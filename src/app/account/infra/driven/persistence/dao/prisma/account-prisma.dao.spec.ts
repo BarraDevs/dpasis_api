@@ -23,7 +23,7 @@ describe('AccountPrismaDao', () => {
     sut = module.get<AccountPrismaAdapterDao>(AccountPrismaAdapterDao);
     prisma = module.get<PrismaService>(PrismaService);
 
-    await prisma.account.deleteMany({});
+    await prisma.account.deleteMany();
   });
 
   afterAll(async() => {

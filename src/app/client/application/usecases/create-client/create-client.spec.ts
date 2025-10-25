@@ -28,7 +28,7 @@ describe('CreateClient', () => {
     findClientById = module.get(FindClientById);
     prisma = module.get(PrismaService);
 
-    await prisma.client.deleteMany({});
+    await prisma.client.deleteMany();
 
     data = {
       kind: 'individual',
@@ -45,7 +45,7 @@ describe('CreateClient', () => {
   });
 
   afterAll(async() => {
-    await prisma.client.deleteMany({});
+    await prisma.client.deleteMany();
   });
 
   it('should be defined', () => {

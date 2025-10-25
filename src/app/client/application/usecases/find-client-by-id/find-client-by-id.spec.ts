@@ -24,7 +24,7 @@ describe('FindClientById', () => {
     prisma = module.get(PrismaService);
     createClient = module.get(CreateClient);
 
-    await prisma.client.deleteMany({});
+    await prisma.client.deleteMany();
   });
 
   it('should be defined', () => {

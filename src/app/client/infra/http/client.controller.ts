@@ -1,16 +1,24 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { SuccessMessage } from 'src/core/dtos/success-message.dto';
 import { Swagger } from 'src/infra/openapi/swagger';
+import { Params } from 'src/infra/validators/class-*/dtos/params/params.dto';
+import { IPagination } from 'src/shared/value-objects/pagination/pagination';
+import { ClientDto } from '../../application/dtos/client.dto';
 import { CreateClient } from '../../application/usecases/create-client/create-client.service';
 import { CreateClientInputDto, CreateClientOutputDto } from '../../application/usecases/create-client/dtos/create-client.dto';
+import { EditClientInputDto } from '../../application/usecases/edit-client/dtos/edit-client.dto';
+import { EditClient } from '../../application/usecases/edit-client/edit-client.service';
+import { FindAllClientQueryDto } from '../../application/usecases/find-all-client/dtos/find-all-client.dto';
+import { FindAllClient } from '../../application/usecases/find-all-client/find-all-client.service';
+import { FindClientById } from '../../application/usecases/find-client-by-id/find-client-by-id.service';
 
 @Controller('client')
 export class ClientController {
   constructor(
     private readonly createClientService: CreateClient,
-    // private readonly findAllClientService: FindAllClient,
-    // private readonly findClientByIdService: FindClientById,
-    // private readonly editClientService: EditClient,
-    // private readonly deleteClientService: DeleteClient,
+    private readonly findAllClientService: FindAllClient,
+    private readonly findClientByIdService: FindClientById,
+    private readonly editClientService: EditClient,
   ) {}
 
   @Post()
@@ -26,50 +34,37 @@ export class ClientController {
     return this.createClientService.execute(body);
   }
 
-  // @Get()
-  // @Swagger({
-  //   tags: ['TAG_AQUI'],
-  //   summary: 'Rota para listar NOME_AQUI',
-  //   applyBadRequest: true,
-  //   okPaginatedResponse: ClientDto,
-  // })
-  // public findAll(@Query() queries: FindAllClientQueryDto): Promise<IPagination<ClientDto>> {
-  //   return this.findAllClientService.execute(queries);
-  // }
+  @Get()
+  @Swagger({
+    tags: ['Clientes'],
+    summary: 'Rota para listar todos os clientes',
+    applyBadRequest: true,
+    okPaginatedResponse: ClientDto,
+  })
+  public findAll(@Query() queries: FindAllClientQueryDto): Promise<IPagination<ClientDto>> {
+    return this.findAllClientService.execute(queries);
+  }
 
-  // @Get(':id')
-  // @Swagger({
-  //   tags: ['TAG_AQUI'],
-  //   summary: 'Rota para buscar NOME_AQUI por ID',
-  //   applyBadRequest: true,
-  //   applyNotFound: true,
-  //   okResponse: ClientDto,
-  // })
-  // public findOne(@Param() params: Params): Promise<ClientDto> {
-  //   return this.findClientByIdService.execute(params.id);
-  // }
+  @Get(':id')
+  @Swagger({
+    tags: ['Clientes'],
+    summary: 'Rota para buscar cliente por ID',
+    applyBadRequest: true,
+    okResponse: ClientDto,
+  })
+  public findOne(@Param() params: Params): Promise<ClientDto | null> {
+    return this.findClientByIdService.execute(params.id);
+  }
 
-  // @Patch(':id')
-  // @Swagger({
-  //   tags: ['TAG_AQUI'],
-  //   summary: 'Rota para editar NOME_AQUI',
-  //   applyBadRequest: true,
-  //   applyNotFound: true,
-  //   okResponse: SuccessMessage,
-  // })
-  // public update(@Param() params: Params, @Body() body: EditClientInputDto): Promise<SuccessMessage> {
-  //   return this.editClientService.execute(params.id, body);
-  // }
-
-  // @Delete(':id')
-  // @Swagger({
-  //   tags: ['TAG_AQUI'],
-  //   summary: 'Rota para deletar NOME_AQUI',
-  //   applyBadRequest: true,
-  //   applyNotFound: true,
-  //   okResponse: SuccessMessage,
-  // })
-  // public remove(@Param() params: Params): Promise<SuccessMessage> {
-  //   return this.deleteClientService.execute(params.id);
-  // }
+  @Patch(':id')
+  @Swagger({
+    tags: ['Clientes'],
+    summary: 'Rota para editar cliente',
+    applyBadRequest: true,
+    applyNotFound: true,
+    okResponse: SuccessMessage,
+  })
+  public update(@Param() params: Params, @Body() body: EditClientInputDto): Promise<SuccessMessage> {
+    return this.editClientService.execute(params.id, body);
+  }
 }

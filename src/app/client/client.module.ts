@@ -17,7 +17,6 @@ import { ClientController } from './infra/http/client.controller';
   ],
   providers: [
     CreateClient,
-    // DeleteClient,
     EditClient,
     FindAllClient,
     FindClientById,
