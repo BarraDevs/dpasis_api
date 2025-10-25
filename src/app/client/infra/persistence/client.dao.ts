@@ -16,7 +16,8 @@ export class ClientDaoAdapterPrisma implements IClientDao {
       AND: [
         {
           OR: [
-            { companyName: { contains: queries.search } },
+            { companyName: { contains: queries.companyName } },
+            { cnpj: { contains: queries.cnpj } },
           ],
         },
       ],

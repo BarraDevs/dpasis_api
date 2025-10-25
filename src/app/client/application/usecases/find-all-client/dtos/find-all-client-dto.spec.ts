@@ -1,66 +1,66 @@
-// import { ArgumentMetadata, ValidationPipe } from '@nestjs/common';
-// import { pipeOptions } from 'src/infra/validators/class-*/config';
-// import { FindAllClientQueryDto } from './find-all-client.dto';
+import { ArgumentMetadata, ValidationPipe } from '@nestjs/common';
+import { pipeOptions } from 'src/infra/validators/class-*/config';
+import { FindAllClientQueryDto } from './find-all-client.dto';
 
-// const metadata: ArgumentMetadata = {
-//   type: 'body',
-//   metatype: FindAllClientQueryDto,
-// };
+const metadata: ArgumentMetadata = {
+  type: 'body',
+  metatype: FindAllClientQueryDto,
+};
 
-// describe('FindAllClientQueryDto', () => {
-//   let target: ValidationPipe;
+describe('FindAllClientQueryDto', () => {
+  let target: ValidationPipe;
 
-//   beforeEach(() => {
-//     target = new ValidationPipe(pipeOptions);
-//   });
+  beforeEach(() => {
+    target = new ValidationPipe(pipeOptions);
+  });
 
-//   describe.each(
-//     [
-//       'field',
-//     ]
-//   )('%s field', (field: string) => {
-//     it.each(
-//       [
-//         undefined,
-//         null,
-//         '',
-//         '  ',
-//       ]
-//     )(`should throw an error if ${field} is empty (%s)`, async(value: any) => {
-//       const data = { [field]: value };
+  describe.each(
+    [
+      'companyName',
+      'cnpj',
+    ]
+  )('%s field', (field: string) => {
+    it.each(
+      [
+        undefined,
+        null,
+        '',
+        '  ',
+      ]
+    )(`should not throw an error if ${field} is empty (%s)`, async(value: any) => {
+      const data = { [field]: value };
 
-//       expect.assertions(1);
-//       return target.transform(data, metadata).catch((error) => {
-//         expect(error.getResponse().message).toContain(`${field} é obrigatório`);
-//       });
-//     });
+      const result = await target.transform(data, metadata);
 
-//     it.each(
-//       [
-//         123,
-//         true,
-//         false,
-//         {},
-//         [],
-//       ]
-//     )('should throw an error if %s is not a string (%s)', async(value: any) => {
-//       const data = { [field]: value };
+      expect(result).toBeInstanceOf(FindAllClientQueryDto);
+    });
 
-//       expect.assertions(1);
-//       return target.transform(data, metadata).catch((error) => {
-//         expect(error.getResponse().message).toContain(`${field} deve ser uma string`);
-//       });
-//     });
-//   });
+    it.each(
+      [
+        123,
+        true,
+        false,
+        {},
+        [],
+      ]
+    )('should throw an error if %s is not a string (%s)', async(value: any) => {
+      const data = { [field]: value };
 
-//   it('should pass if all fields are valid', async() => {
-//     const data = {
-//       field: 'name',
-//     };
+      expect.assertions(1);
+      return target.transform(data, metadata).catch((error) => {
+        expect(error.getResponse().message).toContain(`${field} deve ser um texto`);
+      });
+    });
+  });
 
-//     const result = await target.transform(data, metadata);
+  it('should pass if all fields are valid', async() => {
+    const data = {
+      companyName: 'Empresa XYZ',
+    };
 
-//     expect(result).toBeInstanceOf(FindAllClientQueryDto);
-//     expect(result).toEqual(data);
-//   });
-// });
+    const result = await target.transform(data, metadata);
+
+    expect(result).toBeInstanceOf(FindAllClientQueryDto);
+    expect(result).toEqual(data);
+  });
+});

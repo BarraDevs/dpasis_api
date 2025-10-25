@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { AccountModule } from '../account/account.module';
 import { ClientPersistenceModule } from './application/persistence/client-persistence.module';
 import { CreateClient } from './application/usecases/create-client/create-client.service';
+import { FindAllClient } from './application/usecases/find-all-client/find-all-client.service';
 import { FindClientById } from './application/usecases/find-client-by-id/find-client-by-id.service';
 import { ClientController } from './infra/http/client.controller';
 
@@ -17,7 +18,7 @@ import { ClientController } from './infra/http/client.controller';
     CreateClient,
     // DeleteClient,
     // EditClient,
-    // FindAllClient,
+    FindAllClient,
     FindClientById,
   ],
   exports: [],
