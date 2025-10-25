@@ -5,12 +5,15 @@ import { ClientDuplicateCnpjError } from 'src/app/client/domain/errors/duplicate
 import { ClientDuplicateIeError } from 'src/app/client/domain/errors/duplicate-ie.error';
 import { ConfigModule } from 'src/core/config/config.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
+import { ClientDto } from '../../dtos/client.dto';
+import { FindClientById } from '../find-client-by-id/find-client-by-id.service';
 import { CreateClient } from './create-client.service';
 import { CreateClientInputDto } from './dtos/create-client.dto';
 
 describe('CreateClient', () => {
   let sut: CreateClient;
   let prisma: PrismaService;
+  let findClientById: FindClientById;
   let data: CreateClientInputDto;
 
   beforeEach(async() => {
@@ -22,6 +25,7 @@ describe('CreateClient', () => {
     }).compile();
 
     sut = module.get(CreateClient);
+    findClientById = module.get(FindClientById);
     prisma = module.get(PrismaService);
 
     await prisma.client.deleteMany({});
@@ -129,7 +133,7 @@ describe('CreateClient', () => {
   it('should create with correct default values', async() => {
     const result = await sut.execute(data);
 
-    const createdClient = await prisma.client.findUnique({ where: { id: result.id } });
+    const createdClient = await findClientById.execute(result.id);
     expect(createdClient).toEqual(
       expect.objectContaining({
         active: true,
@@ -140,13 +144,12 @@ describe('CreateClient', () => {
     );
   });
 
-  // TODO: trocar pelo findById
   it('should create a client', async() => {
     const result = await sut.execute(data);
     expect(result).toHaveProperty('id', expect.any(String));
 
-    const createdClient = await prisma.client.findUnique({ where: { id: result.id } });
-    expect(createdClient).toEqual({
+    const createdClient = await findClientById.execute(result.id);
+    expect(createdClient).toEqual<ClientDto>({
       ...data,
       id: result.id,
       active: true,

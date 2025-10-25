@@ -13,6 +13,7 @@ export class ClientDto {
   active: boolean;
   mainAddressId: string | null;
   createdAt: Date;
+  updatedAt: Date;
   address?: Array<{
     zipCode: string;
     street: string;
