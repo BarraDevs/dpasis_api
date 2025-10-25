@@ -3,21 +3,28 @@ import { Props } from 'scripts/generate-module';
 export function generateCreateUsecaseSpecFile({ moduleName, moduleNamePascal }: Props) {
   return `import { Test, TestingModule } from '@nestjs/testing';
 import { ${moduleNamePascal}Module } from 'src/app/${moduleName}/${moduleName}.module';
+import { ConfigModule } from 'src/core/config/config.module';
+import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { Create${moduleNamePascal} } from './create-${moduleName}.service';
 
 describe('Create${moduleNamePascal}', () => {
-  let service: Create${moduleNamePascal};
+  let sut: Create${moduleNamePascal};
+  let prisma: PrismaService;
 
   beforeEach(async() => {
     const module: TestingModule = await Test.createTestingModule({
-      imports: [${moduleNamePascal}Module],
+      imports: [
+        ${moduleNamePascal}Module,
+        ConfigModule,
+      ],
     }).compile();
 
-    service = module.get(Create${moduleNamePascal});
+    sut = module.get(Create${moduleNamePascal});
+    prisma = module.get(PrismaService);
   });
 
   it('should be defined', () => {
-    expect(service).toBeDefined();
+    expect(sut).toBeDefined();
   });
 });
 `;
