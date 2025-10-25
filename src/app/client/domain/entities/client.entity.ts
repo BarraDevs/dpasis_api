@@ -2,8 +2,8 @@ type ClientProps = ClientCreateProps & {
   id: string;
   active: boolean;
   mainAddressId: string | null;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 type ClientCreateProps = {
@@ -29,8 +29,8 @@ export class Client {
       id: crypto.randomUUID(),
       active: true,
       mainAddressId: null,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
     });
   }
 

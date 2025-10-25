@@ -1,9 +1,4 @@
-import { IsNotEmpty, IsString } from 'class-validator';
-import { Trim } from 'src/infra/validators/class-*/decorators/trim/trim';
+import { PartialType } from '@nestjs/swagger';
+import { CreateClientInputDto } from '../../create-client/dtos/create-client.dto';
 
-export class EditClientInputDto {
-  @IsString({ message: '$property deve ser uma string' })
-  @IsNotEmpty({ message: '$property é obrigatório' })
-  @Trim()
-  field: string;
-}
+export class EditClientInputDto extends PartialType(CreateClientInputDto) {}
