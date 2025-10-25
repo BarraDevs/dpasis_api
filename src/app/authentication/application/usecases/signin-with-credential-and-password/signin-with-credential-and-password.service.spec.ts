@@ -58,7 +58,6 @@ describe('SigninWithCredentialAndPassword', () => {
       data: {
         roles: { create: { role } },
         email,
-        document: '12345678900',
         password: hashedPassword,
         status: AccountStatus.ACTIVE,
       },
@@ -87,7 +86,6 @@ describe('SigninWithCredentialAndPassword', () => {
       data: {
         roles: { create: { role } },
         email,
-        document: '12345678900',
         password: hashedPassword,
         status: AccountStatus.INACTIVE,
       },
@@ -116,7 +114,6 @@ describe('SigninWithCredentialAndPassword', () => {
       data: {
         roles: { create: { role } },
         email,
-        document: '12345678900',
         password: hashedPassword,
         status: AccountStatus.PENDING,
       },
@@ -145,7 +142,6 @@ describe('SigninWithCredentialAndPassword', () => {
       data: {
         roles: { create: { role } },
         email,
-        document: '12345678900',
         password: hashedPassword,
         status: AccountStatus.ACTIVE,
       },

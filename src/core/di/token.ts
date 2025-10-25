@@ -3,6 +3,9 @@ const TOKENS = {
   LoggerGateway: Symbol.for('LoggerGateway'),
 
   AccountDao: Symbol.for('AccountDao'),
+
+  ClientDao: Symbol.for('ClientDao'),
+  ClientRepository: Symbol.for('ClientRepository'),
 };
 
 export { TOKENS };

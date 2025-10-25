@@ -4,13 +4,19 @@ import { Request, Response } from 'express';
 import { ForbiddenAccountError } from 'src/app/authentication/application/errors/forbidden-account.error';
 import { InactiveAccountError } from 'src/app/authentication/application/errors/inactive-account.error';
 import { InvalidCredentialError } from 'src/app/authentication/application/errors/invalid-credential.error';
+import { ClientDuplicateCnpjError } from 'src/app/client/domain/errors/duplicate-cnpj.error';
+import { ClientDuplicateIeError } from 'src/app/client/domain/errors/duplicate-ie.error';
 import { TOKENS } from 'src/core/di/token';
 import { type ILoggerGateway, LogContext } from 'src/infra/logger/logger.gateway';
+import { AppException } from '../app.exception';
 
 @Catch(
   InvalidCredentialError,
   InactiveAccountError,
-  ForbiddenAccountError
+  ForbiddenAccountError,
+
+  ClientDuplicateCnpjError,
+  ClientDuplicateIeError,
 )
 export class HttpExceptionFilter extends BaseExceptionFilter implements ExceptionFilter {
   private readonly SENSITIVE_FIELDS = [
@@ -21,7 +27,7 @@ export class HttpExceptionFilter extends BaseExceptionFilter implements Exceptio
     super();
   }
 
-  public catch(exception: Error, host: ArgumentsHost) {
+  public catch(exception: AppException, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const request = ctx.getRequest<Request>();
     const response = ctx.getResponse<Response>();
@@ -33,7 +39,7 @@ export class HttpExceptionFilter extends BaseExceptionFilter implements Exceptio
       body: this.sanitizeBody(request.body),
       params: request.params,
       query: request.query,
-      statusCode: HttpStatus.BAD_REQUEST,
+      statusCode: exception.code ?? HttpStatus.BAD_REQUEST,
       error: exception.message,
     });
 

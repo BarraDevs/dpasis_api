@@ -2,6 +2,7 @@ import { createMock } from '@golevelup/ts-jest';
 import { ArgumentsHost } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { Request, Response } from 'express';
+import { AppException } from '../app.exception';
 import { FilterModule } from '../filter.module';
 import { HttpExceptionFilter } from './http-exception.filter';
 
@@ -25,7 +26,7 @@ describe('HttpExceptionFilter', () => {
     it('should handle HttpException correctly', () => {
       // Arrange
       const errorMessage = 'Invalid credentials';
-      const exception = new Error(errorMessage);
+      const exception = new AppException(errorMessage);
       const mockRequest = createMock<Request>();
       const mockResponse = createMock<Response>();
       const host = createMock<ArgumentsHost>({});
@@ -46,7 +47,7 @@ describe('HttpExceptionFilter', () => {
     it('should sanitize sensitive fields in the request body', () => {
       // Arrange
       const errorMessage = 'Invalid credentials';
-      const exception = new Error(errorMessage);
+      const exception = new AppException(errorMessage);
       const mockRequest = createMock<Request>({
         body: {
           username: 'user1',
@@ -74,7 +75,7 @@ describe('HttpExceptionFilter', () => {
     it('should handle array bodies and sanitize sensitive fields', () => {
       // Arrange
       const errorMessage = 'Invalid credentials';
-      const exception = new Error(errorMessage);
+      const exception = new AppException(errorMessage);
       const mockRequest = createMock<Request>({
         body: [
           { username: 'user1', password: 'secret1' },
@@ -102,7 +103,7 @@ describe('HttpExceptionFilter', () => {
     it('should handle nested objects and sanitize sensitive fields', () => {
       // Arrange
       const errorMessage = 'Invalid credentials';
-      const exception = new Error(errorMessage);
+      const exception = new AppException(errorMessage);
       const mockRequest = createMock<Request>({
         body: {
           user: {
@@ -142,7 +143,7 @@ describe('HttpExceptionFilter', () => {
     it('should return the original body if there are no sensitive fields', () => {
       // Arrange
       const errorMessage = 'Invalid credentials';
-      const exception = new Error(errorMessage);
+      const exception = new AppException(errorMessage);
       const mockRequest = createMock<Request>({
         body: {
           username: 'user1',
@@ -167,10 +168,10 @@ describe('HttpExceptionFilter', () => {
       });
     });
 
-    it('should call logger.error with correct parameters', () => {
+    it('should call logger.error with correct parameters when not providing error code', () => {
       // Arrange
       const errorMessage = 'Invalid credentials';
-      const exception = new Error(errorMessage);
+      const exception = new AppException(errorMessage);
       const mockRequest = createMock<Request>({
         method: 'POST',
         url: '/login',
@@ -204,6 +205,48 @@ describe('HttpExceptionFilter', () => {
         params: {},
         query: {},
         statusCode: 400,
+        error: errorMessage,
+      });
+    });
+
+    it('should call logger.error with correct parameters when providing error code', () => {
+      // Arrange
+      const errorMessage = 'Invalid credentials';
+      const exceptionCode = 415;
+      const exception = new AppException(errorMessage, exceptionCode);
+      const mockRequest = createMock<Request>({
+        method: 'POST',
+        url: '/login',
+        body: { username: 'user1', password: 'secret' },
+        params: {},
+        query: {},
+        user: { sub: '12345' },
+      });
+      const mockResponse = createMock<Response>();
+      const host = createMock<ArgumentsHost>({});
+
+      jest.spyOn(host, 'switchToHttp').mockReturnValue({
+        getRequest: () => mockRequest,
+        getResponse: () => mockResponse,
+      } as any);
+
+      const loggerErrorSpy = jest.spyOn(sut['logger'], 'error').mockImplementation();
+
+      // Act
+      sut.catch(exception, host);
+
+      // Assert
+      expect(loggerErrorSpy).toHaveBeenCalledWith(expect.any(String), {
+        accountId: '12345',
+        method: 'POST',
+        url: '/login',
+        body: {
+          username: 'user1',
+          password: '****',
+        },
+        params: {},
+        query: {},
+        statusCode: exceptionCode,
         error: errorMessage,
       });
     });

@@ -48,7 +48,6 @@ describe('FindAccountByCredential', () => {
     // Arrange
     const createdAccount = await prisma.account.create({
       data: {
-        document: '12345678900',
         email: 'jhondoe@email.com',
         password: 'securepassword',
         status: AccountStatus.ACTIVE,

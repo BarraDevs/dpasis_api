@@ -47,7 +47,6 @@ describe('AccountPrismaDao', () => {
       // Arrange
       const account = await prisma.account.create({
         data: {
-          document: '12345678909',
           email: 'account@email.com',
           password: 'hashed_password',
           status: AccountStatus.ACTIVE,
@@ -89,7 +88,6 @@ describe('AccountPrismaDao', () => {
       // Arrange
       const account = await prisma.account.create({
         data: {
-          document: '12345678909',
           email: 'account@email.com',
           password: 'hashed_password',
           status: AccountStatus.ACTIVE,
@@ -131,7 +129,6 @@ describe('AccountPrismaDao', () => {
       // Arrange
       const account = await prisma.account.create({
         data: {
-          document: '12345678909',
           email: 'account@email.com',
           password: 'hashed_password',
           status: AccountStatus.ACTIVE,
@@ -162,7 +159,6 @@ describe('AccountPrismaDao', () => {
       // Arrange
       const account = await prisma.account.create({
         data: {
-          document: '12345678909',
           email: 'account@email.com',
           password: 'hashed_password',
           status: AccountStatus.ACTIVE,
@@ -186,7 +182,6 @@ describe('AccountPrismaDao', () => {
       // Arrange
       const account = await prisma.account.create({
         data: {
-          document: '12345678909',
           email: 'account@email.com',
           password: 'old_hashed_password',
           passwordResetToken: 'reset-token',

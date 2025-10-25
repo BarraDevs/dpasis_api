@@ -9,7 +9,6 @@ datasource db {
 
 model Account {
   id                 String  @id @default(uuid())
-  document           String  @unique
   email              String  @unique
   password           String  @db.Text
   passwordResetToken String? @db.VarChar(64)
@@ -31,12 +30,31 @@ model Role {
 model Admin {
   accountId String   @unique
   name      String
+  document  String   @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   role      Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
   roleId    String   @unique
 
   @@id([accountId])
+}
+
+model Client {
+  id              String   @unique @default(uuid())
+  kind            String
+  cnpj            String   @unique
+  ie              String   @unique
+  group           String
+  type            String
+  generateInvoice Boolean
+  companyName     String
+  fantasyName     String
+  owner           String
+  headquarters    String
+  active          Boolean
+  mainAddressId   String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
 
 model Faq {
