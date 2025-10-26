@@ -22,6 +22,10 @@ describe('UTCDate Value Object', () => {
       expect(utcDate.value).toBeInstanceOf(Date);
       expect(utcDate.value).toEqual(mockDate);
     });
+
+    it('should throw an error when provided an invalid date', () => {
+      expect(() => UTCDate.from('invalid-date' as any)).toThrow(InvalidDateError);
+    });
   });
 
   describe('static from', () => {

@@ -13,7 +13,7 @@ export class UTCDate {
   }
 
   private constructor(value?: DateTime) {
-    if (value && !DateTime.isDateTime(value)) {
+    if (value && !value.isValid) {
       throw new InvalidDateError();
     }
     this._value = value ?? DateTime.utc();
@@ -31,10 +31,10 @@ export class UTCDate {
     if (!days || days <= 0) {
       throw new InvalidDaysQuantityError();
     }
-    if (!Number.isInteger(days)) {
+    if (Number.isNaN(days)) {
       throw new InvalidDaysQuantityError();
     }
-    if (Number.isNaN(days)) {
+    if (!Number.isInteger(days)) {
       throw new InvalidDaysQuantityError();
     }
     return new UTCDate(this._value.plus({ days }));
@@ -44,10 +44,10 @@ export class UTCDate {
     if (!months || months <= 0) {
       throw new InvalidMonthsQuantityError();
     }
-    if (!Number.isInteger(months)) {
+    if (Number.isNaN(months)) {
       throw new InvalidMonthsQuantityError();
     }
-    if (Number.isNaN(months)) {
+    if (!Number.isInteger(months)) {
       throw new InvalidMonthsQuantityError();
     }
     return new UTCDate(this._value.plus({ months }));
