@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { AccountModule } from '../account/account.module';
+import { AuthenticationGuardsModule } from '../authentication/application/guards/guards.module';
 import { ClientPersistenceModule } from './application/persistence/client-persistence.module';
 import { CreateClient } from './application/usecases/create-client/create-client.service';
 import { EditClient } from './application/usecases/edit-client/edit-client.service';
@@ -10,7 +10,7 @@ import { ClientController } from './infra/http/client.controller';
 @Module({
   imports: [
     ClientPersistenceModule,
-    AccountModule,
+    AuthenticationGuardsModule,
   ],
   controllers: [
     ClientController,

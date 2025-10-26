@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { RequiredRoles } from 'src/app/authentication/infra/decorators/required-role.decorator';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
 import { Swagger } from 'src/infra/openapi/swagger';
 import { Params } from 'src/infra/validators/class-*/dtos/params/params.dto';
@@ -13,6 +14,7 @@ import { FindAllClient } from '../../application/usecases/find-all-client/find-a
 import { FindClientById } from '../../application/usecases/find-client-by-id/find-client-by-id.service';
 
 @Controller('client')
+@RequiredRoles()
 export class ClientController {
   constructor(
     private readonly createClientService: CreateClient,
@@ -22,7 +24,6 @@ export class ClientController {
   ) {}
 
   @Post()
-  // @RequiredRoles()
   @Swagger({
     tags: ['Clientes'],
     summary: 'Rota para criar um cliente',
