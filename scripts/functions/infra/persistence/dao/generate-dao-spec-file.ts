@@ -17,6 +17,9 @@ describe('${moduleNamePascal}DaoAdapterPrisma', () => {
         ${moduleNamePascal}PersistenceModule,
         ConfigModule,
       ],
+      providers: [
+        ${moduleNamePascal}DaoAdapterPrisma,
+      ],
     }).compile();
 
     sut = module.get(${moduleNamePascal}DaoAdapterPrisma);
