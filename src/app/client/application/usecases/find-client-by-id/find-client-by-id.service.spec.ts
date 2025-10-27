@@ -76,7 +76,6 @@ describe('FindClientById', () => {
       owner: data.owner,
       headquarters: data.headquarters,
       active: true,
-      mainAddressId: null,
       createdAt: expect.any(Date),
       updatedAt: expect.any(Date),
     });

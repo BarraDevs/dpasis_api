@@ -13,7 +13,7 @@ import {
   ApiUnsupportedMediaTypeResponse,
   getSchemaPath,
 } from '@nestjs/swagger';
-import { IPagination } from 'src/shared/value-objects/pagination/pagination';
+import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
 import { ClientError, ServerError } from './error.dto';
 
 type swaggerProps = {

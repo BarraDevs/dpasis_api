@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
+import { IClientRepository } from 'src/app/client/application/persistence/repository/client-repository.interface';
+import { Client } from 'src/app/client/domain/entities/client.entity';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
-import { IClientRepository } from '../../application/persistence/repository/client-repository.interface';
-import { Client } from '../../domain/entities/client.entity';
 
 @Injectable()
 export class ClientRepositoryAdapterPrisma implements IClientRepository {

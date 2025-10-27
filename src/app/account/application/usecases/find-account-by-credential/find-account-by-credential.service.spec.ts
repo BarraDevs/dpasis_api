@@ -19,8 +19,8 @@ describe('FindAccountByCredential', () => {
       ],
     }).compile();
 
-    sut = module.get<FindAccountByCredential>(FindAccountByCredential);
-    prisma = module.get<PrismaService>(PrismaService);
+    sut = module.get(FindAccountByCredential);
+    prisma = module.get(PrismaService);
 
     await prisma.account.deleteMany();
   });
@@ -63,7 +63,6 @@ describe('FindAccountByCredential', () => {
     const result = await sut.execute(createdAccount.email);
 
     // Assert
-    expect(result).not.toBeNull();
     expect(result).toEqual<AccountWithSensitiveDataDto>({
       id: createdAccount.id,
       email: createdAccount.email,

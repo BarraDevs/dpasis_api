@@ -11,7 +11,6 @@ export class ClientDto {
   owner: string;
   headquarters: string;
   active: boolean;
-  mainAddressId: string | null;
   createdAt: Date;
   updatedAt: Date;
   // address?: Array<{

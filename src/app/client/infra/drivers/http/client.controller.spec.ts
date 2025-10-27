@@ -1,13 +1,13 @@
 import { createMock } from '@golevelup/ts-jest';
 import { Test } from '@nestjs/testing';
+import { ClientDto } from 'src/app/client/application/dtos/client.dto';
+import { CreateClientInputDto, CreateClientOutputDto } from 'src/app/client/application/usecases/create-client/dtos/create-client.dto';
+import { ClientModule } from 'src/app/client/client.module';
 import { ConfigModule } from 'src/core/config/config.module';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
 import { Params } from 'src/infra/validators/class-*/dtos/params/params.dto';
 import { Queries } from 'src/infra/validators/class-*/dtos/queries/queries.dto';
-import { IPagination } from 'src/shared/value-objects/pagination/pagination';
-import { ClientDto } from '../../application/dtos/client.dto';
-import { CreateClientInputDto, CreateClientOutputDto } from '../../application/usecases/create-client/dtos/create-client.dto';
-import { ClientModule } from '../../client.module';
+import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
 import { ClientController } from './client.controller';
 
 describe('ClientController', () => {

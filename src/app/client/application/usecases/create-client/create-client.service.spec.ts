@@ -137,7 +137,6 @@ describe('CreateClient', () => {
     expect(createdClient).toEqual(
       expect.objectContaining({
         active: true,
-        mainAddressId: null,
         createdAt: expect.any(Date),
         updatedAt: expect.any(Date),
       })
@@ -153,7 +152,6 @@ describe('CreateClient', () => {
       ...data,
       id: result.id,
       active: true,
-      mainAddressId: null,
       createdAt: expect.any(Date),
       updatedAt: expect.any(Date),
     });

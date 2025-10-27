@@ -27,6 +27,7 @@ describe('AccountPrismaDao', () => {
   });
 
   afterAll(async() => {
+    await prisma.account.deleteMany();
     await prisma.$disconnect();
   });
 

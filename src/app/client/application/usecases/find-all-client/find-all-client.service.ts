@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { TOKENS } from 'src/core/di/token';
-import { IPagination, Pagination } from 'src/shared/value-objects/pagination/pagination';
+import { IPagination, Pagination } from 'src/shared/value-objects/pagination/pagination.vo';
 import { ClientDto } from '../../dtos/client.dto';
 import type { IClientDao } from '../../persistence/dao/client-dao.interface';
 import { FindAllClientQueryDto } from './dtos/find-all-client.dto';

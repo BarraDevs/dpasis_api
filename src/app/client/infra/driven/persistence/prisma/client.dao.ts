@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { ClientDto } from 'src/app/client/application/dtos/client.dto';
+import { IClientDao } from 'src/app/client/application/persistence/dao/client-dao.interface';
+import { FindAllClientQueryDto } from 'src/app/client/application/usecases/find-all-client/dtos/find-all-client.dto';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
-import { ClientDto } from '../../application/dtos/client.dto';
-import { IClientDao } from '../../application/persistence/dao/client-dao.interface';
-import { FindAllClientQueryDto } from '../../application/usecases/find-all-client/dtos/find-all-client.dto';
 
 @Injectable()
 export class ClientDaoAdapterPrisma implements IClientDao {

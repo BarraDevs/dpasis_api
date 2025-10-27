@@ -134,7 +134,6 @@ describe('EditClient', () => {
     expect(editedClient).toEqual<ClientDto>({
       id: client.id,
       active: true,
-      mainAddressId: null,
       createdAt: editedClient!.createdAt,
       updatedAt: editedClient!.updatedAt,
       ...data,
@@ -169,7 +168,6 @@ describe('EditClient', () => {
       owner: editData.owner ?? data.owner,
       headquarters: editData.headquarters ?? data.headquarters,
       active: true,
-      mainAddressId: null,
       createdAt: editedClient!.createdAt,
       updatedAt: editedClient!.updatedAt,
     });

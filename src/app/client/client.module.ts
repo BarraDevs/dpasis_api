@@ -5,7 +5,7 @@ import { CreateClient } from './application/usecases/create-client/create-client
 import { EditClient } from './application/usecases/edit-client/edit-client.service';
 import { FindAllClient } from './application/usecases/find-all-client/find-all-client.service';
 import { FindClientById } from './application/usecases/find-client-by-id/find-client-by-id.service';
-import { ClientController } from './infra/http/client.controller';
+import { ClientController } from './infra/drivers/http/client.controller';
 
 @Module({
   imports: [

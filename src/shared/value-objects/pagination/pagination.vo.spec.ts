@@ -1,4 +1,4 @@
-import { Pagination } from './pagination';
+import { Pagination } from './pagination.vo';
 
 describe('Pagination value object', () => {
   it('should create a pagination object with default values', () => {

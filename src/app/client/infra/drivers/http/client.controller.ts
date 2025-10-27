@@ -1,17 +1,17 @@
 import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { RequiredRoles } from 'src/app/authentication/infra/decorators/required-role.decorator';
+import { ClientDto } from 'src/app/client/application/dtos/client.dto';
+import { CreateClient } from 'src/app/client/application/usecases/create-client/create-client.service';
+import { CreateClientInputDto, CreateClientOutputDto } from 'src/app/client/application/usecases/create-client/dtos/create-client.dto';
+import { EditClientInputDto } from 'src/app/client/application/usecases/edit-client/dtos/edit-client.dto';
+import { EditClient } from 'src/app/client/application/usecases/edit-client/edit-client.service';
+import { FindAllClientQueryDto } from 'src/app/client/application/usecases/find-all-client/dtos/find-all-client.dto';
+import { FindAllClient } from 'src/app/client/application/usecases/find-all-client/find-all-client.service';
+import { FindClientById } from 'src/app/client/application/usecases/find-client-by-id/find-client-by-id.service';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
 import { Swagger } from 'src/infra/openapi/swagger';
 import { Params } from 'src/infra/validators/class-*/dtos/params/params.dto';
-import { IPagination } from 'src/shared/value-objects/pagination/pagination';
-import { ClientDto } from '../../application/dtos/client.dto';
-import { CreateClient } from '../../application/usecases/create-client/create-client.service';
-import { CreateClientInputDto, CreateClientOutputDto } from '../../application/usecases/create-client/dtos/create-client.dto';
-import { EditClientInputDto } from '../../application/usecases/edit-client/dtos/edit-client.dto';
-import { EditClient } from '../../application/usecases/edit-client/edit-client.service';
-import { FindAllClientQueryDto } from '../../application/usecases/find-all-client/dtos/find-all-client.dto';
-import { FindAllClient } from '../../application/usecases/find-all-client/find-all-client.service';
-import { FindClientById } from '../../application/usecases/find-client-by-id/find-client-by-id.service';
+import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
 
 @Controller('client')
 @RequiredRoles()

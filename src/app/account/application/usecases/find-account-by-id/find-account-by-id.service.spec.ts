@@ -19,8 +19,8 @@ describe('FindAccountById', () => {
       ],
     }).compile();
 
-    sut = module.get<FindAccountById>(FindAccountById);
-    prisma = module.get<PrismaService>(PrismaService);
+    sut = module.get(FindAccountById);
+    prisma = module.get(PrismaService);
 
     await prisma.account.deleteMany();
   });
@@ -63,7 +63,6 @@ describe('FindAccountById', () => {
     const result = await sut.execute(createdAccount.id);
 
     // Assert
-    expect(result).not.toBeNull();
     expect(result).toEqual<AccountDto>({
       id: createdAccount.id,
       email: createdAccount.email,

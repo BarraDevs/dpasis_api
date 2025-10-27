@@ -3,7 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ClientModule } from 'src/app/client/client.module';
 import { ConfigModule } from 'src/core/config/config.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
-import { IPagination } from 'src/shared/value-objects/pagination/pagination';
+import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
 import { ClientDto } from '../../dtos/client.dto';
 import { CreateClient } from '../create-client/create-client.service';
 import { CreateClientInputDto } from '../create-client/dtos/create-client.dto';
