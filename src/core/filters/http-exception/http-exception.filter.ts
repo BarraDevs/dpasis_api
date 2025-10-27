@@ -1,9 +1,13 @@
 import { ArgumentsHost, Catch, ExceptionFilter, HttpStatus, Inject } from '@nestjs/common';
 import { BaseExceptionFilter } from '@nestjs/core';
 import { Request, Response } from 'express';
+import { AddressMainCannotBeDeletedError } from 'src/app/address/domain/errors/address-main-cannot-be-deleted.error';
+import { AddressMainMustBeOneError } from 'src/app/address/domain/errors/address-main-must-be-one.error';
+import { AddressNotFoundError } from 'src/app/address/domain/errors/address-not-found.error';
 import { ForbiddenAccountError } from 'src/app/authentication/application/errors/forbidden-account.error';
 import { InactiveAccountError } from 'src/app/authentication/application/errors/inactive-account.error';
 import { InvalidCredentialError } from 'src/app/authentication/application/errors/invalid-credential.error';
+import { ClientNotFoundError } from 'src/app/client/domain/errors/client-not-found';
 import { ClientDuplicateCnpjError } from 'src/app/client/domain/errors/duplicate-cnpj.error';
 import { ClientDuplicateIeError } from 'src/app/client/domain/errors/duplicate-ie.error';
 import { TOKENS } from 'src/core/di/token';
@@ -15,8 +19,13 @@ import { AppException } from '../app.exception';
   InactiveAccountError,
   ForbiddenAccountError,
 
+  ClientNotFoundError,
   ClientDuplicateCnpjError,
   ClientDuplicateIeError,
+
+  AddressNotFoundError,
+  AddressMainCannotBeDeletedError,
+  AddressMainMustBeOneError
 )
 export class HttpExceptionFilter extends BaseExceptionFilter implements ExceptionFilter {
   private readonly SENSITIVE_FIELDS = [
@@ -44,7 +53,7 @@ export class HttpExceptionFilter extends BaseExceptionFilter implements Exceptio
     });
 
     response
-      .status(HttpStatus.BAD_REQUEST)
+      .status(exception.code ?? HttpStatus.BAD_REQUEST)
       .json({ message: exception.message });
   }
 

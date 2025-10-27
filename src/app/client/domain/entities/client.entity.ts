@@ -20,6 +20,7 @@ type ClientCreateProps = {
 
 export class Client {
   private readonly _id: string; // TODO: usar Value Object UUID
+  // private readonly _cnpj: CNPJ;
   private readonly _props: ClientProps;
 
   static create(props: ClientCreateProps): Client {
