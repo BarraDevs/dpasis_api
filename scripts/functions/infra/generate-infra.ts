@@ -9,6 +9,10 @@ export async function generateInfraFiles(props: Props) {
   const infraPath = path.join(props.modulePath, 'infra');
   await fs.mkdir(infraPath);
 
+  // Cria as pastas infra/driven e infra/drivers.
+  await fs.mkdir(path.join(infraPath, 'driven'));
+  await fs.mkdir(path.join(infraPath, 'drivers'));
+
   await generateInfraHttp(props);
   await generateInfraPersistence(props);
 }

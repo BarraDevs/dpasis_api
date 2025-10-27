@@ -17,7 +17,7 @@ export async function generateCreateUsecase(props: Props) {
     generateCreateUsecaseFile(props)
   );
   await fs.writeFile(
-    path.join(createPath, `create-${props.moduleName}.spec.ts`),
+    path.join(createPath, `create-${props.moduleName}.service.spec.ts`),
     generateCreateUsecaseSpecFile(props)
   );
 

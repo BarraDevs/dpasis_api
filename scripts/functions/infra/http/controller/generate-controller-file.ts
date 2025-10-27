@@ -2,9 +2,9 @@ import { Props } from 'scripts/generate-module';
 
 export function generateControllerFile({ moduleName, moduleNamePascal }: Props) {
   return `import { Body, Controller, Post } from '@nestjs/common';
+import { Create${moduleNamePascal} } from 'src/app/${moduleName}/application/usecases/create-${moduleName}/create-${moduleName}.service';
+import { Create${moduleNamePascal}InputDto, Create${moduleNamePascal}OutputDto } from 'src/app/${moduleName}/application/usecases/create-${moduleName}/dtos/create-${moduleName}.dto';
 import { Swagger } from 'src/infra/openapi/swagger';
-import { Create${moduleNamePascal} } from '../../application/usecases/create-${moduleName}/create-${moduleName}.service';
-import { Create${moduleNamePascal}InputDto, Create${moduleNamePascal}OutputDto } from '../../application/usecases/create-${moduleName}/dtos/create-${moduleName}.dto';
 
 @Controller('${moduleName}')
 export class ${moduleNamePascal}Controller {

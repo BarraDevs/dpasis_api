@@ -2,8 +2,8 @@ import { Props } from 'scripts/generate-module';
 
 export function generateCreateUsecaseDtoSpecFile({ moduleName, moduleNamePascal }: Props) {
   return `import { ArgumentMetadata, ValidationPipe } from '@nestjs/common';
-import { Create${moduleNamePascal}InputDto } from './create-${moduleName}.dto';
 import { pipeOptions } from 'src/infra/validators/class-*/config';
+import { Create${moduleNamePascal}InputDto } from './create-${moduleName}.dto';
 
 const metadata: ArgumentMetadata = {
   type: 'body',

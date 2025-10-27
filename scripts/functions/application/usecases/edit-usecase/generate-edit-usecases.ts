@@ -17,7 +17,7 @@ export async function generateEditUsecase(props: Props) {
     generateEditUsecaseFile(props)
   );
   await fs.writeFile(
-    path.join(editPath, `edit-${props.moduleName}.spec.ts`),
+    path.join(editPath, `edit-${props.moduleName}.service.spec.ts`),
     generateEditUsecaseSpecFile(props)
   );
 

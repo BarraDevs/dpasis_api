@@ -15,7 +15,7 @@ export async function generateDeleteUsecase(props: Props) {
     generateDeleteUsecaseFile(props)
   );
   await fs.writeFile(
-    path.join(deletePath, `delete-${props.moduleName}.spec.ts`),
+    path.join(deletePath, `delete-${props.moduleName}.service.spec.ts`),
     generateDeleteUsecaseSpecFile(props)
   );
 }

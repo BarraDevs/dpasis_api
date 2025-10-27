@@ -17,7 +17,7 @@ export async function generateFindAllUsecase(props: Props) {
     generateFindAllUsecaseFile(props)
   );
   await fs.writeFile(
-    path.join(findAllPath, `find-all-${props.moduleName}.spec.ts`),
+    path.join(findAllPath, `find-all-${props.moduleName}.service.spec.ts`),
     generateFindAllUsecaseSpecFile(props)
   );
 

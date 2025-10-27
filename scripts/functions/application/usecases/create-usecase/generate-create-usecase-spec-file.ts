@@ -1,6 +1,6 @@
 import { Props } from 'scripts/generate-module';
 
-export function generateCreateUsecaseSpecFile({ moduleName, moduleNamePascal }: Props) {
+export function generateCreateUsecaseSpecFile({ moduleName, moduleNamePascal, moduleNameCamel }: Props) {
   return `import { Test, TestingModule } from '@nestjs/testing';
 import { ${moduleNamePascal}Module } from 'src/app/${moduleName}/${moduleName}.module';
 import { ConfigModule } from 'src/core/config/config.module';
@@ -21,6 +21,12 @@ describe('Create${moduleNamePascal}', () => {
 
     sut = module.get(Create${moduleNamePascal});
     prisma = module.get(PrismaService);
+
+    await prisma.${moduleNameCamel}.deleteMany();
+  });
+
+  afterAll(async() => {
+    await prisma.${moduleNameCamel}.deleteMany();
   });
 
   it('should be defined', () => {

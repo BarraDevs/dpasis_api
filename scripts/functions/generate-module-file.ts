@@ -2,8 +2,8 @@ import { Props } from 'scripts/generate-module';
 
 export function generateModuleFile({ moduleName, moduleNamePascal }: Props) {
   return `import { Module } from '@nestjs/common';
-import { ${moduleNamePascal}Controller } from './infra/http/${moduleName}.controller';
 import { ${moduleNamePascal}PersistenceModule } from './application/persistence/${moduleName}-persistence.module';
+import { ${moduleNamePascal}Controller } from './infra/drivers/http/${moduleName}.controller';
 
 @Module({
   imports: [

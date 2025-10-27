@@ -1,6 +1,6 @@
 import { Props } from 'scripts/generate-module';
 
-export function generateFindAllUsecaseSpecFile({ moduleName, moduleNamePascal }: Props) {
+export function generateFindAllUsecaseSpecFile({ moduleName, moduleNamePascal, moduleNameCamel }: Props) {
   return `// import { Test, TestingModule } from '@nestjs/testing';
 // import { ${moduleNamePascal}Module } from 'src/app/${moduleName}/${moduleName}.module';
 // import { ConfigModule } from 'src/core/config/config.module';
@@ -20,6 +20,13 @@ export function generateFindAllUsecaseSpecFile({ moduleName, moduleNamePascal }:
 //     }).compile();
 //
 //     sut = module.get(FindAll${moduleNamePascal});
+//     prisma = module.get(PrismaService);
+//
+//     await prisma.${moduleNameCamel}.deleteMany();
+//   });
+//
+//   afterAll(async() => {
+//     await prisma.${moduleNameCamel}.deleteMany();
 //   });
 //
 //   it('should be defined', () => {

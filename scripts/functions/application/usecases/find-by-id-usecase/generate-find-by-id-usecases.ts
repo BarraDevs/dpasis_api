@@ -15,7 +15,7 @@ export async function generateFindByIdUsecase(props: Props) {
     generateFindByIdUsecaseFile(props)
   );
   await fs.writeFile(
-    path.join(findByIdPath, `find-${props.moduleName}-by-id.spec.ts`),
+    path.join(findByIdPath, `find-${props.moduleName}-by-id.service.spec.ts`),
     generateFindByIdUsecaseSpecFile(props)
   );
 

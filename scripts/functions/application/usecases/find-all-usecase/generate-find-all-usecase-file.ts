@@ -2,7 +2,7 @@ import { Props } from 'scripts/generate-module';
 
 export function generateFindAllUsecaseFile(props: Props) {
   return `// import { Injectable } from '@nestjs/common';
-// import { IPagination, Pagination } from 'src/shared/value-objects/pagination/pagination';
+// import { IPagination, Pagination } from 'src/shared/value-objects/pagination/pagination.vo';
 // import { ${props.moduleNamePascal}Dto } from '../../dtos/${props.moduleName}.dto';
 // import { FindAll${props.moduleNamePascal}QueryDto } from './dtos/find-all-${props.moduleName}.dto';
 //

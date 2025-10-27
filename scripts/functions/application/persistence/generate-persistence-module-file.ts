@@ -4,7 +4,7 @@ export function generatePersistenceModuleFile({ moduleName, moduleNamePascal }: 
   return `import { Module, Provider } from '@nestjs/common';
 import { TOKENS } from 'src/core/di/token';
 import { DatabaseModule } from 'src/infra/database/database.module';
-import { ${moduleNamePascal}DaoAdapterPrisma } from '../../infra/persistence/${moduleName}.dao';
+import { ${moduleNamePascal}DaoAdapterPrisma } from '../../infra/driven/persistence/${moduleName}.dao';
 
 const adapters: Provider[] = [
   {
