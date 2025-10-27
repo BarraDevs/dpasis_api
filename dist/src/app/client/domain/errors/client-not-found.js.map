@@ -1,0 +1,1 @@
+{"version":3,"file":"client-not-found.js","sourceRoot":"","sources":["../../../../../../src/app/client/domain/errors/client-not-found.ts"],"names":[],"mappings":";;;AAAA,0EAA8D;AAE9D,MAAa,mBAAoB,SAAQ,4BAAY;IACnD;QACE,KAAK,CAAC,yCAAyC,EAAE,GAAG,CAAC,CAAC;QACtD,IAAI,CAAC,IAAI,GAAG,qBAAqB,CAAC;IACpC,CAAC;CACF;AALD,kDAKC"}

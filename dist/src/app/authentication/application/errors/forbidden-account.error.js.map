@@ -1,0 +1,1 @@
+{"version":3,"file":"forbidden-account.error.js","sourceRoot":"","sources":["../../../../../../src/app/authentication/application/errors/forbidden-account.error.ts"],"names":[],"mappings":";;;AAAA,0EAA8D;AAE9D,MAAa,qBAAsB,SAAQ,4BAAY;IACrD;QACE,KAAK,CAAC,gBAAgB,EAAE,GAAG,CAAC,CAAC;QAC7B,IAAI,CAAC,IAAI,GAAG,uBAAuB,CAAC;IACtC,CAAC;CACF;AALD,sDAKC"}

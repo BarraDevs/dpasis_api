@@ -1,0 +1,1 @@
+{"version":3,"file":"address-main-cannot-be-deleted.error.js","sourceRoot":"","sources":["../../../../../../src/app/address/domain/errors/address-main-cannot-be-deleted.error.ts"],"names":[],"mappings":";;;AAAA,0EAA8D;AAE9D,MAAa,+BAAgC,SAAQ,4BAAY;IAC/D;QACE,KAAK,CAAC,0CAA0C,EAAE,GAAG,CAAC,CAAC;QACvD,IAAI,CAAC,IAAI,GAAG,iCAAiC,CAAC;IAChD,CAAC;CACF;AALD,0EAKC"}
