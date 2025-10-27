@@ -1,1 +1,0 @@
-{"version":3,"file":"set-role.decorator.js","sourceRoot":"","sources":["../../../../../../src/app/authentication/infra/decorators/set-role.decorator.ts"],"names":[],"mappings":";;;AAAA,2CAA6C;AAGhC,QAAA,QAAQ,GAAG,MAAM,CAAC;AACxB,MAAM,QAAQ,GAAG,CAAC,GAAG,KAAoB,EAAE,EAAE,CAAC,IAAA,oBAAW,EAAC,gBAAQ,EAAE,KAAK,CAAC,CAAC;AAArE,QAAA,QAAQ,YAA6D"}
