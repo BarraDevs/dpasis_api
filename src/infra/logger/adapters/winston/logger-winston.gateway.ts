@@ -6,12 +6,9 @@ import { ILoggerGateway, LogContext } from '../../logger.gateway';
 export class LoggerWinstonAdapterGateway implements ILoggerGateway {
   private readonly logger: Logger;
 
-  private filterByContext(context: LogContext) {
-    return format.combine(
-      format(info => info.context === context ? info : false)(),
-      format.timestamp({ format: 'DD-MM-YYYY HH:mm:ss' }),
-      format.json(),
-    );
+  constructor() {
+    const transports = Object.values(LogContext).map(context => this.generateTransport(context));
+    this.logger = createLogger({ transports });
   }
 
   private generateTransport(context: LogContext) {
@@ -22,9 +19,12 @@ export class LoggerWinstonAdapterGateway implements ILoggerGateway {
     });
   }
 
-  constructor() {
-    const transports = Object.values(LogContext).map(context => this.generateTransport(context));
-    this.logger = createLogger({ transports });
+  private filterByContext(context: LogContext) {
+    return format.combine(
+      format(info => info.context === context ? info : false)(),
+      format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+      format.json(),
+    );
   }
 
   public debug(context: LogContext, data: any): void {

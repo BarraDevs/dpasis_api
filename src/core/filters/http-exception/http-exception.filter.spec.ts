@@ -2,6 +2,7 @@ import { createMock } from '@golevelup/ts-jest';
 import { ArgumentsHost } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { Request, Response } from 'express';
+import { LoggerModule } from 'src/infra/logger/logger.module';
 import { AppException } from '../app.exception';
 import { FilterModule } from '../filter.module';
 import { HttpExceptionFilter } from './http-exception.filter';
@@ -11,11 +12,16 @@ describe('HttpExceptionFilter', () => {
 
   beforeEach(async() => {
     const module = await Test.createTestingModule({
-      imports: [FilterModule],
-      providers: [HttpExceptionFilter],
+      imports: [
+        FilterModule,
+        LoggerModule,
+      ],
+      providers: [
+        HttpExceptionFilter,
+      ],
     }).compile();
 
-    sut = module.get<HttpExceptionFilter>(HttpExceptionFilter);
+    sut = module.get(HttpExceptionFilter);
   });
 
   it('should be defined', () => {

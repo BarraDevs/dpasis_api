@@ -3,20 +3,20 @@ export interface ILoggerGateway {
   error<T extends LogContext>(context: T, data: LogContextDataMap[T]): void
 }
 
-type LogContextDataMap = {
-  [LogContext.HTTP]: HttpData
-  [LogContext.WS]: WsData
-  [LogContext.CACHE]: CacheData
-  [LogContext.SMTP]: SmtpData
-  [LogContext.UPLOAD_FILE]: UploadFileData
-}
-
 export enum LogContext {
   HTTP = 'http',
   WS = 'ws',
   CACHE = 'cache',
   SMTP = 'smtp',
   UPLOAD_FILE = 'upload-file',
+}
+
+type LogContextDataMap = {
+  [LogContext.HTTP]: HttpData
+  [LogContext.WS]: WsData
+  [LogContext.CACHE]: CacheData
+  [LogContext.SMTP]: SmtpData
+  [LogContext.UPLOAD_FILE]: UploadFileData
 }
 
 type CommomData = {

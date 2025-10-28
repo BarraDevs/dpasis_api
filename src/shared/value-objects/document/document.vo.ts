@@ -3,6 +3,8 @@ import { CPF } from '../cpf/cpf.vo';
 import { InvalidDocumentError } from './document.error';
 
 export class Document {
+  private readonly CPF_LENGTH = 11;
+  private readonly CNPJ_LENGTH = 14;
   private readonly _value: string;
 
   public get value(): string {
@@ -12,10 +14,10 @@ export class Document {
   constructor(raw: string) {
     const document = this.sanitize(raw);
 
-    if (document.length === 11) {
+    if (document.length === this.CPF_LENGTH) {
       this._value = new CPF(document).value;
     }
-    else if (document.length === 14) {
+    else if (document.length === this.CNPJ_LENGTH) {
       this._value = new CNPJ(document).value;
     }
     else {

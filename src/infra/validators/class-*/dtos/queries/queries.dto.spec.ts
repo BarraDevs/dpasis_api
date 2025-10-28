@@ -20,32 +20,41 @@ describe('Queries DTO', () => {
       'size',
     ]
   )('%s field', (field) => {
-    it.each([
-      undefined,
-      null,
-    ])(`should not throw an error if ${field} is empty (%s)`, async(value: any) => {
+    it.each(
+      [
+        undefined,
+        null,
+      ]
+    )(`should not throw an error if ${field} is empty (%s)`, async(value: any) => {
       const data = { [field]: value };
 
       const result = await target.transform(data, metadata);
       expect(result).toBeInstanceOf(Queries);
     });
 
-    it.each([
-      '1',
-      '10',
-      '100',
-    ])('should convert valid string numbers to integers (%s)', async(value: string) => {
+    it.each(
+      [
+        '1',
+        '10',
+        '100',
+      ]
+    )('should convert valid string numbers to integers (%s)', async(value: string) => {
       const data = { [field]: value };
 
       const result = await target.transform(data, metadata);
       expect(result[field]).toBe(parseInt(value));
     });
 
-    it.each([
-      '0',
-      '-1',
-      '-10',
-    ])(`should throw an error if ${field} is not positive (%s)`, async(value: string) => {
+    it.each(
+      [
+        '0',
+        '-1',
+        '-10',
+        0,
+        -1,
+        -10,
+      ]
+    )(`should throw an error if ${field} is not positive (%s)`, async(value: string) => {
       const data = { [field]: value };
 
       expect.assertions(1);
@@ -54,13 +63,18 @@ describe('Queries DTO', () => {
       });
     });
 
-    it.each([
-      '1.5',
-      '2.7',
-      'abc',
-      'true',
-      'false',
-    ])(`should throw an error if ${field} is not an integer (%s)`, async(value: string) => {
+    it.each(
+      [
+        '1.5',
+        '2.7',
+        'abc',
+        'true',
+        'false',
+        4.65,
+        {},
+        [],
+      ]
+    )(`should throw an error if ${field} is not an integer (%s)`, async(value: string) => {
       const data = { [field]: value };
 
       expect.assertions(1);
@@ -71,41 +85,47 @@ describe('Queries DTO', () => {
   });
 
   describe('search field', () => {
-    it.each([
-      undefined,
-      null,
-      '',
-      '  ',
-    ])('should not throw an error if search is empty (%s)', async(value: any) => {
+    it.each(
+      [
+        undefined,
+        null,
+        '',
+        '  ',
+      ]
+    )('should not throw an error if search is empty (%s)', async(value: any) => {
       const data = { search: value };
 
       const result = await target.transform(data, metadata);
       expect(result).toBeInstanceOf(Queries);
     });
 
-    it.each([
-      'test',
-      '  test  ',
-      'search term',
-      '123',
-    ])('should accept valid string values (%s)', async(value: string) => {
+    it.each(
+      [
+        'test',
+        '  test  ',
+        'search term',
+        '123',
+      ]
+    )('should accept valid string values (%s)', async(value: string) => {
       const data = { search: value };
 
       const result = await target.transform(data, metadata);
       expect(result.search).toBe(value.trim());
     });
 
-    it.each([
-      123,
-      true,
-      false,
-      {},
-      [],
-      () => {},
-      Symbol('test'),
-      BigInt(123),
-      new Date(),
-    ])('should throw an error if search is not a string (%s)', async(value: any) => {
+    it.each(
+      [
+        123,
+        true,
+        false,
+        {},
+        [],
+        () => {},
+        Symbol('test'),
+        BigInt(123),
+        new Date(),
+      ]
+    )('should throw an error if search is not a string (%s)', async(value: any) => {
       const data = { search: value };
 
       expect.assertions(1);
