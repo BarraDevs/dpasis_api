@@ -57,131 +57,140 @@ describe('EditClient', () => {
     expect(sut).toBeDefined();
   });
 
-  it('should throw an error when client does not exist', async() => {
-    const clientId = 'non-existing-client-id';
+  describe('integration tests', () => {
+    it('should throw an error when client does not exist', async() => {
+      // Arrange
+      const clientId = 'non-existing-client-id';
 
-    expect.assertions(1);
-    return sut.execute(clientId, {}).catch((error) => {
-      expect(error).toBeInstanceOf(ClientNotFoundError);
+      // Act & Assert
+      expect.assertions(1);
+      return sut.execute(clientId, {}).catch((error) => {
+        expect(error).toBeInstanceOf(ClientNotFoundError);
+      });
     });
-  });
 
-  it('should throw an error when cnpj is already used by another client', async() => {
-    await createClient.execute(data);
-    const client2 = await createClient.execute({ ...data, cnpj: '98765432000188', ie: '987654321' });
+    it('should throw an error when cnpj is already used by another client', async() => {
+      // Arrange
+      await createClient.execute(data);
+      const client2 = await createClient.execute({ ...data, cnpj: '98765432000188', ie: '987654321' });
 
-    const editData: EditClientInputDto = {
-      cnpj: data.cnpj,
-    };
+      const editData: EditClientInputDto = {
+        cnpj: data.cnpj,
+      };
 
-    expect.assertions(1);
-    return sut.execute(client2.id, editData).catch((error) => {
-      expect(error).toBeInstanceOf(ClientDuplicateCnpjError);
+      // Act & Assert
+      expect.assertions(1);
+      return sut.execute(client2.id, editData).catch((error) => {
+        expect(error).toBeInstanceOf(ClientDuplicateCnpjError);
+      });
     });
-  });
 
-  it('should throw an error when ie is already used by another client', async() => {
-    await createClient.execute(data);
-    const client2 = await createClient.execute({ ...data, cnpj: '98765432000188', ie: '987654321' });
+    it('should throw an error when ie is already used by another client', async() => {
+      // Arrange
+      await createClient.execute(data);
+      const client2 = await createClient.execute({ ...data, cnpj: '98765432000188', ie: '987654321' });
 
-    const editData: EditClientInputDto = {
-      ie: data.ie,
-    };
+      const editData: EditClientInputDto = {
+        ie: data.ie,
+      };
 
-    expect.assertions(1);
-    return sut.execute(client2.id, editData).catch((error) => {
-      expect(error).toBeInstanceOf(ClientDuplicateIeError);
+      // Act & Assert
+      expect.assertions(1);
+      return sut.execute(client2.id, editData).catch((error) => {
+        expect(error).toBeInstanceOf(ClientDuplicateIeError);
+      });
     });
-  });
 
-  it('should not throw an error when cnpj and ie are unchanged', async() => {
-    const client = await createClient.execute(data);
+    it('should not throw an error when cnpj and ie are unchanged', async() => {
+      // Arrange
+      const client = await createClient.execute(data);
 
-    const editData: EditClientInputDto = {
-      companyName: 'New Company Name',
-    };
+      const editData: EditClientInputDto = {
+        companyName: 'New Company Name',
+      };
 
-    await expect(sut.execute(client.id, editData)).resolves.toBeDefined();
-  });
+      // Act
+      const result = await sut.execute(client.id, editData);
 
-  it('should not throw an error when cnpj is "changed" but remains the same', async() => {
-    const client = await createClient.execute(data);
-
-    const editData: EditClientInputDto = {
-      cnpj: data.cnpj,
-    };
-
-    await expect(sut.execute(client.id, editData)).resolves.toBeDefined();
-  });
-
-  it('should not throw an error when ie is "changed" but remains the same', async() => {
-    const client = await createClient.execute(data);
-
-    const editData: EditClientInputDto = {
-      ie: '123456789',
-    };
-
-    await expect(sut.execute(client.id, editData)).resolves.toBeDefined();
-  });
-
-  it('should not edit anything when no data is provided', async() => {
-    const client = await createClient.execute(data);
-
-    await sut.execute(client.id, {});
-
-    const editedClient = await findClientById.execute(client.id);
-
-    expect(editedClient).toEqual<ClientDto>({
-      id: client.id,
-      active: true,
-      createdAt: editedClient!.createdAt,
-      updatedAt: editedClient!.updatedAt,
-      ...data,
+      // Assert
+      expect(result).toEqual<SuccessMessage>({ message: 'Cliente editado com sucesso!' });
     });
-  });
 
-  it('should edit a client successfully', async() => {
-    const client = await createClient.execute(data);
+    it('should not throw an error when cnpj is "changed" but remains the same', async() => {
+      // Arrange
+      const client = await createClient.execute(data);
 
-    const editData: EditClientInputDto = {
-      kind: 'contract',
-      group: 'vip',
-      companyName: 'John Doe Enterprises',
-      cnpj: '11223344556677',
-      ie: '9988776655',
-    };
+      const editData: EditClientInputDto = {
+        cnpj: data.cnpj,
+      };
 
-    await sut.execute(client.id, editData);
+      // Act
+      const result = await sut.execute(client.id, editData);
 
-    const editedClient = await findClientById.execute(client.id);
-
-    expect(editedClient).toEqual<ClientDto>({
-      id: client.id,
-      kind: editData.kind ?? data.kind,
-      cnpj: editData.cnpj ?? data.cnpj,
-      ie: editData.ie ?? data.ie,
-      group: editData.group ?? data.group,
-      type: editData.type ?? data.type,
-      generateInvoice: editData.generateInvoice ?? data.generateInvoice,
-      companyName: editData.companyName ?? data.companyName,
-      fantasyName: editData.fantasyName ?? data.fantasyName,
-      owner: editData.owner ?? data.owner,
-      headquarters: editData.headquarters ?? data.headquarters,
-      active: true,
-      createdAt: editedClient!.createdAt,
-      updatedAt: editedClient!.updatedAt,
+      // Assert
+      expect(result).toEqual<SuccessMessage>({ message: 'Cliente editado com sucesso!' });
     });
-  });
 
-  it('should return success message upon successful edit', async() => {
-    const client = await createClient.execute(data);
+    it('should not throw an error when ie is "changed" but remains the same', async() => {
+      // Arrange
+      const client = await createClient.execute(data);
 
-    const editData: EditClientInputDto = {
-      companyName: 'New Company Name',
-    };
+      const editData: EditClientInputDto = {
+        ie: '123456789',
+      };
 
-    const result = await sut.execute(client.id, editData);
+      // Act
+      const result = await sut.execute(client.id, editData);
 
-    expect(result).toEqual<SuccessMessage>({ message: 'Cliente editado com sucesso!' });
+      // Assert
+      expect(result).toEqual<SuccessMessage>({ message: 'Cliente editado com sucesso!' });
+    });
+
+    it('should not edit anything when no data is provided', async() => {
+      // Arrange
+      const client = await createClient.execute(data);
+
+      // Act
+      await sut.execute(client.id, {});
+
+      // Assert
+      const editedClient = await findClientById.execute(client.id);
+      expect(editedClient).toMatchObject(data);
+    });
+
+    it('should edit a client successfully', async() => {
+      // Arrange
+      const client = await createClient.execute(data);
+
+      const editData: EditClientInputDto = {
+        kind: 'contract',
+        group: 'vip',
+        companyName: 'John Doe Enterprises',
+        cnpj: '11223344556677',
+        ie: '9988776655',
+      };
+
+      // Act
+      await sut.execute(client.id, editData);
+
+      // Assert
+      const editedClient = await findClientById.execute(client.id);
+      expect(editedClient).toEqual<ClientDto>({
+        id: client.id,
+        kind: editData.kind ?? data.kind,
+        cnpj: editData.cnpj ?? data.cnpj,
+        ie: editData.ie ?? data.ie,
+        group: editData.group ?? data.group,
+        type: editData.type ?? data.type,
+        generateInvoice: editData.generateInvoice ?? data.generateInvoice,
+        companyName: editData.companyName ?? data.companyName,
+        fantasyName: editData.fantasyName ?? data.fantasyName,
+        owner: editData.owner ?? data.owner,
+        headquarters: editData.headquarters ?? data.headquarters,
+        active: true,
+        createdAt: editedClient!.createdAt,
+        updatedAt: editedClient!.updatedAt,
+      });
+    });
   });
 });

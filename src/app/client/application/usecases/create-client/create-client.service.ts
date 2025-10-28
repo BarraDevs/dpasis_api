@@ -28,8 +28,6 @@ export class CreateClient {
     const client = Client.create(data);
     await this.clientRepository.save(client);
 
-    return {
-      id: client.props.id,
-    };
+    return { id: client.props.id };
   }
 }

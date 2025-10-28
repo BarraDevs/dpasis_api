@@ -52,86 +52,104 @@ describe('FindAllClient', () => {
     expect(sut).toBeDefined();
   });
 
-  it('should call clientDao with correct parameters', async() => {
-    const findAllSpy = jest.spyOn(sut['clientDao'], 'findAll').mockResolvedValue([[], 0]);
-    const queries = createMock<FindAllClientQueryDto>({ page: 1, size: 10 });
+  describe('execute', () => {
+    it('should call clientDao with correct parameters', async() => {
+      // Arrange
+      const findAllSpy = jest.spyOn(sut['clientDao'], 'findAll').mockResolvedValue([[], 0]);
+      const queries = createMock<FindAllClientQueryDto>({ page: 1, size: 10 });
 
-    await sut.execute(queries);
+      // Act
+      await sut.execute(queries);
 
-    expect(findAllSpy).toHaveBeenCalledWith(queries);
-  });
-
-  it('should return an empty pagination when no clients exist', async() => {
-    const result = await sut.execute({});
-
-    expect(result).toEqual<IPagination<ClientDto>>({
-      data: [],
-      currentPage: 1,
-      itemsPerPage: 0,
-      totalItems: 0,
-      totalPages: 0,
+      // Assert
+      expect(findAllSpy).toHaveBeenCalledWith(queries);
     });
   });
 
-  it('should return a pagination with clients when they exist', async() => {
-    const client1 = await createClient.execute({ ...data, cnpj: '12345678000199', ie: '123456789' });
-    const client2 = await createClient.execute({ ...data, cnpj: '98765432000199', ie: '987654321' });
+  describe('integration tests', () => {
+    it('should return an empty array when no clients exist', async() => {
+      // Act
+      const result = await sut.execute({});
 
-    const result = await sut.execute({});
+      // Assert
+      expect(result).toEqual<IPagination<ClientDto>>({
+        data: [],
+        currentPage: 1,
+        itemsPerPage: 0,
+        totalItems: 0,
+        totalPages: 0,
+      });
+    });
 
-    expect(result.currentPage).toBe(1);
-    expect(result.totalItems).toBe(2);
-    expect(result.totalPages).toBe(1);
-    expect(result.itemsPerPage).toBe(2);
-    expect(result.data).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ id: client1.id }),
-        expect.objectContaining({ id: client2.id }),
-      ])
-    );
-  });
+    it('should return an array with clients when they exist', async() => {
+      // Arrange
+      const client1 = await createClient.execute({ ...data, cnpj: '12345678000199', ie: '123456789' });
+      const client2 = await createClient.execute({ ...data, cnpj: '98765432000199', ie: '987654321' });
 
-  it('should return a pagination with filtered clients based on companyName', async() => {
-    const client1 = await createClient.execute({ ...data, companyName: 'Alpha Corp', cnpj: '12345678000199', ie: '123456789' });
-    const client2 = await createClient.execute({ ...data, companyName: 'Beta LLC', cnpj: '98765432000199', ie: '987654321' });
+      // Act
+      const result = await sut.execute({});
 
-    const result = await sut.execute({ companyName: 'Alpha' });
+      // Assert
+      expect(result.currentPage).toBe(1);
+      expect(result.totalItems).toBe(2);
+      expect(result.totalPages).toBe(1);
+      expect(result.itemsPerPage).toBe(2);
+      expect(result.data).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ id: client1.id }),
+          expect.objectContaining({ id: client2.id }),
+        ])
+      );
+    });
 
-    expect(result.currentPage).toBe(1);
-    expect(result.totalItems).toBe(1);
-    expect(result.totalPages).toBe(1);
-    expect(result.itemsPerPage).toBe(1);
-    expect(result.data).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ id: client1.id }),
-      ])
-    );
-    expect(result.data).not.toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ id: client2.id }),
-      ])
-    );
-  });
+    it('should return a pagination with filtered clients based on companyName', async() => {
+      // Arrange
+      const client1 = await createClient.execute({ ...data, companyName: 'Alpha Corp', cnpj: '12345678000199', ie: '123456789' });
+      const client2 = await createClient.execute({ ...data, companyName: 'Beta LLC', cnpj: '98765432000199', ie: '987654321' });
 
-  it('should return a pagination with filtered clients based on cnpj', async() => {
-    const client1 = await createClient.execute({ ...data, cnpj: '12345678000199', ie: '123456789' });
-    const client2 = await createClient.execute({ ...data, cnpj: '98765432000199', ie: '987654321' });
+      // Act
+      const result = await sut.execute({ companyName: 'Alpha' });
 
-    const result = await sut.execute({ cnpj: '12345678' });
+      // Assert
+      expect(result.currentPage).toBe(1);
+      expect(result.totalItems).toBe(1);
+      expect(result.totalPages).toBe(1);
+      expect(result.itemsPerPage).toBe(1);
+      expect(result.data).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ id: client1.id }),
+        ])
+      );
+      expect(result.data).not.toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ id: client2.id }),
+        ])
+      );
+    });
 
-    expect(result.currentPage).toBe(1);
-    expect(result.totalItems).toBe(1);
-    expect(result.totalPages).toBe(1);
-    expect(result.itemsPerPage).toBe(1);
-    expect(result.data).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ id: client1.id }),
-      ])
-    );
-    expect(result.data).not.toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ id: client2.id }),
-      ])
-    );
+    it('should return a pagination with filtered clients based on cnpj', async() => {
+      // Arrange
+      const client1 = await createClient.execute({ ...data, cnpj: '12345678000199', ie: '123456789' });
+      const client2 = await createClient.execute({ ...data, cnpj: '98765432000199', ie: '987654321' });
+
+      // Act
+      const result = await sut.execute({ cnpj: '12345678' });
+
+      // Assert
+      expect(result.currentPage).toBe(1);
+      expect(result.totalItems).toBe(1);
+      expect(result.totalPages).toBe(1);
+      expect(result.itemsPerPage).toBe(1);
+      expect(result.data).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ id: client1.id }),
+        ])
+      );
+      expect(result.data).not.toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ id: client2.id }),
+        ])
+      );
+    });
   });
 });

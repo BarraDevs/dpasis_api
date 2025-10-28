@@ -3,6 +3,7 @@ import { Client } from './client.entity';
 describe('ClientEntity', () => {
   describe('create', () => {
     it('should create a Client with correct properties', () => {
+      // Arrange
       const props = {
         kind: 'Type A',
         cnpj: '12345678901234',
@@ -16,8 +17,10 @@ describe('ClientEntity', () => {
         headquarters: 'Headquarters A',
       };
 
+      // Act
       const client = Client.create(props);
 
+      // Assert
       expect(client.props).toMatchObject({
         ...props,
         id: expect.any(String),
@@ -30,6 +33,7 @@ describe('ClientEntity', () => {
 
   describe('load', () => {
     it('should load a Client with given properties', () => {
+      // Arrange
       const props = {
         id: 'unique-client-id',
         kind: 'Type B',
@@ -47,8 +51,10 @@ describe('ClientEntity', () => {
         updatedAt: new Date('2023-01-02T00:00:00Z'),
       };
 
+      // Act
       const client = Client.load(props);
 
+      // Assert
       expect(client.props).toEqual(props);
     });
   });

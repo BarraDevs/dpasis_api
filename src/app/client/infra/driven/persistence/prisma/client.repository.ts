@@ -7,12 +7,10 @@ import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 export class ClientRepositoryAdapterPrisma implements IClientRepository {
   constructor(private prisma: PrismaService) {}
 
-  public async save(client: Client): Promise<string> {
-    const newClient = await this.prisma.client.create({
+  public async save(client: Client): Promise<void> {
+    await this.prisma.client.create({
       data: { ...client.props },
     });
-
-    return newClient.id;
   }
 
   public async edit(client: Client): Promise<void> {
