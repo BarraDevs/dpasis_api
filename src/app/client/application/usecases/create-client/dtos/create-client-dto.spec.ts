@@ -59,6 +59,15 @@ describe('CreateClientInputDto', () => {
         expect(error.getResponse().message).toContain(`${field} deve ser uma string`);
       });
     });
+
+    it(`should throw an error if ${field} exceeds maximum length`, async() => {
+      const data = { [field]: 'a'.repeat(257) };
+
+      expect.assertions(1);
+      return target.transform(data, metadata).catch((error) => {
+        expect(error.getResponse().message).toContain(`${field} deve ter no máximo 256 caracteres`);
+      });
+    });
   });
 
   describe.each(
@@ -81,23 +90,6 @@ describe('CreateClientInputDto', () => {
         expect(error.getResponse().message).toContain(`${field} é obrigatório`);
       });
     });
-
-    // it.each(
-    //   [
-    //     123,
-    //     'true',
-    //     'false',
-    //     {},
-    //     [],
-    //   ]
-    // )('should throw an error if %s is not boolean (%s)', async(value: any) => {
-    //   const data = { [field]: value };
-
-    //   expect.assertions(1);
-    //   return target.transform(data, metadata).catch((error) => {
-    //     expect(error.getResponse().message).toContain(`${field} deve ser um booleano`);
-    //   });
-    // });
   });
 
   it('should pass if all fields are valid', async() => {

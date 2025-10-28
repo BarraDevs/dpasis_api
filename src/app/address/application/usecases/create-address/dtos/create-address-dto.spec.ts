@@ -17,7 +17,6 @@ describe('CreateAddressInputDto', () => {
   describe.each(
     [
       'zipCode',
-      'street',
       'number',
       'neighborhood',
       'city',
@@ -57,6 +56,65 @@ describe('CreateAddressInputDto', () => {
         expect(error.getResponse().message).toContain(`${field} deve ser uma string`);
       });
     });
+
+    it(`should throw an error if ${field} exceeds maximum length`, async() => {
+      const longString = 'a'.repeat(257);
+      const data = { [field]: longString };
+
+      expect.assertions(1);
+      return target.transform(data, metadata).catch((error) => {
+        expect(error.getResponse().message).toContain(`${field} deve ter no máximo 256 caracteres`);
+      });
+    });
+  });
+
+  describe.each(
+    [
+      'street',
+    ]
+  )('%s field', (field: string) => {
+    it.each(
+      [
+        undefined,
+        null,
+        '',
+        '  ',
+      ]
+    )(`should throw an error if ${field} is empty (%s)`, async(value: any) => {
+      const data = { [field]: value };
+
+      expect.assertions(1);
+      return target.transform(data, metadata).catch((error) => {
+        expect(error.getResponse().message).toContain(`${field} é obrigatório`);
+      });
+    });
+
+    it.each(
+      [
+        123,
+        true,
+        false,
+        {},
+        [],
+      ]
+    )(`should throw an error if ${field} is not a string (%s)`, async(value: any) => {
+      const data = { [field]: value };
+
+      expect.assertions(1);
+      return target.transform(data, metadata).catch((error) => {
+        expect(error.getResponse().message).toContain(`${field} deve ser uma string`);
+      });
+    });
+
+    it(`should throw an error if ${field} exceeds maximum length`, async() => {
+      const longString = 'a'.repeat(513);
+      const data = { [field]: longString };
+
+      expect.assertions(1);
+      return target.transform(data, metadata).catch((error) => {
+        expect(error.getResponse().message).toContain(`${field} deve ter no máximo 512 caracteres`);
+      });
+    });
   });
 
   describe.each(
@@ -78,7 +136,7 @@ describe('CreateAddressInputDto', () => {
 
       expect.assertions(1);
       return target.transform(data, metadata).catch((error) => {
-        expect(error).not.toContain(`${field} deve ser uma string`);
+        expect(error.getResponse().message).not.toContain(`${field} é obrigatório`);
       });
     });
 

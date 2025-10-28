@@ -17,34 +17,20 @@ describe('EditAddressInputDto', () => {
   describe.each(
     [
       'zipCode',
-      'street',
       'number',
       'neighborhood',
       'city',
       'state',
-      'ownerId',
     ]
   )('%s field', (field: string) => {
     it.each(
       [
         undefined,
         null,
-      ]
-    )(`should not throw an error if ${field} is empty (%s)`, async(value: any) => {
-      const data = { [field]: value };
-
-      const result = await target.transform(data, metadata);
-
-      expect(result).toBeInstanceOf(EditAddressInputDto);
-      expect(result).toEqual(data);
-    });
-
-    it.each(
-      [
         '',
         '  ',
       ]
-    )(`should throw an error if ${field} is an empty string (%s)`, async(value: string) => {
+    )(`should throw an error if ${field} is empty (%s)`, async(value: any) => {
       const data = { [field]: value };
 
       expect.assertions(1);
@@ -69,6 +55,65 @@ describe('EditAddressInputDto', () => {
         expect(error.getResponse().message).toContain(`${field} deve ser uma string`);
       });
     });
+
+    it(`should throw an error if ${field} exceeds maximum length`, async() => {
+      const longString = 'a'.repeat(257);
+      const data = { [field]: longString };
+
+      expect.assertions(1);
+      return target.transform(data, metadata).catch((error) => {
+        expect(error.getResponse().message).toContain(`${field} deve ter no máximo 256 caracteres`);
+      });
+    });
+  });
+
+  describe.each(
+    [
+      'street',
+    ]
+  )('%s field', (field: string) => {
+    it.each(
+      [
+        undefined,
+        null,
+        '',
+        '  ',
+      ]
+    )(`should throw an error if ${field} is empty (%s)`, async(value: any) => {
+      const data = { [field]: value };
+
+      expect.assertions(1);
+      return target.transform(data, metadata).catch((error) => {
+        expect(error.getResponse().message).toContain(`${field} é obrigatório`);
+      });
+    });
+
+    it.each(
+      [
+        123,
+        true,
+        false,
+        {},
+        [],
+      ]
+    )(`should throw an error if ${field} is not a string (%s)`, async(value: any) => {
+      const data = { [field]: value };
+
+      expect.assertions(1);
+      return target.transform(data, metadata).catch((error) => {
+        expect(error.getResponse().message).toContain(`${field} deve ser uma string`);
+      });
+    });
+
+    it(`should throw an error if ${field} exceeds maximum length`, async() => {
+      const longString = 'a'.repeat(513);
+      const data = { [field]: longString };
+
+      expect.assertions(1);
+      return target.transform(data, metadata).catch((error) => {
+        expect(error.getResponse().message).toContain(`${field} deve ter no máximo 512 caracteres`);
+      });
+    });
   });
 
   describe.each(
@@ -88,9 +133,10 @@ describe('EditAddressInputDto', () => {
     )(`should not throw an error if ${field} is empty (%s)`, async(value: any) => {
       const data = { [field]: value };
 
-      const result = await target.transform(data, metadata);
-
-      expect(result).toBeInstanceOf(EditAddressInputDto);
+      expect.assertions(1);
+      return target.transform(data, metadata).catch((error) => {
+        expect(error.getResponse().message).not.toContain(`${field} é obrigatório`);
+      });
     });
 
     it.each(
@@ -122,7 +168,6 @@ describe('EditAddressInputDto', () => {
       neighborhood: 'Bairro B',
       city: 'Cidade C',
       state: 'Estado D',
-      ownerId: 'owner-123',
     };
 
     const result = await target.transform(data, metadata);
@@ -139,28 +184,6 @@ describe('EditAddressInputDto', () => {
       neighborhood: 'Bairro B',
       city: 'Cidade C',
       state: 'Estado D',
-      ownerId: 'owner-123',
-    };
-
-    const result = await target.transform(data, metadata);
-
-    expect(result).toBeInstanceOf(EditAddressInputDto);
-    expect(result).toEqual(data);
-  });
-
-  it('should pass if no fields are provided', async() => {
-    const data: EditAddressInputDto = {};
-
-    const result = await target.transform(data, metadata);
-
-    expect(result).toBeInstanceOf(EditAddressInputDto);
-    expect(result).toEqual(data);
-  });
-
-  it('should pass if some fields are provided', async() => {
-    const data: EditAddressInputDto = {
-      street: 'Rua A',
-      city: 'Cidade C',
     };
 
     const result = await target.transform(data, metadata);

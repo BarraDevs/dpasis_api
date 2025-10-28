@@ -31,22 +31,10 @@ describe('EditClientInputDto', () => {
       [
         undefined,
         null,
-      ]
-    )(`should pass if ${field} is not provided (%s)`, async(value: any) => {
-      const data = { [field]: value };
-
-      const result = await target.transform(data, metadata);
-
-      expect(result).toBeInstanceOf(EditClientInputDto);
-      expect(result).toEqual(data);
-    });
-
-    it.each(
-      [
         '',
         '  ',
       ]
-    )(`should throw an error if ${field} is an empty string (%s)`, async(value: any) => {
+    )(`should throw an error if ${field} is empty (%s)`, async(value: any) => {
       const data = { [field]: value };
 
       expect.assertions(1);
@@ -71,6 +59,15 @@ describe('EditClientInputDto', () => {
         expect(error.getResponse().message).toContain(`${field} deve ser uma string`);
       });
     });
+
+    it(`should throw an error if ${field} exceeds maximum length`, async() => {
+      const data = { [field]: 'a'.repeat(257) };
+
+      expect.assertions(1);
+      return target.transform(data, metadata).catch((error) => {
+        expect(error.getResponse().message).toContain(`${field} deve ter no máximo 256 caracteres`);
+      });
+    });
   });
 
   describe.each(
@@ -82,14 +79,16 @@ describe('EditClientInputDto', () => {
       [
         undefined,
         null,
+        '',
+        '  ',
       ]
-    )(`should pass if ${field} is not provided (%s)`, async(value: any) => {
+    )(`should throw an error if ${field} is empty (%s)`, async(value: any) => {
       const data = { [field]: value };
 
-      const result = await target.transform(data, metadata);
-
-      expect(result).toBeInstanceOf(EditClientInputDto);
-      expect(result).toEqual(data);
+      expect.assertions(1);
+      return target.transform(data, metadata).catch((error) => {
+        expect(error.getResponse().message).toContain(`${field} é obrigatório`);
+      });
     });
   });
 
@@ -105,29 +104,6 @@ describe('EditClientInputDto', () => {
       fantasyName: 'fantasyName',
       owner: 'owner',
       headquarters: 'headquarters',
-    };
-
-    const result = await target.transform(data, metadata);
-
-    expect(result).toBeInstanceOf(EditClientInputDto);
-    expect(result).toEqual(data);
-  });
-
-  it('should pass if no fields are provided', async() => {
-    const data = {};
-
-    const result = await target.transform(data, metadata);
-
-    expect(result).toBeInstanceOf(EditClientInputDto);
-    expect(result).toEqual(data);
-  });
-
-  it('should pass if only some fields are provided', async() => {
-    const data = {
-      kind: 'kind',
-      cnpj: 'cnpj',
-      generateInvoice: false,
-      owner: 'owner',
     };
 
     const result = await target.transform(data, metadata);

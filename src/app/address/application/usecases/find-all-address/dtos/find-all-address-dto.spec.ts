@@ -34,28 +34,6 @@ describe('FindAllAddressQueryDto', () => {
         expect(error.getResponse().message).toContain(`${field} é obrigatório`);
       });
     });
-  });
-
-  describe.each(
-    [
-      'ownerId',
-    ]
-  )('%s field', (field: string) => {
-    it.each(
-      [
-        undefined,
-        null,
-        '',
-        '  ',
-      ]
-    )(`should throw an error if ${field} is empty (%s)`, async(value: any) => {
-      const data = { [field]: value };
-
-      expect.assertions(1);
-      return target.transform(data, metadata).catch((error) => {
-        expect(error.getResponse().message).toContain(`${field} é obrigatório`);
-      });
-    });
 
     it.each(
       [
