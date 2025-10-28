@@ -1,3 +1,4 @@
+import { createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AddressModule } from 'src/app/address/address.module';
 import { AddressNotFoundError } from 'src/app/address/domain/errors/address-not-found.error';
@@ -36,55 +37,78 @@ describe('FindAddressById', () => {
     expect(sut).toBeDefined();
   });
 
-  it.each(
-    [
-      true,
-      false,
-    ]
-  )('should throw an error if address not found', async(isMain: boolean) => {
-    return sut.execute('non-existing-id', isMain).catch((error) => {
-      expect(error).toBeInstanceOf(AddressNotFoundError);
+  describe('unit tests', () => {
+    it('should call addressDao.findById with correct values', async() => {
+      // Arrange
+      const address = createMock<AddressDto>();
+      const findByIdSpy = jest.spyOn(sut['addressDao'], 'findById').mockResolvedValue(address);
+
+      // Act
+      const id = 'address-id-123';
+      const isMain = true;
+      await sut.execute(id, isMain);
+
+      // Assert
+      expect(findByIdSpy).toHaveBeenCalledWith(id, isMain);
     });
   });
 
-  it.each(
-    [
-      true,
-      false,
-    ]
-  )('should return address if found', async(isMain: boolean) => {
-    const data: CreateAddressInputDto = {
-      nickname: 'Home',
-      street: '123 Main St',
-      number: 'Apt 4B',
-      complement: 'Near the park',
-      reference: 'Blue door',
-      neighborhood: 'Downtown',
-      city: 'Anytown',
-      state: 'CA',
-      zipCode: '12345',
-      ownerId: 'owner-123',
-    };
-    const createdAddress = await createAddress.execute(data, isMain);
+  describe('integration tests', () => {
+    it.each(
+      [
+        true,
+        false,
+      ]
+    )('should throw an error if address not found', async(isMain: boolean) => {
+      // Act & Assert
+      expect.assertions(1);
+      return sut.execute('non-existing-id', isMain).catch((error) => {
+        expect(error).toBeInstanceOf(AddressNotFoundError);
+      });
+    });
 
-    const address = await sut.execute(createdAddress.id, isMain);
+    it.each(
+      [
+        true,
+        false,
+      ]
+    )('should return address if found', async(isMain: boolean) => {
+      // Arrange
+      const data: CreateAddressInputDto = {
+        nickname: 'Home',
+        street: '123 Main St',
+        number: 'Apt 4B',
+        complement: 'Near the park',
+        reference: 'Blue door',
+        neighborhood: 'Downtown',
+        city: 'Anytown',
+        state: 'CA',
+        zipCode: '12345',
+        ownerId: 'owner-123',
+      };
+      const createdAddress = await createAddress.execute(data, isMain);
 
-    expect(address).toBeDefined();
-    expect(address).toEqual<AddressDto>({
-      id: createdAddress.id,
-      nickname: data.nickname || null,
-      street: data.street,
-      number: data.number,
-      complement: data.complement || null,
-      reference: data.reference || null,
-      neighborhood: data.neighborhood,
-      city: data.city,
-      state: data.state,
-      zipCode: data.zipCode,
-      isMain,
-      ownerId: data.ownerId,
-      createdAt: expect.any(Date),
-      updatedAt: expect.any(Date),
+      // Act
+      const address = await sut.execute(createdAddress.id, isMain);
+
+      // Assert
+      expect(address).toBeDefined();
+      expect(address).toEqual<AddressDto>({
+        id: createdAddress.id,
+        nickname: data.nickname || null,
+        street: data.street,
+        number: data.number,
+        complement: data.complement || null,
+        reference: data.reference || null,
+        neighborhood: data.neighborhood,
+        city: data.city,
+        state: data.state,
+        zipCode: data.zipCode,
+        isMain,
+        ownerId: data.ownerId,
+        createdAt: expect.any(Date),
+        updatedAt: expect.any(Date),
+      });
     });
   });
 });

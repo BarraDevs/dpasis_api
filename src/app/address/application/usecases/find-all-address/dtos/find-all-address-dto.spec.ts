@@ -27,8 +27,10 @@ describe('FindAllAddressQueryDto', () => {
         '  ',
       ]
     )(`should throw an error if ${field} is empty (%s)`, async(value: any) => {
+      // Arrange
       const data = { [field]: value };
 
+      // Act & Assert
       expect.assertions(1);
       return target.transform(data, metadata).catch((error) => {
         expect(error.getResponse().message).toContain(`${field} é obrigatório`);
@@ -44,8 +46,10 @@ describe('FindAllAddressQueryDto', () => {
         [],
       ]
     )(`should throw an error if ${field} is not a string (%s)`, async(value: any) => {
+      // Arrange
       const data = { [field]: value };
 
+      // Act & Assert
       expect.assertions(1);
       return target.transform(data, metadata).catch((error) => {
         expect(error.getResponse().message).toContain(`${field} deve ser uma string`);
@@ -54,13 +58,16 @@ describe('FindAllAddressQueryDto', () => {
   });
 
   it('should pass if all fields are valid', async() => {
+    // Arrange
     const data = {
       isMain: true,
       ownerId: 'owner-123',
     };
 
+    // Act
     const result = await target.transform(data, metadata);
 
+    // Assert
     expect(result).toBeInstanceOf(FindAllAddressQueryDto);
     expect(result).toEqual({ ownerId: data.ownerId });
   });

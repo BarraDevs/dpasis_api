@@ -6,6 +6,7 @@ import { CreateAddressInputDto, CreateAddressOutputDto } from 'src/app/address/a
 import { EditAddressInputDto } from 'src/app/address/application/usecases/edit-address/dtos/edit-address.dto';
 import { FindAllAddressQueryDto } from 'src/app/address/application/usecases/find-all-address/dtos/find-all-address.dto';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
+import { Params } from 'src/infra/validators/class-*/dtos/params/params.dto';
 import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
 import { AddressSecondaryController } from './secondary-address.controller';
 
@@ -28,12 +29,15 @@ describe('AddressSecondaryController', () => {
 
   describe('create', () => {
     it('should call createAddressService with correct parameters', async() => {
+      // Arrange
       const input = createMock<CreateAddressInputDto>();
       const output = createMock<CreateAddressOutputDto>();
       const createAddressServiceSpy = jest.spyOn(sut['createAddressService'], 'execute').mockResolvedValue(output);
 
+      // Act
       const result = await sut.create(input);
 
+      // Assert
       expect(createAddressServiceSpy).toHaveBeenCalledWith(input, false);
       expect(result).toBe(output);
     });
@@ -41,12 +45,15 @@ describe('AddressSecondaryController', () => {
 
   describe('findAll', () => {
     it('should call findAllAddressService with correct parameters', async() => {
+      // Arrange
       const queries = createMock<FindAllAddressQueryDto>();
       const output = createMock<IPagination<AddressDto>>();
       const findAllAddressServiceSpy = jest.spyOn(sut['findAllAddressService'], 'execute').mockResolvedValue(output);
 
+      // Act
       const result = await sut.findAll(queries);
 
+      // Assert
       expect(findAllAddressServiceSpy).toHaveBeenCalledWith({ ...queries, isMain: false });
       expect(result).toBe(output);
     });
@@ -54,40 +61,49 @@ describe('AddressSecondaryController', () => {
 
   describe('findOne', () => {
     it('should call findOneAddressService with correct parameters', async() => {
-      const id = 'some-id';
+      // Arrange
+      const params = createMock<Params>();
       const output = createMock<AddressDto>();
       const findOneAddressServiceSpy = jest.spyOn(sut['findAddressByIdService'], 'execute').mockResolvedValue(output);
 
-      const result = await sut.findOne({ id });
+      // Act
+      const result = await sut.findOne(params);
 
-      expect(findOneAddressServiceSpy).toHaveBeenCalledWith(id, false);
+      // Assert
+      expect(findOneAddressServiceSpy).toHaveBeenCalledWith(params.id, false);
       expect(result).toBe(output);
     });
   });
 
   describe('update', () => {
     it('should call editAddressService with correct parameters', async() => {
-      const id = 'some-id';
+      // Arrange
+      const params = createMock<Params>();
       const body = createMock<EditAddressInputDto>();
       const output = createMock<SuccessMessage>();
       const editAddressServiceSpy = jest.spyOn(sut['editAddressService'], 'execute').mockResolvedValue(output);
 
-      const result = await sut.update({ id }, body);
+      // Act
+      const result = await sut.update(params, body);
 
-      expect(editAddressServiceSpy).toHaveBeenCalledWith(id, false, body);
+      // Assert
+      expect(editAddressServiceSpy).toHaveBeenCalledWith(params.id, false, body);
       expect(result).toBe(output);
     });
   });
 
   describe('remove', () => {
     it('should call deleteAddressService with correct parameters', async() => {
-      const id = 'some-id';
+      // Arrange
+      const params = createMock<Params>();
       const output = createMock<SuccessMessage>();
       const deleteAddressServiceSpy = jest.spyOn(sut['deleteAddressService'], 'execute').mockResolvedValue(output);
 
-      const result = await sut.remove({ id });
+      // Act
+      const result = await sut.remove(params);
 
-      expect(deleteAddressServiceSpy).toHaveBeenCalledWith(id);
+      // Assert
+      expect(deleteAddressServiceSpy).toHaveBeenCalledWith(params.id);
       expect(result).toBe(output);
     });
   });
