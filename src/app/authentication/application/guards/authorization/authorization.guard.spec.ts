@@ -22,7 +22,7 @@ describe('AuthorizationGuard', () => {
       imports: [AuthenticationGuardsModule],
     }).compile();
 
-    guard = module.get<AuthorizationGuard>(AuthorizationGuard);
+    guard = module.get(AuthorizationGuard);
   });
 
   it('should be defined', () => {

@@ -26,48 +26,64 @@ describe('FindAccountById', () => {
   });
 
   afterAll(async() => {
-    await prisma.$disconnect();
+    await prisma.account.deleteMany();
   });
 
   it('should be defined', () => {
     expect(sut).toBeDefined();
   });
 
-  it('should return null if account is not found', async() => {
-    // Arrange
-    const credential = 'non-existing-credential';
+  describe('unit tests', () => {
+    it('should call accountDao.findById with correct values', async() => {
+      // Arrange
+      const id = 'any-id';
+      const findByIdSpy = jest.spyOn(sut['accountDao'], 'findById');
 
-    // Act
-    const result = await sut.execute(credential);
+      // Act
+      await sut.execute(id);
 
-    // Assert
-    expect(result).toBeNull();
+      // Assert
+      expect(findByIdSpy).toHaveBeenCalledWith(id);
+    });
   });
 
-  it('should return account if found by id', async() => {
-    // Arrange
-    const createdAccount = await prisma.account.create({
-      data: {
-        email: 'jhondoe@email.com',
-        password: 'securepassword',
-        status: AccountStatus.ACTIVE,
-        roles: {
-          create: {
-            role: AccountRole.ADMIN,
-          },
-        },
-      },
+  describe('integration tests', () => {
+    it('should return null if account is not found', async() => {
+      // Arrange
+      const id = 'non-existing-id';
+
+      // Act
+      const result = await sut.execute(id);
+
+      // Assert
+      expect(result).toBeNull();
     });
 
-    // Act
-    const result = await sut.execute(createdAccount.id);
+    it('should return account if found by id', async() => {
+      // Arrange
+      const account = await prisma.account.create({
+        data: {
+          email: 'jhondoe@email.com',
+          password: 'securepassword',
+          status: AccountStatus.ACTIVE,
+          roles: {
+            create: {
+              role: AccountRole.ADMIN,
+            },
+          },
+        },
+      });
 
-    // Assert
-    expect(result).toEqual<AccountDto>({
-      id: createdAccount.id,
-      email: createdAccount.email,
-      roles: [AccountRole.ADMIN],
-      status: AccountStatus.ACTIVE,
+      // Act
+      const result = await sut.execute(account.id);
+
+      // Assert
+      expect(result).toEqual<AccountDto>({
+        id: account.id,
+        email: account.email,
+        roles: [AccountRole.ADMIN],
+        status: AccountStatus.ACTIVE,
+      });
     });
   });
 });

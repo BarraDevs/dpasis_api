@@ -2,6 +2,7 @@ import { Test } from '@nestjs/testing';
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
 import { AccountStatus } from 'src/app/account/domain/enums/account-status.enum';
 import { AuthenticationModule } from 'src/app/authentication/authentication.module';
+import { ConfigModule } from 'src/core/config/config.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { Password } from 'src/shared/value-objects/password/password.vo';
 import { ForbiddenAccountError } from '../../errors/forbidden-account.error';
@@ -16,7 +17,10 @@ describe('SigninWithCredentialAndPassword', () => {
 
   beforeEach(async() => {
     const module = await Test.createTestingModule({
-      imports: [AuthenticationModule],
+      imports: [
+        AuthenticationModule,
+        ConfigModule,
+      ],
     }).compile();
 
     sut = module.get(SignInWithCredentialAndPassword);
