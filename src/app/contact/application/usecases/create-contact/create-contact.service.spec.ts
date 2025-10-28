@@ -36,69 +36,95 @@ describe('CreateContact', () => {
     expect(sut).toBeDefined();
   });
 
-  it('should create a contact providing all fields', async() => {
-    const input: CreateContactInputDto = {
-      name: 'John Doe',
-      department: 'Sales',
-      email: 'john.doe@example.com',
-      phone: '123-456-7890',
-      whatsapp: '123-456-7890',
-      ownerId: 'owner-123',
-      info: 'Additional information about John Doe',
-    };
+  describe('unit tests', () => {
+    it('should call contactDao.save with correct values', async() => {
+      // Arrange
+      const id = 'contact-id-123';
+      const input = createMock<CreateContactInputDto>();
+      const contactDaoSpy = jest.spyOn(sut['contactDao'], 'save').mockResolvedValue(id);
 
-    const output = await sut.execute(input);
+      // Act
+      await sut.execute(input);
 
-    const createdContact = await findContactById.execute(output.id);
-    expect(createdContact).toEqual<ContactDto>({
-      id: output.id,
-      name: input.name,
-      department: input.department,
-      email: input.email,
-      phone: input.phone,
-      whatsapp: input.whatsapp,
-      ownerId: input.ownerId,
-      info: input.info || null,
-      createdAt: expect.any(Date),
-      updatedAt: expect.any(Date),
+      // Assert
+      expect(contactDaoSpy).toHaveBeenCalledWith(input);
+    });
+
+    it('should return correct output dto', async() => {
+      // Arrange
+      const id = 'contact-id-123';
+      const input = createMock<CreateContactInputDto>();
+      jest.spyOn(sut['contactDao'], 'save').mockResolvedValue(id);
+
+      // Act
+      const result = await sut.execute(input);
+
+      // Assert
+      expect(result).toEqual<CreateContactOutputDto>({ id });
     });
   });
 
-  it('should create a contact providing only required fields', async() => {
-    const input: CreateContactInputDto = {
-      name: 'John Doe',
-      department: 'Sales',
-      email: 'john.doe@example.com',
-      phone: '123-456-7890',
-      whatsapp: '123-456-7890',
-      ownerId: 'owner-123',
-    };
+  describe('integration tests', () => {
+    it('should create a contact providing all fields', async() => {
+      // Arrange
+      const input: CreateContactInputDto = {
+        name: 'John Doe',
+        department: 'Sales',
+        email: 'john.doe@example.com',
+        phone: '123-456-7890',
+        whatsapp: '123-456-7890',
+        ownerId: 'owner-123',
+        info: 'Additional information about John Doe',
+      };
 
-    const output = await sut.execute(input);
+      // Act
+      const output = await sut.execute(input);
 
-    const createdContact = await findContactById.execute(output.id);
-    expect(createdContact).toEqual<ContactDto>({
-      id: output.id,
-      name: input.name,
-      department: input.department,
-      email: input.email,
-      phone: input.phone,
-      whatsapp: input.whatsapp,
-      ownerId: input.ownerId,
-      info: null,
-      createdAt: expect.any(Date),
-      updatedAt: expect.any(Date),
+      // Assert
+      const createdContact = await findContactById.execute(output.id);
+      expect(createdContact).toEqual<ContactDto>({
+        id: output.id,
+        name: input.name,
+        department: input.department,
+        email: input.email,
+        phone: input.phone,
+        whatsapp: input.whatsapp,
+        ownerId: input.ownerId,
+        info: input.info!,
+        createdAt: expect.any(Date),
+        updatedAt: expect.any(Date),
+      });
     });
-  });
 
-  it('should call contactDao.save with correct values', async() => {
-    const id = 'contact-id-123';
-    const input = createMock<CreateContactInputDto>();
-    const contactDaoSpy = jest.spyOn(sut['contactDao'], 'save').mockResolvedValue(id);
+    it('should create a contact providing only required fields', async() => {
+      // Arrange
+      const input: CreateContactInputDto = {
+        name: 'John Doe',
+        department: 'Sales',
+        email: 'john.doe@example.com',
+        phone: '123-456-7890',
+        whatsapp: '123-456-7890',
+        ownerId: 'owner-123',
+        info: null,
+      };
 
-    const result = await sut.execute(input);
+      // Act
+      const output = await sut.execute(input);
 
-    expect(contactDaoSpy).toHaveBeenCalledWith(input);
-    expect(result).toEqual<CreateContactOutputDto>({ id });
+      // Assert
+      const createdContact = await findContactById.execute(output.id);
+      expect(createdContact).toEqual<ContactDto>({
+        id: output.id,
+        name: input.name,
+        department: input.department,
+        email: input.email,
+        phone: input.phone,
+        whatsapp: input.whatsapp,
+        ownerId: input.ownerId,
+        info: null,
+        createdAt: expect.any(Date),
+        updatedAt: expect.any(Date),
+      });
+    });
   });
 });

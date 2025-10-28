@@ -37,48 +37,59 @@ describe('FindContactById', () => {
     expect(sut).toBeDefined();
   });
 
-  it('should throw an error if contact is not found', async() => {
-    expect.assertions(1);
-    return sut.execute('non-existing-id').catch((error) => {
-      expect(error).toBeInstanceOf(ContactNotFoundError);
+  describe('unit tests', () => {
+    it('should call contactDao.findById with correct parameters', async() => {
+      // Arrange
+      const contact = createMock<ContactDto>();
+      const spy = jest.spyOn(sut['contactDao'], 'findById').mockResolvedValue(contact);
+
+      // Act
+      await sut.execute('existing-id');
+
+      // Assert
+      expect(spy).toHaveBeenCalledWith('existing-id');
     });
   });
 
-  it('should return a contact if found', async() => {
-    const data: CreateContactInputDto = {
-      name: 'John Doe',
-      department: 'Sales',
-      email: 'john.doe@example.com',
-      phone: '123-456-7890',
-      whatsapp: '123-456-7890',
-      ownerId: 'owner-123',
-      info: 'Additional info about John Doe',
-    };
-    const createdContact = await createContact.execute(data);
-
-    const foundContact = await sut.execute(createdContact.id);
-
-    expect(foundContact).toBeDefined();
-    expect(foundContact).toEqual<ContactDto>({
-      id: createdContact.id,
-      name: data.name,
-      department: data.department,
-      email: data.email,
-      phone: data.phone,
-      whatsapp: data.whatsapp,
-      ownerId: data.ownerId,
-      info: data.info || null,
-      createdAt: expect.any(Date),
-      updatedAt: expect.any(Date),
+  describe('integration tests', () => {
+    it('should throw an error if contact is not found', async() => {
+      // Act & Assert
+      expect.assertions(1);
+      return sut.execute('non-existing-id').catch((error) => {
+        expect(error).toBeInstanceOf(ContactNotFoundError);
+      });
     });
-  });
 
-  it('should call contactDao.findById with correct parameters', async() => {
-    const contact = createMock<ContactDto>();
-    const spy = jest.spyOn(sut['contactDao'], 'findById').mockResolvedValue(contact);
+    it('should return a contact if found', async() => {
+      // Arrange
+      const data: CreateContactInputDto = {
+        name: 'John Doe',
+        department: 'Sales',
+        email: 'john.doe@example.com',
+        phone: '123-456-7890',
+        whatsapp: '123-456-7890',
+        ownerId: 'owner-123',
+        info: 'Additional info about John Doe',
+      };
+      const createdContact = await createContact.execute(data);
 
-    await sut.execute('existing-id');
+      // Act
+      const foundContact = await sut.execute(createdContact.id);
 
-    expect(spy).toHaveBeenCalledWith('existing-id');
+      // Assert
+      expect(foundContact).toBeDefined();
+      expect(foundContact).toEqual<ContactDto>({
+        id: createdContact.id,
+        name: data.name,
+        department: data.department,
+        email: data.email,
+        phone: data.phone,
+        whatsapp: data.whatsapp,
+        ownerId: data.ownerId,
+        info: data.info || null,
+        createdAt: expect.any(Date),
+        updatedAt: expect.any(Date),
+      });
+    });
   });
 });

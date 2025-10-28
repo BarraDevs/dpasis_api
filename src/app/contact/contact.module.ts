@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { AuthenticationGuardsModule } from '../authentication/application/guards/guards.module';
 import { ContactPersistenceModule } from './application/persistence/contact-persistence.module';
 import { CreateContact } from './application/usecases/create-contact/create-contact.service';
 import { DeleteContact } from './application/usecases/delete-contact/delete-contact.service';
@@ -10,6 +11,7 @@ import { ContactController } from './infra/drivers/http/contact.controller';
 @Module({
   imports: [
     ContactPersistenceModule,
+    AuthenticationGuardsModule,
   ],
   controllers: [
     ContactController,

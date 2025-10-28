@@ -47,97 +47,116 @@ describe('FindAllContact', () => {
     expect(sut).toBeDefined();
   });
 
-  it('should return an empty array if there is no contact', async() => {
-    const contacts = await sut.execute({ ownerId: data.ownerId });
+  describe('integration tests', () => {
+    it('should return an empty array if there is no contact', async() => {
+      // Act
+      const contacts = await sut.execute({ ownerId: data.ownerId });
 
-    expect(contacts).toEqual<IPagination<ContactDto>>({
-      data: [],
-      currentPage: 1,
-      itemsPerPage: 0,
-      totalItems: 0,
-      totalPages: 0,
+      // Assert
+      expect(contacts).toEqual<IPagination<ContactDto>>({
+        data: [],
+        currentPage: 1,
+        itemsPerPage: 0,
+        totalItems: 0,
+        totalPages: 0,
+      });
     });
-  });
 
-  it('should return all contacts', async() => {
-    await createContact.execute({ ...data, department: 'DP1' });
-    await createContact.execute({ ...data, department: 'DP2' });
-    await createContact.execute({ ...data, department: 'DP3' });
+    it('should return all contacts', async() => {
+      // Arrange
+      await createContact.execute({ ...data, department: 'DP1' });
+      await createContact.execute({ ...data, department: 'DP2' });
+      await createContact.execute({ ...data, department: 'DP3' });
 
-    const contacts = await sut.execute({ ownerId: data.ownerId });
+      // Act
+      const contacts = await sut.execute({ ownerId: data.ownerId });
 
-    expect(contacts).toEqual<IPagination<ContactDto>>({
-      data: expect.arrayContaining([
-        expect.objectContaining({ department: 'DP1' }),
-        expect.objectContaining({ department: 'DP2' }),
-        expect.objectContaining({ department: 'DP3' }),
-      ]),
-      currentPage: 1,
-      itemsPerPage: 3,
-      totalItems: 3,
-      totalPages: 1,
+      // Assert
+      expect(contacts).toEqual<IPagination<ContactDto>>({
+        data: expect.arrayContaining([
+          expect.objectContaining({ department: 'DP1' }),
+          expect.objectContaining({ department: 'DP2' }),
+          expect.objectContaining({ department: 'DP3' }),
+        ]),
+        currentPage: 1,
+        itemsPerPage: 3,
+        totalItems: 3,
+        totalPages: 1,
+      });
     });
-  });
 
-  it('should return paginated contacts', async() => {
-    await createContact.execute({ ...data, department: 'DP1' });
-    await createContact.execute({ ...data, department: 'DP2' });
-    await createContact.execute({ ...data, department: 'DP3' });
+    it('should return paginated contacts', async() => {
+      // Arrange
+      await createContact.execute({ ...data, department: 'DP1' });
+      await createContact.execute({ ...data, department: 'DP2' });
+      await createContact.execute({ ...data, department: 'DP3' });
 
-    const contacts = await sut.execute({ page: 2, size: 2, ownerId: data.ownerId });
+      // Act
+      const contacts = await sut.execute({ page: 2, size: 2, ownerId: data.ownerId });
 
-    expect(contacts).toEqual<IPagination<ContactDto>>({
-      data: expect.arrayContaining([
-        expect.objectContaining({ department: 'DP3' }),
-      ]),
-      currentPage: 2,
-      itemsPerPage: 2,
-      totalItems: 3,
-      totalPages: 2,
+      // Assert
+      expect(contacts).toEqual<IPagination<ContactDto>>({
+        data: expect.arrayContaining([
+          expect.objectContaining({ department: 'DP3' }),
+        ]),
+        currentPage: 2,
+        itemsPerPage: 2,
+        totalItems: 3,
+        totalPages: 2,
+      });
     });
-  });
 
-  it('should return contacts filtered by ownerId', async() => {
-    await createContact.execute({ ...data, ownerId: 'owner-1', department: 'DP1' });
-    await createContact.execute({ ...data, ownerId: 'owner-2', department: 'DP2' });
-    await createContact.execute({ ...data, ownerId: 'owner-1', department: 'DP3' });
+    it('should return contacts filtered by ownerId', async() => {
+      // Arrange
+      await createContact.execute({ ...data, ownerId: 'owner-1', department: 'DP1' });
+      await createContact.execute({ ...data, ownerId: 'owner-2', department: 'DP2' });
+      await createContact.execute({ ...data, ownerId: 'owner-1', department: 'DP3' });
 
-    const contacts = await sut.execute({ ownerId: 'owner-1' });
+      // Act
+      const contacts = await sut.execute({ ownerId: 'owner-1' });
 
-    expect(contacts).toEqual<IPagination<ContactDto>>({
-      data: expect.arrayContaining([
-        expect.objectContaining({ department: 'DP1' }),
-        expect.objectContaining({ department: 'DP3' }),
-      ]),
-      currentPage: 1,
-      itemsPerPage: 2,
-      totalItems: 2,
-      totalPages: 1,
+      // Assert
+      expect(contacts).toEqual<IPagination<ContactDto>>({
+        data: expect.arrayContaining([
+          expect.objectContaining({ department: 'DP1' }),
+          expect.objectContaining({ department: 'DP3' }),
+        ]),
+        currentPage: 1,
+        itemsPerPage: 2,
+        totalItems: 2,
+        totalPages: 1,
+      });
     });
-  });
 
-  it('should return empty array when filtering by non-existing ownerId', async() => {
-    await createContact.execute({ ...data, ownerId: 'owner-1', department: 'DP1' });
-    await createContact.execute({ ...data, ownerId: 'owner-2', department: 'DP2' });
+    it('should return empty array when filtering by non-existing ownerId', async() => {
+      // Arrange
+      await createContact.execute({ ...data, ownerId: 'owner-1', department: 'DP1' });
+      await createContact.execute({ ...data, ownerId: 'owner-2', department: 'DP2' });
 
-    const contacts = await sut.execute({ ownerId: 'non-existing-owner' });
+      // Act
+      const contacts = await sut.execute({ ownerId: 'non-existing-owner' });
 
-    expect(contacts).toEqual<IPagination<ContactDto>>({
-      data: [],
-      currentPage: 1,
-      itemsPerPage: 0,
-      totalItems: 0,
-      totalPages: 0,
+      // Assert
+      expect(contacts).toEqual<IPagination<ContactDto>>({
+        data: [],
+        currentPage: 1,
+        itemsPerPage: 0,
+        totalItems: 0,
+        totalPages: 0,
+      });
     });
-  });
 
-  it('should return contacts ordered by name ascending', async() => {
-    await createContact.execute({ ...data, name: 'Charlie', department: 'DP1' });
-    await createContact.execute({ ...data, name: 'Alice', department: 'DP2' });
-    await createContact.execute({ ...data, name: 'Bob', department: 'DP3' });
+    it('should return contacts ordered by name ascending', async() => {
+      // Arrange
+      await createContact.execute({ ...data, name: 'Charlie', department: 'DP1' });
+      await createContact.execute({ ...data, name: 'Alice', department: 'DP2' });
+      await createContact.execute({ ...data, name: 'Bob', department: 'DP3' });
 
-    const contacts = await sut.execute({ ownerId: data.ownerId });
+      // Act
+      const contacts = await sut.execute({ ownerId: data.ownerId });
 
-    expect(contacts.data.map(c => c.name)).toEqual(['Alice', 'Bob', 'Charlie']);
+      // Assert
+      expect(contacts.data.map(c => c.name)).toEqual(['Alice', 'Bob', 'Charlie']);
+    });
   });
 });

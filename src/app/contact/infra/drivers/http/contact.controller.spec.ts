@@ -26,12 +26,15 @@ describe('ContactController', () => {
 
   describe('create', () => {
     it('should call createContactService.execute with correct values', async() => {
+      // Arrange
       const input = createMock<CreateContactInputDto>();
       const output = createMock<CreateContactOutputDto>();
       const createContactService = jest.spyOn(sut['createContactService'], 'execute').mockResolvedValueOnce(output);
 
+      // Act
       const result = await sut.create(input);
 
+      // Assert
       expect(createContactService).toHaveBeenCalledWith(input);
       expect(result).toBe(output);
     });
@@ -39,11 +42,14 @@ describe('ContactController', () => {
 
   describe('findAll', () => {
     it('should call findAllContactService.execute with correct values', async() => {
+      // Arrange
       const queries = createMock<FindAllContactQueryDto>();
       const findAllContactService = jest.spyOn(sut['findAllContactService'], 'execute').mockResolvedValueOnce(createMock());
 
+      // Act
       const result = await sut.findAll(queries);
 
+      // Assert
       expect(findAllContactService).toHaveBeenCalledWith(queries);
       expect(result).toBeDefined();
     });
@@ -51,24 +57,30 @@ describe('ContactController', () => {
 
   describe('findOne', () => {
     it('should call findContactByIdService.execute with correct values', async() => {
-      const id = 'any_id';
+      // Arrange
+      const params = createMock<Params>();
       const findContactByIdService = jest.spyOn(sut['findContactByIdService'], 'execute').mockResolvedValueOnce(createMock());
 
-      const result = await sut.findOne({ id });
+      // Act
+      const result = await sut.findOne(params);
 
-      expect(findContactByIdService).toHaveBeenCalledWith(id);
+      // Assert
+      expect(findContactByIdService).toHaveBeenCalledWith(params.id);
       expect(result).toBeDefined();
     });
   });
 
   describe('update', () => {
     it('should call editContactService.execute with correct values', async() => {
+      // Arrange
       const params = createMock<Params>();
       const body = createMock<EditContactInputDto>();
       const editContactService = jest.spyOn(sut['editContactService'], 'execute').mockResolvedValueOnce(createMock());
 
+      // Act
       const result = await sut.update(params, body);
 
+      // Assert
       expect(editContactService).toHaveBeenCalledWith(params.id, body);
       expect(result).toBeDefined();
     });
@@ -76,11 +88,14 @@ describe('ContactController', () => {
 
   describe('remove', () => {
     it('should call deleteContactService.execute with correct values', async() => {
+      // Arrange
       const params = createMock<Params>();
       const deleteContactService = jest.spyOn(sut['deleteContactService'], 'execute').mockResolvedValueOnce(createMock());
 
+      // Act
       const result = await sut.remove(params);
 
+      // Assert
       expect(deleteContactService).toHaveBeenCalledWith(params.id);
       expect(result).toBeDefined();
     });

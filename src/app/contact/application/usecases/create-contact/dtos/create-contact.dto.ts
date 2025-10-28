@@ -41,7 +41,7 @@ export class CreateContactInputDto {
   @IsString({ message: '$property deve ser uma string' })
   @IsOptional()
   @Trim()
-  info?: string;
+  info: string | null;
 }
 
 export class CreateContactOutputDto {

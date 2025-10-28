@@ -42,17 +42,49 @@ describe('EditContact', () => {
     expect(sut).toBeDefined();
   });
 
+  describe('unit tests', () => {
+    it('should call contactDao.edit with correct values', async() => {
+      // Arrange
+      const id = 'contact-id-1';
+      const contact = createMock<ContactDto>({ id });
+      const input = createMock<EditContactInputDto>();
+      const contactDaoSpy = jest.spyOn(sut['contactDao'], 'edit').mockResolvedValue();
+      jest.spyOn(sut['contactDao'], 'findById').mockResolvedValue(contact);
+
+      // Act
+      await sut.execute(id, input);
+
+      // Assert
+      expect(contactDaoSpy).toHaveBeenCalledWith(contact.id, input);
+    });
+
+    it('should return a success message on successful edit', async() => {
+      const contact = createMock<ContactDto>();
+      jest.spyOn(sut['contactDao'], 'findById').mockResolvedValue(contact);
+      jest.spyOn(sut['contactDao'], 'edit').mockResolvedValue();
+
+      // Act
+      const result = await sut.execute(contact.id, {});
+
+      // Assert
+      expect(result).toEqual<SuccessMessage>({ message: 'Contato atualizado com sucesso!' });
+    });
+  });
+
   it('should throw an error if contact does not exist', async() => {
+    // Arrange
     const data = createMock<EditContactInputDto>();
 
+    // Act & Assert
     expect.assertions(1);
     return sut.execute('non-existing-id', data).catch((error) => {
       expect(error).toBeInstanceOf(ContactNotFoundError);
     });
   });
 
-  it('should edit a contact', async() => {
-    const contactCreate: CreateContactInputDto = {
+  it('should edit a contact with partial data', async() => {
+    // Arrange
+    const createData: CreateContactInputDto = {
       name: 'John Doe',
       department: 'TI',
       email: 'john.doe@example.com',
@@ -61,45 +93,61 @@ describe('EditContact', () => {
       ownerId: 'owner-id-1',
       info: 'Some info about John Doe',
     };
-    const createdContact = await createContact.execute(contactCreate);
+    const createdContact = await createContact.execute(createData);
 
+    // Act
     const contactEdit: EditContactInputDto = {
       name: 'Jane Doe',
-      department: 'HR',
-      email: 'jane.doe@example.com',
       phone: '987654321',
       whatsapp: '123456789',
-      info: 'Some info about Jane Doe',
     };
-    const result = await sut.execute(createdContact.id, contactEdit);
-    expect(result).toEqual<SuccessMessage>({ message: 'Contato atualizado com sucesso!' });
+    await sut.execute(createdContact.id, contactEdit);
 
+    // Assert
     const editedContact = await findContactById.execute(createdContact.id);
     expect(editedContact).toBeDefined();
     expect(editedContact).toEqual<ContactDto>({
       id: createdContact.id,
-      ownerId: contactCreate.ownerId,
-      name: contactEdit.name,
-      department: contactEdit.department,
-      email: contactEdit.email,
-      phone: contactEdit.phone,
-      whatsapp: contactEdit.whatsapp,
-      info: contactEdit.info || null,
+      ownerId: createData.ownerId,
+      name: contactEdit.name ?? createData.name,
+      department: contactEdit.department ?? createData.department,
+      email: contactEdit.email ?? createData.email,
+      phone: contactEdit.phone ?? createData.phone,
+      whatsapp: contactEdit.whatsapp ?? createData.whatsapp,
+      info: contactEdit.info ?? createData.info,
       createdAt: editedContact.createdAt,
       updatedAt: editedContact.updatedAt,
     });
   });
 
-  it('should call contactDao.edit with correct values', async() => {
-    const id = 'contact-id-1';
-    const contact = createMock<ContactDto>({ id });
-    const input = createMock<EditContactInputDto>();
-    jest.spyOn(sut['contactDao'], 'findById').mockResolvedValue(contact);
+  it('should edit a contact providing null values', async() => {
+    // Arrange
+    const createData: CreateContactInputDto = {
+      name: 'John Doe',
+      department: 'TI',
+      email: 'john.doe@example.com',
+      phone: '123456789',
+      whatsapp: '987654321',
+      ownerId: 'owner-id-1',
+      info: 'Some info about John Doe',
+    };
+    const createdContact = await createContact.execute(createData);
 
-    const contactDaoSpy = jest.spyOn(sut['contactDao'], 'edit').mockResolvedValue();
+    // Act
+    const contactEdit: EditContactInputDto = {
+      info: null,
+    };
+    await sut.execute(createdContact.id, contactEdit);
 
-    await sut.execute(id, input);
-
-    expect(contactDaoSpy).toHaveBeenCalledWith(contact.id, input);
+    // Assert
+    const editedContact = await findContactById.execute(createdContact.id);
+    expect(editedContact).toBeDefined();
+    expect(editedContact).toEqual<ContactDto>({
+      ...createData,
+      info: null,
+      id: createdContact.id,
+      createdAt: editedContact.createdAt,
+      updatedAt: editedContact.updatedAt,
+    });
   });
 });
