@@ -153,6 +153,9 @@ describe('CreateAddressInputDto', () => {
       city: 'Cidade C',
       state: 'Estado D',
       ownerId: 'owner-123',
+      nickname: null,
+      complement: null,
+      reference: null,
     };
 
     // Act

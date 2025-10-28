@@ -70,6 +70,8 @@ describe('FindMainAddress', () => {
         city: 'Metropolis',
         state: 'State',
         ownerId,
+        nickname: null,
+        reference: null,
       }, false);
 
       // Act
@@ -91,6 +93,8 @@ describe('FindMainAddress', () => {
         city: 'Gotham',
         state: 'State',
         ownerId,
+        nickname: null,
+        reference: null,
       };
       const mainAddress = await createAddress.execute(mainAddressData, true);
 
@@ -104,6 +108,8 @@ describe('FindMainAddress', () => {
         city: 'Metropolis',
         state: 'State',
         ownerId,
+        nickname: null,
+        reference: null,
       }, false);
 
       // Act

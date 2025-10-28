@@ -85,6 +85,9 @@ describe('DeleteAddress', () => {
         city: 'Cidade B',
         state: 'Estado C',
         ownerId: 'owner-123',
+        nickname: null,
+        complement: null,
+        reference: null,
       }, false);
 
       // Act

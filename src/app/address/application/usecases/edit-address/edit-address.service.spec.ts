@@ -96,6 +96,9 @@ describe('EditAddress', () => {
         city: 'Cidade Secundária',
         state: 'Estado Secundário',
         ownerId: 'owner-123',
+        nickname: null,
+        complement: null,
+        reference: null,
       }, false);
 
       // Act & Assert
@@ -116,6 +119,9 @@ describe('EditAddress', () => {
         city: 'Cidade Principal',
         state: 'Estado Principal',
         ownerId: 'owner-123',
+        nickname: null,
+        complement: null,
+        reference: null,
       }, true);
 
       // Act & Assert
@@ -140,6 +146,9 @@ describe('EditAddress', () => {
         city: 'Cidade Principal',
         state: 'Estado Principal',
         ownerId: 'owner-123',
+        nickname: null,
+        complement: null,
+        reference: null,
       };
       const mainAddress = await createAddress.execute(data, isMain);
 

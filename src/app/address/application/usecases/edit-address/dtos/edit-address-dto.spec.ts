@@ -21,10 +21,68 @@ describe('EditAddressInputDto', () => {
       { name: 'neighborhood', maxLength: 256 },
       { name: 'city', maxLength: 256 },
       { name: 'state', maxLength: 256 },
+      { name: 'street', maxLength: 512 },
+    ]
+  )('%s', (field) => {
+    it(`should not throw an error if ${field.name} is undefined`, async() => {
+      // Arrange
+      const data = { [field.name]: undefined };
+
+      // Act
+      const result = await target.transform(data, metadata);
+
+      // Assert
+      expect(result).toBeInstanceOf(EditAddressInputDto);
+    });
+
+    it(`should throw an error if ${field.name} is null`, async() => {
+      // Arrange
+      const data = { [field.name]: null };
+
+      // Act & Assert
+      expect.assertions(1);
+      return target.transform(data, metadata).catch((error) => {
+        expect(error.getResponse().message).toContain(`${field.name} é obrigatório`);
+      });
+    });
+
+    it.each(
+      [
+        123,
+        true,
+        false,
+        {},
+        [],
+      ]
+    )(`should throw an error if ${field.name} is not a string (%s)`, async(value: any) => {
+      // Arrange
+      const data = { [field.name]: value };
+
+      // Act & Assert
+      expect.assertions(1);
+      return target.transform(data, metadata).catch((error) => {
+        expect(error.getResponse().message).toContain(`${field.name} deve ser uma string`);
+      });
+    });
+
+    it(`should throw an error if ${field.name} exceeds maximum length (${field.maxLength})`, async() => {
+      // Arrange
+      const longString = 'a'.repeat(field.maxLength + 1);
+      const data = { [field.name]: longString };
+
+      // Act & Assert
+      expect.assertions(1);
+      return target.transform(data, metadata).catch((error) => {
+        expect(error.getResponse().message).toContain(`${field.name} deve ter no máximo ${field.maxLength} caracteres`);
+      });
+    });
+  });
+
+  describe.each(
+    [
       { name: 'nickname', maxLength: 256 },
       { name: 'complement', maxLength: 256 },
       { name: 'reference', maxLength: 256 },
-      { name: 'street', maxLength: 512 },
     ]
   )('%s', (field) => {
     it.each(

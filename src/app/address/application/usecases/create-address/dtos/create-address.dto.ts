@@ -6,19 +6,19 @@ export class CreateAddressInputDto {
   @IsString({ message: '$property deve ser uma string' })
   @MaxLength(256, { message: '$property deve ter no máximo $constraint1 caracteres' })
   @Trim()
-  nickname?: string;
+  nickname: string | null;
 
   @IsOptional()
   @IsString({ message: '$property deve ser uma string' })
   @MaxLength(256, { message: '$property deve ter no máximo $constraint1 caracteres' })
   @Trim()
-  complement?: string;
+  complement: string | null;
 
   @IsOptional()
   @IsString({ message: '$property deve ser uma string' })
   @MaxLength(256, { message: '$property deve ter no máximo $constraint1 caracteres' })
   @Trim()
-  reference?: string;
+  reference: string | null;
 
   @IsString({ message: '$property deve ser uma string' })
   @IsNotEmpty({ message: '$property é obrigatório' })

@@ -37,6 +37,8 @@ describe('FindAllAddress', () => {
       city: 'Metropolis',
       state: 'State',
       ownerId: 'owner-1',
+      nickname: null,
+      reference: null,
     };
 
     await prisma.address.deleteMany();

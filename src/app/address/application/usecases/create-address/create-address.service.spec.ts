@@ -67,6 +67,8 @@ describe('CreateAddress', () => {
         city: 'Metropolis',
         state: 'State',
         ownerId: 'owner-1',
+        nickname: 'Home',
+        reference: null,
       };
 
       // Act
@@ -103,6 +105,9 @@ describe('CreateAddress', () => {
         city: 'Metropolis',
         state: 'State',
         ownerId: 'owner-1',
+        nickname: null,
+        complement: null,
+        reference: null,
       };
       await sut.execute(data, true);
 
@@ -123,6 +128,9 @@ describe('CreateAddress', () => {
         city: 'Gotham',
         state: 'State',
         ownerId: 'owner-2',
+        nickname: null,
+        complement: null,
+        reference: null,
       };
 
       // Act

@@ -23,20 +23,26 @@ describe('EditContactInputDto', () => {
       'whatsapp',
     ]
   )('%s field', (field: string) => {
-    it.each(
-      [
-        undefined,
-        null,
-      ]
-    )(`should not throw an error if ${field} is empty (%s)`, async(value: any) => {
+    it(`shoul not throw an error if ${field} is undefined`, async() => {
       // Arrange
-      const data = { [field]: value };
+      const data = { [field]: undefined };
 
       // Act
       const result = await target.transform(data, metadata);
 
       // Assert
       expect(result).toBeInstanceOf(EditContactInputDto);
+    });
+
+    it(`should throw an error if ${field} is null`, async() => {
+      // Arrange
+      const data = { [field]: null };
+
+      // Act & Assert
+      expect.assertions(1);
+      return target.transform(data, metadata).catch((error) => {
+        expect(error.getResponse().message).toContain(`${field} é obrigatório`);
+      });
     });
 
     it.each(
