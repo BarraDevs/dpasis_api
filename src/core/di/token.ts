@@ -5,6 +5,7 @@ const TOKENS = {
   AccountDao: Symbol.for('AccountDao'),
 
   AddressDao: Symbol.for('AddressDao'),
+  ContactDao: Symbol.for('ContactDao'),
 
   ClientDao: Symbol.for('ClientDao'),
   ClientRepository: Symbol.for('ClientRepository'),
