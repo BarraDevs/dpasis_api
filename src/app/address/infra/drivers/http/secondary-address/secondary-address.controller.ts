@@ -8,12 +8,14 @@ import { EditAddress } from 'src/app/address/application/usecases/edit-address/e
 import { FindAddressById } from 'src/app/address/application/usecases/find-address-by-id/find-address-by-id.service';
 import { FindAllAddressQueryDto } from 'src/app/address/application/usecases/find-all-address/dtos/find-all-address.dto';
 import { FindAllAddress } from 'src/app/address/application/usecases/find-all-address/find-all-address.service';
+import { RequiredRoles } from 'src/app/authentication/infra/decorators/required-role.decorator';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
 import { Swagger } from 'src/infra/openapi/swagger';
 import { Params } from 'src/infra/validators/class-*/dtos/params/params.dto';
 import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
 
 @Controller('address/secondary')
+@RequiredRoles()
 export class AddressSecondaryController {
   private readonly IS_MAIN = false;
 

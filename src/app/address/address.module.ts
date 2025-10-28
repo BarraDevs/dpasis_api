@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { AuthenticationGuardsModule } from '../authentication/application/guards/guards.module';
 import { AddressPersistenceModule } from './application/persistence/address-persistence.module';
 import { CreateAddress } from './application/usecases/create-address/create-address.service';
 import { DeleteAddress } from './application/usecases/delete-address/delete-address.service';
@@ -12,6 +13,7 @@ import { AddressSecondaryController } from './infra/drivers/http/secondary-addre
 @Module({
   imports: [
     AddressPersistenceModule,
+    AuthenticationGuardsModule,
   ],
   controllers: [
     AddressMainController,
