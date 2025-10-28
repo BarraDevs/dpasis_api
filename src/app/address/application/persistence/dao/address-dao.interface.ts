@@ -6,7 +6,7 @@ import { FindAllAddressQueryDto } from '../../usecases/find-all-address/dtos/fin
 export interface IAddressDao {
   findAll(queries: FindAllAddressQueryDto): Promise<[AddressDto[], number]>;
   findById(id: string, isMain: boolean): Promise<AddressDto | null>;
-  findMainAddress(id: string): Promise<AddressDto | null>;
+  findMainAddress(ownerId: string): Promise<AddressDto | null>;
   save(data: CreateAddressInputDto, isMain: boolean): Promise<string>;
   edit(id: string, data: EditAddressInputDto): Promise<void>;
   delete(id: string): Promise<void>;
