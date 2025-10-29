@@ -30,8 +30,10 @@ describe('Edit${moduleNamePascal}InputDto', () => {
         '  ',
       ]
     )(\`should throw an error if \${field} is empty (%s)\`, async(value: any) => {
+      // Arrange
       const data = { [field]: value };
 
+      // Act & Assert
       expect.assertions(1);
       return target.transform(data, metadata).catch((error) => {
         expect(error.getResponse().message).toContain(\`\${field} é obrigatório\`);
@@ -47,8 +49,10 @@ describe('Edit${moduleNamePascal}InputDto', () => {
         [],
       ]
     )('should throw an error if %s is not a string (%s)', async(value: any) => {
+      // Arrange
       const data = { [field]: value };
 
+      // Act & Assert
       expect.assertions(1);
       return target.transform(data, metadata).catch((error) => {
         expect(error.getResponse().message).toContain(\`\${field} deve ser uma string\`);
@@ -57,12 +61,15 @@ describe('Edit${moduleNamePascal}InputDto', () => {
   });
 
   it('should pass if all fields are valid', async() => {
+    // Arrange
     const data = {
       field: 'name',
     };
 
+    // Act
     const result = await target.transform(data, metadata);
 
+    // Assert
     expect(result).toBeInstanceOf(Edit${moduleNamePascal}InputDto);
     expect(result).toEqual(data);
   });
