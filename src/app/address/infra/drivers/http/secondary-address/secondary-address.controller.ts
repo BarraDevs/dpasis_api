@@ -1,4 +1,5 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
 import { AddressDto } from 'src/app/address/application/dtos/address.dto';
 import { CreateAddress } from 'src/app/address/application/usecases/create-address/create-address.service';
 import { CreateAddressInputDto, CreateAddressOutputDto } from 'src/app/address/application/usecases/create-address/dtos/create-address.dto';
@@ -15,7 +16,7 @@ import { Params } from 'src/infra/validators/class-*/dtos/params/params.dto';
 import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
 
 @Controller('address/secondary')
-@RequiredRoles()
+@RequiredRoles(AccountRole.ADMIN)
 export class AddressSecondaryController {
   private readonly IS_MAIN = false;
 
