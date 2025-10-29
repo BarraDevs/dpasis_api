@@ -6,13 +6,8 @@ import { LoggerModule } from './logger/logger.module';
 @Module({
   imports: [
     DatabaseModule,
-    CacheModule.forRoot(),
-    LoggerModule.forRoot(),
-  ],
-  exports: [
-    DatabaseModule,
-    CacheModule,
     LoggerModule,
+    CacheModule.register(),
   ],
 })
 export class InfraModule {}

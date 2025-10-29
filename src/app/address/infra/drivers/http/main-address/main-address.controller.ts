@@ -5,11 +5,13 @@ import { CreateAddressInputDto, CreateAddressOutputDto } from 'src/app/address/a
 import { EditAddressInputDto } from 'src/app/address/application/usecases/edit-address/dtos/edit-address.dto';
 import { EditAddress } from 'src/app/address/application/usecases/edit-address/edit-address.service';
 import { FindMainAddress } from 'src/app/address/application/usecases/find-main-address/find-main-address.service';
+import { RequiredRoles } from 'src/app/authentication/infra/decorators/required-role.decorator';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
 import { Swagger } from 'src/infra/openapi/swagger';
 import { Params } from 'src/infra/validators/class-*/dtos/params/params.dto';
 
 @Controller('address/main')
+@RequiredRoles()
 export class AddressMainController {
   private readonly IS_MAIN = true;
 

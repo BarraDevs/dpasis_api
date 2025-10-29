@@ -1,3 +1,4 @@
+import { createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AddressModule } from 'src/app/address/address.module';
 import { AddressMainMustBeOneError } from 'src/app/address/domain/errors/address-main-must-be-one.error';
@@ -6,7 +7,7 @@ import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { AddressDto } from '../../dtos/address.dto';
 import { FindAddressById } from '../find-address-by-id/find-address-by-id.service';
 import { CreateAddress } from './create-address.service';
-import { CreateAddressInputDto, CreateAddressOutputDto } from './dtos/create-address.dto';
+import { CreateAddressInputDto } from './dtos/create-address.dto';
 
 describe('CreateAddress', () => {
   let sut: CreateAddress;
@@ -36,91 +37,124 @@ describe('CreateAddress', () => {
     expect(sut).toBeDefined();
   });
 
-  it('should create a main address', async() => {
-    const data: CreateAddressInputDto = {
-      zipCode: '12345-678',
-      street: 'Main St',
-      number: '123',
-      complement: 'Apt 4',
-      neighborhood: 'Downtown',
-      city: 'Metropolis',
-      state: 'State',
-      ownerId: 'owner-1',
-    };
+  describe('unit tests', () => {
+    it('should call addressDao with correct values', async() => {
+      // Arrange
+      const input = createMock<CreateAddressInputDto>();
+      const address = createMock<AddressDto>();
+      const findMainAddressSpy = jest.spyOn(sut['addressDao'], 'findMainAddress').mockResolvedValue(null);
+      const saveSpy = jest.spyOn(sut['addressDao'], 'save').mockResolvedValue(address.id);
 
-    const result = await sut.execute(data, true);
-    expect(result).toEqual<CreateAddressOutputDto>({ id: result.id });
+      // Act
+      const result = await sut.execute(input, true);
 
-    const createdAddress = await findAddressById.execute(result.id, true);
-    expect(createdAddress).toBeDefined();
-    expect(createdAddress).toEqual<AddressDto>({
-      id: result.id,
-      nickname: data.nickname || null,
-      zipCode: data.zipCode,
-      street: data.street,
-      number: data.number,
-      complement: data.complement || null,
-      reference: data.reference || null,
-      neighborhood: data.neighborhood,
-      city: data.city,
-      state: data.state,
-      ownerId: data.ownerId,
-      isMain: true,
-      createdAt: createdAddress!.createdAt,
-      updatedAt: createdAddress!.updatedAt,
+      // Assert
+      expect(findMainAddressSpy).toHaveBeenCalledWith(input.ownerId);
+      expect(saveSpy).toHaveBeenCalledWith(input, true);
+      expect(result).toEqual({ id: address.id });
     });
   });
 
-  it('should not create a second main address for the same owner', async() => {
-    const data: CreateAddressInputDto = {
-      zipCode: '12345-678',
-      street: 'Main St',
-      number: '123',
-      neighborhood: 'Downtown',
-      city: 'Metropolis',
-      state: 'State',
-      ownerId: 'owner-1',
-    };
+  describe('integration tests', () => {
+    it('should create a main address', async() => {
+      // Arrange
+      const data: CreateAddressInputDto = {
+        zipCode: '12345-678',
+        street: 'Main St',
+        number: '123',
+        complement: 'Apt 4',
+        neighborhood: 'Downtown',
+        city: 'Metropolis',
+        state: 'State',
+        ownerId: 'owner-1',
+        nickname: 'Home',
+        reference: null,
+      };
 
-    await sut.execute(data, true);
+      // Act
+      const result = await sut.execute(data, true);
 
-    expect.assertions(1);
-    return sut.execute(data, true).catch((error) => {
-      expect(error).toBeInstanceOf(AddressMainMustBeOneError);
+      // Assert
+      const createdAddress = await findAddressById.execute(result.id, true);
+      expect(createdAddress).toBeDefined();
+      expect(createdAddress).toEqual<AddressDto>({
+        id: result.id,
+        nickname: data.nickname || null,
+        zipCode: data.zipCode,
+        street: data.street,
+        number: data.number,
+        complement: data.complement || null,
+        reference: data.reference || null,
+        neighborhood: data.neighborhood,
+        city: data.city,
+        state: data.state,
+        ownerId: data.ownerId,
+        isMain: true,
+        createdAt: createdAddress!.createdAt,
+        updatedAt: createdAddress!.updatedAt,
+      });
     });
-  });
 
-  it('should create a non-main address', async() => {
-    const data: CreateAddressInputDto = {
-      zipCode: '98765-432',
-      street: 'Second St',
-      number: '456',
-      neighborhood: 'Uptown',
-      city: 'Gotham',
-      state: 'State',
-      ownerId: 'owner-2',
-    };
+    it('should not create a second main address for the same owner', async() => {
+      // Arrange
+      const data: CreateAddressInputDto = {
+        zipCode: '12345-678',
+        street: 'Main St',
+        number: '123',
+        neighborhood: 'Downtown',
+        city: 'Metropolis',
+        state: 'State',
+        ownerId: 'owner-1',
+        nickname: null,
+        complement: null,
+        reference: null,
+      };
+      await sut.execute(data, true);
 
-    const result = await sut.execute(data, false);
-    expect(result).toEqual<CreateAddressOutputDto>({ id: result.id });
+      // Act & Assert
+      expect.assertions(1);
+      return sut.execute(data, true).catch((error) => {
+        expect(error).toBeInstanceOf(AddressMainMustBeOneError);
+      });
+    });
 
-    const createdAddress = await findAddressById.execute(result.id, false);
-    expect(createdAddress).toBeDefined();
-    expect(createdAddress).toEqual<AddressDto>({
-      id: result.id,
-      nickname: data.nickname || null,
-      zipCode: data.zipCode,
-      street: data.street,
-      number: data.number,
-      complement: data.complement || null,
-      reference: data.reference || null,
-      neighborhood: data.neighborhood,
-      city: data.city,
-      state: data.state,
-      ownerId: data.ownerId,
-      isMain: false,
-      createdAt: createdAddress!.createdAt,
-      updatedAt: createdAddress!.updatedAt,
+    it('should create a non-main address', async() => {
+      // Arrange
+      const data: CreateAddressInputDto = {
+        zipCode: '98765-432',
+        street: 'Second St',
+        number: '456',
+        neighborhood: 'Uptown',
+        city: 'Gotham',
+        state: 'State',
+        ownerId: 'owner-2',
+        nickname: null,
+        complement: null,
+        reference: null,
+      };
+
+      // Act
+      const result = await sut.execute(data, false);
+
+      // Assert
+      const createdAddress = await findAddressById.execute(result.id, false);
+      expect(createdAddress).toBeDefined();
+      expect(createdAddress).toEqual<AddressDto>({
+        id: result.id,
+        nickname: data.nickname || null,
+        zipCode: data.zipCode,
+        street: data.street,
+        number: data.number,
+        complement: data.complement || null,
+        reference: data.reference || null,
+        neighborhood: data.neighborhood,
+        city: data.city,
+        state: data.state,
+        ownerId: data.ownerId,
+        isMain: false,
+        createdAt: createdAddress!.createdAt,
+        updatedAt: createdAddress!.updatedAt,
+      });
     });
   });
 });

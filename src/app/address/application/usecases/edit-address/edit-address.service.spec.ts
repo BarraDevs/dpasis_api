@@ -4,6 +4,7 @@ import { AddressModule } from 'src/app/address/address.module';
 import { AddressNotFoundError } from 'src/app/address/domain/errors/address-not-found.error';
 import { ConfigModule } from 'src/core/config/config.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
+import { AddressDto } from '../../dtos/address.dto';
 import { CreateAddress } from '../create-address/create-address.service';
 import { CreateAddressInputDto } from '../create-address/dtos/create-address.dto';
 import { FindAddressById } from '../find-address-by-id/find-address-by-id.service';
@@ -40,92 +41,139 @@ describe('EditAddress', () => {
     expect(sut).toBeDefined();
   });
 
-  it('should throw an error if address not found', async() => {
-    const data = createMock<EditAddressInputDto>();
+  describe('unit tests', () => {
+    it('should call addressDao methods with correct values', async() => {
+      // Arrange
+      const data = createMock<EditAddressInputDto>();
+      const address = createMock<AddressDto>();
+      const findByIdSpy = jest.spyOn(sut['addressDao'], 'findById').mockResolvedValue(address);
+      const editSpy = jest.spyOn(sut['addressDao'], 'edit').mockResolvedValue();
 
-    expect.assertions(1);
-    return sut.execute('non-existing-id', true, data).catch((error) => {
-      expect(error).toBeInstanceOf(AddressNotFoundError);
+      // Act
+      const id = 'address-id';
+      await sut.execute(id, true, data);
+
+      // Assert
+      expect(findByIdSpy).toHaveBeenCalledWith(id, true);
+      expect(editSpy).toHaveBeenCalledWith(address.id, data);
+    });
+
+    it('should return success message on successful edit', async() => {
+      // Arrange
+      const data = createMock<EditAddressInputDto>();
+      const address = createMock<AddressDto>();
+      jest.spyOn(sut['addressDao'], 'findById').mockResolvedValue(address);
+      jest.spyOn(sut['addressDao'], 'edit').mockResolvedValue();
+
+      // Act
+      const result = await sut.execute('address-id', false, data);
+
+      // Assert
+      expect(result).toEqual({ message: 'Endereço atualizado com sucesso!' });
     });
   });
 
-  it('should throw an error if main address not found', async() => {
-    const secondaryAddress = await createAddress.execute({
-      zipCode: '12345678',
-      street: 'Rua Secundária',
-      number: '456',
-      neighborhood: 'Bairro Secundário',
-      city: 'Cidade Secundária',
-      state: 'Estado Secundário',
-      ownerId: 'owner-123',
-    }, false);
+  describe('integration tests', () => {
+    it('should throw an error if address not found', async() => {
+      // Arrange
+      const data = createMock<EditAddressInputDto>();
 
-    const data = createMock<EditAddressInputDto>();
-
-    expect.assertions(1);
-    return sut.execute(secondaryAddress.id, true, data).catch((error) => {
-      expect(error).toBeInstanceOf(AddressNotFoundError);
+      // Act & Assert
+      expect.assertions(1);
+      return sut.execute('non-existing-id', true, data).catch((error) => {
+        expect(error).toBeInstanceOf(AddressNotFoundError);
+      });
     });
-  });
 
-  it('should throw an error if secondary address not found', async() => {
-    const mainAddress = await createAddress.execute({
-      zipCode: '12345678',
-      street: 'Rua Principal',
-      number: '123',
-      neighborhood: 'Bairro Principal',
-      city: 'Cidade Principal',
-      state: 'Estado Principal',
-      ownerId: 'owner-123',
-    }, true);
+    it('should throw an error if main address not found', async() => {
+      // Arrange
+      const data = createMock<EditAddressInputDto>();
+      const secondaryAddress = await createAddress.execute({
+        zipCode: '12345678',
+        street: 'Rua Secundária',
+        number: '456',
+        neighborhood: 'Bairro Secundário',
+        city: 'Cidade Secundária',
+        state: 'Estado Secundário',
+        ownerId: 'owner-123',
+        nickname: null,
+        complement: null,
+        reference: null,
+      }, false);
 
-    const data = createMock<EditAddressInputDto>();
-
-    expect.assertions(1);
-    return sut.execute(mainAddress.id, false, data).catch((error) => {
-      expect(error).toBeInstanceOf(AddressNotFoundError);
+      // Act & Assert
+      expect.assertions(1);
+      return sut.execute(secondaryAddress.id, true, data).catch((error) => {
+        expect(error).toBeInstanceOf(AddressNotFoundError);
+      });
     });
-  });
 
-  it.each(
-    [
-      true,
-      false,
-    ]
-  )('should edit address successfully (isMain=%s)', async(isMain: boolean) => {
-    const data: CreateAddressInputDto = {
-      zipCode: '12345678',
-      street: 'Rua Principal',
-      number: '123',
-      neighborhood: 'Bairro Principal',
-      city: 'Cidade Principal',
-      state: 'Estado Principal',
-      ownerId: 'owner-123',
-    };
+    it('should throw an error if secondary address not found', async() => {
+      // Arrange
+      const data = createMock<EditAddressInputDto>();
+      const mainAddress = await createAddress.execute({
+        zipCode: '12345678',
+        street: 'Rua Principal',
+        number: '123',
+        neighborhood: 'Bairro Principal',
+        city: 'Cidade Principal',
+        state: 'Estado Principal',
+        ownerId: 'owner-123',
+        nickname: null,
+        complement: null,
+        reference: null,
+      }, true);
 
-    const mainAddress = await createAddress.execute(data, isMain);
+      // Act & Assert
+      expect.assertions(1);
+      return sut.execute(mainAddress.id, false, data).catch((error) => {
+        expect(error).toBeInstanceOf(AddressNotFoundError);
+      });
+    });
 
-    const dataEdited: EditAddressInputDto = {
-      zipCode: '87654321',
-      street: 'Rua Editada',
-      number: '321',
-      neighborhood: 'Bairro Editado',
-    };
+    it.each(
+      [
+        true,
+        false,
+      ]
+    )('should edit address successfully (isMain=%s)', async(isMain: boolean) => {
+      // Arrange
+      const data: CreateAddressInputDto = {
+        zipCode: '12345678',
+        street: 'Rua Principal',
+        number: '123',
+        neighborhood: 'Bairro Principal',
+        city: 'Cidade Principal',
+        state: 'Estado Principal',
+        ownerId: 'owner-123',
+        nickname: null,
+        complement: null,
+        reference: null,
+      };
+      const mainAddress = await createAddress.execute(data, isMain);
 
-    const result = await sut.execute(mainAddress.id, isMain, dataEdited);
-    expect(result).toEqual({ message: 'Endereço atualizado com sucesso!' });
+      // Act
+      const dataEdited: EditAddressInputDto = {
+        zipCode: '87654321',
+        street: 'Rua Editada',
+        number: '321',
+        neighborhood: 'Bairro Editado',
+      };
+      await sut.execute(mainAddress.id, isMain, dataEdited);
 
-    const updatedAddress = await findAddressById.execute(mainAddress.id, isMain);
-    expect(updatedAddress).toMatchObject({
-      id: mainAddress.id,
-      zipCode: dataEdited.zipCode,
-      street: dataEdited.street,
-      number: dataEdited.number,
-      neighborhood: dataEdited.neighborhood,
-      city: data.city,
-      state: data.state,
-      ownerId: data.ownerId,
-      isMain,
+      // Assert
+      const updatedAddress = await findAddressById.execute(mainAddress.id, isMain);
+      expect(updatedAddress).toMatchObject({
+        id: mainAddress.id,
+        zipCode: dataEdited.zipCode,
+        street: dataEdited.street,
+        number: dataEdited.number,
+        neighborhood: dataEdited.neighborhood,
+        city: data.city,
+        state: data.state,
+        ownerId: data.ownerId,
+        isMain,
+      });
     });
   });
 });

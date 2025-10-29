@@ -9,7 +9,7 @@ import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 export class ClientDaoAdapterPrisma implements IClientDao {
   constructor(private prisma: PrismaService) {}
 
-  public findAll(queries: FindAllClientQueryDto): Promise<[ClientDto[], number]> {
+  public async findAll(queries: FindAllClientQueryDto): Promise<[ClientDto[], number]> {
     const pagination = this.prisma.paginationFactory(queries.page, queries.size);
 
     const where: Prisma.ClientWhereInput = {
@@ -34,19 +34,19 @@ export class ClientDaoAdapterPrisma implements IClientDao {
     ]);
   }
 
-  public findById(id: string): Promise<ClientDto | null> {
+  public async findById(id: string): Promise<ClientDto | null> {
     return this.prisma.client.findUnique({
       where: { id },
     });
   }
 
-  public findByCnpj(cnpj: string): Promise<ClientDto | null> {
+  public async findByCnpj(cnpj: string): Promise<ClientDto | null> {
     return this.prisma.client.findUnique({
       where: { cnpj },
     });
   }
 
-  public findByIe(ie: string): Promise<ClientDto | null> {
+  public async findByIe(ie: string): Promise<ClientDto | null> {
     return this.prisma.client.findUnique({
       where: { ie },
     });

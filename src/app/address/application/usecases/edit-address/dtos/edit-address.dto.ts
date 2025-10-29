@@ -1,4 +1,9 @@
-import { PartialType } from '@nestjs/swagger';
+import { OmitType, PartialType } from '@nestjs/swagger';
 import { CreateAddressInputDto } from '../../create-address/dtos/create-address.dto';
 
-export class EditAddressInputDto extends PartialType(CreateAddressInputDto) {}
+export class EditAddressInputDto extends PartialType(
+  OmitType(CreateAddressInputDto, ['ownerId']),
+  {
+    skipNullProperties: false,
+  }
+) {}

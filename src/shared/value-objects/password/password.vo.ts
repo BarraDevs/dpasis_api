@@ -1,6 +1,9 @@
 import * as bcrypt from 'bcrypt';
 
 export class Password {
+  private readonly saltRounds = 10;
+  private readonly _value: string;
+
   public static compare(plain: string, hash: string): boolean {
     return bcrypt.compareSync(plain, hash);
   }
@@ -12,9 +15,6 @@ export class Password {
   constructor(password: string) {
     this._value = this.hashPassword(password);
   }
-
-  private readonly saltRounds = 10;
-  private readonly _value: string;
 
   private hashPassword(password: string): string {
     const salt = this.generateSalt(this.saltRounds);

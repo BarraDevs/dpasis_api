@@ -35,7 +35,6 @@ async function bootstrap() {
   app.use(compression());
   app.enableCors();
 
-  const port = Number(process.env.PORT) || 10000;
-  await app.listen(port, '0.0.0.0');
+  await app.listen(process.env.PORT as string);
 }
 bootstrap();

@@ -30,12 +30,15 @@ describe('ClientController', () => {
 
   describe('create', () => {
     it('should call createClientService with correct parameters', async() => {
+      // Arrange
       const input = createMock<CreateClientInputDto>();
       const output = createMock<CreateClientOutputDto>();
       const createClientSpy = jest.spyOn(sut['createClientService'], 'execute').mockResolvedValue(output);
 
+      // Act
       const result = await sut.create(input);
 
+      // Assert
       expect(createClientSpy).toHaveBeenCalledWith(input);
       expect(result).toEqual(output);
     });
@@ -43,12 +46,15 @@ describe('ClientController', () => {
 
   describe('findAll', () => {
     it('should call findAllClientService with correct parameters', async() => {
+      // Arrange
       const queries = createMock<Queries>();
       const output = createMock<IPagination<ClientDto>>();
       const findAllClientSpy = jest.spyOn(sut['findAllClientService'], 'execute').mockResolvedValue(output);
 
+      // Act
       const result = await sut.findAll(queries);
 
+      // Assert
       expect(findAllClientSpy).toHaveBeenCalledWith(queries);
       expect(result).toEqual(output);
     });
@@ -56,12 +62,15 @@ describe('ClientController', () => {
 
   describe('findById', () => {
     it('should call findClientByIdService with correct parameters', async() => {
+      // Arrange
       const params = createMock<Params>();
       const output = createMock<ClientDto>();
       const findClientByIdSpy = jest.spyOn(sut['findClientByIdService'], 'execute').mockResolvedValue(output);
 
+      // Act
       const result = await sut.findOne(params);
 
+      // Assert
       expect(findClientByIdSpy).toHaveBeenCalledWith(params.id);
       expect(result).toEqual(output);
     });
@@ -69,13 +78,16 @@ describe('ClientController', () => {
 
   describe('update', () => {
     it('should call editClientService with correct parameters', async() => {
+      // Arrange
       const params = createMock<Params>();
       const body = createMock<CreateClientInputDto>();
       const output = createMock<SuccessMessage>();
       const editClientSpy = jest.spyOn(sut['editClientService'], 'execute').mockResolvedValue(output);
 
+      // Act
       const result = await sut.update(params, body);
 
+      // Assert
       expect(editClientSpy).toHaveBeenCalledWith(params.id, body);
       expect(result).toEqual(output);
     });

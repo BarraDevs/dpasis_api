@@ -10,22 +10,25 @@ import { InvalidCredentialError } from 'src/app/authentication/application/error
 import { ClientNotFoundError } from 'src/app/client/domain/errors/client-not-found';
 import { ClientDuplicateCnpjError } from 'src/app/client/domain/errors/duplicate-cnpj.error';
 import { ClientDuplicateIeError } from 'src/app/client/domain/errors/duplicate-ie.error';
+import { ContactNotFoundError } from 'src/app/contact/domain/errors/contact-not-found.error';
 import { TOKENS } from 'src/core/di/token';
 import { type ILoggerGateway, LogContext } from 'src/infra/logger/logger.gateway';
 import { AppException } from '../app.exception';
 
 @Catch(
-  InvalidCredentialError,
-  InactiveAccountError,
   ForbiddenAccountError,
+  InactiveAccountError,
+  InvalidCredentialError,
+
+  AddressNotFoundError,
+  AddressMainCannotBeDeletedError,
+  AddressMainMustBeOneError,
 
   ClientNotFoundError,
   ClientDuplicateCnpjError,
   ClientDuplicateIeError,
 
-  AddressNotFoundError,
-  AddressMainCannotBeDeletedError,
-  AddressMainMustBeOneError
+  ContactNotFoundError,
 )
 export class HttpExceptionFilter extends BaseExceptionFilter implements ExceptionFilter {
   private readonly SENSITIVE_FIELDS = [

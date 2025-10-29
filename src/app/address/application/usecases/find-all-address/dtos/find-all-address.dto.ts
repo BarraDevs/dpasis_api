@@ -9,7 +9,7 @@ export class FindAllAddressQueryDto extends Queries {
   @Trim()
   ownerId: string;
 
-  // it'll be used internally in the controller to differentiate main and secondary addresses
+  // it'll be used internally in the controllers to differentiate main and secondary addresses
   @ApiHideProperty()
   isMain: boolean;
 }

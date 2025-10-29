@@ -26,50 +26,67 @@ describe('FindAccountByCredential', () => {
   });
 
   afterAll(async() => {
-    await prisma.$disconnect();
+    await prisma.account.deleteMany();
   });
 
   it('should be defined', () => {
     expect(sut).toBeDefined();
   });
 
-  it('should return null if account is not found', async() => {
-    // Arrange
-    const credential = 'non-existing-credential';
+  describe('unit tests', () => {
+    it('should call accountDao.findByCredential with correct values', async() => {
+      // Arrange
+      const credential = 'any-credential';
+      const findByCredentialSpy = jest.spyOn(sut['accountDao'], 'findByCredential');
 
-    // Act
-    const result = await sut.execute(credential);
+      // Act
+      await sut.execute(credential);
 
-    // Assert
-    expect(result).toBeNull();
+      // Assert
+      expect(findByCredentialSpy).toHaveBeenCalledWith(credential);
+    });
   });
 
-  it('should return account if found by credential', async() => {
+  describe('integration tests', () => {
+    it('should return null if account is not found', async() => {
     // Arrange
-    const createdAccount = await prisma.account.create({
-      data: {
-        email: 'jhondoe@email.com',
-        password: 'securepassword',
-        status: AccountStatus.ACTIVE,
-        roles: {
-          create: {
-            role: AccountRole.ADMIN,
-          },
-        },
-      },
+      const credential = 'non-existing-credential';
+
+      // Act
+      const result = await sut.execute(credential);
+
+      // Assert
+      expect(result).toBeNull();
     });
 
-    // Act
-    const result = await sut.execute(createdAccount.email);
+    it('should return account if found by credential', async() => {
+    // Arrange
+      const account = await prisma.account.create({
+        data: {
+          email: 'jhondoe@email.com',
+          password: 'securepassword',
+          status: AccountStatus.ACTIVE,
+          roles: {
+            create: [
+              { role: AccountRole.ADMIN },
+              { role: AccountRole.USER },
+            ],
+          },
+        },
+      });
 
-    // Assert
-    expect(result).toEqual<AccountWithSensitiveDataDto>({
-      id: createdAccount.id,
-      email: createdAccount.email,
-      password: createdAccount.password,
-      passwordResetToken: null,
-      roles: [AccountRole.ADMIN],
-      status: AccountStatus.ACTIVE,
+      // Act
+      const result = await sut.execute(account.email);
+
+      // Assert
+      expect(result).toEqual<AccountWithSensitiveDataDto>({
+        id: account.id,
+        email: account.email,
+        password: account.password,
+        passwordResetToken: null,
+        roles: [AccountRole.ADMIN, AccountRole.USER],
+        status: AccountStatus.ACTIVE,
+      });
     });
   });
 });

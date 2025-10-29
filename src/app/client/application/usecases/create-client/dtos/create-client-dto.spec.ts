@@ -35,8 +35,10 @@ describe('CreateClientInputDto', () => {
         '  ',
       ]
     )(`should throw an error if ${field} is empty (%s)`, async(value: any) => {
+      // Arrange
       const data = { [field]: value };
 
+      // Act & Assert
       expect.assertions(1);
       return target.transform(data, metadata).catch((error) => {
         expect(error.getResponse().message).toContain(`${field} é obrigatório`);
@@ -52,11 +54,24 @@ describe('CreateClientInputDto', () => {
         [],
       ]
     )('should throw an error if %s is not a string (%s)', async(value: any) => {
+      // Arrange
       const data = { [field]: value };
 
+      // Act & Assert
       expect.assertions(1);
       return target.transform(data, metadata).catch((error) => {
         expect(error.getResponse().message).toContain(`${field} deve ser uma string`);
+      });
+    });
+
+    it(`should throw an error if ${field} exceeds maximum length`, async() => {
+      // Arrange
+      const data = { [field]: 'a'.repeat(257) };
+
+      // Act & Assert
+      expect.assertions(1);
+      return target.transform(data, metadata).catch((error) => {
+        expect(error.getResponse().message).toContain(`${field} deve ter no máximo 256 caracteres`);
       });
     });
   });
@@ -74,33 +89,19 @@ describe('CreateClientInputDto', () => {
         '  ',
       ]
     )(`should throw an error if ${field} is empty (%s)`, async(value: any) => {
+      // Arrange
       const data = { [field]: value };
 
+      // Act & Assert
       expect.assertions(1);
       return target.transform(data, metadata).catch((error) => {
         expect(error.getResponse().message).toContain(`${field} é obrigatório`);
       });
     });
-
-    // it.each(
-    //   [
-    //     123,
-    //     'true',
-    //     'false',
-    //     {},
-    //     [],
-    //   ]
-    // )('should throw an error if %s is not boolean (%s)', async(value: any) => {
-    //   const data = { [field]: value };
-
-    //   expect.assertions(1);
-    //   return target.transform(data, metadata).catch((error) => {
-    //     expect(error.getResponse().message).toContain(`${field} deve ser um booleano`);
-    //   });
-    // });
   });
 
   it('should pass if all fields are valid', async() => {
+    // Arrange
     const data = {
       kind: 'kind',
       cnpj: 'cnpj',
@@ -114,8 +115,10 @@ describe('CreateClientInputDto', () => {
       headquarters: 'headquarters',
     };
 
+    // Act
     const result = await target.transform(data, metadata);
 
+    // Assert
     expect(result).toBeInstanceOf(CreateClientInputDto);
     expect(result).toEqual(data);
   });

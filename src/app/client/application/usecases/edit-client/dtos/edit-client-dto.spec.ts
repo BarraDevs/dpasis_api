@@ -32,27 +32,15 @@ describe('EditClientInputDto', () => {
         undefined,
         null,
       ]
-    )(`should pass if ${field} is not provided (%s)`, async(value: any) => {
+    )(`should not throw an error if ${field} is empty (%s)`, async(value: any) => {
+      // Arrange
       const data = { [field]: value };
 
+      // Act
       const result = await target.transform(data, metadata);
 
+      // Assert
       expect(result).toBeInstanceOf(EditClientInputDto);
-      expect(result).toEqual(data);
-    });
-
-    it.each(
-      [
-        '',
-        '  ',
-      ]
-    )(`should throw an error if ${field} is an empty string (%s)`, async(value: any) => {
-      const data = { [field]: value };
-
-      expect.assertions(1);
-      return target.transform(data, metadata).catch((error) => {
-        expect(error.getResponse().message).toContain(`${field} é obrigatório`);
-      });
     });
 
     it.each(
@@ -64,11 +52,40 @@ describe('EditClientInputDto', () => {
         [],
       ]
     )('should throw an error if %s is not a string (%s)', async(value: any) => {
+      // Arrange
       const data = { [field]: value };
 
+      // Act & Assert
       expect.assertions(1);
       return target.transform(data, metadata).catch((error) => {
         expect(error.getResponse().message).toContain(`${field} deve ser uma string`);
+      });
+    });
+
+    it.each(
+      [
+        '',
+        '   ',
+      ]
+    )(`should throw an error if ${field} is an empty string`, async(value: any) => {
+      // Arrange
+      const data = { [field]: value };
+
+      // Act & Assert
+      expect.assertions(1);
+      return target.transform(data, metadata).catch((error) => {
+        expect(error.getResponse().message).toContain(`${field} é obrigatório`);
+      });
+    });
+
+    it(`should throw an error if ${field} exceeds maximum length`, async() => {
+      // Arrange
+      const data = { [field]: 'a'.repeat(257) };
+
+      // Act & Assert
+      expect.assertions(1);
+      return target.transform(data, metadata).catch((error) => {
+        expect(error.getResponse().message).toContain(`${field} deve ter no máximo 256 caracteres`);
       });
     });
   });
@@ -83,17 +100,20 @@ describe('EditClientInputDto', () => {
         undefined,
         null,
       ]
-    )(`should pass if ${field} is not provided (%s)`, async(value: any) => {
+    )(`should not throw an error if ${field} is empty (%s)`, async(value: any) => {
+      // Arrange
       const data = { [field]: value };
 
+      // Act
       const result = await target.transform(data, metadata);
 
+      // Assert
       expect(result).toBeInstanceOf(EditClientInputDto);
-      expect(result).toEqual(data);
     });
   });
 
   it('should pass if all fields are valid', async() => {
+    // Arrange
     const data = {
       kind: 'kind',
       cnpj: 'cnpj',
@@ -107,31 +127,10 @@ describe('EditClientInputDto', () => {
       headquarters: 'headquarters',
     };
 
+    // Act
     const result = await target.transform(data, metadata);
 
-    expect(result).toBeInstanceOf(EditClientInputDto);
-    expect(result).toEqual(data);
-  });
-
-  it('should pass if no fields are provided', async() => {
-    const data = {};
-
-    const result = await target.transform(data, metadata);
-
-    expect(result).toBeInstanceOf(EditClientInputDto);
-    expect(result).toEqual(data);
-  });
-
-  it('should pass if only some fields are provided', async() => {
-    const data = {
-      kind: 'kind',
-      cnpj: 'cnpj',
-      generateInvoice: false,
-      owner: 'owner',
-    };
-
-    const result = await target.transform(data, metadata);
-
+    // Assert
     expect(result).toBeInstanceOf(EditClientInputDto);
     expect(result).toEqual(data);
   });

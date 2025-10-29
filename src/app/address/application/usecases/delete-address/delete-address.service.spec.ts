@@ -37,38 +37,66 @@ describe('DeleteAddress', () => {
     expect(sut).toBeDefined();
   });
 
-  it('should throw an error if address does not exist', async() => {
-    expect.assertions(1);
-    return sut.execute('non-existing-id').catch((error) => {
-      expect(error).toBeInstanceOf(AddressNotFoundError);
+  describe('unit tests', () => {
+    it('should throw an error if address is main', async() => {
+      // Arrange
+      const mainAddress = createMock<AddressDto>({ isMain: true });
+      jest.spyOn(sut['addressDao'], 'findById').mockResolvedValueOnce(mainAddress);
+
+      // Act & Assert
+      expect.assertions(1);
+      return sut.execute('main-address-id').catch((error) => {
+        expect(error).toBeInstanceOf(AddressMainCannotBeDeletedError);
+      });
+    });
+
+    it('should call addressDao with correct values', async() => {
+      // Arrange
+      const address = createMock<AddressDto>({ isMain: false });
+      const findByIdSpy = jest.spyOn(sut['addressDao'], 'findById').mockResolvedValue(address);
+      const deleteSpy = jest.spyOn(sut['addressDao'], 'delete').mockResolvedValue();
+
+      // Act
+      const result = await sut.execute(address.id);
+
+      // Assert
+      expect(findByIdSpy).toHaveBeenCalledWith(address.id, false);
+      expect(deleteSpy).toHaveBeenCalledWith(address.id);
+      expect(result).toEqual({ message: 'Endereço deletado com sucesso!' });
     });
   });
 
-  it('should throw an error if address is main', async() => {
-    const mainAddress = createMock<AddressDto>({ isMain: true });
-    jest.spyOn(sut['addressDao'], 'findById').mockResolvedValueOnce(mainAddress);
-
-    expect.assertions(1);
-    return sut.execute('main-address-id').catch((error) => {
-      expect(error).toBeInstanceOf(AddressMainCannotBeDeletedError);
+  describe('integration tests', () => {
+    it('should throw an error if address does not exist', async() => {
+      // Act & Assert
+      expect.assertions(1);
+      return sut.execute('non-existing-id').catch((error) => {
+        expect(error).toBeInstanceOf(AddressNotFoundError);
+      });
     });
-  });
 
-  it('should delete address successfully', async() => {
-    const address = await createAddress.execute({
-      zipCode: '12345-678',
-      street: 'Rua A',
-      number: '100',
-      neighborhood: 'Bairro B',
-      city: 'Cidade B',
-      state: 'Estado C',
-      ownerId: 'owner-123',
-    }, false);
+    it('should delete address successfully', async() => {
+      // Arrange
+      const address = await createAddress.execute({
+        zipCode: '12345-678',
+        street: 'Rua A',
+        number: '100',
+        neighborhood: 'Bairro B',
+        city: 'Cidade B',
+        state: 'Estado C',
+        ownerId: 'owner-123',
+        nickname: null,
+        complement: null,
+        reference: null,
+      }, false);
 
-    const result = await sut.execute(address.id);
-    expect(result).toEqual({ message: 'Endereço deletado com sucesso!' });
+      // Act
+      const result = await sut.execute(address.id);
 
-    const deletedAddress = await prisma.address.findUnique({ where: { id: address.id } });
-    expect(deletedAddress).toBeNull();
+      // Assert
+      const deletedAddress = await prisma.address.findUnique({ where: { id: address.id } });
+      expect(deletedAddress).toBeNull();
+      expect(result).toEqual({ message: 'Endereço deletado com sucesso!' });
+    });
   });
 });

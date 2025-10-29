@@ -1,15 +1,20 @@
+import { createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AddressModule } from 'src/app/address/address.module';
 import { ConfigModule } from 'src/core/config/config.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
+import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
+import { AddressDto } from '../../dtos/address.dto';
 import { CreateAddress } from '../create-address/create-address.service';
 import { CreateAddressInputDto } from '../create-address/dtos/create-address.dto';
+import { FindAllAddressQueryDto } from './dtos/find-all-address.dto';
 import { FindAllAddress } from './find-all-address.service';
 
 describe('FindAllAddress', () => {
   let sut: FindAllAddress;
   let prisma: PrismaService;
   let createAddress: CreateAddress;
+  let data: CreateAddressInputDto;
 
   beforeEach(async() => {
     const module: TestingModule = await Test.createTestingModule({
@@ -23,6 +28,19 @@ describe('FindAllAddress', () => {
     prisma = module.get(PrismaService);
     createAddress = module.get(CreateAddress);
 
+    data = {
+      zipCode: '12345-678',
+      street: 'Main St',
+      number: '123',
+      complement: 'Apt 4',
+      neighborhood: 'Downtown',
+      city: 'Metropolis',
+      state: 'State',
+      ownerId: 'owner-1',
+      nickname: null,
+      reference: null,
+    };
+
     await prisma.address.deleteMany();
   });
 
@@ -34,25 +52,119 @@ describe('FindAllAddress', () => {
     expect(sut).toBeDefined();
   });
 
-  it('should find all addresses by owner id and is main', async() => {
-    const data: CreateAddressInputDto = {
-      zipCode: '12345-678',
-      street: 'Main St',
-      number: '123',
-      complement: 'Apt 4',
-      neighborhood: 'Downtown',
-      city: 'Metropolis',
-      state: 'State',
-      ownerId: 'owner-1',
-    };
+  describe('unit tests', () => {
+    it('should call addressDao.findAll with correct values', async() => {
+      // Arrange
+      const queries = createMock<FindAllAddressQueryDto>({ page: 1, size: 10 });
+      const findAllSpy = jest.spyOn(sut['addressDao'], 'findAll').mockResolvedValue([[], 0]);
 
-    await createAddress.execute({ ...data }, true);
-    await createAddress.execute({ ...data }, false);
-    await createAddress.execute({ ...data, ownerId: 'owner-2' }, true);
+      // Act
+      await sut.execute(queries);
 
-    const addressesMain = await sut.execute({ ownerId: 'owner-1', isMain: true });
-    expect(addressesMain.data).toHaveLength(1);
-    expect(addressesMain.data[0].isMain).toBe(true);
-    expect(addressesMain.data[0].ownerId).toBe('owner-1');
+      // Assert
+      expect(findAllSpy).toHaveBeenCalledWith(queries);
+    });
+  });
+
+  describe('integration tests', () => {
+    it('should return an empty array when no addresses exist', async() => {
+      // Act
+      const result = await sut.execute({ ownerId: 'non-existent-owner', isMain: true });
+
+      // Assert
+      expect(result).toEqual<IPagination<AddressDto>>({
+        data: [],
+        currentPage: 1,
+        itemsPerPage: 0,
+        totalItems: 0,
+        totalPages: 0,
+      });
+    });
+
+    it('should filter addresses by isMain flag', async() => {
+      // Arrange
+      const isMain = false;
+      const ownerId = 'owner-1';
+
+      const address01 = await createAddress.execute({ ...data, ownerId }, isMain);
+      await createAddress.execute({ ...data, ownerId }, !isMain);
+
+      // Act
+      const result = await sut.execute({ ownerId, isMain });
+
+      // Assert
+      expect(result.data).toHaveLength(1);
+      expect(result.data).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ id: address01.id }),
+        ]),
+      );
+    });
+
+    it('should filter addresses by ownerId', async() => {
+      // Arrange
+      const isMain = false;
+      const ownerId = 'owner-2';
+
+      const address01 = await createAddress.execute({ ...data, ownerId }, isMain);
+      const address02 = await createAddress.execute({ ...data, ownerId }, isMain);
+      await createAddress.execute({ ...data, ownerId: 'owner-3' }, isMain);
+
+      // Act
+      const result = await sut.execute({ ownerId, isMain });
+
+      // Assert
+      expect(result.data).toHaveLength(2);
+      expect(result.data).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ id: address01.id }),
+          expect.objectContaining({ id: address02.id }),
+        ]),
+      );
+    });
+
+    it('should filter addresses by ownerId and isMain flag', async() => {
+      // Arrange
+      const ownerId = 'owner-4';
+
+      const address01 = await createAddress.execute({ ...data, ownerId }, true);
+      await createAddress.execute({ ...data, ownerId }, false);
+      await createAddress.execute({ ...data, ownerId: 'owner-5' }, true);
+
+      // Act
+      const result = await sut.execute({ ownerId, isMain: true });
+
+      // Assert
+      expect(result.data).toHaveLength(1);
+      expect(result.data).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ id: address01.id }),
+        ]),
+      );
+    });
+
+    it('should return paginated addresses', async() => {
+      // Arrange
+      const ownerId = 'owner-6';
+
+      const addresses = [];
+      for (let i = 0; i < 15; i++) {
+        const address = await createAddress.execute({ ...data, ownerId }, false);
+        addresses.push(address);
+      }
+
+      // Act
+      const resultPage1 = await sut.execute({ ownerId, isMain: false, page: 1, size: 10 });
+      const resultPage2 = await sut.execute({ ownerId, isMain: false, page: 2, size: 10 });
+
+      // Assert
+      expect(resultPage1.data).toHaveLength(10);
+      expect(resultPage1.totalItems).toBe(15);
+      expect(resultPage1.totalPages).toBe(2);
+
+      expect(resultPage2.data).toHaveLength(5);
+      expect(resultPage2.totalItems).toBe(15);
+      expect(resultPage2.totalPages).toBe(2);
+    });
   });
 });

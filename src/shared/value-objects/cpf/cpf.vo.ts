@@ -1,8 +1,7 @@
 import { InvalidCpfError } from './cpf.error';
 
-const CPF_LENGTH = 11;
-
 export class CPF {
+  private readonly LENGTH = 11;
   private readonly _value: string;
 
   public get value(): string {
@@ -24,7 +23,7 @@ export class CPF {
 
   private validate(cpf: string): boolean {
     if (!cpf) return false;
-    if (cpf.length !== CPF_LENGTH) return false;
+    if (cpf.length !== this.LENGTH) return false;
     if (this.allDigitsAreEqual(cpf)) return false;
 
     const firstDigit = this.calculateDigit(cpf, 9);

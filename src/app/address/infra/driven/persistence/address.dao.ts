@@ -44,9 +44,9 @@ export class AddressDaoAdapterPrisma implements IAddressDao {
     });
   }
 
-  public async findMainAddress(id: string): Promise<AddressDto | null> {
+  public async findMainAddress(ownerId: string): Promise<AddressDto | null> {
     return this.prisma.address.findFirst({
-      where: { ownerId: id, isMain: true },
+      where: { ownerId, isMain: true },
     });
   }
 

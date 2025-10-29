@@ -3,9 +3,8 @@ import { InvalidExpirationTimeError } from './code.error';
 export class Code {
   private readonly SECONDS_IN_A_MINUTE = 60;
   private readonly MILISECONDS_IN_A_SECOND = 1000;
-
-  private _value: string;
-  private _expiresIn: number;
+  private readonly _value: string;
+  private readonly _expiresIn: number;
 
   public get value(): { code: string; expiresIn: number } {
     return {

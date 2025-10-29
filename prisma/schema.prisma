@@ -29,8 +29,8 @@ model Role {
 
 model Admin {
   accountId String   @unique
-  name      String
-  document  String   @unique
+  name      String   @db.VarChar(256)
+  document  String   @unique @db.VarChar(256)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   role      Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
@@ -41,16 +41,16 @@ model Admin {
 
 model Client {
   id              String   @unique @default(uuid())
-  kind            String
-  cnpj            String   @unique
-  ie              String   @unique
-  group           String
-  type            String
+  kind            String   @db.VarChar(256)
+  cnpj            String   @unique @db.VarChar(256)
+  ie              String   @unique @db.VarChar(256)
+  group           String   @db.VarChar(256)
+  type            String   @db.VarChar(256)
+  companyName     String   @db.VarChar(256)
+  fantasyName     String   @db.VarChar(256)
+  owner           String   @db.VarChar(256)
+  headquarters    String   @db.VarChar(256)
   generateInvoice Boolean
-  companyName     String
-  fantasyName     String
-  owner           String
-  headquarters    String
   active          Boolean
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -59,18 +59,31 @@ model Client {
 model Address {
   id           String   @id @default(uuid())
   isMain       Boolean
-  nickname     String?
-  zipCode      String
-  street       String
-  number       String
-  complement   String?
-  reference    String?
-  neighborhood String
-  city         String
-  state        String
-  ownerId      String
+  nickname     String?  @db.VarChar(256)
+  zipCode      String   @db.VarChar(256)
+  street       String   @db.VarChar(512)
+  number       String   @db.VarChar(256)
+  complement   String?  @db.VarChar(256)
+  reference    String?  @db.VarChar(256)
+  neighborhood String   @db.VarChar(256)
+  city         String   @db.VarChar(256)
+  state        String   @db.VarChar(256)
+  ownerId      String   @db.VarChar(256)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+model Contact {
+  id         String   @id @default(uuid())
+  name       String   @db.VarChar(256)
+  department String   @db.VarChar(256)
+  email      String   @db.VarChar(256)
+  phone      String   @db.VarChar(256)
+  whatsapp   String   @db.VarChar(256)
+  info       String?  @db.Text
+  ownerId    String   @db.VarChar(256)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 model Faq {

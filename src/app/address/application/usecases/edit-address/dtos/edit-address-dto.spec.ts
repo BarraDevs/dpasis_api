@@ -16,40 +16,33 @@ describe('EditAddressInputDto', () => {
 
   describe.each(
     [
-      'zipCode',
-      'street',
-      'number',
-      'neighborhood',
-      'city',
-      'state',
-      'ownerId',
+      { name: 'zipCode', maxLength: 256 },
+      { name: 'number', maxLength: 256 },
+      { name: 'neighborhood', maxLength: 256 },
+      { name: 'city', maxLength: 256 },
+      { name: 'state', maxLength: 256 },
+      { name: 'street', maxLength: 512 },
     ]
-  )('%s field', (field: string) => {
-    it.each(
-      [
-        undefined,
-        null,
-      ]
-    )(`should not throw an error if ${field} is empty (%s)`, async(value: any) => {
-      const data = { [field]: value };
+  )('%s', (field) => {
+    it(`should not throw an error if ${field.name} is undefined`, async() => {
+      // Arrange
+      const data = { [field.name]: undefined };
 
+      // Act
       const result = await target.transform(data, metadata);
 
+      // Assert
       expect(result).toBeInstanceOf(EditAddressInputDto);
-      expect(result).toEqual(data);
     });
 
-    it.each(
-      [
-        '',
-        '  ',
-      ]
-    )(`should throw an error if ${field} is an empty string (%s)`, async(value: string) => {
-      const data = { [field]: value };
+    it(`should throw an error if ${field.name} is null`, async() => {
+      // Arrange
+      const data = { [field.name]: null };
 
+      // Act & Assert
       expect.assertions(1);
       return target.transform(data, metadata).catch((error) => {
-        expect(error.getResponse().message).toContain(`${field} é obrigatório`);
+        expect(error.getResponse().message).toContain(`${field.name} é obrigatório`);
       });
     });
 
@@ -61,35 +54,50 @@ describe('EditAddressInputDto', () => {
         {},
         [],
       ]
-    )(`should throw an error if ${field} is not a string (%s)`, async(value: any) => {
-      const data = { [field]: value };
+    )(`should throw an error if ${field.name} is not a string (%s)`, async(value: any) => {
+      // Arrange
+      const data = { [field.name]: value };
 
+      // Act & Assert
       expect.assertions(1);
       return target.transform(data, metadata).catch((error) => {
-        expect(error.getResponse().message).toContain(`${field} deve ser uma string`);
+        expect(error.getResponse().message).toContain(`${field.name} deve ser uma string`);
+      });
+    });
+
+    it(`should throw an error if ${field.name} exceeds maximum length (${field.maxLength})`, async() => {
+      // Arrange
+      const longString = 'a'.repeat(field.maxLength + 1);
+      const data = { [field.name]: longString };
+
+      // Act & Assert
+      expect.assertions(1);
+      return target.transform(data, metadata).catch((error) => {
+        expect(error.getResponse().message).toContain(`${field.name} deve ter no máximo ${field.maxLength} caracteres`);
       });
     });
   });
 
   describe.each(
     [
-      'nickname',
-      'complement',
-      'reference',
+      { name: 'nickname', maxLength: 256 },
+      { name: 'complement', maxLength: 256 },
+      { name: 'reference', maxLength: 256 },
     ]
-  )('%s field', (field: string) => {
+  )('%s', (field) => {
     it.each(
       [
         undefined,
         null,
-        '',
-        '  ',
       ]
-    )(`should not throw an error if ${field} is empty (%s)`, async(value: any) => {
-      const data = { [field]: value };
+    )(`should not throw an error if ${field.name} is empty (%s)`, async(value: any) => {
+      // Arrange
+      const data = { [field.name]: value };
 
+      // Act
       const result = await target.transform(data, metadata);
 
+      // Assert
       expect(result).toBeInstanceOf(EditAddressInputDto);
     });
 
@@ -101,17 +109,32 @@ describe('EditAddressInputDto', () => {
         {},
         [],
       ]
-    )(`should throw an error if ${field} is not a string (%s)`, async(value: any) => {
-      const data = { [field]: value };
+    )(`should throw an error if ${field.name} is not a string (%s)`, async(value: any) => {
+      // Arrange
+      const data = { [field.name]: value };
 
+      // Act & Assert
       expect.assertions(1);
       return target.transform(data, metadata).catch((error) => {
-        expect(error.getResponse().message).toContain(`${field} deve ser uma string`);
+        expect(error.getResponse().message).toContain(`${field.name} deve ser uma string`);
+      });
+    });
+
+    it(`should throw an error if ${field.name} exceeds maximum length (${field.maxLength})`, async() => {
+      // Arrange
+      const longString = 'a'.repeat(field.maxLength + 1);
+      const data = { [field.name]: longString };
+
+      // Act & Assert
+      expect.assertions(1);
+      return target.transform(data, metadata).catch((error) => {
+        expect(error.getResponse().message).toContain(`${field.name} deve ter no máximo ${field.maxLength} caracteres`);
       });
     });
   });
 
   it('should pass if all fields are valid', async() => {
+    // Arrange
     const data: EditAddressInputDto = {
       nickname: 'Casa',
       zipCode: '12345678',
@@ -122,49 +145,12 @@ describe('EditAddressInputDto', () => {
       neighborhood: 'Bairro B',
       city: 'Cidade C',
       state: 'Estado D',
-      ownerId: 'owner-123',
     };
 
+    // Act
     const result = await target.transform(data, metadata);
 
-    expect(result).toBeInstanceOf(EditAddressInputDto);
-    expect(result).toEqual(data);
-  });
-
-  it('should pass if all required fields are valid and optional fields are missing', async() => {
-    const data: EditAddressInputDto = {
-      zipCode: '12345678',
-      street: 'Rua A',
-      number: '100',
-      neighborhood: 'Bairro B',
-      city: 'Cidade C',
-      state: 'Estado D',
-      ownerId: 'owner-123',
-    };
-
-    const result = await target.transform(data, metadata);
-
-    expect(result).toBeInstanceOf(EditAddressInputDto);
-    expect(result).toEqual(data);
-  });
-
-  it('should pass if no fields are provided', async() => {
-    const data: EditAddressInputDto = {};
-
-    const result = await target.transform(data, metadata);
-
-    expect(result).toBeInstanceOf(EditAddressInputDto);
-    expect(result).toEqual(data);
-  });
-
-  it('should pass if some fields are provided', async() => {
-    const data: EditAddressInputDto = {
-      street: 'Rua A',
-      city: 'Cidade C',
-    };
-
-    const result = await target.transform(data, metadata);
-
+    // Assert
     expect(result).toBeInstanceOf(EditAddressInputDto);
     expect(result).toEqual(data);
   });

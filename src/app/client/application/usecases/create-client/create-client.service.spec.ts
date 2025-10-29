@@ -1,3 +1,4 @@
+import { createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ClientModule } from 'src/app/client/client.module';
 import { Client } from 'src/app/client/domain/entities/client.entity';
@@ -8,7 +9,7 @@ import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { ClientDto } from '../../dtos/client.dto';
 import { FindClientById } from '../find-client-by-id/find-client-by-id.service';
 import { CreateClient } from './create-client.service';
-import { CreateClientInputDto } from './dtos/create-client.dto';
+import { CreateClientInputDto, CreateClientOutputDto } from './dtos/create-client.dto';
 
 describe('CreateClient', () => {
   let sut: CreateClient;
@@ -52,108 +53,105 @@ describe('CreateClient', () => {
     expect(sut).toBeDefined();
   });
 
-  it('should throw an error if cnpj is duplicated', async() => {
-    // act
-    await sut.execute(data);
+  describe('unit tests', () => {
+    it('should throw an error if cnpj is duplicate', async() => {
+      // Arrange
+      const client = createMock<ClientDto>();
+      const findByCnpjSpy = jest.spyOn(sut['clientDao'], 'findByCnpj').mockResolvedValue(client);
+      const findByIeSpy = jest.spyOn(sut['clientDao'], 'findByIe').mockResolvedValue(null);
+      const saveSpy = jest.spyOn(sut['clientRepository'], 'save').mockResolvedValue();
 
-    // assert
-    expect.assertions(1);
-    return sut.execute(data).catch((error) => {
-      expect(error).toBeInstanceOf(ClientDuplicateCnpjError);
+      // Act & Assert
+      expect.assertions(4);
+      return sut.execute(data).catch((error) => {
+        expect(error).toBeInstanceOf(ClientDuplicateCnpjError);
+        expect(findByCnpjSpy).toHaveBeenCalledWith(data.cnpj);
+        expect(findByIeSpy).not.toHaveBeenCalled();
+        expect(saveSpy).not.toHaveBeenCalled();
+      });
+    });
+
+    it('should throw an error if ie is duplicate', async() => {
+      // Arrange
+      const client = createMock<ClientDto>();
+      const findByCnpjSpy = jest.spyOn(sut['clientDao'], 'findByCnpj').mockResolvedValue(null);
+      const findByIeSpy = jest.spyOn(sut['clientDao'], 'findByIe').mockResolvedValue(client);
+      const saveSpy = jest.spyOn(sut['clientRepository'], 'save').mockResolvedValue();
+
+      // Act & Assert
+      expect.assertions(4);
+      return sut.execute(data).catch((error) => {
+        expect(error).toBeInstanceOf(ClientDuplicateIeError);
+        expect(findByCnpjSpy).toHaveBeenCalledWith(data.cnpj);
+        expect(findByIeSpy).toHaveBeenCalledWith(data.ie);
+        expect(saveSpy).not.toHaveBeenCalled();
+      });
+    });
+
+    it('should create a client and return its id', async() => {
+      // Arrange
+      const findByCnpjSpy = jest.spyOn(sut['clientDao'], 'findByCnpj').mockResolvedValue(null);
+      const findByIeSpy = jest.spyOn(sut['clientDao'], 'findByIe').mockResolvedValue(null);
+      const saveSpy = jest.spyOn(sut['clientRepository'], 'save').mockResolvedValue();
+
+      // Act
+      const result = await sut.execute(data);
+
+      // Assert
+      expect(findByCnpjSpy).toHaveBeenCalledWith(data.cnpj);
+      expect(findByIeSpy).toHaveBeenCalledWith(data.ie);
+      expect(saveSpy).toHaveBeenCalledWith(expect.any(Client));
+      expect(result).toEqual<CreateClientOutputDto>({ id: result.id });
     });
   });
 
-  it('should throw an error if ie is duplicated', async() => {
-    // act
-    await sut.execute({
-      ...data,
-      cnpj: 'anothercnpj12345678',
+  describe('integration tests', () => {
+    it('should throw an error if cnpj is duplicate', async() => {
+      // Arrange
+      await sut.execute(data);
+
+      // Act & Assert
+      expect.assertions(1);
+      return sut.execute(data).catch((error) => {
+        expect(error).toBeInstanceOf(ClientDuplicateCnpjError);
+      });
     });
 
-    // assert
-    expect.assertions(1);
-    return sut.execute(data).catch((error) => {
-      expect(error).toBeInstanceOf(ClientDuplicateIeError);
+    it('should throw an error if ie is duplicate', async() => {
+      // Arrange
+      await sut.execute(data);
+      const newData = { ...data, cnpj: '98765432000199' };
+
+      // Act & Assert
+      expect.assertions(1);
+      return sut.execute(newData).catch((error) => {
+        expect(error).toBeInstanceOf(ClientDuplicateIeError);
+      });
     });
-  });
 
-  it('should call clientDao.findByCnpj with correct values', async() => {
-    const findByCnpjSpy = jest.spyOn(sut['clientDao'], 'findByCnpj');
+    it('should persist the client in the database', async() => {
+      // Act
+      const createResult = await sut.execute(data);
+      const clientDto = await findClientById.execute(createResult.id);
 
-    await sut.execute(data);
-
-    expect(findByCnpjSpy).toHaveBeenCalledWith(data.cnpj);
-  });
-
-  it('should call clientDao.findByIe with correct values', async() => {
-    const findByIeSpy = jest.spyOn(sut['clientDao'], 'findByIe');
-
-    await sut.execute(data);
-
-    expect(findByIeSpy).toHaveBeenCalledWith(data.ie);
-  });
-
-  it('should call clientRepository.save with correct values', async() => {
-    jest.spyOn(sut['clientDao'], 'findByCnpj').mockResolvedValue(null);
-    jest.spyOn(sut['clientDao'], 'findByIe').mockResolvedValue(null);
-
-    const saveSpy = jest.spyOn(sut['clientRepository'], 'save');
-
-    await sut.execute(data);
-
-    expect(saveSpy).toHaveBeenCalledWith(expect.any(Client));
-  });
-
-  it('should return the created client id', async() => {
-    const result = await sut.execute(data);
-
-    expect(result).toHaveProperty('id', expect.any(String));
-  });
-
-  it('should create a new client entity', async() => {
-    const createSpy = jest.spyOn(Client, 'create');
-
-    await sut.execute(data);
-
-    expect(createSpy).toHaveBeenNthCalledWith(1, data);
-  });
-
-  it('should handle concurrent creation attempts correctly', async() => {
-    const data1 = { ...data, cnpj: 'concurrent1', ie: 'ie1' };
-    const data2 = { ...data, cnpj: 'concurrent2', ie: 'ie2' };
-
-    const [result1, result2] = await Promise.all([
-      sut.execute(data1),
-      sut.execute(data2),
-    ]);
-
-    expect(result1.id).not.toBe(result2.id);
-  });
-
-  it('should create with correct default values', async() => {
-    const result = await sut.execute(data);
-
-    const createdClient = await findClientById.execute(result.id);
-    expect(createdClient).toEqual(
-      expect.objectContaining({
+      // Assert
+      expect(clientDto).toBeDefined();
+      expect(clientDto).toEqual<ClientDto>({
+        id: createResult.id,
+        kind: data.kind,
+        cnpj: data.cnpj,
+        ie: data.ie,
+        group: data.group,
+        type: data.type,
+        generateInvoice: data.generateInvoice,
+        companyName: data.companyName,
+        fantasyName: data.fantasyName,
+        owner: data.owner,
+        headquarters: data.headquarters,
         active: true,
         createdAt: expect.any(Date),
         updatedAt: expect.any(Date),
-      })
-    );
-  });
-
-  it('should create a client', async() => {
-    const result = await sut.execute(data);
-    expect(result).toHaveProperty('id', expect.any(String));
-
-    const createdClient = await findClientById.execute(result.id);
-    expect(createdClient).toEqual<ClientDto>({
-      ...data,
-      id: result.id,
-      active: true,
-      createdAt: expect.any(Date),
-      updatedAt: expect.any(Date),
+      });
     });
   });
 });

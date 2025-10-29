@@ -28,7 +28,7 @@ describe('AuthenticationGuard', () => {
       imports: [AuthenticationGuardsModule],
     }).compile();
 
-    guard = module.get<AuthenticationGuard>(AuthenticationGuard);
+    guard = module.get(AuthenticationGuard);
   });
 
   afterEach(() => {

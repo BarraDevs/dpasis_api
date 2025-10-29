@@ -31,53 +31,65 @@ describe('FindClientById', () => {
     expect(sut).toBeDefined();
   });
 
-  it('should call clientDao with correct arguments', async() => {
-    const id = 'client-id';
-    const clientDaoSpy = jest.spyOn(sut['clientDao'], 'findById');
+  describe('unit tests', () => {
+    it('should call clientDao with correct arguments', async() => {
+      // Arrange
+      const id = 'client-id';
+      const clientDaoSpy = jest.spyOn(sut['clientDao'], 'findById');
 
-    await sut.execute(id);
+      // Act
+      await sut.execute(id);
 
-    expect(clientDaoSpy).toHaveBeenNthCalledWith(1, id);
+      // Assert
+      expect(clientDaoSpy).toHaveBeenNthCalledWith(1, id);
+    });
   });
 
-  it('should return null if client is not found', async() => {
-    const result = await sut.execute('id');
+  describe('integration tests', () => {
+    it('should return null if client is not found', async() => {
+      // Act
+      const result = await sut.execute('id');
 
-    expect(result).toBeNull();
-  });
+      // Assert
+      expect(result).toBeNull();
+    });
 
-  it('should return correct dto when client is found', async() => {
-    const data: CreateClientInputDto = {
-      kind: 'individual',
-      cnpj: '12345678000199',
-      ie: '123456789',
-      group: 'default',
-      type: 'customer',
-      generateInvoice: true,
-      companyName: 'John Doe Ltda',
-      fantasyName: 'John Doe',
-      owner: 'John Doe',
-      headquarters: '123 Main St, City, State, ZIP',
-    };
-    const createdClient = await createClient.execute(data);
+    it('should return correct dto when client is found', async() => {
+      // Arrange
+      const data: CreateClientInputDto = {
+        kind: 'individual',
+        cnpj: '12345678000199',
+        ie: '123456789',
+        group: 'default',
+        type: 'customer',
+        generateInvoice: true,
+        companyName: 'John Doe Ltda',
+        fantasyName: 'John Doe',
+        owner: 'John Doe',
+        headquarters: '123 Main St, City, State, ZIP',
+      };
+      const createdClient = await createClient.execute(data);
 
-    const result = await sut.execute(createdClient.id);
+      // Act
+      const result = await sut.execute(createdClient.id);
 
-    expect(result).toEqual<ClientDto>({
-      id: createdClient.id,
-      kind: data.kind,
-      cnpj: data.cnpj,
-      ie: data.ie,
-      group: data.group,
-      type: data.type,
-      generateInvoice: data.generateInvoice,
-      companyName: data.companyName,
-      fantasyName: data.fantasyName,
-      owner: data.owner,
-      headquarters: data.headquarters,
-      active: true,
-      createdAt: expect.any(Date),
-      updatedAt: expect.any(Date),
+      // Assert
+      expect(result).toEqual<ClientDto>({
+        id: createdClient.id,
+        kind: data.kind,
+        cnpj: data.cnpj,
+        ie: data.ie,
+        group: data.group,
+        type: data.type,
+        generateInvoice: data.generateInvoice,
+        companyName: data.companyName,
+        fantasyName: data.fantasyName,
+        owner: data.owner,
+        headquarters: data.headquarters,
+        active: true,
+        createdAt: expect.any(Date),
+        updatedAt: expect.any(Date),
+      });
     });
   });
 });
