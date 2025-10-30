@@ -23,13 +23,7 @@ export class LicenseDaoAdapterPrisma implements ILicenseDao {
     const pagination = this.prisma.paginationFactory(queries.page, queries.size);
 
     const where: Prisma.LicenseWhereInput = {
-      AND: [
-        {
-          OR: [
-            { field: { contains: queries.search } },
-          ],
-        },
-      ],
+      license: { contains: queries.search, mode: 'insensitive' },
     };
 
     return this.prisma.$transaction([

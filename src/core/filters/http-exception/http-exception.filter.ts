@@ -11,8 +11,10 @@ import { ClientNotFoundError } from 'src/app/client/domain/errors/client-not-fou
 import { ClientDuplicateCnpjError } from 'src/app/client/domain/errors/duplicate-cnpj.error';
 import { ClientDuplicateIeError } from 'src/app/client/domain/errors/duplicate-ie.error';
 import { ContactNotFoundError } from 'src/app/contact/domain/errors/contact-not-found.error';
+import { LicenseNotFoundError } from 'src/app/license/domain/errors/license-not-found.error';
 import { TOKENS } from 'src/core/di/token';
 import { type ILoggerGateway, LogContext } from 'src/infra/logger/logger.gateway';
+import { InvalidDateError, InvalidDaysQuantityError, InvalidMonthsQuantityError } from 'src/shared/value-objects/utc-date/utc-date.error';
 import { AppException } from '../app.exception';
 
 @Catch(
@@ -29,6 +31,13 @@ import { AppException } from '../app.exception';
   ClientDuplicateIeError,
 
   ContactNotFoundError,
+
+  LicenseNotFoundError,
+
+
+  InvalidDateError,
+  InvalidDaysQuantityError,
+  InvalidMonthsQuantityError,
 )
 export class HttpExceptionFilter extends BaseExceptionFilter implements ExceptionFilter {
   private readonly SENSITIVE_FIELDS = [
