@@ -4,6 +4,7 @@ import { Request, Response } from 'express';
 import { AddressMainCannotBeDeletedError } from 'src/app/address/domain/errors/address-main-cannot-be-deleted.error';
 import { AddressMainMustBeOneError } from 'src/app/address/domain/errors/address-main-must-be-one.error';
 import { AddressNotFoundError } from 'src/app/address/domain/errors/address-not-found.error';
+import { AttachmentNotFoundError } from 'src/app/attachment/domain/errors/attachment-not-found.error';
 import { ForbiddenAccountError } from 'src/app/authentication/application/errors/forbidden-account.error';
 import { InactiveAccountError } from 'src/app/authentication/application/errors/inactive-account.error';
 import { InvalidCredentialError } from 'src/app/authentication/application/errors/invalid-credential.error';
@@ -21,6 +22,8 @@ import { AppException } from '../app.exception';
   ForbiddenAccountError,
   InactiveAccountError,
   InvalidCredentialError,
+
+  AttachmentNotFoundError,
 
   AddressNotFoundError,
   AddressMainCannotBeDeletedError,

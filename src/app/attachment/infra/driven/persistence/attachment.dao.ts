@@ -15,7 +15,6 @@ export class AttachmentDaoAdapterPrisma implements IAttachmentDao {
     const result = await this.prisma.attachment.create({
       data,
     });
-
     return result.id;
   }
 
@@ -23,13 +22,8 @@ export class AttachmentDaoAdapterPrisma implements IAttachmentDao {
     const pagination = this.prisma.paginationFactory(queries.page, queries.size);
 
     const where: Prisma.AttachmentWhereInput = {
-      AND: [
-        {
-          OR: [
-            { field: { contains: queries.search } },
-          ],
-        },
-      ],
+      ownerId: queries.ownerId, // Filtrando por ownerId (obrigatório pelo DTO)
+      link: queries.search ? { contains: queries.search, mode: 'insensitive' } : undefined, // Busca opcional no link
     };
 
     return this.prisma.$transaction([
@@ -52,7 +46,7 @@ export class AttachmentDaoAdapterPrisma implements IAttachmentDao {
   public async edit(id: string, data: EditAttachmentInputDto): Promise<void> {
     await this.prisma.attachment.update({
       where: { id },
-      data,
+      data, // ownerId não está incluído aqui devido ao OmitType no DTO
     });
   }
 
