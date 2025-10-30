@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
 import { RequiredRoles } from 'src/app/authentication/infra/decorators/required-role.decorator';
 import { ClientDto } from 'src/app/client/application/dtos/client.dto';
 import { CreateClient } from 'src/app/client/application/usecases/create-client/create-client.service';
@@ -14,7 +15,7 @@ import { Params } from 'src/infra/validators/class-*/dtos/params/params.dto';
 import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
 
 @Controller('client')
-@RequiredRoles()
+@RequiredRoles(AccountRole.ADMIN)
 export class ClientController {
   constructor(
     private readonly createClientService: CreateClient,

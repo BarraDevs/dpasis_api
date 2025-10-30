@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
 import { AddressDto } from 'src/app/address/application/dtos/address.dto';
 import { CreateAddress } from 'src/app/address/application/usecases/create-address/create-address.service';
 import { CreateAddressInputDto, CreateAddressOutputDto } from 'src/app/address/application/usecases/create-address/dtos/create-address.dto';
@@ -11,7 +12,7 @@ import { Swagger } from 'src/infra/openapi/swagger';
 import { Params } from 'src/infra/validators/class-*/dtos/params/params.dto';
 
 @Controller('address/main')
-@RequiredRoles()
+@RequiredRoles(AccountRole.ADMIN)
 export class AddressMainController {
   private readonly IS_MAIN = true;
 

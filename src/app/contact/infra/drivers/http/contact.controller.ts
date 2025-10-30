@@ -1,4 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
+import { RequiredRoles } from 'src/app/authentication/infra/decorators/required-role.decorator';
 import { ContactDto } from 'src/app/contact/application/dtos/contact.dto';
 import { CreateContact } from 'src/app/contact/application/usecases/create-contact/create-contact.service';
 import { CreateContactInputDto, CreateContactOutputDto } from 'src/app/contact/application/usecases/create-contact/dtos/create-contact.dto';
@@ -14,6 +16,7 @@ import { Params } from 'src/infra/validators/class-*/dtos/params/params.dto';
 import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
 
 @Controller('contact')
+@RequiredRoles(AccountRole.ADMIN)
 export class ContactController {
   constructor(
     private readonly createContactService: CreateContact,
