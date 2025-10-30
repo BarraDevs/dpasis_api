@@ -77,7 +77,7 @@ describe('LicenseDaoAdapterPrisma', () => {
 
     it('should return all licenses with count when no query provided', async() => {
       // Act
-      const [licenses, total] = await sut.findAll({});
+      const [licenses, total] = await sut.findAll({ ownerId: 'owner-1' });
 
       // Assert
       expect(total).toBe(5);
@@ -86,7 +86,7 @@ describe('LicenseDaoAdapterPrisma', () => {
 
     it('should return paginated licenses', async() => {
       // Act
-      const [licenses, total] = await sut.findAll({ page: 2, size: 2 });
+      const [licenses, total] = await sut.findAll({ ownerId: 'owner-1', page: 2, size: 2 });
 
       // Assert
       expect(total).toBe(5);
@@ -96,7 +96,7 @@ describe('LicenseDaoAdapterPrisma', () => {
 
     it('should filter licenses by search term (case-insensitive)', async() => {
       // Act
-      const [licenses, total] = await sut.findAll({ search: 'test' });
+      const [licenses, total] = await sut.findAll({ ownerId: 'owner-1', search: 'test' });
 
       // Assert
       expect(total).toBe(3);
@@ -106,7 +106,7 @@ describe('LicenseDaoAdapterPrisma', () => {
 
     it('should return paginated and filtered licenses', async() => {
       // Act
-      const [licenses, total] = await sut.findAll({ search: 'license', page: 1, size: 2 });
+      const [licenses, total] = await sut.findAll({ ownerId: 'owner-1', search: 'license', page: 1, size: 2 });
 
       // Assert
       expect(total).toBe(3); // Alpha, Beta, Delta

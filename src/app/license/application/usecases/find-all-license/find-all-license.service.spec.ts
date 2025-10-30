@@ -55,7 +55,8 @@ describe('FindAllLicense', () => {
   describe('integration tests', () => {
     it('should return an empty pagination object when no licenses exist', async() => {
       // Act
-      const result = await sut.execute({});
+      const ownerId = 'owner-123';
+      const result = await sut.execute({ ownerId });
 
       // Assert
       expect(result).toEqual<IPagination<LicenseDto>>({
@@ -69,11 +70,12 @@ describe('FindAllLicense', () => {
 
     it('should return all licenses when no queries are provided', async() => {
       // Arrange
-      const lic1 = await createLicense.execute({ paymentDay: 5, bonusInCents: 100, billingStartDate: new Date('2024-01-01'), license: 'Basic', ownerId: 'ow1' });
-      const lic2 = await createLicense.execute({ paymentDay: 15, bonusInCents: 200, billingStartDate: new Date('2024-02-01'), license: 'Pro', ownerId: 'ow1' });
+      const ownerId = 'owner-123';
+      const lic1 = await createLicense.execute({ paymentDay: 5, bonusInCents: 100, billingStartDate: new Date('2024-01-01'), license: 'Basic', ownerId });
+      const lic2 = await createLicense.execute({ paymentDay: 15, bonusInCents: 200, billingStartDate: new Date('2024-02-01'), license: 'Pro', ownerId });
 
       // Act
-      const result = await sut.execute({});
+      const result = await sut.execute({ ownerId });
 
       // Assert
       expect(result.totalItems).toBe(2);
@@ -88,19 +90,20 @@ describe('FindAllLicense', () => {
 
     it('should return paginated licenses', async() => {
       // Arrange
+      const ownerId = 'owner-1';
       for (let i = 1; i <= 15; i++) {
         await createLicense.execute({
           paymentDay: i,
           bonusInCents: i * 100,
           billingStartDate: new Date(`2024-01-${i < 10 ? '0' : ''}${i}`),
           license: `License ${i}`,
-          ownerId: `ow${i}`,
+          ownerId,
         });
       }
 
       // Act
-      const resultPage1 = await sut.execute({ page: 1, size: 10 });
-      const resultPage2 = await sut.execute({ page: 2, size: 10 });
+      const resultPage1 = await sut.execute({ page: 1, size: 10, ownerId });
+      const resultPage2 = await sut.execute({ page: 2, size: 10, ownerId });
 
       // Assert
       expect(resultPage1.data).toHaveLength(10);
@@ -116,13 +119,14 @@ describe('FindAllLicense', () => {
 
     it('should return licenses filtered by search term (case-insensitive)', async() => {
       // Arrange
-      const lic1 = await createLicense.execute({ paymentDay: 5, bonusInCents: 100, billingStartDate: new Date('2024-01-01'), license: 'Alpha License', ownerId: 'owner-1' });
-      await createLicense.execute({ paymentDay: 15, bonusInCents: 200, billingStartDate: new Date('2024-02-01'), license: 'Beta Package', ownerId: 'owner-1' });
-      const lic3 = await createLicense.execute({ paymentDay: 25, bonusInCents: 300, billingStartDate: new Date('2024-03-01'), license: 'Gamma alpha license', ownerId: 'owner-1' });
+      const ownerId = 'owner-1';
+      const lic1 = await createLicense.execute({ paymentDay: 5, bonusInCents: 100, billingStartDate: new Date('2024-01-01'), license: 'Alpha License', ownerId });
+      await createLicense.execute({ paymentDay: 15, bonusInCents: 200, billingStartDate: new Date('2024-02-01'), license: 'Beta Package', ownerId });
+      const lic3 = await createLicense.execute({ paymentDay: 25, bonusInCents: 300, billingStartDate: new Date('2024-03-01'), license: 'Gamma alpha license', ownerId });
 
 
       // Act
-      const result = await sut.execute({ search: 'alpha' });
+      const result = await sut.execute({ search: 'alpha', ownerId });
 
       // Assert
       expect(result.totalItems).toBe(2);
