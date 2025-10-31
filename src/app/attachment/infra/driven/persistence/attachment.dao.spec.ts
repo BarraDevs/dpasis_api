@@ -1,4 +1,5 @@
 import { Test } from '@nestjs/testing';
+import { Owner } from '@prisma/client';
 import { AttachmentPersistenceModule } from 'src/app/attachment/application/persistence/attachment-persistence.module';
 import { CreateAttachmentInputDto } from 'src/app/attachment/application/usecases/create-attachment/dtos/create-attachment.dto';
 import { EditAttachmentInputDto } from 'src/app/attachment/application/usecases/edit-attachment/dtos/edit-attachment.dto';
@@ -9,6 +10,8 @@ import { AttachmentDaoAdapterPrisma } from './attachment.dao'; // Ajuste no impo
 describe('AttachmentDaoAdapterPrisma', () => {
   let sut: AttachmentDaoAdapterPrisma;
   let prisma: PrismaService;
+  let owner01: Owner;
+  let owner02: Owner;
 
   beforeEach(async() => {
     const module = await Test.createTestingModule({
@@ -24,11 +27,25 @@ describe('AttachmentDaoAdapterPrisma', () => {
     sut = module.get(AttachmentDaoAdapterPrisma);
     prisma = module.get(PrismaService);
 
-    await prisma.attachment.deleteMany(); // Limpa a tabela de attachments
+    await prisma.owner.deleteMany();
+    await prisma.attachment.deleteMany();
+
+    // Create owners for attachment ownership
+    owner01 = await prisma.owner.create({
+      data: {
+        id: 'owner-attachment-dao-01',
+      },
+    });
+    owner02 = await prisma.owner.create({
+      data: {
+        id: 'owner-attachment-dao-02',
+      },
+    });
   });
 
   afterAll(async() => {
-    await prisma.attachment.deleteMany(); // Limpa a tabela de attachments
+    await prisma.owner.deleteMany();
+    await prisma.attachment.deleteMany();
   });
 
   it('should be defined', () => {
@@ -40,7 +57,7 @@ describe('AttachmentDaoAdapterPrisma', () => {
       // Arrange
       const data: CreateAttachmentInputDto = {
         link: 'http://example.com/file1.pdf',
-        ownerId: 'owner-save-test',
+        ownerId: owner01.id,
       };
 
       // Act
@@ -56,36 +73,33 @@ describe('AttachmentDaoAdapterPrisma', () => {
   });
 
   describe('findAll', () => {
-    const owner1 = 'owner-findall-1';
-    const owner2 = 'owner-findall-2';
-
     beforeEach(async() => {
       // Seed data for findAll tests
       await prisma.attachment.createMany({
         data: [
-          { link: 'file_a.txt', ownerId: owner1 },
-          { link: 'image_b.jpg', ownerId: owner2 },
-          { link: 'document_c.pdf', ownerId: owner1 },
-          { link: 'archive_d.zip', ownerId: owner1 },
-          { link: 'another_image_e.png', ownerId: owner2 },
-          { link: 'report_f.PDF', ownerId: owner1 }, // Case test
+          { link: 'file_a.txt', ownerId: owner01.id },
+          { link: 'image_b.jpg', ownerId: owner02.id },
+          { link: 'document_c.pdf', ownerId: owner01.id },
+          { link: 'archive_d.zip', ownerId: owner01.id },
+          { link: 'another_image_e.png', ownerId: owner02.id },
+          { link: 'report_f.PDF', ownerId: owner01.id }, // Case test
         ],
       });
     });
 
     it('should return all attachments for a specific owner', async() => {
       // Act
-      const [attachments, total] = await sut.findAll({ ownerId: owner1 });
+      const [attachments, total] = await sut.findAll({ ownerId: owner01.id });
 
       // Assert
       expect(total).toBe(4);
       expect(attachments).toHaveLength(4);
-      expect(attachments.every(a => a.ownerId === owner1)).toBe(true);
+      expect(attachments.every(a => a.ownerId === owner01.id)).toBe(true);
     });
 
     it('should return paginated attachments for a specific owner', async() => {
       // Act
-      const [attachments, total] = await sut.findAll({ ownerId: owner1, page: 2, size: 2 });
+      const [attachments, total] = await sut.findAll({ ownerId: owner01.id, page: 2, size: 2 });
 
       // Assert
       expect(total).toBe(4);
@@ -95,7 +109,7 @@ describe('AttachmentDaoAdapterPrisma', () => {
 
     it('should filter attachments by search term (link) and ownerId', async() => {
       // Act
-      const [attachments, total] = await sut.findAll({ ownerId: owner1, search: '.pdf' });
+      const [attachments, total] = await sut.findAll({ ownerId: owner01.id, search: '.pdf' });
 
       // Assert
       expect(total).toBe(2); // document_c.pdf, report_f.PDF
@@ -114,7 +128,7 @@ describe('AttachmentDaoAdapterPrisma', () => {
 
     it('should return empty if search term matches nothing for the owner', async() => {
       // Act
-      const [attachments, total] = await sut.findAll({ ownerId: owner1, search: '.xlsx' });
+      const [attachments, total] = await sut.findAll({ ownerId: owner01.id, search: '.xlsx' });
 
       // Assert
       expect(total).toBe(0);
@@ -134,7 +148,7 @@ describe('AttachmentDaoAdapterPrisma', () => {
     it('should return the correct attachment if found', async() => {
       // Arrange
       const created = await prisma.attachment.create({
-        data: { link: 'findme.png', ownerId: 'find-owner' },
+        data: { link: 'findme.png', ownerId: owner01.id },
       });
 
       // Act
@@ -151,7 +165,7 @@ describe('AttachmentDaoAdapterPrisma', () => {
     it('should update the attachment link', async() => {
       // Arrange
       const created = await prisma.attachment.create({
-        data: { link: 'old-link.gif', ownerId: 'edit-owner' },
+        data: { link: 'old-link.gif', ownerId: owner01.id },
       });
       const editData: EditAttachmentInputDto = {
         link: 'new-link.webp',
@@ -164,7 +178,7 @@ describe('AttachmentDaoAdapterPrisma', () => {
       const updatedAttachment = await prisma.attachment.findUnique({ where: { id: created.id } });
       expect(updatedAttachment).toBeDefined();
       expect(updatedAttachment?.link).toBe(editData.link);
-      expect(updatedAttachment?.ownerId).toBe('edit-owner'); // Unchanged
+      expect(updatedAttachment?.ownerId).toBe(owner01.id); // Unchanged
     });
 
     it('should not throw error if attachment does not exist (Prisma handles this)', async() => {
@@ -180,7 +194,10 @@ describe('AttachmentDaoAdapterPrisma', () => {
     it('should delete the attachment', async() => {
       // Arrange
       const created = await prisma.attachment.create({
-        data: { link: 'delete-me.tmp', ownerId: 'delete-owner' },
+        data: {
+          link: 'delete-me.tmp',
+          ownerId: owner01.id,
+        },
       });
 
       // Act

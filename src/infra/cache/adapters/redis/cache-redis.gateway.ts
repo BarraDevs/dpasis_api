@@ -8,7 +8,7 @@ import { ICacheGateway } from '../../cache.gateway';
 @Injectable()
 export class CacheRedisAdapterGateway implements ICacheGateway {
   private readonly ONE_DAY_IN_SECONDS = 86400;
-  private client: RedisClientType;
+  private client: RedisClientType | null = null;
 
   constructor(
     @Inject(TOKENS.LoggerGateway) private readonly logger: ILoggerGateway,
@@ -35,13 +35,14 @@ export class CacheRedisAdapterGateway implements ICacheGateway {
         key: this.configService.redisUrl,
         error,
       });
+      this.client = null;
     }
   }
 
   public async set<T>(key: string, value: T, ttlInSeconds?: number, skipLog: boolean = false): Promise<void> {
     try {
-      await this.client.set(key, JSON.stringify(value));
-      await this.client.expire(
+      await this.client?.set(key, JSON.stringify(value));
+      await this.client?.expire(
         key,
         ttlInSeconds && ttlInSeconds > 0 ? ttlInSeconds : this.ONE_DAY_IN_SECONDS,
       );
@@ -71,7 +72,7 @@ export class CacheRedisAdapterGateway implements ICacheGateway {
 
   public async get<T>(key: string): Promise<T | null> {
     try {
-      const value = await this.client.get(key);
+      const value = await this.client?.get(key);
       return value ? JSON.parse(value) : null;
     }
     catch (error) {
@@ -87,7 +88,7 @@ export class CacheRedisAdapterGateway implements ICacheGateway {
 
   public async delete(key: string): Promise<void> {
     try {
-      await this.client.del(key);
+      await this.client?.del(key);
       this.logger.debug(LogContext.CACHE, {
         adapter: 'redis',
         action: 'delete',
@@ -110,13 +111,15 @@ export class CacheRedisAdapterGateway implements ICacheGateway {
       let cursor = 0;
 
       do {
-        const result = await this.client.scan(cursor, { MATCH: `*${key}*`, COUNT: 100 });
-        cursor = result.cursor;
-        keys.push(...result.keys);
+        const result = await this.client?.scan(cursor, { MATCH: `*${key}*`, COUNT: 100 });
+        if (result) {
+          cursor = result.cursor;
+          keys.push(...result.keys);
+        }
       } while (cursor !== 0);
 
       if (keys.length > 0) {
-        await this.client.del(keys);
+        await this.client?.del(keys);
         this.logger.debug(LogContext.CACHE, {
           adapter: 'redis',
           action: 'deleteContaining',

@@ -1,5 +1,6 @@
 import { createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
+import { Owner } from '@prisma/client';
 import { ContactModule } from 'src/app/contact/contact.module';
 import { ConfigModule } from 'src/core/config/config.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
@@ -25,10 +26,12 @@ describe('CreateContact', () => {
     prisma = module.get(PrismaService);
     findContactById = module.get(FindContactById);
 
+    await prisma.owner.deleteMany();
     await prisma.contact.deleteMany();
   });
 
   afterAll(async() => {
+    await prisma.owner.deleteMany();
     await prisma.contact.deleteMany();
   });
 
@@ -65,6 +68,16 @@ describe('CreateContact', () => {
   });
 
   describe('integration tests', () => {
+    let owner01: Owner;
+
+    beforeEach(async() => {
+      owner01 = await prisma.owner.create({
+        data: {
+          id: 'owner-123',
+        },
+      });
+    });
+
     it('should create a contact providing all fields', async() => {
       // Arrange
       const input: CreateContactInputDto = {
@@ -73,7 +86,7 @@ describe('CreateContact', () => {
         email: 'john.doe@example.com',
         phone: '123-456-7890',
         whatsapp: '123-456-7890',
-        ownerId: 'owner-123',
+        ownerId: owner01.id,
         info: 'Additional information about John Doe',
       };
 
@@ -104,7 +117,7 @@ describe('CreateContact', () => {
         email: 'john.doe@example.com',
         phone: '123-456-7890',
         whatsapp: '123-456-7890',
-        ownerId: 'owner-123',
+        ownerId: owner01.id,
         info: null,
       };
 

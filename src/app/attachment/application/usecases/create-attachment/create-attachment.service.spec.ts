@@ -1,5 +1,6 @@
 import { createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
+import { Owner } from '@prisma/client';
 import { AttachmentModule } from 'src/app/attachment/attachment.module'; // Adjust import path
 import { ConfigModule } from 'src/core/config/config.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
@@ -25,10 +26,12 @@ describe('CreateAttachment', () => {
     prisma = module.get(PrismaService);
     findAttachmentById = module.get(FindAttachmentById);
 
+    await prisma.owner.deleteMany();
     await prisma.attachment.deleteMany();
   });
 
   afterAll(async() => {
+    await prisma.owner.deleteMany();
     await prisma.attachment.deleteMany();
   });
 
@@ -65,11 +68,19 @@ describe('CreateAttachment', () => {
   });
 
   describe('integration tests', () => {
+    let owner01: Owner;
+
+    beforeEach(async() => {
+      owner01 = await prisma.owner.create({
+        data: { id: 'owner-integration-test' },
+      });
+    });
+
     it('should create an attachment with valid data', async() => {
       // Arrange
       const input: CreateAttachmentInputDto = {
         link: 'https://example.com/path/to/my_document.pdf',
-        ownerId: 'owner-integration-test',
+        ownerId: owner01.id,
       };
 
       // Act

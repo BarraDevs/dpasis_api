@@ -11,9 +11,17 @@ import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 export class AddressDaoAdapterPrisma implements IAddressDao {
   constructor(private prisma: PrismaService) {}
 
-  public async save(data: CreateAddressInputDto, isMain: boolean): Promise<string> {
+  public async save({ ownerId, ...rest }: CreateAddressInputDto, isMain: boolean): Promise<string> {
     const address = await this.prisma.address.create({
-      data: { ...data, isMain },
+      data: {
+        ...rest,
+        isMain,
+        owner: {
+          connect: {
+            id: ownerId,
+          },
+        },
+      },
     });
 
     return address.id;

@@ -11,9 +11,16 @@ import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 export class AttachmentDaoAdapterPrisma implements IAttachmentDao {
   constructor(private prisma: PrismaService) {}
 
-  public async save(data: CreateAttachmentInputDto): Promise<string> {
+  public async save({ ownerId, ...rest }: CreateAttachmentInputDto): Promise<string> {
     const result = await this.prisma.attachment.create({
-      data,
+      data: {
+        ...rest,
+        owner: {
+          connect: {
+            id: ownerId,
+          },
+        },
+      },
     });
     return result.id;
   }

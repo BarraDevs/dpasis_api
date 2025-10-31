@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { Owner } from '@prisma/client';
 import { ContactModule } from 'src/app/contact/contact.module';
 import { ConfigModule } from 'src/core/config/config.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
@@ -26,16 +27,7 @@ describe('FindAllContact', () => {
     prisma = module.get(PrismaService);
     createContact = module.get(CreateContact);
 
-    data = {
-      name: 'Jane Smith',
-      department: 'Marketing',
-      email: 'jane.smith@example.com',
-      phone: '987-654-3210',
-      whatsapp: '987-654-3210',
-      ownerId: 'owner-456',
-      info: 'Additional information about Jane Smith',
-    };
-
+    await prisma.owner.deleteMany();
     await prisma.contact.deleteMany();
   });
 
@@ -48,6 +40,28 @@ describe('FindAllContact', () => {
   });
 
   describe('integration tests', () => {
+    let owner01: Owner;
+    let owner02: Owner;
+
+    beforeEach(async() => {
+      owner01 = await prisma.owner.create({
+        data: { id: 'owner-456' },
+      });
+      owner02 = await prisma.owner.create({
+        data: { id: 'owner-789' },
+      });
+
+      data = {
+        name: 'Jane Smith',
+        department: 'Marketing',
+        email: 'jane.smith@example.com',
+        phone: '987-654-3210',
+        whatsapp: '987-654-3210',
+        ownerId: owner01.id,
+        info: 'Additional information about Jane Smith',
+      };
+    });
+
     it('should return an empty array if there is no contact', async() => {
       // Act
       const contacts = await sut.execute({ ownerId: data.ownerId });
@@ -108,12 +122,12 @@ describe('FindAllContact', () => {
 
     it('should return contacts filtered by ownerId', async() => {
       // Arrange
-      await createContact.execute({ ...data, ownerId: 'owner-1', department: 'DP1' });
-      await createContact.execute({ ...data, ownerId: 'owner-2', department: 'DP2' });
-      await createContact.execute({ ...data, ownerId: 'owner-1', department: 'DP3' });
+      await createContact.execute({ ...data, ownerId: owner01.id, department: 'DP1' });
+      await createContact.execute({ ...data, ownerId: owner02.id, department: 'DP2' });
+      await createContact.execute({ ...data, ownerId: owner01.id, department: 'DP3' });
 
       // Act
-      const contacts = await sut.execute({ ownerId: 'owner-1' });
+      const contacts = await sut.execute({ ownerId: owner01.id });
 
       // Assert
       expect(contacts).toEqual<IPagination<ContactDto>>({
@@ -130,8 +144,8 @@ describe('FindAllContact', () => {
 
     it('should return empty array when filtering by non-existing ownerId', async() => {
       // Arrange
-      await createContact.execute({ ...data, ownerId: 'owner-1', department: 'DP1' });
-      await createContact.execute({ ...data, ownerId: 'owner-2', department: 'DP2' });
+      await createContact.execute({ ...data, ownerId: owner01.id, department: 'DP1' });
+      await createContact.execute({ ...data, ownerId: owner02.id, department: 'DP2' });
 
       // Act
       const contacts = await sut.execute({ ownerId: 'non-existing-owner' });

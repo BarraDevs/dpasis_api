@@ -11,9 +11,16 @@ import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 export class ContactDaoAdapterPrisma implements IContactDao {
   constructor(private prisma: PrismaService) {}
 
-  public async save(data: CreateContactInputDto): Promise<string> {
+  public async save({ ownerId, ...rest }: CreateContactInputDto): Promise<string> {
     const result = await this.prisma.contact.create({
-      data,
+      data: {
+        ...rest,
+        owner: {
+          connect: {
+            id: ownerId,
+          },
+        },
+      },
     });
 
     return result.id;

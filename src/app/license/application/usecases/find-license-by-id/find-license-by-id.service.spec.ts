@@ -25,10 +25,12 @@ describe('FindLicenseById', () => {
     prisma = module.get(PrismaService);
     createLicense = module.get(CreateLicense);
 
+    await prisma.owner.deleteMany();
     await prisma.license.deleteMany();
   });
 
   afterAll(async() => {
+    await prisma.owner.deleteMany();
     await prisma.license.deleteMany();
   });
 
@@ -68,12 +70,16 @@ describe('FindLicenseById', () => {
 
     it('should return a license if found', async() => {
       // Arrange
+      const owner = await prisma.owner.create({
+        data: { id: 'owner-id' },
+      });
+
       const createData = {
         paymentDay: 20,
         bonusInCents: 1500,
         billingStartDate: new Date('2024-05-10'),
         license: '{"config": "value"}',
-        ownerId: 'owner-id',
+        ownerId: owner.id,
       };
       const createdLicense = await createLicense.execute(createData);
 

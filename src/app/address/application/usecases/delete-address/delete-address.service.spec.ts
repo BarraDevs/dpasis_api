@@ -1,5 +1,6 @@
 import { createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
+import { Owner } from '@prisma/client';
 import { AddressModule } from 'src/app/address/address.module';
 import { AddressMainCannotBeDeletedError } from 'src/app/address/domain/errors/address-main-cannot-be-deleted.error';
 import { AddressNotFoundError } from 'src/app/address/domain/errors/address-not-found.error';
@@ -7,12 +8,14 @@ import { ConfigModule } from 'src/core/config/config.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { AddressDto } from '../../dtos/address.dto';
 import { CreateAddress } from '../create-address/create-address.service';
+import { FindAddressById } from '../find-address-by-id/find-address-by-id.service';
 import { DeleteAddress } from './delete-address.service';
 
 describe('DeleteAddress', () => {
   let sut: DeleteAddress;
   let prisma: PrismaService;
   let createAddress: CreateAddress;
+  let findAddressById: FindAddressById;
 
   beforeEach(async() => {
     const module: TestingModule = await Test.createTestingModule({
@@ -25,11 +28,14 @@ describe('DeleteAddress', () => {
     sut = module.get(DeleteAddress);
     prisma = module.get(PrismaService);
     createAddress = module.get(CreateAddress);
+    findAddressById = module.get(FindAddressById);
 
+    await prisma.owner.deleteMany();
     await prisma.address.deleteMany();
   });
 
   afterAll(async() => {
+    await prisma.owner.deleteMany();
     await prisma.address.deleteMany();
   });
 
@@ -67,6 +73,16 @@ describe('DeleteAddress', () => {
   });
 
   describe('integration tests', () => {
+    let owner01: Owner;
+
+    beforeEach(async() => {
+      owner01 = await prisma.owner.create({
+        data: {
+          id: 'owner-123',
+        },
+      });
+    });
+
     it('should throw an error if address does not exist', async() => {
       // Act & Assert
       expect.assertions(1);
@@ -84,7 +100,7 @@ describe('DeleteAddress', () => {
         neighborhood: 'Bairro B',
         city: 'Cidade B',
         state: 'Estado C',
-        ownerId: 'owner-123',
+        ownerId: owner01.id,
         nickname: null,
         complement: null,
         reference: null,
@@ -92,11 +108,10 @@ describe('DeleteAddress', () => {
 
       // Act
       const result = await sut.execute(address.id);
+      expect(result).toEqual({ message: 'Endereço deletado com sucesso!' });
 
       // Assert
-      const deletedAddress = await prisma.address.findUnique({ where: { id: address.id } });
-      expect(deletedAddress).toBeNull();
-      expect(result).toEqual({ message: 'Endereço deletado com sucesso!' });
+      await expect(findAddressById.execute(address.id, false)).rejects.toThrow(AddressNotFoundError);
     });
   });
 });

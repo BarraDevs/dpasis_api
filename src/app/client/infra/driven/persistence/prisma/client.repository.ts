@@ -9,14 +9,24 @@ export class ClientRepositoryAdapterPrisma implements IClientRepository {
 
   public async save(client: Client): Promise<void> {
     await this.prisma.client.create({
-      data: { ...client.props },
+      data: {
+        ...client.props,
+        resource: {
+          create: {
+            // make sure to create a new resource with same client id
+            id: client.props.id,
+          },
+        },
+      },
     });
   }
 
   public async edit(client: Client): Promise<void> {
+    const { id, ...data } = client.props;
+
     await this.prisma.client.update({
-      where: { id: client.props.id },
-      data: { ...client.props },
+      where: { id },
+      data,
     });
   }
 }

@@ -1,5 +1,6 @@
 import { createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
+import { Owner } from '@prisma/client';
 import { LicenseNotFoundError } from 'src/app/license/domain/errors/license-not-found.error';
 import { LicenseModule } from 'src/app/license/license.module';
 import { ConfigModule } from 'src/core/config/config.module';
@@ -30,10 +31,12 @@ describe('EditLicense', () => {
     createLicense = module.get(CreateLicense);
     findLicenseById = module.get(FindLicenseById);
 
+    await prisma.owner.deleteMany();
     await prisma.license.deleteMany();
   });
 
   afterAll(async() => {
+    await prisma.owner.deleteMany();
     await prisma.license.deleteMany();
   });
 
@@ -83,6 +86,16 @@ describe('EditLicense', () => {
   });
 
   describe('integration tests', () => {
+    let owner01: Owner;
+
+    beforeEach(async() => {
+      owner01 = await prisma.owner.create({
+        data: {
+          id: 'owner-123',
+        },
+      });
+    });
+
     it('should throw LicenseNotFoundError if license does not exist', async() => {
       // Arrange
       const id = 'non-existing-id';
@@ -99,7 +112,7 @@ describe('EditLicense', () => {
         bonusInCents: 1000,
         billingStartDate: new Date('2024-01-01'),
         license: 'Initial License',
-        ownerId: 'owner-123',
+        ownerId: owner01.id,
       };
       const createdLicense = await createLicense.execute(createData);
 
@@ -117,6 +130,7 @@ describe('EditLicense', () => {
       expect(editedLicense.bonusInCents).toBe(createData.bonusInCents); // Unchanged
       expect(editedLicense.billingStartDate).toEqual(createData.billingStartDate); // Unchanged
       expect(editedLicense.license).toBe(editData.license);
+      expect(editedLicense.ownerId).toBe(owner01.id);
     });
 
     it('should edit a license providing null values where allowed by PartialType (though DTO validation prevents null for required base fields)', async() => {
@@ -126,13 +140,11 @@ describe('EditLicense', () => {
         bonusInCents: 1000,
         billingStartDate: new Date('2024-01-01'),
         license: 'Initial License',
-        ownerId: 'owner-123',
+        ownerId: owner01.id,
       };
       const createdLicense = await createLicense.execute(createData);
 
       // Act
-      // Edit DTO allows null via skipNullProperties: false, but base DTO might require fields
-      // Let's try updating only the bonus
       const editData: EditLicenseInputDto = {
         bonusInCents: 0, // Valid change
       };
@@ -143,6 +155,9 @@ describe('EditLicense', () => {
       expect(editedLicense).toBeDefined();
       expect(editedLicense.bonusInCents).toBe(0);
       expect(editedLicense.paymentDay).toBe(createData.paymentDay); // Unchanged
+      expect(editedLicense.billingStartDate).toEqual(createData.billingStartDate); // Unchanged
+      expect(editedLicense.license).toBe(createData.license); // Unchanged
+      expect(editedLicense.ownerId).toBe(owner01.id); // Unchanged
     });
   });
 });

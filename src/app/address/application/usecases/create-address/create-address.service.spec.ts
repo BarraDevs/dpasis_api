@@ -1,5 +1,6 @@
 import { createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
+import { Owner } from '@prisma/client';
 import { AddressModule } from 'src/app/address/address.module';
 import { AddressMainMustBeOneError } from 'src/app/address/domain/errors/address-main-must-be-one.error';
 import { ConfigModule } from 'src/core/config/config.module';
@@ -26,10 +27,12 @@ describe('CreateAddress', () => {
     prisma = module.get(PrismaService);
     findAddressById = module.get(FindAddressById);
 
+    await prisma.owner.deleteMany();
     await prisma.address.deleteMany();
   });
 
   afterAll(async() => {
+    await prisma.owner.deleteMany();
     await prisma.address.deleteMany();
   });
 
@@ -56,6 +59,16 @@ describe('CreateAddress', () => {
   });
 
   describe('integration tests', () => {
+    let owner01: Owner;
+
+    beforeEach(async() => {
+      owner01 = await prisma.owner.create({
+        data: {
+          id: 'owner-1',
+        },
+      });
+    });
+
     it('should create a main address', async() => {
       // Arrange
       const data: CreateAddressInputDto = {
@@ -66,7 +79,7 @@ describe('CreateAddress', () => {
         neighborhood: 'Downtown',
         city: 'Metropolis',
         state: 'State',
-        ownerId: 'owner-1',
+        ownerId: owner01.id,
         nickname: 'Home',
         reference: null,
       };
@@ -104,7 +117,7 @@ describe('CreateAddress', () => {
         neighborhood: 'Downtown',
         city: 'Metropolis',
         state: 'State',
-        ownerId: 'owner-1',
+        ownerId: owner01.id,
         nickname: null,
         complement: null,
         reference: null,
@@ -127,7 +140,7 @@ describe('CreateAddress', () => {
         neighborhood: 'Uptown',
         city: 'Gotham',
         state: 'State',
-        ownerId: 'owner-2',
+        ownerId: owner01.id,
         nickname: null,
         complement: null,
         reference: null,

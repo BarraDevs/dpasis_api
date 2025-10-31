@@ -1,5 +1,6 @@
 import { createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
+import { Owner } from '@prisma/client';
 import { AddressModule } from 'src/app/address/address.module';
 import { AddressNotFoundError } from 'src/app/address/domain/errors/address-not-found.error';
 import { ConfigModule } from 'src/core/config/config.module';
@@ -26,10 +27,12 @@ describe('FindAddressById', () => {
     prisma = module.get(PrismaService);
     createAddress = module.get(CreateAddress);
 
+    await prisma.owner.deleteMany();
     await prisma.address.deleteMany();
   });
 
   afterAll(async() => {
+    await prisma.owner.deleteMany();
     await prisma.address.deleteMany();
   });
 
@@ -54,6 +57,16 @@ describe('FindAddressById', () => {
   });
 
   describe('integration tests', () => {
+    let owner01: Owner;
+
+    beforeEach(async() => {
+      owner01 = await prisma.owner.create({
+        data: {
+          id: 'owner-01',
+        },
+      });
+    });
+
     it.each(
       [
         true,
@@ -84,7 +97,7 @@ describe('FindAddressById', () => {
         city: 'Anytown',
         state: 'CA',
         zipCode: '12345',
-        ownerId: 'owner-123',
+        ownerId: owner01.id,
       };
       const createdAddress = await createAddress.execute(data, isMain);
 

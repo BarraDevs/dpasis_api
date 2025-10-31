@@ -36,6 +36,7 @@ describe('ClientEntity', () => {
       // Arrange
       const props = {
         id: 'unique-client-id',
+        resourceId: 'resource-id',
         kind: 'Type B',
         cnpj: '43210987654321',
         ie: '123456789',

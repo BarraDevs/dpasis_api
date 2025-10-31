@@ -1,0 +1,305 @@
+import { Test } from '@nestjs/testing';
+import { ClientPersistenceModule } from 'src/app/client/application/persistence/client-persistence.module';
+import { Client } from 'src/app/client/domain/entities/client.entity';
+import { ConfigModule } from 'src/core/config/config.module';
+import { PrismaService } from 'src/infra/database/prisma/prisma.service';
+import { ClientRepositoryAdapterPrisma } from './client.repository';
+
+describe('ClientRepositoryAdapterPrisma', () => {
+  let sut: ClientRepositoryAdapterPrisma;
+  let prisma: PrismaService;
+
+  beforeEach(async() => {
+    const module = await Test.createTestingModule({
+      imports: [
+        ClientPersistenceModule,
+        ConfigModule,
+      ],
+      providers: [
+        ClientRepositoryAdapterPrisma,
+      ],
+    }).compile();
+
+    sut = module.get(ClientRepositoryAdapterPrisma);
+    prisma = module.get(PrismaService);
+
+    await prisma.client.deleteMany();
+    await prisma.owner.deleteMany();
+  });
+
+  afterAll(async() => {
+    await prisma.client.deleteMany();
+    await prisma.owner.deleteMany();
+  });
+
+  it('should be defined', () => {
+    expect(sut).toBeDefined();
+  });
+
+  describe('save', () => {
+    it('should save a client and create a resource with the same id', async() => {
+      // Arrange
+      const client = Client.create({
+        kind: 'PJ',
+        cnpj: '12.345.678/0001-90',
+        ie: '123.456.789.012',
+        group: 'Group A',
+        type: 'Premium',
+        generateInvoice: true,
+        companyName: 'Test Company Ltd',
+        fantasyName: 'Test Company',
+        owner: 'John Doe',
+        headquarters: 'Main Office',
+      });
+
+      // Act
+      await sut.save(client);
+
+      // Assert
+      const savedClient = await prisma.client.findUnique({
+        where: { id: client.props.id },
+        include: { resource: true },
+      });
+
+      expect(savedClient).toBeDefined();
+      expect(savedClient?.id).toBe(client.props.id);
+      expect(savedClient?.kind).toBe(client.props.kind);
+      expect(savedClient?.cnpj).toBe(client.props.cnpj);
+      expect(savedClient?.ie).toBe(client.props.ie);
+      expect(savedClient?.group).toBe(client.props.group);
+      expect(savedClient?.type).toBe(client.props.type);
+      expect(savedClient?.generateInvoice).toBe(client.props.generateInvoice);
+      expect(savedClient?.companyName).toBe(client.props.companyName);
+      expect(savedClient?.fantasyName).toBe(client.props.fantasyName);
+      expect(savedClient?.owner).toBe(client.props.owner);
+      expect(savedClient?.headquarters).toBe(client.props.headquarters);
+      expect(savedClient?.active).toBe(client.props.active);
+
+      // Check if resource was created with the same id
+      expect(savedClient?.resource).toBeDefined();
+      expect(savedClient?.resource?.id).toBe(client.props.id);
+    });
+
+    it('should save multiple clients with unique cnpj and ie', async() => {
+      // Arrange
+      const client1 = Client.create({
+        kind: 'PJ',
+        cnpj: '11.111.111/0001-11',
+        ie: '111.111.111.111',
+        group: 'Group A',
+        type: 'Premium',
+        generateInvoice: true,
+        companyName: 'First Company Ltd',
+        fantasyName: 'First Company',
+        owner: 'John Doe',
+        headquarters: 'Main Office',
+      });
+
+      const client2 = Client.create({
+        kind: 'PF',
+        cnpj: '22.222.222/0001-22',
+        ie: '222.222.222.222',
+        group: 'Group B',
+        type: 'Basic',
+        generateInvoice: false,
+        companyName: 'Second Company Ltd',
+        fantasyName: 'Second Company',
+        owner: 'Jane Doe',
+        headquarters: 'Branch Office',
+      });
+
+      // Act
+      await sut.save(client1);
+      await sut.save(client2);
+
+      // Assert
+      const savedClients = await prisma.client.findMany();
+      expect(savedClients).toHaveLength(2);
+
+      const savedClient1 = savedClients.find(c => c.id === client1.props.id);
+      const savedClient2 = savedClients.find(c => c.id === client2.props.id);
+
+      expect(savedClient1).toBeDefined();
+      expect(savedClient2).toBeDefined();
+      expect(savedClient1?.cnpj).toBe(client1.props.cnpj);
+      expect(savedClient2?.cnpj).toBe(client2.props.cnpj);
+    });
+
+    it('should throw error when trying to save client with duplicate cnpj', async() => {
+      // Arrange
+      const duplicateCnpj = '12.345.678/0001-90';
+      const client1 = Client.create({
+        kind: 'PJ',
+        cnpj: duplicateCnpj,
+        ie: '111.111.111.111',
+        group: 'Group A',
+        type: 'Premium',
+        generateInvoice: true,
+        companyName: 'First Company Ltd',
+        fantasyName: 'First Company',
+        owner: 'John Doe',
+        headquarters: 'Main Office',
+      });
+
+      const client2 = Client.create({
+        kind: 'PJ',
+        cnpj: duplicateCnpj, // Same CNPJ
+        ie: '222.222.222.222',
+        group: 'Group B',
+        type: 'Basic',
+        generateInvoice: false,
+        companyName: 'Second Company Ltd',
+        fantasyName: 'Second Company',
+        owner: 'Jane Doe',
+        headquarters: 'Branch Office',
+      });
+
+      // Act & Assert
+      await sut.save(client1);
+      await expect(sut.save(client2)).rejects.toThrow();
+    });
+
+    it('should throw error when trying to save client with duplicate ie', async() => {
+      // Arrange
+      const duplicateIe = '123.456.789.012';
+      const client1 = Client.create({
+        kind: 'PJ',
+        cnpj: '11.111.111/0001-11',
+        ie: duplicateIe,
+        group: 'Group A',
+        type: 'Premium',
+        generateInvoice: true,
+        companyName: 'First Company Ltd',
+        fantasyName: 'First Company',
+        owner: 'John Doe',
+        headquarters: 'Main Office',
+      });
+
+      const client2 = Client.create({
+        kind: 'PJ',
+        cnpj: '22.222.222/0001-22',
+        ie: duplicateIe, // Same IE
+        group: 'Group B',
+        type: 'Basic',
+        generateInvoice: false,
+        companyName: 'Second Company Ltd',
+        fantasyName: 'Second Company',
+        owner: 'Jane Doe',
+        headquarters: 'Branch Office',
+      });
+
+      // Act & Assert
+      await sut.save(client1);
+      await expect(sut.save(client2)).rejects.toThrow();
+    });
+  });
+
+  describe('edit', () => {
+    it('should update client properties', async() => {
+      // Arrange
+      const originalClient = Client.create({
+        kind: 'PJ',
+        cnpj: '12.345.678/0001-90',
+        ie: '123.456.789.012',
+        group: 'Group A',
+        type: 'Premium',
+        generateInvoice: true,
+        companyName: 'Original Company Ltd',
+        fantasyName: 'Original Company',
+        owner: 'John Doe',
+        headquarters: 'Main Office',
+      });
+
+      await sut.save(originalClient);
+
+      const updatedClient = Client.load({
+        ...originalClient.props,
+        companyName: 'Updated Company Ltd',
+        fantasyName: 'Updated Company',
+        owner: 'Jane Smith',
+        type: 'Basic',
+        generateInvoice: false,
+        updatedAt: new Date(),
+      });
+
+      // Act
+      await sut.edit(updatedClient);
+
+      // Assert
+      const editedClient = await prisma.client.findUnique({
+        where: { id: originalClient.props.id },
+      });
+
+      expect(editedClient).toBeDefined();
+      expect(editedClient?.id).toBe(originalClient.props.id);
+      expect(editedClient?.companyName).toBe(updatedClient.props.companyName);
+      expect(editedClient?.fantasyName).toBe(updatedClient.props.fantasyName);
+      expect(editedClient?.owner).toBe(updatedClient.props.owner);
+      expect(editedClient?.type).toBe(updatedClient.props.type);
+      expect(editedClient?.generateInvoice).toBe(updatedClient.props.generateInvoice);
+
+      // These should remain unchanged
+      expect(editedClient?.cnpj).toBe(originalClient.props.cnpj);
+      expect(editedClient?.ie).toBe(originalClient.props.ie);
+      expect(editedClient?.kind).toBe(originalClient.props.kind);
+    });
+
+    it('should throw error when trying to edit non-existent client', async() => {
+      // Arrange
+      const nonExistentClient = Client.load({
+        id: 'non-existent-id',
+        kind: 'PJ',
+        cnpj: '99.999.999/0001-99',
+        ie: '999.999.999.999',
+        group: 'Group X',
+        type: 'Premium',
+        generateInvoice: true,
+        companyName: 'Non Existent Company Ltd',
+        fantasyName: 'Non Existent Company',
+        owner: 'Ghost User',
+        headquarters: 'Nowhere',
+        active: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      // Act & Assert
+      await expect(sut.edit(nonExistentClient)).rejects.toThrow();
+    });
+
+    it('should update client to inactive status', async() => {
+      // Arrange
+      const client = Client.create({
+        kind: 'PJ',
+        cnpj: '12.345.678/0001-90',
+        ie: '123.456.789.012',
+        group: 'Group A',
+        type: 'Premium',
+        generateInvoice: true,
+        companyName: 'Test Company Ltd',
+        fantasyName: 'Test Company',
+        owner: 'John Doe',
+        headquarters: 'Main Office',
+      });
+
+      await sut.save(client);
+
+      const inactiveClient = Client.load({
+        ...client.props,
+        active: false,
+        updatedAt: new Date(),
+      });
+
+      // Act
+      await sut.edit(inactiveClient);
+
+      // Assert
+      const editedClient = await prisma.client.findUnique({
+        where: { id: client.props.id },
+      });
+
+      expect(editedClient).toBeDefined();
+      expect(editedClient?.active).toBe(false);
+    });
+  });
+});

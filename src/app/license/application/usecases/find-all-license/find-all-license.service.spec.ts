@@ -1,5 +1,6 @@
 import { createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
+import { Owner } from '@prisma/client';
 import { LicenseModule } from 'src/app/license/license.module';
 import { ConfigModule } from 'src/core/config/config.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
@@ -26,12 +27,13 @@ describe('FindAllLicense', () => {
     prisma = module.get(PrismaService);
     createLicense = module.get(CreateLicense); // Get CreateLicense service
 
+    await prisma.owner.deleteMany();
     await prisma.license.deleteMany();
   });
 
   afterAll(async() => {
+    await prisma.owner.deleteMany();
     await prisma.license.deleteMany();
-    await prisma.$disconnect();
   });
 
   it('should be defined', () => {
@@ -53,10 +55,18 @@ describe('FindAllLicense', () => {
   });
 
   describe('integration tests', () => {
+    let owner01: Owner;
+    let owner02: Owner;
+
+    beforeEach(async() => {
+      // Create test owners
+      owner01 = await prisma.owner.create({ data: { id: 'owner-1' } });
+      owner02 = await prisma.owner.create({ data: { id: 'owner-2' } });
+    });
+
     it('should return an empty pagination object when no licenses exist', async() => {
       // Act
-      const ownerId = 'owner-123';
-      const result = await sut.execute({ ownerId });
+      const result = await sut.execute({ ownerId: owner01.id });
 
       // Assert
       expect(result).toEqual<IPagination<LicenseDto>>({
@@ -70,12 +80,23 @@ describe('FindAllLicense', () => {
 
     it('should return all licenses when no queries are provided', async() => {
       // Arrange
-      const ownerId = 'owner-123';
-      const lic1 = await createLicense.execute({ paymentDay: 5, bonusInCents: 100, billingStartDate: new Date('2024-01-01'), license: 'Basic', ownerId });
-      const lic2 = await createLicense.execute({ paymentDay: 15, bonusInCents: 200, billingStartDate: new Date('2024-02-01'), license: 'Pro', ownerId });
+      const lic1 = await createLicense.execute({
+        paymentDay: 5,
+        bonusInCents: 100,
+        billingStartDate: new Date('2024-01-01'),
+        license: 'Basic',
+        ownerId: owner01.id,
+      });
+      const lic2 = await createLicense.execute({
+        paymentDay: 15,
+        bonusInCents: 200,
+        billingStartDate: new Date('2024-02-01'),
+        license: 'Pro',
+        ownerId: owner01.id,
+      });
 
       // Act
-      const result = await sut.execute({ ownerId });
+      const result = await sut.execute({ ownerId: owner01.id });
 
       // Assert
       expect(result.totalItems).toBe(2);
@@ -90,20 +111,19 @@ describe('FindAllLicense', () => {
 
     it('should return paginated licenses', async() => {
       // Arrange
-      const ownerId = 'owner-1';
       for (let i = 1; i <= 15; i++) {
         await createLicense.execute({
           paymentDay: i,
           bonusInCents: i * 100,
           billingStartDate: new Date(`2024-01-${i < 10 ? '0' : ''}${i}`),
           license: `License ${i}`,
-          ownerId,
+          ownerId: owner01.id,
         });
       }
 
       // Act
-      const resultPage1 = await sut.execute({ page: 1, size: 10, ownerId });
-      const resultPage2 = await sut.execute({ page: 2, size: 10, ownerId });
+      const resultPage1 = await sut.execute({ page: 1, size: 10, ownerId: owner01.id });
+      const resultPage2 = await sut.execute({ page: 2, size: 10, ownerId: owner01.id });
 
       // Assert
       expect(resultPage1.data).toHaveLength(10);
@@ -119,14 +139,31 @@ describe('FindAllLicense', () => {
 
     it('should return licenses filtered by search term (case-insensitive)', async() => {
       // Arrange
-      const ownerId = 'owner-1';
-      const lic1 = await createLicense.execute({ paymentDay: 5, bonusInCents: 100, billingStartDate: new Date('2024-01-01'), license: 'Alpha License', ownerId });
-      await createLicense.execute({ paymentDay: 15, bonusInCents: 200, billingStartDate: new Date('2024-02-01'), license: 'Beta Package', ownerId });
-      const lic3 = await createLicense.execute({ paymentDay: 25, bonusInCents: 300, billingStartDate: new Date('2024-03-01'), license: 'Gamma alpha license', ownerId });
+      const lic1 = await createLicense.execute({
+        paymentDay: 5,
+        bonusInCents: 100,
+        billingStartDate: new Date('2024-01-01'),
+        license: 'Alpha License',
+        ownerId: owner01.id,
+      });
+      await createLicense.execute({
+        paymentDay: 15,
+        bonusInCents: 200,
+        billingStartDate: new Date('2024-02-01'),
+        license: 'Beta Package',
+        ownerId: owner01.id,
+      });
+      const lic3 = await createLicense.execute({
+        paymentDay: 25,
+        bonusInCents: 300,
+        billingStartDate: new Date('2024-03-01'),
+        license: 'Gamma alpha license',
+        ownerId: owner01.id,
+      });
 
 
       // Act
-      const result = await sut.execute({ search: 'alpha', ownerId });
+      const result = await sut.execute({ search: 'alpha', ownerId: owner01.id });
 
       // Assert
       expect(result.totalItems).toBe(2);
@@ -135,6 +172,44 @@ describe('FindAllLicense', () => {
         expect.arrayContaining([
           expect.objectContaining({ id: lic1.id }),
           expect.objectContaining({ id: lic3.id }),
+        ])
+      );
+    });
+
+    it('should return licenses for the specified owner only', async() => {
+      // Arrange
+      const lic1 = await createLicense.execute({
+        paymentDay: 5,
+        bonusInCents: 100,
+        billingStartDate: new Date('2024-01-01'),
+        license: 'Owner1 License1',
+        ownerId: owner01.id,
+      });
+      const lic2 = await createLicense.execute({
+        paymentDay: 15,
+        bonusInCents: 200,
+        billingStartDate: new Date('2024-02-01'),
+        license: 'Owner1 License2',
+        ownerId: owner01.id,
+      });
+      await createLicense.execute({
+        paymentDay: 25,
+        bonusInCents: 300,
+        billingStartDate: new Date('2024-03-01'),
+        license: 'Owner2 License1',
+        ownerId: owner02.id,
+      });
+
+      // Act
+      const result = await sut.execute({ ownerId: owner01.id });
+
+      // Assert
+      expect(result.totalItems).toBe(2);
+      expect(result.data).toHaveLength(2);
+      expect(result.data).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ id: lic1.id }),
+          expect.objectContaining({ id: lic2.id }),
         ])
       );
     });

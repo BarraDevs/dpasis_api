@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { Owner } from '@prisma/client';
 import { AddressModule } from 'src/app/address/address.module';
 import { ConfigModule } from 'src/core/config/config.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
@@ -24,10 +25,12 @@ describe('FindMainAddress', () => {
     prisma = module.get(PrismaService);
     createAddress = module.get(CreateAddress);
 
+    await prisma.owner.deleteMany();
     await prisma.address.deleteMany();
   });
 
   afterAll(async() => {
+    await prisma.owner.deleteMany();
     await prisma.address.deleteMany();
   });
 
@@ -58,9 +61,18 @@ describe('FindMainAddress', () => {
   });
 
   describe('integration tests', () => {
+    let owner01: Owner;
+
+    beforeEach(async() => {
+      owner01 = await prisma.owner.create({
+        data: {
+          id: 'owner-1',
+        },
+      });
+    });
+
     it('should return null if user has no main address', async() => {
       // Arrange
-      const ownerId = 'owner-1';
       await createAddress.execute({
         zipCode: '12345-678',
         street: 'Main St',
@@ -69,13 +81,13 @@ describe('FindMainAddress', () => {
         neighborhood: 'Downtown',
         city: 'Metropolis',
         state: 'State',
-        ownerId,
+        ownerId: owner01.id,
         nickname: null,
         reference: null,
       }, false);
 
       // Act
-      const result = await sut.execute(ownerId);
+      const result = await sut.execute(owner01.id);
 
       // Assert
       expect(result).toBeNull();
@@ -83,7 +95,6 @@ describe('FindMainAddress', () => {
 
     it('should return the main address for the given owner ID', async() => {
       // Arrange
-      const ownerId = 'owner-2';
       const mainAddressData: CreateAddressInputDto = {
         zipCode: '98765-432',
         street: 'Second St',
@@ -92,7 +103,7 @@ describe('FindMainAddress', () => {
         neighborhood: 'Uptown',
         city: 'Gotham',
         state: 'State',
-        ownerId,
+        ownerId: owner01.id,
         nickname: null,
         reference: null,
       };
@@ -107,13 +118,13 @@ describe('FindMainAddress', () => {
         neighborhood: 'Midtown',
         city: 'Metropolis',
         state: 'State',
-        ownerId,
+        ownerId: owner01.id,
         nickname: null,
         reference: null,
       }, false);
 
       // Act
-      const result = await sut.execute(ownerId);
+      const result = await sut.execute(owner01.id);
 
       // Assert
       expect(result).toBeDefined();
@@ -128,8 +139,8 @@ describe('FindMainAddress', () => {
         neighborhood: mainAddressData.neighborhood,
         city: mainAddressData.city,
         state: mainAddressData.state,
-        ownerId: mainAddressData.ownerId,
         isMain: true,
+        ownerId: owner01.id,
         createdAt: expect.any(Date),
         updatedAt: expect.any(Date),
       });

@@ -25,12 +25,13 @@ describe('CreateLicense', () => {
     prisma = module.get(PrismaService);
     findLicenseById = module.get(FindLicenseById);
 
+    await prisma.owner.deleteMany();
     await prisma.license.deleteMany();
   });
 
   afterAll(async() => {
+    await prisma.owner.deleteMany();
     await prisma.license.deleteMany();
-    await prisma.$disconnect();
   });
 
   it('should be defined', () => {
@@ -71,12 +72,18 @@ describe('CreateLicense', () => {
   describe('integration tests', () => {
     it('should create a license with valid data', async() => {
       // Arrange
+      const owner = await prisma.owner.create({
+        data: {
+          id: 'owner-id',
+        },
+      });
+
       const input: CreateLicenseInputDto = {
         paymentDay: 10,
         bonusInCents: 5000, // R$ 50.00
         billingStartDate: new Date('2024-12-01'), // Use Date object directly
         license: '{"features": ["basic", "advanced"]}',
-        ownerId: 'owner-id',
+        ownerId: owner.id,
       };
 
       // Act
@@ -91,7 +98,7 @@ describe('CreateLicense', () => {
         bonusInCents: input.bonusInCents,
         billingStartDate: input.billingStartDate, // Compare Date objects
         license: input.license,
-        ownerId: 'owner-id',
+        ownerId: owner.id,
         createdAt: expect.any(Date),
         updatedAt: expect.any(Date),
       });
