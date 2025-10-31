@@ -63,6 +63,23 @@ model Client {
   @@map("clients")
 }
 
+model Supplier {
+  id             String   @id
+  cnpj           String   @unique @db.VarChar(256)
+  ie             String   @unique @db.VarChar(256)
+  group          String   @db.VarChar(256)
+  type           String   @db.VarChar(256)
+  companyName    String   @db.VarChar(256)
+  fantasyName    String   @db.VarChar(256)
+  representative String   @db.VarChar(256)
+  active         Boolean
+  resource       Owner? // resource no sentido de proprietário
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("suppliers")
+}
+
 model Owner {
   id          String       @id
   addresses   Address[]
@@ -72,6 +89,9 @@ model Owner {
 
   clientId String? @unique
   client   Client? @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  supplierId String?   @unique
+  supplier   Supplier? @relation(fields: [supplierId], references: [id], onDelete: Cascade)
 
   @@map("owners")
 }

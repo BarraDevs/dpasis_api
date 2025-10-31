@@ -12,6 +12,9 @@ const TOKENS = {
 
   ClientDao: Symbol.for('ClientDao'),
   ClientRepository: Symbol.for('ClientRepository'),
+
+  SupplierDao: Symbol.for('SupplierDao'),
+  SupplierRepository: Symbol.for('SupplierRepository'),
 };
 
 export { TOKENS };

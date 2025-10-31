@@ -38,10 +38,7 @@ export class Client {
   }
 
   public get props(): Readonly<ClientProps> {
-    return {
-      ...this._props,
-      id: this._id,
-    };
+    return { ...this._props, id: this._id };
   }
 
   constructor(props: ClientProps) {

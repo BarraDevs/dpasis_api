@@ -14,6 +14,9 @@ import { ClientDuplicateIeError } from 'src/app/client/domain/errors/duplicate-i
 import { ContactNotFoundError } from 'src/app/contact/domain/errors/contact-not-found.error';
 import { LicenseNotFoundError } from 'src/app/license/domain/errors/license-not-found.error';
 import { OwnerNotFoundError } from 'src/app/owner/domain/errors/owner-not-found.error';
+import { SupplierDuplicateCnpjError } from 'src/app/supplier/domain/errors/duplicate-cnpj.error';
+import { SupplierDuplicateIeError } from 'src/app/supplier/domain/errors/duplicate-ie.error';
+import { SupplierNotFoundError } from 'src/app/supplier/domain/errors/supplier-not-found.error';
 import { TOKENS } from 'src/core/di/token';
 import { type ILoggerGateway, LogContext } from 'src/infra/logger/logger.gateway';
 import { InvalidDateError, InvalidDaysQuantityError, InvalidMonthsQuantityError } from 'src/shared/value-objects/utc-date/utc-date.error';
@@ -43,6 +46,10 @@ import { AppException } from '../app.exception';
   InvalidMonthsQuantityError,
 
   OwnerNotFoundError,
+
+  SupplierNotFoundError,
+  SupplierDuplicateCnpjError,
+  SupplierDuplicateIeError,
 )
 export class HttpExceptionFilter extends BaseExceptionFilter implements ExceptionFilter {
   private readonly SENSITIVE_FIELDS = [
