@@ -1,6 +1,8 @@
 import { createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { LicenseModule } from 'src/app/license/license.module';
+import { OwnerDto } from 'src/app/owner/application/dtos/owner.dto';
+import { OwnerNotFoundError } from 'src/app/owner/domain/errors/owner-not-found.error';
 import { ConfigModule } from 'src/core/config/config.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { LicenseDto } from '../../dtos/license.dto';
@@ -45,12 +47,16 @@ describe('CreateLicense', () => {
       const input = createMock<CreateLicenseInputDto>({ billingStartDate: new Date('2024-11-01') });
       const licenseDaoSpy = jest.spyOn(sut['licenseDao'], 'save').mockResolvedValue(id);
 
+      const owner = createMock<OwnerDto>();
+      jest.spyOn(sut['findOwnerById'], 'execute').mockResolvedValue(owner);
+
       // Act
       await sut.execute(input);
 
       // Assert
       expect(licenseDaoSpy).toHaveBeenCalledWith({
         ...input,
+        ownerId: owner.id,
         billingStartDate: expect.any(Date),
       });
     });
@@ -61,6 +67,9 @@ describe('CreateLicense', () => {
       const input = createMock<CreateLicenseInputDto>({ billingStartDate: new Date('2024-11-01') });
       jest.spyOn(sut['licenseDao'], 'save').mockResolvedValue(id);
 
+      const owner = createMock<OwnerDto>();
+      jest.spyOn(sut['findOwnerById'], 'execute').mockResolvedValue(owner);
+
       // Act
       const result = await sut.execute(input);
 
@@ -70,6 +79,20 @@ describe('CreateLicense', () => {
   });
 
   describe('integration tests', () => {
+    it('should throw an error when owner does not exist', async() => {
+      // Arrange
+      const input: CreateLicenseInputDto = {
+        paymentDay: 15,
+        bonusInCents: 1000,
+        billingStartDate: new Date('2024-10-01'),
+        license: 'Pro Plan',
+        ownerId: 'non-existent-owner-id',
+      };
+
+      // Act & Assert
+      await expect(sut.execute(input)).rejects.toThrow(OwnerNotFoundError);
+    });
+
     it('should create a license with valid data', async() => {
       // Arrange
       const owner = await prisma.owner.create({

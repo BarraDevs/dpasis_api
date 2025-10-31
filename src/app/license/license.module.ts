@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AuthenticationGuardsModule } from '../authentication/application/guards/guards.module'; // Adicionado
+import { OwnerModule } from '../owner/owner.module';
 import { LicensePersistenceModule } from './application/persistence/license-persistence.module';
 import { CreateLicense } from './application/usecases/create-license/create-license.service';
 import { DeleteLicense } from './application/usecases/delete-license/delete-license.service';
@@ -12,6 +13,7 @@ import { LicenseController } from './infra/drivers/http/license.controller';
   imports: [
     LicensePersistenceModule,
     AuthenticationGuardsModule,
+    OwnerModule,
   ],
   controllers: [
     LicenseController,
