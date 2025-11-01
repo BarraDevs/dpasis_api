@@ -16,7 +16,13 @@ describe('CreateSupplierInputDto', () => {
 
   describe.each(
     [
-      'field',
+      'cnpj',
+      'ie',
+      'group',
+      'type',
+      'companyName',
+      'fantasyName',
+      'representative',
     ]
   )('%s field', (field: string) => {
     it.each(
@@ -55,12 +61,29 @@ describe('CreateSupplierInputDto', () => {
         expect(error.getResponse().message).toContain(`${field} deve ser uma string`);
       });
     });
+
+    it(`should throw an error if ${field} exceeds maximum length`, async() => {
+      // Arrange
+      const data = { [field]: 'a'.repeat(257) };
+
+      // Act & Assert
+      expect.assertions(1);
+      return target.transform(data, metadata).catch((error) => {
+        expect(error.getResponse().message).toContain(`${field} deve ter no máximo 256 caracteres`);
+      });
+    });
   });
 
   it('should pass if all fields are valid', async() => {
     // Arrange
     const data = {
-      field: 'name',
+      cnpj: 'cnpj',
+      ie: 'ie',
+      group: 'group',
+      type: 'type',
+      companyName: 'companyName',
+      fantasyName: 'fantasyName',
+      representative: 'representative',
     };
 
     // Act
