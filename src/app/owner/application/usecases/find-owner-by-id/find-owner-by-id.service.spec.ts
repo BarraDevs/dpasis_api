@@ -25,6 +25,7 @@ describe('FindOwnerById', () => {
 
   afterAll(async() => {
     await prisma.owner.deleteMany();
+    await prisma.$disconnect();
   });
 
   it('should be defined', () => {

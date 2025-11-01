@@ -34,6 +34,7 @@ describe('FindAllAttachment', () => {
   afterAll(async() => {
     await prisma.owner.deleteMany();
     await prisma.attachment.deleteMany();
+    await prisma.$disconnect();
   });
 
   it('should be defined', () => {

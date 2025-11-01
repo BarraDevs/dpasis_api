@@ -14,21 +14,18 @@ export class CreateItems {
   ) {}
 
   public async execute(data: CreateItemsInputDto): Promise<CreateItemsOutputDto> {
-    // 1. Validar se o Owner existe
     const owner = await this.findOwnerById.execute(data.ownerId);
     if (!owner) {
       throw new OwnerNotFoundError();
     }
 
-    // 2. Mapear os DTOs para Entidades de Domínio (DDD)
     const itemsToCreate: Item[] = data.items.map((itemDto) => {
       return Item.create({
         ...itemDto,
-        ownerId: data.ownerId, // Atribui o ownerId pai a todos os filhos
+        ownerId: data.ownerId,
       });
     });
 
-    // 3. Delegar a persistência em lote para o repositório
     await this.itemRepository.createMany(itemsToCreate);
 
     return {

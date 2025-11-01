@@ -13,13 +13,15 @@ export class ItemDaoAdapterPrisma implements IItemDao {
     const pagination = this.prisma.paginationFactory(queries.page, queries.size);
 
     const where: Prisma.ItemWhereInput = {
-      ownerId: queries.ownerId,
-      description: queries.search
-        ? { contains: queries.search, mode: 'insensitive' }
-        : undefined,
-      serviceCode: queries.search
-        ? { contains: queries.search, mode: 'insensitive' }
-        : undefined,
+      AND: [
+        {
+          ownerId: queries.ownerId,
+          OR: [
+            { description: queries.search ? { contains: queries.search, mode: 'insensitive' } : undefined },
+            { serviceCode: queries.search ? { contains: queries.search, mode: 'insensitive' } : undefined },
+          ],
+        },
+      ],
     };
 
     return this.prisma.$transaction([

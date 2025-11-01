@@ -38,6 +38,7 @@ describe('CreateSupplier', () => {
 
   afterAll(async() => {
     await prisma.supplier.deleteMany();
+    await prisma.$disconnect();
   });
 
   it('should be defined', () => {

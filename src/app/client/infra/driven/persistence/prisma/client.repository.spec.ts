@@ -30,6 +30,7 @@ describe('ClientRepositoryAdapterPrisma', () => {
   afterAll(async() => {
     await prisma.client.deleteMany();
     await prisma.owner.deleteMany();
+    await prisma.$disconnect();
   });
 
   it('should be defined', () => {

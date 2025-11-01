@@ -33,6 +33,7 @@ describe('FindAllContact', () => {
 
   afterAll(async() => {
     await prisma.contact.deleteMany();
+    await prisma.$disconnect();
   });
 
   it('should be defined', () => {

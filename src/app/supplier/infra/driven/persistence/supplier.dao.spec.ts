@@ -30,6 +30,7 @@ describe('SupplierDaoAdapterPrisma', () => {
 
   afterAll(async() => {
     await prisma.supplier.deleteMany();
+    await prisma.$disconnect();
   });
 
   it('should be defined', () => {

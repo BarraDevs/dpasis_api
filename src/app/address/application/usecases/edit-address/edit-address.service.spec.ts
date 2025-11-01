@@ -38,6 +38,7 @@ describe('EditAddress', () => {
   afterAll(async() => {
     await prisma.owner.deleteMany();
     await prisma.address.deleteMany();
+    await prisma.$disconnect();
   });
 
   it('should be defined', () => {

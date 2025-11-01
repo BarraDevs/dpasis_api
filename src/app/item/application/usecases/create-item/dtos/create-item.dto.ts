@@ -50,6 +50,7 @@ export class CreateItemsInputDto {
   @IsString()
   @IsNotEmpty()
   @MaxLength(256)
+  @Trim()
   ownerId: string;
 
   @ApiProperty({

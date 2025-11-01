@@ -17,6 +17,7 @@ export class DeleteItem {
     if (!item) {
       throw new ItemNotFoundError();
     }
+
     await this.itemRepository.delete(id);
 
     return { message: 'Item deletado com sucesso!' };

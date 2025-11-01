@@ -13,7 +13,7 @@ import { FindAllLicense } from './find-all-license.service';
 describe('FindAllLicense', () => {
   let sut: FindAllLicense;
   let prisma: PrismaService;
-  let createLicense: CreateLicense; // To create test data
+  let createLicense: CreateLicense;
 
   beforeEach(async() => {
     const module: TestingModule = await Test.createTestingModule({
@@ -25,7 +25,7 @@ describe('FindAllLicense', () => {
 
     sut = module.get(FindAllLicense);
     prisma = module.get(PrismaService);
-    createLicense = module.get(CreateLicense); // Get CreateLicense service
+    createLicense = module.get(CreateLicense);
 
     await prisma.owner.deleteMany();
     await prisma.license.deleteMany();
@@ -34,6 +34,7 @@ describe('FindAllLicense', () => {
   afterAll(async() => {
     await prisma.owner.deleteMany();
     await prisma.license.deleteMany();
+    await prisma.$disconnect();
   });
 
   it('should be defined', () => {

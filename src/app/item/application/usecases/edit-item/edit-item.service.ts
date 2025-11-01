@@ -21,8 +21,6 @@ export class EditItem {
     }
 
     const item = Item.load({ ...itemDto, ...data });
-    item.changePrice(data.unitPriceInCents);
-
     await this.itemRepository.edit(item);
 
     return { message: 'Item atualizado com sucesso!' };

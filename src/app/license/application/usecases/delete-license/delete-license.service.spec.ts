@@ -36,6 +36,7 @@ describe('DeleteLicense', () => {
   afterAll(async() => {
     await prisma.owner.deleteMany();
     await prisma.license.deleteMany();
+    await prisma.$disconnect();;
   });
 
   it('should be defined', () => {
