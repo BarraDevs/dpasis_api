@@ -1,6 +1,8 @@
-export class InvalidCnpjError extends Error {
+import { AppException } from 'src/core/filters/app.exception';
+
+export class InvalidCnpjError extends AppException {
   constructor() {
-    super('CNPJ inválido');
+    super('CNPJ inválido', 400);
     this.name = 'InvalidCnpjError';
   }
 }

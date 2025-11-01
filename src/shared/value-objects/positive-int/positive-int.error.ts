@@ -1,6 +1,8 @@
-export class NumberMustBePositiveAndInt extends Error {
+import { AppException } from 'src/core/filters/app.exception';
+
+export class NumberMustBePositiveAndInt extends AppException {
   constructor(resource: string) {
-    super(`${resource} deve ser um inteiro positivo`);
+    super(`${resource} deve ser um inteiro positivo`, 400);
     this.name = 'NumberMustBePositiveAndInt';
   }
 }

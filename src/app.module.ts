@@ -4,6 +4,7 @@ import { AttachmentModule } from './app/attachment/attachment.module';
 import { AuthenticationModule } from './app/authentication/authentication.module';
 import { ClientModule } from './app/client/client.module';
 import { ContactModule } from './app/contact/contact.module';
+import { ItemModule } from './app/item/item.module';
 import { LicenseModule } from './app/license/license.module';
 import { SupplierModule } from './app/supplier/supplier.module';
 import { CoreModule } from './core/core.module';
@@ -18,6 +19,7 @@ import { InfraModule } from './infra/infra.module';
     AttachmentModule,
     ClientModule,
     ContactModule,
+    ItemModule,
     LicenseModule,
     SupplierModule,
   ],

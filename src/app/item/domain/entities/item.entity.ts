@@ -49,9 +49,10 @@ export class Item {
     return this._props.quantity * this._props.unitPriceInCents;
   }
 
-  public changePrice(newPriceInCents: number) {
-    const unitPriceInCents = new PositiveInt(newPriceInCents, 'Preço unitário');
+  public changePrice(newPriceInCents?: number) {
+    if (!newPriceInCents) return;
 
+    const unitPriceInCents = new PositiveInt(newPriceInCents, 'Preço unitário');
     this._props.unitPriceInCents = unitPriceInCents.value;
     this._props.updatedAt = new Date();
   }

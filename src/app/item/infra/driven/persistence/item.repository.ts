@@ -8,13 +8,11 @@ export class ItemRepositoryAdapterPrisma implements IItemRepository {
   constructor(private prisma: PrismaService) {}
 
   public async createMany(items: Item[]): Promise<void> {
-    // O Prisma 'createMany' é otimizado para inserção em lote.
-    // Mapeamos nossas entidades (que já têm UUIDs gerados) para os dados crus.
     const dataToCreate = items.map((item) => item.props);
 
     await this.prisma.item.createMany({
       data: dataToCreate,
-      skipDuplicates: false, // Falha se houver duplicatas (o que não deve acontecer com UUIDs)
+      skipDuplicates: false,
     });
   }
 
@@ -24,6 +22,12 @@ export class ItemRepositoryAdapterPrisma implements IItemRepository {
     await this.prisma.item.update({
       where: { id },
       data,
+    });
+  }
+
+  public async delete(id: string): Promise<void> {
+    await this.prisma.item.delete({
+      where: { id },
     });
   }
 }

@@ -14,7 +14,7 @@ import { StringToNumber } from 'src/infra/validators/class-*/decorators/string-n
 import { Trim } from 'src/infra/validators/class-*/decorators/trim/trim';
 
 // Este é o DTO para CADA item no array
-class CreateItemInputDto {
+export class CreateItemInputDto {
   @ApiProperty({ description: 'Descrição do item/serviço' })
   @IsString()
   @IsNotEmpty()
