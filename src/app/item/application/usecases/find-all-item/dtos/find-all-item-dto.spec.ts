@@ -1,66 +1,66 @@
-// import { ArgumentMetadata, ValidationPipe } from '@nestjs/common';
-// import { pipeOptions } from 'src/infra/validators/class-*/config';
-// import { FindAllItemQueryDto } from './find-all-item.dto';
-// 
-// const metadata: ArgumentMetadata = {
-//   type: 'body',
-//   metatype: FindAllItemQueryDto,
-// };
-// 
-// describe('FindAllItemQueryDto', () => {
-//   let target: ValidationPipe;
-// 
-//   beforeEach(() => {
-//     target = new ValidationPipe(pipeOptions);
-//   });
-// 
-//   describe.each(
-//     [
-//       'field',
-//     ]
-//   )('%s field', (field: string) => {
-//     it.each(
-//       [
-//         undefined,
-//         null,
-//         '',
-//         '  ',
-//       ]
-//     )(`should throw an error if ${field} is empty (%s)`, async(value: any) => {
-//       const data = { [field]: value };
-// 
-//       expect.assertions(1);
-//       return target.transform(data, metadata).catch((error) => {
-//         expect(error.getResponse().message).toContain(`${field} é obrigatório`);
-//       });
-//     });
-// 
-//     it.each(
-//       [
-//         123,
-//         true,
-//         false,
-//         {},
-//         [],
-//       ]
-//     )('should throw an error if %s is not a string (%s)', async(value: any) => {
-//       const data = { [field]: value };
-// 
-//       expect.assertions(1);
-//       return target.transform(data, metadata).catch((error) => {
-//         expect(error.getResponse().message).toContain(`${field} deve ser uma string`);
-//       });
-//     });
-//   });
-// 
-//   it('should pass if all fields are valid', async() => {
-//     const data = {
-//       field: 'name',
-//     };
-// 
-//     const result = await target.transform(data, metadata);
-// 
-//     expect(result).toBeInstanceOf(FindAllItemQueryDto);
-//     expect(result).toEqual(data);
-//   });
-// });
+import { ArgumentMetadata, ValidationPipe } from '@nestjs/common';
+import { pipeOptions } from 'src/infra/validators/class-*/config';
+import { FindAllItemQueryDto } from './find-all-item.dto';
+
+const metadata: ArgumentMetadata = {
+  type: 'body',
+  metatype: FindAllItemQueryDto,
+};
+
+describe('FindAllItemQueryDto', () => {
+  let target: ValidationPipe;
+
+  beforeEach(() => {
+    target = new ValidationPipe(pipeOptions);
+  });
+
+  describe.each(
+    [
+      'ownerId',
+    ]
+  )('%s field', (field: string) => {
+    it.each(
+      [
+        undefined,
+        null,
+        '',
+        '  ',
+      ]
+    )(`should throw an error if ${field} is empty (%s)`, async(value: any) => {
+      const data = { [field]: value };
+
+      expect.assertions(1);
+      return target.transform(data, metadata).catch((error) => {
+        expect(error.getResponse().message).toContain(`${field} é obrigatório`);
+      });
+    });
+
+    it.each(
+      [
+        123,
+        true,
+        false,
+        {},
+        [],
+      ]
+    )('should throw an error if %s is not a string (%s)', async(value: any) => {
+      const data = { [field]: value };
+
+      expect.assertions(1);
+      return target.transform(data, metadata).catch((error) => {
+        expect(error.getResponse().message).toContain(`${field} deve ser uma string`);
+      });
+    });
+  });
+
+  it('should pass if all fields are valid', async() => {
+    const data = {
+      ownerId: ' valid-owner-id ',
+    };
+
+    const result = await target.transform(data, metadata);
+
+    expect(result).toBeInstanceOf(FindAllItemQueryDto);
+    expect(result.ownerId).toEqual(data.ownerId.trim());
+  });
+});

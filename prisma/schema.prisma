@@ -86,6 +86,7 @@ model Owner {
   contacts    Contact[]
   licenses    License[]
   attachments Attachment[]
+  items       Item[]
 
   clientId String? @unique
   client   Client? @relation(fields: [clientId], references: [id], onDelete: Cascade)
@@ -159,6 +160,21 @@ model Attachment {
   owner Owner @relation(fields: [ownerId], references: [id], onDelete: Cascade) // Deletar o Owner deleta o Anexo
 
   @@map("attachments")
+}
+
+model Item {
+  id               String   @id
+  description      String   @db.Text
+  serviceCode      String   @db.VarChar(256)
+  quantity         Int
+  unitPriceInCents Int
+  ownerId   String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  owner Owner @relation(fields: [ownerId], references: [id], onDelete: Cascade) // Deletar o Owner deleta o Item
+
+  @@map("items")
 }
 
 model Faq {
