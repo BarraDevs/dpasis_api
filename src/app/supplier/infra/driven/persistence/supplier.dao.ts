@@ -17,7 +17,7 @@ export class SupplierDaoAdapterPrisma implements ISupplierDao {
         {
           OR: [
             { companyName: { contains: queries.companyName, mode: 'insensitive' } },
-            { cnpj: { contains: queries.cnpj } },
+            { cnpj: { contains: queries.cnpj, mode: 'insensitive' } },
           ],
         },
       ],
