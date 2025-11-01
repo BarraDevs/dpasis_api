@@ -29,8 +29,14 @@ export class AttachmentDaoAdapterPrisma implements IAttachmentDao {
     const pagination = this.prisma.paginationFactory(queries.page, queries.size);
 
     const where: Prisma.AttachmentWhereInput = {
-      ownerId: queries.ownerId, // Filtrando por ownerId (obrigatório pelo DTO)
-      link: queries.search ? { contains: queries.search, mode: 'insensitive' } : undefined, // Busca opcional no link
+      AND: [
+        {
+          ownerId: queries.ownerId,
+          OR: [
+            { link: { contains: queries.search, mode: 'insensitive' } },
+          ],
+        },
+      ],
     };
 
     return this.prisma.$transaction([
