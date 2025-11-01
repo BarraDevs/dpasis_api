@@ -26,11 +26,14 @@ describe('FindContactById', () => {
     prisma = module.get(PrismaService);
     createContact = module.get(CreateContact);
 
+    await prisma.owner.deleteMany();
     await prisma.contact.deleteMany();
   });
 
   afterAll(async() => {
+    await prisma.owner.deleteMany();
     await prisma.contact.deleteMany();
+    await prisma.$disconnect();
   });
 
   it('should be defined', () => {
@@ -61,6 +64,12 @@ describe('FindContactById', () => {
     });
 
     it('should return a contact if found', async() => {
+      const owner = await prisma.owner.create({
+        data: {
+          id: 'owner-123',
+        },
+      });
+
       // Arrange
       const data: CreateContactInputDto = {
         name: 'John Doe',
@@ -68,7 +77,7 @@ describe('FindContactById', () => {
         email: 'john.doe@example.com',
         phone: '123-456-7890',
         whatsapp: '123-456-7890',
-        ownerId: 'owner-123',
+        ownerId: owner.id,
         info: 'Additional info about John Doe',
       };
       const createdContact = await createContact.execute(data);

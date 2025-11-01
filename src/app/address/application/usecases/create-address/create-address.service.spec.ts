@@ -1,7 +1,9 @@
 import { createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
+import { Owner } from '@prisma/client';
 import { AddressModule } from 'src/app/address/address.module';
 import { AddressMainMustBeOneError } from 'src/app/address/domain/errors/address-main-must-be-one.error';
+import { OwnerNotFoundError } from 'src/app/owner/domain/errors/owner-not-found.error';
 import { ConfigModule } from 'src/core/config/config.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { AddressDto } from '../../dtos/address.dto';
@@ -26,11 +28,14 @@ describe('CreateAddress', () => {
     prisma = module.get(PrismaService);
     findAddressById = module.get(FindAddressById);
 
+    await prisma.owner.deleteMany();
     await prisma.address.deleteMany();
   });
 
   afterAll(async() => {
+    await prisma.owner.deleteMany();
     await prisma.address.deleteMany();
+    await prisma.$disconnect();
   });
 
   it('should be defined', () => {
@@ -45,17 +50,52 @@ describe('CreateAddress', () => {
       const findMainAddressSpy = jest.spyOn(sut['addressDao'], 'findMainAddress').mockResolvedValue(null);
       const saveSpy = jest.spyOn(sut['addressDao'], 'save').mockResolvedValue(address.id);
 
+      const owner = createMock<Owner>();
+      jest.spyOn(sut['findOwnerById'], 'execute').mockResolvedValue(owner);
+
       // Act
       const result = await sut.execute(input, true);
 
       // Assert
-      expect(findMainAddressSpy).toHaveBeenCalledWith(input.ownerId);
+      expect(findMainAddressSpy).toHaveBeenCalledWith(owner.id);
       expect(saveSpy).toHaveBeenCalledWith(input, true);
       expect(result).toEqual({ id: address.id });
     });
   });
 
   describe('integration tests', () => {
+    let owner01: Owner;
+
+    beforeEach(async() => {
+      owner01 = await prisma.owner.create({
+        data: {
+          id: 'owner-1',
+        },
+      });
+    });
+
+    it('should throw an error if owner does not exist', async() => {
+      // Arrange
+      const data: CreateAddressInputDto = {
+        zipCode: '12345-678',
+        street: 'Main St',
+        number: '123',
+        neighborhood: 'Downtown',
+        city: 'Metropolis',
+        state: 'State',
+        ownerId: 'non-existent-owner',
+        nickname: null,
+        complement: null,
+        reference: null,
+      };
+
+      // Act & Assert
+      expect.assertions(1);
+      return sut.execute(data, false).catch((error) => {
+        expect(error).toBeInstanceOf(OwnerNotFoundError);
+      });
+    });
+
     it('should create a main address', async() => {
       // Arrange
       const data: CreateAddressInputDto = {
@@ -66,7 +106,7 @@ describe('CreateAddress', () => {
         neighborhood: 'Downtown',
         city: 'Metropolis',
         state: 'State',
-        ownerId: 'owner-1',
+        ownerId: owner01.id,
         nickname: 'Home',
         reference: null,
       };
@@ -104,7 +144,7 @@ describe('CreateAddress', () => {
         neighborhood: 'Downtown',
         city: 'Metropolis',
         state: 'State',
-        ownerId: 'owner-1',
+        ownerId: owner01.id,
         nickname: null,
         complement: null,
         reference: null,
@@ -127,7 +167,7 @@ describe('CreateAddress', () => {
         neighborhood: 'Uptown',
         city: 'Gotham',
         state: 'State',
-        ownerId: 'owner-2',
+        ownerId: owner01.id,
         nickname: null,
         complement: null,
         reference: null,

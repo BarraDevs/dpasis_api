@@ -1,5 +1,6 @@
 import { createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
+import { Owner } from '@prisma/client';
 import { AddressModule } from 'src/app/address/address.module';
 import { AddressNotFoundError } from 'src/app/address/domain/errors/address-not-found.error';
 import { ConfigModule } from 'src/core/config/config.module';
@@ -30,11 +31,14 @@ describe('EditAddress', () => {
     createAddress = module.get(CreateAddress);
     findAddressById = module.get(FindAddressById);
 
+    await prisma.owner.deleteMany();
     await prisma.address.deleteMany();
   });
 
   afterAll(async() => {
+    await prisma.owner.deleteMany();
     await prisma.address.deleteMany();
+    await prisma.$disconnect();
   });
 
   it('should be defined', () => {
@@ -74,6 +78,16 @@ describe('EditAddress', () => {
   });
 
   describe('integration tests', () => {
+    let owner01: Owner;
+
+    beforeEach(async() => {
+      owner01 = await prisma.owner.create({
+        data: {
+          id: 'owner-123',
+        },
+      });
+    });
+
     it('should throw an error if address not found', async() => {
       // Arrange
       const data = createMock<EditAddressInputDto>();
@@ -95,7 +109,7 @@ describe('EditAddress', () => {
         neighborhood: 'Bairro Secundário',
         city: 'Cidade Secundária',
         state: 'Estado Secundário',
-        ownerId: 'owner-123',
+        ownerId: owner01.id,
         nickname: null,
         complement: null,
         reference: null,
@@ -118,7 +132,7 @@ describe('EditAddress', () => {
         neighborhood: 'Bairro Principal',
         city: 'Cidade Principal',
         state: 'Estado Principal',
-        ownerId: 'owner-123',
+        ownerId: owner01.id,
         nickname: null,
         complement: null,
         reference: null,
@@ -145,7 +159,7 @@ describe('EditAddress', () => {
         neighborhood: 'Bairro Principal',
         city: 'Cidade Principal',
         state: 'Estado Principal',
-        ownerId: 'owner-123',
+        ownerId: owner01.id,
         nickname: null,
         complement: null,
         reference: null,

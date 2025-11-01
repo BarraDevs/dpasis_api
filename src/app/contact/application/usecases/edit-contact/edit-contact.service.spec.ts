@@ -1,5 +1,6 @@
 import { createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
+import { Owner } from '@prisma/client';
 import { ContactModule } from 'src/app/contact/contact.module';
 import { ContactNotFoundError } from 'src/app/contact/domain/errors/contact-not-found.error';
 import { ConfigModule } from 'src/core/config/config.module';
@@ -31,11 +32,14 @@ describe('EditContact', () => {
     createContact = module.get(CreateContact);
     findContactById = module.get(FindContactById);
 
+    await prisma.owner.deleteMany();
     await prisma.contact.deleteMany();
   });
 
   afterAll(async() => {
+    await prisma.owner.deleteMany();
     await prisma.contact.deleteMany();
+    await prisma.$disconnect();
   });
 
   it('should be defined', () => {
@@ -71,83 +75,95 @@ describe('EditContact', () => {
     });
   });
 
-  it('should throw an error if contact does not exist', async() => {
-    // Arrange
-    const data = createMock<EditContactInputDto>();
+  describe('integration tests', () => {
+    let owner: Owner;
 
-    // Act & Assert
-    expect.assertions(1);
-    return sut.execute('non-existing-id', data).catch((error) => {
-      expect(error).toBeInstanceOf(ContactNotFoundError);
+    beforeEach(async() => {
+      owner = await prisma.owner.create({
+        data: {
+          id: 'owner-id-1',
+        },
+      });
     });
-  });
 
-  it('should edit a contact with partial data', async() => {
+    it('should throw an error if contact does not exist', async() => {
     // Arrange
-    const createData: CreateContactInputDto = {
-      name: 'John Doe',
-      department: 'TI',
-      email: 'john.doe@example.com',
-      phone: '123456789',
-      whatsapp: '987654321',
-      ownerId: 'owner-id-1',
-      info: 'Some info about John Doe',
-    };
-    const createdContact = await createContact.execute(createData);
+      const data = createMock<EditContactInputDto>();
 
-    // Act
-    const contactEdit: EditContactInputDto = {
-      name: 'Jane Doe',
-      phone: '987654321',
-      whatsapp: '123456789',
-    };
-    await sut.execute(createdContact.id, contactEdit);
-
-    // Assert
-    const editedContact = await findContactById.execute(createdContact.id);
-    expect(editedContact).toBeDefined();
-    expect(editedContact).toEqual<ContactDto>({
-      id: createdContact.id,
-      ownerId: createData.ownerId,
-      name: contactEdit.name ?? createData.name,
-      department: contactEdit.department ?? createData.department,
-      email: contactEdit.email ?? createData.email,
-      phone: contactEdit.phone ?? createData.phone,
-      whatsapp: contactEdit.whatsapp ?? createData.whatsapp,
-      info: contactEdit.info ?? createData.info,
-      createdAt: editedContact.createdAt,
-      updatedAt: editedContact.updatedAt,
+      // Act & Assert
+      expect.assertions(1);
+      return sut.execute('non-existing-id', data).catch((error) => {
+        expect(error).toBeInstanceOf(ContactNotFoundError);
+      });
     });
-  });
 
-  it('should edit a contact providing null values', async() => {
+    it('should edit a contact with partial data', async() => {
     // Arrange
-    const createData: CreateContactInputDto = {
-      name: 'John Doe',
-      department: 'TI',
-      email: 'john.doe@example.com',
-      phone: '123456789',
-      whatsapp: '987654321',
-      ownerId: 'owner-id-1',
-      info: 'Some info about John Doe',
-    };
-    const createdContact = await createContact.execute(createData);
+      const createData: CreateContactInputDto = {
+        name: 'John Doe',
+        department: 'TI',
+        email: 'john.doe@example.com',
+        phone: '123456789',
+        whatsapp: '987654321',
+        ownerId: owner.id,
+        info: 'Some info about John Doe',
+      };
+      const createdContact = await createContact.execute(createData);
 
-    // Act
-    const contactEdit: EditContactInputDto = {
-      info: null,
-    };
-    await sut.execute(createdContact.id, contactEdit);
+      // Act
+      const contactEdit: EditContactInputDto = {
+        name: 'Jane Doe',
+        phone: '987654321',
+        whatsapp: '123456789',
+      };
+      await sut.execute(createdContact.id, contactEdit);
 
-    // Assert
-    const editedContact = await findContactById.execute(createdContact.id);
-    expect(editedContact).toBeDefined();
-    expect(editedContact).toEqual<ContactDto>({
-      ...createData,
-      info: null,
-      id: createdContact.id,
-      createdAt: editedContact.createdAt,
-      updatedAt: editedContact.updatedAt,
+      // Assert
+      const editedContact = await findContactById.execute(createdContact.id);
+      expect(editedContact).toBeDefined();
+      expect(editedContact).toEqual<ContactDto>({
+        id: createdContact.id,
+        ownerId: createData.ownerId,
+        name: contactEdit.name ?? createData.name,
+        department: contactEdit.department ?? createData.department,
+        email: contactEdit.email ?? createData.email,
+        phone: contactEdit.phone ?? createData.phone,
+        whatsapp: contactEdit.whatsapp ?? createData.whatsapp,
+        info: contactEdit.info ?? createData.info,
+        createdAt: editedContact.createdAt,
+        updatedAt: editedContact.updatedAt,
+      });
+    });
+
+    it('should edit a contact providing null values', async() => {
+    // Arrange
+      const createData: CreateContactInputDto = {
+        name: 'John Doe',
+        department: 'TI',
+        email: 'john.doe@example.com',
+        phone: '123456789',
+        whatsapp: '987654321',
+        ownerId: owner.id,
+        info: 'Some info about John Doe',
+      };
+      const createdContact = await createContact.execute(createData);
+
+      // Act
+      const contactEdit: EditContactInputDto = {
+        info: null,
+      };
+      await sut.execute(createdContact.id, contactEdit);
+
+      // Assert
+      const editedContact = await findContactById.execute(createdContact.id);
+      expect(editedContact).toBeDefined();
+      expect(editedContact).toEqual<ContactDto>({
+        ...createData,
+        info: null,
+        id: createdContact.id,
+        createdAt: editedContact.createdAt,
+        updatedAt: editedContact.updatedAt,
+      });
     });
   });
 });

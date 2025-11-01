@@ -1,5 +1,6 @@
 import { createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
+import { Owner } from '@prisma/client';
 import { AttachmentModule } from 'src/app/attachment/attachment.module';
 import { AttachmentNotFoundError } from 'src/app/attachment/domain/errors/attachment-not-found.error';
 import { ConfigModule } from 'src/core/config/config.module';
@@ -30,11 +31,14 @@ describe('EditAttachment', () => {
     createAttachment = module.get(CreateAttachment);
     findAttachmentById = module.get(FindAttachmentById);
 
+    await prisma.owner.deleteMany();
     await prisma.attachment.deleteMany();
   });
 
   afterAll(async() => {
+    await prisma.owner.deleteMany();
     await prisma.attachment.deleteMany();
+    await prisma.$disconnect();
   });
 
   it('should be defined', () => {
@@ -83,6 +87,17 @@ describe('EditAttachment', () => {
   });
 
   describe('integration tests', () => {
+    let owner01: Owner;
+
+    beforeEach(async() => {
+      // Create an owner for attachment ownership
+      owner01 = await prisma.owner.create({
+        data: {
+          id: 'owner-edit-attachment-test',
+        },
+      });
+    });
+
     it('should throw AttachmentNotFoundError if attachment does not exist', async() => {
       // Arrange
       const id = 'non-existing-id';
@@ -96,7 +111,7 @@ describe('EditAttachment', () => {
       // Arrange
       const createData = {
         link: 'https://original.com/file.txt',
-        ownerId: 'owner-edit-test',
+        ownerId: owner01.id,
       };
       const createdAttachment = await createAttachment.execute(createData);
 
@@ -117,7 +132,7 @@ describe('EditAttachment', () => {
       // Arrange
       const createData = {
         link: 'https://original.com/file.txt',
-        ownerId: 'owner-edit-test-nochange',
+        ownerId: owner01.id,
       };
       const createdAttachment = await createAttachment.execute(createData);
 

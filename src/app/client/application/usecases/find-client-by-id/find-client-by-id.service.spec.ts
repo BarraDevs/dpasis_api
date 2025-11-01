@@ -27,6 +27,11 @@ describe('FindClientById', () => {
     await prisma.client.deleteMany();
   });
 
+  afterAll(async() => {
+    await prisma.client.deleteMany();
+    await prisma.$disconnect();
+  });
+
   it('should be defined', () => {
     expect(sut).toBeDefined();
   });

@@ -31,6 +31,7 @@ describe('SigninWithCredentialAndPassword', () => {
 
   afterAll(async() => {
     await prisma.account.deleteMany();
+    await prisma.$disconnect();
   });
 
   it('should be defined', () => {

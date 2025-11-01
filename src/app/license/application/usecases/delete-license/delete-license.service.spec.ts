@@ -29,11 +29,14 @@ describe('DeleteLicense', () => {
     createLicense = module.get(CreateLicense);
     findLicenseById = module.get(FindLicenseById);
 
+    await prisma.owner.deleteMany();
     await prisma.license.deleteMany();
   });
 
   afterAll(async() => {
+    await prisma.owner.deleteMany();
     await prisma.license.deleteMany();
+    await prisma.$disconnect();;
   });
 
   it('should be defined', () => {
@@ -89,12 +92,18 @@ describe('DeleteLicense', () => {
 
     it('should delete a license successfully', async() => {
       // Arrange
+      const owner = await prisma.owner.create({
+        data: {
+          id: 'owner-123',
+        },
+      });
+
       const createData = {
         paymentDay: 1,
         bonusInCents: 0,
         billingStartDate: new Date('2023-01-01'),
         license: 'Test License',
-        ownerId: 'owner-123',
+        ownerId: owner.id,
       };
       const createdLicense = await createLicense.execute(createData);
 

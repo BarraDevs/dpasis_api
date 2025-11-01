@@ -1,5 +1,6 @@
 import { createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
+import { Owner } from '@prisma/client';
 import { AttachmentModule } from 'src/app/attachment/attachment.module';
 import { AttachmentNotFoundError } from 'src/app/attachment/domain/errors/attachment-not-found.error';
 import { ConfigModule } from 'src/core/config/config.module';
@@ -29,11 +30,14 @@ describe('DeleteAttachment', () => {
     createAttachment = module.get(CreateAttachment);
     findAttachmentById = module.get(FindAttachmentById);
 
+    await prisma.owner.deleteMany();
     await prisma.attachment.deleteMany();
   });
 
   afterAll(async() => {
+    await prisma.owner.deleteMany();
     await prisma.attachment.deleteMany();
+    await prisma.$disconnect();
   });
 
   it('should be defined', () => {
@@ -82,6 +86,16 @@ describe('DeleteAttachment', () => {
   });
 
   describe('integration tests', () => {
+    let owner01: Owner;
+
+    beforeEach(async() => {
+      owner01 = await prisma.owner.create({
+        data: {
+          id: 'owner-attachment-delete-test',
+        },
+      });
+    });
+
     it('should throw AttachmentNotFoundError if the attachment does not exist', async() => {
       // Act & Assert
       await expect(sut.execute('non-existing-id')).rejects.toThrow(AttachmentNotFoundError);
@@ -91,7 +105,7 @@ describe('DeleteAttachment', () => {
       // Arrange
       const createData = {
         link: 'https://example.com/to-be-deleted.doc',
-        ownerId: 'owner-delete-test',
+        ownerId: owner01.id,
       };
       const createdAttachment = await createAttachment.execute(createData);
 

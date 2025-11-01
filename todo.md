@@ -1,0 +1,11 @@
+- implementar cnpj e UUID no client entity
+- 
+
+- items (createmany)
+  - id
+  - description
+  - serviceCode
+  - quantity
+  - unitValueInCents
+  - createdAt
+  - updatedAt

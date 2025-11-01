@@ -1,5 +1,6 @@
 import { createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
+import { Owner } from '@prisma/client';
 import { AddressModule } from 'src/app/address/address.module';
 import { ConfigModule } from 'src/core/config/config.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
@@ -41,11 +42,14 @@ describe('FindAllAddress', () => {
       reference: null,
     };
 
+    await prisma.owner.deleteMany();
     await prisma.address.deleteMany();
   });
 
   afterAll(async() => {
+    await prisma.owner.deleteMany();
     await prisma.address.deleteMany();
+    await prisma.$disconnect();
   });
 
   it('should be defined', () => {
@@ -67,6 +71,22 @@ describe('FindAllAddress', () => {
   });
 
   describe('integration tests', () => {
+    let owner01: Owner;
+    let owner02: Owner;
+
+    beforeEach(async() => {
+      owner01 = await prisma.owner.create({
+        data: {
+          id: 'owner-1',
+        },
+      });
+      owner02 = await prisma.owner.create({
+        data: {
+          id: 'owner-2',
+        },
+      });
+    });
+
     it('should return an empty array when no addresses exist', async() => {
       // Act
       const result = await sut.execute({ ownerId: 'non-existent-owner', isMain: true });
@@ -84,13 +104,12 @@ describe('FindAllAddress', () => {
     it('should filter addresses by isMain flag', async() => {
       // Arrange
       const isMain = false;
-      const ownerId = 'owner-1';
 
-      const address01 = await createAddress.execute({ ...data, ownerId }, isMain);
-      await createAddress.execute({ ...data, ownerId }, !isMain);
+      const address01 = await createAddress.execute({ ...data, ownerId: owner01.id }, isMain);
+      await createAddress.execute({ ...data, ownerId: owner01.id }, !isMain);
 
       // Act
-      const result = await sut.execute({ ownerId, isMain });
+      const result = await sut.execute({ ownerId: owner01.id, isMain });
 
       // Assert
       expect(result.data).toHaveLength(1);
@@ -104,14 +123,13 @@ describe('FindAllAddress', () => {
     it('should filter addresses by ownerId', async() => {
       // Arrange
       const isMain = false;
-      const ownerId = 'owner-2';
 
-      const address01 = await createAddress.execute({ ...data, ownerId }, isMain);
-      const address02 = await createAddress.execute({ ...data, ownerId }, isMain);
-      await createAddress.execute({ ...data, ownerId: 'owner-3' }, isMain);
+      const address01 = await createAddress.execute({ ...data, ownerId: owner01.id }, isMain);
+      const address02 = await createAddress.execute({ ...data, ownerId: owner01.id }, isMain);
+      await createAddress.execute({ ...data, ownerId: owner02.id }, isMain);
 
       // Act
-      const result = await sut.execute({ ownerId, isMain });
+      const result = await sut.execute({ ownerId: owner01.id, isMain });
 
       // Assert
       expect(result.data).toHaveLength(2);
@@ -125,14 +143,12 @@ describe('FindAllAddress', () => {
 
     it('should filter addresses by ownerId and isMain flag', async() => {
       // Arrange
-      const ownerId = 'owner-4';
-
-      const address01 = await createAddress.execute({ ...data, ownerId }, true);
-      await createAddress.execute({ ...data, ownerId }, false);
-      await createAddress.execute({ ...data, ownerId: 'owner-5' }, true);
+      const address01 = await createAddress.execute({ ...data, ownerId: owner01.id }, true);
+      await createAddress.execute({ ...data, ownerId: owner01.id }, false);
+      await createAddress.execute({ ...data, ownerId: owner02.id }, true);
 
       // Act
-      const result = await sut.execute({ ownerId, isMain: true });
+      const result = await sut.execute({ ownerId: owner01.id, isMain: true });
 
       // Assert
       expect(result.data).toHaveLength(1);
@@ -145,17 +161,15 @@ describe('FindAllAddress', () => {
 
     it('should return paginated addresses', async() => {
       // Arrange
-      const ownerId = 'owner-6';
-
       const addresses = [];
       for (let i = 0; i < 15; i++) {
-        const address = await createAddress.execute({ ...data, ownerId }, false);
+        const address = await createAddress.execute({ ...data, ownerId: owner01.id }, false);
         addresses.push(address);
       }
 
       // Act
-      const resultPage1 = await sut.execute({ ownerId, isMain: false, page: 1, size: 10 });
-      const resultPage2 = await sut.execute({ ownerId, isMain: false, page: 2, size: 10 });
+      const resultPage1 = await sut.execute({ ownerId: owner01.id, isMain: false, page: 1, size: 10 });
+      const resultPage2 = await sut.execute({ ownerId: owner01.id, isMain: false, page: 2, size: 10 });
 
       // Assert
       expect(resultPage1.data).toHaveLength(10);

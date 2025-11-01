@@ -1,5 +1,6 @@
 import { createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
+import { Owner } from '@prisma/client';
 import { ContactModule } from 'src/app/contact/contact.module';
 import { ContactNotFoundError } from 'src/app/contact/domain/errors/contact-not-found.error';
 import { ConfigModule } from 'src/core/config/config.module';
@@ -29,11 +30,14 @@ describe('DeleteContact', () => {
     createContact = module.get(CreateContact);
     findContactById = module.get(FindContactById);
 
+    await prisma.owner.deleteMany();
     await prisma.contact.deleteMany();
   });
 
   afterAll(async() => {
+    await prisma.owner.deleteMany();
     await prisma.contact.deleteMany();
+    await prisma.$disconnect();
   });
 
   it('should be defined', () => {
@@ -57,6 +61,16 @@ describe('DeleteContact', () => {
   });
 
   describe('integration tests', () => {
+    let owner: Owner;
+
+    beforeEach(async() => {
+      owner = await prisma.owner.create({
+        data: {
+          id: 'owner-1',
+        },
+      });
+    });
+
     it('should throw an error if contact does not exist', async() => {
       // Act & Assert
       expect.assertions(1);
@@ -73,7 +87,7 @@ describe('DeleteContact', () => {
         email: 'john.doe@example.com',
         phone: '1234567890',
         whatsapp: '1234567890',
-        ownerId: 'owner-1',
+        ownerId: owner.id,
         info: null,
       });
 
@@ -95,7 +109,7 @@ describe('DeleteContact', () => {
         email: 'jane.smith@example.com',
         phone: '0987654321',
         whatsapp: '0987654321',
-        ownerId: 'owner-2',
+        ownerId: owner.id,
         info: null,
       });
 

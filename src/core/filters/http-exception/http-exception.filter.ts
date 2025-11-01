@@ -1,47 +1,11 @@
 import { ArgumentsHost, Catch, ExceptionFilter, HttpStatus, Inject } from '@nestjs/common';
 import { BaseExceptionFilter } from '@nestjs/core';
 import { Request, Response } from 'express';
-import { AddressMainCannotBeDeletedError } from 'src/app/address/domain/errors/address-main-cannot-be-deleted.error';
-import { AddressMainMustBeOneError } from 'src/app/address/domain/errors/address-main-must-be-one.error';
-import { AddressNotFoundError } from 'src/app/address/domain/errors/address-not-found.error';
-import { AttachmentNotFoundError } from 'src/app/attachment/domain/errors/attachment-not-found.error';
-import { ForbiddenAccountError } from 'src/app/authentication/application/errors/forbidden-account.error';
-import { InactiveAccountError } from 'src/app/authentication/application/errors/inactive-account.error';
-import { InvalidCredentialError } from 'src/app/authentication/application/errors/invalid-credential.error';
-import { ClientNotFoundError } from 'src/app/client/domain/errors/client-not-found';
-import { ClientDuplicateCnpjError } from 'src/app/client/domain/errors/duplicate-cnpj.error';
-import { ClientDuplicateIeError } from 'src/app/client/domain/errors/duplicate-ie.error';
-import { ContactNotFoundError } from 'src/app/contact/domain/errors/contact-not-found.error';
-import { LicenseNotFoundError } from 'src/app/license/domain/errors/license-not-found.error';
 import { TOKENS } from 'src/core/di/token';
 import { type ILoggerGateway, LogContext } from 'src/infra/logger/logger.gateway';
-import { InvalidDateError, InvalidDaysQuantityError, InvalidMonthsQuantityError } from 'src/shared/value-objects/utc-date/utc-date.error';
 import { AppException } from '../app.exception';
 
-@Catch(
-  ForbiddenAccountError,
-  InactiveAccountError,
-  InvalidCredentialError,
-
-  AttachmentNotFoundError,
-
-  AddressNotFoundError,
-  AddressMainCannotBeDeletedError,
-  AddressMainMustBeOneError,
-
-  ClientNotFoundError,
-  ClientDuplicateCnpjError,
-  ClientDuplicateIeError,
-
-  ContactNotFoundError,
-
-  LicenseNotFoundError,
-
-
-  InvalidDateError,
-  InvalidDaysQuantityError,
-  InvalidMonthsQuantityError,
-)
+@Catch(AppException)
 export class HttpExceptionFilter extends BaseExceptionFilter implements ExceptionFilter {
   private readonly SENSITIVE_FIELDS = [
     'password',

@@ -11,9 +11,16 @@ import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 export class AttachmentDaoAdapterPrisma implements IAttachmentDao {
   constructor(private prisma: PrismaService) {}
 
-  public async save(data: CreateAttachmentInputDto): Promise<string> {
+  public async save({ ownerId, ...rest }: CreateAttachmentInputDto): Promise<string> {
     const result = await this.prisma.attachment.create({
-      data,
+      data: {
+        ...rest,
+        owner: {
+          connect: {
+            id: ownerId,
+          },
+        },
+      },
     });
     return result.id;
   }
@@ -22,8 +29,14 @@ export class AttachmentDaoAdapterPrisma implements IAttachmentDao {
     const pagination = this.prisma.paginationFactory(queries.page, queries.size);
 
     const where: Prisma.AttachmentWhereInput = {
-      ownerId: queries.ownerId, // Filtrando por ownerId (obrigatório pelo DTO)
-      link: queries.search ? { contains: queries.search, mode: 'insensitive' } : undefined, // Busca opcional no link
+      AND: [
+        {
+          ownerId: queries.ownerId,
+          OR: [
+            { link: { contains: queries.search, mode: 'insensitive' } },
+          ],
+        },
+      ],
     };
 
     return this.prisma.$transaction([

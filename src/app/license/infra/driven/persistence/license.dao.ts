@@ -11,9 +11,16 @@ import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 export class LicenseDaoAdapterPrisma implements ILicenseDao {
   constructor(private prisma: PrismaService) {}
 
-  public async save(data: CreateLicenseInputDto): Promise<string> {
+  public async save({ ownerId, ...rest }: CreateLicenseInputDto): Promise<string> {
     const result = await this.prisma.license.create({
-      data,
+      data: {
+        ...rest,
+        owner: {
+          connect: {
+            id: ownerId,
+          },
+        },
+      },
     });
 
     return result.id;
@@ -23,7 +30,14 @@ export class LicenseDaoAdapterPrisma implements ILicenseDao {
     const pagination = this.prisma.paginationFactory(queries.page, queries.size);
 
     const where: Prisma.LicenseWhereInput = {
-      license: { contains: queries.search, mode: 'insensitive' },
+      AND: [
+        {
+          ownerId: queries.ownerId,
+          OR: [
+            { license: { contains: queries.search, mode: 'insensitive' } },
+          ],
+        },
+      ],
     };
 
     return this.prisma.$transaction([

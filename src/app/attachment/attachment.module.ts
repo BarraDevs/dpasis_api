@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AuthenticationGuardsModule } from '../authentication/application/guards/guards.module';
+import { OwnerModule } from '../owner/owner.module';
 import { AttachmentPersistenceModule } from './application/persistence/attachment-persistence.module';
 import { CreateAttachment } from './application/usecases/create-attachment/create-attachment.service';
 import { DeleteAttachment } from './application/usecases/delete-attachment/delete-attachment.service';
@@ -12,6 +13,7 @@ import { AttachmentController } from './infra/drivers/http/attachment.controller
   imports: [
     AttachmentPersistenceModule,
     AuthenticationGuardsModule,
+    OwnerModule,
   ],
   controllers: [
     AttachmentController,

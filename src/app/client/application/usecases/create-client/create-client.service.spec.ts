@@ -47,6 +47,7 @@ describe('CreateClient', () => {
 
   afterAll(async() => {
     await prisma.client.deleteMany();
+    await prisma.$disconnect();
   });
 
   it('should be defined', () => {
