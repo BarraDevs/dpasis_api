@@ -14,12 +14,15 @@ export class ClientDaoAdapterPrisma implements IClientDao {
 
     const where: Prisma.ClientWhereInput = {
       AND: [
-        {
-          OR: [
-            { companyName: { contains: queries.companyName, mode: 'insensitive' } },
-            { cnpj: { contains: queries.cnpj, mode: 'insensitive' } },
-          ],
-        },
+        { kind: queries.kind ? { contains: queries.kind, mode: 'insensitive' } : undefined },
+        { cnpj: queries.cnpj ? { contains: queries.cnpj } : undefined },
+        { ie: queries.ie ? { contains: queries.ie } : undefined },
+        { group: queries.group ? { contains: queries.group, mode: 'insensitive' } : undefined },
+        { type: queries.type ? { contains: queries.type, mode: 'insensitive' } : undefined },
+        { companyName: queries.companyName ? { contains: queries.companyName, mode: 'insensitive' } : undefined },
+        { fantasyName: queries.fantasyName ? { contains: queries.fantasyName, mode: 'insensitive' } : undefined },
+        { owner: queries.owner ? { contains: queries.owner, mode: 'insensitive' } : undefined },
+        { headquarters: queries.headquarters ? { contains: queries.headquarters, mode: 'insensitive' } : undefined },
       ],
     };
 
