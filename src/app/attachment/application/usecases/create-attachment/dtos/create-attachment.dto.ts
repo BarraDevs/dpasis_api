@@ -1,8 +1,17 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, IsUrl, MaxLength } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, IsUrl, MaxLength } from 'class-validator';
 import { Trim } from 'src/infra/validators/class-*/decorators/trim/trim';
 
 export class CreateAttachmentInputDto {
+  @ApiProperty({
+    description: 'Nome do anexo (para facilitar identificação)',
+    example: 'document.pdf',
+  })
+  @IsOptional()
+  @IsString({ message: '$property deve ser um texto' })
+  @Trim()
+  name: string | null;
+
   @ApiProperty({
     description: 'Link/URL completa para o anexo',
     example: 'https://example.com/files/document.pdf',

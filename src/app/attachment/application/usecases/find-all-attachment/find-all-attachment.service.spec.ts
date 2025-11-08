@@ -89,9 +89,9 @@ describe('FindAllAttachment', () => {
 
     it('should return only attachments for the specified ownerId', async() => {
       // Arrange
-      const att1 = await createAttachment.execute({ link: 'link1.pdf', ownerId: owner01.id });
-      await createAttachment.execute({ link: 'link2.jpg', ownerId: owner02.id });
-      const att3 = await createAttachment.execute({ link: 'link3.txt', ownerId: owner01.id });
+      const att1 = await createAttachment.execute({ name: 'file.pdf', link: 'link1.pdf', ownerId: owner01.id });
+      await createAttachment.execute({ name: 'file.pdf', link: 'link2.jpg', ownerId: owner02.id });
+      const att3 = await createAttachment.execute({ name: 'file.pdf', link: 'link3.txt', ownerId: owner01.id });
 
       // Act
       const result = await sut.execute({ ownerId: owner01.id });
@@ -106,7 +106,7 @@ describe('FindAllAttachment', () => {
     it('should return paginated attachments for the owner', async() => {
       // Arrange
       for (let i = 1; i <= 7; i++) {
-        await createAttachment.execute({ link: `link${i}.dat`, ownerId: owner01.id });
+        await createAttachment.execute({ name: `file${i}.dat`, link: `link${i}.dat`, ownerId: owner01.id });
       }
 
       // Act
@@ -127,9 +127,9 @@ describe('FindAllAttachment', () => {
 
     it('should return attachments filtered by search term in link (case-insensitive)', async() => {
       // Arrange
-      const att1 = await createAttachment.execute({ link: 'https://server.com/files/report.pdf', ownerId: owner01.id });
-      await createAttachment.execute({ link: 'https://server.com/images/photo.jpg', ownerId: owner02.id });
-      const att3 = await createAttachment.execute({ link: 'https://server.com/docs/annual_REPORT.docx', ownerId: owner01.id });
+      const att1 = await createAttachment.execute({ name: '', link: 'https://server.com/files/report.pdf', ownerId: owner01.id });
+      await createAttachment.execute({ name: '', link: 'https://server.com/images/photo.jpg', ownerId: owner02.id });
+      const att3 = await createAttachment.execute({ name: '', link: 'https://server.com/docs/annual_REPORT.docx', ownerId: owner01.id });
 
       // Act
       const result = await sut.execute({ ownerId: owner01.id, search: 'report' });

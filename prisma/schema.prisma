@@ -152,6 +152,7 @@ model License {
 
 model Attachment {
   id        String   @id @default(uuid())
+  name      String?  @db.VarChar(256)
   link      String   @db.Text
   ownerId   String
   createdAt DateTime @default(now())
