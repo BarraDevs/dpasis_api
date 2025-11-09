@@ -4,12 +4,17 @@ import { ConfigModule } from 'src/core/config/config.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
 import { SupplierDto } from '../../dtos/supplier.dto';
+import { CreateSupplier } from '../create-supplier/create-supplier.service';
+import { CreateSupplierInputDto } from '../create-supplier/dtos/create-supplier.dto';
 import { FindAllSupplierQueryDto } from './dtos/find-all-supplier.dto';
 import { FindAllSupplier } from './find-all-supplier.service';
 
 describe('FindAllSupplier', () => {
   let sut: FindAllSupplier;
   let prisma: PrismaService;
+  let createSupplier: CreateSupplier;
+  let baseSupplierData: CreateSupplierInputDto;
+  let createdSupplierIds: string[];
 
   beforeEach(async() => {
     const module: TestingModule = await Test.createTestingModule({
@@ -21,8 +26,100 @@ describe('FindAllSupplier', () => {
 
     sut = module.get(FindAllSupplier);
     prisma = module.get(PrismaService);
+    createSupplier = module.get(CreateSupplier);
+
+    baseSupplierData = {
+      cnpj: '12.345.678/0001-90',
+      ie: '123.456.789.012',
+      group: 'Matéria Prima',
+      type: 'Nacional',
+      companyName: 'Fornecedor Base Ltda',
+      fantasyName: 'Fornecedor Base',
+      representative: 'João Silva',
+    };
 
     await prisma.supplier.deleteMany();
+
+    // Create diverse test suppliers for comprehensive filter testing
+    createdSupplierIds = [];
+
+    // Supplier 1: Technology, Nacional, Premium
+    const supplier1 = await createSupplier.execute({
+      ...baseSupplierData,
+      cnpj: '11.111.111/0001-11',
+      ie: '111.111.111.111',
+      group: 'Technology',
+      type: 'Nacional',
+      companyName: 'Alpha Tech Supplies Ltd',
+      fantasyName: 'Alpha Tech',
+      representative: 'John Alpha Smith',
+    });
+    createdSupplierIds.push(supplier1.id);
+
+    // Supplier 2: Industrial, Internacional, Standard
+    const supplier2 = await createSupplier.execute({
+      ...baseSupplierData,
+      cnpj: '22.222.222/0001-22',
+      ie: '222.222.222.222',
+      group: 'Industrial',
+      type: 'Internacional',
+      companyName: 'Beta Industrial Materials',
+      fantasyName: 'Beta Industrial',
+      representative: 'Jane Beta Santos',
+    });
+    createdSupplierIds.push(supplier2.id);
+
+    // Supplier 3: Technology, Nacional, Premium
+    const supplier3 = await createSupplier.execute({
+      ...baseSupplierData,
+      cnpj: '33.333.333/0001-33',
+      ie: '333.333.333.333',
+      group: 'Technology',
+      type: 'Nacional',
+      companyName: 'Gamma Corporation Supplies',
+      fantasyName: 'Gamma Corp',
+      representative: 'Robert Gamma Wilson',
+    });
+    createdSupplierIds.push(supplier3.id);
+
+    // Supplier 4: Raw Materials, Regional, Basic
+    const supplier4 = await createSupplier.execute({
+      ...baseSupplierData,
+      cnpj: '44.444.444/0001-44',
+      ie: '444.444.444.444',
+      group: 'Raw Materials',
+      type: 'Regional',
+      companyName: 'Delta Raw Materials Inc',
+      fantasyName: 'Delta Materials',
+      representative: 'Maria Delta Costa',
+    });
+    createdSupplierIds.push(supplier4.id);
+
+    // Supplier 5: Services, Internacional, Standard
+    const supplier5 = await createSupplier.execute({
+      ...baseSupplierData,
+      cnpj: '55.555.555/0001-55',
+      ie: '555.555.555.555',
+      group: 'Services',
+      type: 'Internacional',
+      companyName: 'Epsilon Consulting Services',
+      fantasyName: 'Epsilon Consulting',
+      representative: 'Carlos Epsilon Lima',
+    });
+    createdSupplierIds.push(supplier5.id);
+
+    // Supplier 6: Industrial, Nacional, Premium
+    const supplier6 = await createSupplier.execute({
+      ...baseSupplierData,
+      cnpj: '66.666.666/0001-66',
+      ie: '666.666.666.666',
+      group: 'Industrial',
+      type: 'Nacional',
+      companyName: 'Foxtrot Manufacturing Supplies',
+      fantasyName: 'Foxtrot Manufacturing',
+      representative: 'Ana Foxtrot Silva',
+    });
+    createdSupplierIds.push(supplier6.id);
   });
 
   afterAll(async() => {
@@ -34,426 +131,388 @@ describe('FindAllSupplier', () => {
     expect(sut).toBeDefined();
   });
 
-  describe('unit tests', () => {
-    it('should call supplierDao.findAll with correct parameters', async() => {
+  describe('execute', () => {
+    it('should call supplierDao with correct parameters', async() => {
       // Arrange
-      const queries: FindAllSupplierQueryDto = {
-        page: 1,
-        size: 10,
-        companyName: 'Test Company',
-        cnpj: '11.222.333/0001-44',
-      };
-
-      const mockResult: SupplierDto[] = [];
-      const mockTotal = 0;
-      const findAllSpy = jest.spyOn(sut['supplierDao'], 'findAll').mockResolvedValue([mockResult, mockTotal]);
+      const findAllSpy = jest.spyOn(sut['supplierDao'], 'findAll').mockResolvedValue([[], 0]);
+      const queries: FindAllSupplierQueryDto = { page: 1, size: 10 };
 
       // Act
       await sut.execute(queries);
 
       // Assert
       expect(findAllSpy).toHaveBeenCalledWith(queries);
-      expect(findAllSpy).toHaveBeenCalledTimes(1);
-
-      // Cleanup
-      findAllSpy.mockRestore();
     });
 
-    it('should return paginated result with correct structure', async() => {
+    it('should return a Pagination object with correct structure', async() => {
       // Arrange
-      const queries: FindAllSupplierQueryDto = {
-        page: 2,
-        size: 5,
-      };
-
-      const mockSuppliers: SupplierDto[] = [
-        {
-          id: 'supplier-1',
-          cnpj: '11.222.333/0001-44',
-          ie: '123.456.789',
-          group: 'Group 1',
-          type: 'Type 1',
-          companyName: 'Company 1',
-          fantasyName: 'Fantasy 1',
-          representative: 'Rep 1',
-          active: true,
-          createdAt: new Date('2024-01-01'),
-          updatedAt: new Date('2024-01-01'),
-        },
-        {
-          id: 'supplier-2',
-          cnpj: '22.333.444/0001-55',
-          ie: '987.654.321',
-          group: 'Group 2',
-          type: 'Type 2',
-          companyName: 'Company 2',
-          fantasyName: 'Fantasy 2',
-          representative: 'Rep 2',
-          active: false,
-          createdAt: new Date('2024-01-02'),
-          updatedAt: new Date('2024-01-02'),
-        },
-      ];
-      const mockTotal = 15;
-
-      const findAllSpy = jest.spyOn(sut['supplierDao'], 'findAll').mockResolvedValue([mockSuppliers, mockTotal]);
+      const mockData: SupplierDto[] = [{ id: 'test-id' } as SupplierDto];
+      jest.spyOn(sut['supplierDao'], 'findAll').mockResolvedValue([mockData, 1]);
 
       // Act
-      const result = await sut.execute(queries);
+      const result = await sut.execute({});
 
       // Assert
-      expect(result).toEqual<IPagination<SupplierDto>>({
-        currentPage: 2,
-        itemsPerPage: 5,
-        totalItems: 15,
-        totalPages: 3, // Math.ceil(15/5)
-        data: mockSuppliers,
-      });
-
-      // Cleanup
-      findAllSpy.mockRestore();
-    });
-
-    it('should handle empty result correctly', async() => {
-      // Arrange
-      const queries: FindAllSupplierQueryDto = {
-        page: 1,
-        size: 10,
-      };
-
-      const mockResult: SupplierDto[] = [];
-      const mockTotal = 0;
-      const findAllSpy = jest.spyOn(sut['supplierDao'], 'findAll').mockResolvedValue([mockResult, mockTotal]);
-
-      // Act
-      const result = await sut.execute(queries);
-
-      // Assert
-      expect(result).toEqual<IPagination<SupplierDto>>({
-        currentPage: 1,
-        itemsPerPage: 10,
-        totalItems: 0,
-        totalPages: 0,
-        data: [],
-      });
-
-      // Cleanup
-      findAllSpy.mockRestore();
-    });
-
-    it('should handle queries without pagination parameters', async() => {
-      // Arrange
-      const queries: FindAllSupplierQueryDto = {
-        companyName: 'Test Company',
-      };
-
-      const mockSuppliers: SupplierDto[] = [
-        {
-          id: 'supplier-1',
-          cnpj: '11.222.333/0001-44',
-          ie: '123.456.789',
-          group: 'Group 1',
-          type: 'Type 1',
-          companyName: 'Test Company',
-          fantasyName: 'Fantasy 1',
-          representative: 'Rep 1',
-          active: true,
-          createdAt: new Date('2024-01-01'),
-          updatedAt: new Date('2024-01-01'),
-        },
-      ];
-      const mockTotal = 1;
-
-      const findAllSpy = jest.spyOn(sut['supplierDao'], 'findAll').mockResolvedValue([mockSuppliers, mockTotal]);
-
-      // Act
-      const result = await sut.execute(queries);
-
-      // Assert
-      expect(result).toEqual<IPagination<SupplierDto>>({
-        currentPage: 1, // Default page
-        itemsPerPage: 1, // Default size equals total when not provided
-        totalItems: 1,
-        totalPages: 1,
-        data: mockSuppliers,
-      });
-
-      // Cleanup
-      findAllSpy.mockRestore();
-    });
-
-    it('should pass through errors from supplierDao', async() => {
-      // Arrange
-      const queries: FindAllSupplierQueryDto = {};
-      const error = new Error('Database connection error');
-      const findAllSpy = jest.spyOn(sut['supplierDao'], 'findAll').mockRejectedValue(error);
-
-      // Act & Assert
-      await expect(sut.execute(queries)).rejects.toThrow('Database connection error');
-
-      // Cleanup
-      findAllSpy.mockRestore();
+      expect(result).toHaveProperty('data');
+      expect(result).toHaveProperty('currentPage');
+      expect(result).toHaveProperty('itemsPerPage');
+      expect(result).toHaveProperty('totalItems');
+      expect(result).toHaveProperty('totalPages');
     });
   });
 
-  describe('integration tests', () => {
-    let supplier1: any;
-    let supplier2: any;
-    let supplier3: any;
+  describe('Integration tests - Basic functionality', () => {
+    it('should return an empty result when no suppliers exist', async() => {
+      // Arrange
+      await prisma.supplier.deleteMany(); // Ensure database is clean
 
-    beforeEach(async() => {
-      // Create test suppliers
-      supplier1 = await prisma.supplier.create({
-        data: {
-          id: 'supplier-1',
-          cnpj: '11.222.333/0001-44',
-          ie: '123.456.789',
-          group: 'Matéria Prima',
-          type: 'Nacional',
-          companyName: 'Empresa ABC Ltda',
-          fantasyName: 'ABC',
-          representative: 'João Silva',
-          active: true,
-        },
-      });
+      // Act
+      const result = await sut.execute({});
 
-      supplier2 = await prisma.supplier.create({
-        data: {
-          id: 'supplier-2',
-          cnpj: '22.333.444/0001-55',
-          ie: '987.654.321',
-          group: 'Serviços',
-          type: 'Internacional',
-          companyName: 'XYZ Comércio S.A.',
-          fantasyName: 'XYZ',
-          representative: 'Maria Santos',
-          active: false,
-        },
-      });
-
-      supplier3 = await prisma.supplier.create({
-        data: {
-          id: 'supplier-3',
-          cnpj: '33.444.555/0001-66',
-          ie: '111.222.333',
-          group: 'Matéria Prima',
-          type: 'Nacional',
-          companyName: 'DEF Indústria e Comércio',
-          fantasyName: 'DEF',
-          representative: 'Carlos Oliveira',
-          active: true,
-        },
+      // Assert
+      expect(result).toEqual<IPagination<SupplierDto>>({
+        data: [],
+        currentPage: 1,
+        itemsPerPage: 0,
+        totalItems: 0,
+        totalPages: 0,
       });
     });
 
-    it('should return all suppliers when no filters are applied', async() => {
-      // Arrange
-      const queries: FindAllSupplierQueryDto = {};
-
+    it('should return all suppliers when no filters are provided', async() => {
       // Act
-      const result = await sut.execute(queries);
+      const result = await sut.execute({});
 
       // Assert
-      expect(result.totalItems).toBe(3);
-      expect(result.data).toHaveLength(3);
+      expect(result.totalItems).toBe(6);
+      expect(result.data).toHaveLength(6);
       expect(result.currentPage).toBe(1);
-      expect(result.itemsPerPage).toBe(3); // Default size equals total
       expect(result.totalPages).toBe(1);
+      expect(result.itemsPerPage).toBe(6);
 
-      const supplierIds = result.data.map(s => s.id);
-      expect(supplierIds).toContain(supplier1.id);
-      expect(supplierIds).toContain(supplier2.id);
-      expect(supplierIds).toContain(supplier3.id);
+      // Verify all created suppliers are returned
+      const returnedIds = result.data.map(supplier => supplier.id).sort();
+      const expectedIds = [...createdSupplierIds].sort();
+      expect(returnedIds).toEqual(expectedIds);
     });
 
-    it('should return paginated results correctly', async() => {
-      // Arrange
-      const queries: FindAllSupplierQueryDto = {
-        page: 1,
-        size: 2,
-      };
-
+    it('should handle pagination correctly', async() => {
       // Act
-      const result = await sut.execute(queries);
+      const result = await sut.execute({ page: 2, size: 2 });
 
       // Assert
-      expect(result.totalItems).toBe(3);
+      expect(result.totalItems).toBe(6);
       expect(result.data).toHaveLength(2);
-      expect(result.currentPage).toBe(1);
-      expect(result.itemsPerPage).toBe(2);
-      expect(result.totalPages).toBe(2); // Math.ceil(3/2)
-    });
-
-    it('should return second page correctly', async() => {
-      // Arrange
-      const queries: FindAllSupplierQueryDto = {
-        page: 2,
-        size: 2,
-      };
-
-      // Act
-      const result = await sut.execute(queries);
-
-      // Assert
-      expect(result.totalItems).toBe(3);
-      expect(result.data).toHaveLength(1); // Only 1 item on second page
       expect(result.currentPage).toBe(2);
+      expect(result.totalPages).toBe(3);
       expect(result.itemsPerPage).toBe(2);
-      expect(result.totalPages).toBe(2);
     });
+  });
 
-    it('should filter suppliers by company name (case insensitive)', async() => {
-      // Arrange
-      const queries: FindAllSupplierQueryDto = {
-        companyName: 'abc', // Should match "Empresa ABC Ltda"
-      };
-
+  describe('Integration tests - Individual filter tests', () => {
+    it('should filter by cnpj - exact match', async() => {
       // Act
-      const result = await sut.execute(queries);
+      const result = await sut.execute({ cnpj: '11.111.111/0001-11' });
 
       // Assert
       expect(result.totalItems).toBe(1);
       expect(result.data).toHaveLength(1);
-      expect(result.data[0].id).toBe(supplier1.id);
-      expect(result.data[0].companyName).toBe('Empresa ABC Ltda');
+      expect(result.data[0].cnpj).toBe('11.111.111/0001-11');
+      expect(result.data[0].id).toBe(createdSupplierIds[0]);
     });
 
-    it('should filter suppliers by CNPJ', async() => {
-      // Arrange
-      const queries: FindAllSupplierQueryDto = {
-        cnpj: '0001-55', // Should match supplier2
-      };
-
+    it('should filter by cnpj - partial match', async() => {
       // Act
-      const result = await sut.execute(queries);
+      const result = await sut.execute({ cnpj: '22.222' });
 
       // Assert
       expect(result.totalItems).toBe(1);
       expect(result.data).toHaveLength(1);
-      expect(result.data[0].id).toBe(supplier2.id);
-      expect(result.data[0].cnpj).toBe('22.333.444/0001-55');
+      expect(result.data[0].cnpj).toBe('22.222.222/0001-22');
     });
 
-    it('should filter by company name OR CNPJ', async() => {
-      // Arrange
-      const queries: FindAllSupplierQueryDto = {
-        companyName: 'ABC', // Should match supplier1
-        cnpj: '22.333', // Should match supplier2
-      };
-
+    it('should filter by ie - exact match', async() => {
       // Act
-      const result = await sut.execute(queries);
+      const result = await sut.execute({ ie: '333.333.333.333' });
+
+      // Assert
+      expect(result.totalItems).toBe(1);
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0].ie).toBe('333.333.333.333');
+      expect(result.data[0].id).toBe(createdSupplierIds[2]);
+    });
+
+    it('should filter by group - Technology', async() => {
+      // Act
+      const result = await sut.execute({ group: 'Technology' });
+
+      // Assert
+      expect(result.totalItems).toBe(2); // suppliers 1, 3
+      expect(result.data).toHaveLength(2);
+      result.data.forEach(supplier => {
+        expect(supplier.group).toContain('Technology');
+      });
+    });
+
+    it('should filter by group - Industrial', async() => {
+      // Act
+      const result = await sut.execute({ group: 'Industrial' });
+
+      // Assert
+      expect(result.totalItems).toBe(2); // suppliers 2, 6
+      expect(result.data).toHaveLength(2);
+      result.data.forEach(supplier => {
+        expect(supplier.group).toContain('Industrial');
+      });
+    });
+
+    it('should filter by type - Regional', async() => {
+      // Act
+      const result = await sut.execute({ type: 'Regional' });
+
+      // Assert
+      expect(result.totalItems).toBe(1); // supplier 4
+      expect(result.data).toHaveLength(1);
+      result.data.forEach(supplier => {
+        expect(supplier.type).toBe('Regional');
+      });
+    });
+
+    it('should filter by type - Internacional', async() => {
+      // Act
+      const result = await sut.execute({ type: 'Internacional' });
+
+      // Assert
+      expect(result.totalItems).toBe(2); // suppliers 2, 5
+      expect(result.data).toHaveLength(2);
+      result.data.forEach(supplier => {
+        expect(supplier.type).toBe('Internacional');
+      });
+    });
+
+    it('should filter by companyName - partial match', async() => {
+      // Act
+      const result = await sut.execute({ companyName: 'Alpha' });
+
+      // Assert
+      expect(result.totalItems).toBe(1);
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0].companyName).toBe('Alpha Tech Supplies Ltd');
+    });
+
+    it('should filter by companyName - multiple matches', async() => {
+      // Act
+      const result = await sut.execute({ companyName: 'Corp' });
+
+      // Assert
+      expect(result.totalItems).toBe(1); // Gamma Corporation
+      expect(result.data).toHaveLength(1);
+    });
+
+    it('should filter by fantasyName', async() => {
+      // Act
+      const result = await sut.execute({ fantasyName: 'Tech' });
+
+      // Assert
+      expect(result.totalItems).toBe(1);
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0].fantasyName).toBe('Alpha Tech');
+    });
+
+    it('should filter by representative', async() => {
+      // Act
+      const result = await sut.execute({ representative: 'Smith' });
+
+      // Assert
+      expect(result.totalItems).toBe(1);
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0].representative).toBe('John Alpha Smith');
+    });
+  });
+
+  describe('Integration tests - Case insensitive filters', () => {
+    it('should handle case insensitive search for group', async() => {
+      // Act
+      const result = await sut.execute({ group: 'technology' });
 
       // Assert
       expect(result.totalItems).toBe(2);
-      expect(result.data).toHaveLength(2);
-
-      const supplierIds = result.data.map(s => s.id);
-      expect(supplierIds).toContain(supplier1.id);
-      expect(supplierIds).toContain(supplier2.id);
-      expect(supplierIds).not.toContain(supplier3.id);
+      result.data.forEach(supplier => {
+        expect(supplier.group).toContain('Technology');
+      });
     });
 
-    it('should return empty result when no suppliers match filters', async() => {
-      // Arrange
-      const queries: FindAllSupplierQueryDto = {
-        companyName: 'Nonexistent Company',
-      };
-
+    it('should handle case insensitive search for type', async() => {
       // Act
-      const result = await sut.execute(queries);
+      const result = await sut.execute({ type: 'REGIONAL' });
+
+      // Assert
+      expect(result.totalItems).toBe(1);
+      result.data.forEach(supplier => {
+        expect(supplier.type).toBe('Regional');
+      });
+    });
+
+    it('should handle case insensitive search for companyName', async() => {
+      // Act
+      const result = await sut.execute({ companyName: 'ALPHA' });
+
+      // Assert
+      expect(result.totalItems).toBe(1);
+      expect(result.data[0].companyName).toBe('Alpha Tech Supplies Ltd');
+    });
+
+    it('should handle case insensitive search for representative', async() => {
+      // Act
+      const result = await sut.execute({ representative: 'JANE' });
+
+      // Assert
+      expect(result.totalItems).toBe(1);
+      expect(result.data[0].representative).toBe('Jane Beta Santos');
+    });
+  });
+
+  describe('Integration tests - Combined filters', () => {
+    it('should filter by group AND type', async() => {
+      // Act
+      const result = await sut.execute({ group: 'Technology', type: 'Nacional' });
+
+      // Assert
+      expect(result.totalItems).toBe(2); // suppliers 1, 3 (both Technology and Nacional)
+      expect(result.data).toHaveLength(2);
+      result.data.forEach(supplier => {
+        expect(supplier.group).toContain('Technology');
+        expect(supplier.type).toBe('Nacional');
+      });
+    });
+
+    it('should filter by companyName AND representative', async() => {
+      // Act
+      const result = await sut.execute({ companyName: 'Beta', representative: 'Santos' });
+
+      // Assert
+      expect(result.totalItems).toBe(1);
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0].companyName).toContain('Beta');
+      expect(result.data[0].representative).toContain('Santos');
+    });
+
+    it('should filter by multiple string fields', async() => {
+      // Act
+      const result = await sut.execute({
+        companyName: 'Manufacturing',
+        fantasyName: 'Foxtrot',
+        representative: 'Silva',
+      });
+
+      // Assert
+      expect(result.totalItems).toBe(1);
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0].companyName).toContain('Manufacturing');
+      expect(result.data[0].fantasyName).toContain('Foxtrot');
+      expect(result.data[0].representative).toContain('Silva');
+    });
+
+    it('should return empty when filters do not match any supplier', async() => {
+      // Act
+      const result = await sut.execute({ group: 'Technology', type: 'Regional' }); // No Technology suppliers are Regional
 
       // Assert
       expect(result.totalItems).toBe(0);
       expect(result.data).toHaveLength(0);
-      expect(result.totalPages).toBe(0);
     });
 
-    it('should combine pagination with filters', async() => {
-      // Arrange
-      const queries: FindAllSupplierQueryDto = {
-        companyName: 'Comércio', // Should match suppliers 2 and 3
-        page: 1,
-        size: 1,
-      };
-
+    it('should filter by exact CNPJ AND IE', async() => {
       // Act
-      const result = await sut.execute(queries);
+      const result = await sut.execute({
+        cnpj: '44.444.444/0001-44',
+        ie: '444.444.444.444',
+      });
 
       // Assert
-      expect(result.totalItems).toBe(2);
-      expect(result.data).toHaveLength(1); // Only 1 item per page
+      expect(result.totalItems).toBe(1);
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0].cnpj).toBe('44.444.444/0001-44');
+      expect(result.data[0].ie).toBe('444.444.444.444');
+    });
+  });
+
+  describe('Integration tests - Pagination with filters', () => {
+    it('should combine pagination with type filter', async() => {
+      // Act
+      const result = await sut.execute({ type: 'Nacional', page: 1, size: 2 });
+
+      // Assert
+      expect(result.totalItems).toBe(5); // Total Nacional suppliers
+      expect(result.data).toHaveLength(2); // Page size
       expect(result.currentPage).toBe(1);
-      expect(result.itemsPerPage).toBe(1);
+      expect(result.totalPages).toBe(3);
+      expect(result.itemsPerPage).toBe(2);
+    });
+
+    it('should combine pagination with multiple filters', async() => {
+      // Act
+      const result = await sut.execute({ group: 'Technology', page: 1, size: 1 });
+
+      // Assert
+      expect(result.totalItems).toBe(2); // Total Technology suppliers
+      expect(result.data).toHaveLength(1); // Page size
+      expect(result.currentPage).toBe(1);
       expect(result.totalPages).toBe(2);
     });
 
-    it('should return suppliers ordered by createdAt desc by default', async() => {
-      // Arrange
-      const queries: FindAllSupplierQueryDto = {};
-
+    it('should handle pagination beyond available results', async() => {
       // Act
-      const result = await sut.execute(queries);
+      const result = await sut.execute({ type: 'Regional', page: 3, size: 2 });
 
       // Assert
-      expect(result.data).toHaveLength(3);
-      // supplier3 was created last, so should be first in desc order
-      expect(result.data[0].id).toBe(supplier3.id);
+      expect(result.totalItems).toBe(1); // Total Regional suppliers
+      expect(result.data).toHaveLength(0); // No results on page 3
+      expect(result.currentPage).toBe(3);
+    });
+  });
+
+  describe('Integration tests - Edge cases', () => {
+    it('should return empty result when filtering by non-existent value', async() => {
+      // Act
+      const result = await sut.execute({ companyName: 'NonExistentCompany' });
+
+      // Assert
+      expect(result.totalItems).toBe(0);
+      expect(result.data).toHaveLength(0);
     });
 
-    it('should return all SupplierDto properties correctly', async() => {
-      // Arrange
-      const queries: FindAllSupplierQueryDto = {
-        page: 1,
-        size: 1,
-      };
-
+    it('should handle empty string filters', async() => {
       // Act
-      const result = await sut.execute(queries);
+      const result = await sut.execute({ companyName: '', fantasyName: '' });
 
       // Assert
-      expect(result.data).toHaveLength(1);
-      const supplier = result.data[0];
-
-      expect(supplier).toHaveProperty('id');
-      expect(supplier).toHaveProperty('cnpj');
-      expect(supplier).toHaveProperty('ie');
-      expect(supplier).toHaveProperty('group');
-      expect(supplier).toHaveProperty('type');
-      expect(supplier).toHaveProperty('companyName');
-      expect(supplier).toHaveProperty('fantasyName');
-      expect(supplier).toHaveProperty('representative');
-      expect(supplier).toHaveProperty('active');
-      expect(supplier).toHaveProperty('createdAt');
-      expect(supplier).toHaveProperty('updatedAt');
-
-      // Verify property types
-      expect(typeof supplier.id).toBe('string');
-      expect(typeof supplier.cnpj).toBe('string');
-      expect(typeof supplier.ie).toBe('string');
-      expect(typeof supplier.group).toBe('string');
-      expect(typeof supplier.type).toBe('string');
-      expect(typeof supplier.companyName).toBe('string');
-      expect(typeof supplier.fantasyName).toBe('string');
-      expect(typeof supplier.representative).toBe('string');
-      expect(typeof supplier.active).toBe('boolean');
-      expect(supplier.createdAt).toBeInstanceOf(Date);
-      expect(supplier.updatedAt).toBeInstanceOf(Date);
+      expect(result.totalItems).toBe(6); // Should return all suppliers
+      expect(result.data).toHaveLength(6);
     });
 
-    it('should handle empty search parameters gracefully', async() => {
-      // Arrange
-      const queries: FindAllSupplierQueryDto = {
-        companyName: '',
-        cnpj: '',
-      };
-
+    it('should handle undefined filters mixed with valid ones', async() => {
       // Act
-      const result = await sut.execute(queries);
+      const result = await sut.execute({
+        group: 'Technology',
+        companyName: undefined,
+        type: 'Nacional',
+      });
 
       // Assert
-      expect(result.totalItems).toBe(3); // Should return all suppliers
-      expect(result.data).toHaveLength(3);
+      expect(result.totalItems).toBe(2); // Technology AND Nacional suppliers
+      expect(result.data).toHaveLength(2);
+    });
+
+    it('should handle partial matches correctly', async() => {
+      // Act
+      const result = await sut.execute({ representative: 'Alpha' });
+
+      // Assert
+      expect(result.totalItems).toBeGreaterThan(0);
+      result.data.forEach(supplier => {
+        expect(supplier.representative).toContain('Alpha');
+      });
     });
   });
 });

@@ -1,9 +1,33 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiPropertyOptional, OmitType } from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
 import { Trim } from 'src/infra/validators/class-*/decorators/trim/trim';
 import { Queries } from 'src/infra/validators/class-*/dtos/queries/queries.dto';
 
-export class FindAllSupplierQueryDto extends Queries {
+export class FindAllSupplierQueryDto extends OmitType(Queries, ['search']) {
+  @ApiPropertyOptional()
+  @Trim()
+  @IsOptional()
+  @IsString({ message: '$property deve ser um texto' })
+  cnpj?: string;
+
+  @ApiPropertyOptional()
+  @Trim()
+  @IsOptional()
+  @IsString({ message: '$property deve ser um texto' })
+  ie?: string;
+
+  @ApiPropertyOptional()
+  @Trim()
+  @IsOptional()
+  @IsString({ message: '$property deve ser um texto' })
+  group?: string;
+
+  @ApiPropertyOptional()
+  @Trim()
+  @IsOptional()
+  @IsString({ message: '$property deve ser um texto' })
+  type?: string;
+
   @ApiPropertyOptional()
   @Trim()
   @IsOptional()
@@ -14,5 +38,11 @@ export class FindAllSupplierQueryDto extends Queries {
   @Trim()
   @IsOptional()
   @IsString({ message: '$property deve ser um texto' })
-  cnpj?: string;
+  fantasyName?: string;
+
+  @ApiPropertyOptional()
+  @Trim()
+  @IsOptional()
+  @IsString({ message: '$property deve ser um texto' })
+  representative?: string;
 }

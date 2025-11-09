@@ -1,9 +1,9 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiPropertyOptional, OmitType } from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
 import { Trim } from 'src/infra/validators/class-*/decorators/trim/trim';
 import { Queries } from 'src/infra/validators/class-*/dtos/queries/queries.dto';
 
-export class FindAllClientQueryDto extends Queries {
+export class FindAllClientQueryDto extends OmitType(Queries, ['search']) {
   @ApiPropertyOptional()
   @Trim()
   @IsOptional()

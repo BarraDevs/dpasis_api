@@ -16,8 +16,13 @@ describe('FindAllSupplierQueryDto', () => {
 
   describe.each(
     [
-      'companyName',
       'cnpj',
+      'ie',
+      'group',
+      'type',
+      'companyName',
+      'fantasyName',
+      'representative',
     ]
   )('%s field', (field: string) => {
     it.each(
