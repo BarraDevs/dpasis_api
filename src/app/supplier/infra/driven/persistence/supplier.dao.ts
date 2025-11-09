@@ -14,12 +14,13 @@ export class SupplierDaoAdapterPrisma implements ISupplierDao {
 
     const where: Prisma.SupplierWhereInput = {
       AND: [
-        {
-          OR: [
-            { companyName: { contains: queries.companyName, mode: 'insensitive' } },
-            { cnpj: { contains: queries.cnpj } },
-          ],
-        },
+        { cnpj: queries.cnpj ? { contains: queries.cnpj } : undefined },
+        { ie: queries.ie ? { contains: queries.ie } : undefined },
+        { group: queries.group ? { contains: queries.group, mode: 'insensitive' } : undefined },
+        { type: queries.type ? { contains: queries.type, mode: 'insensitive' } : undefined },
+        { companyName: queries.companyName ? { contains: queries.companyName, mode: 'insensitive' } : undefined },
+        { fantasyName: queries.fantasyName ? { contains: queries.fantasyName, mode: 'insensitive' } : undefined },
+        { representative: queries.representative ? { contains: queries.representative, mode: 'insensitive' } : undefined },
       ],
     };
 

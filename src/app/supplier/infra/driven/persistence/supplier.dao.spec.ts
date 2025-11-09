@@ -38,50 +38,93 @@ describe('SupplierDaoAdapterPrisma', () => {
   });
 
   describe('findAll', () => {
-    let supplier1: Supplier;
-    let supplier2: Supplier;
-    let supplier3: Supplier;
-
     beforeEach(async() => {
-      // Seed data for findAll tests
-      supplier1 = await prisma.supplier.create({
+      // Supplier 1: Technology, Nacional
+      await prisma.supplier.create({
         data: {
-          id: 'supplier-01',
-          cnpj: '11.222.333/0001-44',
-          ie: '123456789',
-          group: 'Group A',
-          type: 'Type A',
-          companyName: 'Empresa ABC Ltda',
-          fantasyName: 'ABC',
-          representative: 'João Silva',
+          id: 'supplier-1',
+          cnpj: '11.111.111/0001-11',
+          ie: '111.111.111.111',
+          group: 'Technology',
+          type: 'Nacional',
+          companyName: 'Alpha Tech Supplies Ltd',
+          fantasyName: 'Alpha Tech',
+          representative: 'John Alpha Smith',
           active: true,
         },
       });
 
-      supplier2 = await prisma.supplier.create({
+      // Supplier 2: Industrial, Internacional
+      await prisma.supplier.create({
         data: {
-          id: 'supplier-02',
-          cnpj: '22.333.444/0001-55',
-          ie: '987654321',
-          group: 'Group B',
-          type: 'Type B',
-          companyName: 'XYZ Comércio S.A.',
-          fantasyName: 'XYZ',
-          representative: 'Maria Santos',
+          id: 'supplier-2',
+          cnpj: '22.222.222/0001-22',
+          ie: '222.222.222.222',
+          group: 'Industrial',
+          type: 'Internacional',
+          companyName: 'Beta Industrial Materials',
+          fantasyName: 'Beta Industrial',
+          representative: 'Jane Beta Santos',
           active: true,
         },
       });
 
-      supplier3 = await prisma.supplier.create({
+      // Supplier 3: Technology, Nacional
+      await prisma.supplier.create({
         data: {
-          id: 'supplier-03',
-          cnpj: '33.444.555/0001-66',
-          ie: '111222333',
-          group: 'Group A',
-          type: 'Type C',
-          companyName: 'DEF Indústria e Comércio',
-          fantasyName: 'DEF',
-          representative: 'Carlos Oliveira',
+          id: 'supplier-3',
+          cnpj: '33.333.333/0001-33',
+          ie: '333.333.333.333',
+          group: 'Technology',
+          type: 'Nacional',
+          companyName: 'Gamma Corporation Supplies',
+          fantasyName: 'Gamma Corp',
+          representative: 'Robert Gamma Wilson',
+          active: false,
+        },
+      });
+
+      // Supplier 4: Raw Materials, Regional
+      await prisma.supplier.create({
+        data: {
+          id: 'supplier-4',
+          cnpj: '44.444.444/0001-44',
+          ie: '444.444.444.444',
+          group: 'Raw Materials',
+          type: 'Regional',
+          companyName: 'Delta Raw Materials Inc',
+          fantasyName: 'Delta Materials',
+          representative: 'Maria Delta Costa',
+          active: true,
+        },
+      });
+
+      // Supplier 5: Services, Internacional
+      await prisma.supplier.create({
+        data: {
+          id: 'supplier-5',
+          cnpj: '55.555.555/0001-55',
+          ie: '555.555.555.555',
+          group: 'Services',
+          type: 'Internacional',
+          companyName: 'Epsilon Consulting Services',
+          fantasyName: 'Epsilon Consulting',
+          representative: 'Carlos Epsilon Lima',
+          active: true,
+        },
+      });
+
+      // Supplier 6: Industrial, Nacional
+      await prisma.supplier.create({
+        data: {
+          id: 'supplier-6',
+          cnpj: '66.666.666/0001-66',
+          ie: '666.666.666.666',
+          group: 'Industrial',
+          type: 'Nacional',
+          companyName: 'Foxtrot Manufacturing Supplies',
+          fantasyName: 'Foxtrot Manufacturing',
+          representative: 'Ana Foxtrot Silva',
           active: false,
         },
       });
@@ -95,136 +138,468 @@ describe('SupplierDaoAdapterPrisma', () => {
       const [suppliers, total] = await sut.findAll(queries);
 
       // Assert
-      expect(total).toBe(3);
-      expect(suppliers).toHaveLength(3);
-      expect(suppliers.map(s => s.id)).toEqual(
-        expect.arrayContaining([supplier1.id, supplier2.id, supplier3.id])
-      );
-    });
+      expect(total).toBe(6);
+      expect(suppliers).toHaveLength(6);
 
-    it('should return suppliers ordered by createdAt desc by default', async() => {
-      // Arrange
-      const queries: FindAllSupplierQueryDto = {};
-
-      // Act
-      const [suppliers] = await sut.findAll(queries);
-
-      // Assert
-      expect(suppliers).toHaveLength(3);
-      // The most recently created should be first (supplier3 was created last)
-      expect(suppliers[0].id).toBe(supplier3.id);
-    });
-
-    it('should filter suppliers by company name (case insensitive)', async() => {
-      // Arrange
-      const queries: FindAllSupplierQueryDto = {
-        companyName: 'abc',
-      };
-
-      // Act
-      const [suppliers, total] = await sut.findAll(queries);
-
-      // Assert
-      expect(total).toBe(1);
-      expect(suppliers).toHaveLength(1);
-      expect(suppliers[0].id).toBe(supplier1.id);
-      expect(suppliers[0].companyName).toBe('Empresa ABC Ltda');
-    });
-
-    it('should filter suppliers by partial company name', async() => {
-      // Arrange
-      const queries: FindAllSupplierQueryDto = {
-        companyName: 'Comércio',
-      };
-
-      // Act
-      const [suppliers, total] = await sut.findAll(queries);
-
-      // Assert
-      expect(total).toBe(2);
-      expect(suppliers).toHaveLength(2);
-      expect(suppliers.map(s => s.id)).toEqual(
-        expect.arrayContaining([supplier2.id, supplier3.id])
-      );
-    });
-
-    it('should filter suppliers by CNPJ', async() => {
-      // Arrange
-      const queries: FindAllSupplierQueryDto = {
-        cnpj: '22.333',
-      };
-
-      // Act
-      const [suppliers, total] = await sut.findAll(queries);
-
-      // Assert
-      expect(total).toBe(2);
-      expect(suppliers).toHaveLength(2);
-      expect(suppliers.map(s => s.id)).toEqual(
-        expect.arrayContaining([supplier2.id, supplier1.id])
-      );
-    });
-
-    it('should filter suppliers by company name OR CNPJ', async() => {
-      const queries1: FindAllSupplierQueryDto = {
-        companyName: 'ABC',
-        cnpj: '0001-66',
-      };
-
-      // Act
-      const [suppliers, total] = await sut.findAll(queries1);
-
-      // Assert
-      expect(total).toBe(2);
-      expect(suppliers).toHaveLength(2);
-      expect(suppliers.map(s => s.id)).toEqual(
-        expect.arrayContaining([supplier1.id, supplier3.id])
-      );
+      // Should be ordered by createdAt desc (most recent first)
+      expect(suppliers[0].id).toBe('supplier-6');
+      expect(suppliers[1].id).toBe('supplier-5');
+      expect(suppliers[2].id).toBe('supplier-4');
+      expect(suppliers[3].id).toBe('supplier-3');
+      expect(suppliers[4].id).toBe('supplier-2');
+      expect(suppliers[5].id).toBe('supplier-1');
     });
 
     it('should return paginated results', async() => {
       // Arrange
       const queries: FindAllSupplierQueryDto = {
         page: 2,
-        size: 1,
+        size: 2,
       };
 
       // Act
       const [suppliers, total] = await sut.findAll(queries);
 
       // Assert
-      expect(total).toBe(3);
-      expect(suppliers).toHaveLength(1);
-      expect(suppliers[0].id).toBe(supplier2.id);
+      expect(total).toBe(6);
+      expect(suppliers).toHaveLength(2);
+      expect(suppliers[0].id).toBe('supplier-4');
+      expect(suppliers[1].id).toBe('supplier-3');
     });
 
-    it('should return empty results when no matches are found', async() => {
-      // Arrange
-      const queries: FindAllSupplierQueryDto = {
-        companyName: 'Nonexistent Company',
-      };
+    describe('Individual filter tests', () => {
+      it('should filter by cnpj - exact match', async() => {
+        // Arrange
+        const queries: FindAllSupplierQueryDto = {
+          cnpj: '11.111.111/0001-11',
+        };
 
-      // Act
-      const [suppliers, total] = await sut.findAll(queries);
+        // Act
+        const [suppliers, total] = await sut.findAll(queries);
 
-      // Assert
-      expect(total).toBe(0);
-      expect(suppliers).toHaveLength(0);
+        // Assert
+        expect(total).toBe(1);
+        expect(suppliers).toHaveLength(1);
+        expect(suppliers[0].id).toBe('supplier-1');
+        expect(suppliers[0].cnpj).toBe('11.111.111/0001-11');
+      });
+
+      it('should filter by cnpj - partial match', async() => {
+        // Arrange
+        const queries: FindAllSupplierQueryDto = {
+          cnpj: '22.222',
+        };
+
+        // Act
+        const [suppliers, total] = await sut.findAll(queries);
+
+        // Assert
+        expect(total).toBe(1);
+        expect(suppliers).toHaveLength(1);
+        expect(suppliers[0].cnpj).toBe('22.222.222/0001-22');
+      });
+
+      it('should filter by ie - exact match', async() => {
+        // Arrange
+        const queries: FindAllSupplierQueryDto = {
+          ie: '333.333.333.333',
+        };
+
+        // Act
+        const [suppliers, total] = await sut.findAll(queries);
+
+        // Assert
+        expect(total).toBe(1);
+        expect(suppliers).toHaveLength(1);
+        expect(suppliers[0].id).toBe('supplier-3');
+        expect(suppliers[0].ie).toBe('333.333.333.333');
+      });
+
+      it('should filter by group - Technology', async() => {
+        // Arrange
+        const queries: FindAllSupplierQueryDto = {
+          group: 'Technology',
+        };
+
+        // Act
+        const [suppliers, total] = await sut.findAll(queries);
+
+        // Assert
+        expect(total).toBe(2); // suppliers 1, 3
+        expect(suppliers).toHaveLength(2);
+        const supplierIds = suppliers.map(s => s.id).sort();
+        expect(supplierIds).toEqual(['supplier-1', 'supplier-3']);
+        suppliers.forEach(supplier => {
+          expect(supplier.group).toContain('Technology');
+        });
+      });
+
+      it('should filter by group - Industrial', async() => {
+        // Arrange
+        const queries: FindAllSupplierQueryDto = {
+          group: 'Industrial',
+        };
+
+        // Act
+        const [suppliers, total] = await sut.findAll(queries);
+
+        // Assert
+        expect(total).toBe(2); // suppliers 2, 6
+        expect(suppliers).toHaveLength(2);
+        const supplierIds = suppliers.map(s => s.id).sort();
+        expect(supplierIds).toEqual(['supplier-2', 'supplier-6']);
+        suppliers.forEach(supplier => {
+          expect(supplier.group).toContain('Industrial');
+        });
+      });
+
+      it('should filter by type - Nacional', async() => {
+        // Arrange
+        const queries: FindAllSupplierQueryDto = {
+          type: 'Nacional',
+        };
+
+        // Act
+        const [suppliers, total] = await sut.findAll(queries);
+
+        // Assert
+        expect(total).toBe(5); // suppliers 1, 2, 3, 5, 6
+        expect(suppliers).toHaveLength(5);
+        const supplierIds = suppliers.map(s => s.id).sort();
+        expect(supplierIds).toEqual(['supplier-1', 'supplier-2', 'supplier-3', 'supplier-5', 'supplier-6']);
+      });
+
+      it('should filter by type - Internacional', async() => {
+        // Arrange
+        const queries: FindAllSupplierQueryDto = {
+          type: 'Internacional',
+        };
+
+        // Act
+        const [suppliers, total] = await sut.findAll(queries);
+
+        // Assert
+        expect(total).toBe(2); // suppliers 2, 5
+        expect(suppliers).toHaveLength(2);
+        const supplierIds = suppliers.map(s => s.id).sort();
+        expect(supplierIds).toEqual(['supplier-2', 'supplier-5']);
+        suppliers.forEach(supplier => {
+          expect(supplier.type).toBe('Internacional');
+        });
+      });
+
+      it('should filter by companyName - partial match', async() => {
+        // Arrange
+        const queries: FindAllSupplierQueryDto = {
+          companyName: 'Corp',
+        };
+
+        // Act
+        const [suppliers, total] = await sut.findAll(queries);
+
+        // Assert
+        expect(total).toBe(1); // Gamma Corporation
+        expect(suppliers).toHaveLength(1);
+        expect(suppliers[0].id).toBe('supplier-3');
+      });
+
+      it('should filter by fantasyName - partial match', async() => {
+        // Arrange
+        const queries: FindAllSupplierQueryDto = {
+          fantasyName: 'Tech',
+        };
+
+        // Act
+        const [suppliers, total] = await sut.findAll(queries);
+
+        // Assert
+        expect(total).toBe(1); // Alpha Tech
+        expect(suppliers).toHaveLength(1);
+        expect(suppliers[0].id).toBe('supplier-1');
+        expect(suppliers[0].fantasyName).toBe('Alpha Tech');
+      });
+
+      it('should filter by representative - partial match', async() => {
+        // Arrange
+        const queries: FindAllSupplierQueryDto = {
+          representative: 'Smith',
+        };
+
+        // Act
+        const [suppliers, total] = await sut.findAll(queries);
+
+        // Assert
+        expect(total).toBe(1); // John Alpha Smith
+        expect(suppliers).toHaveLength(1);
+        expect(suppliers[0].id).toBe('supplier-1');
+        expect(suppliers[0].representative).toBe('John Alpha Smith');
+      });
     });
 
-    it('should handle empty search terms', async() => {
-      // Arrange
-      const queries: FindAllSupplierQueryDto = {
-        companyName: '',
-        cnpj: '',
-      };
+    describe('Case insensitive filter tests', () => {
+      it('should handle case insensitive search for group', async() => {
+        // Arrange
+        const queries: FindAllSupplierQueryDto = {
+          group: 'technology',
+        };
 
-      // Act
-      const [suppliers, total] = await sut.findAll(queries);
+        // Act
+        const [suppliers, total] = await sut.findAll(queries);
 
-      // Assert
-      expect(total).toBe(3);
-      expect(suppliers).toHaveLength(3);
+        // Assert
+        expect(total).toBe(2);
+        suppliers.forEach(supplier => {
+          expect(supplier.group).toBe('Technology');
+        });
+      });
+
+      it('should handle case insensitive search for type', async() => {
+        // Arrange
+        const queries: FindAllSupplierQueryDto = {
+          type: 'REGIONAL',
+        };
+
+        // Act
+        const [suppliers, total] = await sut.findAll(queries);
+
+        // Assert
+        expect(total).toBe(1);
+        suppliers.forEach(supplier => {
+          expect(supplier.type).toBe('Regional');
+        });
+      });
+
+      it('should handle case insensitive search for companyName', async() => {
+        // Arrange
+        const queries: FindAllSupplierQueryDto = {
+          companyName: 'ALPHA',
+        };
+
+        // Act
+        const [suppliers, total] = await sut.findAll(queries);
+
+        // Assert
+        expect(total).toBe(1);
+        expect(suppliers[0].companyName).toBe('Alpha Tech Supplies Ltd');
+      });
+
+      it('should handle case insensitive search for representative', async() => {
+        // Arrange
+        const queries: FindAllSupplierQueryDto = {
+          representative: 'JANE',
+        };
+
+        // Act
+        const [suppliers, total] = await sut.findAll(queries);
+
+        // Assert
+        expect(total).toBe(1);
+        expect(suppliers[0].representative).toBe('Jane Beta Santos');
+      });
+    });
+
+    describe('Combined filter tests', () => {
+      it('should filter by group AND type', async() => {
+        // Arrange
+        const queries: FindAllSupplierQueryDto = {
+          group: 'Technology',
+          type: 'Nacional',
+        };
+
+        // Act
+        const [suppliers, total] = await sut.findAll(queries);
+
+        // Assert
+        expect(total).toBe(2); // suppliers 1, 3 (both Technology and Nacional)
+        expect(suppliers).toHaveLength(2);
+        suppliers.forEach(supplier => {
+          expect(supplier.group).toContain('Technology');
+          expect(supplier.type).toBe('Nacional');
+        });
+      });
+
+      it('should filter by companyName AND representative', async() => {
+        // Arrange
+        const queries: FindAllSupplierQueryDto = {
+          companyName: 'Beta',
+          representative: 'Santos',
+        };
+
+        // Act
+        const [suppliers, total] = await sut.findAll(queries);
+
+        // Assert
+        expect(total).toBe(1); // supplier-2
+        expect(suppliers).toHaveLength(1);
+        expect(suppliers[0].id).toBe('supplier-2');
+      });
+
+      it('should filter by multiple string fields', async() => {
+        // Arrange
+        const queries: FindAllSupplierQueryDto = {
+          companyName: 'Manufacturing',
+          fantasyName: 'Foxtrot',
+          representative: 'Silva',
+        };
+
+        // Act
+        const [suppliers, total] = await sut.findAll(queries);
+
+        // Assert
+        expect(total).toBe(1); // supplier-6
+        expect(suppliers).toHaveLength(1);
+        expect(suppliers[0].id).toBe('supplier-6');
+      });
+
+      it('should return empty when filters do not match any supplier', async() => {
+        // Arrange
+        const queries: FindAllSupplierQueryDto = {
+          group: 'Technology',
+          type: 'Regional', // No Technology suppliers have Regional type
+        };
+
+        // Act
+        const [suppliers, total] = await sut.findAll(queries);
+
+        // Assert
+        expect(total).toBe(0);
+        expect(suppliers).toHaveLength(0);
+      });
+
+      it('should filter by exact CNPJ AND IE', async() => {
+        // Arrange
+        const queries: FindAllSupplierQueryDto = {
+          cnpj: '44.444.444/0001-44',
+          ie: '444.444.444.444',
+        };
+
+        // Act
+        const [suppliers, total] = await sut.findAll(queries);
+
+        // Assert
+        expect(total).toBe(1); // supplier-4
+        expect(suppliers).toHaveLength(1);
+        expect(suppliers[0].id).toBe('supplier-4');
+      });
+    });
+
+    describe('Pagination with filters', () => {
+      it('should combine pagination with type filter', async() => {
+        // Arrange
+        const queries: FindAllSupplierQueryDto = {
+          type: 'Nacional',
+          page: 1,
+          size: 2,
+        };
+
+        // Act
+        const [suppliers, total] = await sut.findAll(queries);
+
+        // Assert
+        expect(total).toBe(5); // Total Nacional suppliers
+        expect(suppliers).toHaveLength(2); // Page size
+        // Should return first 2 Nacional suppliers (ordered by createdAt desc)
+        expect(suppliers[0].id).toBe('supplier-6');
+        expect(suppliers[1].id).toBe('supplier-5');
+      });
+
+      it('should combine pagination with multiple filters', async() => {
+        // Arrange
+        const queries: FindAllSupplierQueryDto = {
+          group: 'Technology',
+          page: 1,
+          size: 1,
+        };
+
+        // Act
+        const [suppliers, total] = await sut.findAll(queries);
+
+        // Assert
+        expect(total).toBe(2); // Total Technology suppliers
+        expect(suppliers).toHaveLength(1); // Page size
+        // Should return first Technology supplier (ordered by createdAt desc)
+        expect(suppliers[0].id).toBe('supplier-3');
+      });
+
+      it('should handle pagination beyond available results', async() => {
+        // Arrange
+        const queries: FindAllSupplierQueryDto = {
+          type: 'Regional',
+          page: 3,
+          size: 2,
+        };
+
+        // Act
+        const [suppliers, total] = await sut.findAll(queries);
+
+        // Assert
+        expect(total).toBe(1); // Total Regional suppliers
+        expect(suppliers).toHaveLength(0); // No results on page 3
+      });
+    });
+
+    describe('Edge cases and special scenarios', () => {
+      it('should return empty result when filtering by non-existent value', async() => {
+        // Arrange
+        const queries: FindAllSupplierQueryDto = {
+          companyName: 'NonExistentCompany',
+        };
+
+        // Act
+        const [suppliers, total] = await sut.findAll(queries);
+
+        // Assert
+        expect(total).toBe(0);
+        expect(suppliers).toHaveLength(0);
+      });
+
+      it('should handle empty string filters', async() => {
+        // Arrange
+        const queries: FindAllSupplierQueryDto = {
+          companyName: '',
+          fantasyName: '',
+        };
+
+        // Act
+        const [suppliers, total] = await sut.findAll(queries);
+
+        // Assert
+        expect(total).toBe(6); // Should return all suppliers (empty strings are ignored)
+        expect(suppliers).toHaveLength(6);
+      });
+
+      it('should handle undefined filters mixed with valid ones', async() => {
+        // Arrange
+        const queries: FindAllSupplierQueryDto = {
+          group: 'Technology',
+          companyName: undefined,
+          type: 'Nacional',
+        };
+
+        // Act
+        const [suppliers, total] = await sut.findAll(queries);
+
+        // Assert
+        expect(total).toBe(2); // Technology AND Nacional suppliers
+        expect(suppliers).toHaveLength(2);
+      });
+
+      it('should handle partial matches correctly', async() => {
+        // Arrange
+        const queries: FindAllSupplierQueryDto = {
+          representative: 'Alpha', // Should match John Alpha Smith
+        };
+
+        // Act
+        const [suppliers, total] = await sut.findAll(queries);
+
+        // Assert
+        expect(total).toBe(1);
+        expect(suppliers).toHaveLength(1);
+        suppliers.forEach(supplier => {
+          expect(supplier.representative).toContain('Alpha');
+        });
+      });
     });
   });
 

@@ -110,6 +110,7 @@ describe('EditAttachment', () => {
     it('should edit an attachment link', async() => {
       // Arrange
       const createData = {
+        name: 'Original Document',
         link: 'https://original.com/file.txt',
         ownerId: owner01.id,
       };
@@ -125,12 +126,14 @@ describe('EditAttachment', () => {
       const editedAttachment = await findAttachmentById.execute(createdAttachment.id);
       expect(editedAttachment).toBeDefined();
       expect(editedAttachment.link).toBe(editData.link);
+      expect(editedAttachment.name).toBe(createData.name); // Should remain unchanged
       expect(editedAttachment.ownerId).toBe(createData.ownerId); // Should remain unchanged
     });
 
     it('should not change ownerId when editing', async() => {
       // Arrange
       const createData = {
+        name: null,
         link: 'https://original.com/file.txt',
         ownerId: owner01.id,
       };

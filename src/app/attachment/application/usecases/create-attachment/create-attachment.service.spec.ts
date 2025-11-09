@@ -87,6 +87,7 @@ describe('CreateAttachment', () => {
     it('should throw error when owner does not exist', async() => {
       // Arrange
       const input: CreateAttachmentInputDto = {
+        name: 'my_document.pdf',
         link: 'https://example.com/path/to/my_document.pdf',
         ownerId: 'non-existent-owner-id',
       };
@@ -98,6 +99,7 @@ describe('CreateAttachment', () => {
     it('should create an attachment with valid data', async() => {
       // Arrange
       const input: CreateAttachmentInputDto = {
+        name: 'my_document.pdf',
         link: 'https://example.com/path/to/my_document.pdf',
         ownerId: owner01.id,
       };
@@ -110,6 +112,31 @@ describe('CreateAttachment', () => {
       expect(createdAttachment).toBeDefined();
       expect(createdAttachment).toEqual<AttachmentDto>({
         id: output.id,
+        name: input.name,
+        link: input.link,
+        ownerId: input.ownerId,
+        createdAt: expect.any(Date),
+        updatedAt: expect.any(Date),
+      });
+    });
+
+    it('should create an attachment without name (optional field)', async() => {
+      // Arrange
+      const input: CreateAttachmentInputDto = {
+        name: null,
+        link: 'https://example.com/path/to/unnamed_document.pdf',
+        ownerId: owner01.id,
+      };
+
+      // Act
+      const output = await sut.execute(input);
+
+      // Assert
+      const createdAttachment = await findAttachmentById.execute(output.id);
+      expect(createdAttachment).toBeDefined();
+      expect(createdAttachment).toEqual<AttachmentDto>({
+        id: output.id,
+        name: null,
         link: input.link,
         ownerId: input.ownerId,
         createdAt: expect.any(Date),

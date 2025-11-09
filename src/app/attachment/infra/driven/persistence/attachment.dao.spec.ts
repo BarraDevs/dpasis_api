@@ -57,6 +57,7 @@ describe('AttachmentDaoAdapterPrisma', () => {
     it('should save an attachment and return its id', async() => {
       // Arrange
       const data: CreateAttachmentInputDto = {
+        name: 'file1.pdf',
         link: 'http://example.com/file1.pdf',
         ownerId: owner01.id,
       };

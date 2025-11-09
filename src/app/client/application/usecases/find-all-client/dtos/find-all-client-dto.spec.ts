@@ -16,8 +16,15 @@ describe('FindAllClientQueryDto', () => {
 
   describe.each(
     [
-      'companyName',
+      'kind',
       'cnpj',
+      'ie',
+      'group',
+      'type',
+      'companyName',
+      'fantasyName',
+      'owner',
+      'headquarters',
     ]
   )('%s field', (field: string) => {
     it.each(

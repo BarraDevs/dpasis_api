@@ -83,6 +83,7 @@ describe('FindAttachmentById', () => {
     it('should return an attachment if found', async() => {
       // Arrange
       const createData = {
+        name: 'file-to-find.txt',
         link: 'https://example.com/file-to-find.txt',
         ownerId: owner01.id,
       };
@@ -95,6 +96,7 @@ describe('FindAttachmentById', () => {
       expect(foundAttachment).toBeDefined();
       expect(foundAttachment).toEqual<AttachmentDto>({
         id: createdAttachment.id,
+        name: createData.name,
         link: createData.link,
         ownerId: createData.ownerId,
         createdAt: expect.any(Date),

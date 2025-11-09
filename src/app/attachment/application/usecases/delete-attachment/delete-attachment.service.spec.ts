@@ -104,6 +104,7 @@ describe('DeleteAttachment', () => {
     it('should delete an attachment successfully', async() => {
       // Arrange
       const createData = {
+        name: null,
         link: 'https://example.com/to-be-deleted.doc',
         ownerId: owner01.id,
       };
