@@ -43,6 +43,34 @@ model Admin {
   @@map("admins")
 }
 
+model Company {
+  id                String   @id @default(uuid())
+  name              String   @db.VarChar(256)
+  fantasyName       String   @db.VarChar(256)
+  document          String   @unique @db.VarChar(256)
+  ie                String   @unique @db.VarChar(256)
+
+  zipCode           String   @db.VarChar(256)
+  street            String   @db.VarChar(512)
+  number            String   @db.VarChar(256)
+  complement        String?  @db.VarChar(256)
+  reference         String?  @db.VarChar(256)
+  neighborhood      String   @db.VarChar(256)
+  city              String   @db.VarChar(256)
+  state             String   @db.VarChar(256)
+
+  phone01           String   @db.VarChar(256)
+  phone02           String?  @db.VarChar(256)
+  cellphone         String?  @db.VarChar(256)
+  email01           String   @db.VarChar(256)
+  email02           String?  @db.VarChar(256)
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("companies")
+}
+
 model Client {
   id              String   @id
   kind            String   @db.VarChar(256)
@@ -169,7 +197,7 @@ model Item {
   serviceCode      String   @db.VarChar(256)
   quantity         Int
   unitPriceInCents Int
-  ownerId   String
+  ownerId          String
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
