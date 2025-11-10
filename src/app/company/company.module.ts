@@ -9,8 +9,8 @@ import { CompanyController } from './infra/drivers/http/company.controller';
 
 @Module({
   imports: [
-    AuthenticationGuardsModule,
     CompanyPersistenceModule,
+    AuthenticationGuardsModule,
   ],
   controllers: [
     CompanyController,

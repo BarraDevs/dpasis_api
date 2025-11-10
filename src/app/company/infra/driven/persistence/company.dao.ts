@@ -24,30 +24,31 @@ export class CompanyDaoAdapterPrisma implements ICompanyDao {
 
     const where: Prisma.CompanyWhereInput = {
       AND: [
-        { name: queries.name ? { contains: queries.name } : undefined },
-        { fantasyName: queries.fantasyName ? { contains: queries.fantasyName } : undefined },
-        { document: queries.document ? { contains: queries.document } : undefined },
-        { ie: queries.ie ? { contains: queries.ie } : undefined },
+        { name: queries.name ? { contains: queries.name, mode: 'insensitive' } : undefined },
+        { fantasyName: queries.fantasyName ? { contains: queries.fantasyName, mode: 'insensitive' } : undefined },
+        { document: queries.document ? { contains: queries.document, mode: 'insensitive' } : undefined },
+        { ie: queries.ie ? { contains: queries.ie, mode: 'insensitive' } : undefined },
         { OR:
           [
-            { phone01: queries.phone ? { contains: queries.phone } : undefined },
-            { phone02: queries.phone ? { contains: queries.phone } : undefined },
+            { phone01: queries.phone ? { contains: queries.phone, mode: 'insensitive' } : undefined },
+            { phone02: queries.phone ? { contains: queries.phone, mode: 'insensitive' } : undefined },
+            { cellphone: queries.phone ? { contains: queries.phone, mode: 'insensitive' } : undefined },
           ],
         },
         { OR:
           [
-            { email01: queries.email ? { contains: queries.email } : undefined },
-            { email02: queries.email ? { contains: queries.email } : undefined },
+            { email01: queries.email ? { contains: queries.email, mode: 'insensitive' } : undefined },
+            { email02: queries.email ? { contains: queries.email, mode: 'insensitive' } : undefined },
           ],
         },
         {
           OR: [
-            { zipCode: queries.address ? { contains: queries.address } : undefined },
-            { street: queries.address ? { contains: queries.address } : undefined },
-            { number: queries.address ? { contains: queries.address } : undefined },
-            { neighborhood: queries.address ? { contains: queries.address } : undefined },
-            { city: queries.address ? { contains: queries.address } : undefined },
-            { state: queries.address ? { contains: queries.address } : undefined },
+            { zipCode: queries.address ? { contains: queries.address, mode: 'insensitive' } : undefined },
+            { street: queries.address ? { contains: queries.address, mode: 'insensitive' } : undefined },
+            { number: queries.address ? { contains: queries.address, mode: 'insensitive' } : undefined },
+            { neighborhood: queries.address ? { contains: queries.address, mode: 'insensitive' } : undefined },
+            { city: queries.address ? { contains: queries.address, mode: 'insensitive' } : undefined },
+            { state: queries.address ? { contains: queries.address, mode: 'insensitive' } : undefined },
           ],
         },
       ],
