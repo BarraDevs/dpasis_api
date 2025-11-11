@@ -11,6 +11,7 @@ export class ClientDto {
   owner: string;
   headquarters: string;
   active: boolean;
+  companyId: string;
   createdAt: Date;
   updatedAt: Date;
 }

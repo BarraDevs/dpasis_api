@@ -25,6 +25,7 @@ describe('EditClientInputDto', () => {
       'fantasyName',
       'owner',
       'headquarters',
+      'companyId',
     ]
   )('%s field', (field: string) => {
     it.each(

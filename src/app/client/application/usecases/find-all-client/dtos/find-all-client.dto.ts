@@ -57,4 +57,10 @@ export class FindAllClientQueryDto extends OmitType(Queries, ['search']) {
   @IsOptional()
   @IsString({ message: '$property deve ser um texto' })
   headquarters?: string;
+
+  @ApiPropertyOptional()
+  @Trim()
+  @IsOptional()
+  @IsString({ message: '$property deve ser um texto' })
+  companyId?: string;
 }

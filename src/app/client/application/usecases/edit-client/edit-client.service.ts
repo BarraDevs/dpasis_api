@@ -3,6 +3,7 @@ import { Client } from 'src/app/client/domain/entities/client.entity';
 import { ClientNotFoundError } from 'src/app/client/domain/errors/client-not-found';
 import { ClientDuplicateCnpjError } from 'src/app/client/domain/errors/duplicate-cnpj.error';
 import { ClientDuplicateIeError } from 'src/app/client/domain/errors/duplicate-ie.error';
+import { FindCompanyById } from 'src/app/company/application/usecases/find-company-by-id/find-company-by-id.service';
 import { TOKENS } from 'src/core/di/token';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
 import type { IClientDao } from '../../persistence/dao/client-dao.interface';
@@ -14,6 +15,7 @@ export class EditClient {
   constructor(
     @Inject(TOKENS.ClientDao) private readonly clientDao: IClientDao,
     @Inject(TOKENS.ClientRepository) private readonly clientRepository: IClientRepository,
+    private readonly findCompanyById: FindCompanyById,
   ) {}
 
   public async execute(id: string, data: EditClientInputDto): Promise<SuccessMessage> {
@@ -36,6 +38,11 @@ export class EditClient {
       }
     }
 
+    if (data.companyId && data.companyId !== clientData.companyId) {
+      // Verify if the new company exists
+      await this.findCompanyById.execute(data.companyId);
+    }
+
     const client = Client.load({
       ...clientData,
       ...data,
@@ -43,8 +50,6 @@ export class EditClient {
 
     await this.clientRepository.edit(client);
 
-    return {
-      message: 'Cliente editado com sucesso!',
-    };
+    return { message: 'Cliente editado com sucesso!' };
   }
 }

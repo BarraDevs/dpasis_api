@@ -16,6 +16,7 @@ type ClientCreateProps = {
   fantasyName: string;
   owner: string;
   headquarters: string;
+  companyId: string;
 }
 
 export class Client {

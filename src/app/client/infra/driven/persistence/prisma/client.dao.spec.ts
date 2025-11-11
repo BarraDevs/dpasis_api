@@ -1,4 +1,5 @@
 import { Test } from '@nestjs/testing';
+import { Company } from '@prisma/client';
 import { ClientPersistenceModule } from 'src/app/client/application/persistence/client-persistence.module';
 import { FindAllClientQueryDto } from 'src/app/client/application/usecases/find-all-client/dtos/find-all-client.dto';
 import { ConfigModule } from 'src/core/config/config.module';
@@ -8,6 +9,8 @@ import { ClientDaoAdapterPrisma } from './client.dao';
 describe('ClientDaoAdapterPrisma', () => {
   let sut: ClientDaoAdapterPrisma;
   let prisma: PrismaService;
+  let company01: Company;
+  let company02: Company;
 
   beforeEach(async() => {
     const module = await Test.createTestingModule({
@@ -23,7 +26,41 @@ describe('ClientDaoAdapterPrisma', () => {
     sut = module.get(ClientDaoAdapterPrisma);
     prisma = module.get(PrismaService);
 
-    await prisma.client.deleteMany();
+    await prisma.company.deleteMany();
+
+    company01 = await prisma.company.create({
+      data: {
+        name: 'name teste',
+        fantasyName: 'fantasyName teste',
+        document: 'document teste',
+        ie: 'ie teste',
+        zipCode: 'zipCode teste',
+        street: 'street teste',
+        number: 'number teste',
+        neighborhood: 'neighborhood teste',
+        city: 'city teste',
+        state: 'state teste',
+        phone01: 'phone01 teste',
+        email01: 'email01 teste',
+      },
+    });
+
+    company02 = await prisma.company.create({
+      data: {
+        name: 'name teste 02',
+        fantasyName: 'fantasyName teste 02',
+        document: 'document teste 02',
+        ie: 'ie teste 02',
+        zipCode: 'zipCode teste 02',
+        street: 'street teste 02',
+        number: 'number teste 02',
+        neighborhood: 'neighborhood teste 02',
+        city: 'city teste 02',
+        state: 'state teste 02',
+        phone01: 'phone01 teste 02',
+        email01: 'email01 teste 02',
+      },
+    });
   });
 
   afterAll(async() => {
@@ -53,6 +90,7 @@ describe('ClientDaoAdapterPrisma', () => {
             owner: 'John Alpha Smith',
             headquarters: 'Main Office Alpha São Paulo',
             active: true,
+            companyId: company01.id,
             createdAt: new Date('2023-01-01T10:00:00Z'),
           },
           {
@@ -68,6 +106,7 @@ describe('ClientDaoAdapterPrisma', () => {
             owner: 'Jane Beta Santos',
             headquarters: 'Branch Office Beta Rio de Janeiro',
             active: true,
+            companyId: company01.id,
             createdAt: new Date('2023-02-01T10:00:00Z'),
           },
           {
@@ -83,6 +122,7 @@ describe('ClientDaoAdapterPrisma', () => {
             owner: 'Robert Gamma Johnson',
             headquarters: 'Headquarters Gamma Belo Horizonte',
             active: false,
+            companyId: company01.id,
             createdAt: new Date('2023-03-01T10:00:00Z'),
           },
           {
@@ -98,6 +138,7 @@ describe('ClientDaoAdapterPrisma', () => {
             owner: 'Sarah Delta Williams',
             headquarters: 'Office Delta Porto Alegre',
             active: true,
+            companyId: company02.id,
             createdAt: new Date('2023-04-01T10:00:00Z'),
           },
           {
@@ -113,6 +154,7 @@ describe('ClientDaoAdapterPrisma', () => {
             owner: 'Mike Echo Brown',
             headquarters: 'Echo Office Recife',
             active: true,
+            companyId: company02.id,
             createdAt: new Date('2023-05-01T10:00:00Z'),
           },
           {
@@ -128,6 +170,7 @@ describe('ClientDaoAdapterPrisma', () => {
             owner: 'Lisa Foxtrot Davis',
             headquarters: 'Manufacturing Plant Foxtrot Salvador',
             active: false,
+            companyId: company02.id,
             createdAt: new Date('2023-06-01T10:00:00Z'),
           },
         ],
@@ -429,6 +472,24 @@ describe('ClientDaoAdapterPrisma', () => {
           expect(clients).toHaveLength(1);
           expect(clients[0].id).toBe('client-1');
           expect(clients[0].headquarters).toBe('Main Office Alpha São Paulo');
+        });
+      });
+
+      describe('by companyId', () => {
+        it('should filter by companyId', async() => {
+          // Arrange
+          const query: FindAllClientQueryDto = {
+            companyId: company01.id,
+          };
+
+          // Act
+          const [clients, total] = await sut.findAll(query);
+
+          // Assert
+          expect(total).toBe(3); // clients 1, 2, 3
+          expect(clients).toHaveLength(3);
+          const clientIds = clients.map(c => c.id).sort();
+          expect(clientIds).toEqual(['client-1', 'client-2', 'client-3']);
         });
       });
     });
@@ -742,7 +803,7 @@ describe('ClientDaoAdapterPrisma', () => {
         active: true,
       };
 
-      await prisma.client.create({ data: clientData });
+      await prisma.client.create({ data: { ...clientData, companyId: company01.id } });
 
       // Act
       const client = await sut.findById('test-client-id');
@@ -783,7 +844,7 @@ describe('ClientDaoAdapterPrisma', () => {
         active: true,
       };
 
-      await prisma.client.create({ data: clientData });
+      await prisma.client.create({ data: { ...clientData, companyId: company01.id } });
 
       // Act
       const client = await sut.findByCnpj('55.555.555/0001-55');
@@ -812,7 +873,7 @@ describe('ClientDaoAdapterPrisma', () => {
         active: true,
       };
 
-      await prisma.client.create({ data: clientData });
+      await prisma.client.create({ data: { ...clientData, companyId: company01.id } });
 
       // Act
       const client = await sut.findByCnpj('66.666.666/0001-66'.toUpperCase());
@@ -849,7 +910,7 @@ describe('ClientDaoAdapterPrisma', () => {
         active: false,
       };
 
-      await prisma.client.create({ data: clientData });
+      await prisma.client.create({ data: { ...clientData, companyId: company01.id } });
 
       // Act
       const client = await sut.findByIe('777.777.777.777');
@@ -879,7 +940,7 @@ describe('ClientDaoAdapterPrisma', () => {
         active: true,
       };
 
-      await prisma.client.create({ data: clientData });
+      await prisma.client.create({ data: { ...clientData, companyId: company01.id } });
 
       // Act
       const client = await sut.findByIe('888.888.888.888'.toUpperCase());

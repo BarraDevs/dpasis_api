@@ -1,6 +1,7 @@
 import { createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ClientModule } from 'src/app/client/client.module';
+import { CreateCompany } from 'src/app/company/application/usecases/create-company/create-company.service';
 import { ConfigModule } from 'src/core/config/config.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
@@ -15,6 +16,7 @@ describe('FindAllClient', () => {
   let prisma: PrismaService;
   let createClient: CreateClient;
   let baseClientData: CreateClientInputDto;
+  let createCompany: CreateCompany;
   let createdClientIds: string[];
 
   beforeEach(async() => {
@@ -28,6 +30,29 @@ describe('FindAllClient', () => {
     sut = module.get(FindAllClient);
     prisma = module.get(PrismaService);
     createClient = module.get(CreateClient);
+    createCompany = module.get(CreateCompany);
+
+    await prisma.company.deleteMany();
+
+    const company = await createCompany.execute({
+      name: 'name teste',
+      fantasyName: 'fantasyName teste',
+      document: 'document teste',
+      ie: 'ie teste',
+      zipCode: 'zipCode teste',
+      street: 'street teste',
+      number: 'number teste',
+      neighborhood: 'neighborhood teste',
+      complement: null,
+      reference: null,
+      city: 'city teste',
+      state: 'state teste',
+      cellphone: 'cellphone teste',
+      phone01: 'phone01 teste',
+      phone02: 'phone02 teste',
+      email01: 'email01 teste',
+      email02: 'email02 teste',
+    });
 
     baseClientData = {
       kind: 'individual',
@@ -40,9 +65,8 @@ describe('FindAllClient', () => {
       fantasyName: 'John Doe',
       owner: 'John Doe',
       headquarters: '123 Main St, City, State, ZIP',
+      companyId: company.id,
     };
-
-    await prisma.client.deleteMany();
 
     // Create diverse test clients for comprehensive filter testing
     createdClientIds = [];
@@ -139,7 +163,7 @@ describe('FindAllClient', () => {
   });
 
   afterAll(async() => {
-    await prisma.client.deleteMany();
+    await prisma.company.deleteMany();
     await prisma.$disconnect();
   });
 
@@ -575,6 +599,34 @@ describe('FindAllClient', () => {
       expect(result.totalItems).toBeGreaterThan(0);
       result.data.forEach(client => {
         expect(client.headquarters).toContain('Office');
+      });
+    });
+  });
+
+  describe('Integration tests - Correct dto', () => {
+    it('should ensure each returned client matches the ClientDto structure', async() => {
+      // Act
+      const result = await sut.execute({});
+
+      // Assert
+      result.data.forEach(client => {
+        expect(client).toMatchObject<ClientDto>({
+          id: expect.any(String),
+          kind: expect.any(String),
+          cnpj: expect.any(String),
+          ie: expect.any(String),
+          group: expect.any(String),
+          type: expect.any(String),
+          generateInvoice: expect.any(Boolean),
+          companyName: expect.any(String),
+          fantasyName: expect.any(String),
+          owner: expect.any(String),
+          headquarters: expect.any(String),
+          companyId: expect.any(String),
+          active: expect.any(Boolean),
+          createdAt: expect.any(Date),
+          updatedAt: expect.any(Date),
+        });
       });
     });
   });

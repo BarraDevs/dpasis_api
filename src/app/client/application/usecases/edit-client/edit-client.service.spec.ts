@@ -3,6 +3,8 @@ import { ClientModule } from 'src/app/client/client.module';
 import { ClientNotFoundError } from 'src/app/client/domain/errors/client-not-found';
 import { ClientDuplicateCnpjError } from 'src/app/client/domain/errors/duplicate-cnpj.error';
 import { ClientDuplicateIeError } from 'src/app/client/domain/errors/duplicate-ie.error';
+import { CreateCompany } from 'src/app/company/application/usecases/create-company/create-company.service';
+import { CompanyNotFoundError } from 'src/app/company/domain/errors/company-not-found.error';
 import { ConfigModule } from 'src/core/config/config.module';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
@@ -19,6 +21,8 @@ describe('EditClient', () => {
   let createClient: CreateClient;
   let findClientById: FindClientById;
   let data: CreateClientInputDto;
+  let companyId: string;
+  let createCompany: CreateCompany;
 
   beforeEach(async() => {
     const module: TestingModule = await Test.createTestingModule({
@@ -32,6 +36,29 @@ describe('EditClient', () => {
     prisma = module.get(PrismaService);
     createClient = module.get(CreateClient);
     findClientById = module.get(FindClientById);
+    createCompany = module.get(CreateCompany);
+
+    await prisma.company.deleteMany();
+
+    companyId = (await createCompany.execute({
+      name: 'name teste',
+      fantasyName: 'fantasyName teste',
+      document: 'document teste',
+      ie: 'ie teste',
+      zipCode: 'zipCode teste',
+      street: 'street teste',
+      number: 'number teste',
+      neighborhood: 'neighborhood teste',
+      complement: null,
+      reference: null,
+      city: 'city teste',
+      state: 'state teste',
+      cellphone: 'cellphone teste',
+      phone01: 'phone01 teste',
+      phone02: 'phone02 teste',
+      email01: 'email01 teste',
+      email02: 'email02 teste',
+    })).id;
 
     data = {
       kind: 'individual',
@@ -44,13 +71,12 @@ describe('EditClient', () => {
       fantasyName: 'John Doe',
       owner: 'John Doe',
       headquarters: '123 Main St, City, State, ZIP',
+      companyId,
     };
-
-    await prisma.client.deleteMany();
   });
 
   afterAll(async() => {
-    await prisma.client.deleteMany();
+    await prisma.company.deleteMany();
     await prisma.$disconnect();
   });
 
@@ -102,7 +128,22 @@ describe('EditClient', () => {
       });
     });
 
-    it('should not throw an error when cnpj and ie are unchanged', async() => {
+    it('should throw an error when company does not exist', async() => {
+      // Arrange
+      const client = await createClient.execute(data);
+
+      const editData: EditClientInputDto = {
+        companyId: 'non-existing-company-id',
+      };
+
+      // Act & Assert
+      expect.assertions(1);
+      return sut.execute(client.id, editData).catch((error) => {
+        expect(error).toBeInstanceOf(CompanyNotFoundError);
+      });
+    });
+
+    it('should not throw an error when cnpj, ie and company are unchanged', async() => {
       // Arrange
       const client = await createClient.execute(data);
 
@@ -138,6 +179,21 @@ describe('EditClient', () => {
 
       const editData: EditClientInputDto = {
         ie: '123456789',
+      };
+
+      // Act
+      const result = await sut.execute(client.id, editData);
+
+      // Assert
+      expect(result).toEqual<SuccessMessage>({ message: 'Cliente editado com sucesso!' });
+    });
+
+    it('should not throw an error when companyId is "changed" but remains the same', async() => {
+      // Arrange
+      const client = await createClient.execute(data);
+
+      const editData: EditClientInputDto = {
+        companyId,
       };
 
       // Act
@@ -189,9 +245,46 @@ describe('EditClient', () => {
         owner: editData.owner ?? data.owner,
         headquarters: editData.headquarters ?? data.headquarters,
         active: true,
+        companyId,
         createdAt: editedClient!.createdAt,
         updatedAt: editedClient!.updatedAt,
       });
+    });
+
+    it('should change the company of a client successfully', async() => {
+      // Arrange
+      const client = await createClient.execute(data);
+
+      const newCompany = await createCompany.execute({
+        name: 'New Company Ltd',
+        fantasyName: 'New Company',
+        document: '55667788000199',
+        ie: '5544332211',
+        zipCode: 'new zipCode',
+        street: 'new street',
+        number: 'new number',
+        neighborhood: 'new neighborhood',
+        complement: null,
+        reference: null,
+        city: 'new city',
+        state: 'new state',
+        cellphone: 'new cellphone',
+        phone01: 'new phone01',
+        phone02: 'new phone02',
+        email01: 'new email01',
+        email02: 'new email02',
+      });
+
+      const editData: EditClientInputDto = {
+        companyId: newCompany.id,
+      };
+
+      // Act
+      await sut.execute(client.id, editData);
+
+      // Assert
+      const editedClient = await findClientById.execute(client.id);
+      expect(editedClient!.companyId).toBe(newCompany.id);
     });
   });
 });
