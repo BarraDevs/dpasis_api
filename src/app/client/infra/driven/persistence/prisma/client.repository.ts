@@ -8,9 +8,16 @@ export class ClientRepositoryAdapterPrisma implements IClientRepository {
   constructor(private prisma: PrismaService) {}
 
   public async save(client: Client): Promise<void> {
+    const { companyId, ...data } = client.props;
+
     await this.prisma.client.create({
       data: {
-        ...client.props,
+        ...data,
+        company: {
+          connect: {
+            id: companyId,
+          },
+        },
         resource: {
           create: {
             // make sure to create a new resource with same client id

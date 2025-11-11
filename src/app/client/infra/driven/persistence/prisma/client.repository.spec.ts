@@ -1,4 +1,5 @@
 import { Test } from '@nestjs/testing';
+import { Company } from '@prisma/client';
 import { ClientPersistenceModule } from 'src/app/client/application/persistence/client-persistence.module';
 import { Client } from 'src/app/client/domain/entities/client.entity';
 import { ConfigModule } from 'src/core/config/config.module';
@@ -8,6 +9,7 @@ import { ClientRepositoryAdapterPrisma } from './client.repository';
 describe('ClientRepositoryAdapterPrisma', () => {
   let sut: ClientRepositoryAdapterPrisma;
   let prisma: PrismaService;
+  let company: Company;
 
   beforeEach(async() => {
     const module = await Test.createTestingModule({
@@ -23,13 +25,28 @@ describe('ClientRepositoryAdapterPrisma', () => {
     sut = module.get(ClientRepositoryAdapterPrisma);
     prisma = module.get(PrismaService);
 
-    await prisma.client.deleteMany();
-    await prisma.owner.deleteMany();
+    await prisma.company.deleteMany();
+
+    company = await prisma.company.create({
+      data: {
+        name: 'name teste',
+        fantasyName: 'fantasyName teste',
+        document: 'document teste',
+        ie: 'ie teste',
+        zipCode: 'zipCode teste',
+        street: 'street teste',
+        number: 'number teste',
+        neighborhood: 'neighborhood teste',
+        city: 'city teste',
+        state: 'state teste',
+        phone01: 'phone01 teste',
+        email01: 'email01 teste',
+      },
+    });
   });
 
   afterAll(async() => {
-    await prisma.client.deleteMany();
-    await prisma.owner.deleteMany();
+    await prisma.company.deleteMany();
     await prisma.$disconnect();
   });
 
@@ -51,6 +68,7 @@ describe('ClientRepositoryAdapterPrisma', () => {
         fantasyName: 'Test Company',
         owner: 'John Doe',
         headquarters: 'Main Office',
+        companyId: company.id,
       });
 
       // Act
@@ -94,6 +112,7 @@ describe('ClientRepositoryAdapterPrisma', () => {
         fantasyName: 'First Company',
         owner: 'John Doe',
         headquarters: 'Main Office',
+        companyId: company.id,
       });
 
       const client2 = Client.create({
@@ -107,6 +126,7 @@ describe('ClientRepositoryAdapterPrisma', () => {
         fantasyName: 'Second Company',
         owner: 'Jane Doe',
         headquarters: 'Branch Office',
+        companyId: company.id,
       });
 
       // Act
@@ -140,6 +160,7 @@ describe('ClientRepositoryAdapterPrisma', () => {
         fantasyName: 'First Company',
         owner: 'John Doe',
         headquarters: 'Main Office',
+        companyId: company.id,
       });
 
       const client2 = Client.create({
@@ -153,6 +174,7 @@ describe('ClientRepositoryAdapterPrisma', () => {
         fantasyName: 'Second Company',
         owner: 'Jane Doe',
         headquarters: 'Branch Office',
+        companyId: company.id,
       });
 
       // Act & Assert
@@ -174,6 +196,7 @@ describe('ClientRepositoryAdapterPrisma', () => {
         fantasyName: 'First Company',
         owner: 'John Doe',
         headquarters: 'Main Office',
+        companyId: company.id,
       });
 
       const client2 = Client.create({
@@ -187,6 +210,7 @@ describe('ClientRepositoryAdapterPrisma', () => {
         fantasyName: 'Second Company',
         owner: 'Jane Doe',
         headquarters: 'Branch Office',
+        companyId: company.id,
       });
 
       // Act & Assert
@@ -209,6 +233,7 @@ describe('ClientRepositoryAdapterPrisma', () => {
         fantasyName: 'Original Company',
         owner: 'John Doe',
         headquarters: 'Main Office',
+        companyId: company.id,
       });
 
       await sut.save(originalClient);
@@ -260,6 +285,7 @@ describe('ClientRepositoryAdapterPrisma', () => {
         owner: 'Ghost User',
         headquarters: 'Nowhere',
         active: true,
+        companyId: company.id,
         createdAt: new Date(),
         updatedAt: new Date(),
       });
@@ -281,6 +307,7 @@ describe('ClientRepositoryAdapterPrisma', () => {
         fantasyName: 'Test Company',
         owner: 'John Doe',
         headquarters: 'Main Office',
+        companyId: company.id,
       });
 
       await sut.save(client);

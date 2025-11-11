@@ -21,6 +21,8 @@ import { CompanyController } from './infra/drivers/http/company.controller';
     FindAllCompany,
     FindCompanyById,
   ],
-  exports: [],
+  exports: [
+    FindCompanyById,
+  ],
 })
 export class CompanyModule {}

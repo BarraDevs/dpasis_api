@@ -25,6 +25,7 @@ describe('CreateClientInputDto', () => {
       'fantasyName',
       'owner',
       'headquarters',
+      'companyId',
     ]
   )('%s field', (field: string) => {
     it.each(
@@ -113,6 +114,7 @@ describe('CreateClientInputDto', () => {
       fantasyName: 'fantasyName',
       owner: 'owner',
       headquarters: 'headquarters',
+      companyId: 'companyId',
     };
 
     // Act

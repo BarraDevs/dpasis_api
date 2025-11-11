@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ClientModule } from 'src/app/client/client.module';
+import { CreateCompany } from 'src/app/company/application/usecases/create-company/create-company.service';
 import { ConfigModule } from 'src/core/config/config.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { ClientDto } from '../../dtos/client.dto';
@@ -11,6 +12,8 @@ describe('FindClientById', () => {
   let sut: FindClientById;
   let prisma: PrismaService;
   let createClient: CreateClient;
+  let companyId: string;
+  let createCompany: CreateCompany;
 
   beforeEach(async() => {
     const module: TestingModule = await Test.createTestingModule({
@@ -23,12 +26,33 @@ describe('FindClientById', () => {
     sut = module.get(FindClientById);
     prisma = module.get(PrismaService);
     createClient = module.get(CreateClient);
+    createCompany = module.get(CreateCompany);
 
-    await prisma.client.deleteMany();
+    await prisma.company.deleteMany();
+
+    companyId = (await createCompany.execute({
+      name: 'name teste',
+      fantasyName: 'fantasyName teste',
+      document: 'document teste',
+      ie: 'ie teste',
+      zipCode: 'zipCode teste',
+      street: 'street teste',
+      number: 'number teste',
+      neighborhood: 'neighborhood teste',
+      complement: null,
+      reference: null,
+      city: 'city teste',
+      state: 'state teste',
+      cellphone: 'cellphone teste',
+      phone01: 'phone01 teste',
+      phone02: 'phone02 teste',
+      email01: 'email01 teste',
+      email02: 'email02 teste',
+    })).id;
   });
 
   afterAll(async() => {
-    await prisma.client.deleteMany();
+    await prisma.company.deleteMany();
     await prisma.$disconnect();
   });
 
@@ -72,6 +96,7 @@ describe('FindClientById', () => {
         fantasyName: 'John Doe',
         owner: 'John Doe',
         headquarters: '123 Main St, City, State, ZIP',
+        companyId,
       };
       const createdClient = await createClient.execute(data);
 
@@ -92,6 +117,7 @@ describe('FindClientById', () => {
         owner: data.owner,
         headquarters: data.headquarters,
         active: true,
+        companyId,
         createdAt: expect.any(Date),
         updatedAt: expect.any(Date),
       });

@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { Client } from 'src/app/client/domain/entities/client.entity';
 import { ClientDuplicateCnpjError } from 'src/app/client/domain/errors/duplicate-cnpj.error';
 import { ClientDuplicateIeError } from 'src/app/client/domain/errors/duplicate-ie.error';
+import { FindCompanyById } from 'src/app/company/application/usecases/find-company-by-id/find-company-by-id.service';
 import { TOKENS } from 'src/core/di/token';
 import type { IClientDao } from '../../persistence/dao/client-dao.interface';
 import type { IClientRepository } from '../../persistence/repository/client-repository.interface';
@@ -12,6 +13,7 @@ export class CreateClient {
   constructor(
     @Inject(TOKENS.ClientDao) private readonly clientDao: IClientDao,
     @Inject(TOKENS.ClientRepository) private readonly clientRepository: IClientRepository,
+    private readonly findCompanyById: FindCompanyById,
   ) {}
 
   public async execute(data: CreateClientInputDto): Promise<CreateClientOutputDto> {
@@ -25,7 +27,10 @@ export class CreateClient {
       throw new ClientDuplicateIeError();
     }
 
-    const client = Client.create(data);
+    // Verify if the company exists
+    const company = await this.findCompanyById.execute(data.companyId);
+
+    const client = Client.create({ ...data, companyId: company.id });
     await this.clientRepository.save(client);
 
     return { id: client.props.id };
