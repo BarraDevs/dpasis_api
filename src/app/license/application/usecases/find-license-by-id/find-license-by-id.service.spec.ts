@@ -29,7 +29,7 @@ describe('FindLicenseById', () => {
     await prisma.license.deleteMany();
   });
 
-  afterAll(async() => {
+  afterEach(async() => {
     await prisma.owner.deleteMany();
     await prisma.license.deleteMany();
     await prisma.$disconnect();

@@ -162,7 +162,7 @@ describe('FindAllClient', () => {
     createdClientIds.push(client6.id);
   });
 
-  afterAll(async() => {
+  afterEach(async() => {
     await prisma.company.deleteMany();
     await prisma.$disconnect();
   });

@@ -60,7 +60,7 @@ describe('EditCompany', () => {
     existingCompanyId = createResult.id;
   });
 
-  afterAll(async() => {
+  afterEach(async() => {
     await prisma.company.deleteMany();
     await prisma.$disconnect();
   });

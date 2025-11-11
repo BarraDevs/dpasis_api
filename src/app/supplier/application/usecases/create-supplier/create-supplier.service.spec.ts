@@ -36,7 +36,7 @@ describe('CreateSupplier', () => {
     await prisma.supplier.deleteMany();
   });
 
-  afterAll(async() => {
+  afterEach(async() => {
     await prisma.supplier.deleteMany();
     await prisma.$disconnect();
   });

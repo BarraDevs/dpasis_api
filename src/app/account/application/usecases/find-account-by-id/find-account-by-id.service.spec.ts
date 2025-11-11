@@ -25,7 +25,7 @@ describe('FindAccountById', () => {
     await prisma.account.deleteMany();
   });
 
-  afterAll(async() => {
+  afterEach(async() => {
     await prisma.account.deleteMany();
     await prisma.$disconnect();
   });

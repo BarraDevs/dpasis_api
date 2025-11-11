@@ -28,7 +28,7 @@ describe('${moduleNamePascal}DaoAdapterPrisma', () => {
     await prisma.${moduleNameCamel}.deleteMany();
   });
 
-  afterAll(async() => {
+  afterEach(async() => {
     await prisma.${moduleNameCamel}.deleteMany();
   });
 
