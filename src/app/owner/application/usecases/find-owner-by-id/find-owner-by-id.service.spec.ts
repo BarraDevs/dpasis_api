@@ -23,7 +23,7 @@ describe('FindOwnerById', () => {
     await prisma.owner.deleteMany();
   });
 
-  afterAll(async() => {
+  afterEach(async() => {
     await prisma.owner.deleteMany();
     await prisma.$disconnect();
   });

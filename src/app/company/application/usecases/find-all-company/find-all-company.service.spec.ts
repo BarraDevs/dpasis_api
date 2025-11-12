@@ -145,7 +145,7 @@ describe('FindAllCompany', () => {
     await createTestCompanies();
   });
 
-  afterAll(async() => {
+  afterEach(async() => {
     await prisma.company.deleteMany();
     await prisma.$disconnect();
   });

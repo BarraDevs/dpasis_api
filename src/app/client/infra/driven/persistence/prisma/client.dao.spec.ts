@@ -63,7 +63,7 @@ describe('ClientDaoAdapterPrisma', () => {
     });
   });
 
-  afterAll(async() => {
+  afterEach(async() => {
     await prisma.client.deleteMany();
     await prisma.$disconnect();
   });

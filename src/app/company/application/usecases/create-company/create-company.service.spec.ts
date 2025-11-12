@@ -53,7 +53,7 @@ describe('CreateCompany', () => {
     };
   });
 
-  afterAll(async() => {
+  afterEach(async() => {
     await prisma.company.deleteMany();
     await prisma.$disconnect();
   });

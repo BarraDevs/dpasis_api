@@ -122,7 +122,7 @@ describe('FindAllSupplier', () => {
     createdSupplierIds.push(supplier6.id);
   });
 
-  afterAll(async() => {
+  afterEach(async() => {
     await prisma.supplier.deleteMany();
     await prisma.$disconnect();
   });

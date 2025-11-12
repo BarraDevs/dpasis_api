@@ -28,7 +28,7 @@ describe('FindItemById', () => {
     await prisma.item.deleteMany();
   });
 
-  afterAll(async() => {
+  afterEach(async() => {
     await prisma.owner.deleteMany();
     await prisma.item.deleteMany();
     await prisma.$disconnect();

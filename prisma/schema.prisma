@@ -44,30 +44,30 @@ model Admin {
 }
 
 model Company {
-  id                String   @id @default(uuid())
-  name              String   @db.VarChar(256)
-  fantasyName       String   @db.VarChar(256)
-  document          String   @unique @db.VarChar(256)
-  ie                String   @unique @db.VarChar(256)
+  id          String @id @default(uuid())
+  name        String @db.VarChar(256)
+  fantasyName String @db.VarChar(256)
+  document    String @unique @db.VarChar(256)
+  ie          String @unique @db.VarChar(256)
 
-  zipCode           String   @db.VarChar(256)
-  street            String   @db.VarChar(512)
-  number            String   @db.VarChar(256)
-  complement        String?  @db.VarChar(256)
-  reference         String?  @db.VarChar(256)
-  neighborhood      String   @db.VarChar(256)
-  city              String   @db.VarChar(256)
-  state             String   @db.VarChar(256)
+  zipCode      String  @db.VarChar(256)
+  street       String  @db.VarChar(512)
+  number       String  @db.VarChar(256)
+  complement   String? @db.VarChar(256)
+  reference    String? @db.VarChar(256)
+  neighborhood String  @db.VarChar(256)
+  city         String  @db.VarChar(256)
+  state        String  @db.VarChar(256)
 
-  phone01           String   @db.VarChar(256)
-  phone02           String?  @db.VarChar(256)
-  cellphone         String?  @db.VarChar(256)
-  email01           String   @db.VarChar(256)
-  email02           String?  @db.VarChar(256)
-  
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  clients           Client[]
+  phone01   String  @db.VarChar(256)
+  phone02   String? @db.VarChar(256)
+  cellphone String? @db.VarChar(256)
+  email01   String  @db.VarChar(256)
+  email02   String? @db.VarChar(256)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  clients   Client[]
 
   @@map("companies")
 }
@@ -207,6 +207,27 @@ model Item {
   owner Owner @relation(fields: [ownerId], references: [id], onDelete: Cascade) // Deletar o Owner deleta o Item
 
   @@map("items")
+}
+
+model Shipper {
+  id             String   @id @default(uuid())
+  companyName    String   @db.VarChar(256)
+  fantasyName    String   @db.VarChar(256)
+  cnpj           String   @unique @db.VarChar(256)
+  contact        String   @db.VarChar(256)
+  representative String   @db.VarChar(256)
+  zipCode        String   @db.VarChar(256)
+  street         String   @db.VarChar(256)
+  number         String   @db.VarChar(256)
+  complement     String?  @db.VarChar(256)
+  reference      String?  @db.VarChar(256)
+  neighborhood   String   @db.VarChar(256)
+  city           String   @db.VarChar(256)
+  state          String   @db.VarChar(256)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("shippers")
 }
 
 model Faq {

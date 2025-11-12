@@ -31,7 +31,7 @@ describe('CreateAttachment', () => {
     await prisma.attachment.deleteMany();
   });
 
-  afterAll(async() => {
+  afterEach(async() => {
     await prisma.owner.deleteMany();
     await prisma.attachment.deleteMany();
     await prisma.$disconnect();

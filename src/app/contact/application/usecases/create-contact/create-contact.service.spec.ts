@@ -31,7 +31,7 @@ describe('CreateContact', () => {
     await prisma.contact.deleteMany();
   });
 
-  afterAll(async() => {
+  afterEach(async() => {
     await prisma.owner.deleteMany();
     await prisma.contact.deleteMany();
     await prisma.$disconnect();

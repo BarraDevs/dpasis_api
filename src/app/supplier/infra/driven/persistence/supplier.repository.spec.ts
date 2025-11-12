@@ -40,7 +40,7 @@ describe('SupplierRepositoryAdapterPrisma (Integration)', () => {
     await prisma.owner.deleteMany();
   });
 
-  afterAll(async() => {
+  afterEach(async() => {
     await prisma.supplier.deleteMany();
     await prisma.owner.deleteMany();
     await prisma.$disconnect();

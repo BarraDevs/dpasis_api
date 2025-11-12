@@ -25,7 +25,7 @@ export function generateDeleteUsecaseSpecFile({ moduleName, moduleNamePascal, mo
 //     await prisma.${moduleNameCamel}.deleteMany();
 //   });
 //
-//   afterAll(async() => {
+//   afterEach(async() => {
 //     await prisma.${moduleNameCamel}.deleteMany();
 //   });
 //
