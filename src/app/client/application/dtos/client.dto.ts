@@ -13,10 +13,10 @@ export class ClientDto {
   active: boolean;
   createdAt: Date;
   updatedAt: Date;
-  companies: CompanyDto[];
+  companies: ClientCompanyDto[];
 }
 
-class CompanyDto {
+class ClientCompanyDto {
   id: string;
   name: string;
 }
