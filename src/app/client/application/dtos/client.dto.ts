@@ -13,8 +13,10 @@ export class ClientDto {
   active: boolean;
   createdAt: Date;
   updatedAt: Date;
-  companies: Array<{
-    id: string;
-    name: string;
-  }>;
+  companies: CompanyDto[];
+}
+
+class CompanyDto {
+  id: string;
+  name: string;
 }
