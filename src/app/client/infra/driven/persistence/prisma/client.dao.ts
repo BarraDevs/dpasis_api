@@ -5,6 +5,29 @@ import { IClientDao } from 'src/app/client/application/persistence/dao/client-da
 import { FindAllClientQueryDto } from 'src/app/client/application/usecases/find-all-client/dtos/find-all-client.dto';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 
+const clientSelect = {
+  id: true,
+  kind: true,
+  cnpj: true,
+  ie: true,
+  group: true,
+  type: true,
+  generateInvoice: true,
+  companyName: true,
+  fantasyName: true,
+  owner: true,
+  headquarters: true,
+  active: true,
+  createdAt: true,
+  updatedAt: true,
+  companies: {
+    select: {
+      id: true,
+      name: true,
+    },
+  },
+} satisfies Prisma.ClientSelect;
+
 @Injectable()
 export class ClientDaoAdapterPrisma implements IClientDao {
   constructor(private prisma: PrismaService) {}
@@ -23,13 +46,14 @@ export class ClientDaoAdapterPrisma implements IClientDao {
         { fantasyName: queries.fantasyName ? { contains: queries.fantasyName, mode: 'insensitive' } : undefined },
         { owner: queries.owner ? { contains: queries.owner, mode: 'insensitive' } : undefined },
         { headquarters: queries.headquarters ? { contains: queries.headquarters, mode: 'insensitive' } : undefined },
-        { companyId: queries.companyId ? { equals: queries.companyId } : undefined },
+        { companies: queries.companyIds ? { some: { id: { in: queries.companyIds } } } : undefined },
       ],
     };
 
     return this.prisma.$transaction([
       this.prisma.client.findMany({
         where,
+        select: clientSelect,
         take: pagination.take,
         skip: pagination.skip,
         orderBy: { createdAt: 'desc' },
@@ -41,18 +65,21 @@ export class ClientDaoAdapterPrisma implements IClientDao {
   public async findById(id: string): Promise<ClientDto | null> {
     return this.prisma.client.findUnique({
       where: { id },
+      select: clientSelect,
     });
   }
 
   public async findByCnpj(cnpj: string): Promise<ClientDto | null> {
     return this.prisma.client.findUnique({
       where: { cnpj },
+      select: clientSelect,
     });
   }
 
   public async findByIe(ie: string): Promise<ClientDto | null> {
     return this.prisma.client.findUnique({
       where: { ie },
+      select: clientSelect,
     });
   }
 }

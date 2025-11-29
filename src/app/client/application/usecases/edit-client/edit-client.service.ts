@@ -38,14 +38,21 @@ export class EditClient {
       }
     }
 
-    if (data.companyId && data.companyId !== clientData.companyId) {
-      // Verify if the new company exists
-      await this.findCompanyById.execute(data.companyId);
+    if (data.companyIds) {
+      // Verify if each company exists
+      await Promise.all(
+        data.companyIds.map(async(companyId) => {
+          await this.findCompanyById.execute(companyId);
+        }),
+      );
     }
 
+    const { companies, ...rest } = clientData;
+
     const client = Client.load({
-      ...clientData,
+      ...rest,
       ...data,
+      companyIds: data.companyIds ?? companies.map((company) => company.id),
     });
 
     await this.clientRepository.edit(client);

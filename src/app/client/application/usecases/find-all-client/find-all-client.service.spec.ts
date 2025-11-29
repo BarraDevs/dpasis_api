@@ -33,6 +33,7 @@ describe('FindAllClient', () => {
     createCompany = module.get(CreateCompany);
 
     await prisma.company.deleteMany();
+    await prisma.client.deleteMany();
 
     const company = await createCompany.execute({
       name: 'name teste',
@@ -65,7 +66,7 @@ describe('FindAllClient', () => {
       fantasyName: 'John Doe',
       owner: 'John Doe',
       headquarters: '123 Main St, City, State, ZIP',
-      companyId: company.id,
+      companyIds: [company.id],
     };
 
     // Create diverse test clients for comprehensive filter testing
@@ -164,6 +165,7 @@ describe('FindAllClient', () => {
 
   afterEach(async() => {
     await prisma.company.deleteMany();
+    await prisma.client.deleteMany();
     await prisma.$disconnect();
   });
 
@@ -402,6 +404,43 @@ describe('FindAllClient', () => {
       expect(result.data).toHaveLength(1);
       expect(result.data[0].headquarters).toBe('Main Office Alpha São Paulo');
     });
+
+    it('should filter by companyIds', async() => {
+      // Arrange
+      const company = await createCompany.execute({
+        name: 'Unique Company',
+        fantasyName: 'Unique Co',
+        document: 'unique-document',
+        ie: 'unique-ie',
+        zipCode: 'unique-zip',
+        street: 'unique-street',
+        number: 'unique-number',
+        neighborhood: 'unique-neighborhood',
+        complement: null,
+        reference: null,
+        city: 'unique-city',
+        state: 'unique-state',
+        cellphone: 'unique-cellphone',
+        phone01: 'unique-phone01',
+        phone02: 'unique-phone02',
+        email01: 'unique-email01',
+        email02: 'unique-email02',
+      });
+
+      await createClient.execute({
+        ...baseClientData,
+        companyIds: [company.id],
+        companyName: 'Unique Client Corp',
+      });
+
+      // Act
+      const result = await sut.execute({ companyIds: [company.id] });
+
+      // Assert
+      expect(result.totalItems).toBe(1);
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0].companies[0].id).toBe(company.id);
+    });
   });
 
   describe('Integration tests - Case insensitive filters', () => {
@@ -622,10 +661,10 @@ describe('FindAllClient', () => {
           fantasyName: expect.any(String),
           owner: expect.any(String),
           headquarters: expect.any(String),
-          companyId: expect.any(String),
           active: expect.any(Boolean),
           createdAt: expect.any(Date),
           updatedAt: expect.any(Date),
+          companies: expect.any(Array),
         });
       });
     });

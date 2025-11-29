@@ -68,28 +68,28 @@ model Company {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   clients   Client[]
+  suppliers Supplier[]
 
   @@map("companies")
 }
 
 model Client {
-  id              String   @id
-  kind            String   @db.VarChar(256)
-  cnpj            String   @unique @db.VarChar(256)
-  ie              String   @unique @db.VarChar(256)
-  group           String   @db.VarChar(256)
-  type            String   @db.VarChar(256)
-  companyName     String   @db.VarChar(256)
-  fantasyName     String   @db.VarChar(256)
-  owner           String   @db.VarChar(256)
-  headquarters    String   @db.VarChar(256)
+  id              String    @id
+  kind            String    @db.VarChar(256)
+  cnpj            String    @unique @db.VarChar(256)
+  ie              String    @unique @db.VarChar(256)
+  group           String    @db.VarChar(256)
+  type            String    @db.VarChar(256)
+  companyName     String    @db.VarChar(256)
+  fantasyName     String    @db.VarChar(256)
+  owner           String    @db.VarChar(256)
+  headquarters    String    @db.VarChar(256)
   generateInvoice Boolean
   active          Boolean
-  resource        Owner? // resource no sentido de proprietário
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  companyId       String
-  company         Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  resource        Owner?    // resource no sentido de proprietário
+  companies       Company[]
 
   @@map("clients")
 }
@@ -104,9 +104,10 @@ model Supplier {
   fantasyName    String   @db.VarChar(256)
   representative String   @db.VarChar(256)
   active         Boolean
-  resource       Owner? // resource no sentido de proprietário
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+  resource       Owner?   // resource no sentido de proprietário
+  companies      Company[]
 
   @@map("suppliers")
 }
@@ -143,8 +144,7 @@ model Address {
   ownerId      String
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
-
-  owner Owner @relation(fields: [ownerId], references: [id], onDelete: Cascade) // Deletar o Owner deleta o Endereço
+  owner        Owner    @relation(fields: [ownerId], references: [id], onDelete: Cascade)
 
   @@map("addresses")
 }
@@ -160,8 +160,7 @@ model Contact {
   ownerId    String
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
-
-  owner Owner @relation(fields: [ownerId], references: [id], onDelete: Cascade) // Deletar o Owner deleta o Contato
+  owner      Owner    @relation(fields: [ownerId], references: [id], onDelete: Cascade)
 
   @@map("contacts")
 }
@@ -175,8 +174,7 @@ model License {
   ownerId          String
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
-
-  owner Owner @relation(fields: [ownerId], references: [id], onDelete: Cascade) // Deletar o Owner deleta a Licença
+  owner            Owner    @relation(fields: [ownerId], references: [id], onDelete: Cascade)
 
   @@map("licenses")
 }
@@ -188,8 +186,7 @@ model Attachment {
   ownerId   String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  owner Owner @relation(fields: [ownerId], references: [id], onDelete: Cascade) // Deletar o Owner deleta o Anexo
+  owner     Owner    @relation(fields: [ownerId], references: [id], onDelete: Cascade)
 
   @@map("attachments")
 }
@@ -203,8 +200,7 @@ model Item {
   ownerId          String
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
-
-  owner Owner @relation(fields: [ownerId], references: [id], onDelete: Cascade) // Deletar o Owner deleta o Item
+  owner            Owner    @relation(fields: [ownerId], references: [id], onDelete: Cascade)
 
   @@map("items")
 }

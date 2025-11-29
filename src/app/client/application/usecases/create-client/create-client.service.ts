@@ -27,10 +27,14 @@ export class CreateClient {
       throw new ClientDuplicateIeError();
     }
 
-    // Verify if the company exists
-    const company = await this.findCompanyById.execute(data.companyId);
+    // Verify if each company exists
+    await Promise.all(
+      data.companyIds.map(
+        async(companyId) => this.findCompanyById.execute(companyId),
+      ),
+    );
 
-    const client = Client.create({ ...data, companyId: company.id });
+    const client = Client.create(data);
     await this.clientRepository.save(client);
 
     return { id: client.props.id };

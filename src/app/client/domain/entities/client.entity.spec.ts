@@ -15,7 +15,10 @@ describe('ClientEntity', () => {
         fantasyName: 'Fantasy A',
         owner: 'Owner A',
         headquarters: 'Headquarters A',
-        companyId: 'unique-company-id',
+        companyIds: [
+          'company-id-1',
+          'company-id-2',
+        ],
       };
 
       // Act
@@ -49,7 +52,10 @@ describe('ClientEntity', () => {
         owner: 'Owner B',
         headquarters: 'Headquarters B',
         active: false,
-        companyId: 'unique-company-id',
+        companyIds: [
+          'company-id-3',
+          'company-id-4',
+        ],
         createdAt: new Date('2023-01-01T00:00:00Z'),
         updatedAt: new Date('2023-01-02T00:00:00Z'),
       };

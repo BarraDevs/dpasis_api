@@ -29,6 +29,7 @@ describe('FindClientById', () => {
     createCompany = module.get(CreateCompany);
 
     await prisma.company.deleteMany();
+    await prisma.client.deleteMany();
 
     companyId = (await createCompany.execute({
       name: 'name teste',
@@ -53,6 +54,7 @@ describe('FindClientById', () => {
 
   afterEach(async() => {
     await prisma.company.deleteMany();
+    await prisma.client.deleteMany();
     await prisma.$disconnect();
   });
 
@@ -96,7 +98,7 @@ describe('FindClientById', () => {
         fantasyName: 'John Doe',
         owner: 'John Doe',
         headquarters: '123 Main St, City, State, ZIP',
-        companyId,
+        companyIds: [companyId],
       };
       const createdClient = await createClient.execute(data);
 
@@ -117,9 +119,14 @@ describe('FindClientById', () => {
         owner: data.owner,
         headquarters: data.headquarters,
         active: true,
-        companyId,
         createdAt: expect.any(Date),
         updatedAt: expect.any(Date),
+        companies: [
+          {
+            id: companyId,
+            name: 'name teste',
+          },
+        ],
       });
     });
   });

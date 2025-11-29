@@ -16,18 +16,18 @@ type ClientCreateProps = {
   fantasyName: string;
   owner: string;
   headquarters: string;
-  companyId: string;
+  companyIds: string[];
 }
 
 export class Client {
   private readonly _id: string; // TODO: usar Value Object UUID
-  // private readonly _cnpj: CNPJ;
   private readonly _props: ClientProps;
 
   static create(props: ClientCreateProps): Client {
     return new Client({
       ...props,
       id: crypto.randomUUID(),
+      // cnpj: new CNPJ(props.cnpj).value,
       active: true,
       createdAt: new Date(),
       updatedAt: new Date(),

@@ -8,15 +8,13 @@ export class ClientRepositoryAdapterPrisma implements IClientRepository {
   constructor(private prisma: PrismaService) {}
 
   public async save(client: Client): Promise<void> {
-    const { companyId, ...data } = client.props;
+    const { companyIds, ...data } = client.props;
 
     await this.prisma.client.create({
       data: {
         ...data,
-        company: {
-          connect: {
-            id: companyId,
-          },
+        companies: {
+          connect: companyIds.map((companyId) => ({ id: companyId })),
         },
         resource: {
           create: {
@@ -29,11 +27,16 @@ export class ClientRepositoryAdapterPrisma implements IClientRepository {
   }
 
   public async edit(client: Client): Promise<void> {
-    const { id, ...data } = client.props;
+    const { id, companyIds, ...data } = client.props;
 
     await this.prisma.client.update({
       where: { id },
-      data,
+      data: {
+        ...data,
+        companies: {
+          set: companyIds.map((companyId) => ({ id: companyId })),
+        },
+      },
     });
   }
 }

@@ -39,6 +39,7 @@ describe('EditClient', () => {
     createCompany = module.get(CreateCompany);
 
     await prisma.company.deleteMany();
+    await prisma.client.deleteMany();
 
     companyId = (await createCompany.execute({
       name: 'name teste',
@@ -71,12 +72,13 @@ describe('EditClient', () => {
       fantasyName: 'John Doe',
       owner: 'John Doe',
       headquarters: '123 Main St, City, State, ZIP',
-      companyId,
+      companyIds: [companyId],
     };
   });
 
   afterEach(async() => {
     await prisma.company.deleteMany();
+    await prisma.client.deleteMany();
     await prisma.$disconnect();
   });
 
@@ -133,7 +135,7 @@ describe('EditClient', () => {
       const client = await createClient.execute(data);
 
       const editData: EditClientInputDto = {
-        companyId: 'non-existing-company-id',
+        companyIds: ['non-existing-company-id'],
       };
 
       // Act & Assert
@@ -188,31 +190,19 @@ describe('EditClient', () => {
       expect(result).toEqual<SuccessMessage>({ message: 'Cliente editado com sucesso!' });
     });
 
-    it('should not throw an error when companyId is "changed" but remains the same', async() => {
-      // Arrange
-      const client = await createClient.execute(data);
-
-      const editData: EditClientInputDto = {
-        companyId,
-      };
-
-      // Act
-      const result = await sut.execute(client.id, editData);
-
-      // Assert
-      expect(result).toEqual<SuccessMessage>({ message: 'Cliente editado com sucesso!' });
-    });
-
     it('should not edit anything when no data is provided', async() => {
       // Arrange
       const client = await createClient.execute(data);
+      const clientBeforeEdit = await findClientById.execute(client.id);
+
+      const editData: EditClientInputDto = {};
 
       // Act
-      await sut.execute(client.id, {});
+      await sut.execute(client.id, editData);
 
       // Assert
       const editedClient = await findClientById.execute(client.id);
-      expect(editedClient).toMatchObject(data);
+      expect(editedClient).toMatchObject(clientBeforeEdit!);
     });
 
     it('should edit a client successfully', async() => {
@@ -245,9 +235,9 @@ describe('EditClient', () => {
         owner: editData.owner ?? data.owner,
         headquarters: editData.headquarters ?? data.headquarters,
         active: true,
-        companyId,
         createdAt: editedClient!.createdAt,
         updatedAt: editedClient!.updatedAt,
+        companies: editedClient!.companies,
       });
     });
 
@@ -276,7 +266,7 @@ describe('EditClient', () => {
       });
 
       const editData: EditClientInputDto = {
-        companyId: newCompany.id,
+        companyIds: [newCompany.id],
       };
 
       // Act
@@ -284,7 +274,7 @@ describe('EditClient', () => {
 
       // Assert
       const editedClient = await findClientById.execute(client.id);
-      expect(editedClient!.companyId).toBe(newCompany.id);
+      expect(editedClient!.companies[0].id).toBe(newCompany.id);
     });
   });
 });

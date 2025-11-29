@@ -35,6 +35,7 @@ describe('CreateClient', () => {
     createCompany = module.get(CreateCompany);
 
     await prisma.company.deleteMany();
+    await prisma.client.deleteMany();
 
     companyId = (await createCompany.execute({
       name: 'name teste',
@@ -67,12 +68,13 @@ describe('CreateClient', () => {
       fantasyName: 'John Doe',
       owner: 'John Doe',
       headquarters: '123 Main St, City, State, ZIP',
-      companyId,
+      companyIds: [companyId],
     };
   });
 
   afterEach(async() => {
     await prisma.company.deleteMany();
+    await prisma.client.deleteMany();
     await prisma.$disconnect();
   });
 
@@ -117,7 +119,7 @@ describe('CreateClient', () => {
 
     it('should throw an error if company does not exist', async() => {
       // Arrange
-      const invalidData = { ...data, companyId: 'non-existent-company-id' };
+      const invalidData = { ...data, companyIds: ['non-existent-company-id'] };
       const findByCnpjSpy = jest.spyOn(sut['clientDao'], 'findByCnpj').mockResolvedValue(null);
       const findByIeSpy = jest.spyOn(sut['clientDao'], 'findByIe').mockResolvedValue(null);
       const saveSpy = jest.spyOn(sut['clientRepository'], 'save').mockResolvedValue();
@@ -175,7 +177,7 @@ describe('CreateClient', () => {
 
     it('should throw an error if company does not exist', async() => {
       // Arrange
-      const invalidData = { ...data, companyId: 'non-existent-company-id' };
+      const invalidData = { ...data, companyIds: ['non-existent-company-id'] };
 
       // Act & Assert
       expect.assertions(1);
@@ -204,9 +206,13 @@ describe('CreateClient', () => {
         owner: data.owner,
         headquarters: data.headquarters,
         active: true,
-        companyId,
         createdAt: expect.any(Date),
         updatedAt: expect.any(Date),
+        companies: expect.arrayContaining([
+          expect.objectContaining({
+            id: companyId,
+          }),
+        ]),
       });
     });
   });
