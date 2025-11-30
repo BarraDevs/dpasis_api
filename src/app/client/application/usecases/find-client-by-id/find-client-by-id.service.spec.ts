@@ -34,7 +34,7 @@ describe('FindClientById', () => {
     companyId = (await createCompany.execute({
       name: 'name teste',
       fantasyName: 'fantasyName teste',
-      document: 'document teste',
+      document: '91699347000120',
       ie: 'ie teste',
       zipCode: 'zipCode teste',
       street: 'street teste',
@@ -44,11 +44,11 @@ describe('FindClientById', () => {
       reference: null,
       city: 'city teste',
       state: 'state teste',
-      cellphone: 'cellphone teste',
-      phone01: 'phone01 teste',
-      phone02: 'phone02 teste',
-      email01: 'email01 teste',
-      email02: 'email02 teste',
+      cellphone: '1199887766',
+      phone01: '1199887766',
+      phone02: '1199887766',
+      email01: 'email01@teste.com',
+      email02: 'email02@teste.com',
     })).id;
   });
 

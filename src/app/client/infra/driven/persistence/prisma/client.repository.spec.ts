@@ -42,6 +42,7 @@ describe('ClientRepositoryAdapterPrisma', () => {
         state: 'state teste',
         phone01: 'phone01 teste',
         email01: 'email01 teste',
+        active: true,
       },
     });
   });
@@ -419,6 +420,7 @@ describe('ClientRepositoryAdapterPrisma', () => {
           state: 'Another State',
           phone01: '555-5678',
           email01: 'another@example.com',
+          active: true,
         },
       });
 

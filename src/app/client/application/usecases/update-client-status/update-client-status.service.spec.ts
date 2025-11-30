@@ -39,7 +39,7 @@ describe('UpdateClientStatus', () => {
     companyId = (await createCompany.execute({
       name: 'Test Company Ltd',
       fantasyName: 'Test Company',
-      document: '12345678000190',
+      document: '73094364000151',
       ie: '123456789',
       zipCode: '12345678',
       street: 'Main Street',
@@ -353,7 +353,7 @@ describe('UpdateClientStatus', () => {
       const company2Id = (await createCompany.execute({
         name: 'Second Company Ltd',
         fantasyName: 'Second Company',
-        document: '98765432000199',
+        document: '20852273000171',
         ie: '987654321',
         zipCode: '87654321',
         street: 'Second Street',

@@ -40,7 +40,7 @@ describe('CreateClient', () => {
     companyId = (await createCompany.execute({
       name: 'name teste',
       fantasyName: 'fantasyName teste',
-      document: 'document teste',
+      document: '61067756000142',
       ie: 'ie teste',
       zipCode: 'zipCode teste',
       street: 'street teste',
@@ -50,11 +50,11 @@ describe('CreateClient', () => {
       reference: null,
       city: 'city teste',
       state: 'state teste',
-      cellphone: 'cellphone teste',
-      phone01: 'phone01 teste',
-      phone02: 'phone02 teste',
-      email01: 'email01 teste',
-      email02: 'email02 teste',
+      cellphone: '2299887766',
+      phone01: '3399887766',
+      phone02: null,
+      email01: 'email01@teste.com',
+      email02: 'email02@teste.com',
     })).id;
 
     data = {

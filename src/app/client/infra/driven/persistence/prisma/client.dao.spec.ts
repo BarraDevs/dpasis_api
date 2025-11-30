@@ -43,6 +43,7 @@ describe('ClientDaoAdapterPrisma', () => {
         state: 'state teste',
         phone01: 'phone01 teste',
         email01: 'email01 teste',
+        active: true,
       },
     });
 
@@ -60,6 +61,7 @@ describe('ClientDaoAdapterPrisma', () => {
         state: 'state teste 02',
         phone01: 'phone01 teste 02',
         email01: 'email01 teste 02',
+        active: true,
       },
     });
 
@@ -77,6 +79,7 @@ describe('ClientDaoAdapterPrisma', () => {
         state: 'state teste 03',
         phone01: 'phone01 teste 03',
         email01: 'email01 teste 03',
+        active: true,
       },
     });
   });

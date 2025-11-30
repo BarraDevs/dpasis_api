@@ -44,7 +44,7 @@ describe('EditClient', () => {
     companyId = (await createCompany.execute({
       name: 'name teste',
       fantasyName: 'fantasyName teste',
-      document: 'document teste',
+      document: '73094364000151',
       ie: 'ie teste',
       zipCode: 'zipCode teste',
       street: 'street teste',
@@ -54,11 +54,11 @@ describe('EditClient', () => {
       reference: null,
       city: 'city teste',
       state: 'state teste',
-      cellphone: 'cellphone teste',
-      phone01: 'phone01 teste',
-      phone02: 'phone02 teste',
-      email01: 'email01 teste',
-      email02: 'email02 teste',
+      cellphone: '1199887766',
+      phone01: '1199887766',
+      phone02: '1199887766',
+      email01: 'email01@teste.com',
+      email02: 'email02@teste.com',
     })).id;
 
     data = {
@@ -248,7 +248,7 @@ describe('EditClient', () => {
       const newCompany = await createCompany.execute({
         name: 'New Company Ltd',
         fantasyName: 'New Company',
-        document: '55667788000199',
+        document: '28282171000170',
         ie: '5544332211',
         zipCode: 'new zipCode',
         street: 'new street',
@@ -258,11 +258,11 @@ describe('EditClient', () => {
         reference: null,
         city: 'new city',
         state: 'new state',
-        cellphone: 'new cellphone',
-        phone01: 'new phone01',
-        phone02: 'new phone02',
-        email01: 'new email01',
-        email02: 'new email02',
+        cellphone: '1199887766',
+        phone01: '1199887766',
+        phone02: null,
+        email01: 'jhondoe@mail.com',
+        email02: null,
       });
 
       const editData: EditClientInputDto = {

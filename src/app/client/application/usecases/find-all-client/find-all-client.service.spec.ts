@@ -38,7 +38,7 @@ describe('FindAllClient', () => {
     const company = await createCompany.execute({
       name: 'name teste',
       fantasyName: 'fantasyName teste',
-      document: 'document teste',
+      document: '98476009000178',
       ie: 'ie teste',
       zipCode: 'zipCode teste',
       street: 'street teste',
@@ -48,11 +48,11 @@ describe('FindAllClient', () => {
       reference: null,
       city: 'city teste',
       state: 'state teste',
-      cellphone: 'cellphone teste',
-      phone01: 'phone01 teste',
-      phone02: 'phone02 teste',
-      email01: 'email01 teste',
-      email02: 'email02 teste',
+      cellphone: '9999887766',
+      phone01: '1199887766',
+      phone02: null,
+      email01: 'email01@teste.com',
+      email02: null,
     });
 
     baseClientData = {
@@ -410,7 +410,7 @@ describe('FindAllClient', () => {
       const company = await createCompany.execute({
         name: 'Unique Company',
         fantasyName: 'Unique Co',
-        document: 'unique-document',
+        document: '30833317000170',
         ie: 'unique-ie',
         zipCode: 'unique-zip',
         street: 'unique-street',
@@ -420,11 +420,11 @@ describe('FindAllClient', () => {
         reference: null,
         city: 'unique-city',
         state: 'unique-state',
-        cellphone: 'unique-cellphone',
-        phone01: 'unique-phone01',
-        phone02: 'unique-phone02',
-        email01: 'unique-email01',
-        email02: 'unique-email02',
+        cellphone: '8888887766',
+        phone01: '77799887766',
+        phone02: null,
+        email01: 'unique-email01@teste.com',
+        email02: null,
       });
 
       await createClient.execute({
