@@ -5,7 +5,7 @@ import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 
 @Injectable()
 export class SupplierRepositoryAdapterPrisma implements ISupplierRepository {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   public async save(supplier: Supplier): Promise<void> {
     await this.prisma.supplier.create({

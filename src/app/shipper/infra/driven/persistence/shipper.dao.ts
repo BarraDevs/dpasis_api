@@ -9,7 +9,7 @@ import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 
 @Injectable()
 export class ShipperDaoAdapterPrisma implements IShipperDao {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   public async save(data: CreateShipperInputDto): Promise<string> {
     const result = await this.prisma.shipper.create({

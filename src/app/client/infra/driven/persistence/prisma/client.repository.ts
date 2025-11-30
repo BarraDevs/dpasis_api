@@ -5,7 +5,7 @@ import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 
 @Injectable()
 export class ClientRepositoryAdapterPrisma implements IClientRepository {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   public async findById(id: string): Promise<Client | null> {
     const clientRecord = await this.prisma.client.findUnique({

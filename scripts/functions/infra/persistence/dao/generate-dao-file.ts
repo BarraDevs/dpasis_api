@@ -12,7 +12,7 @@ import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 
 @Injectable()
 export class ${moduleNamePascal}DaoAdapterPrisma implements I${moduleNamePascal}Dao {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   public async save(data: Create${moduleNamePascal}InputDto): Promise<string> {
     const result = await this.prisma.${moduleNameCamel}.create({

@@ -9,7 +9,7 @@ import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 
 @Injectable()
 export class AddressDaoAdapterPrisma implements IAddressDao {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   public async save({ ownerId, ...rest }: CreateAddressInputDto, isMain: boolean): Promise<string> {
     const address = await this.prisma.address.create({

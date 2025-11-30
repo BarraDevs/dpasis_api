@@ -7,7 +7,7 @@ import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 
 @Injectable()
 export class SupplierDaoAdapterPrisma implements ISupplierDao {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   public async findAll(queries: FindAllSupplierQueryDto): Promise<[SupplierDto[], number]> {
     const pagination = this.prisma.paginationFactory(queries.page, queries.size);

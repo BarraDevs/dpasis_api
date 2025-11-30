@@ -30,7 +30,7 @@ const clientSelect = {
 
 @Injectable()
 export class ClientDaoAdapterPrisma implements IClientDao {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   public async findAll(queries: FindAllClientQueryDto): Promise<[ClientDto[], number]> {
     const pagination = this.prisma.paginationFactory(queries.page, queries.size);
