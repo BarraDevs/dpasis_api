@@ -4,6 +4,9 @@ export class CompanyDto {
   fantasyName: string;
   document: string;
   ie: string;
+  active: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 
   zipCode: string;
   street: string;
@@ -19,7 +22,4 @@ export class CompanyDto {
   cellphone: string | null;
   email01: string;
   email02: string | null;
-
-  createdAt: Date;
-  updatedAt: Date;
 }

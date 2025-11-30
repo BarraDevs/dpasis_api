@@ -24,7 +24,7 @@ describe('FindAllCompany', () => {
       {
         name: 'Alpha Tech Solutions Ltda',
         fantasyName: 'Alpha Tech',
-        document: '11111111000111',
+        document: '76.150.767/0001-69',
         ie: '111111111',
         phone01: '11999111111',
         phone02: '1133111111',
@@ -43,7 +43,7 @@ describe('FindAllCompany', () => {
       {
         name: 'Beta Innovations Ltda',
         fantasyName: 'Beta Innovations',
-        document: '22222222000222',
+        document: '56.369.794/0001-10',
         ie: '222222222',
         phone01: '11999222222',
         phone02: null,
@@ -62,7 +62,7 @@ describe('FindAllCompany', () => {
       {
         name: 'Gamma Enterprises Ltda',
         fantasyName: 'Gamma Corp',
-        document: '33333333000333',
+        document: '90.233.549/0001-19',
         ie: '333333333',
         phone01: '11999333333',
         phone02: '1133333333',
@@ -81,7 +81,7 @@ describe('FindAllCompany', () => {
       {
         name: 'Delta Services Ltda',
         fantasyName: 'Delta Services',
-        document: '44444444000444',
+        document: '44.183.167/0001-00',
         ie: '444444444',
         phone01: '11999444444',
         phone02: '1133444444',
@@ -100,7 +100,7 @@ describe('FindAllCompany', () => {
       {
         name: 'Epsilon Consulting Ltda',
         fantasyName: 'Epsilon',
-        document: '55555555000555',
+        document: '49.420.200/0001-92',
         ie: '555555555',
         phone01: '11999555555',
         phone02: null,
@@ -225,6 +225,7 @@ describe('FindAllCompany', () => {
         neighborhood: `District ${i + 4}`,
         city: 'São Paulo',
         state: 'SP',
+        active: true,
         createdAt: new Date(),
         updatedAt: new Date(),
       }));
@@ -366,7 +367,7 @@ describe('FindAllCompany', () => {
     it('should filter by document', async() => {
       // Arrange
       const queries: FindAllCompanyQueryDto = {
-        document: '33333333000333',
+        document: '49420200000192',
       };
 
       // Act
@@ -374,8 +375,8 @@ describe('FindAllCompany', () => {
 
       // Assert
       expect(result.data).toHaveLength(1);
-      expect(result.data[0].document).toBe('33333333000333');
-      expect(result.data[0].name).toContain('Gamma');
+      expect(result.data[0].document).toBe('49420200000192');
+      expect(result.data[0].name).toContain('Epsilon Consulting Ltda');
       expect(result.totalItems).toBe(1);
     });
 
