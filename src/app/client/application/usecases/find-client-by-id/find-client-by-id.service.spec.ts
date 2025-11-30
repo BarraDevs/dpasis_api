@@ -89,7 +89,7 @@ describe('FindClientById', () => {
       // Arrange
       const data: CreateClientInputDto = {
         kind: 'individual',
-        cnpj: '12345678000199',
+        cnpj: '51540177000111',
         ie: '123456789',
         group: 'default',
         type: 'customer',

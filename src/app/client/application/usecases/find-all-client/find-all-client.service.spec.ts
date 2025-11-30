@@ -57,7 +57,7 @@ describe('FindAllClient', () => {
 
     baseClientData = {
       kind: 'individual',
-      cnpj: '12345678000199',
+      cnpj: '87321937000147',
       ie: '123456789',
       group: 'default',
       type: 'customer',
@@ -76,7 +76,7 @@ describe('FindAllClient', () => {
     const client1 = await createClient.execute({
       ...baseClientData,
       kind: 'PJ',
-      cnpj: '11.111.111/0001-11',
+      cnpj: '84.114.930/0001-66',
       ie: '111.111.111.111',
       group: 'Technology',
       type: 'Premium',
@@ -91,7 +91,7 @@ describe('FindAllClient', () => {
     const client2 = await createClient.execute({
       ...baseClientData,
       kind: 'PF',
-      cnpj: '22.222.222/0001-22',
+      cnpj: '67.946.814/0001-94',
       ie: '222.222.222.222',
       group: 'Industrial',
       type: 'Basic',
@@ -106,7 +106,7 @@ describe('FindAllClient', () => {
     const client3 = await createClient.execute({
       ...baseClientData,
       kind: 'PJ',
-      cnpj: '33.333.333/0001-33',
+      cnpj: '60.141.983/0001-08',
       ie: '333.333.333.333',
       group: 'Technology',
       type: 'Premium',
@@ -121,7 +121,7 @@ describe('FindAllClient', () => {
     const client4 = await createClient.execute({
       ...baseClientData,
       kind: 'PJ',
-      cnpj: '44.444.444/0001-44',
+      cnpj: '14.511.327/0001-32',
       ie: '444.444.444.444',
       group: 'Retail',
       type: 'Standard',
@@ -136,7 +136,7 @@ describe('FindAllClient', () => {
     const client5 = await createClient.execute({
       ...baseClientData,
       kind: 'PF',
-      cnpj: '55.555.555/0001-55',
+      cnpj: '12.830.377/0001-57',
       ie: '555.555.555.555',
       group: 'Services',
       type: 'Basic',
@@ -151,7 +151,7 @@ describe('FindAllClient', () => {
     const client6 = await createClient.execute({
       ...baseClientData,
       kind: 'PJ',
-      cnpj: '66.666.666/0001-66',
+      cnpj: '94.984.407/0001-44',
       ie: '666.666.666.666',
       group: 'Industrial',
       type: 'Premium',
@@ -278,23 +278,23 @@ describe('FindAllClient', () => {
 
     it('should filter by cnpj - exact match', async() => {
       // Act
-      const result = await sut.execute({ cnpj: '11.111.111/0001-11' });
+      const result = await sut.execute({ cnpj: '94984407000144' });
 
       // Assert
       expect(result.totalItems).toBe(1);
       expect(result.data).toHaveLength(1);
-      expect(result.data[0].cnpj).toBe('11.111.111/0001-11');
-      expect(result.data[0].id).toBe(createdClientIds[0]);
+      expect(result.data[0].cnpj).toBe('94984407000144');
+      expect(result.data[0].id).toBe(createdClientIds[5]);
     });
 
     it('should filter by cnpj - partial match', async() => {
       // Act
-      const result = await sut.execute({ cnpj: '22.222' });
+      const result = await sut.execute({ cnpj: '14511327' });
 
       // Assert
       expect(result.totalItems).toBe(1);
       expect(result.data).toHaveLength(1);
-      expect(result.data[0].cnpj).toBe('22.222.222/0001-22');
+      expect(result.data[0].cnpj).toBe('14511327000132');
     });
 
     it('should filter by ie - exact match', async() => {
@@ -572,14 +572,14 @@ describe('FindAllClient', () => {
     it('should filter by exact CNPJ AND IE', async() => {
       // Act
       const result = await sut.execute({
-        cnpj: '44.444.444/0001-44',
+        cnpj: '14511327000132',
         ie: '444.444.444.444',
       });
 
       // Assert
       expect(result.totalItems).toBe(1);
       expect(result.data).toHaveLength(1);
-      expect(result.data[0].cnpj).toBe('44.444.444/0001-44');
+      expect(result.data[0].cnpj).toBe('14511327000132');
       expect(result.data[0].ie).toBe('444.444.444.444');
     });
   });

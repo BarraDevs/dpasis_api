@@ -44,7 +44,7 @@ describe('EditClient', () => {
     companyId = (await createCompany.execute({
       name: 'name teste',
       fantasyName: 'fantasyName teste',
-      document: '73094364000151',
+      document: '81689219000141',
       ie: 'ie teste',
       zipCode: 'zipCode teste',
       street: 'street teste',
@@ -63,7 +63,7 @@ describe('EditClient', () => {
 
     data = {
       kind: 'individual',
-      cnpj: '12345678000199',
+      cnpj: '69578571000104',
       ie: '123456789',
       group: 'default',
       type: 'customer',
@@ -101,7 +101,7 @@ describe('EditClient', () => {
     it('should throw an error when cnpj is already used by another client', async() => {
       // Arrange
       await createClient.execute(data);
-      const client2 = await createClient.execute({ ...data, cnpj: '98765432000188', ie: '987654321' });
+      const client2 = await createClient.execute({ ...data, cnpj: '80693036000137', ie: '987654321' });
 
       const editData: EditClientInputDto = {
         cnpj: data.cnpj,
@@ -117,7 +117,7 @@ describe('EditClient', () => {
     it('should throw an error when ie is already used by another client', async() => {
       // Arrange
       await createClient.execute(data);
-      const client2 = await createClient.execute({ ...data, cnpj: '98765432000188', ie: '987654321' });
+      const client2 = await createClient.execute({ ...data, cnpj: '22426484000178', ie: '987654321' });
 
       const editData: EditClientInputDto = {
         ie: data.ie,
@@ -213,7 +213,7 @@ describe('EditClient', () => {
         kind: 'contract',
         group: 'vip',
         companyName: 'John Doe Enterprises',
-        cnpj: '11223344556677',
+        cnpj: '60079322000108',
         ie: '9988776655',
       };
 
@@ -248,7 +248,7 @@ describe('EditClient', () => {
       const newCompany = await createCompany.execute({
         name: 'New Company Ltd',
         fantasyName: 'New Company',
-        document: '28282171000170',
+        document: '32451250000134',
         ie: '5544332211',
         zipCode: 'new zipCode',
         street: 'new street',

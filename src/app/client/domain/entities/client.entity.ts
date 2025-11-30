@@ -1,3 +1,4 @@
+import { CNPJ } from 'src/shared/value-objects/cnpj/cnpj.vo';
 import { UUID } from 'src/shared/value-objects/uuid/uuid.vo';
 
 type ClientProps = ClientCreateProps & {
@@ -28,7 +29,6 @@ export class Client {
     return new Client({
       ...props,
       id: new UUID().value,
-      // cnpj: new CNPJ(props.cnpj).value,
       active: true,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -44,7 +44,10 @@ export class Client {
   }
 
   constructor(props: ClientProps) {
-    this._props = props;
+    this._props = {
+      ...props,
+      cnpj: new CNPJ(props.cnpj).value,
+    };
   }
 
   public toggleStatus(): void {

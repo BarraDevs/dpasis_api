@@ -62,7 +62,7 @@ describe('ClientRepositoryAdapterPrisma', () => {
       // Arrange
       const client = Client.create({
         kind: 'PJ',
-        cnpj: '12.345.678/0001-90',
+        cnpj: '93.335.895/0001-04',
         ie: '123.456.789.012',
         group: 'Group A',
         type: 'Premium',
@@ -106,7 +106,7 @@ describe('ClientRepositoryAdapterPrisma', () => {
       // Arrange
       const client1 = Client.create({
         kind: 'PJ',
-        cnpj: '11.111.111/0001-11',
+        cnpj: '11.938.884/0001-46',
         ie: '111.111.111.111',
         group: 'Group A',
         type: 'Premium',
@@ -120,7 +120,7 @@ describe('ClientRepositoryAdapterPrisma', () => {
 
       const client2 = Client.create({
         kind: 'PF',
-        cnpj: '22.222.222/0001-22',
+        cnpj: '36.630.627/0001-73',
         ie: '222.222.222.222',
         group: 'Group B',
         type: 'Basic',
@@ -151,7 +151,7 @@ describe('ClientRepositoryAdapterPrisma', () => {
 
     it('should throw error when trying to save client with duplicate cnpj', async() => {
       // Arrange
-      const duplicateCnpj = '12.345.678/0001-90';
+      const duplicateCnpj = '93.335.895/0001-04';
       const client1 = Client.create({
         kind: 'PJ',
         cnpj: duplicateCnpj,
@@ -190,7 +190,7 @@ describe('ClientRepositoryAdapterPrisma', () => {
       const duplicateIe = '123.456.789.012';
       const client1 = Client.create({
         kind: 'PJ',
-        cnpj: '11.111.111/0001-11',
+        cnpj: '11.938.884/0001-46',
         ie: duplicateIe,
         group: 'Group A',
         type: 'Premium',
@@ -204,7 +204,7 @@ describe('ClientRepositoryAdapterPrisma', () => {
 
       const client2 = Client.create({
         kind: 'PJ',
-        cnpj: '22.222.222/0001-22',
+        cnpj: '36.630.627/0001-73',
         ie: duplicateIe, // Same IE
         group: 'Group B',
         type: 'Basic',
@@ -226,7 +226,7 @@ describe('ClientRepositoryAdapterPrisma', () => {
       const nonExistentCompanyId = 'non-existent-company-id';
       const client = Client.create({
         kind: 'PJ',
-        cnpj: '33.333.333/0001-33',
+        cnpj: '36.444.234/0001-75',
         ie: '333.333.333.333',
         group: 'Group C',
         type: 'Standard',
@@ -246,7 +246,7 @@ describe('ClientRepositoryAdapterPrisma', () => {
       // Arrange
       const client = Client.create({
         kind: 'PJ',
-        cnpj: '44.444.444/0001-44',
+        cnpj: '36.444.234/0001-75',
         ie: '444.444.444.444',
         group: 'Group D',
         type: 'Standard',
@@ -276,7 +276,7 @@ describe('ClientRepositoryAdapterPrisma', () => {
       // Arrange
       const client = Client.create({
         kind: 'PJ',
-        cnpj: '66.666.666/0001-66',
+        cnpj: '36.444.234/0001-75',
         ie: '666.666.666.666',
         group: 'Group F',
         type: 'Premium',
@@ -298,7 +298,7 @@ describe('ClientRepositoryAdapterPrisma', () => {
       // Arrange
       const originalClient = Client.create({
         kind: 'PJ',
-        cnpj: '12.345.678/0001-90',
+        cnpj: '93.335.895/0001-04',
         ie: '123.456.789.012',
         group: 'Group A',
         type: 'Premium',
@@ -349,7 +349,7 @@ describe('ClientRepositoryAdapterPrisma', () => {
       const nonExistentClient = Client.load({
         id: 'non-existent-id',
         kind: 'PJ',
-        cnpj: '99.999.999/0001-99',
+        cnpj: '54.968.396/0001-94',
         ie: '999.999.999.999',
         group: 'Group X',
         type: 'Premium',
@@ -372,7 +372,7 @@ describe('ClientRepositoryAdapterPrisma', () => {
       // Arrange
       const client = Client.create({
         kind: 'PJ',
-        cnpj: '12.345.678/0001-90',
+        cnpj: '93.335.895/0001-04',
         ie: '123.456.789.012',
         group: 'Group A',
         type: 'Premium',
@@ -426,7 +426,7 @@ describe('ClientRepositoryAdapterPrisma', () => {
 
       const client = Client.create({
         kind: 'PJ',
-        cnpj: '12.345.678/0001-90',
+        cnpj: '93.335.895/0001-04',
         ie: '123.456.789.012',
         group: 'Group A',
         type: 'Premium',
@@ -464,7 +464,7 @@ describe('ClientRepositoryAdapterPrisma', () => {
       // Arrange
       const client = Client.create({
         kind: 'PJ',
-        cnpj: '12.345.678/0001-90',
+        cnpj: '93.335.895/0001-04',
         ie: '123.456.789.012',
         group: 'Group A',
         type: 'Premium',
@@ -502,7 +502,7 @@ describe('ClientRepositoryAdapterPrisma', () => {
       // Arrange
       const client = Client.create({
         kind: 'PJ',
-        cnpj: '12.345.678/0001-90',
+        cnpj: '93.335.895/0001-04',
         ie: '123.456.789.012',
         group: 'Group A',
         type: 'Premium',
@@ -531,7 +531,7 @@ describe('ClientRepositoryAdapterPrisma', () => {
       // Arrange
       const client = Client.create({
         kind: 'PJ',
-        cnpj: '12.345.678/0001-90',
+        cnpj: '93.335.895/0001-04',
         ie: '123.456.789.012',
         group: 'Group A',
         type: 'Premium',

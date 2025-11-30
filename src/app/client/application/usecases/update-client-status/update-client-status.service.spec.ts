@@ -89,6 +89,7 @@ describe('UpdateClientStatus', () => {
       const clientData = createMock<ClientDto>({
         id,
         active: true,
+        cnpj: '52435131000103',
         companies: [{ id: companyId, name: 'Company' }],
       });
 
@@ -116,6 +117,7 @@ describe('UpdateClientStatus', () => {
       const clientData = createMock<ClientDto>({
         id,
         active: true,
+        cnpj: '20021261000103',
         companies: [{ id: companyId, name: 'Company' }],
       });
 
@@ -139,6 +141,7 @@ describe('UpdateClientStatus', () => {
       const clientData = createMock<ClientDto>({
         id,
         active: false,
+        cnpj: '75279173000190',
         companies: [{ id: companyId, name: 'Company' }],
       });
 
@@ -170,7 +173,7 @@ describe('UpdateClientStatus', () => {
       // Arrange
       const client = await createClient.execute({
         kind: 'PJ',
-        cnpj: '11222333000144',
+        cnpj: '98752975000170',
         ie: '111222333444',
         group: 'Group A',
         type: 'Premium',
@@ -203,7 +206,7 @@ describe('UpdateClientStatus', () => {
       // Arrange
       const client = await createClient.execute({
         kind: 'PJ',
-        cnpj: '22333444000155',
+        cnpj: '45077596000166',
         ie: '222333444555',
         group: 'Group B',
         type: 'Standard',
@@ -237,7 +240,7 @@ describe('UpdateClientStatus', () => {
       // Arrange
       const client = await createClient.execute({
         kind: 'PJ',
-        cnpj: '33444555000166',
+        cnpj: '12911198000144',
         ie: '333444555666',
         group: 'Group C',
         type: 'VIP',
@@ -278,7 +281,7 @@ describe('UpdateClientStatus', () => {
       // Arrange
       const client = await createClient.execute({
         kind: 'PJ',
-        cnpj: '44555666000177',
+        cnpj: '75279173000190',
         ie: '444555666777',
         group: 'Group D',
         type: 'Enterprise',
@@ -310,7 +313,7 @@ describe('UpdateClientStatus', () => {
       // Arrange
       const originalData = {
         kind: 'PJ',
-        cnpj: '55666777000188',
+        cnpj: '45697335000149',
         ie: '555666777888',
         group: 'Group E',
         type: 'Gold',
@@ -372,7 +375,7 @@ describe('UpdateClientStatus', () => {
 
       const client = await createClient.execute({
         kind: 'PJ',
-        cnpj: '66777888000199',
+        cnpj: '45275773000119',
         ie: '666777888999',
         group: 'Group F',
         type: 'Platinum',
@@ -403,7 +406,7 @@ describe('UpdateClientStatus', () => {
       // Arrange
       const client = await createClient.execute({
         kind: 'PJ',
-        cnpj: '77888999000111',
+        cnpj: '15270176000130',
         ie: '777888999111',
         group: 'Group G',
         type: 'Basic',

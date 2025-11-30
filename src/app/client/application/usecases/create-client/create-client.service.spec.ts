@@ -59,7 +59,7 @@ describe('CreateClient', () => {
 
     data = {
       kind: 'individual',
-      cnpj: '12345678000199',
+      cnpj: '61019181000192',
       ie: '123456789',
       group: 'default',
       type: 'customer',
