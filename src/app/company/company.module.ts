@@ -5,6 +5,7 @@ import { CreateCompany } from './application/usecases/create-company/create-comp
 import { EditCompany } from './application/usecases/edit-company/edit-company.service';
 import { FindAllCompany } from './application/usecases/find-all-company/find-all-company.service';
 import { FindCompanyById } from './application/usecases/find-company-by-id/find-company-by-id.service';
+import { UpdateCompanyStatus } from './application/usecases/update-company-status/update-company-status.service';
 import { CompanyController } from './infra/drivers/http/company.controller';
 
 @Module({
@@ -20,6 +21,7 @@ import { CompanyController } from './infra/drivers/http/company.controller';
     EditCompany,
     FindAllCompany,
     FindCompanyById,
+    UpdateCompanyStatus,
   ],
   exports: [
     FindCompanyById,

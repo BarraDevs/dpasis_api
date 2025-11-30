@@ -7,6 +7,18 @@ import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 export class CompanyRepositoryAdapterPrisma implements ICompanyRepository {
   constructor(private readonly prisma: PrismaService) {}
 
+  public async findById(id: string): Promise<Company | null> {
+    const companyRecord = await this.prisma.company.findUnique({
+      where: { id },
+    });
+
+    if (!companyRecord) {
+      return null;
+    }
+
+    return new Company(companyRecord);
+  }
+
   public async save(company: Company): Promise<void> {
     await this.prisma.company.create({
       data: company.props,
