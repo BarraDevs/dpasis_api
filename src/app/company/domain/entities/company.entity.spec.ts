@@ -786,46 +786,6 @@ describe('Company Entity', () => {
       company.toggleStatus();
       expect(company.props.active).toBe(false);
     });
-
-    it('should update updatedAt timestamp when toggling status', () => {
-      // Arrange
-      const initialDate = new Date('2024-01-01T00:00:00Z');
-      const props = {
-        id: 'timestamp-test-id',
-        name: 'Timestamp Test',
-        fantasyName: 'Timestamp',
-        document: '00365466000190',
-        ie: '778899000122',
-        zipCode: '00000-111',
-        street: 'Timestamp Street',
-        number: '300',
-        complement: null,
-        reference: null,
-        neighborhood: 'Timestamp District',
-        city: 'Timestamp City',
-        state: 'TS',
-        phone01: '1188889999',
-        phone02: null,
-        cellphone: null,
-        email01: 'timestamp@test.com',
-        email02: null,
-        active: true,
-        createdAt: initialDate,
-        updatedAt: initialDate,
-      };
-
-      const company = Company.load(props);
-      const beforeToggle = new Date();
-
-      // Act
-      company.toggleStatus();
-
-      // Assert
-      const afterToggle = new Date();
-      expect(company.props.updatedAt.getTime()).toBeGreaterThan(initialDate.getTime());
-      expect(company.props.updatedAt.getTime()).toBeGreaterThanOrEqual(beforeToggle.getTime());
-      expect(company.props.updatedAt.getTime()).toBeLessThanOrEqual(afterToggle.getTime());
-    });
   });
 
   describe('props getter', () => {

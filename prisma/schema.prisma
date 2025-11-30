@@ -44,11 +44,12 @@ model Admin {
 }
 
 model Company {
-  id          String @id @default(uuid())
-  name        String @db.VarChar(256)
-  fantasyName String @db.VarChar(256)
-  document    String @unique @db.VarChar(256)
-  ie          String @unique @db.VarChar(256)
+  id          String  @id @default(uuid())
+  name        String  @db.VarChar(256)
+  fantasyName String  @db.VarChar(256)
+  document    String  @unique @db.VarChar(256)
+  ie          String  @unique @db.VarChar(256)
+  active      Boolean
 
   zipCode      String  @db.VarChar(256)
   street       String  @db.VarChar(512)
@@ -65,8 +66,8 @@ model Company {
   email01   String  @db.VarChar(256)
   email02   String? @db.VarChar(256)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
   clients   Client[]
   suppliers Supplier[]
 
@@ -88,25 +89,25 @@ model Client {
   active          Boolean
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
-  resource        Owner?    // resource no sentido de proprietário
+  resource        Owner? // resource no sentido de proprietário
   companies       Company[]
 
   @@map("clients")
 }
 
 model Supplier {
-  id             String   @id
-  cnpj           String   @unique @db.VarChar(256)
-  ie             String   @unique @db.VarChar(256)
-  group          String   @db.VarChar(256)
-  type           String   @db.VarChar(256)
-  companyName    String   @db.VarChar(256)
-  fantasyName    String   @db.VarChar(256)
-  representative String   @db.VarChar(256)
+  id             String    @id
+  cnpj           String    @unique @db.VarChar(256)
+  ie             String    @unique @db.VarChar(256)
+  group          String    @db.VarChar(256)
+  type           String    @db.VarChar(256)
+  companyName    String    @db.VarChar(256)
+  fantasyName    String    @db.VarChar(256)
+  representative String    @db.VarChar(256)
   active         Boolean
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  resource       Owner?   // resource no sentido de proprietário
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  resource       Owner? // resource no sentido de proprietário
   companies      Company[]
 
   @@map("suppliers")
