@@ -1,12 +1,11 @@
-import { createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ClientModule } from 'src/app/client/client.module';
+import { Client } from 'src/app/client/domain/entities/client.entity';
 import { ClientNotFoundError } from 'src/app/client/domain/errors/client-not-found';
 import { CreateCompany } from 'src/app/company/application/usecases/create-company/create-company.service';
 import { ConfigModule } from 'src/core/config/config.module';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
-import { ClientDto } from '../../dtos/client.dto';
 import { CreateClient } from '../create-client/create-client.service';
 import { FindClientById } from '../find-client-by-id/find-client-by-id.service';
 import { UpdateClientStatus } from './update-client-status.service';
@@ -71,7 +70,7 @@ describe('UpdateClientStatus', () => {
     it('should throw ClientNotFoundError if client does not exist', async() => {
       // Arrange
       const id = 'non-existing-id';
-      const findByIdSpy = jest.spyOn(sut['clientDao'], 'findById').mockResolvedValue(null);
+      const findByIdSpy = jest.spyOn(sut['clientRepository'], 'findById').mockResolvedValue(null);
       const editSpy = jest.spyOn(sut['clientRepository'], 'edit');
 
       // Act & Assert
@@ -83,17 +82,28 @@ describe('UpdateClientStatus', () => {
       });
     });
 
-    it('should call clientDao.findById and clientRepository.edit with correct values', async() => {
+    it('should call clientRepository.findById and clientRepository.edit with correct values', async() => {
       // Arrange
       const id = 'client-id-123';
-      const clientData = createMock<ClientDto>({
+      const clientEntity = Client.load({
         id,
-        active: true,
+        kind: 'PJ',
         cnpj: '52435131000103',
-        companies: [{ id: companyId, name: 'Company' }],
+        ie: '111222333444',
+        group: 'Group A',
+        type: 'Premium',
+        generateInvoice: true,
+        companyName: 'Test Client',
+        fantasyName: 'Test',
+        owner: 'Owner',
+        headquarters: 'HQ',
+        companyIds: [companyId],
+        active: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       });
 
-      const findByIdSpy = jest.spyOn(sut['clientDao'], 'findById').mockResolvedValue(clientData);
+      const findByIdSpy = jest.spyOn(sut['clientRepository'], 'findById').mockResolvedValue(clientEntity);
       const editSpy = jest.spyOn(sut['clientRepository'], 'edit').mockResolvedValue();
 
       // Act
@@ -114,14 +124,25 @@ describe('UpdateClientStatus', () => {
     it('should toggle status from active to inactive', async() => {
       // Arrange
       const id = 'client-id-123';
-      const clientData = createMock<ClientDto>({
+      const clientEntity = Client.load({
         id,
-        active: true,
+        kind: 'PJ',
         cnpj: '20021261000103',
-        companies: [{ id: companyId, name: 'Company' }],
+        ie: '222333444555',
+        group: 'Group B',
+        type: 'Standard',
+        generateInvoice: false,
+        companyName: 'Active Client',
+        fantasyName: 'Active',
+        owner: 'Owner 2',
+        headquarters: 'Office',
+        companyIds: [companyId],
+        active: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       });
 
-      jest.spyOn(sut['clientDao'], 'findById').mockResolvedValue(clientData);
+      jest.spyOn(sut['clientRepository'], 'findById').mockResolvedValue(clientEntity);
       const editSpy = jest.spyOn(sut['clientRepository'], 'edit').mockResolvedValue();
 
       // Act
@@ -138,14 +159,25 @@ describe('UpdateClientStatus', () => {
     it('should toggle status from inactive to active', async() => {
       // Arrange
       const id = 'client-id-123';
-      const clientData = createMock<ClientDto>({
+      const clientEntity = Client.load({
         id,
-        active: false,
+        kind: 'PJ',
         cnpj: '75279173000190',
-        companies: [{ id: companyId, name: 'Company' }],
+        ie: '333444555666',
+        group: 'Group C',
+        type: 'VIP',
+        generateInvoice: true,
+        companyName: 'Inactive Client',
+        fantasyName: 'Inactive',
+        owner: 'Owner 3',
+        headquarters: 'Branch',
+        companyIds: [companyId],
+        active: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       });
 
-      jest.spyOn(sut['clientDao'], 'findById').mockResolvedValue(clientData);
+      jest.spyOn(sut['clientRepository'], 'findById').mockResolvedValue(clientEntity);
       const editSpy = jest.spyOn(sut['clientRepository'], 'edit').mockResolvedValue();
 
       // Act

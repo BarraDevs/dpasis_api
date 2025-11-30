@@ -7,6 +7,24 @@ import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 export class ClientRepositoryAdapterPrisma implements IClientRepository {
   constructor(private prisma: PrismaService) {}
 
+  public async findById(id: string): Promise<Client | null> {
+    const clientRecord = await this.prisma.client.findUnique({
+      where: { id },
+      include: { companies: true },
+    });
+
+    if (!clientRecord) {
+      return null;
+    }
+
+    const client = Client.load({
+      ...clientRecord,
+      companyIds: clientRecord.companies.map((company) => company.id),
+    });
+
+    return client;
+  }
+
   public async save(client: Client): Promise<void> {
     const { companyIds, ...data } = client.props;
 

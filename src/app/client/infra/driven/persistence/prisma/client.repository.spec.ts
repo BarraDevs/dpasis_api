@@ -57,6 +57,45 @@ describe('ClientRepositoryAdapterPrisma', () => {
     expect(sut).toBeDefined();
   });
 
+  describe('findById', () => {
+    it('should return a client when found', async() => {
+      // Arrange
+      const client = Client.create({
+        kind: 'PJ',
+        cnpj: '93.335.895/0001-04',
+        ie: '123.456.789.012',
+        group: 'Group A',
+        type: 'Premium',
+        generateInvoice: true,
+        companyName: 'Test Company Ltd',
+        fantasyName: 'Test Company',
+        owner: 'John Doe',
+        headquarters: 'Main Office',
+        companyIds: [company.id],
+      });
+
+      await sut.save(client);
+
+      // Act
+      const foundClient = await sut.findById(client.props.id);
+
+      // Assert
+      expect(foundClient).toBeDefined();
+      expect(foundClient?.props.id).toBe(client.props.id);
+      expect(foundClient?.props.cnpj).toBe(client.props.cnpj);
+      expect(foundClient?.props.ie).toBe(client.props.ie);
+      expect(foundClient?.props.companyIds).toEqual([company.id]);
+    });
+
+    it('should return null when client is not found', async() => {
+      // Act
+      const foundClient = await sut.findById('non-existent-id');
+
+      // Assert
+      expect(foundClient).toBeNull();
+    });
+  });
+
   describe('save', () => {
     it('should save a client and create a resource with the same id', async() => {
       // Arrange
