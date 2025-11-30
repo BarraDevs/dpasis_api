@@ -563,6 +563,42 @@ describe('ClientDaoAdapterPrisma', () => {
           expect(clients).toHaveLength(0);
         });
       });
+
+      describe('by active status', () => {
+        it('should filter by active = true', async() => {
+          // Arrange
+          const query: FindAllClientQueryDto = {
+            active: true,
+          };
+
+          // Act
+          const [clients, total] = await sut.findAll(query);
+
+          // Assert
+          expect(total).toBe(4); // clients 1, 2, 4, 5
+          expect(clients).toHaveLength(4);
+          clients.forEach(client => {
+            expect(client.active).toBe(true);
+          });
+        });
+
+        it('should filter by active = false', async() => {
+          // Arrange
+          const query: FindAllClientQueryDto = {
+            active: false,
+          };
+
+          // Act
+          const [clients, total] = await sut.findAll(query);
+
+          // Assert
+          expect(total).toBe(2); // clients 3, 6
+          expect(clients).toHaveLength(2);
+          clients.forEach(client => {
+            expect(client.active).toBe(false);
+          });
+        });
+      });
     });
 
     describe('Case insensitive filter tests', () => {

@@ -441,6 +441,27 @@ describe('FindAllClient', () => {
       expect(result.data).toHaveLength(1);
       expect(result.data[0].companies[0].id).toBe(company.id);
     });
+
+    it('should filter by active status', async() => {
+      // Arrange
+      // Deactivate one client
+      const clientToDeactivateId = createdClientIds[0];
+      await prisma.client.update({
+        where: { id: clientToDeactivateId },
+        data: { active: false },
+      });
+
+      // Act
+      const activeResult = await sut.execute({ active: true });
+      const inactiveResult = await sut.execute({ active: false });
+
+      // Assert
+      expect(activeResult.totalItems).toBe(5);
+      expect(activeResult.data.find(c => c.id === clientToDeactivateId)).toBeUndefined();
+
+      expect(inactiveResult.totalItems).toBe(1);
+      expect(inactiveResult.data[0].id).toBe(clientToDeactivateId);
+    });
   });
 
   describe('Integration tests - Case insensitive filters', () => {
