@@ -18,7 +18,7 @@ export class CompanyDaoAdapterPrisma implements ICompanyDao {
         { fantasyName: queries.fantasyName ? { contains: queries.fantasyName, mode: 'insensitive' } : undefined },
         { document: queries.document ? { contains: queries.document, mode: 'insensitive' } : undefined },
         { ie: queries.ie ? { contains: queries.ie, mode: 'insensitive' } : undefined },
-        // { active: queries.active !== undefined ? queries.active : undefined },
+        { active: queries.active !== undefined ? queries.active : undefined },
         { OR:
           [
             { phone01: queries.phone ? { contains: queries.phone, mode: 'insensitive' } : undefined },
@@ -65,12 +65,6 @@ export class CompanyDaoAdapterPrisma implements ICompanyDao {
   public async findByDocument(document: string): Promise<CompanyDto | null> {
     return this.prisma.company.findUnique({
       where: { document },
-    });
-  }
-
-  public async findByIe(ie: string): Promise<CompanyDto | null> {
-    return this.prisma.company.findUnique({
-      where: { ie },
     });
   }
 }

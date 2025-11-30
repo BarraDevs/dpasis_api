@@ -1,6 +1,6 @@
+import { InvalidCnpjError } from 'src/shared/value-objects/cnpj/cnpj.error';
 import { InvalidEmailError } from 'src/shared/value-objects/email/email.error';
 import { InvalidPhoneError } from 'src/shared/value-objects/phone/phone.error';
-import { InvalidCnpjError } from 'src/shared/value-objects/vo-errors';
 import { Company } from './company.entity';
 
 describe('Company Entity', () => {
@@ -217,88 +217,42 @@ describe('Company Entity', () => {
   });
 
   describe('load', () => {
-    it('should load an existing company with all properties', () => {
-      // Arrange
-      const existingProps = {
-        id: '123e4567-e89b-12d3-a456-426614174000',
-        name: 'Existing Company Ltda',
-        fantasyName: 'Existing Company',
-        document: '55967002000146', // Already sanitized
-        ie: '987.654.321.098',
-        zipCode: '54321-876',
-        street: 'Rua Existing',
-        number: '500',
-        complement: 'Andar 5',
-        reference: 'Ao lado do banco',
-        neighborhood: 'Centro',
-        city: 'Rio de Janeiro',
-        state: 'RJ',
-        phone01: '2122223333', // Already sanitized
-        phone02: '2144445555', // Already sanitized
-        cellphone: '21987654321', // Already sanitized
-        email01: 'existing@company.com',
-        email02: 'contact@company.com',
-        active: true,
-        createdAt: new Date('2024-01-15T10:30:00Z'),
-        updatedAt: new Date('2024-01-20T14:45:00Z'),
-      };
+    const existingProps = {
+      id: '123e4567-e89b-12d3-a456-426614174000',
+      name: 'Existing Company Ltda',
+      fantasyName: 'Existing Company',
+      document: '55967002000146', // Already sanitized
+      ie: '987.654.321.098',
+      zipCode: '54321-876',
+      street: 'Rua Existing',
+      number: '500',
+      complement: 'Andar 5',
+      reference: 'Ao lado do banco',
+      neighborhood: 'Centro',
+      city: 'Rio de Janeiro',
+      state: 'RJ',
+      phone01: '2122223333', // Already sanitized
+      phone02: '2144445555', // Already sanitized
+      cellphone: '21987654321', // Already sanitized
+      email01: 'existing@company.com',
+      email02: 'contact@company.com',
+      active: true,
+      createdAt: new Date('2024-01-15T10:30:00Z'),
+      updatedAt: new Date('2024-01-20T14:45:00Z'),
+    };
 
+    it('should load an existing company with all properties', () => {
       // Act
       const company = Company.load(existingProps);
 
       // Assert
       expect(company).toBeInstanceOf(Company);
-      expect(company.props.id).toBe(existingProps.id);
-      expect(company.props.name).toBe(existingProps.name);
-      expect(company.props.fantasyName).toBe(existingProps.fantasyName);
-      expect(company.props.document).toBe(existingProps.document);
-      expect(company.props.ie).toBe(existingProps.ie);
-      expect(company.props.zipCode).toBe(existingProps.zipCode);
-      expect(company.props.street).toBe(existingProps.street);
-      expect(company.props.number).toBe(existingProps.number);
-      expect(company.props.complement).toBe(existingProps.complement);
-      expect(company.props.reference).toBe(existingProps.reference);
-      expect(company.props.neighborhood).toBe(existingProps.neighborhood);
-      expect(company.props.city).toBe(existingProps.city);
-      expect(company.props.state).toBe(existingProps.state);
-      expect(company.props.phone01).toBe(existingProps.phone01);
-      expect(company.props.phone02).toBe(existingProps.phone02);
-      expect(company.props.cellphone).toBe(existingProps.cellphone);
-      expect(company.props.email01).toBe(existingProps.email01);
-      expect(company.props.email02).toBe(existingProps.email02);
-      expect(company.props.active).toBe(existingProps.active);
-      expect(company.props.createdAt).toBe(existingProps.createdAt);
-      expect(company.props.updatedAt).toBe(existingProps.updatedAt);
+      expect(company.props).toMatchObject(existingProps);
     });
 
     it('should load company with active=false', () => {
-      // Arrange
-      const existingProps = {
-        id: '223e4567-e89b-12d3-a456-426614174001',
-        name: 'Inactive Company',
-        fantasyName: 'Inactive',
-        document: '00365466000190',
-        ie: '111222333444',
-        zipCode: '99999-000',
-        street: 'Street',
-        number: '1',
-        complement: null,
-        reference: null,
-        neighborhood: 'Hood',
-        city: 'City',
-        state: 'ST',
-        phone01: '1122334455',
-        phone02: null,
-        cellphone: null,
-        email01: 'inactive@company.com',
-        email02: null,
-        active: false,
-        createdAt: new Date('2024-01-01T00:00:00Z'),
-        updatedAt: new Date('2024-01-10T00:00:00Z'),
-      };
-
       // Act
-      const company = Company.load(existingProps);
+      const company = Company.load({ ...existingProps, active: false });
 
       // Assert
       expect(company.props.active).toBe(false);
@@ -306,32 +260,18 @@ describe('Company Entity', () => {
 
     it('should load company with null optional fields', () => {
       // Arrange
-      const existingProps = {
-        id: '323e4567-e89b-12d3-a456-426614174002',
-        name: 'Minimal Company',
-        fantasyName: 'Minimal',
-        document: '00365466000190',
-        ie: '222333444555',
-        zipCode: '11111-222',
-        street: 'Main St',
-        number: '10',
+      const props = {
+        ...existingProps,
         complement: null,
         reference: null,
-        neighborhood: 'Downtown',
-        city: 'Metropolis',
-        state: 'MT',
-        phone01: '1133445566',
         phone02: null,
         cellphone: null,
-        email01: 'minimal@company.com',
         email02: null,
         active: true,
-        createdAt: new Date('2024-02-01T00:00:00Z'),
-        updatedAt: new Date('2024-02-01T00:00:00Z'),
       };
 
       // Act
-      const company = Company.load(existingProps);
+      const company = Company.load(props);
 
       // Assert
       expect(company.props.complement).toBeNull();
@@ -342,33 +282,8 @@ describe('Company Entity', () => {
     });
 
     it('should sanitize document if loaded with formatting', () => {
-      // Arrange
-      const existingProps = {
-        id: '423e4567-e89b-12d3-a456-426614174003',
-        name: 'Company With Formatted Document',
-        fantasyName: 'Formatted',
-        document: '55.967.002/0001-46', // With formatting
-        ie: '333444555666',
-        zipCode: '22222-333',
-        street: 'Avenue',
-        number: '20',
-        complement: null,
-        reference: null,
-        neighborhood: 'District',
-        city: 'Town',
-        state: 'TW',
-        phone01: '1144556677',
-        phone02: null,
-        cellphone: null,
-        email01: 'formatted@company.com',
-        email02: null,
-        active: true,
-        createdAt: new Date('2024-03-01T00:00:00Z'),
-        updatedAt: new Date('2024-03-01T00:00:00Z'),
-      };
-
       // Act
-      const company = Company.load(existingProps);
+      const company = Company.load({ ...existingProps, document: '55.967.002/0001-46' });
 
       // Assert
       expect(company.props.document).toBe('55967002000146');
@@ -376,32 +291,15 @@ describe('Company Entity', () => {
 
     it('should sanitize phones if loaded with formatting', () => {
       // Arrange
-      const existingProps = {
-        id: '523e4567-e89b-12d3-a456-426614174004',
-        name: 'Company With Formatted Phones',
-        fantasyName: 'Phone Format',
-        document: '00365466000190',
-        ie: '444555666777',
-        zipCode: '33333-444',
-        street: 'Boulevard',
-        number: '30',
-        complement: null,
-        reference: null,
-        neighborhood: 'Area',
-        city: 'Village',
-        state: 'VL',
+      const props = {
+        ...existingProps,
         phone01: '(11) 5555-6666', // With formatting
         phone02: '(11) 7777-8888', // With formatting
         cellphone: '(11) 99999-0000', // With formatting
-        email01: 'phones@company.com',
-        email02: null,
-        active: true,
-        createdAt: new Date('2024-04-01T00:00:00Z'),
-        updatedAt: new Date('2024-04-01T00:00:00Z'),
       };
 
       // Act
-      const company = Company.load(existingProps);
+      const company = Company.load(props);
 
       // Assert
       expect(company.props.phone01).toBe('1155556666');
@@ -411,32 +309,14 @@ describe('Company Entity', () => {
 
     it('should validate and accept valid emails when loading', () => {
       // Arrange
-      const existingProps = {
-        id: '623e4567-e89b-12d3-a456-426614174005',
-        name: 'Email Validation Company',
-        fantasyName: 'Email Valid',
-        document: '00365466000190',
-        ie: '555666777888',
-        zipCode: '44444-555',
-        street: 'Lane',
-        number: '40',
-        complement: null,
-        reference: null,
-        neighborhood: 'Quarter',
-        city: 'Hamlet',
-        state: 'HM',
-        phone01: '1166667777',
-        phone02: null,
-        cellphone: null,
+      const props = {
+        ...existingProps,
         email01: 'valid.email@domain.com',
         email02: 'another.valid@domain.com.br',
-        active: true,
-        createdAt: new Date('2024-05-01T00:00:00Z'),
-        updatedAt: new Date('2024-05-01T00:00:00Z'),
       };
 
       // Act
-      const company = Company.load(existingProps);
+      const company = Company.load(props);
 
       // Assert
       expect(company.props.email01).toBe('valid.email@domain.com');
@@ -444,258 +324,48 @@ describe('Company Entity', () => {
     });
 
     it('should throw InvalidCnpjError when loading with invalid document', () => {
-      // Arrange
-      const existingProps = {
-        id: '723e4567-e89b-12d3-a456-426614174006',
-        name: 'Invalid Document Company',
-        fantasyName: 'Invalid Doc',
-        document: '00.000.000/0000-00', // Invalid CNPJ
-        ie: '666777888999',
-        zipCode: '55555-666',
-        street: 'Road',
-        number: '50',
-        complement: null,
-        reference: null,
-        neighborhood: 'Zone',
-        city: 'Municipality',
-        state: 'MN',
-        phone01: '1177778888',
-        phone02: null,
-        cellphone: null,
-        email01: 'invalid@company.com',
-        email02: null,
-        active: true,
-        createdAt: new Date('2024-06-01T00:00:00Z'),
-        updatedAt: new Date('2024-06-01T00:00:00Z'),
-      };
-
       // Act & Assert
-      expect(() => Company.load(existingProps)).toThrow(InvalidCnpjError);
+      expect(() => Company.load({ ...existingProps, document: '28492891000161' })).toThrow(InvalidCnpjError);
     });
 
     it('should throw InvalidEmailError when loading with invalid email01', () => {
-      // Arrange
-      const existingProps = {
-        id: '823e4567-e89b-12d3-a456-426614174007',
-        name: 'Invalid Email Company',
-        fantasyName: 'Invalid Email',
-        document: '00365466000190',
-        ie: '777888999000',
-        zipCode: '66666-777',
-        street: 'Path',
-        number: '60',
-        complement: null,
-        reference: null,
-        neighborhood: 'Section',
-        city: 'Borough',
-        state: 'BR',
-        phone01: '1188889999',
-        phone02: null,
-        cellphone: null,
-        email01: 'not-an-email', // Invalid email
-        email02: null,
-        active: true,
-        createdAt: new Date('2024-07-01T00:00:00Z'),
-        updatedAt: new Date('2024-07-01T00:00:00Z'),
-      };
-
       // Act & Assert
-      expect(() => Company.load(existingProps)).toThrow(InvalidEmailError);
+      expect(() => Company.load({ ...existingProps, email01: 'not-an-email' })).toThrow(InvalidEmailError);
     });
 
     it('should throw InvalidEmailError when loading with invalid email02', () => {
-      // Arrange
-      const existingProps = {
-        id: '923e4567-e89b-12d3-a456-426614174008',
-        name: 'Invalid Email2 Company',
-        fantasyName: 'Invalid Email2',
-        document: '00365466000190',
-        ie: '888999000111',
-        zipCode: '77777-888',
-        street: 'Drive',
-        number: '70',
-        complement: null,
-        reference: null,
-        neighborhood: 'Block',
-        city: 'Township',
-        state: 'TS',
-        phone01: '1199990000',
-        phone02: null,
-        cellphone: null,
-        email01: 'valid@company.com',
-        email02: 'invalid@', // Invalid email
-        active: true,
-        createdAt: new Date('2024-08-01T00:00:00Z'),
-        updatedAt: new Date('2024-08-01T00:00:00Z'),
-      };
-
       // Act & Assert
-      expect(() => Company.load(existingProps)).toThrow(InvalidEmailError);
+      expect(() => Company.load({ ...existingProps, email02: 'invalid@' })).toThrow(InvalidEmailError);
     });
 
     it('should throw InvalidPhoneError when loading with invalid phone01', () => {
-      // Arrange
-      const existingProps = {
-        id: 'a23e4567-e89b-12d3-a456-426614174009',
-        name: 'Invalid Phone Company',
-        fantasyName: 'Invalid Phone',
-        document: '00365466000190',
-        ie: '999000111222',
-        zipCode: '88888-999',
-        street: 'Circle',
-        number: '80',
-        complement: null,
-        reference: null,
-        neighborhood: 'Ward',
-        city: 'Burg',
-        state: 'BG',
-        phone01: '123', // Too short
-        phone02: null,
-        cellphone: null,
-        email01: 'phone@company.com',
-        email02: null,
-        active: true,
-        createdAt: new Date('2024-09-01T00:00:00Z'),
-        updatedAt: new Date('2024-09-01T00:00:00Z'),
-      };
-
       // Act & Assert
-      expect(() => Company.load(existingProps)).toThrow(InvalidPhoneError);
+      expect(() => Company.load({ ...existingProps, phone01: '123' })).toThrow(InvalidPhoneError);
     });
 
     it('should throw InvalidPhoneError when loading with invalid phone02', () => {
-      // Arrange
-      const existingProps = {
-        id: 'b23e4567-e89b-12d3-a456-426614174010',
-        name: 'Invalid Phone2 Company',
-        fantasyName: 'Invalid Phone2',
-        document: '00365466000190',
-        ie: '000111222333',
-        zipCode: '99999-000',
-        street: 'Square',
-        number: '90',
-        complement: null,
-        reference: null,
-        neighborhood: 'Parish',
-        city: 'County',
-        state: 'CT',
-        phone01: '1100001111',
-        phone02: 'abc123defg', // Invalid
-        cellphone: null,
-        email01: 'phone2@company.com',
-        email02: null,
-        active: true,
-        createdAt: new Date('2024-10-01T00:00:00Z'),
-        updatedAt: new Date('2024-10-01T00:00:00Z'),
-      };
-
       // Act & Assert
-      expect(() => Company.load(existingProps)).toThrow(InvalidPhoneError);
+      expect(() => Company.load({ ...existingProps, phone02: 'abc123defg' })).toThrow(InvalidPhoneError);
     });
 
     it('should throw InvalidPhoneError when loading with invalid cellphone', () => {
-      // Arrange
-      const existingProps = {
-        id: 'c23e4567-e89b-12d3-a456-426614174011',
-        name: 'Invalid Cellphone Company',
-        fantasyName: 'Invalid Cell',
-        document: '00365466000190',
-        ie: '111222333444',
-        zipCode: '00000-111',
-        street: 'Court',
-        number: '100',
-        complement: null,
-        reference: null,
-        neighborhood: 'Region',
-        city: 'District',
-        state: 'DT',
-        phone01: '1111112222',
-        phone02: null,
-        cellphone: '11 9', // Too short
-        email01: 'cell@company.com',
-        email02: null,
-        active: true,
-        createdAt: new Date('2024-11-01T00:00:00Z'),
-        updatedAt: new Date('2024-11-01T00:00:00Z'),
-      };
-
       // Act & Assert
-      expect(() => Company.load(existingProps)).toThrow(InvalidPhoneError);
+      expect(() => Company.load({ ...existingProps, cellphone: '11 9' })).toThrow(InvalidPhoneError);
     });
 
     it('should preserve original timestamps when loading', () => {
       // Arrange
       const createdAt = new Date('2024-01-01T12:00:00Z');
       const updatedAt = new Date('2024-06-15T18:30:00Z');
-      const existingProps = {
-        id: 'd23e4567-e89b-12d3-a456-426614174012',
-        name: 'Timestamp Preservation Company',
-        fantasyName: 'Timestamp',
-        document: '00365466000190',
-        ie: '222333444555',
-        zipCode: '11111-222',
-        street: 'Plaza',
-        number: '110',
-        complement: null,
-        reference: null,
-        neighborhood: 'Locality',
-        city: 'Place',
-        state: 'PL',
-        phone01: '1122223333',
-        phone02: null,
-        cellphone: null,
-        email01: 'timestamp@company.com',
-        email02: null,
-        active: true,
-        createdAt,
-        updatedAt,
-      };
 
       // Act
-      const company = Company.load(existingProps);
+      const company = Company.load({ ...existingProps, createdAt, updatedAt });
 
       // Assert
       expect(company.props.createdAt).toBe(createdAt);
       expect(company.props.updatedAt).toBe(updatedAt);
       expect(company.props.createdAt.getTime()).toBe(createdAt.getTime());
       expect(company.props.updatedAt.getTime()).toBe(updatedAt.getTime());
-    });
-
-    it('should load company with all optional fields populated', () => {
-      // Arrange
-      const existingProps = {
-        id: 'e23e4567-e89b-12d3-a456-426614174013',
-        name: 'Full Optional Company',
-        fantasyName: 'Full Optional',
-        document: '00365466000190',
-        ie: '333444555666',
-        zipCode: '22222-333',
-        street: 'Parkway',
-        number: '120',
-        complement: 'Suite 200',
-        reference: 'Next to the park',
-        neighborhood: 'Uptown',
-        city: 'Megalopolis',
-        state: 'MG',
-        phone01: '1133334444',
-        phone02: '1155556666',
-        cellphone: '11977778888',
-        email01: 'primary@company.com',
-        email02: 'secondary@company.com',
-        active: true,
-        createdAt: new Date('2024-12-01T00:00:00Z'),
-        updatedAt: new Date('2024-12-01T00:00:00Z'),
-      };
-
-      // Act
-      const company = Company.load(existingProps);
-
-      // Assert
-      expect(company.props.complement).toBe('Suite 200');
-      expect(company.props.reference).toBe('Next to the park');
-      expect(company.props.phone02).toBe('1155556666');
-      expect(company.props.cellphone).toBe('11977778888');
-      expect(company.props.email02).toBe('secondary@company.com');
     });
   });
 

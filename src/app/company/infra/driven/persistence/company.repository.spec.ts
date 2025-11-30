@@ -163,16 +163,6 @@ describe('CompanyRepositoryAdapterPrisma (Integration)', () => {
       await expect(sut.save(company2)).rejects.toThrow();
     });
 
-    it('should throw error when trying to save company with duplicate ie', async() => {
-      // Arrange
-      const company1 = Company.create(companyProps);
-      const company2 = Company.create({ ...companyProps, document: '82.523.514/0001-96' });
-      await sut.save(company1);
-
-      // Act & Assert
-      await expect(sut.save(company2)).rejects.toThrow();
-    });
-
     it('should save company with all timestamps set correctly', async() => {
       // Arrange
       const beforeCreate = new Date();
@@ -419,27 +409,6 @@ describe('CompanyRepositoryAdapterPrisma (Integration)', () => {
       const editedCompany2 = Company.load({
         ...company2.props,
         document: company1.props.document,
-      });
-
-      // Act & Assert
-      await expect(sut.edit(editedCompany2)).rejects.toThrow();
-    });
-
-    it('should throw error when trying to change ie to an existing one', async() => {
-      // Arrange
-      const company1 = Company.create(companyProps);
-      const company2 = Company.create({
-        ...companyProps,
-        document: '49.964.832/0001-17',
-        ie: '223334445555',
-        email01: 'company2-ie@test.com',
-      });
-      await sut.save(company1);
-      await sut.save(company2);
-
-      const editedCompany2 = Company.load({
-        ...company2.props,
-        ie: company1.props.ie,
       });
 
       // Act & Assert

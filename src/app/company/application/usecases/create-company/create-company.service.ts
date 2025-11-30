@@ -1,7 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Company } from 'src/app/company/domain/entities/company.entity';
 import { CompanyDuplicateDocumentError } from 'src/app/company/domain/errors/duplicate-document.error';
-import { CompanyDuplicateIeError } from 'src/app/company/domain/errors/duplicate-ie.error';
 import { TOKENS } from 'src/core/di/token';
 import type { ICompanyDao } from '../../persistence/dao/company-dao.interface';
 import type { ICompanyRepository } from '../../persistence/repository/company-repository.interface';
@@ -15,19 +14,13 @@ export class CreateCompany {
   ) {}
 
   public async execute(data: CreateCompanyInputDto): Promise<CreateCompanyOutputDto> {
-    const [doc, ie] = await Promise.all([
-      this.companyDao.findByDocument(data.document),
-      this.companyDao.findByIe(data.ie),
-    ]);
+    const company = Company.create(data);
 
-    if (doc) {
+    const duplicateDocument = await this.companyDao.findByDocument(company.props.document);
+    if (duplicateDocument) {
       throw new CompanyDuplicateDocumentError();
     }
-    if (ie) {
-      throw new CompanyDuplicateIeError();
-    }
 
-    const company = Company.create(data);
     await this.companyRepository.save(company);
 
     return { id: company.props.id };

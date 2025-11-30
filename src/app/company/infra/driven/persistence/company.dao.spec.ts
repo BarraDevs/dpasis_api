@@ -583,6 +583,38 @@ describe('CompanyDaoAdapterPrisma', () => {
       });
     });
 
+    describe('active status filter tests', () => {
+      it('should filter by active status true', async() => {
+      // Arrange
+        const queries: FindAllCompanyQueryDto = { active: true };
+
+        // Act
+        const [companies, total] = await sut.findAll(queries);
+
+        // Assert
+        expect(companies.length).toBe(3); // 3 companies are active
+        expect(total).toBe(3);
+        companies.forEach(company => {
+          expect(company.active).toBe(true);
+        });
+      });
+
+      it('should filter by active status false', async() => {
+      // Arrange
+        const queries: FindAllCompanyQueryDto = { active: false };
+
+        // Act
+        const [companies, total] = await sut.findAll(queries);
+
+        // Assert
+        expect(companies.length).toBe(3); // 3 companies are inactive
+        expect(total).toBe(3);
+        companies.forEach(company => {
+          expect(company.active).toBe(false);
+        });
+      });
+    });
+
     describe('combined filters tests', () => {
       it('should combine name and address filters', async() => {
       // Arrange
@@ -732,26 +764,6 @@ describe('CompanyDaoAdapterPrisma', () => {
     it('should return null for non-existent document', async() => {
       // Act
       const result = await sut.findByDocument('99999999000999');
-
-      // Assert
-      expect(result).toBeNull();
-    });
-  });
-
-  describe('findByIe', () => {
-    it('should find company by ie', async() => {
-      // Act
-      const result = await sut.findByIe('333333333');
-
-      // Assert
-      expect(result).toBeDefined();
-      expect(result?.name).toBe('Gamma Solutions Ltda');
-      expect(result?.ie).toBe('333333333');
-    });
-
-    it('should return null for non-existent ie', async() => {
-      // Act
-      const result = await sut.findByIe('999999999');
 
       // Assert
       expect(result).toBeNull();

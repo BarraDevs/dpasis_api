@@ -457,6 +457,19 @@ describe('FindAllCompany', () => {
       });
     });
 
+    it('should filter by active status', async() => {
+      // Arrange
+      const queries: FindAllCompanyQueryDto = {
+        active: false,
+      };
+
+      // Act
+      const result = await sut.execute(queries);
+
+      // Assert
+      expect(result.data).toHaveLength(0); // No companies are inactive
+    });
+
     it('should combine multiple filters', async() => {
       // Arrange
       const queries: FindAllCompanyQueryDto = {

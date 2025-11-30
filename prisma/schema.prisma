@@ -48,7 +48,7 @@ model Company {
   name        String  @db.VarChar(256)
   fantasyName String  @db.VarChar(256)
   document    String  @unique @db.VarChar(256)
-  ie          String  @unique @db.VarChar(256)
+  ie          String  @db.VarChar(256)
   active      Boolean
 
   zipCode      String  @db.VarChar(256)

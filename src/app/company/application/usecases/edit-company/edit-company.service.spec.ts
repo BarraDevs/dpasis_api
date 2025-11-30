@@ -1,28 +1,22 @@
-import { createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { CompanyModule } from 'src/app/company/company.module';
-import { Company } from 'src/app/company/domain/entities/company.entity';
 import { CompanyNotFoundError } from 'src/app/company/domain/errors/company-not-found.error';
 import { CompanyDuplicateDocumentError } from 'src/app/company/domain/errors/duplicate-document.error';
-import { CompanyDuplicateIeError } from 'src/app/company/domain/errors/duplicate-ie.error';
 import { ConfigModule } from 'src/core/config/config.module';
-import { TOKENS } from 'src/core/di/token';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { CompanyDto } from '../../dtos/company.dto';
-import type { ICompanyDao } from '../../persistence/dao/company-dao.interface';
-import type { ICompanyRepository } from '../../persistence/repository/company-repository.interface';
 import { CreateCompany } from '../create-company/create-company.service';
 import { CreateCompanyInputDto } from '../create-company/dtos/create-company.dto';
+import { FindCompanyById } from '../find-company-by-id/find-company-by-id.service';
 import { EditCompanyInputDto } from './dtos/edit-company.dto';
 import { EditCompany } from './edit-company.service';
 
 describe('EditCompany', () => {
   let sut: EditCompany;
-  let companyDao: jest.Mocked<ICompanyDao>;
-  let companyRepository: jest.Mocked<ICompanyRepository>;
   let prisma: PrismaService;
   let createCompany: CreateCompany;
+  let findCompanyById: FindCompanyById;
   let existingCompanyId: string;
   let createCompanyData: CreateCompanyInputDto;
 
@@ -35,10 +29,9 @@ describe('EditCompany', () => {
     }).compile();
 
     sut = module.get(EditCompany);
-    companyDao = module.get(TOKENS.CompanyDao);
-    companyRepository = module.get(TOKENS.CompanyRepository);
     prisma = module.get(PrismaService);
     createCompany = module.get(CreateCompany);
+    findCompanyById = module.get(FindCompanyById);
 
     // Clean database for integration tests
     await prisma.company.deleteMany();
@@ -83,301 +76,330 @@ describe('EditCompany', () => {
       const nonExistentId = 'non-existent-id';
       const editData: EditCompanyInputDto = {};
 
-      jest.spyOn(companyDao, 'findById').mockResolvedValue(null);
-      const editSpy = jest.spyOn(companyRepository, 'edit').mockResolvedValue();
+      const findByIdSpy = jest.spyOn(sut['companyDao'], 'findById').mockResolvedValue(null);
+      const editSpy = jest.spyOn(sut['companyRepository'], 'edit').mockResolvedValue();
 
       // Act & Assert
       expect.assertions(3);
       await expect(sut.execute(nonExistentId, editData)).rejects.toBeInstanceOf(CompanyNotFoundError);
-      expect(companyDao.findById).toHaveBeenCalledWith(nonExistentId);
+      expect(findByIdSpy).toHaveBeenCalledWith(nonExistentId);
       expect(editSpy).not.toHaveBeenCalled();
     });
 
-    it('should throw CompanyDuplicateDocumentError when document already exists for another company', async() => {
+    it('should call companyDao.findById and companyRepository.edit with correct values', async() => {
       // Arrange
-      const existingCompany = createMock<CompanyDto>();
-      const duplicateCompany = createMock<CompanyDto>();
-      const editData: EditCompanyInputDto = { document: '98765432000187' };
-
-      jest.spyOn(companyDao, 'findById').mockResolvedValue(existingCompany);
-      jest.spyOn(companyDao, 'findByDocument').mockResolvedValue(duplicateCompany);
-      const editSpy = jest.spyOn(companyRepository, 'edit').mockResolvedValue();
-
-      // Act & Assert
-      expect.assertions(4);
-      await expect(sut.execute(existingCompanyId, editData)).rejects.toBeInstanceOf(CompanyDuplicateDocumentError);
-      expect(companyDao.findById).toHaveBeenCalledWith(existingCompanyId);
-      expect(companyDao.findByDocument).toHaveBeenCalledWith(editData.document);
-      expect(editSpy).not.toHaveBeenCalled();
-    });
-
-    it('should throw CompanyDuplicateIeError when ie already exists for another company', async() => {
-      // Arrange
-      const existingCompany = createMock<CompanyDto>();
-      const duplicateCompany = createMock<CompanyDto>();
-      const editData: EditCompanyInputDto = { ie: '987654321' };
-
-      jest.spyOn(companyDao, 'findById').mockResolvedValue(existingCompany);
-      jest.spyOn(companyDao, 'findByIe').mockResolvedValue(duplicateCompany);
-      const editSpy = jest.spyOn(companyRepository, 'edit').mockResolvedValue();
-
-      // Act & Assert
-      expect.assertions(4);
-      await expect(sut.execute(existingCompanyId, editData)).rejects.toBeInstanceOf(CompanyDuplicateIeError);
-      expect(companyDao.findById).toHaveBeenCalledWith(existingCompanyId);
-      expect(companyDao.findByIe).toHaveBeenCalledWith(editData.ie);
-      expect(editSpy).not.toHaveBeenCalled();
-    });
-
-    it('should not check for document duplication when document is not being changed', async() => {
-      // Arrange
-      const existingCompany = createMock<CompanyDto>({
+      const companyId = 'company-id-123';
+      const existingCompanyData: CompanyDto = {
+        id: companyId,
+        name: 'Old Company Name',
+        fantasyName: 'Old Fantasy',
         document: '23741590000109',
-        email01: 'existing@example.com',
-        phone01: '11999998888',
-      });
-      const editData: EditCompanyInputDto = { name: 'Updated Company Name' };
-
-      jest.spyOn(companyDao, 'findById').mockResolvedValue(existingCompany);
-      const findByDocumentSpy = jest.spyOn(companyDao, 'findByDocument').mockResolvedValue(null);
-      jest.spyOn(companyRepository, 'edit').mockResolvedValue();
-
-      // Act
-      const result = await sut.execute(existingCompanyId, editData);
-
-      // Assert
-      expect(companyDao.findById).toHaveBeenCalledWith(existingCompanyId);
-      expect(findByDocumentSpy).not.toHaveBeenCalled();
-      expect(result).toEqual<SuccessMessage>({ message: 'Empresa atualizada com sucesso!' });
-    });
-
-    it('should not check for ie duplication when ie is not being changed', async() => {
-      // Arrange
-      const existingCompany = createMock<CompanyDto>({
-        document: '23741590000109',
-        email01: 'existing@example.com',
-        phone01: '11999998888',
-      });
-      const editData: EditCompanyInputDto = { name: 'Updated Company Name' };
-
-      jest.spyOn(companyDao, 'findById').mockResolvedValue(existingCompany);
-      const findByIeSpy = jest.spyOn(companyDao, 'findByIe').mockResolvedValue(null);
-      jest.spyOn(companyRepository, 'edit').mockResolvedValue();
-
-      // Act
-      const result = await sut.execute(existingCompanyId, editData);
-
-      // Assert
-      expect(companyDao.findById).toHaveBeenCalledWith(existingCompanyId);
-      expect(findByIeSpy).not.toHaveBeenCalled();
-      expect(result).toEqual<SuccessMessage>({ message: 'Empresa atualizada com sucesso!' });
-    });
-
-    it('should allow same document when updating the same company', async() => {
-      // Arrange
-      const existingCompany = createMock<CompanyDto>({
-        document: '23741590000109',
-        email01: 'existing@example.com',
-        phone01: '11999998888',
-      });
-      const editData: EditCompanyInputDto = {
-        document: '23741590000109',
-      };
-
-      jest.spyOn(companyDao, 'findById').mockResolvedValue(existingCompany);
-      const findByDocumentSpy = jest.spyOn(companyDao, 'findByDocument').mockResolvedValue(null);
-      jest.spyOn(companyRepository, 'edit').mockResolvedValue();
-
-      // Act
-      const result = await sut.execute(existingCompanyId, editData);
-
-      // Assert
-      expect(companyDao.findById).toHaveBeenCalledWith(existingCompanyId);
-      expect(findByDocumentSpy).not.toHaveBeenCalled();
-      expect(result).toEqual<SuccessMessage>({ message: 'Empresa atualizada com sucesso!' });
-    });
-
-    it('should allow same ie when updating the same company', async() => {
-      // Arrange
-      const existingCompany = createMock<CompanyDto>({
-        document: '23741590000109',
-        email01: 'existing@example.com',
-        phone01: '11999998888',
         ie: '123456789',
-      });
-      const editData: EditCompanyInputDto = {
-        ie: '123456789',
+        zipCode: '12345678',
+        street: 'Old Street',
+        number: '100',
+        complement: null,
+        reference: null,
+        neighborhood: 'Old Hood',
+        city: 'Old City',
+        state: 'SP',
+        phone01: '1111111111',
+        phone02: null,
+        cellphone: null,
+        email01: 'old@company.com',
+        email02: null,
+        active: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
 
-      jest.spyOn(companyDao, 'findById').mockResolvedValue(existingCompany);
-      const findByIeSpy = jest.spyOn(companyDao, 'findByIe').mockResolvedValue(null);
-      jest.spyOn(companyRepository, 'edit').mockResolvedValue();
-
-      // Act
-      const result = await sut.execute(existingCompanyId, editData);
-
-      // Assert
-      expect(companyDao.findById).toHaveBeenCalledWith(existingCompanyId);
-      expect(findByIeSpy).not.toHaveBeenCalled();
-      expect(result).toEqual<SuccessMessage>({ message: 'Empresa atualizada com sucesso!' });
-    });
-
-    it('should successfully update company when all validations pass', async() => {
-      // Arrange
-      const existingCompany = createMock<CompanyDto>({
-        document: '23741590000109',
-        email01: 'existing@example.com',
-        phone01: '11999998888',
-      });
       const editData: EditCompanyInputDto = {
-        name: 'Updated Company Ltd',
-        fantasyName: 'Updated Company',
-        phone01: '11991112222',
+        name: 'New Company Name',
       };
 
-      jest.spyOn(companyDao, 'findById').mockResolvedValue(existingCompany);
-      const editSpy = jest.spyOn(companyRepository, 'edit').mockResolvedValue();
+      const findByIdSpy = jest.spyOn(sut['companyDao'], 'findById').mockResolvedValue(existingCompanyData);
+      const editSpy = jest.spyOn(sut['companyRepository'], 'edit').mockResolvedValue();
 
       // Act
-      const result = await sut.execute(existingCompanyId, editData);
+      const result = await sut.execute(companyId, editData);
 
       // Assert
-      expect(companyDao.findById).toHaveBeenCalledWith(existingCompanyId);
+      expect(findByIdSpy).toHaveBeenCalledWith(companyId);
       expect(editSpy).toHaveBeenCalledTimes(1);
-      expect(editSpy).toHaveBeenCalledWith(expect.any(Company));
+      expect(editSpy).toHaveBeenCalledWith(expect.objectContaining({
+        props: expect.objectContaining({
+          id: companyId,
+          name: editData.name,
+        }),
+      }));
       expect(result).toEqual<SuccessMessage>({ message: 'Empresa atualizada com sucesso!' });
     });
 
-    it('should create Company entity with merged data when editing', async() => {
+    it('should merge existing data with new data when editing', async() => {
       // Arrange
-      const existingCompany = createMock<CompanyDto>({
-        id: existingCompanyId,
-        name: 'Original Name',
-        fantasyName: 'Original Fantasy',
+      const companyId = 'company-id-456';
+      const existingCompanyData: CompanyDto = {
+        id: companyId,
+        name: 'Existing Name',
+        fantasyName: 'Existing Fantasy',
         document: '23741590000109',
-        ie: '123456789',
-        email01: 'original@example.com',
-        phone01: '11111111111',
-      });
+        ie: '111111111',
+        zipCode: '11111111',
+        street: 'Existing Street',
+        number: '200',
+        complement: 'Apt 1',
+        reference: 'Near park',
+        neighborhood: 'Existing Hood',
+        city: 'Existing City',
+        state: 'RJ',
+        phone01: '2222222222',
+        phone02: '3333333333',
+        cellphone: '4444444444',
+        email01: 'existing@company.com',
+        email02: 'contact@company.com',
+        active: true,
+        createdAt: new Date('2024-01-01'),
+        updatedAt: new Date('2024-01-01'),
+      };
+
+      const editData: EditCompanyInputDto = {
+        fantasyName: 'Updated Fantasy',
+        street: 'Updated Street',
+      };
+
+      jest.spyOn(sut['companyDao'], 'findById').mockResolvedValue(existingCompanyData);
+      const editSpy = jest.spyOn(sut['companyRepository'], 'edit').mockResolvedValue();
+
+      // Act
+      await sut.execute(companyId, editData);
+
+      // Assert
+      expect(editSpy).toHaveBeenCalledWith(expect.objectContaining({
+        props: expect.objectContaining({
+          id: companyId,
+          name: 'Existing Name', // Preserved
+          fantasyName: 'Updated Fantasy', // Updated
+          street: 'Updated Street', // Updated
+          city: 'Existing City', // Preserved
+        }),
+      }));
+    });
+
+    it('should throw CompanyDuplicateDocumentError when trying to change to existing document', async() => {
+      // Arrange
+      const companyId = 'company-id-789';
+      const existingCompanyData: CompanyDto = {
+        id: companyId,
+        name: 'Company A',
+        fantasyName: 'Company A',
+        document: '23741590000109',
+        ie: '222222222',
+        zipCode: '22222222',
+        street: 'Street A',
+        number: '300',
+        complement: null,
+        reference: null,
+        neighborhood: 'Hood A',
+        city: 'City A',
+        state: 'SP',
+        phone01: '5555555555',
+        phone02: null,
+        cellphone: null,
+        email01: 'companya@test.com',
+        email02: null,
+        active: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      const editData: EditCompanyInputDto = {
+        document: '67.942.043/0001-67', // Document of another company
+      };
+
+      const duplicateCompany: CompanyDto = {
+        id: 'other-company-id',
+        name: 'Company B',
+        fantasyName: 'Company B',
+        document: '67942043000167',
+        ie: '333333333',
+        zipCode: '33333333',
+        street: 'Street B',
+        number: '400',
+        complement: null,
+        reference: null,
+        neighborhood: 'Hood B',
+        city: 'City B',
+        state: 'RJ',
+        phone01: '6666666666',
+        phone02: null,
+        cellphone: null,
+        email01: 'companyb@test.com',
+        email02: null,
+        active: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      jest.spyOn(sut['companyDao'], 'findById').mockResolvedValue(existingCompanyData);
+      jest.spyOn(sut['companyDao'], 'findByDocument').mockResolvedValue(duplicateCompany);
+      const editSpy = jest.spyOn(sut['companyRepository'], 'edit').mockResolvedValue();
+
+      // Act & Assert
+      expect.assertions(2);
+      await expect(sut.execute(companyId, editData)).rejects.toBeInstanceOf(CompanyDuplicateDocumentError);
+      expect(editSpy).not.toHaveBeenCalled();
+    });
+
+    it('should not check for duplicate document when document is not being changed', async() => {
+      // Arrange
+      const companyId = 'company-id-999';
+      const existingCompanyData: CompanyDto = {
+        id: companyId,
+        name: 'Same Document Company',
+        fantasyName: 'Same Document',
+        document: '23741590000109',
+        ie: '444444444',
+        zipCode: '44444444',
+        street: 'Same Street',
+        number: '500',
+        complement: null,
+        reference: null,
+        neighborhood: 'Same Hood',
+        city: 'Same City',
+        state: 'MG',
+        phone01: '7777777777',
+        phone02: null,
+        cellphone: null,
+        email01: 'same@company.com',
+        email02: null,
+        active: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
       const editData: EditCompanyInputDto = {
         name: 'Updated Name',
-        fantasyName: 'Updated Fantasy',
       };
 
-      jest.spyOn(companyDao, 'findById').mockResolvedValue(existingCompany);
-      const editSpy = jest.spyOn(companyRepository, 'edit').mockResolvedValue();
+      jest.spyOn(sut['companyDao'], 'findById').mockResolvedValue(existingCompanyData);
+      const findByDocumentSpy = jest.spyOn(sut['companyDao'], 'findByDocument');
+      const editSpy = jest.spyOn(sut['companyRepository'], 'edit').mockResolvedValue();
 
       // Act
-      await sut.execute(existingCompanyId, editData);
+      await sut.execute(companyId, editData);
 
       // Assert
-      const savedCompany = editSpy.mock.calls[0][0];
-      expect(savedCompany).toBeInstanceOf(Company);
-      expect(savedCompany.props.id).toBe(existingCompanyId);
-      expect(savedCompany.props.name).toBe(editData.name);
-      expect(savedCompany.props.fantasyName).toBe(editData.fantasyName);
-      expect(savedCompany.props.document).toBe(existingCompany.document);
-      expect(savedCompany.props.ie).toBe(existingCompany.ie);
-      expect(savedCompany.props.email01).toBe(existingCompany.email01);
-      expect(savedCompany.props.phone01).toBe(existingCompany.phone01);
+      expect(findByDocumentSpy).not.toHaveBeenCalled();
+      expect(editSpy).toHaveBeenCalled();
     });
 
-    it('should handle partial updates with only some fields', async() => {
+    it('should allow editing to same document (sanitized)', async() => {
       // Arrange
-      const existingCompany = createMock<CompanyDto>({
-        id: existingCompanyId,
-        name: 'Original',
-        city: 'São Paulo',
+      const companyId = 'company-id-111';
+      const existingCompanyData: CompanyDto = {
+        id: companyId,
+        name: 'Sanitized Company',
+        fantasyName: 'Sanitized',
         document: '23741590000109',
-        email01: 'existing@example.com',
-        phone01: '11999998888',
-      });
+        ie: '555555555',
+        zipCode: '55555555',
+        street: 'Sanitized Street',
+        number: '600',
+        complement: null,
+        reference: null,
+        neighborhood: 'Sanitized Hood',
+        city: 'Sanitized City',
+        state: 'PR',
+        phone01: '8888888888',
+        phone02: null,
+        cellphone: null,
+        email01: 'sanitized@company.com',
+        email02: null,
+        active: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
       const editData: EditCompanyInputDto = {
-        city: 'Rio de Janeiro',
+        document: '23.741.590/0001-09', // Same document but with formatting
       };
 
-      jest.spyOn(companyDao, 'findById').mockResolvedValue(existingCompany);
-      const editSpy = jest.spyOn(companyRepository, 'edit').mockResolvedValue();
+      jest.spyOn(sut['companyDao'], 'findById').mockResolvedValue(existingCompanyData);
+      const findByDocumentSpy = jest.spyOn(sut['companyDao'], 'findByDocument');
+      const editSpy = jest.spyOn(sut['companyRepository'], 'edit').mockResolvedValue();
 
       // Act
-      await sut.execute(existingCompanyId, editData);
+      await sut.execute(companyId, editData);
 
       // Assert
-      const savedCompany = editSpy.mock.calls[0][0];
-      expect(savedCompany.props.name).toBe(existingCompany.name);
-      expect(savedCompany.props.city).toBe(editData.city);
+      expect(findByDocumentSpy).not.toHaveBeenCalled(); // Because sanitized document is same as existing
+      expect(editSpy).toHaveBeenCalled();
     });
 
-    it('should handle empty edit data', async() => {
+    it('should sanitize phone numbers and emails through Company entity', async() => {
       // Arrange
-      const existingCompany = createMock<CompanyDto>({
-        id: existingCompanyId,
-        name: 'Company Name',
+      const companyId = 'company-id-222';
+      const existingCompanyData: CompanyDto = {
+        id: companyId,
+        name: 'Sanitize Test Company',
+        fantasyName: 'Sanitize Test',
         document: '23741590000109',
-        email01: 'existing@example.com',
-        phone01: '11999998888',
-      });
-      const editData: EditCompanyInputDto = {};
+        ie: '666666666',
+        zipCode: '66666666',
+        street: 'Test Street',
+        number: '700',
+        complement: null,
+        reference: null,
+        neighborhood: 'Test Hood',
+        city: 'Test City',
+        state: 'RS',
+        phone01: '9999999999',
+        phone02: null,
+        cellphone: null,
+        email01: 'test@company.com',
+        email02: null,
+        active: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
 
-      jest.spyOn(companyDao, 'findById').mockResolvedValue(existingCompany);
-      const editSpy = jest.spyOn(companyRepository, 'edit').mockResolvedValue();
+      const editData: EditCompanyInputDto = {
+        phone01: '(11) 1111-2222',
+        phone02: '(11) 3333-4444',
+        cellphone: '(11) 98888-7777',
+      };
+
+      jest.spyOn(sut['companyDao'], 'findById').mockResolvedValue(existingCompanyData);
+      const editSpy = jest.spyOn(sut['companyRepository'], 'edit').mockResolvedValue();
 
       // Act
-      const result = await sut.execute(existingCompanyId, editData);
+      await sut.execute(companyId, editData);
 
       // Assert
-      expect(editSpy).toHaveBeenCalledTimes(1);
-      expect(result).toEqual<SuccessMessage>({ message: 'Empresa atualizada com sucesso!' });
+      expect(editSpy).toHaveBeenCalledWith(expect.objectContaining({
+        props: expect.objectContaining({
+          phone01: '1111112222',
+          phone02: '1133334444',
+          cellphone: '11988887777',
+        }),
+      }));
     });
   });
 
   describe('integration tests', () => {
     it('should throw CompanyNotFoundError when company does not exist in database', async() => {
       // Arrange
-      const nonExistentId = 'non-existent-id';
-      const editData: EditCompanyInputDto = { name: 'Updated Company' };
+      const nonExistentId = 'non-existent-id-123';
+      const editData: EditCompanyInputDto = { name: 'New Name' };
 
       // Act & Assert
-      expect.assertions(1);
-      await expect(sut.execute(nonExistentId, editData)).rejects.toBeInstanceOf(CompanyNotFoundError);
+      await expect(sut.execute(nonExistentId, editData)).rejects.toThrow(CompanyNotFoundError);
     });
 
-    it('should throw CompanyDuplicateDocumentError when document already exists for another company in database', async() => {
-      // Arrange
-      const anotherCompanyData: CreateCompanyInputDto = {
-        ...createCompanyData,
-        document: '34800075000179',
-        ie: '987654321',
-      };
-      await createCompany.execute(anotherCompanyData);
-
-      const editData: EditCompanyInputDto = { document: '34800075000179' };
-
-      // Act & Assert
-      expect.assertions(1);
-      await expect(sut.execute(existingCompanyId, editData)).rejects.toBeInstanceOf(CompanyDuplicateDocumentError);
-    });
-
-    it('should throw CompanyDuplicateIeError when ie already exists for another company in database', async() => {
-      // Arrange
-      const anotherCompanyData: CreateCompanyInputDto = {
-        ...createCompanyData,
-        document: '34800075000179',
-        ie: '987654321',
-      };
-      await createCompany.execute(anotherCompanyData);
-
-      const editData: EditCompanyInputDto = { ie: '987654321' };
-
-      // Act & Assert
-      expect.assertions(1);
-      await expect(sut.execute(existingCompanyId, editData)).rejects.toBeInstanceOf(CompanyDuplicateIeError);
-    });
-
-    it('should successfully update company name in database', async() => {
+    it('should successfully edit company name', async() => {
       // Arrange
       const editData: EditCompanyInputDto = {
-        name: 'Updated Company Name',
+        name: 'Updated Company Name Ltd',
       };
 
       // Act
@@ -386,26 +408,18 @@ describe('EditCompany', () => {
       // Assert
       expect(result).toEqual<SuccessMessage>({ message: 'Empresa atualizada com sucesso!' });
 
-      // Verify update in database
-      const updatedCompany = await prisma.company.findUnique({
-        where: { id: existingCompanyId },
-      });
-
-      expect(updatedCompany).toBeDefined();
-      expect(updatedCompany?.name).toBe('Updated Company Name');
-      expect(updatedCompany?.fantasyName).toBe(createCompanyData.fantasyName);
-      expect(updatedCompany?.document).toBe(createCompanyData.document);
-      expect(updatedCompany?.ie).toBe(createCompanyData.ie);
-      expect(updatedCompany?.active).toBe(true);
+      const updatedCompany = await findCompanyById.execute(existingCompanyId);
+      expect(updatedCompany.name).toBe('Updated Company Name Ltd');
+      expect(updatedCompany.fantasyName).toBe(createCompanyData.fantasyName); // Unchanged
     });
 
-    it('should successfully update multiple fields in database', async() => {
+    it('should successfully edit multiple fields', async() => {
       // Arrange
       const editData: EditCompanyInputDto = {
-        name: 'Completely Updated Company',
-        fantasyName: 'Updated Fantasy',
-        phone01: '11999999999',
-        email01: 'updated@company.com',
+        name: 'Multi Edit Company Ltd',
+        fantasyName: 'Multi Edit',
+        street: 'Rua Nova',
+        number: '999',
         city: 'Rio de Janeiro',
         state: 'RJ',
       };
@@ -416,73 +430,149 @@ describe('EditCompany', () => {
       // Assert
       expect(result).toEqual<SuccessMessage>({ message: 'Empresa atualizada com sucesso!' });
 
-      // Verify updates in database
-      const updatedCompany = await prisma.company.findUnique({
-        where: { id: existingCompanyId },
-      });
-
-      expect(updatedCompany).toBeDefined();
-      expect(updatedCompany?.name).toBe(editData.name);
-      expect(updatedCompany?.fantasyName).toBe(editData.fantasyName);
-      expect(updatedCompany?.phone01).toBe(editData.phone01);
-      expect(updatedCompany?.email01).toBe(editData.email01);
-      expect(updatedCompany?.city).toBe(editData.city);
-      expect(updatedCompany?.state).toBe(editData.state);
-      expect(updatedCompany?.document).toBe(createCompanyData.document);
-      expect(updatedCompany?.ie).toBe(createCompanyData.ie);
-      expect(updatedCompany?.active).toBe(true);
+      const updatedCompany = await findCompanyById.execute(existingCompanyId);
+      expect(updatedCompany.name).toBe('Multi Edit Company Ltd');
+      expect(updatedCompany.fantasyName).toBe('Multi Edit');
+      expect(updatedCompany.street).toBe('Rua Nova');
+      expect(updatedCompany.number).toBe('999');
+      expect(updatedCompany.city).toBe('Rio de Janeiro');
+      expect(updatedCompany.state).toBe('RJ');
+      expect(updatedCompany.document).toBe(createCompanyData.document); // Unchanged
+      expect(updatedCompany.ie).toBe(createCompanyData.ie); // Unchanged
     });
 
-    it('should successfully update document to new unique value', async() => {
+    it('should update updatedAt timestamp when editing', async() => {
       // Arrange
+      const initialCompany = await findCompanyById.execute(existingCompanyId);
+      const initialUpdatedAt = initialCompany.updatedAt.getTime();
+
+      await new Promise(resolve => setTimeout(resolve, 10));
+
       const editData: EditCompanyInputDto = {
-        document: '36990654000157',
+        fantasyName: 'Updated Fantasy Name',
       };
 
       // Act
-      const result = await sut.execute(existingCompanyId, editData);
+      await sut.execute(existingCompanyId, editData);
 
       // Assert
-      expect(result).toEqual<SuccessMessage>({ message: 'Empresa atualizada com sucesso!' });
-
-      // Verify update in database
-      const updatedCompany = await prisma.company.findUnique({
-        where: { id: existingCompanyId },
-      });
-
-      expect(updatedCompany).toBeDefined();
-      expect(updatedCompany?.document).toBe(editData.document);
+      const updatedCompany = await findCompanyById.execute(existingCompanyId);
+      expect(updatedCompany.updatedAt.getTime()).toBeGreaterThan(initialUpdatedAt);
+      expect(updatedCompany.createdAt).toEqual(initialCompany.createdAt); // createdAt unchanged
     });
 
-    it('should successfully update ie to new unique value', async() => {
+    it('should preserve createdAt timestamp when editing', async() => {
       // Arrange
+      const initialCompany = await findCompanyById.execute(existingCompanyId);
+      const initialCreatedAt = initialCompany.createdAt;
+
       const editData: EditCompanyInputDto = {
-        ie: '111111111',
+        name: 'CreatedAt Test Company',
       };
 
       // Act
-      const result = await sut.execute(existingCompanyId, editData);
+      await sut.execute(existingCompanyId, editData);
 
       // Assert
-      expect(result).toEqual<SuccessMessage>({ message: 'Empresa atualizada com sucesso!' });
-
-      // Verify update in database
-      const updatedCompany = await prisma.company.findUnique({
-        where: { id: existingCompanyId },
-      });
-
-      expect(updatedCompany).toBeDefined();
-      expect(updatedCompany?.ie).toBe(editData.ie);
+      const updatedCompany = await findCompanyById.execute(existingCompanyId);
+      expect(updatedCompany.createdAt).toEqual(initialCreatedAt);
     });
 
-    it('should handle optional fields being set to null', async() => {
+    it('should sanitize document when editing', async() => {
       // Arrange
       const editData: EditCompanyInputDto = {
+        document: '67.942.043/0001-67', // With formatting
+      };
+
+      // Act
+      await sut.execute(existingCompanyId, editData);
+
+      // Assert
+      const updatedCompany = await findCompanyById.execute(existingCompanyId);
+      expect(updatedCompany.document).toBe('67942043000167'); // Sanitized (no formatting)
+    });
+
+    it('should sanitize phone numbers when editing', async() => {
+      // Arrange
+      const editData: EditCompanyInputDto = {
+        phone01: '(21) 1111-2222',
+        phone02: '(21) 3333-4444',
+        cellphone: '(21) 98888-7777',
+      };
+
+      // Act
+      await sut.execute(existingCompanyId, editData);
+
+      // Assert
+      const updatedCompany = await findCompanyById.execute(existingCompanyId);
+      expect(updatedCompany.phone01).toBe('2111112222');
+      expect(updatedCompany.phone02).toBe('2133334444');
+      expect(updatedCompany.cellphone).toBe('21988887777');
+    });
+
+    it('should allow setting optional fields to null', async() => {
+      // Arrange
+      const editData: EditCompanyInputDto = {
+        complement: null,
+        reference: null,
         phone02: null,
         cellphone: null,
         email02: null,
+      };
+
+      // Act
+      await sut.execute(existingCompanyId, editData);
+
+      // Assert
+      const updatedCompany = await findCompanyById.execute(existingCompanyId);
+      expect(updatedCompany.complement).toBeNull();
+      expect(updatedCompany.reference).toBeNull();
+      expect(updatedCompany.phone02).toBeNull();
+      expect(updatedCompany.cellphone).toBeNull();
+      expect(updatedCompany.email02).toBeNull();
+    });
+
+    it('should throw CompanyDuplicateDocumentError when changing to existing document', async() => {
+      // Arrange
+      const secondCompanyResult = await createCompany.execute({
+        name: 'Second Company Ltd',
+        fantasyName: 'Second Company',
+        document: '67942043000167',
+        ie: '987654321',
+        zipCode: '87654321',
+        street: 'Second Street',
+        number: '200',
         complement: null,
         reference: null,
+        neighborhood: 'Uptown',
+        city: 'Rio de Janeiro',
+        state: 'RJ',
+        phone01: '2144445555',
+        phone02: null,
+        cellphone: null,
+        email01: 'second@company.com',
+        email02: null,
+      });
+
+      const secondCompany = await findCompanyById.execute(secondCompanyResult.id);
+
+      const editData: EditCompanyInputDto = {
+        document: secondCompany.document, // Try to use second company's document
+      };
+
+      // Act & Assert
+      await expect(sut.execute(existingCompanyId, editData)).rejects.toThrow(CompanyDuplicateDocumentError);
+
+      // Verify first company's document was not changed
+      const unchangedCompany = await findCompanyById.execute(existingCompanyId);
+      expect(unchangedCompany.document).toBe(createCompanyData.document);
+    });
+
+    it('should allow editing company with same document (formatted differently)', async() => {
+      // Arrange
+      const editData: EditCompanyInputDto = {
+        document: '23.741.590/0001-09', // Same document with formatting
+        name: 'Same Document Test',
       };
 
       // Act
@@ -491,155 +581,147 @@ describe('EditCompany', () => {
       // Assert
       expect(result).toEqual<SuccessMessage>({ message: 'Empresa atualizada com sucesso!' });
 
-      // Verify update in database
-      const updatedCompany = await prisma.company.findUnique({
-        where: { id: existingCompanyId },
-      });
-
-      expect(updatedCompany).toBeDefined();
-      expect(updatedCompany?.phone02).toBeNull();
-      expect(updatedCompany?.cellphone).toBeNull();
-      expect(updatedCompany?.email02).toBeNull();
-      expect(updatedCompany?.complement).toBeNull();
-      expect(updatedCompany?.reference).toBeNull();
+      const updatedCompany = await findCompanyById.execute(existingCompanyId);
+      expect(updatedCompany.document).toBe('23741590000109');
+      expect(updatedCompany.name).toBe('Same Document Test');
     });
 
-    it('should preserve createdAt timestamp', async() => {
-      // Arrange
-      const originalCompany = await prisma.company.findUnique({
-        where: { id: existingCompanyId },
-      });
-      const originalCreatedAt = originalCompany!.createdAt;
-
-      const editData: EditCompanyInputDto = { name: 'Updated Name' };
-
-      // Act
-      await sut.execute(existingCompanyId, editData);
-
-      // Assert
-      const updatedCompany = await prisma.company.findUnique({
-        where: { id: existingCompanyId },
-      });
-
-      expect(updatedCompany?.createdAt).toEqual(originalCreatedAt);
-    });
-
-    it('should sanitize document when updating', async() => {
+    it('should edit all fields at once', async() => {
       // Arrange
       const editData: EditCompanyInputDto = {
-        document: '41.455.539/0001-12',
+        name: 'Complete Edit Company Ltd',
+        fantasyName: 'Complete Edit',
+        document: '67942043000167',
+        ie: '999888777',
+        zipCode: '99999999',
+        street: 'Completely New Street',
+        number: '1000',
+        complement: 'New Suite 10',
+        reference: 'New Reference Point',
+        neighborhood: 'New Neighborhood',
+        city: 'Brasília',
+        state: 'DF',
+        phone01: '6133332222',
+        phone02: '6144443333',
+        cellphone: '61999998888',
+        email01: 'complete@newemail.com',
+        email02: 'sales@newemail.com',
       };
 
       // Act
       await sut.execute(existingCompanyId, editData);
 
       // Assert
-      const updatedCompany = await prisma.company.findUnique({
-        where: { id: existingCompanyId },
-      });
-
-      expect(updatedCompany?.document).toBe('41455539000112');
+      const updatedCompany = await findCompanyById.execute(existingCompanyId);
+      expect(updatedCompany.id).toBe(existingCompanyId); // ID unchanged
+      expect(updatedCompany.name).toBe('Complete Edit Company Ltd');
+      expect(updatedCompany.fantasyName).toBe('Complete Edit');
+      expect(updatedCompany.document).toBe('67942043000167');
+      expect(updatedCompany.ie).toBe('999888777');
+      expect(updatedCompany.zipCode).toBe('99999999');
+      expect(updatedCompany.street).toBe('Completely New Street');
+      expect(updatedCompany.number).toBe('1000');
+      expect(updatedCompany.complement).toBe('New Suite 10');
+      expect(updatedCompany.reference).toBe('New Reference Point');
+      expect(updatedCompany.neighborhood).toBe('New Neighborhood');
+      expect(updatedCompany.city).toBe('Brasília');
+      expect(updatedCompany.state).toBe('DF');
+      expect(updatedCompany.phone01).toBe('6133332222');
+      expect(updatedCompany.phone02).toBe('6144443333');
+      expect(updatedCompany.cellphone).toBe('61999998888');
+      expect(updatedCompany.email01).toBe('complete@newemail.com');
+      expect(updatedCompany.email02).toBe('sales@newemail.com');
+      expect(updatedCompany.active).toBe(true); // active unchanged
     });
 
-    it('should sanitize phones when updating', async() => {
+    it('should handle multiple edits to same company', async() => {
+      // Arrange & Act - First edit
+      await sut.execute(existingCompanyId, { name: 'First Edit' });
+      const firstEdit = await findCompanyById.execute(existingCompanyId);
+
+      // Second edit
+      await sut.execute(existingCompanyId, { fantasyName: 'Second Edit Fantasy' });
+      const secondEdit = await findCompanyById.execute(existingCompanyId);
+
+      // Third edit
+      await sut.execute(existingCompanyId, { city: 'Third Edit City' });
+      const thirdEdit = await findCompanyById.execute(existingCompanyId);
+
+      // Assert
+      expect(firstEdit.name).toBe('First Edit');
+      expect(secondEdit.name).toBe('First Edit'); // Preserved from first edit
+      expect(secondEdit.fantasyName).toBe('Second Edit Fantasy');
+      expect(thirdEdit.name).toBe('First Edit'); // Still preserved
+      expect(thirdEdit.fantasyName).toBe('Second Edit Fantasy'); // Still preserved
+      expect(thirdEdit.city).toBe('Third Edit City');
+      expect(thirdEdit.updatedAt.getTime()).toBeGreaterThan(secondEdit.updatedAt.getTime());
+    });
+
+    it('should preserve active status when editing', async() => {
       // Arrange
+      const initialCompany = await findCompanyById.execute(existingCompanyId);
       const editData: EditCompanyInputDto = {
-        phone01: '(11) 1111-2222',
-        phone02: '(11) 3333-4444',
-        cellphone: '(11) 98888-7777',
+        name: 'Active Status Test',
       };
 
       // Act
       await sut.execute(existingCompanyId, editData);
 
       // Assert
-      const updatedCompany = await prisma.company.findUnique({
-        where: { id: existingCompanyId },
-      });
-
-      expect(updatedCompany?.phone01).toBe('1111112222');
-      expect(updatedCompany?.phone02).toBe('1133334444');
-      expect(updatedCompany?.cellphone).toBe('11988887777');
+      const updatedCompany = await findCompanyById.execute(existingCompanyId);
+      expect(updatedCompany.active).toBe(initialCompany.active);
     });
 
-    it('should validate email format when updating', async() => {
+    it('should validate email format when editing', async() => {
       // Arrange
       const editData: EditCompanyInputDto = {
-        email01: 'invalid-email',
+        email01: 'invalid-email', // Invalid email format
       };
 
       // Act & Assert
       await expect(sut.execute(existingCompanyId, editData)).rejects.toThrow();
     });
 
-    it('should validate document format when updating', async() => {
+    it('should validate document (CNPJ) when editing', async() => {
       // Arrange
       const editData: EditCompanyInputDto = {
-        document: '00000000000000',
+        document: '00.000.000/0000-00', // Invalid CNPJ
       };
 
       // Act & Assert
       await expect(sut.execute(existingCompanyId, editData)).rejects.toThrow();
     });
 
-    it('should validate phone format when updating', async() => {
+    it('should validate phone number when editing', async() => {
       // Arrange
       const editData: EditCompanyInputDto = {
-        phone01: '123',
+        phone01: '123', // Invalid phone (too short)
       };
 
       // Act & Assert
       await expect(sut.execute(existingCompanyId, editData)).rejects.toThrow();
     });
 
-    it('should allow updating null optional fields to values', async() => {
+    it('should edit only provided fields and keep others unchanged', async() => {
       // Arrange
-      const editToNull: EditCompanyInputDto = {
-        phone02: null,
-        cellphone: null,
-        email02: null,
-        complement: null,
-        reference: null,
-      };
-      await sut.execute(existingCompanyId, editToNull);
-
-      const editToValues: EditCompanyInputDto = {
-        phone02: '1144445555',
-        cellphone: '11988887777',
-        email02: 'newemail@company.com',
-        complement: 'New Complement',
-        reference: 'New Reference',
+      const initialCompany = await findCompanyById.execute(existingCompanyId);
+      const editData: EditCompanyInputDto = {
+        fantasyName: 'Only Fantasy Changed',
       };
 
       // Act
-      await sut.execute(existingCompanyId, editToValues);
+      await sut.execute(existingCompanyId, editData);
 
       // Assert
-      const updatedCompany = await prisma.company.findUnique({
-        where: { id: existingCompanyId },
-      });
-
-      expect(updatedCompany?.phone02).toBe('1144445555');
-      expect(updatedCompany?.cellphone).toBe('11988887777');
-      expect(updatedCompany?.email02).toBe('newemail@company.com');
-      expect(updatedCompany?.complement).toBe('New Complement');
-      expect(updatedCompany?.reference).toBe('New Reference');
-    });
-
-    it('should successfully edit company multiple times', async() => {
-      // Arrange & Act
-      await sut.execute(existingCompanyId, { name: 'First Update' });
-      await sut.execute(existingCompanyId, { fantasyName: 'Second Update' });
-      await sut.execute(existingCompanyId, { city: 'Third Update City' });
-
-      // Assert
-      const updatedCompany = await prisma.company.findUnique({
-        where: { id: existingCompanyId },
-      });
-
-      expect(updatedCompany?.name).toBe('First Update');
-      expect(updatedCompany?.fantasyName).toBe('Second Update');
-      expect(updatedCompany?.city).toBe('Third Update City');
+      const updatedCompany = await findCompanyById.execute(existingCompanyId);
+      expect(updatedCompany.fantasyName).toBe('Only Fantasy Changed');
+      expect(updatedCompany.name).toBe(initialCompany.name);
+      expect(updatedCompany.document).toBe(initialCompany.document);
+      expect(updatedCompany.ie).toBe(initialCompany.ie);
+      expect(updatedCompany.street).toBe(initialCompany.street);
+      expect(updatedCompany.city).toBe(initialCompany.city);
+      expect(updatedCompany.phone01).toBe(initialCompany.phone01);
+      expect(updatedCompany.email01).toBe(initialCompany.email01);
     });
   });
 });

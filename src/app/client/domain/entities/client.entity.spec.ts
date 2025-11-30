@@ -1,4 +1,4 @@
-import { InvalidCnpjError } from 'src/shared/value-objects/vo-errors';
+import { InvalidCnpjError } from 'src/shared/value-objects/cnpj/cnpj.error';
 import { Client } from './client.entity';
 
 describe('ClientEntity', () => {
