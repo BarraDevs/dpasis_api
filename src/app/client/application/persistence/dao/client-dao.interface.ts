@@ -5,5 +5,4 @@ export interface IClientDao {
   findAll(queries: FindAllClientQueryDto): Promise<[ClientDto[], number]>;
   findById(id: string): Promise<ClientDto | null>;
   findByCnpj(cnpj: string): Promise<ClientDto | null>;
-  findByIe(ie: string): Promise<ClientDto | null>;
 }

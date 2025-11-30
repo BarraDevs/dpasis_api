@@ -76,11 +76,4 @@ export class ClientDaoAdapterPrisma implements IClientDao {
       select: clientSelect,
     });
   }
-
-  public async findByIe(ie: string): Promise<ClientDto | null> {
-    return this.prisma.client.findUnique({
-      where: { ie },
-      select: clientSelect,
-    });
-  }
 }

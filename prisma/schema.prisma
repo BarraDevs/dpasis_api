@@ -78,7 +78,7 @@ model Client {
   id              String    @id
   kind            String    @db.VarChar(256)
   cnpj            String    @unique @db.VarChar(256)
-  ie              String    @unique @db.VarChar(256)
+  ie              String    @db.VarChar(256)
   group           String    @db.VarChar(256)
   type            String    @db.VarChar(256)
   companyName     String    @db.VarChar(256)

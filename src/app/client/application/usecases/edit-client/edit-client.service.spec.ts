@@ -2,7 +2,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ClientModule } from 'src/app/client/client.module';
 import { ClientNotFoundError } from 'src/app/client/domain/errors/client-not-found.error';
 import { ClientDuplicateCnpjError } from 'src/app/client/domain/errors/duplicate-cnpj.error';
-import { ClientDuplicateIeError } from 'src/app/client/domain/errors/duplicate-ie.error';
 import { CreateCompany } from 'src/app/company/application/usecases/create-company/create-company.service';
 import { CompanyNotFoundError } from 'src/app/company/domain/errors/company-not-found.error';
 import { ConfigModule } from 'src/core/config/config.module';
@@ -114,22 +113,6 @@ describe('EditClient', () => {
       });
     });
 
-    it('should throw an error when ie is already used by another client', async() => {
-      // Arrange
-      await createClient.execute(data);
-      const client2 = await createClient.execute({ ...data, cnpj: '22426484000178', ie: '987654321' });
-
-      const editData: EditClientInputDto = {
-        ie: data.ie,
-      };
-
-      // Act & Assert
-      expect.assertions(1);
-      return sut.execute(client2.id, editData).catch((error) => {
-        expect(error).toBeInstanceOf(ClientDuplicateIeError);
-      });
-    });
-
     it('should throw an error when company does not exist', async() => {
       // Arrange
       const client = await createClient.execute(data);
@@ -145,7 +128,7 @@ describe('EditClient', () => {
       });
     });
 
-    it('should not throw an error when cnpj, ie and company are unchanged', async() => {
+    it('should not throw an error when cnpj and company are unchanged', async() => {
       // Arrange
       const client = await createClient.execute(data);
 
@@ -166,21 +149,6 @@ describe('EditClient', () => {
 
       const editData: EditClientInputDto = {
         cnpj: data.cnpj,
-      };
-
-      // Act
-      const result = await sut.execute(client.id, editData);
-
-      // Assert
-      expect(result).toEqual<SuccessMessage>({ message: 'Cliente editado com sucesso!' });
-    });
-
-    it('should not throw an error when ie is "changed" but remains the same', async() => {
-      // Arrange
-      const client = await createClient.execute(data);
-
-      const editData: EditClientInputDto = {
-        ie: '123456789',
       };
 
       // Act

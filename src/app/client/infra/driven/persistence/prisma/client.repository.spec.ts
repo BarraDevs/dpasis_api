@@ -141,7 +141,7 @@ describe('ClientRepositoryAdapterPrisma', () => {
       expect(savedClient?.resource?.id).toBe(client.props.id);
     });
 
-    it('should save multiple clients with unique cnpj and ie', async() => {
+    it('should save multiple clients with unique cnpj', async() => {
       // Arrange
       const client1 = Client.create({
         kind: 'PJ',
@@ -209,42 +209,6 @@ describe('ClientRepositoryAdapterPrisma', () => {
         kind: 'PJ',
         cnpj: duplicateCnpj, // Same CNPJ
         ie: '222.222.222.222',
-        group: 'Group B',
-        type: 'Basic',
-        generateInvoice: false,
-        companyName: 'Second Company Ltd',
-        fantasyName: 'Second Company',
-        owner: 'Jane Doe',
-        headquarters: 'Branch Office',
-        companyIds: [company.id],
-      });
-
-      // Act & Assert
-      await sut.save(client1);
-      await expect(sut.save(client2)).rejects.toThrow();
-    });
-
-    it('should throw error when trying to save client with duplicate ie', async() => {
-      // Arrange
-      const duplicateIe = '123.456.789.012';
-      const client1 = Client.create({
-        kind: 'PJ',
-        cnpj: '11.938.884/0001-46',
-        ie: duplicateIe,
-        group: 'Group A',
-        type: 'Premium',
-        generateInvoice: true,
-        companyName: 'First Company Ltd',
-        fantasyName: 'First Company',
-        owner: 'John Doe',
-        headquarters: 'Main Office',
-        companyIds: [company.id],
-      });
-
-      const client2 = Client.create({
-        kind: 'PJ',
-        cnpj: '36.630.627/0001-73',
-        ie: duplicateIe, // Same IE
         group: 'Group B',
         type: 'Basic',
         generateInvoice: false,
