@@ -287,6 +287,46 @@ describe('CompanyController', () => {
     });
   });
 
+  describe('updateStatus', () => {
+    it('should call updateCompanyStatusService with correct parameters', async() => {
+      // Arrange
+      const params = createMock<Params>({ id: 'company-to-update-status' });
+      const output = createMock<SuccessMessage>();
+      const updateCompanyStatusSpy = jest.spyOn(sut['updateCompanyStatusService'], 'execute').mockResolvedValue(output);
+
+      // Act
+      const result = await sut.updateStatus(params);
+
+      // Assert
+      expect(updateCompanyStatusSpy).toHaveBeenCalledWith(params.id);
+      expect(result).toEqual(output);
+    });
+
+    it('should propagate errors from updateCompanyStatusService', async() => {
+      // Arrange
+      const params = createMock<Params>({ id: 'company-id' });
+      const error = new Error('Status update failed');
+      jest.spyOn(sut['updateCompanyStatusService'], 'execute').mockRejectedValue(error);
+
+      // Act & Assert
+      await expect(sut.updateStatus(params)).rejects.toThrow('Status update failed');
+    });
+
+    it('should extract id from params correctly', async() => {
+      // Arrange
+      const params = createMock<Params>({ id: 'specific-id-789' });
+      const output = createMock<SuccessMessage>();
+      const updateCompanyStatusSpy = jest.spyOn(sut['updateCompanyStatusService'], 'execute').mockResolvedValue(output);
+
+      // Act
+      await sut.updateStatus(params);
+
+      // Assert
+      expect(updateCompanyStatusSpy).toHaveBeenCalledWith('specific-id-789');
+      expect(updateCompanyStatusSpy).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe('service dependencies', () => {
     it('should have all required services injected', () => {
       // Assert
@@ -294,6 +334,7 @@ describe('CompanyController', () => {
       expect(sut['findAllCompanyService']).toBeDefined();
       expect(sut['findCompanyByIdService']).toBeDefined();
       expect(sut['editCompanyService']).toBeDefined();
+      expect(sut['updateCompanyStatusService']).toBeDefined();
     });
 
     it('should maintain service instances', () => {
@@ -302,6 +343,7 @@ describe('CompanyController', () => {
       expect(typeof sut['findAllCompanyService'].execute).toBe('function');
       expect(typeof sut['findCompanyByIdService'].execute).toBe('function');
       expect(typeof sut['editCompanyService'].execute).toBe('function');
+      expect(typeof sut['updateCompanyStatusService'].execute).toBe('function');
     });
   });
 
@@ -328,6 +370,12 @@ describe('CompanyController', () => {
       // Assert
       expect(sut.update).toBeDefined();
       expect(sut.update.length).toBe(2); // Two parameters (params, body)
+    });
+
+    it('should have correct updateStatus method signature', () => {
+      // Assert
+      expect(sut.updateStatus).toBeDefined();
+      expect(sut.updateStatus.length).toBe(1); // One parameter (params)
     });
   });
 });
