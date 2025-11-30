@@ -9,6 +9,7 @@ import { EditClient } from 'src/app/client/application/usecases/edit-client/edit
 import { FindAllClientQueryDto } from 'src/app/client/application/usecases/find-all-client/dtos/find-all-client.dto';
 import { FindAllClient } from 'src/app/client/application/usecases/find-all-client/find-all-client.service';
 import { FindClientById } from 'src/app/client/application/usecases/find-client-by-id/find-client-by-id.service';
+import { UpdateClientStatus } from 'src/app/client/application/usecases/update-client-status/update-client-status.service';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
 import { Swagger } from 'src/infra/openapi/swagger';
 import { Params } from 'src/infra/validators/class-*/dtos/params/params.dto';
@@ -22,6 +23,7 @@ export class ClientController {
     private readonly findAllClientService: FindAllClient,
     private readonly findClientByIdService: FindClientById,
     private readonly editClientService: EditClient,
+    private readonly updateClientStatusService: UpdateClientStatus,
   ) {}
 
   @Post()
@@ -68,5 +70,17 @@ export class ClientController {
   })
   public update(@Param() params: Params, @Body() body: EditClientInputDto): Promise<SuccessMessage> {
     return this.editClientService.execute(params.id, body);
+  }
+
+  @Patch(':id/status')
+  @Swagger({
+    tags: ['Clientes'],
+    summary: 'Rota para ativar/desativar cliente',
+    applyBadRequest: true,
+    applyNotFound: true,
+    okResponse: SuccessMessage,
+  })
+  public updateStatus(@Param() params: Params): Promise<SuccessMessage> {
+    return this.updateClientStatusService.execute(params.id);
   }
 }

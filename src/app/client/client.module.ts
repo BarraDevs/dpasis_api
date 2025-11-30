@@ -6,6 +6,7 @@ import { CreateClient } from './application/usecases/create-client/create-client
 import { EditClient } from './application/usecases/edit-client/edit-client.service';
 import { FindAllClient } from './application/usecases/find-all-client/find-all-client.service';
 import { FindClientById } from './application/usecases/find-client-by-id/find-client-by-id.service';
+import { UpdateClientStatus } from './application/usecases/update-client-status/update-client-status.service';
 import { ClientController } from './infra/drivers/http/client.controller';
 
 @Module({
@@ -22,6 +23,7 @@ import { ClientController } from './infra/drivers/http/client.controller';
     EditClient,
     FindAllClient,
     FindClientById,
+    UpdateClientStatus,
   ],
   exports: [],
 })

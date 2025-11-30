@@ -46,4 +46,9 @@ export class Client {
     this._id = props.id!;
     this._props = props;
   }
+
+  public toggleStatus(): void {
+    this._props.active = !this._props.active;
+    this._props.updatedAt = new Date();
+  }
 }

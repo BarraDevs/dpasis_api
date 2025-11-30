@@ -67,4 +67,42 @@ describe('ClientEntity', () => {
       expect(client.props).toEqual(props);
     });
   });
+
+  describe('toggleStatus', () => {
+    it('should toggle the client status', () => {
+      // Arrange
+      const props = {
+        id: 'unique-client-id',
+        resourceId: 'resource-id',
+        kind: 'Type C',
+        cnpj: '56789012345678',
+        ie: '876543210',
+        group: 'Group C',
+        type: 'Type 3',
+        generateInvoice: true,
+        companyName: 'Company C',
+        fantasyName: 'Fantasy C',
+        owner: 'Owner C',
+        headquarters: 'Headquarters C',
+        active: false,
+        companyIds: [
+          'company-id-5',
+          'company-id-6',
+        ],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      const client = Client.load(props);
+
+      // Act & Assert
+      expect(client.props.active).toBe(false);
+
+      client.toggleStatus();
+      expect(client.props.active).toBe(true);
+
+      client.toggleStatus();
+      expect(client.props.active).toBe(false);
+    });
+  });
 });
