@@ -11,7 +11,7 @@ describe('SupplierRepositoryAdapterPrisma (Integration)', () => {
   let prisma: PrismaService;
 
   const supplierProps = {
-    cnpj: '99.888.777/0001-11',
+    cnpj: '02.832.358/0001-06',
     ie: '987.654.321.110',
     group: 'Teste',
     type: 'Teste',
@@ -46,6 +46,29 @@ describe('SupplierRepositoryAdapterPrisma (Integration)', () => {
     await prisma.$disconnect();
   });
 
+  describe('findById', () => {
+    it('should return a Supplier when found', async() => {
+      // Arrange
+      const supplier = Supplier.create(supplierProps);
+      await sut.save(supplier);
+
+      // Act
+      const foundSupplier = await sut.findById(supplier.props.id);
+
+      // Assert
+      expect(foundSupplier).toBeDefined();
+      expect(foundSupplier?.props).toEqual(supplier.props);
+    });
+
+    it('should return null when Supplier not found', async() => {
+      // Act
+      const foundSupplier = await sut.findById('non-existent-id');
+
+      // Assert
+      expect(foundSupplier).toBeNull();
+    });
+  });
+
   describe('save', () => {
     it('should create an Owner and a Supplier with the same ID', async() => {
       // Arrange
@@ -69,7 +92,6 @@ describe('SupplierRepositoryAdapterPrisma (Integration)', () => {
       });
       expect(savedSupplier).toBeDefined();
       expect(savedSupplier?.id).toBe(sharedId);
-      expect(savedSupplier?.cnpj).toBe(supplierProps.cnpj);
       expect(savedSupplier?.representative).toBe(supplierProps.representative);
 
       // 3. Verificar a relação no Owner
@@ -99,16 +121,6 @@ describe('SupplierRepositoryAdapterPrisma (Integration)', () => {
       // Act & Assert
       await expect(sut.save(supplier2)).rejects.toThrow();
     });
-
-    it('should throw an error when trying to save a Supplier with an existing IE', async() => {
-      // Arrange
-      const supplier1 = Supplier.create(supplierProps);
-      const supplier2 = Supplier.create({ ...supplierProps, cnpj: '11.222.333/0001-44' });
-      await sut.save(supplier1);
-
-      // Act & Assert
-      await expect(sut.save(supplier2)).rejects.toThrow();
-    });
   });
 
   describe('edit', () => {
@@ -131,7 +143,7 @@ describe('SupplierRepositoryAdapterPrisma (Integration)', () => {
       expect(updatedSupplier).toBeDefined();
       expect(updatedSupplier).toEqual<SupplierDto>({
         id: supplier.props.id,
-        cnpj: supplierProps.cnpj,
+        cnpj: '02832358000106',
         ie: supplierProps.ie,
         group: supplierProps.group,
         type: supplierProps.type,
@@ -148,7 +160,7 @@ describe('SupplierRepositoryAdapterPrisma (Integration)', () => {
       // Arrange
       const nonExistentSupplier = Supplier.load({
         id: 'non-existent-id',
-        cnpj: '11.222.333/0001-44',
+        cnpj: '43.850.499/0001-39',
         ie: '111.222.333.444',
         group: 'NonExistentGroup',
         type: 'NonExistentType',
@@ -169,8 +181,7 @@ describe('SupplierRepositoryAdapterPrisma (Integration)', () => {
       const supplier1 = Supplier.create(supplierProps);
       const supplier2 = Supplier.create({
         ...supplierProps,
-        ie: '111.222.333.444',
-        cnpj: '11.222.333/0001-44',
+        cnpj: '43.850.499/0001-39',
       });
       await sut.save(supplier1);
       await sut.save(supplier2);
@@ -178,26 +189,6 @@ describe('SupplierRepositoryAdapterPrisma (Integration)', () => {
       const editedSupplier2 = Supplier.load({
         ...supplier2.props,
         cnpj: supplier1.props.cnpj,
-      });
-
-      // Act & Assert
-      await expect(sut.edit(editedSupplier2)).rejects.toThrow();
-    });
-
-    it('should throw error when trying to change IE to an existing one', async() => {
-      // Arrange
-      const supplier1 = Supplier.create(supplierProps);
-      const supplier2 = Supplier.create({
-        ...supplierProps,
-        cnpj: '11.222.333/0001-44',
-        ie: '111.222.333.444',
-      });
-      await sut.save(supplier1);
-      await sut.save(supplier2);
-
-      const editedSupplier2 = Supplier.load({
-        ...supplier2.props,
-        ie: supplier1.props.ie,
       });
 
       // Act & Assert

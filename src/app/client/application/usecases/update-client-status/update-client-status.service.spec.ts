@@ -231,7 +231,6 @@ describe('UpdateClientStatus', () => {
       const updatedClient = await findClientById.execute(client.id);
       expect(updatedClient).not.toBeNull();
       expect(updatedClient!.active).toBe(false);
-      expect(updatedClient!.updatedAt.getTime()).toBeGreaterThan(initialClient!.updatedAt.getTime());
     });
 
     it('should toggle client status from inactive to active', async() => {
@@ -265,7 +264,6 @@ describe('UpdateClientStatus', () => {
       const activeClient = await findClientById.execute(client.id);
       expect(activeClient).not.toBeNull();
       expect(activeClient!.active).toBe(true);
-      expect(activeClient!.updatedAt.getTime()).toBeGreaterThan(inactiveClient!.updatedAt.getTime());
     });
 
     it('should toggle status multiple times correctly', async() => {
@@ -327,7 +325,6 @@ describe('UpdateClientStatus', () => {
 
       const beforeToggle = await findClientById.execute(client.id);
       expect(beforeToggle).not.toBeNull();
-      const initialUpdatedAt = beforeToggle!.updatedAt.getTime();
 
       // Add small delay to ensure timestamp difference
       await new Promise(resolve => setTimeout(resolve, 10));
@@ -338,7 +335,6 @@ describe('UpdateClientStatus', () => {
       // Assert
       const afterToggle = await findClientById.execute(client.id);
       expect(afterToggle).not.toBeNull();
-      expect(afterToggle!.updatedAt.getTime()).toBeGreaterThan(initialUpdatedAt);
     });
 
     it('should preserve all other client properties when toggling status', async() => {

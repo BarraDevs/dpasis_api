@@ -5,5 +5,4 @@ export interface ISupplierDao {
   findAll(queries: FindAllSupplierQueryDto): Promise<[SupplierDto[], number]>;
   findById(id: string): Promise<SupplierDto | null>;
   findByCnpj(cnpj: string): Promise<SupplierDto | null>;
-  findByIe(ie: string): Promise<SupplierDto | null>;
 }

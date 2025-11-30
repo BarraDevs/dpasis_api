@@ -98,7 +98,7 @@ model Client {
 model Supplier {
   id             String    @id
   cnpj           String    @unique @db.VarChar(256)
-  ie             String    @unique @db.VarChar(256)
+  ie             String    @db.VarChar(256)
   group          String    @db.VarChar(256)
   type           String    @db.VarChar(256)
   companyName    String    @db.VarChar(256)

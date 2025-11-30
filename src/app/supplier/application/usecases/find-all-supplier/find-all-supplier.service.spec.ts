@@ -29,7 +29,7 @@ describe('FindAllSupplier', () => {
     createSupplier = module.get(CreateSupplier);
 
     baseSupplierData = {
-      cnpj: '12.345.678/0001-90',
+      cnpj: '85.693.309/0001-67',
       ie: '123.456.789.012',
       group: 'Matéria Prima',
       type: 'Nacional',
@@ -46,7 +46,7 @@ describe('FindAllSupplier', () => {
     // Supplier 1: Technology, Nacional, Premium
     const supplier1 = await createSupplier.execute({
       ...baseSupplierData,
-      cnpj: '11.111.111/0001-11',
+      cnpj: '09.048.836/0001-30',
       ie: '111.111.111.111',
       group: 'Technology',
       type: 'Nacional',
@@ -59,7 +59,7 @@ describe('FindAllSupplier', () => {
     // Supplier 2: Industrial, Internacional, Standard
     const supplier2 = await createSupplier.execute({
       ...baseSupplierData,
-      cnpj: '22.222.222/0001-22',
+      cnpj: '34.145.406/0001-84',
       ie: '222.222.222.222',
       group: 'Industrial',
       type: 'Internacional',
@@ -72,7 +72,7 @@ describe('FindAllSupplier', () => {
     // Supplier 3: Technology, Nacional, Premium
     const supplier3 = await createSupplier.execute({
       ...baseSupplierData,
-      cnpj: '33.333.333/0001-33',
+      cnpj: '74.097.670/0001-04',
       ie: '333.333.333.333',
       group: 'Technology',
       type: 'Nacional',
@@ -85,7 +85,7 @@ describe('FindAllSupplier', () => {
     // Supplier 4: Raw Materials, Regional, Basic
     const supplier4 = await createSupplier.execute({
       ...baseSupplierData,
-      cnpj: '44.444.444/0001-44',
+      cnpj: '74.678.725/0001-70',
       ie: '444.444.444.444',
       group: 'Raw Materials',
       type: 'Regional',
@@ -98,7 +98,7 @@ describe('FindAllSupplier', () => {
     // Supplier 5: Services, Internacional, Standard
     const supplier5 = await createSupplier.execute({
       ...baseSupplierData,
-      cnpj: '55.555.555/0001-55',
+      cnpj: '38.570.883/0001-48',
       ie: '555.555.555.555',
       group: 'Services',
       type: 'Internacional',
@@ -111,7 +111,7 @@ describe('FindAllSupplier', () => {
     // Supplier 6: Industrial, Nacional, Premium
     const supplier6 = await createSupplier.execute({
       ...baseSupplierData,
-      cnpj: '66.666.666/0001-66',
+      cnpj: '68.383.796/0001-42',
       ie: '666.666.666.666',
       group: 'Industrial',
       type: 'Nacional',
@@ -212,23 +212,23 @@ describe('FindAllSupplier', () => {
   describe('Integration tests - Individual filter tests', () => {
     it('should filter by cnpj - exact match', async() => {
       // Act
-      const result = await sut.execute({ cnpj: '11.111.111/0001-11' });
+      const result = await sut.execute({ cnpj: '09048836000130' });
 
       // Assert
       expect(result.totalItems).toBe(1);
       expect(result.data).toHaveLength(1);
-      expect(result.data[0].cnpj).toBe('11.111.111/0001-11');
+      expect(result.data[0].cnpj).toBe('09048836000130');
       expect(result.data[0].id).toBe(createdSupplierIds[0]);
     });
 
     it('should filter by cnpj - partial match', async() => {
       // Act
-      const result = await sut.execute({ cnpj: '22.222' });
+      const result = await sut.execute({ cnpj: '34145' });
 
       // Assert
       expect(result.totalItems).toBe(1);
       expect(result.data).toHaveLength(1);
-      expect(result.data[0].cnpj).toBe('22.222.222/0001-22');
+      expect(result.data[0].cnpj).toBe('34145406000184');
     });
 
     it('should filter by ie - exact match', async() => {
@@ -328,6 +328,27 @@ describe('FindAllSupplier', () => {
       expect(result.data).toHaveLength(1);
       expect(result.data[0].representative).toBe('John Alpha Smith');
     });
+
+    it('should filter by active status - true', async() => {
+      // Act
+      const result = await sut.execute({ active: true });
+
+      // Assert
+      expect(result.totalItems).toBe(6);
+      expect(result.data).toHaveLength(6);
+      result.data.forEach(supplier => {
+        expect(supplier.active).toBe(true);
+      });
+    });
+
+    it('should filter by active status - false', async() => {
+      // Act
+      const result = await sut.execute({ active: false });
+
+      // Assert
+      expect(result.totalItems).toBe(0);
+      expect(result.data).toHaveLength(0);
+    });
   });
 
   describe('Integration tests - Case insensitive filters', () => {
@@ -425,14 +446,14 @@ describe('FindAllSupplier', () => {
     it('should filter by exact CNPJ AND IE', async() => {
       // Act
       const result = await sut.execute({
-        cnpj: '44.444.444/0001-44',
+        cnpj: '74678725000170',
         ie: '444.444.444.444',
       });
 
       // Assert
       expect(result.totalItems).toBe(1);
       expect(result.data).toHaveLength(1);
-      expect(result.data[0].cnpj).toBe('44.444.444/0001-44');
+      expect(result.data[0].cnpj).toBe('74678725000170');
       expect(result.data[0].ie).toBe('444.444.444.444');
     });
   });

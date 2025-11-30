@@ -334,6 +334,40 @@ describe('SupplierDaoAdapterPrisma', () => {
         expect(suppliers[0].id).toBe('supplier-1');
         expect(suppliers[0].representative).toBe('John Alpha Smith');
       });
+
+      it('should filter by active status - true', async() => {
+        // Arrange
+        const queries: FindAllSupplierQueryDto = {
+          active: true,
+        };
+
+        // Act
+        const [suppliers, total] = await sut.findAll(queries);
+
+        // Assert
+        expect(total).toBe(4); // suppliers 1, 2, 4, 6
+        expect(suppliers).toHaveLength(4);
+        suppliers.forEach(supplier => {
+          expect(supplier.active).toBe(true);
+        });
+      });
+
+      it('should filter by active status - false', async() => {
+        // Arrange
+        const queries: FindAllSupplierQueryDto = {
+          active: false,
+        };
+
+        // Act
+        const [suppliers, total] = await sut.findAll(queries);
+
+        // Assert
+        expect(total).toBe(2); // suppliers 3, 5
+        expect(suppliers).toHaveLength(2);
+        suppliers.forEach(supplier => {
+          expect(supplier.active).toBe(false);
+        });
+      });
     });
 
     describe('Case insensitive filter tests', () => {
@@ -695,55 +729,6 @@ describe('SupplierDaoAdapterPrisma', () => {
     it('should return null when supplier with CNPJ is not found', async() => {
       // Act
       const result = await sut.findByCnpj('99.999.999/0001-99');
-
-      // Assert
-      expect(result).toBeNull();
-    });
-  });
-
-  describe('findByIe', () => {
-    let supplier: Supplier;
-
-    beforeEach(async() => {
-      supplier = await prisma.supplier.create({
-        data: {
-          id: 'supplier-find-by-ie',
-          cnpj: '33.333.333/0001-33',
-          ie: '333333333',
-          group: 'IE Test Group',
-          type: 'IE Test Type',
-          companyName: 'IE Test Company',
-          fantasyName: 'IE Test Fantasy',
-          representative: 'IE Test Representative',
-          active: true,
-        },
-      });
-    });
-
-    it('should return the correct supplier when found by IE', async() => {
-      // Act
-      const result = await sut.findByIe(supplier.ie);
-
-      // Assert
-      expect(result).not.toBeNull();
-      expect(result).toEqual<SupplierDto>({
-        id: supplier.id,
-        cnpj: supplier.cnpj,
-        ie: supplier.ie,
-        group: supplier.group,
-        type: supplier.type,
-        companyName: supplier.companyName,
-        fantasyName: supplier.fantasyName,
-        representative: supplier.representative,
-        active: supplier.active,
-        createdAt: supplier.createdAt,
-        updatedAt: supplier.updatedAt,
-      });
-    });
-
-    it('should return null when supplier with IE is not found', async() => {
-      // Act
-      const result = await sut.findByIe('999999999');
 
       // Assert
       expect(result).toBeNull();

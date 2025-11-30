@@ -7,6 +7,18 @@ import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 export class SupplierRepositoryAdapterPrisma implements ISupplierRepository {
   constructor(private readonly prisma: PrismaService) {}
 
+  public async findById(id: string): Promise<Supplier | null> {
+    const supplierRecord = await this.prisma.supplier.findUnique({
+      where: { id },
+    });
+
+    if (!supplierRecord) {
+      return null;
+    }
+
+    return Supplier.load(supplierRecord);
+  }
+
   public async save(supplier: Supplier): Promise<void> {
     await this.prisma.supplier.create({
       data: {

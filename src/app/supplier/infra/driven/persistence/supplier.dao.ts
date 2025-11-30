@@ -21,6 +21,7 @@ export class SupplierDaoAdapterPrisma implements ISupplierDao {
         { companyName: queries.companyName ? { contains: queries.companyName, mode: 'insensitive' } : undefined },
         { fantasyName: queries.fantasyName ? { contains: queries.fantasyName, mode: 'insensitive' } : undefined },
         { representative: queries.representative ? { contains: queries.representative, mode: 'insensitive' } : undefined },
+        { active: queries.active !== undefined ? queries.active : undefined },
       ],
     };
 
@@ -46,12 +47,6 @@ export class SupplierDaoAdapterPrisma implements ISupplierDao {
   public async findByCnpj(cnpj: string): Promise<SupplierDto | null> {
     return this.prisma.supplier.findUnique({
       where: { cnpj },
-    });
-  }
-
-  public async findByIe(ie: string): Promise<SupplierDto | null> {
-    return this.prisma.supplier.findUnique({
-      where: { ie },
     });
   }
 }

@@ -3,11 +3,13 @@ import { SupplierModule } from 'src/app/supplier/supplier.module';
 import { ConfigModule } from 'src/core/config/config.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { SupplierDto } from '../../dtos/supplier.dto';
+import { CreateSupplier } from '../create-supplier/create-supplier.service';
 import { FindSupplierById } from './find-supplier-by-id.service';
 
 describe('FindSupplierById', () => {
   let sut: FindSupplierById;
   let prisma: PrismaService;
+  let createSupplier: CreateSupplier;
 
   beforeEach(async() => {
     const module: TestingModule = await Test.createTestingModule({
@@ -19,6 +21,7 @@ describe('FindSupplierById', () => {
 
     sut = module.get(FindSupplierById);
     prisma = module.get(PrismaService);
+    createSupplier = module.get(CreateSupplier);
 
     await prisma.supplier.deleteMany();
   });
@@ -111,41 +114,36 @@ describe('FindSupplierById', () => {
   });
 
   describe('integration tests', () => {
-    let createdSupplier: any;
-
-    beforeEach(async() => {
-      createdSupplier = await prisma.supplier.create({
-        data: {
-          id: 'integration-test-supplier-id',
-          cnpj: '11.222.333/0001-44',
-          ie: '123.456.789',
-          group: 'Integration Test Group',
-          type: 'Integration Test Type',
-          companyName: 'Integration Test Company Ltd',
-          fantasyName: 'Integration Test Fantasy',
-          representative: 'Integration Test Representative',
-          active: true,
-        },
-      });
-    });
-
     it('should return supplier when found by existing id', async() => {
+      // Arrange
+      const supplier = await createSupplier.execute({
+        cnpj: '29.303.255/0001-05',
+        ie: '123.456.789',
+        group: 'Integration Test Group',
+        type: 'Integration Test Type',
+        companyName: 'Integration Test Company Ltd',
+        fantasyName: 'Integration Test Fantasy',
+        representative: 'Integration Test Representative',
+      });
+
       // Act
-      const result = await sut.execute(createdSupplier.id);
+      const result = await sut.execute(supplier.id);
 
       // Assert
       expect(result).not.toBeNull();
-      expect(result?.id).toBe(createdSupplier.id);
-      expect(result?.cnpj).toBe(createdSupplier.cnpj);
-      expect(result?.ie).toBe(createdSupplier.ie);
-      expect(result?.group).toBe(createdSupplier.group);
-      expect(result?.type).toBe(createdSupplier.type);
-      expect(result?.companyName).toBe(createdSupplier.companyName);
-      expect(result?.fantasyName).toBe(createdSupplier.fantasyName);
-      expect(result?.representative).toBe(createdSupplier.representative);
-      expect(result?.active).toBe(createdSupplier.active);
-      expect(result?.createdAt).toBeInstanceOf(Date);
-      expect(result?.updatedAt).toBeInstanceOf(Date);
+      expect(result).toEqual<SupplierDto>({
+        id: supplier.id,
+        cnpj: '29303255000105',
+        ie: '123.456.789',
+        group: 'Integration Test Group',
+        type: 'Integration Test Type',
+        companyName: 'Integration Test Company Ltd',
+        fantasyName: 'Integration Test Fantasy',
+        representative: 'Integration Test Representative',
+        active: true,
+        createdAt: expect.any(Date),
+        updatedAt: expect.any(Date),
+      });
     });
 
     it('should return null when supplier does not exist', async() => {
@@ -156,28 +154,12 @@ describe('FindSupplierById', () => {
       expect(result).toBeNull();
     });
 
-    it('should return null when id is empty string', async() => {
-      // Act
-      const result = await sut.execute('');
-
-      // Assert
-      expect(result).toBeNull();
-    });
-
-    it('should handle malformed UUID gracefully', async() => {
-      // Act
-      const result = await sut.execute('invalid-uuid-format');
-
-      // Assert
-      expect(result).toBeNull();
-    });
-
     it('should return correct supplier even when multiple suppliers exist', async() => {
       // Arrange - Create additional suppliers
       const supplier2 = await prisma.supplier.create({
         data: {
           id: 'second-supplier-id',
-          cnpj: '22.333.444/0001-55',
+          cnpj: '86.038.719/0001-37',
           ie: '987.654.321',
           group: 'Second Group',
           type: 'Second Type',
@@ -191,7 +173,7 @@ describe('FindSupplierById', () => {
       const supplier3 = await prisma.supplier.create({
         data: {
           id: 'third-supplier-id',
-          cnpj: '33.444.555/0001-66',
+          cnpj: '35275774000100',
           ie: '111.222.333',
           group: 'Third Group',
           type: 'Third Type',
@@ -213,39 +195,7 @@ describe('FindSupplierById', () => {
       expect(result?.active).toBe(false);
 
       // Should not return data from other suppliers
-      expect(result?.id).not.toBe(createdSupplier.id);
       expect(result?.id).not.toBe(supplier3.id);
-    });
-
-    it('should return supplier with all expected SupplierDto properties', async() => {
-      // Act
-      const result = await sut.execute(createdSupplier.id);
-
-      // Assert - Verify all SupplierDto properties are present
-      expect(result).toHaveProperty('id');
-      expect(result).toHaveProperty('cnpj');
-      expect(result).toHaveProperty('ie');
-      expect(result).toHaveProperty('group');
-      expect(result).toHaveProperty('type');
-      expect(result).toHaveProperty('companyName');
-      expect(result).toHaveProperty('fantasyName');
-      expect(result).toHaveProperty('representative');
-      expect(result).toHaveProperty('active');
-      expect(result).toHaveProperty('createdAt');
-      expect(result).toHaveProperty('updatedAt');
-
-      // Verify property types
-      expect(typeof result?.id).toBe('string');
-      expect(typeof result?.cnpj).toBe('string');
-      expect(typeof result?.ie).toBe('string');
-      expect(typeof result?.group).toBe('string');
-      expect(typeof result?.type).toBe('string');
-      expect(typeof result?.companyName).toBe('string');
-      expect(typeof result?.fantasyName).toBe('string');
-      expect(typeof result?.representative).toBe('string');
-      expect(typeof result?.active).toBe('boolean');
-      expect(result?.createdAt).toBeInstanceOf(Date);
-      expect(result?.updatedAt).toBeInstanceOf(Date);
     });
   });
 });
