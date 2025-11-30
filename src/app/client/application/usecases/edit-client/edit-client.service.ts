@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Client } from 'src/app/client/domain/entities/client.entity';
-import { ClientNotFoundError } from 'src/app/client/domain/errors/client-not-found';
+import { ClientNotFoundError } from 'src/app/client/domain/errors/client-not-found.error';
 import { ClientDuplicateCnpjError } from 'src/app/client/domain/errors/duplicate-cnpj.error';
 import { ClientDuplicateIeError } from 'src/app/client/domain/errors/duplicate-ie.error';
 import { FindCompanyById } from 'src/app/company/application/usecases/find-company-by-id/find-company-by-id.service';

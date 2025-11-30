@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ClientModule } from 'src/app/client/client.module';
-import { ClientNotFoundError } from 'src/app/client/domain/errors/client-not-found';
+import { ClientNotFoundError } from 'src/app/client/domain/errors/client-not-found.error';
 import { ClientDuplicateCnpjError } from 'src/app/client/domain/errors/duplicate-cnpj.error';
 import { ClientDuplicateIeError } from 'src/app/client/domain/errors/duplicate-ie.error';
 import { CreateCompany } from 'src/app/company/application/usecases/create-company/create-company.service';

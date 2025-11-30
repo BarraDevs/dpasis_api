@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { ClientNotFoundError } from 'src/app/client/domain/errors/client-not-found';
+import { ClientNotFoundError } from 'src/app/client/domain/errors/client-not-found.error';
 import { TOKENS } from 'src/core/di/token';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
 import type { IClientRepository } from '../../persistence/repository/client-repository.interface';

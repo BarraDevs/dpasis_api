@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ClientModule } from 'src/app/client/client.module';
 import { Client } from 'src/app/client/domain/entities/client.entity';
-import { ClientNotFoundError } from 'src/app/client/domain/errors/client-not-found';
+import { ClientNotFoundError } from 'src/app/client/domain/errors/client-not-found.error';
 import { CreateCompany } from 'src/app/company/application/usecases/create-company/create-company.service';
 import { ConfigModule } from 'src/core/config/config.module';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
