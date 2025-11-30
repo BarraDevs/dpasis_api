@@ -52,6 +52,5 @@ export class Client {
 
   public toggleStatus(): void {
     this._props.active = !this._props.active;
-    this._props.updatedAt = new Date();
   }
 }

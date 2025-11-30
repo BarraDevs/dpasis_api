@@ -32,7 +32,7 @@ export class EditClient {
     });
 
     if (data.cnpj && client.props.cnpj !== clientData.cnpj) {
-      const existingClientWithCnpj = await this.clientDao.findByCnpj(data.cnpj);
+      const existingClientWithCnpj = await this.clientDao.findByCnpj(client.props.cnpj);
       if (existingClientWithCnpj) {
         throw new ClientDuplicateCnpjError();
       }
