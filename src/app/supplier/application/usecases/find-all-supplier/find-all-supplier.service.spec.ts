@@ -634,6 +634,291 @@ describe('FindAllSupplier', () => {
     });
   });
 
+  describe('Integration tests - Filter by companyIds', () => {
+    it('should filter by single companyId - Company 1', async() => {
+      // Act
+      const result = await sut.execute({ companyIds: [companyId1] });
+
+      // Assert
+      expect(result.totalItems).toBe(3); // suppliers 2, 3, 6 (have Company 1)
+      expect(result.data).toHaveLength(3);
+
+      const supplierIds = result.data.map(s => s.id).sort();
+      const expectedIds = [createdSupplierIds[1], createdSupplierIds[2], createdSupplierIds[5]].sort();
+      expect(supplierIds).toEqual(expectedIds);
+
+      // Verify each supplier has Company 1
+      result.data.forEach(supplier => {
+        const companyIds = supplier.companies.map(c => c.id);
+        expect(companyIds).toContain(companyId1);
+      });
+    });
+
+    it('should filter by single companyId - Company 2', async() => {
+      // Act
+      const result = await sut.execute({ companyIds: [companyId2] });
+
+      // Assert
+      expect(result.totalItems).toBe(3); // suppliers 3, 4, 6 (have Company 2)
+      expect(result.data).toHaveLength(3);
+
+      const supplierIds = result.data.map(s => s.id).sort();
+      const expectedIds = [createdSupplierIds[2], createdSupplierIds[3], createdSupplierIds[5]].sort();
+      expect(supplierIds).toEqual(expectedIds);
+
+      // Verify each supplier has Company 2
+      result.data.forEach(supplier => {
+        const companyIds = supplier.companies.map(c => c.id);
+        expect(companyIds).toContain(companyId2);
+      });
+    });
+
+    it('should filter by single companyId - Company 3', async() => {
+      // Act
+      const result = await sut.execute({ companyIds: [companyId3] });
+
+      // Assert
+      expect(result.totalItems).toBe(2); // suppliers 5, 6 (have Company 3)
+      expect(result.data).toHaveLength(2);
+
+      const supplierIds = result.data.map(s => s.id).sort();
+      const expectedIds = [createdSupplierIds[4], createdSupplierIds[5]].sort();
+      expect(supplierIds).toEqual(expectedIds);
+
+      // Verify each supplier has Company 3
+      result.data.forEach(supplier => {
+        const companyIds = supplier.companies.map(c => c.id);
+        expect(companyIds).toContain(companyId3);
+      });
+    });
+
+    it('should filter by multiple companyIds - Companies 1 and 2', async() => {
+      // Act
+      const result = await sut.execute({ companyIds: [companyId1, companyId2] });
+
+      // Assert
+      expect(result.totalItems).toBe(4); // suppliers 2, 3, 4, 6 (have Company 1 OR 2)
+      expect(result.data).toHaveLength(4);
+
+      const supplierIds = result.data.map(s => s.id).sort();
+      const expectedIds = [
+        createdSupplierIds[1],
+        createdSupplierIds[2],
+        createdSupplierIds[3],
+        createdSupplierIds[5],
+      ].sort();
+      expect(supplierIds).toEqual(expectedIds);
+    });
+
+    it('should filter by multiple companyIds - Companies 2 and 3', async() => {
+      // Act
+      const result = await sut.execute({ companyIds: [companyId2, companyId3] });
+
+      // Assert
+      expect(result.totalItems).toBe(4); // suppliers 3, 4, 5, 6 (have Company 2 OR 3)
+      expect(result.data).toHaveLength(4);
+
+      const supplierIds = result.data.map(s => s.id).sort();
+      const expectedIds = [
+        createdSupplierIds[2],
+        createdSupplierIds[3],
+        createdSupplierIds[4],
+        createdSupplierIds[5],
+      ].sort();
+      expect(supplierIds).toEqual(expectedIds);
+    });
+
+    it('should filter by all companyIds', async() => {
+      // Act
+      const result = await sut.execute({ companyIds: [companyId1, companyId2, companyId3] });
+
+      // Assert
+      expect(result.totalItems).toBe(5); // All suppliers except supplier 1 (which has no companies)
+      expect(result.data).toHaveLength(5);
+
+      const supplierIds = result.data.map(s => s.id).sort();
+      const expectedIds = [
+        createdSupplierIds[1],
+        createdSupplierIds[2],
+        createdSupplierIds[3],
+        createdSupplierIds[4],
+        createdSupplierIds[5],
+      ].sort();
+      expect(supplierIds).toEqual(expectedIds);
+    });
+
+    it('should return empty when filtering by non-existent companyId', async() => {
+      // Act
+      const result = await sut.execute({ companyIds: ['non-existent-company-id'] });
+
+      // Assert
+      expect(result.totalItems).toBe(0);
+      expect(result.data).toHaveLength(0);
+    });
+
+    it('should return all suppliers when companyIds is empty array', async() => {
+      // Act
+      const result = await sut.execute({ companyIds: [] });
+
+      // Assert
+      expect(result.totalItems).toBe(6); // Should return all suppliers (empty array is ignored)
+      expect(result.data).toHaveLength(6);
+    });
+
+    it('should combine companyIds filter with group filter', async() => {
+      // Act
+      const result = await sut.execute({
+        companyIds: [companyId1],
+        group: 'Technology',
+      });
+
+      // Assert
+      expect(result.totalItems).toBe(1); // Only supplier 3 (has Company 1 AND Technology group)
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0].id).toBe(createdSupplierIds[2]);
+      expect(result.data[0].group).toBe('Technology');
+    });
+
+    it('should combine companyIds filter with type filter', async() => {
+      // Act
+      const result = await sut.execute({
+        companyIds: [companyId2],
+        type: 'Nacional',
+      });
+
+      // Assert
+      expect(result.totalItems).toBe(2); // suppliers 3, 6 (have Company 2 AND Nacional)
+      expect(result.data).toHaveLength(2);
+
+      const supplierIds = result.data.map(s => s.id).sort();
+      const expectedIds = [createdSupplierIds[2], createdSupplierIds[5]].sort();
+      expect(supplierIds).toEqual(expectedIds);
+
+      result.data.forEach(supplier => {
+        expect(supplier.type).toBe('Nacional');
+      });
+    });
+
+    it('should combine companyIds filter with active filter', async() => {
+      // Arrange - First, deactivate one supplier
+      const supplierToDeactivate = await prisma.supplier.findUnique({
+        where: { id: createdSupplierIds[1] },
+      });
+      await prisma.supplier.update({
+        where: { id: createdSupplierIds[1] },
+        data: { active: !supplierToDeactivate!.active },
+      });
+
+      // Act
+      const result = await sut.execute({
+        companyIds: [companyId1],
+        active: true,
+      });
+
+      // Assert
+      expect(result.totalItems).toBe(2); // suppliers 3, 6 (have Company 1 AND active)
+      expect(result.data).toHaveLength(2);
+
+      result.data.forEach(supplier => {
+        expect(supplier.active).toBe(true);
+        const companyIds = supplier.companies.map(c => c.id);
+        expect(companyIds).toContain(companyId1);
+      });
+
+      // Cleanup - restore original state
+      await prisma.supplier.update({
+        where: { id: createdSupplierIds[1] },
+        data: { active: !supplierToDeactivate!.active },
+      });
+    });
+
+    it('should combine companyIds with multiple string filters', async() => {
+      // Act
+      const result = await sut.execute({
+        companyIds: [companyId1, companyId2],
+        group: 'Technology',
+        type: 'Nacional',
+      });
+
+      // Assert
+      expect(result.totalItems).toBe(1); // Only supplier 3 (has Company 1/2, Technology, and Nacional)
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0].id).toBe(createdSupplierIds[2]);
+    });
+
+    it('should return empty when companyIds filter does not match with other filters', async() => {
+      // Act
+      const result = await sut.execute({
+        companyIds: [companyId3],
+        group: 'Technology', // No Technology supplier has only Company 3
+      });
+
+      // Assert
+      expect(result.totalItems).toBe(0);
+      expect(result.data).toHaveLength(0);
+    });
+
+    it('should combine pagination with companyIds filter', async() => {
+      // Act
+      const result = await sut.execute({
+        companyIds: [companyId1],
+        page: 1,
+        size: 2,
+      });
+
+      // Assert
+      expect(result.totalItems).toBe(3); // Total suppliers with Company 1
+      expect(result.data).toHaveLength(2); // Page size
+      expect(result.currentPage).toBe(1);
+      expect(result.totalPages).toBe(2);
+      expect(result.itemsPerPage).toBe(2);
+    });
+
+    it('should combine pagination with multiple companyIds', async() => {
+      // Act
+      const result = await sut.execute({
+        companyIds: [companyId2, companyId3],
+        page: 2,
+        size: 2,
+      });
+
+      // Assert
+      expect(result.totalItems).toBe(4); // suppliers 3, 4, 5, 6 (have Company 2 or 3)
+      expect(result.data).toHaveLength(2); // Page size
+      expect(result.currentPage).toBe(2);
+      expect(result.totalPages).toBe(2);
+    });
+
+    it('should verify correct companies are returned when filtering by companyIds', async() => {
+      // Act
+      const result = await sut.execute({ companyIds: [companyId2] });
+
+      // Assert
+      expect(result.totalItems).toBe(3); // suppliers 3, 4, 6
+
+      // Verify each supplier has Company 2 in their companies array
+      result.data.forEach(supplier => {
+        const company2 = supplier.companies.find(c => c.id === companyId2);
+        expect(company2).toBeDefined();
+        expect(company2?.name).toBe('Test Company 2');
+      });
+    });
+
+    it('should handle companyIds filter with pagination beyond results', async() => {
+      // Act
+      const result = await sut.execute({
+        companyIds: [companyId3],
+        page: 5,
+        size: 2,
+      });
+
+      // Assert
+      expect(result.totalItems).toBe(2); // Total suppliers with Company 3
+      expect(result.data).toHaveLength(0); // No results on page 5
+      expect(result.currentPage).toBe(5);
+    });
+  });
+
   describe('Integration tests - Company associations', () => {
     it('should return suppliers with empty companies array', async() => {
       // Act

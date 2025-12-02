@@ -9,6 +9,7 @@ import { EditSupplier } from 'src/app/supplier/application/usecases/edit-supplie
 import { FindAllSupplierQueryDto } from 'src/app/supplier/application/usecases/find-all-supplier/dtos/find-all-supplier.dto';
 import { FindAllSupplier } from 'src/app/supplier/application/usecases/find-all-supplier/find-all-supplier.service';
 import { FindSupplierById } from 'src/app/supplier/application/usecases/find-supplier-by-id/find-supplier-by-id.service';
+import { UpdateSupplierStatus } from 'src/app/supplier/application/usecases/update-supplier-status/update-supplier-status.service';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
 import { Swagger } from 'src/infra/openapi/swagger';
 import { Params } from 'src/infra/validators/class-*/dtos/params/params.dto';
@@ -22,6 +23,7 @@ export class SupplierController {
     private readonly findAllSupplierService: FindAllSupplier,
     private readonly findSupplierByIdService: FindSupplierById,
     private readonly editSupplierService: EditSupplier,
+    private readonly updateSupplierStatusService: UpdateSupplierStatus,
   ) {}
 
   @Post()
@@ -68,5 +70,17 @@ export class SupplierController {
   })
   public update(@Param() params: Params, @Body() body: EditSupplierInputDto): Promise<SuccessMessage> {
     return this.editSupplierService.execute(params.id, body);
+  }
+
+  @Patch(':id/status')
+  @Swagger({
+    tags: ['Fornecedores'],
+    summary: 'Rota para ativar/desativar fornecedor',
+    applyBadRequest: true,
+    applyNotFound: true,
+    okResponse: SuccessMessage,
+  })
+  public async updateStatus(@Param() params: Params): Promise<SuccessMessage> {
+    return this.updateSupplierStatusService.execute(params.id);
   }
 }
