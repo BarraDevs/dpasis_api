@@ -1,5 +1,7 @@
+import { createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ClientModule } from 'src/app/client/client.module';
+import { ClientNotFoundError } from 'src/app/client/domain/errors/client-not-found.error';
 import { CreateCompany } from 'src/app/company/application/usecases/create-company/create-company.service';
 import { ConfigModule } from 'src/core/config/config.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
@@ -63,26 +65,39 @@ describe('FindClientById', () => {
   });
 
   describe('unit tests', () => {
-    it('should call clientDao with correct arguments', async() => {
+    it('should throw ClientNotFoundError when client does not exist', async() => {
       // Arrange
-      const id = 'client-id';
-      const clientDaoSpy = jest.spyOn(sut['clientDao'], 'findById');
+      const nonExistentId = 'non-existent-id';
+      jest.spyOn(sut['clientDao'], 'findById').mockResolvedValue(null);
+
+      // Act & Assert
+      expect.assertions(2);
+      await expect(sut.execute(nonExistentId)).rejects.toBeInstanceOf(ClientNotFoundError);
+      expect(sut['clientDao'].findById).toHaveBeenCalledWith(nonExistentId);
+    });
+
+    it('should return client data when client exists', async() => {
+      // Arrange
+      const client = createMock<ClientDto>();
+      const findByIdSpy = jest.spyOn(sut['clientDao'], 'findById').mockResolvedValue(client);
 
       // Act
-      await sut.execute(id);
+      const result = await sut.execute('existing-client-id');
 
       // Assert
-      expect(clientDaoSpy).toHaveBeenNthCalledWith(1, id);
+      expect(findByIdSpy).toHaveBeenCalledWith('existing-client-id');
+      expect(result).toBe(client);
     });
   });
 
   describe('integration tests', () => {
-    it('should return null if client is not found', async() => {
-      // Act
-      const result = await sut.execute('id');
+    it('should throw ClientNotFoundError when client does not exist', async() => {
+      // Arrange
+      const nonExistentId = 'non-existent-id';
 
-      // Assert
-      expect(result).toBeNull();
+      // Act & Assert
+      expect.assertions(1);
+      await expect(sut.execute(nonExistentId)).rejects.toBeInstanceOf(ClientNotFoundError);
     });
 
     it('should return correct dto when client is found', async() => {

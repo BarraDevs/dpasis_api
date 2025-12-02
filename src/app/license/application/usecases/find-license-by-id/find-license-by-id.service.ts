@@ -15,6 +15,7 @@ export class FindLicenseById {
     if (!license) {
       throw new LicenseNotFoundError();
     }
+
     return license;
   }
 }

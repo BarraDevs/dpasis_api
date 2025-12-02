@@ -1,4 +1,6 @@
+import { createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
+import { SupplierNotFoundError } from 'src/app/supplier/domain/errors/supplier-not-found.error';
 import { SupplierModule } from 'src/app/supplier/supplier.module';
 import { ConfigModule } from 'src/core/config/config.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
@@ -79,17 +81,14 @@ describe('FindSupplierById', () => {
   });
 
   describe('unit tests', () => {
-    it('should call supplierDao.findById with correct id', async() => {
+    it('should throw an error if supplier is not found', async() => {
       // Arrange
-      const supplierId = 'test-supplier-id';
+      const supplierId = 'non-existent-supplier-id';
       const findByIdSpy = jest.spyOn(sut['supplierDao'], 'findById').mockResolvedValue(null);
 
-      // Act
-      await sut.execute(supplierId);
-
-      // Assert
-      expect(findByIdSpy).toHaveBeenCalledWith(supplierId);
-      expect(findByIdSpy).toHaveBeenCalledTimes(1);
+      // Act & Assert
+      await expect(sut.execute(supplierId)).rejects.toBeInstanceOf(SupplierNotFoundError);
+      expect(sut['supplierDao'].findById).toHaveBeenCalledWith(supplierId);
 
       // Cleanup
       findByIdSpy.mockRestore();
@@ -97,46 +96,17 @@ describe('FindSupplierById', () => {
 
     it('should return supplier data when found', async() => {
       // Arrange
-      const supplierId = 'test-supplier-id';
-      const mockSupplier: SupplierDto = {
-        id: supplierId,
-        cnpj: '11.222.333/0001-44',
-        ie: '123.456.789',
-        group: 'Test Group',
-        type: 'Test Type',
-        companyName: 'Test Company Ltd',
-        fantasyName: 'Test Fantasy',
-        representative: 'Test Representative',
-        active: true,
-        createdAt: new Date('2024-01-01'),
-        updatedAt: new Date('2024-01-01'),
-        companies: [],
-      };
+      const supplierId = 'existing-supplier-id';
+      const expectedSupplier = createMock<SupplierDto>();
 
-      const findByIdSpy = jest.spyOn(sut['supplierDao'], 'findById').mockResolvedValue(mockSupplier);
+      const findByIdSpy = jest.spyOn(sut['supplierDao'], 'findById').mockResolvedValue(expectedSupplier);
 
       // Act
       const result = await sut.execute(supplierId);
 
       // Assert
-      expect(result).toEqual(mockSupplier);
       expect(findByIdSpy).toHaveBeenCalledWith(supplierId);
-
-      // Cleanup
-      findByIdSpy.mockRestore();
-    });
-
-    it('should return null when supplier is not found', async() => {
-      // Arrange
-      const supplierId = 'non-existent-id';
-      const findByIdSpy = jest.spyOn(sut['supplierDao'], 'findById').mockResolvedValue(null);
-
-      // Act
-      const result = await sut.execute(supplierId);
-
-      // Assert
-      expect(result).toBeNull();
-      expect(findByIdSpy).toHaveBeenCalledWith(supplierId);
+      expect(result).toEqual(expectedSupplier);
 
       // Cleanup
       findByIdSpy.mockRestore();
@@ -194,12 +164,9 @@ describe('FindSupplierById', () => {
       });
     });
 
-    it('should return null when supplier does not exist', async() => {
-      // Act
-      const result = await sut.execute('non-existent-supplier-id');
-
-      // Assert
-      expect(result).toBeNull();
+    it('should throw an error when supplier does not exist', async() => {
+      // Act & Assert
+      await expect(sut.execute('non-existent-supplier-id')).rejects.toBeInstanceOf(SupplierNotFoundError);
     });
 
     it('should return correct supplier even when multiple suppliers exist', async() => {

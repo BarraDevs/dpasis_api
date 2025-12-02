@@ -15,6 +15,7 @@ export class FindAttachmentById {
     if (!attachment) {
       throw new AttachmentNotFoundError();
     }
+
     return attachment;
   }
 }
