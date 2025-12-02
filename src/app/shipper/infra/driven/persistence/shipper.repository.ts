@@ -37,7 +37,8 @@ export class ShipperRepositoryAdapterPrisma implements IShipperRepository {
   }
 
   public async edit(shipper: Shipper): Promise<void> {
-    const { id, companyIds, ...data } = shipper.props;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { id, companyIds, updatedAt, ...data } = shipper.props;
 
     await this.prisma.shipper.update({
       where: { id },
