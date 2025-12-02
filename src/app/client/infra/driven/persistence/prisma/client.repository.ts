@@ -17,12 +17,10 @@ export class ClientRepositoryAdapterPrisma implements IClientRepository {
       return null;
     }
 
-    const client = Client.load({
+    return Client.load({
       ...clientRecord,
       companyIds: clientRecord.companies.map((company) => company.id),
     });
-
-    return client;
   }
 
   public async save(client: Client): Promise<void> {
@@ -37,7 +35,7 @@ export class ClientRepositoryAdapterPrisma implements IClientRepository {
         resource: {
           create: {
             // make sure to create a new resource with same client id
-            id: client.props.id,
+            id: data.id,
           },
         },
       },

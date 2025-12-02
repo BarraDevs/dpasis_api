@@ -1,3 +1,5 @@
+import { CompanySummaryDto } from 'src/app/company/application/dtos/company.dto';
+
 export class ClientDto {
   id: string;
   kind: string;
@@ -13,10 +15,5 @@ export class ClientDto {
   active: boolean;
   createdAt: Date;
   updatedAt: Date;
-  companies: ClientCompanyDto[];
-}
-
-class ClientCompanyDto {
-  id: string;
-  name: string;
+  companies: CompanySummaryDto[];
 }
