@@ -40,7 +40,7 @@ export class Client {
   }
 
   public get props(): Readonly<ClientProps> {
-    return { ...this._props };
+    return { ...this._props, companyIds: [...this._props.companyIds] };
   }
 
   constructor(props: ClientProps) {

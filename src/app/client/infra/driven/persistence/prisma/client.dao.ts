@@ -46,7 +46,7 @@ export class ClientDaoAdapterPrisma implements IClientDao {
         { fantasyName: queries.fantasyName ? { contains: queries.fantasyName, mode: 'insensitive' } : undefined },
         { owner: queries.owner ? { contains: queries.owner, mode: 'insensitive' } : undefined },
         { headquarters: queries.headquarters ? { contains: queries.headquarters, mode: 'insensitive' } : undefined },
-        { companies: queries.companyIds ? { some: { id: { in: queries.companyIds } } } : undefined },
+        { companies: queries.companyIds?.length ? { some: { id: { in: queries.companyIds } } } : undefined },
         { active: queries.active !== undefined ? queries.active : undefined },
       ],
     };
