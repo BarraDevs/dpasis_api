@@ -68,8 +68,10 @@ model Company {
 
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
+
   clients   Client[]
   suppliers Supplier[]
+  shippers  Shipper[]
 
   @@map("companies")
 }
@@ -221,8 +223,10 @@ model Shipper {
   neighborhood   String   @db.VarChar(256)
   city           String   @db.VarChar(256)
   state          String   @db.VarChar(256)
+  active         Boolean
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+  companies      Company[]
 
   @@map("shippers")
 }

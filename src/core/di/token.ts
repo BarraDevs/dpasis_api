@@ -9,7 +9,6 @@ const TOKENS = {
   ContactDao: Symbol.for('ContactDao'),
   LicenseDao: Symbol.for('LicenseDao'),
   OwnerDao: Symbol.for('OwnerDao'),
-  ShipperDao: Symbol.for('ShipperDao'),
 
   CompanyDao: Symbol.for('CompanyDao'),
   CompanyRepository: Symbol.for('CompanyRepository'),
@@ -19,6 +18,9 @@ const TOKENS = {
 
   ItemDao: Symbol.for('ItemDao'),
   ItemRepository: Symbol.for('ItemRepository'),
+
+  ShipperDao: Symbol.for('ShipperDao'),
+  ShipperRepository: Symbol.for('ShipperRepository'),
 
   SupplierDao: Symbol.for('SupplierDao'),
   SupplierRepository: Symbol.for('SupplierRepository'),

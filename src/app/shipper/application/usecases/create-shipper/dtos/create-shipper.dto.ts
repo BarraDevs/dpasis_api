@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
+import { ArrayMinSize, IsArray, IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
 import { Trim } from 'src/infra/validators/class-*/decorators/trim/trim';
 
 export class CreateShipperInputDto {
@@ -79,6 +79,12 @@ export class CreateShipperInputDto {
   @MaxLength(256, { message: '$property deve ter no máximo $constraint1 caracteres' })
   @Trim()
   state: string;
+
+  @Trim()
+  @IsString({ message: '$property deve ser uma string', each: true })
+  @IsArray({ message: '$property deve ser um array' })
+  @ArrayMinSize(1, { message: '$property deve ter ao menos $constraint1 item' })
+  companyIds: string[];
 }
 
 export class CreateShipperOutputDto {
