@@ -13,6 +13,7 @@ describe('CreateSupplier', () => {
   let sut: CreateSupplier;
   let prisma: PrismaService;
   let findSupplierById: FindSupplierById;
+  let companyId: string;
 
   beforeEach(async() => {
     const module: TestingModule = await Test.createTestingModule({
@@ -27,10 +28,32 @@ describe('CreateSupplier', () => {
     findSupplierById = module.get(FindSupplierById);
 
     await prisma.supplier.deleteMany();
+    await prisma.company.deleteMany();
+
+    // Create a test company
+    const company = await prisma.company.create({
+      data: {
+        name: 'Test Company',
+        fantasyName: 'Test',
+        document: '12345678000190',
+        ie: '123456789',
+        zipCode: '12345678',
+        street: 'Test Street',
+        number: '123',
+        neighborhood: 'Test District',
+        city: 'Test City',
+        state: 'TS',
+        phone01: '1234567890',
+        email01: 'test@company.com',
+        active: true,
+      },
+    });
+    companyId = company.id;
   });
 
   afterEach(async() => {
     await prisma.supplier.deleteMany();
+    await prisma.company.deleteMany();
     await prisma.$disconnect();
   });
 
@@ -39,7 +62,7 @@ describe('CreateSupplier', () => {
   });
 
   describe('unit tests', () => {
-    it('should call supplierDao.findByCnpj and supplierRepository.save with correct values', async() => {
+    it('should call supplierDao.findByCnpj, findCompanyById and supplierRepository.save with correct values', async() => {
       // Arrange
       const createData: CreateSupplierInputDto = {
         cnpj: '55.967.002/0001-46',
@@ -49,9 +72,11 @@ describe('CreateSupplier', () => {
         companyName: 'Test Supplier Ltd',
         fantasyName: 'Test Supplier',
         representative: 'John Doe',
+        companyIds: [companyId],
       };
 
       const findByCnpjSpy = jest.spyOn(sut['supplierDao'], 'findByCnpj').mockResolvedValue(null);
+      const findCompanyByIdSpy = jest.spyOn(sut['findCompanyById'], 'execute').mockResolvedValue({} as any);
       const saveSpy = jest.spyOn(sut['supplierRepository'], 'save').mockResolvedValue();
 
       // Act
@@ -59,6 +84,7 @@ describe('CreateSupplier', () => {
 
       // Assert
       expect(findByCnpjSpy).toHaveBeenCalledWith('55967002000146'); // Sanitized CNPJ
+      expect(findCompanyByIdSpy).toHaveBeenCalledWith(companyId);
       expect(saveSpy).toHaveBeenCalledTimes(1);
       expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({
         props: expect.objectContaining({
@@ -69,6 +95,7 @@ describe('CreateSupplier', () => {
           companyName: createData.companyName,
           fantasyName: createData.fantasyName,
           representative: createData.representative,
+          companyIds: createData.companyIds,
           active: true,
         }),
       }));
@@ -86,9 +113,11 @@ describe('CreateSupplier', () => {
         companyName: 'Materials Supplier Ltd',
         fantasyName: 'Materials Supplier',
         representative: 'Jane Smith',
+        companyIds: [companyId],
       };
 
       jest.spyOn(sut['supplierDao'], 'findByCnpj').mockResolvedValue(null);
+      jest.spyOn(sut['findCompanyById'], 'execute').mockResolvedValue({} as any);
       const saveSpy = jest.spyOn(sut['supplierRepository'], 'save').mockResolvedValue();
 
       // Act
@@ -101,6 +130,7 @@ describe('CreateSupplier', () => {
       expect(savedSupplier.props.ie).toBe('987654321');
       expect(savedSupplier.props.group).toBe('Materials');
       expect(savedSupplier.props.type).toBe('National');
+      expect(savedSupplier.props.companyIds).toEqual([companyId]);
       expect(savedSupplier.props.active).toBe(true);
     });
 
@@ -114,6 +144,7 @@ describe('CreateSupplier', () => {
         companyName: 'Duplicate Supplier',
         fantasyName: 'Duplicate',
         representative: 'Duplicate Rep',
+        companyIds: [companyId],
       };
 
       const existingSupplier: SupplierDto = {
@@ -128,6 +159,7 @@ describe('CreateSupplier', () => {
         active: true,
         createdAt: new Date(),
         updatedAt: new Date(),
+        companies: [],
       };
 
       jest.spyOn(sut['supplierDao'], 'findByCnpj').mockResolvedValue(existingSupplier);
@@ -148,9 +180,11 @@ describe('CreateSupplier', () => {
         companyName: 'Sanitize Supplier',
         fantasyName: 'Sanitize',
         representative: 'Sanitize Rep',
+        companyIds: [companyId],
       };
 
       const findByCnpjSpy = jest.spyOn(sut['supplierDao'], 'findByCnpj').mockResolvedValue(null);
+      jest.spyOn(sut['findCompanyById'], 'execute').mockResolvedValue({} as any);
       jest.spyOn(sut['supplierRepository'], 'save').mockResolvedValue();
 
       // Act
@@ -170,9 +204,11 @@ describe('CreateSupplier', () => {
         companyName: 'Return Supplier',
         fantasyName: 'Return',
         representative: 'Return Rep',
+        companyIds: [companyId],
       };
 
       jest.spyOn(sut['supplierDao'], 'findByCnpj').mockResolvedValue(null);
+      jest.spyOn(sut['findCompanyById'], 'execute').mockResolvedValue({} as any);
       jest.spyOn(sut['supplierRepository'], 'save').mockResolvedValue();
 
       // Act
@@ -196,6 +232,7 @@ describe('CreateSupplier', () => {
         companyName: 'Integration Supplier Ltd',
         fantasyName: 'Integration Supplier',
         representative: 'Integration Rep',
+        companyIds: [companyId],
       };
 
       // Act
@@ -219,6 +256,9 @@ describe('CreateSupplier', () => {
         active: true,
         createdAt: createdSupplier!.createdAt,
         updatedAt: createdSupplier!.updatedAt,
+        companies: expect.arrayContaining([
+          expect.objectContaining({ id: companyId }),
+        ]),
       });
     });
 
@@ -232,6 +272,7 @@ describe('CreateSupplier', () => {
         companyName: 'Sanitize Test Supplier',
         fantasyName: 'Sanitize Test',
         representative: 'Sanitize Rep',
+        companyIds: [companyId],
       };
 
       // Act
@@ -253,6 +294,7 @@ describe('CreateSupplier', () => {
         companyName: 'Active Supplier',
         fantasyName: 'Active',
         representative: 'Active Rep',
+        companyIds: [companyId],
       };
 
       // Act
@@ -274,6 +316,7 @@ describe('CreateSupplier', () => {
         companyName: 'Timestamp Supplier',
         fantasyName: 'Timestamp',
         representative: 'Timestamp Rep',
+        companyIds: [companyId],
       };
 
       const beforeCreate = new Date();
@@ -304,6 +347,7 @@ describe('CreateSupplier', () => {
         companyName: 'First Supplier',
         fantasyName: 'First',
         representative: 'First Rep',
+        companyIds: [companyId],
       };
 
       const duplicateSupplier: CreateSupplierInputDto = {
@@ -314,6 +358,7 @@ describe('CreateSupplier', () => {
         companyName: 'Second Supplier',
         fantasyName: 'Second',
         representative: 'Second Rep',
+        companyIds: [companyId],
       };
 
       // Act
@@ -333,6 +378,7 @@ describe('CreateSupplier', () => {
         companyName: 'Format Supplier 1',
         fantasyName: 'Format 1',
         representative: 'Format Rep 1',
+        companyIds: [companyId],
       };
 
       const duplicateSupplier: CreateSupplierInputDto = {
@@ -343,6 +389,7 @@ describe('CreateSupplier', () => {
         companyName: 'Format Supplier 2',
         fantasyName: 'Format 2',
         representative: 'Format Rep 2',
+        companyIds: [companyId],
       };
 
       // Act
@@ -362,6 +409,7 @@ describe('CreateSupplier', () => {
         companyName: 'Multi Supplier 1',
         fantasyName: 'Multi 1',
         representative: 'Multi Rep 1',
+        companyIds: [companyId],
       };
 
       const supplier2: CreateSupplierInputDto = {
@@ -372,6 +420,7 @@ describe('CreateSupplier', () => {
         companyName: 'Multi Supplier 2',
         fantasyName: 'Multi 2',
         representative: 'Multi Rep 2',
+        companyIds: [companyId],
       };
 
       const supplier3: CreateSupplierInputDto = {
@@ -382,6 +431,7 @@ describe('CreateSupplier', () => {
         companyName: 'Multi Supplier 3',
         fantasyName: 'Multi 3',
         representative: 'Multi Rep 3',
+        companyIds: [companyId],
       };
 
       // Act
@@ -416,6 +466,7 @@ describe('CreateSupplier', () => {
         companyName: 'UUID Supplier',
         fantasyName: 'UUID',
         representative: 'UUID Rep',
+        companyIds: [companyId],
       };
 
       // Act
@@ -435,6 +486,7 @@ describe('CreateSupplier', () => {
         companyName: 'Output Supplier',
         fantasyName: 'Output',
         representative: 'Output Rep',
+        companyIds: [companyId],
       };
 
       // Act
@@ -457,10 +509,70 @@ describe('CreateSupplier', () => {
         companyName: 'Invalid Supplier',
         fantasyName: 'Invalid',
         representative: 'Invalid Rep',
+        companyIds: [companyId],
       };
 
       // Act & Assert
       await expect(sut.execute(createData)).rejects.toThrow();
+    });
+
+    it('should throw error when company does not exist', async() => {
+      // Arrange
+      const createData: CreateSupplierInputDto = {
+        cnpj: '34028316000103',
+        ie: '888888888',
+        group: 'Invalid Company Group',
+        type: 'Invalid Company Type',
+        companyName: 'Invalid Company Supplier',
+        fantasyName: 'Invalid Company',
+        representative: 'Invalid Company Rep',
+        companyIds: ['non-existent-company-id'],
+      };
+
+      // Act & Assert
+      await expect(sut.execute(createData)).rejects.toThrow();
+    });
+
+    it('should create supplier with multiple companies', async() => {
+      // Arrange
+      const company2 = await prisma.company.create({
+        data: {
+          name: 'Test Company 2',
+          fantasyName: 'Test 2',
+          document: '98765432000190',
+          ie: '987654321',
+          zipCode: '87654321',
+          street: 'Test Street 2',
+          number: '456',
+          neighborhood: 'Test District 2',
+          city: 'Test City 2',
+          state: 'T2',
+          phone01: '0987654321',
+          email01: 'test2@company.com',
+          active: true,
+        },
+      });
+
+      const createData: CreateSupplierInputDto = {
+        cnpj: '26637142000158',
+        ie: '999999999',
+        group: 'Multi Company Group',
+        type: 'Multi Company Type',
+        companyName: 'Multi Company Supplier',
+        fantasyName: 'Multi Company',
+        representative: 'Multi Company Rep',
+        companyIds: [companyId, company2.id],
+      };
+
+      // Act
+      const result = await sut.execute(createData);
+
+      // Assert
+      const createdSupplier = await findSupplierById.execute(result.id);
+      expect(createdSupplier).not.toBeNull();
+      expect(createdSupplier!.companies).toHaveLength(2);
+      expect(createdSupplier!.companies.map(c => c.id)).toContain(companyId);
+      expect(createdSupplier!.companies.map(c => c.id)).toContain(company2.id);
     });
   });
 });

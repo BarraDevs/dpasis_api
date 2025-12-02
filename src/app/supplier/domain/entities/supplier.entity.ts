@@ -16,6 +16,7 @@ type SupplierCreateProps = {
   companyName: string;
   fantasyName: string;
   representative: string;
+  companyIds: string[];
 };
 
 export class Supplier {

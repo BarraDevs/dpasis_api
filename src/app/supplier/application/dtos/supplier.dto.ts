@@ -1,3 +1,5 @@
+import { CompanySummaryDto } from 'src/app/company/application/dtos/company.dto';
+
 export class SupplierDto {
   id: string;
   cnpj: string;
@@ -10,4 +12,5 @@ export class SupplierDto {
   active: boolean;
   createdAt: Date;
   updatedAt: Date;
+  companies: CompanySummaryDto[];
 }

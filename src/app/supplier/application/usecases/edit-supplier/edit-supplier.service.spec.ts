@@ -19,6 +19,7 @@ describe('EditSupplier', () => {
   let findSupplierById: FindSupplierById;
   let existingSupplierId: string;
   let createSupplierData: CreateSupplierInputDto;
+  let companyId: string;
 
   beforeEach(async() => {
     const module: TestingModule = await Test.createTestingModule({
@@ -35,6 +36,27 @@ describe('EditSupplier', () => {
 
     // Clean database for integration tests
     await prisma.supplier.deleteMany();
+    await prisma.company.deleteMany();
+
+    // Create a test company
+    const company = await prisma.company.create({
+      data: {
+        name: 'Test Company',
+        fantasyName: 'Test',
+        document: '12345678000190',
+        ie: '123456789',
+        zipCode: '12345678',
+        street: 'Test Street',
+        number: '123',
+        neighborhood: 'Test District',
+        city: 'Test City',
+        state: 'TS',
+        phone01: '1234567890',
+        email01: 'test@company.com',
+        active: true,
+      },
+    });
+    companyId = company.id;
 
     // Create a supplier for testing edits
     createSupplierData = {
@@ -45,6 +67,7 @@ describe('EditSupplier', () => {
       companyName: 'Original Supplier Ltd',
       fantasyName: 'Original Supplier',
       representative: 'Original Rep',
+      companyIds: [companyId],
     };
 
     const createResult = await createSupplier.execute(createSupplierData);
@@ -53,6 +76,7 @@ describe('EditSupplier', () => {
 
   afterEach(async() => {
     await prisma.supplier.deleteMany();
+    await prisma.company.deleteMany();
     await prisma.$disconnect();
   });
 
@@ -91,6 +115,7 @@ describe('EditSupplier', () => {
         active: true,
         createdAt: new Date(),
         updatedAt: new Date(),
+        companies: [],
       };
 
       const editData: EditSupplierInputDto = {
@@ -130,6 +155,7 @@ describe('EditSupplier', () => {
         active: true,
         createdAt: new Date('2024-01-01'),
         updatedAt: new Date('2024-01-01'),
+        companies: [],
       };
 
       const editData: EditSupplierInputDto = {
@@ -170,6 +196,7 @@ describe('EditSupplier', () => {
         active: true,
         createdAt: new Date(),
         updatedAt: new Date(),
+        companies: [],
       };
 
       const editData: EditSupplierInputDto = {
@@ -188,6 +215,7 @@ describe('EditSupplier', () => {
         active: true,
         createdAt: new Date(),
         updatedAt: new Date(),
+        companies: [],
       };
 
       jest.spyOn(sut['supplierDao'], 'findById').mockResolvedValue(existingSupplierData);
@@ -215,6 +243,7 @@ describe('EditSupplier', () => {
         active: true,
         createdAt: new Date(),
         updatedAt: new Date(),
+        companies: [],
       };
 
       const editData: EditSupplierInputDto = {
@@ -248,6 +277,7 @@ describe('EditSupplier', () => {
         active: true,
         createdAt: new Date(),
         updatedAt: new Date(),
+        companies: [],
       };
 
       const editData: EditSupplierInputDto = {
@@ -281,6 +311,7 @@ describe('EditSupplier', () => {
         active: true,
         createdAt: new Date(),
         updatedAt: new Date(),
+        companies: [],
       };
 
       const editData: EditSupplierInputDto = {
@@ -298,6 +329,120 @@ describe('EditSupplier', () => {
       expect(editSpy).toHaveBeenCalledWith(expect.objectContaining({
         props: expect.objectContaining({
           cnpj: '55967002000146',
+        }),
+      }));
+    });
+
+    it('should call findCompanyById when editing companyIds', async() => {
+      // Arrange
+      const supplierId = 'supplier-id-333';
+      const companyId1 = 'company-id-1';
+      const companyId2 = 'company-id-2';
+
+      const existingSupplierData: SupplierDto = {
+        id: supplierId,
+        cnpj: '23741590000109',
+        ie: '777777777',
+        group: 'Company Test Group',
+        type: 'Company Test Type',
+        companyName: 'Company Test Supplier',
+        fantasyName: 'Company Test',
+        representative: 'Company Test Rep',
+        active: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        companies: [{ id: companyId1, name: 'Company 1' }],
+      };
+
+      const editData: EditSupplierInputDto = {
+        companyIds: [companyId1, companyId2],
+      };
+
+      jest.spyOn(sut['supplierDao'], 'findById').mockResolvedValue(existingSupplierData);
+      const findCompanyByIdSpy = jest.spyOn(sut['findCompanyById'], 'execute').mockResolvedValue({} as any);
+      const editSpy = jest.spyOn(sut['supplierRepository'], 'edit').mockResolvedValue();
+
+      // Act
+      await sut.execute(supplierId, editData);
+
+      // Assert
+      expect(findCompanyByIdSpy).toHaveBeenCalledTimes(2);
+      expect(findCompanyByIdSpy).toHaveBeenCalledWith(companyId1);
+      expect(findCompanyByIdSpy).toHaveBeenCalledWith(companyId2);
+      expect(editSpy).toHaveBeenCalledWith(expect.objectContaining({
+        props: expect.objectContaining({
+          companyIds: [companyId1, companyId2],
+        }),
+      }));
+    });
+
+    it('should not call findCompanyById when companyIds is not provided', async() => {
+      // Arrange
+      const supplierId = 'supplier-id-444';
+      const existingSupplierData: SupplierDto = {
+        id: supplierId,
+        cnpj: '23741590000109',
+        ie: '888888888',
+        group: 'No Company Change Group',
+        type: 'No Company Change Type',
+        companyName: 'No Company Change Supplier',
+        fantasyName: 'No Company Change',
+        representative: 'No Company Change Rep',
+        active: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        companies: [{ id: 'company-id-1', name: 'Company 1' }],
+      };
+
+      const editData: EditSupplierInputDto = {
+        companyName: 'Updated Name',
+      };
+
+      jest.spyOn(sut['supplierDao'], 'findById').mockResolvedValue(existingSupplierData);
+      const findCompanyByIdSpy = jest.spyOn(sut['findCompanyById'], 'execute');
+      const editSpy = jest.spyOn(sut['supplierRepository'], 'edit').mockResolvedValue();
+
+      // Act
+      await sut.execute(supplierId, editData);
+
+      // Assert
+      expect(findCompanyByIdSpy).not.toHaveBeenCalled();
+      expect(editSpy).toHaveBeenCalled();
+    });
+
+    it('should preserve existing companyIds when not provided in editData', async() => {
+      // Arrange
+      const supplierId = 'supplier-id-555';
+      const companyId1 = 'company-id-1';
+      const existingSupplierData: SupplierDto = {
+        id: supplierId,
+        cnpj: '23741590000109',
+        ie: '999999999',
+        group: 'Preserve Companies Group',
+        type: 'Preserve Companies Type',
+        companyName: 'Preserve Companies Supplier',
+        fantasyName: 'Preserve Companies',
+        representative: 'Preserve Companies Rep',
+        active: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        companies: [{ id: companyId1, name: 'Company 1' }],
+      };
+
+      const editData: EditSupplierInputDto = {
+        companyName: 'Updated Name Only',
+      };
+
+      jest.spyOn(sut['supplierDao'], 'findById').mockResolvedValue(existingSupplierData);
+      const editSpy = jest.spyOn(sut['supplierRepository'], 'edit').mockResolvedValue();
+
+      // Act
+      await sut.execute(supplierId, editData);
+
+      // Assert
+      expect(editSpy).toHaveBeenCalledWith(expect.objectContaining({
+        props: expect.objectContaining({
+          companyIds: [companyId1], // Preserved from existing data
         }),
       }));
     });
@@ -399,6 +544,7 @@ describe('EditSupplier', () => {
         companyName: 'Second Supplier Ltd',
         fantasyName: 'Second Supplier',
         representative: 'Second Rep',
+        companyIds: [companyId],
       });
 
       const secondSupplier = await findSupplierById.execute(secondSupplierResult.id);
@@ -535,6 +681,162 @@ describe('EditSupplier', () => {
       expect(updatedSupplier!.group).toBe(initialSupplier!.group);
       expect(updatedSupplier!.type).toBe(initialSupplier!.type);
       expect(updatedSupplier!.representative).toBe(initialSupplier!.representative);
+    });
+
+    it('should throw error when trying to add non-existent company', async() => {
+      // Arrange
+      const editData: EditSupplierInputDto = {
+        companyIds: ['non-existent-company-id'],
+      };
+
+      // Act & Assert
+      await expect(sut.execute(existingSupplierId, editData)).rejects.toThrow();
+    });
+
+    it('should update company associations successfully', async() => {
+      // Arrange
+      const company2 = await prisma.company.create({
+        data: {
+          name: 'Test Company 2',
+          fantasyName: 'Test 2',
+          document: '98765432000190',
+          ie: '987654321',
+          zipCode: '87654321',
+          street: 'Test Street 2',
+          number: '456',
+          neighborhood: 'Test District 2',
+          city: 'Test City 2',
+          state: 'T2',
+          phone01: '0987654321',
+          email01: 'test2@company.com',
+          active: true,
+        },
+      });
+
+      const editData: EditSupplierInputDto = {
+        companyIds: [company2.id],
+      };
+
+      // Act
+      await sut.execute(existingSupplierId, editData);
+
+      // Assert
+      const updatedSupplier = await findSupplierById.execute(existingSupplierId);
+      expect(updatedSupplier).not.toBeNull();
+      expect(updatedSupplier!.companies).toHaveLength(1);
+      expect(updatedSupplier!.companies[0].id).toBe(company2.id);
+    });
+
+    it('should add multiple companies to supplier', async() => {
+      // Arrange
+      const company2 = await prisma.company.create({
+        data: {
+          name: 'Test Company 2',
+          fantasyName: 'Test 2',
+          document: '98765432000190',
+          ie: '987654321',
+          zipCode: '87654321',
+          street: 'Test Street 2',
+          number: '456',
+          neighborhood: 'Test District 2',
+          city: 'Test City 2',
+          state: 'T2',
+          phone01: '0987654321',
+          email01: 'test2@company.com',
+          active: true,
+        },
+      });
+
+      const company3 = await prisma.company.create({
+        data: {
+          name: 'Test Company 3',
+          fantasyName: 'Test 3',
+          document: '11122233000190',
+          ie: '111222333',
+          zipCode: '11223344',
+          street: 'Test Street 3',
+          number: '789',
+          neighborhood: 'Test District 3',
+          city: 'Test City 3',
+          state: 'T3',
+          phone01: '1112223333',
+          email01: 'test3@company.com',
+          active: true,
+        },
+      });
+
+      const editData: EditSupplierInputDto = {
+        companyIds: [companyId, company2.id, company3.id],
+      };
+
+      // Act
+      await sut.execute(existingSupplierId, editData);
+
+      // Assert
+      const updatedSupplier = await findSupplierById.execute(existingSupplierId);
+      expect(updatedSupplier).not.toBeNull();
+      expect(updatedSupplier!.companies).toHaveLength(3);
+      expect(updatedSupplier!.companies.map(c => c.id)).toContain(companyId);
+      expect(updatedSupplier!.companies.map(c => c.id)).toContain(company2.id);
+      expect(updatedSupplier!.companies.map(c => c.id)).toContain(company3.id);
+    });
+
+    it('should preserve companies when companyIds is not provided', async() => {
+      // Arrange
+      const initialSupplier = await findSupplierById.execute(existingSupplierId);
+      const editData: EditSupplierInputDto = {
+        companyName: 'Updated Name Without Company Change',
+      };
+
+      // Act
+      await sut.execute(existingSupplierId, editData);
+
+      // Assert
+      const updatedSupplier = await findSupplierById.execute(existingSupplierId);
+      expect(updatedSupplier).not.toBeNull();
+      expect(updatedSupplier!.companies).toHaveLength(initialSupplier!.companies.length);
+      expect(updatedSupplier!.companies[0].id).toBe(initialSupplier!.companies[0].id);
+    });
+
+    it('should edit both supplier data and companies simultaneously', async() => {
+      // Arrange
+      const company2 = await prisma.company.create({
+        data: {
+          name: 'Test Company 2',
+          fantasyName: 'Test 2',
+          document: '98765432000190',
+          ie: '987654321',
+          zipCode: '87654321',
+          street: 'Test Street 2',
+          number: '456',
+          neighborhood: 'Test District 2',
+          city: 'Test City 2',
+          state: 'T2',
+          phone01: '0987654321',
+          email01: 'test2@company.com',
+          active: true,
+        },
+      });
+
+      const editData: EditSupplierInputDto = {
+        companyName: 'Simultaneous Edit Supplier',
+        fantasyName: 'Simultaneous Edit',
+        group: 'Simultaneous Group',
+        companyIds: [companyId, company2.id],
+      };
+
+      // Act
+      await sut.execute(existingSupplierId, editData);
+
+      // Assert
+      const updatedSupplier = await findSupplierById.execute(existingSupplierId);
+      expect(updatedSupplier).not.toBeNull();
+      expect(updatedSupplier!.companyName).toBe('Simultaneous Edit Supplier');
+      expect(updatedSupplier!.fantasyName).toBe('Simultaneous Edit');
+      expect(updatedSupplier!.group).toBe('Simultaneous Group');
+      expect(updatedSupplier!.companies).toHaveLength(2);
+      expect(updatedSupplier!.companies.map(c => c.id)).toContain(companyId);
+      expect(updatedSupplier!.companies.map(c => c.id)).toContain(company2.id);
     });
   });
 });

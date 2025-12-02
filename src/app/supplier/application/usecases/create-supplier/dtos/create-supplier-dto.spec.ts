@@ -74,6 +74,57 @@ describe('CreateSupplierInputDto', () => {
     });
   });
 
+  describe('companyIds field', () => {
+    it.each(
+      [
+        undefined,
+        null,
+      ]
+    )('should throw an error if companyIds is empty (%s)', async(value: any) => {
+      // Arrange
+      const data = { companyIds: value };
+
+      // Act & Assert
+      expect.assertions(1);
+      return target.transform(data, metadata).catch((error) => {
+        expect(error.getResponse().message).toContain('companyIds deve ser um array');
+      });
+    });
+
+    it('should throw an error if companyIds is not an array', async() => {
+      // Arrange
+      const data = { companyIds: 'not-an-array' };
+
+      // Act & Assert
+      expect.assertions(1);
+      return target.transform(data, metadata).catch((error) => {
+        expect(error.getResponse().message).toContain('companyIds deve ser um array');
+      });
+    });
+
+    it('should throw an error if companyIds is an empty array', async() => {
+      // Arrange
+      const data = { companyIds: [] };
+
+      // Act & Assert
+      expect.assertions(1);
+      return target.transform(data, metadata).catch((error) => {
+        expect(error.getResponse().message).toContain('companyIds deve ter ao menos 1 item');
+      });
+    });
+
+    it('should throw an error if companyIds contains non-string items', async() => {
+      // Arrange
+      const data = { companyIds: ['valid-string', 123, true] };
+
+      // Act & Assert
+      expect.assertions(1);
+      return target.transform(data, metadata).catch((error) => {
+        expect(error.getResponse().message).toContain('companyIds deve ser uma string');
+      });
+    });
+  });
+
   it('should pass if all fields are valid', async() => {
     // Arrange
     const data = {
@@ -84,6 +135,7 @@ describe('CreateSupplierInputDto', () => {
       companyName: 'companyName',
       fantasyName: 'fantasyName',
       representative: 'representative',
+      companyIds: ['company-id-1', 'company-id-2'],
     };
 
     // Act

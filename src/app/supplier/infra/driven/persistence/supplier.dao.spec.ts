@@ -1,5 +1,5 @@
 import { Test } from '@nestjs/testing';
-import { Supplier } from '@prisma/client';
+import { Company, Supplier } from '@prisma/client';
 import { SupplierDto } from 'src/app/supplier/application/dtos/supplier.dto';
 import { SupplierPersistenceModule } from 'src/app/supplier/application/persistence/supplier-persistence.module';
 import { FindAllSupplierQueryDto } from 'src/app/supplier/application/usecases/find-all-supplier/dtos/find-all-supplier.dto';
@@ -25,10 +25,12 @@ describe('SupplierDaoAdapterPrisma', () => {
     sut = module.get(SupplierDaoAdapterPrisma);
     prisma = module.get(PrismaService);
 
+    await prisma.company.deleteMany();
     await prisma.supplier.deleteMany();
   });
 
   afterEach(async() => {
+    await prisma.company.deleteMany();
     await prisma.supplier.deleteMany();
     await prisma.$disconnect();
   });
@@ -639,8 +641,27 @@ describe('SupplierDaoAdapterPrisma', () => {
 
   describe('findById', () => {
     let supplier: Supplier;
+    let company: Company;
 
     beforeEach(async() => {
+      company = await prisma.company.create({
+        data: {
+          name: 'name teste',
+          fantasyName: 'fantasyName teste',
+          document: 'document teste',
+          ie: 'ie teste',
+          zipCode: 'zipCode teste',
+          street: 'street teste',
+          number: 'number teste',
+          neighborhood: 'neighborhood teste',
+          city: 'city teste',
+          state: 'state teste',
+          phone01: 'phone01 teste',
+          email01: 'email01 teste',
+          active: true,
+        },
+      });
+
       supplier = await prisma.supplier.create({
         data: {
           id: 'supplier-find-by-id',
@@ -652,6 +673,7 @@ describe('SupplierDaoAdapterPrisma', () => {
           fantasyName: 'Test Fantasy',
           representative: 'Test Representative',
           active: true,
+          companies: { connect: { id: company.id } },
         },
       });
     });
@@ -674,6 +696,12 @@ describe('SupplierDaoAdapterPrisma', () => {
         active: supplier.active,
         createdAt: supplier.createdAt,
         updatedAt: supplier.updatedAt,
+        companies: [
+          {
+            id: company.id,
+            name: company.name,
+          },
+        ],
       });
     });
 
@@ -723,6 +751,7 @@ describe('SupplierDaoAdapterPrisma', () => {
         active: supplier.active,
         createdAt: supplier.createdAt,
         updatedAt: supplier.updatedAt,
+        companies: [],
       });
     });
 

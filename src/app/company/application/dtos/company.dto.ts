@@ -23,3 +23,8 @@ export class CompanyDto {
   email01: string;
   email02: string | null;
 }
+
+export class CompanySummaryDto {
+  id: string;
+  name: string;
+}

@@ -5,6 +5,26 @@ import { ISupplierDao } from 'src/app/supplier/application/persistence/dao/suppl
 import { FindAllSupplierQueryDto } from 'src/app/supplier/application/usecases/find-all-supplier/dtos/find-all-supplier.dto';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 
+const supplierSelect = {
+  id: true,
+  cnpj: true,
+  ie: true,
+  group: true,
+  type: true,
+  companyName: true,
+  fantasyName: true,
+  representative: true,
+  active: true,
+  createdAt: true,
+  updatedAt: true,
+  companies: {
+    select: {
+      id: true,
+      name: true,
+    },
+  },
+} satisfies Prisma.SupplierSelect;
+
 @Injectable()
 export class SupplierDaoAdapterPrisma implements ISupplierDao {
   constructor(private readonly prisma: PrismaService) {}
@@ -28,6 +48,7 @@ export class SupplierDaoAdapterPrisma implements ISupplierDao {
     const [suppliers, total] = await this.prisma.$transaction([
       this.prisma.supplier.findMany({
         where,
+        select: supplierSelect,
         take: pagination.take,
         skip: pagination.skip,
         orderBy: { createdAt: 'desc' },
@@ -41,12 +62,14 @@ export class SupplierDaoAdapterPrisma implements ISupplierDao {
   public async findById(id: string): Promise<SupplierDto | null> {
     return this.prisma.supplier.findUnique({
       where: { id },
+      select: supplierSelect,
     });
   }
 
   public async findByCnpj(cnpj: string): Promise<SupplierDto | null> {
     return this.prisma.supplier.findUnique({
       where: { cnpj },
+      select: supplierSelect,
     });
   }
 }

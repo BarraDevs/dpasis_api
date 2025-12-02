@@ -10,6 +10,7 @@ describe('Supplier Entity', () => {
     companyName: 'Tech Supplier Ltda',
     fantasyName: 'Tech Supplier',
     representative: 'John Doe',
+    companyIds: ['comp-123', 'comp-456'],
   };
 
   describe('create', () => {
@@ -31,6 +32,7 @@ describe('Supplier Entity', () => {
       expect(supplier.props.active).toBe(true);
       expect(supplier.props.createdAt).toBeInstanceOf(Date);
       expect(supplier.props.updatedAt).toBeInstanceOf(Date);
+      expect(supplier.props.companyIds).toEqual(validProps.companyIds);
     });
 
     it('should sanitize cnpj removing special characters', () => {
@@ -140,6 +142,7 @@ describe('Supplier Entity', () => {
         active: true,
         createdAt: new Date('2024-01-15T10:30:00Z'),
         updatedAt: new Date('2024-01-20T14:45:00Z'),
+        companyIds: ['comp-123', 'comp-456'],
       };
 
       // Act
@@ -158,6 +161,7 @@ describe('Supplier Entity', () => {
       expect(supplier.props.active).toBe(existingProps.active);
       expect(supplier.props.createdAt).toBe(existingProps.createdAt);
       expect(supplier.props.updatedAt).toBe(existingProps.updatedAt);
+      expect(supplier.props.companyIds).toEqual(existingProps.companyIds);
     });
 
     it('should load supplier with active=false', () => {
@@ -174,6 +178,7 @@ describe('Supplier Entity', () => {
         active: false,
         createdAt: new Date('2024-01-01T00:00:00Z'),
         updatedAt: new Date('2024-01-10T00:00:00Z'),
+        companyIds: [],
       };
 
       // Act
@@ -197,6 +202,7 @@ describe('Supplier Entity', () => {
         active: true,
         createdAt: new Date('2024-02-01T00:00:00Z'),
         updatedAt: new Date('2024-02-01T00:00:00Z'),
+        companyIds: [],
       };
 
       // Act
@@ -220,6 +226,7 @@ describe('Supplier Entity', () => {
         active: true,
         createdAt: new Date('2024-03-01T00:00:00Z'),
         updatedAt: new Date('2024-03-01T00:00:00Z'),
+        companyIds: [],
       };
 
       // Act & Assert
@@ -242,6 +249,7 @@ describe('Supplier Entity', () => {
         active: true,
         createdAt,
         updatedAt,
+        companyIds: [],
       };
 
       // Act
@@ -268,6 +276,7 @@ describe('Supplier Entity', () => {
         active: true,
         createdAt: new Date(),
         updatedAt: new Date(),
+        companyIds: [],
       };
 
       const props2 = {
@@ -282,6 +291,7 @@ describe('Supplier Entity', () => {
         active: true,
         createdAt: new Date(),
         updatedAt: new Date(),
+        companyIds: [],
       };
 
       // Act
@@ -311,6 +321,7 @@ describe('Supplier Entity', () => {
         active: true,
         createdAt: new Date('2024-01-01T00:00:00Z'),
         updatedAt: new Date('2024-01-01T00:00:00Z'),
+        companyIds: [],
       };
 
       const supplier = Supplier.load(props);
@@ -336,6 +347,7 @@ describe('Supplier Entity', () => {
         active: false,
         createdAt: new Date('2024-01-01T00:00:00Z'),
         updatedAt: new Date('2024-01-01T00:00:00Z'),
+        companyIds: [],
       };
 
       const supplier = Supplier.load(props);
@@ -381,6 +393,7 @@ describe('Supplier Entity', () => {
         active: true,
         createdAt: new Date('2024-01-01T00:00:00Z'),
         updatedAt: new Date('2024-01-01T00:00:00Z'),
+        companyIds: [],
       };
 
       const supplier = Supplier.load(props);

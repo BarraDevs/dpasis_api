@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, MaxLength } from 'class-validator';
+import { ArrayMinSize, IsArray, IsNotEmpty, IsString, MaxLength } from 'class-validator';
 import { Trim } from 'src/infra/validators/class-*/decorators/trim/trim';
 
 export class CreateSupplierInputDto {
@@ -51,6 +51,12 @@ export class CreateSupplierInputDto {
   @MaxLength(256, { message: '$property deve ter no máximo $constraint1 caracteres' })
   @Trim()
   representative: string;
+
+  @Trim()
+  @IsString({ message: '$property deve ser uma string', each: true })
+  @IsArray({ message: '$property deve ser um array' })
+  @ArrayMinSize(1, { message: '$property deve ter ao menos $constraint1 item' })
+  companyIds: string[];
 }
 
 export class CreateSupplierOutputDto {
