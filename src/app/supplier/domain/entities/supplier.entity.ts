@@ -37,7 +37,7 @@ export class Supplier {
   }
 
   public get props(): Readonly<SupplierProps> {
-    return { ...this._props };
+    return { ...this._props, companyIds: [...this._props.companyIds] };
   }
 
   constructor(props: SupplierProps) {
