@@ -1,0 +1,37 @@
+import { Injectable } from '@nestjs/common';
+import { ICompanyRepository } from 'src/app/company/application/persistence/repository/company-repository.interface';
+import { Company } from 'src/app/company/domain/entities/company.entity';
+import { PrismaService } from 'src/infra/database/prisma/prisma.service';
+
+@Injectable()
+export class CompanyRepositoryAdapterPrisma implements ICompanyRepository {
+  constructor(private readonly prisma: PrismaService) {}
+
+  public async findById(id: string): Promise<Company | null> {
+    const companyRecord = await this.prisma.company.findUnique({
+      where: { id },
+    });
+
+    if (!companyRecord) {
+      return null;
+    }
+
+    return new Company(companyRecord);
+  }
+
+  public async save(company: Company): Promise<void> {
+    await this.prisma.company.create({
+      data: company.props,
+    });
+  }
+
+  public async edit(company: Company): Promise<void> {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { id, updatedAt, ...data } = company.props;
+
+    await this.prisma.company.update({
+      where: { id },
+      data,
+    });
+  }
+}

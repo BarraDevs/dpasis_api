@@ -1,15 +1,15 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
 import { RequiredRoles } from 'src/app/authentication/infra/decorators/required-role.decorator';
 import { ShipperDto } from 'src/app/shipper/application/dtos/shipper.dto';
 import { CreateShipper } from 'src/app/shipper/application/usecases/create-shipper/create-shipper.service';
 import { CreateShipperInputDto, CreateShipperOutputDto } from 'src/app/shipper/application/usecases/create-shipper/dtos/create-shipper.dto';
-import { DeleteShipper } from 'src/app/shipper/application/usecases/delete-shipper/delete-shipper.service';
 import { EditShipperInputDto } from 'src/app/shipper/application/usecases/edit-shipper/dtos/edit-shipper.dto';
 import { EditShipper } from 'src/app/shipper/application/usecases/edit-shipper/edit-shipper.service';
 import { FindAllShipperQueryDto } from 'src/app/shipper/application/usecases/find-all-shipper/dtos/find-all-shipper.dto';
 import { FindAllShipper } from 'src/app/shipper/application/usecases/find-all-shipper/find-all-shipper.service';
 import { FindShipperById } from 'src/app/shipper/application/usecases/find-shipper-by-id/find-shipper-by-id.service';
+import { UpdateShipperStatus } from 'src/app/shipper/application/usecases/update-shipper-status/update-shipper-status.service';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
 import { Swagger } from 'src/infra/openapi/swagger';
 import { Params } from 'src/infra/validators/class-*/dtos/params/params.dto';
@@ -23,7 +23,7 @@ export class ShipperController {
     private readonly findAllShipperService: FindAllShipper,
     private readonly findShipperByIdService: FindShipperById,
     private readonly editShipperService: EditShipper,
-    private readonly deleteShipperService: DeleteShipper,
+    private readonly updateShipperStatusService: UpdateShipperStatus,
   ) {}
 
   @Post()
@@ -74,15 +74,15 @@ export class ShipperController {
     return this.editShipperService.execute(params.id, body);
   }
 
-  @Delete(':id')
+  @Patch(':id/status')
   @Swagger({
     tags: ['Transportadora'],
-    summary: 'Deleta uma transportadora',
+    summary: 'Ativa ou desativa uma transportadora',
     applyBadRequest: true,
     applyNotFound: true,
     okResponse: SuccessMessage,
   })
-  public remove(@Param() params: Params): Promise<SuccessMessage> {
-    return this.deleteShipperService.execute(params.id);
+  public updateStatus(@Param() params: Params): Promise<SuccessMessage> {
+    return this.updateShipperStatusService.execute(params.id);
   }
 }

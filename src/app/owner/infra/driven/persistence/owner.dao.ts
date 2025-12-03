@@ -5,7 +5,7 @@ import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 
 @Injectable()
 export class OwnerDaoAdapterPrisma implements IOwnerDao {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   public async findById(id: string): Promise<OwnerDto | null> {
     return this.prisma.owner.findUnique({

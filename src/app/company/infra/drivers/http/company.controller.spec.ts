@@ -287,47 +287,43 @@ describe('CompanyController', () => {
     });
   });
 
-  describe('service dependencies', () => {
-    it('should have all required services injected', () => {
+  describe('updateStatus', () => {
+    it('should call updateCompanyStatusService with correct parameters', async() => {
+      // Arrange
+      const params = createMock<Params>({ id: 'company-to-update-status' });
+      const output = createMock<SuccessMessage>();
+      const updateCompanyStatusSpy = jest.spyOn(sut['updateCompanyStatusService'], 'execute').mockResolvedValue(output);
+
+      // Act
+      const result = await sut.updateStatus(params);
+
       // Assert
-      expect(sut['createCompanyService']).toBeDefined();
-      expect(sut['findAllCompanyService']).toBeDefined();
-      expect(sut['findCompanyByIdService']).toBeDefined();
-      expect(sut['editCompanyService']).toBeDefined();
+      expect(updateCompanyStatusSpy).toHaveBeenCalledWith(params.id);
+      expect(result).toEqual(output);
     });
 
-    it('should maintain service instances', () => {
-      // Assert
-      expect(typeof sut['createCompanyService'].execute).toBe('function');
-      expect(typeof sut['findAllCompanyService'].execute).toBe('function');
-      expect(typeof sut['findCompanyByIdService'].execute).toBe('function');
-      expect(typeof sut['editCompanyService'].execute).toBe('function');
-    });
-  });
+    it('should propagate errors from updateCompanyStatusService', async() => {
+      // Arrange
+      const params = createMock<Params>({ id: 'company-id' });
+      const error = new Error('Status update failed');
+      jest.spyOn(sut['updateCompanyStatusService'], 'execute').mockRejectedValue(error);
 
-  describe('method signatures', () => {
-    it('should have correct create method signature', () => {
-      // Assert
-      expect(sut.create).toBeDefined();
-      expect(sut.create.length).toBe(1); // One parameter (body)
+      // Act & Assert
+      await expect(sut.updateStatus(params)).rejects.toThrow('Status update failed');
     });
 
-    it('should have correct findAll method signature', () => {
-      // Assert
-      expect(sut.findAll).toBeDefined();
-      expect(sut.findAll.length).toBe(1); // One parameter (queries)
-    });
+    it('should extract id from params correctly', async() => {
+      // Arrange
+      const params = createMock<Params>({ id: 'specific-id-789' });
+      const output = createMock<SuccessMessage>();
+      const updateCompanyStatusSpy = jest.spyOn(sut['updateCompanyStatusService'], 'execute').mockResolvedValue(output);
 
-    it('should have correct findOne method signature', () => {
-      // Assert
-      expect(sut.findOne).toBeDefined();
-      expect(sut.findOne.length).toBe(1); // One parameter (params)
-    });
+      // Act
+      await sut.updateStatus(params);
 
-    it('should have correct update method signature', () => {
       // Assert
-      expect(sut.update).toBeDefined();
-      expect(sut.update.length).toBe(2); // Two parameters (params, body)
+      expect(updateCompanyStatusSpy).toHaveBeenCalledWith('specific-id-789');
+      expect(updateCompanyStatusSpy).toHaveBeenCalledTimes(1);
     });
   });
 });

@@ -35,7 +35,7 @@ describe('FindCompanyById', () => {
     createCompanyData = {
       name: 'Test Company Ltd',
       fantasyName: 'Test Company',
-      document: '12345678000195',
+      document: '67942043000167',
       ie: '123456789',
       phone01: '11999887766',
       phone02: '1133445566',
@@ -80,28 +80,7 @@ describe('FindCompanyById', () => {
     it('should return company data when company exists', async() => {
       // Arrange
       const companyId = 'existing-company-id';
-      const expectedCompany = createMock<CompanyDto>({
-        id: companyId,
-        name: 'Test Company Ltd',
-        fantasyName: 'Test Company',
-        document: '12345678000195',
-        ie: '123456789',
-        phone01: '11999887766',
-        phone02: '1133445566',
-        cellphone: '11988776655',
-        email01: 'test@company.com',
-        email02: 'sales@company.com',
-        zipCode: '01234567',
-        street: 'Test Street',
-        number: '123',
-        complement: 'Suite 1',
-        reference: 'Near the mall',
-        neighborhood: 'Downtown',
-        city: 'São Paulo',
-        state: 'SP',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
+      const expectedCompany = createMock<CompanyDto>();
 
       jest.spyOn(sut['companyDao'], 'findById').mockResolvedValue(expectedCompany);
 
@@ -130,11 +109,7 @@ describe('FindCompanyById', () => {
     it('should return exactly what companyDao returns when company exists', async() => {
       // Arrange
       const companyId = 'test-id';
-      const mockCompanyData = createMock<CompanyDto>({
-        id: companyId,
-        name: 'Specific Company Name',
-        document: '98765432000187',
-      });
+      const mockCompanyData = createMock<CompanyDto>();
 
       jest.spyOn(sut['companyDao'], 'findById').mockResolvedValue(mockCompanyData);
 
@@ -181,6 +156,7 @@ describe('FindCompanyById', () => {
         neighborhood: createCompanyData.neighborhood,
         city: createCompanyData.city,
         state: createCompanyData.state,
+        active: true,
         createdAt: expect.any(Date),
         updatedAt: expect.any(Date),
       });
@@ -192,7 +168,7 @@ describe('FindCompanyById', () => {
         ...createCompanyData,
         name: 'Second Company Ltd',
         fantasyName: 'Second Company',
-        document: '98765432000187',
+        document: '01427316000127',
         ie: '987654321',
       };
 
@@ -206,11 +182,11 @@ describe('FindCompanyById', () => {
       // Assert
       expect(firstCompany.id).toBe(existingCompanyId);
       expect(secondCompany.id).toBe(secondCompanyId);
+      expect(firstCompany.id).not.toBe(secondCompany.id);
       expect(firstCompany.name).toBe(createCompanyData.name);
       expect(secondCompany.name).toBe(secondCompanyData.name);
       expect(firstCompany.document).toBe(createCompanyData.document);
       expect(secondCompany.document).toBe(secondCompanyData.document);
-      expect(firstCompany.id).not.toBe(secondCompany.id);
     });
 
     it('should handle company with null optional fields', async() => {
@@ -218,7 +194,7 @@ describe('FindCompanyById', () => {
       const companyWithNulls: CreateCompanyInputDto = {
         ...createCompanyData,
         name: 'Company With Nulls Ltd',
-        document: '11111111000111',
+        document: '01427316000127',
         ie: '111111111',
         phone02: null,
         cellphone: null,
@@ -237,6 +213,7 @@ describe('FindCompanyById', () => {
       expect(result).toEqual<CompanyDto>({
         ...companyWithNulls,
         id: companyWithNullsId,
+        active: true,
         createdAt: expect.any(Date),
         updatedAt: expect.any(Date),
       });

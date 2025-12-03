@@ -63,6 +63,43 @@ describe('FindAllCompanyQueryDto', () => {
     });
   });
 
+  describe('active field', () => {
+    it.each(
+      [
+        undefined,
+        null,
+      ]
+    )('should not throw an error if active is empty (%s)', async(value: any) => {
+      // Arrange
+      const data = { active: value };
+
+      // Act
+      const result = await target.transform(data, metadata);
+
+      // Assert
+      expect(result).toBeInstanceOf(FindAllCompanyQueryDto);
+    });
+
+    it.each(
+      [
+        'true',
+        'false',
+        123,
+        {},
+        [],
+      ]
+    )('should throw an error if active is not a boolean (%s)', async(value: any) => {
+      // Arrange
+      const data = { active: value };
+
+      // Act & Assert
+      expect.assertions(1);
+      return target.transform(data, metadata).catch((error) => {
+        expect(error.getResponse().message).toContain('active deve ser um valor booleano');
+      });
+    });
+  });
+
   it('should pass if all fields are valid', async() => {
     // Arrange
     const data: FindAllCompanyQueryDto = {
@@ -73,6 +110,7 @@ describe('FindAllCompanyQueryDto', () => {
       address: '123 Main St',
       phone: '123-456-7890',
       email: 'contact@company.com',
+      active: true,
       page: 2,
       size: 50,
     };

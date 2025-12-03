@@ -33,11 +33,12 @@ describe('FindAllClient', () => {
     createCompany = module.get(CreateCompany);
 
     await prisma.company.deleteMany();
+    await prisma.client.deleteMany();
 
     const company = await createCompany.execute({
       name: 'name teste',
       fantasyName: 'fantasyName teste',
-      document: 'document teste',
+      document: '98476009000178',
       ie: 'ie teste',
       zipCode: 'zipCode teste',
       street: 'street teste',
@@ -47,16 +48,16 @@ describe('FindAllClient', () => {
       reference: null,
       city: 'city teste',
       state: 'state teste',
-      cellphone: 'cellphone teste',
-      phone01: 'phone01 teste',
-      phone02: 'phone02 teste',
-      email01: 'email01 teste',
-      email02: 'email02 teste',
+      cellphone: '9999887766',
+      phone01: '1199887766',
+      phone02: null,
+      email01: 'email01@teste.com',
+      email02: null,
     });
 
     baseClientData = {
       kind: 'individual',
-      cnpj: '12345678000199',
+      cnpj: '87321937000147',
       ie: '123456789',
       group: 'default',
       type: 'customer',
@@ -65,7 +66,7 @@ describe('FindAllClient', () => {
       fantasyName: 'John Doe',
       owner: 'John Doe',
       headquarters: '123 Main St, City, State, ZIP',
-      companyId: company.id,
+      companyIds: [company.id],
     };
 
     // Create diverse test clients for comprehensive filter testing
@@ -75,7 +76,7 @@ describe('FindAllClient', () => {
     const client1 = await createClient.execute({
       ...baseClientData,
       kind: 'PJ',
-      cnpj: '11.111.111/0001-11',
+      cnpj: '84.114.930/0001-66',
       ie: '111.111.111.111',
       group: 'Technology',
       type: 'Premium',
@@ -90,7 +91,7 @@ describe('FindAllClient', () => {
     const client2 = await createClient.execute({
       ...baseClientData,
       kind: 'PF',
-      cnpj: '22.222.222/0001-22',
+      cnpj: '67.946.814/0001-94',
       ie: '222.222.222.222',
       group: 'Industrial',
       type: 'Basic',
@@ -105,7 +106,7 @@ describe('FindAllClient', () => {
     const client3 = await createClient.execute({
       ...baseClientData,
       kind: 'PJ',
-      cnpj: '33.333.333/0001-33',
+      cnpj: '60.141.983/0001-08',
       ie: '333.333.333.333',
       group: 'Technology',
       type: 'Premium',
@@ -120,7 +121,7 @@ describe('FindAllClient', () => {
     const client4 = await createClient.execute({
       ...baseClientData,
       kind: 'PJ',
-      cnpj: '44.444.444/0001-44',
+      cnpj: '14.511.327/0001-32',
       ie: '444.444.444.444',
       group: 'Retail',
       type: 'Standard',
@@ -135,7 +136,7 @@ describe('FindAllClient', () => {
     const client5 = await createClient.execute({
       ...baseClientData,
       kind: 'PF',
-      cnpj: '55.555.555/0001-55',
+      cnpj: '12.830.377/0001-57',
       ie: '555.555.555.555',
       group: 'Services',
       type: 'Basic',
@@ -150,7 +151,7 @@ describe('FindAllClient', () => {
     const client6 = await createClient.execute({
       ...baseClientData,
       kind: 'PJ',
-      cnpj: '66.666.666/0001-66',
+      cnpj: '94.984.407/0001-44',
       ie: '666.666.666.666',
       group: 'Industrial',
       type: 'Premium',
@@ -164,6 +165,7 @@ describe('FindAllClient', () => {
 
   afterEach(async() => {
     await prisma.company.deleteMany();
+    await prisma.client.deleteMany();
     await prisma.$disconnect();
   });
 
@@ -276,23 +278,23 @@ describe('FindAllClient', () => {
 
     it('should filter by cnpj - exact match', async() => {
       // Act
-      const result = await sut.execute({ cnpj: '11.111.111/0001-11' });
+      const result = await sut.execute({ cnpj: '94984407000144' });
 
       // Assert
       expect(result.totalItems).toBe(1);
       expect(result.data).toHaveLength(1);
-      expect(result.data[0].cnpj).toBe('11.111.111/0001-11');
-      expect(result.data[0].id).toBe(createdClientIds[0]);
+      expect(result.data[0].cnpj).toBe('94984407000144');
+      expect(result.data[0].id).toBe(createdClientIds[5]);
     });
 
     it('should filter by cnpj - partial match', async() => {
       // Act
-      const result = await sut.execute({ cnpj: '22.222' });
+      const result = await sut.execute({ cnpj: '14511327' });
 
       // Assert
       expect(result.totalItems).toBe(1);
       expect(result.data).toHaveLength(1);
-      expect(result.data[0].cnpj).toBe('22.222.222/0001-22');
+      expect(result.data[0].cnpj).toBe('14511327000132');
     });
 
     it('should filter by ie - exact match', async() => {
@@ -401,6 +403,64 @@ describe('FindAllClient', () => {
       expect(result.totalItems).toBe(1);
       expect(result.data).toHaveLength(1);
       expect(result.data[0].headquarters).toBe('Main Office Alpha São Paulo');
+    });
+
+    it('should filter by companyIds', async() => {
+      // Arrange
+      const company = await createCompany.execute({
+        name: 'Unique Company',
+        fantasyName: 'Unique Co',
+        document: '30833317000170',
+        ie: 'unique-ie',
+        zipCode: 'unique-zip',
+        street: 'unique-street',
+        number: 'unique-number',
+        neighborhood: 'unique-neighborhood',
+        complement: null,
+        reference: null,
+        city: 'unique-city',
+        state: 'unique-state',
+        cellphone: '8888887766',
+        phone01: '77799887766',
+        phone02: null,
+        email01: 'unique-email01@teste.com',
+        email02: null,
+      });
+
+      await createClient.execute({
+        ...baseClientData,
+        companyIds: [company.id],
+        companyName: 'Unique Client Corp',
+      });
+
+      // Act
+      const result = await sut.execute({ companyIds: [company.id] });
+
+      // Assert
+      expect(result.totalItems).toBe(1);
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0].companies[0].id).toBe(company.id);
+    });
+
+    it('should filter by active status', async() => {
+      // Arrange
+      // Deactivate one client
+      const clientToDeactivateId = createdClientIds[0];
+      await prisma.client.update({
+        where: { id: clientToDeactivateId },
+        data: { active: false },
+      });
+
+      // Act
+      const activeResult = await sut.execute({ active: true });
+      const inactiveResult = await sut.execute({ active: false });
+
+      // Assert
+      expect(activeResult.totalItems).toBe(5);
+      expect(activeResult.data.find(c => c.id === clientToDeactivateId)).toBeUndefined();
+
+      expect(inactiveResult.totalItems).toBe(1);
+      expect(inactiveResult.data[0].id).toBe(clientToDeactivateId);
     });
   });
 
@@ -512,14 +572,14 @@ describe('FindAllClient', () => {
     it('should filter by exact CNPJ AND IE', async() => {
       // Act
       const result = await sut.execute({
-        cnpj: '44.444.444/0001-44',
+        cnpj: '14511327000132',
         ie: '444.444.444.444',
       });
 
       // Assert
       expect(result.totalItems).toBe(1);
       expect(result.data).toHaveLength(1);
-      expect(result.data[0].cnpj).toBe('44.444.444/0001-44');
+      expect(result.data[0].cnpj).toBe('14511327000132');
       expect(result.data[0].ie).toBe('444.444.444.444');
     });
   });
@@ -622,10 +682,10 @@ describe('FindAllClient', () => {
           fantasyName: expect.any(String),
           owner: expect.any(String),
           headquarters: expect.any(String),
-          companyId: expect.any(String),
           active: expect.any(Boolean),
           createdAt: expect.any(Date),
           updatedAt: expect.any(Date),
+          companies: expect.any(Array),
         });
       });
     });

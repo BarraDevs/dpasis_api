@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { ShipperNotFoundError } from 'src/app/shipper/domain/errors/shipper-not-found';
+import { ShipperNotFoundError } from 'src/app/shipper/domain/errors/shipper-not-found.error';
 import { TOKENS } from 'src/core/di/token';
 import { ShipperDto } from '../../dtos/shipper.dto';
 import type { IShipperDao } from '../../persistence/dao/shipper-dao.interface';

@@ -1,6 +1,6 @@
 import { createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
-import { ShipperNotFoundError } from 'src/app/shipper/domain/errors/shipper-not-found';
+import { ShipperNotFoundError } from 'src/app/shipper/domain/errors/shipper-not-found.error';
 import { ShipperModule } from 'src/app/shipper/shipper.module';
 import { ConfigModule } from 'src/core/config/config.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
@@ -46,6 +46,7 @@ describe('FindShipperById', () => {
       neighborhood: 'Centro',
       city: 'São Paulo',
       state: 'SP',
+      companyIds: [],
     };
 
     const createResult = await createShipper.execute(createShipperData);
@@ -169,8 +170,10 @@ describe('FindShipperById', () => {
         neighborhood: createShipperData.neighborhood,
         city: createShipperData.city,
         state: createShipperData.state,
+        active: true,
         createdAt: expect.any(Date),
         updatedAt: expect.any(Date),
+        companies: [],
       });
     });
 
@@ -180,7 +183,7 @@ describe('FindShipperById', () => {
         ...createShipperData,
         companyName: 'Segunda Transportadora Ltda',
         fantasyName: 'Second Transport',
-        cnpj: '98765432000187',
+        cnpj: '18247807000199',
       };
 
       const secondShipperResult = await createShipper.execute(secondShipperData);
@@ -205,7 +208,7 @@ describe('FindShipperById', () => {
       const shipperWithNulls: CreateShipperInputDto = {
         ...createShipperData,
         companyName: 'Transportadora Com Nulls Ltda',
-        cnpj: '11111111000111',
+        cnpj: '90910555000163',
         complement: null,
         reference: null,
       };
@@ -218,10 +221,24 @@ describe('FindShipperById', () => {
 
       // Assert
       expect(result).toEqual<ShipperDto>({
-        ...shipperWithNulls,
+        companyName: shipperWithNulls.companyName,
+        fantasyName: shipperWithNulls.fantasyName,
+        cnpj: shipperWithNulls.cnpj,
+        contact: shipperWithNulls.contact,
+        representative: shipperWithNulls.representative,
+        zipCode: shipperWithNulls.zipCode,
+        street: shipperWithNulls.street,
+        number: shipperWithNulls.number,
+        complement: shipperWithNulls.complement,
+        reference: shipperWithNulls.reference,
+        neighborhood: shipperWithNulls.neighborhood,
+        city: shipperWithNulls.city,
+        state: shipperWithNulls.state,
         id: shipperWithNullsId,
+        active: true,
         createdAt: expect.any(Date),
         updatedAt: expect.any(Date),
+        companies: [],
       });
     });
 

@@ -5,7 +5,7 @@ import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 
 @Injectable()
 export class ItemRepositoryAdapterPrisma implements IItemRepository {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   public async createMany(items: Item[]): Promise<void> {
     const dataToCreate = items.map((item) => item.props);

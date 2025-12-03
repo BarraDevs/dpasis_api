@@ -9,7 +9,7 @@ import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 
 @Injectable()
 export class LicenseDaoAdapterPrisma implements ILicenseDao {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   public async save({ ownerId, ...rest }: CreateLicenseInputDto): Promise<string> {
     const result = await this.prisma.license.create({

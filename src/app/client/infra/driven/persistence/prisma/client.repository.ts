@@ -5,23 +5,37 @@ import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 
 @Injectable()
 export class ClientRepositoryAdapterPrisma implements IClientRepository {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
+
+  public async findById(id: string): Promise<Client | null> {
+    const clientRecord = await this.prisma.client.findUnique({
+      where: { id },
+      include: { companies: true },
+    });
+
+    if (!clientRecord) {
+      return null;
+    }
+
+    return Client.load({
+      ...clientRecord,
+      companyIds: clientRecord.companies.map((company) => company.id),
+    });
+  }
 
   public async save(client: Client): Promise<void> {
-    const { companyId, ...data } = client.props;
+    const { companyIds, ...data } = client.props;
 
     await this.prisma.client.create({
       data: {
         ...data,
-        company: {
-          connect: {
-            id: companyId,
-          },
+        companies: {
+          connect: companyIds.map((companyId) => ({ id: companyId })),
         },
         resource: {
           create: {
             // make sure to create a new resource with same client id
-            id: client.props.id,
+            id: data.id,
           },
         },
       },
@@ -29,11 +43,17 @@ export class ClientRepositoryAdapterPrisma implements IClientRepository {
   }
 
   public async edit(client: Client): Promise<void> {
-    const { id, ...data } = client.props;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { id, companyIds, updatedAt, ...data } = client.props;
 
     await this.prisma.client.update({
       where: { id },
-      data,
+      data: {
+        ...data,
+        companies: {
+          set: companyIds.map((companyId) => ({ id: companyId })),
+        },
+      },
     });
   }
 }

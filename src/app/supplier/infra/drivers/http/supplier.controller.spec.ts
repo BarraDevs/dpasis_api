@@ -92,4 +92,20 @@ describe('SupplierController', () => {
       expect(result).toEqual(output);
     });
   });
+
+  describe('updateStatus', () => {
+    it('should call updateSupplierStatusService with correct parameters', async() => {
+      // Arrange
+      const params = createMock<Params>();
+      const output = createMock<SuccessMessage>();
+      const updateSupplierStatusSpy = jest.spyOn(sut['updateSupplierStatusService'], 'execute').mockResolvedValue(output);
+
+      // Act
+      const result = await sut.updateStatus(params);
+
+      // Assert
+      expect(updateSupplierStatusSpy).toHaveBeenCalledWith(params.id);
+      expect(result).toEqual(output);
+    });
+  });
 });

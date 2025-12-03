@@ -9,7 +9,7 @@ import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 
 @Injectable()
 export class ContactDaoAdapterPrisma implements IContactDao {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   public async save({ ownerId, ...rest }: CreateContactInputDto): Promise<string> {
     const result = await this.prisma.contact.create({

@@ -9,6 +9,7 @@ import { EditCompany } from 'src/app/company/application/usecases/edit-company/e
 import { FindAllCompanyQueryDto } from 'src/app/company/application/usecases/find-all-company/dtos/find-all-company.dto';
 import { FindAllCompany } from 'src/app/company/application/usecases/find-all-company/find-all-company.service';
 import { FindCompanyById } from 'src/app/company/application/usecases/find-company-by-id/find-company-by-id.service';
+import { UpdateCompanyStatus } from 'src/app/company/application/usecases/update-company-status/update-company-status.service';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
 import { Swagger } from 'src/infra/openapi/swagger';
 import { Params } from 'src/infra/validators/class-*/dtos/params/params.dto';
@@ -22,6 +23,7 @@ export class CompanyController {
     private readonly findAllCompanyService: FindAllCompany,
     private readonly findCompanyByIdService: FindCompanyById,
     private readonly editCompanyService: EditCompany,
+    private readonly updateCompanyStatusService: UpdateCompanyStatus,
   ) {}
 
   @Post()
@@ -70,5 +72,17 @@ export class CompanyController {
   })
   public update(@Param() params: Params, @Body() body: EditCompanyInputDto): Promise<SuccessMessage> {
     return this.editCompanyService.execute(params.id, body);
+  }
+
+  @Patch(':id/status')
+  @Swagger({
+    tags: ['Empresa'],
+    summary: 'Atualiza o status de uma empresa',
+    applyBadRequest: true,
+    applyNotFound: true,
+    okResponse: SuccessMessage,
+  })
+  public updateStatus(@Param() params: Params): Promise<SuccessMessage> {
+    return this.updateCompanyStatusService.execute(params.id);
   }
 }

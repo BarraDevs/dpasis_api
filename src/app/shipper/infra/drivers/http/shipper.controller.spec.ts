@@ -94,18 +94,18 @@ describe('ShipperController', () => {
     });
   });
 
-  describe('remove', () => {
-    it('should call deleteShipperService with correct parameters', async() => {
+  describe('updateStatus', () => {
+    it('should call updateShipperStatusService with correct parameters', async() => {
       // Arrange
       const params = createMock<Params>();
       const output = createMock<SuccessMessage>();
-      const deleteShipperSpy = jest.spyOn(sut['deleteShipperService'], 'execute').mockResolvedValue(output);
+      const updateShipperStatusSpy = jest.spyOn(sut['updateShipperStatusService'], 'execute').mockResolvedValue(output);
 
       // Act
-      const result = await sut.remove(params);
+      const result = await sut.updateStatus(params);
 
       // Assert
-      expect(deleteShipperSpy).toHaveBeenCalledWith(params.id);
+      expect(updateShipperStatusSpy).toHaveBeenCalledWith(params.id);
       expect(result).toEqual(output);
     });
   });

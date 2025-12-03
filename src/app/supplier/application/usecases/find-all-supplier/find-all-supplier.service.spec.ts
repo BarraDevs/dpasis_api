@@ -15,6 +15,9 @@ describe('FindAllSupplier', () => {
   let createSupplier: CreateSupplier;
   let baseSupplierData: CreateSupplierInputDto;
   let createdSupplierIds: string[];
+  let companyId1: string;
+  let companyId2: string;
+  let companyId3: string;
 
   beforeEach(async() => {
     const module: TestingModule = await Test.createTestingModule({
@@ -28,102 +31,169 @@ describe('FindAllSupplier', () => {
     prisma = module.get(PrismaService);
     createSupplier = module.get(CreateSupplier);
 
+    await prisma.supplier.deleteMany();
+    await prisma.company.deleteMany();
+
+    // Create test companies
+    const company1 = await prisma.company.create({
+      data: {
+        name: 'Test Company 1',
+        fantasyName: 'Company 1',
+        document: '12345678000190',
+        ie: '111111111',
+        zipCode: '12345678',
+        street: 'Test Street 1',
+        number: '100',
+        neighborhood: 'District 1',
+        city: 'City 1',
+        state: 'C1',
+        phone01: '1111111111',
+        email01: 'company1@test.com',
+        active: true,
+      },
+    });
+    companyId1 = company1.id;
+
+    const company2 = await prisma.company.create({
+      data: {
+        name: 'Test Company 2',
+        fantasyName: 'Company 2',
+        document: '98765432000190',
+        ie: '222222222',
+        zipCode: '87654321',
+        street: 'Test Street 2',
+        number: '200',
+        neighborhood: 'District 2',
+        city: 'City 2',
+        state: 'C2',
+        phone01: '2222222222',
+        email01: 'company2@test.com',
+        active: true,
+      },
+    });
+    companyId2 = company2.id;
+
+    const company3 = await prisma.company.create({
+      data: {
+        name: 'Test Company 3',
+        fantasyName: 'Company 3',
+        document: '11122233000190',
+        ie: '333333333',
+        zipCode: '11223344',
+        street: 'Test Street 3',
+        number: '300',
+        neighborhood: 'District 3',
+        city: 'City 3',
+        state: 'C3',
+        phone01: '3333333333',
+        email01: 'company3@test.com',
+        active: true,
+      },
+    });
+    companyId3 = company3.id;
+
     baseSupplierData = {
-      cnpj: '12.345.678/0001-90',
+      cnpj: '85.693.309/0001-67',
       ie: '123.456.789.012',
       group: 'Matéria Prima',
       type: 'Nacional',
       companyName: 'Fornecedor Base Ltda',
       fantasyName: 'Fornecedor Base',
       representative: 'João Silva',
+      companyIds: [],
     };
-
-    await prisma.supplier.deleteMany();
 
     // Create diverse test suppliers for comprehensive filter testing
     createdSupplierIds = [];
 
-    // Supplier 1: Technology, Nacional, Premium
+    // Supplier 1: Technology, Nacional, Premium - No companies
     const supplier1 = await createSupplier.execute({
       ...baseSupplierData,
-      cnpj: '11.111.111/0001-11',
+      cnpj: '09.048.836/0001-30',
       ie: '111.111.111.111',
       group: 'Technology',
       type: 'Nacional',
       companyName: 'Alpha Tech Supplies Ltd',
       fantasyName: 'Alpha Tech',
       representative: 'John Alpha Smith',
+      companyIds: [],
     });
     createdSupplierIds.push(supplier1.id);
 
-    // Supplier 2: Industrial, Internacional, Standard
+    // Supplier 2: Industrial, Internacional, Standard - Company 1
     const supplier2 = await createSupplier.execute({
       ...baseSupplierData,
-      cnpj: '22.222.222/0001-22',
+      cnpj: '34.145.406/0001-84',
       ie: '222.222.222.222',
       group: 'Industrial',
       type: 'Internacional',
       companyName: 'Beta Industrial Materials',
       fantasyName: 'Beta Industrial',
       representative: 'Jane Beta Santos',
+      companyIds: [companyId1],
     });
     createdSupplierIds.push(supplier2.id);
 
-    // Supplier 3: Technology, Nacional, Premium
+    // Supplier 3: Technology, Nacional, Premium - Companies 1 and 2
     const supplier3 = await createSupplier.execute({
       ...baseSupplierData,
-      cnpj: '33.333.333/0001-33',
+      cnpj: '74.097.670/0001-04',
       ie: '333.333.333.333',
       group: 'Technology',
       type: 'Nacional',
       companyName: 'Gamma Corporation Supplies',
       fantasyName: 'Gamma Corp',
       representative: 'Robert Gamma Wilson',
+      companyIds: [companyId1, companyId2],
     });
     createdSupplierIds.push(supplier3.id);
 
-    // Supplier 4: Raw Materials, Regional, Basic
+    // Supplier 4: Raw Materials, Regional, Basic - Company 2
     const supplier4 = await createSupplier.execute({
       ...baseSupplierData,
-      cnpj: '44.444.444/0001-44',
+      cnpj: '74.678.725/0001-70',
       ie: '444.444.444.444',
       group: 'Raw Materials',
       type: 'Regional',
       companyName: 'Delta Raw Materials Inc',
       fantasyName: 'Delta Materials',
       representative: 'Maria Delta Costa',
+      companyIds: [companyId2],
     });
     createdSupplierIds.push(supplier4.id);
 
-    // Supplier 5: Services, Internacional, Standard
+    // Supplier 5: Services, Internacional, Standard - Company 3
     const supplier5 = await createSupplier.execute({
       ...baseSupplierData,
-      cnpj: '55.555.555/0001-55',
+      cnpj: '38.570.883/0001-48',
       ie: '555.555.555.555',
       group: 'Services',
       type: 'Internacional',
       companyName: 'Epsilon Consulting Services',
       fantasyName: 'Epsilon Consulting',
       representative: 'Carlos Epsilon Lima',
+      companyIds: [companyId3],
     });
     createdSupplierIds.push(supplier5.id);
 
-    // Supplier 6: Industrial, Nacional, Premium
+    // Supplier 6: Industrial, Nacional, Premium - All companies
     const supplier6 = await createSupplier.execute({
       ...baseSupplierData,
-      cnpj: '66.666.666/0001-66',
+      cnpj: '68.383.796/0001-42',
       ie: '666.666.666.666',
       group: 'Industrial',
       type: 'Nacional',
       companyName: 'Foxtrot Manufacturing Supplies',
       fantasyName: 'Foxtrot Manufacturing',
       representative: 'Ana Foxtrot Silva',
+      companyIds: [companyId1, companyId2, companyId3],
     });
     createdSupplierIds.push(supplier6.id);
   });
 
   afterEach(async() => {
     await prisma.supplier.deleteMany();
+    await prisma.company.deleteMany();
     await prisma.$disconnect();
   });
 
@@ -207,28 +277,55 @@ describe('FindAllSupplier', () => {
       expect(result.totalPages).toBe(3);
       expect(result.itemsPerPage).toBe(2);
     });
+
+    it('should return correct dto structure', async() => {
+      // Act
+      const result = await sut.execute({});
+
+      // Assert
+      const supplier = result.data.filter(s => s.companies.length > 0)[0];
+      expect(supplier).toEqual<SupplierDto>({
+        id: expect.any(String),
+        cnpj: expect.any(String),
+        ie: expect.any(String),
+        group: expect.any(String),
+        type: expect.any(String),
+        companyName: expect.any(String),
+        fantasyName: expect.any(String),
+        representative: expect.any(String),
+        active: expect.any(Boolean),
+        createdAt: expect.any(Date),
+        updatedAt: expect.any(Date),
+        companies: expect.arrayContaining([
+          expect.objectContaining({
+            id: expect.any(String),
+            name: expect.any(String),
+          }),
+        ]),
+      });
+    });
   });
 
   describe('Integration tests - Individual filter tests', () => {
     it('should filter by cnpj - exact match', async() => {
       // Act
-      const result = await sut.execute({ cnpj: '11.111.111/0001-11' });
+      const result = await sut.execute({ cnpj: '09048836000130' });
 
       // Assert
       expect(result.totalItems).toBe(1);
       expect(result.data).toHaveLength(1);
-      expect(result.data[0].cnpj).toBe('11.111.111/0001-11');
+      expect(result.data[0].cnpj).toBe('09048836000130');
       expect(result.data[0].id).toBe(createdSupplierIds[0]);
     });
 
     it('should filter by cnpj - partial match', async() => {
       // Act
-      const result = await sut.execute({ cnpj: '22.222' });
+      const result = await sut.execute({ cnpj: '34145' });
 
       // Assert
       expect(result.totalItems).toBe(1);
       expect(result.data).toHaveLength(1);
-      expect(result.data[0].cnpj).toBe('22.222.222/0001-22');
+      expect(result.data[0].cnpj).toBe('34145406000184');
     });
 
     it('should filter by ie - exact match', async() => {
@@ -328,6 +425,27 @@ describe('FindAllSupplier', () => {
       expect(result.data).toHaveLength(1);
       expect(result.data[0].representative).toBe('John Alpha Smith');
     });
+
+    it('should filter by active status - true', async() => {
+      // Act
+      const result = await sut.execute({ active: true });
+
+      // Assert
+      expect(result.totalItems).toBe(6);
+      expect(result.data).toHaveLength(6);
+      result.data.forEach(supplier => {
+        expect(supplier.active).toBe(true);
+      });
+    });
+
+    it('should filter by active status - false', async() => {
+      // Act
+      const result = await sut.execute({ active: false });
+
+      // Assert
+      expect(result.totalItems).toBe(0);
+      expect(result.data).toHaveLength(0);
+    });
   });
 
   describe('Integration tests - Case insensitive filters', () => {
@@ -425,14 +543,14 @@ describe('FindAllSupplier', () => {
     it('should filter by exact CNPJ AND IE', async() => {
       // Act
       const result = await sut.execute({
-        cnpj: '44.444.444/0001-44',
+        cnpj: '74678725000170',
         ie: '444.444.444.444',
       });
 
       // Assert
       expect(result.totalItems).toBe(1);
       expect(result.data).toHaveLength(1);
-      expect(result.data[0].cnpj).toBe('44.444.444/0001-44');
+      expect(result.data[0].cnpj).toBe('74678725000170');
       expect(result.data[0].ie).toBe('444.444.444.444');
     });
   });
@@ -512,6 +630,415 @@ describe('FindAllSupplier', () => {
       expect(result.totalItems).toBeGreaterThan(0);
       result.data.forEach(supplier => {
         expect(supplier.representative).toContain('Alpha');
+      });
+    });
+  });
+
+  describe('Integration tests - Filter by companyIds', () => {
+    it('should filter by single companyId - Company 1', async() => {
+      // Act
+      const result = await sut.execute({ companyIds: [companyId1] });
+
+      // Assert
+      expect(result.totalItems).toBe(3); // suppliers 2, 3, 6 (have Company 1)
+      expect(result.data).toHaveLength(3);
+
+      const supplierIds = result.data.map(s => s.id).sort();
+      const expectedIds = [createdSupplierIds[1], createdSupplierIds[2], createdSupplierIds[5]].sort();
+      expect(supplierIds).toEqual(expectedIds);
+
+      // Verify each supplier has Company 1
+      result.data.forEach(supplier => {
+        const companyIds = supplier.companies.map(c => c.id);
+        expect(companyIds).toContain(companyId1);
+      });
+    });
+
+    it('should filter by single companyId - Company 2', async() => {
+      // Act
+      const result = await sut.execute({ companyIds: [companyId2] });
+
+      // Assert
+      expect(result.totalItems).toBe(3); // suppliers 3, 4, 6 (have Company 2)
+      expect(result.data).toHaveLength(3);
+
+      const supplierIds = result.data.map(s => s.id).sort();
+      const expectedIds = [createdSupplierIds[2], createdSupplierIds[3], createdSupplierIds[5]].sort();
+      expect(supplierIds).toEqual(expectedIds);
+
+      // Verify each supplier has Company 2
+      result.data.forEach(supplier => {
+        const companyIds = supplier.companies.map(c => c.id);
+        expect(companyIds).toContain(companyId2);
+      });
+    });
+
+    it('should filter by single companyId - Company 3', async() => {
+      // Act
+      const result = await sut.execute({ companyIds: [companyId3] });
+
+      // Assert
+      expect(result.totalItems).toBe(2); // suppliers 5, 6 (have Company 3)
+      expect(result.data).toHaveLength(2);
+
+      const supplierIds = result.data.map(s => s.id).sort();
+      const expectedIds = [createdSupplierIds[4], createdSupplierIds[5]].sort();
+      expect(supplierIds).toEqual(expectedIds);
+
+      // Verify each supplier has Company 3
+      result.data.forEach(supplier => {
+        const companyIds = supplier.companies.map(c => c.id);
+        expect(companyIds).toContain(companyId3);
+      });
+    });
+
+    it('should filter by multiple companyIds - Companies 1 and 2', async() => {
+      // Act
+      const result = await sut.execute({ companyIds: [companyId1, companyId2] });
+
+      // Assert
+      expect(result.totalItems).toBe(4); // suppliers 2, 3, 4, 6 (have Company 1 OR 2)
+      expect(result.data).toHaveLength(4);
+
+      const supplierIds = result.data.map(s => s.id).sort();
+      const expectedIds = [
+        createdSupplierIds[1],
+        createdSupplierIds[2],
+        createdSupplierIds[3],
+        createdSupplierIds[5],
+      ].sort();
+      expect(supplierIds).toEqual(expectedIds);
+    });
+
+    it('should filter by multiple companyIds - Companies 2 and 3', async() => {
+      // Act
+      const result = await sut.execute({ companyIds: [companyId2, companyId3] });
+
+      // Assert
+      expect(result.totalItems).toBe(4); // suppliers 3, 4, 5, 6 (have Company 2 OR 3)
+      expect(result.data).toHaveLength(4);
+
+      const supplierIds = result.data.map(s => s.id).sort();
+      const expectedIds = [
+        createdSupplierIds[2],
+        createdSupplierIds[3],
+        createdSupplierIds[4],
+        createdSupplierIds[5],
+      ].sort();
+      expect(supplierIds).toEqual(expectedIds);
+    });
+
+    it('should filter by all companyIds', async() => {
+      // Act
+      const result = await sut.execute({ companyIds: [companyId1, companyId2, companyId3] });
+
+      // Assert
+      expect(result.totalItems).toBe(5); // All suppliers except supplier 1 (which has no companies)
+      expect(result.data).toHaveLength(5);
+
+      const supplierIds = result.data.map(s => s.id).sort();
+      const expectedIds = [
+        createdSupplierIds[1],
+        createdSupplierIds[2],
+        createdSupplierIds[3],
+        createdSupplierIds[4],
+        createdSupplierIds[5],
+      ].sort();
+      expect(supplierIds).toEqual(expectedIds);
+    });
+
+    it('should return empty when filtering by non-existent companyId', async() => {
+      // Act
+      const result = await sut.execute({ companyIds: ['non-existent-company-id'] });
+
+      // Assert
+      expect(result.totalItems).toBe(0);
+      expect(result.data).toHaveLength(0);
+    });
+
+    it('should return all suppliers when companyIds is empty array', async() => {
+      // Act
+      const result = await sut.execute({ companyIds: [] });
+
+      // Assert
+      expect(result.totalItems).toBe(6); // Should return all suppliers (empty array is ignored)
+      expect(result.data).toHaveLength(6);
+    });
+
+    it('should combine companyIds filter with group filter', async() => {
+      // Act
+      const result = await sut.execute({
+        companyIds: [companyId1],
+        group: 'Technology',
+      });
+
+      // Assert
+      expect(result.totalItems).toBe(1); // Only supplier 3 (has Company 1 AND Technology group)
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0].id).toBe(createdSupplierIds[2]);
+      expect(result.data[0].group).toBe('Technology');
+    });
+
+    it('should combine companyIds filter with type filter', async() => {
+      // Act
+      const result = await sut.execute({
+        companyIds: [companyId2],
+        type: 'Nacional',
+      });
+
+      // Assert
+      expect(result.totalItems).toBe(2); // suppliers 3, 6 (have Company 2 AND Nacional)
+      expect(result.data).toHaveLength(2);
+
+      const supplierIds = result.data.map(s => s.id).sort();
+      const expectedIds = [createdSupplierIds[2], createdSupplierIds[5]].sort();
+      expect(supplierIds).toEqual(expectedIds);
+
+      result.data.forEach(supplier => {
+        expect(supplier.type).toBe('Nacional');
+      });
+    });
+
+    it('should combine companyIds filter with active filter', async() => {
+      // Arrange - First, deactivate one supplier
+      const supplierToDeactivate = await prisma.supplier.findUnique({
+        where: { id: createdSupplierIds[1] },
+      });
+      await prisma.supplier.update({
+        where: { id: createdSupplierIds[1] },
+        data: { active: !supplierToDeactivate!.active },
+      });
+
+      // Act
+      const result = await sut.execute({
+        companyIds: [companyId1],
+        active: true,
+      });
+
+      // Assert
+      expect(result.totalItems).toBe(2); // suppliers 3, 6 (have Company 1 AND active)
+      expect(result.data).toHaveLength(2);
+
+      result.data.forEach(supplier => {
+        expect(supplier.active).toBe(true);
+        const companyIds = supplier.companies.map(c => c.id);
+        expect(companyIds).toContain(companyId1);
+      });
+
+      // Cleanup - restore original state
+      await prisma.supplier.update({
+        where: { id: createdSupplierIds[1] },
+        data: { active: !supplierToDeactivate!.active },
+      });
+    });
+
+    it('should combine companyIds with multiple string filters', async() => {
+      // Act
+      const result = await sut.execute({
+        companyIds: [companyId1, companyId2],
+        group: 'Technology',
+        type: 'Nacional',
+      });
+
+      // Assert
+      expect(result.totalItems).toBe(1); // Only supplier 3 (has Company 1/2, Technology, and Nacional)
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0].id).toBe(createdSupplierIds[2]);
+    });
+
+    it('should return empty when companyIds filter does not match with other filters', async() => {
+      // Act
+      const result = await sut.execute({
+        companyIds: [companyId3],
+        group: 'Technology', // No Technology supplier has only Company 3
+      });
+
+      // Assert
+      expect(result.totalItems).toBe(0);
+      expect(result.data).toHaveLength(0);
+    });
+
+    it('should combine pagination with companyIds filter', async() => {
+      // Act
+      const result = await sut.execute({
+        companyIds: [companyId1],
+        page: 1,
+        size: 2,
+      });
+
+      // Assert
+      expect(result.totalItems).toBe(3); // Total suppliers with Company 1
+      expect(result.data).toHaveLength(2); // Page size
+      expect(result.currentPage).toBe(1);
+      expect(result.totalPages).toBe(2);
+      expect(result.itemsPerPage).toBe(2);
+    });
+
+    it('should combine pagination with multiple companyIds', async() => {
+      // Act
+      const result = await sut.execute({
+        companyIds: [companyId2, companyId3],
+        page: 2,
+        size: 2,
+      });
+
+      // Assert
+      expect(result.totalItems).toBe(4); // suppliers 3, 4, 5, 6 (have Company 2 or 3)
+      expect(result.data).toHaveLength(2); // Page size
+      expect(result.currentPage).toBe(2);
+      expect(result.totalPages).toBe(2);
+    });
+
+    it('should verify correct companies are returned when filtering by companyIds', async() => {
+      // Act
+      const result = await sut.execute({ companyIds: [companyId2] });
+
+      // Assert
+      expect(result.totalItems).toBe(3); // suppliers 3, 4, 6
+
+      // Verify each supplier has Company 2 in their companies array
+      result.data.forEach(supplier => {
+        const company2 = supplier.companies.find(c => c.id === companyId2);
+        expect(company2).toBeDefined();
+        expect(company2?.name).toBe('Test Company 2');
+      });
+    });
+
+    it('should handle companyIds filter with pagination beyond results', async() => {
+      // Act
+      const result = await sut.execute({
+        companyIds: [companyId3],
+        page: 5,
+        size: 2,
+      });
+
+      // Assert
+      expect(result.totalItems).toBe(2); // Total suppliers with Company 3
+      expect(result.data).toHaveLength(0); // No results on page 5
+      expect(result.currentPage).toBe(5);
+    });
+  });
+
+  describe('Integration tests - Company associations', () => {
+    it('should return suppliers with empty companies array', async() => {
+      // Act
+      const result = await sut.execute({});
+
+      // Assert
+      const suppliersWithNoCompanies = result.data.filter(s => s.companies.length === 0);
+      expect(suppliersWithNoCompanies).toHaveLength(1); // Only supplier 1 has no companies
+      expect(suppliersWithNoCompanies[0].id).toBe(createdSupplierIds[0]);
+    });
+
+    it('should return suppliers with companies array populated', async() => {
+      // Act
+      const result = await sut.execute({});
+
+      // Assert
+      const suppliersWithCompanies = result.data.filter(s => s.companies.length > 0);
+      expect(suppliersWithCompanies).toHaveLength(5); // Suppliers 2, 3, 4, 5, 6 have companies
+    });
+
+    it('should return supplier with single company association', async() => {
+      // Act
+      const result = await sut.execute({ companyName: 'Beta Industrial' });
+
+      // Assert
+      expect(result.totalItems).toBe(1);
+      expect(result.data[0].companies).toHaveLength(1);
+      expect(result.data[0].companies[0].id).toBe(companyId1);
+      expect(result.data[0].companies[0].name).toBe('Test Company 1');
+    });
+
+    it('should return supplier with multiple company associations', async() => {
+      // Act
+      const result = await sut.execute({ companyName: 'Gamma Corporation' });
+
+      // Assert
+      expect(result.totalItems).toBe(1);
+      expect(result.data[0].companies).toHaveLength(2);
+      const companyIds = result.data[0].companies.map(c => c.id);
+      expect(companyIds).toContain(companyId1);
+      expect(companyIds).toContain(companyId2);
+    });
+
+    it('should return supplier with all companies associated', async() => {
+      // Act
+      const result = await sut.execute({ companyName: 'Foxtrot Manufacturing' });
+
+      // Assert
+      expect(result.totalItems).toBe(1);
+      expect(result.data[0].companies).toHaveLength(3);
+      const companyIds = result.data[0].companies.map(c => c.id);
+      expect(companyIds).toContain(companyId1);
+      expect(companyIds).toContain(companyId2);
+      expect(companyIds).toContain(companyId3);
+    });
+
+    it('should return correct company names and ids in companies array', async() => {
+      // Act
+      const result = await sut.execute({ representative: 'Maria Delta Costa' });
+
+      // Assert
+      expect(result.totalItems).toBe(1);
+      expect(result.data[0].companies).toHaveLength(1);
+      expect(result.data[0].companies[0]).toEqual({
+        id: companyId2,
+        name: 'Test Company 2',
+      });
+    });
+
+    it('should return all suppliers and verify companies array structure', async() => {
+      // Act
+      const result = await sut.execute({});
+
+      // Assert
+      expect(result.totalItems).toBe(6);
+
+      // Verify each supplier has companies array
+      result.data.forEach(supplier => {
+        expect(supplier).toHaveProperty('companies');
+        expect(Array.isArray(supplier.companies)).toBe(true);
+
+        // Verify each company in the array has id and name
+        supplier.companies.forEach(company => {
+          expect(company).toHaveProperty('id');
+          expect(company).toHaveProperty('name');
+          expect(typeof company.id).toBe('string');
+          expect(typeof company.name).toBe('string');
+        });
+      });
+    });
+
+    it('should verify specific supplier company associations', async() => {
+      // Act
+      const result = await sut.execute({});
+
+      // Assert - Verify specific suppliers have correct number of companies
+      const supplier1 = result.data.find(s => s.id === createdSupplierIds[0]);
+      const supplier2 = result.data.find(s => s.id === createdSupplierIds[1]);
+      const supplier3 = result.data.find(s => s.id === createdSupplierIds[2]);
+      const supplier4 = result.data.find(s => s.id === createdSupplierIds[3]);
+      const supplier5 = result.data.find(s => s.id === createdSupplierIds[4]);
+      const supplier6 = result.data.find(s => s.id === createdSupplierIds[5]);
+
+      expect(supplier1?.companies).toHaveLength(0); // No companies
+      expect(supplier2?.companies).toHaveLength(1); // Company 1
+      expect(supplier3?.companies).toHaveLength(2); // Companies 1, 2
+      expect(supplier4?.companies).toHaveLength(1); // Company 2
+      expect(supplier5?.companies).toHaveLength(1); // Company 3
+      expect(supplier6?.companies).toHaveLength(3); // Companies 1, 2, 3
+    });
+
+    it('should handle pagination with companies array', async() => {
+      // Act
+      const result = await sut.execute({ page: 1, size: 3 });
+
+      // Assert
+      expect(result.data).toHaveLength(3);
+      result.data.forEach(supplier => {
+        expect(supplier).toHaveProperty('companies');
+        expect(Array.isArray(supplier.companies)).toBe(true);
       });
     });
   });

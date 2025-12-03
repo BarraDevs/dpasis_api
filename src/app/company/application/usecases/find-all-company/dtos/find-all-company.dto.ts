@@ -1,5 +1,5 @@
 import { ApiPropertyOptional, OmitType } from '@nestjs/swagger';
-import { IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsOptional, IsString } from 'class-validator';
 import { Trim } from 'src/infra/validators/class-*/decorators/trim/trim';
 import { Queries } from 'src/infra/validators/class-*/dtos/queries/queries.dto';
 
@@ -45,4 +45,9 @@ export class FindAllCompanyQueryDto extends OmitType(Queries, ['search']) {
   @IsOptional()
   @IsString({ message: '$property deve ser um texto' })
   email?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsBoolean({ message: '$property deve ser um valor booleano' })
+  active?: boolean;
 }

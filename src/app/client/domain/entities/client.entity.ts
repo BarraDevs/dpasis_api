@@ -1,3 +1,6 @@
+import { CNPJ } from 'src/shared/value-objects/cnpj/cnpj.vo';
+import { UUID } from 'src/shared/value-objects/uuid/uuid.vo';
+
 type ClientProps = ClientCreateProps & {
   id: string;
   active: boolean;
@@ -16,18 +19,16 @@ type ClientCreateProps = {
   fantasyName: string;
   owner: string;
   headquarters: string;
-  companyId: string;
+  companyIds: string[];
 }
 
 export class Client {
-  private readonly _id: string; // TODO: usar Value Object UUID
-  // private readonly _cnpj: CNPJ;
   private readonly _props: ClientProps;
 
   static create(props: ClientCreateProps): Client {
     return new Client({
       ...props,
-      id: crypto.randomUUID(),
+      id: new UUID().value,
       active: true,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -39,11 +40,17 @@ export class Client {
   }
 
   public get props(): Readonly<ClientProps> {
-    return { ...this._props, id: this._id };
+    return { ...this._props, companyIds: [...this._props.companyIds] };
   }
 
   constructor(props: ClientProps) {
-    this._id = props.id!;
-    this._props = props;
+    this._props = {
+      ...props,
+      cnpj: new CNPJ(props.cnpj).value,
+    };
+  }
+
+  public toggleStatus(): void {
+    this._props.active = !this._props.active;
   }
 }

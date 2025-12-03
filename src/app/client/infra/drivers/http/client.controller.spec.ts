@@ -92,4 +92,20 @@ describe('ClientController', () => {
       expect(result).toEqual(output);
     });
   });
+
+  describe('updateStatus', () => {
+    it('should call updateClientStatusService with correct parameters', async() => {
+      // Arrange
+      const params = createMock<Params>();
+      const output = createMock<SuccessMessage>();
+      const updateClientStatusSpy = jest.spyOn(sut['updateClientStatusService'], 'execute').mockResolvedValue(output);
+
+      // Act
+      const result = await sut.updateStatus(params);
+
+      // Assert
+      expect(updateClientStatusSpy).toHaveBeenCalledWith(params.id);
+      expect(result).toEqual(output);
+    });
+  });
 });

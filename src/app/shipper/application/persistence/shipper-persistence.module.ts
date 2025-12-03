@@ -2,11 +2,16 @@ import { Module, Provider } from '@nestjs/common';
 import { TOKENS } from 'src/core/di/token';
 import { DatabaseModule } from 'src/infra/database/database.module';
 import { ShipperDaoAdapterPrisma } from '../../infra/driven/persistence/shipper.dao';
+import { ShipperRepositoryAdapterPrisma } from '../../infra/driven/persistence/shipper.repository';
 
 const adapters: Provider[] = [
   {
     provide: TOKENS.ShipperDao,
     useClass: ShipperDaoAdapterPrisma,
+  },
+  {
+    provide: TOKENS.ShipperRepository,
+    useClass: ShipperRepositoryAdapterPrisma,
   },
 ];
 

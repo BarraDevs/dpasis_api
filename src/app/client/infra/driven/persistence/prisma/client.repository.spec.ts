@@ -26,6 +26,7 @@ describe('ClientRepositoryAdapterPrisma', () => {
     prisma = module.get(PrismaService);
 
     await prisma.company.deleteMany();
+    await prisma.client.deleteMany();
 
     company = await prisma.company.create({
       data: {
@@ -41,12 +42,14 @@ describe('ClientRepositoryAdapterPrisma', () => {
         state: 'state teste',
         phone01: 'phone01 teste',
         email01: 'email01 teste',
+        active: true,
       },
     });
   });
 
   afterEach(async() => {
     await prisma.company.deleteMany();
+    await prisma.client.deleteMany();
     await prisma.$disconnect();
   });
 
@@ -54,12 +57,12 @@ describe('ClientRepositoryAdapterPrisma', () => {
     expect(sut).toBeDefined();
   });
 
-  describe('save', () => {
-    it('should save a client and create a resource with the same id', async() => {
+  describe('findById', () => {
+    it('should return a client when found', async() => {
       // Arrange
       const client = Client.create({
         kind: 'PJ',
-        cnpj: '12.345.678/0001-90',
+        cnpj: '93.335.895/0001-04',
         ie: '123.456.789.012',
         group: 'Group A',
         type: 'Premium',
@@ -68,7 +71,46 @@ describe('ClientRepositoryAdapterPrisma', () => {
         fantasyName: 'Test Company',
         owner: 'John Doe',
         headquarters: 'Main Office',
-        companyId: company.id,
+        companyIds: [company.id],
+      });
+
+      await sut.save(client);
+
+      // Act
+      const foundClient = await sut.findById(client.props.id);
+
+      // Assert
+      expect(foundClient).toBeDefined();
+      expect(foundClient?.props.id).toBe(client.props.id);
+      expect(foundClient?.props.cnpj).toBe(client.props.cnpj);
+      expect(foundClient?.props.ie).toBe(client.props.ie);
+      expect(foundClient?.props.companyIds).toEqual([company.id]);
+    });
+
+    it('should return null when client is not found', async() => {
+      // Act
+      const foundClient = await sut.findById('non-existent-id');
+
+      // Assert
+      expect(foundClient).toBeNull();
+    });
+  });
+
+  describe('save', () => {
+    it('should save a client and create a resource with the same id', async() => {
+      // Arrange
+      const client = Client.create({
+        kind: 'PJ',
+        cnpj: '93.335.895/0001-04',
+        ie: '123.456.789.012',
+        group: 'Group A',
+        type: 'Premium',
+        generateInvoice: true,
+        companyName: 'Test Company Ltd',
+        fantasyName: 'Test Company',
+        owner: 'John Doe',
+        headquarters: 'Main Office',
+        companyIds: [company.id],
       });
 
       // Act
@@ -99,11 +141,11 @@ describe('ClientRepositoryAdapterPrisma', () => {
       expect(savedClient?.resource?.id).toBe(client.props.id);
     });
 
-    it('should save multiple clients with unique cnpj and ie', async() => {
+    it('should save multiple clients with unique cnpj', async() => {
       // Arrange
       const client1 = Client.create({
         kind: 'PJ',
-        cnpj: '11.111.111/0001-11',
+        cnpj: '11.938.884/0001-46',
         ie: '111.111.111.111',
         group: 'Group A',
         type: 'Premium',
@@ -112,12 +154,12 @@ describe('ClientRepositoryAdapterPrisma', () => {
         fantasyName: 'First Company',
         owner: 'John Doe',
         headquarters: 'Main Office',
-        companyId: company.id,
+        companyIds: [company.id],
       });
 
       const client2 = Client.create({
         kind: 'PF',
-        cnpj: '22.222.222/0001-22',
+        cnpj: '36.630.627/0001-73',
         ie: '222.222.222.222',
         group: 'Group B',
         type: 'Basic',
@@ -126,7 +168,7 @@ describe('ClientRepositoryAdapterPrisma', () => {
         fantasyName: 'Second Company',
         owner: 'Jane Doe',
         headquarters: 'Branch Office',
-        companyId: company.id,
+        companyIds: [company.id],
       });
 
       // Act
@@ -148,7 +190,7 @@ describe('ClientRepositoryAdapterPrisma', () => {
 
     it('should throw error when trying to save client with duplicate cnpj', async() => {
       // Arrange
-      const duplicateCnpj = '12.345.678/0001-90';
+      const duplicateCnpj = '93.335.895/0001-04';
       const client1 = Client.create({
         kind: 'PJ',
         cnpj: duplicateCnpj,
@@ -160,7 +202,7 @@ describe('ClientRepositoryAdapterPrisma', () => {
         fantasyName: 'First Company',
         owner: 'John Doe',
         headquarters: 'Main Office',
-        companyId: company.id,
+        companyIds: [company.id],
       });
 
       const client2 = Client.create({
@@ -174,7 +216,7 @@ describe('ClientRepositoryAdapterPrisma', () => {
         fantasyName: 'Second Company',
         owner: 'Jane Doe',
         headquarters: 'Branch Office',
-        companyId: company.id,
+        companyIds: [company.id],
       });
 
       // Act & Assert
@@ -182,40 +224,75 @@ describe('ClientRepositoryAdapterPrisma', () => {
       await expect(sut.save(client2)).rejects.toThrow();
     });
 
-    it('should throw error when trying to save client with duplicate ie', async() => {
+    it('should throw error when trying to connect to non-existent company', async() => {
       // Arrange
-      const duplicateIe = '123.456.789.012';
-      const client1 = Client.create({
+      const nonExistentCompanyId = 'non-existent-company-id';
+      const client = Client.create({
         kind: 'PJ',
-        cnpj: '11.111.111/0001-11',
-        ie: duplicateIe,
-        group: 'Group A',
-        type: 'Premium',
+        cnpj: '36.444.234/0001-75',
+        ie: '333.333.333.333',
+        group: 'Group C',
+        type: 'Standard',
         generateInvoice: true,
-        companyName: 'First Company Ltd',
-        fantasyName: 'First Company',
-        owner: 'John Doe',
-        headquarters: 'Main Office',
-        companyId: company.id,
-      });
-
-      const client2 = Client.create({
-        kind: 'PJ',
-        cnpj: '22.222.222/0001-22',
-        ie: duplicateIe, // Same IE
-        group: 'Group B',
-        type: 'Basic',
-        generateInvoice: false,
-        companyName: 'Second Company Ltd',
-        fantasyName: 'Second Company',
-        owner: 'Jane Doe',
-        headquarters: 'Branch Office',
-        companyId: company.id,
+        companyName: 'Third Company Ltd',
+        fantasyName: 'Third Company',
+        owner: 'Jim Beam',
+        headquarters: 'Headquarters',
+        companyIds: [nonExistentCompanyId],
       });
 
       // Act & Assert
-      await sut.save(client1);
-      await expect(sut.save(client2)).rejects.toThrow();
+      await expect(sut.save(client)).rejects.toThrow();
+    });
+
+    it('should skip duplicate company connections when saving a client', async() => {
+      // Arrange
+      const client = Client.create({
+        kind: 'PJ',
+        cnpj: '36.444.234/0001-75',
+        ie: '444.444.444.444',
+        group: 'Group D',
+        type: 'Standard',
+        generateInvoice: false,
+        companyName: 'Fourth Company Ltd',
+        fantasyName: 'Fourth Company',
+        owner: 'Alice Wonderland',
+        headquarters: 'Main HQ',
+        companyIds: [company.id, company.id], // Duplicate company IDs
+      });
+
+      // Act
+      await sut.save(client);
+
+      // Assert
+      const savedClient = await prisma.client.findUnique({
+        where: { id: client.props.id },
+        include: { companies: true },
+      });
+
+      expect(savedClient).toBeDefined();
+      expect(savedClient?.companies).toHaveLength(1);
+      expect(savedClient?.companies[0].id).toBe(company.id);
+    });
+
+    it('should throw error when trying to save client with null companyIds', async() => {
+      // Arrange
+      const client = Client.create({
+        kind: 'PJ',
+        cnpj: '36.444.234/0001-75',
+        ie: '666.666.666.666',
+        group: 'Group F',
+        type: 'Premium',
+        generateInvoice: false,
+        companyName: 'Sixth Company Ltd',
+        fantasyName: 'Sixth Company',
+        owner: 'Charlie Chocolate',
+        headquarters: 'Candy Factory',
+        companyIds: null as any, // Null companyIds
+      });
+
+      // Act & Assert
+      await expect(sut.save(client)).rejects.toThrow();
     });
   });
 
@@ -224,7 +301,7 @@ describe('ClientRepositoryAdapterPrisma', () => {
       // Arrange
       const originalClient = Client.create({
         kind: 'PJ',
-        cnpj: '12.345.678/0001-90',
+        cnpj: '93.335.895/0001-04',
         ie: '123.456.789.012',
         group: 'Group A',
         type: 'Premium',
@@ -233,7 +310,7 @@ describe('ClientRepositoryAdapterPrisma', () => {
         fantasyName: 'Original Company',
         owner: 'John Doe',
         headquarters: 'Main Office',
-        companyId: company.id,
+        companyIds: [company.id],
       });
 
       await sut.save(originalClient);
@@ -275,7 +352,7 @@ describe('ClientRepositoryAdapterPrisma', () => {
       const nonExistentClient = Client.load({
         id: 'non-existent-id',
         kind: 'PJ',
-        cnpj: '99.999.999/0001-99',
+        cnpj: '54.968.396/0001-94',
         ie: '999.999.999.999',
         group: 'Group X',
         type: 'Premium',
@@ -285,7 +362,7 @@ describe('ClientRepositoryAdapterPrisma', () => {
         owner: 'Ghost User',
         headquarters: 'Nowhere',
         active: true,
-        companyId: company.id,
+        companyIds: [company.id],
         createdAt: new Date(),
         updatedAt: new Date(),
       });
@@ -298,7 +375,7 @@ describe('ClientRepositoryAdapterPrisma', () => {
       // Arrange
       const client = Client.create({
         kind: 'PJ',
-        cnpj: '12.345.678/0001-90',
+        cnpj: '93.335.895/0001-04',
         ie: '123.456.789.012',
         group: 'Group A',
         type: 'Premium',
@@ -307,7 +384,7 @@ describe('ClientRepositoryAdapterPrisma', () => {
         fantasyName: 'Test Company',
         owner: 'John Doe',
         headquarters: 'Main Office',
-        companyId: company.id,
+        companyIds: [company.id],
       });
 
       await sut.save(client);
@@ -328,6 +405,157 @@ describe('ClientRepositoryAdapterPrisma', () => {
 
       expect(editedClient).toBeDefined();
       expect(editedClient?.active).toBe(false);
+    });
+
+    it('should update client companies', async() => {
+      // Arrange
+      const anotherCompany = await prisma.company.create({
+        data: {
+          name: 'Another Company',
+          fantasyName: 'Another Fantasy',
+          document: '987654321',
+          ie: 'IE987654',
+          zipCode: '54321',
+          street: 'Another St',
+          number: '200',
+          neighborhood: 'Another Neighborhood',
+          city: 'Another City',
+          state: 'Another State',
+          phone01: '555-5678',
+          email01: 'another@example.com',
+          active: true,
+        },
+      });
+
+      const client = Client.create({
+        kind: 'PJ',
+        cnpj: '93.335.895/0001-04',
+        ie: '123.456.789.012',
+        group: 'Group A',
+        type: 'Premium',
+        generateInvoice: true,
+        companyName: 'Test Company Ltd',
+        fantasyName: 'Test Company',
+        owner: 'John Doe',
+        headquarters: 'Main Office',
+        companyIds: [company.id],
+      });
+
+      await sut.save(client);
+
+      const updatedClient = Client.load({
+        ...client.props,
+        companyIds: [anotherCompany.id],
+        updatedAt: new Date(),
+      });
+
+      // Act
+      await sut.edit(updatedClient);
+
+      // Assert
+      const editedClient = await prisma.client.findUnique({
+        where: { id: client.props.id },
+        include: { companies: true },
+      });
+
+      expect(editedClient).toBeDefined();
+      expect(editedClient?.companies).toHaveLength(1);
+      expect(editedClient?.companies[0].id).toBe(anotherCompany.id);
+    });
+
+    it('should skip duplicate company connections when editing a client', async() => {
+      // Arrange
+      const client = Client.create({
+        kind: 'PJ',
+        cnpj: '93.335.895/0001-04',
+        ie: '123.456.789.012',
+        group: 'Group A',
+        type: 'Premium',
+        generateInvoice: true,
+        companyName: 'Test Company Ltd',
+        fantasyName: 'Test Company',
+        owner: 'John Doe',
+        headquarters: 'Main Office',
+        companyIds: [company.id],
+      });
+
+      await sut.save(client);
+
+      const updatedClient = Client.load({
+        ...client.props,
+        companyIds: [company.id, company.id], // Duplicate company IDs
+        updatedAt: new Date(),
+      });
+
+      // Act
+      await sut.edit(updatedClient);
+
+      // Assert
+      const editedClient = await prisma.client.findUnique({
+        where: { id: client.props.id },
+        include: { companies: true },
+      });
+
+      expect(editedClient).toBeDefined();
+      expect(editedClient?.companies).toHaveLength(1);
+      expect(editedClient?.companies[0].id).toBe(company.id);
+    });
+
+    it('should throw error when trying to connect to non-existent company on edit', async() => {
+      // Arrange
+      const client = Client.create({
+        kind: 'PJ',
+        cnpj: '93.335.895/0001-04',
+        ie: '123.456.789.012',
+        group: 'Group A',
+        type: 'Premium',
+        generateInvoice: true,
+        companyName: 'Test Company Ltd',
+        fantasyName: 'Test Company',
+        owner: 'John Doe',
+        headquarters: 'Main Office',
+        companyIds: [company.id],
+      });
+
+      await sut.save(client);
+
+      const nonExistentCompanyId = 'non-existent-company-id';
+      const updatedClient = Client.load({
+        ...client.props,
+        companyIds: [nonExistentCompanyId],
+        updatedAt: new Date(),
+      });
+
+      // Act & Assert
+      await expect(sut.edit(updatedClient)).rejects.toThrow();
+    });
+
+    it('should throw error when trying to set null companyIds on edit', async() => {
+      // Arrange
+      const client = Client.create({
+        kind: 'PJ',
+        cnpj: '93.335.895/0001-04',
+        ie: '123.456.789.012',
+        group: 'Group A',
+        type: 'Premium',
+        generateInvoice: true,
+        companyName: 'Test Company Ltd',
+        fantasyName: 'Test Company',
+        owner: 'John Doe',
+        headquarters: 'Main Office',
+        companyIds: [company.id],
+      });
+
+      await sut.save(client);
+
+      const updatedClient = Client.load({
+        ...client.props,
+        companyIds: null as any, // Null companyIds
+        updatedAt: new Date(),
+      });
+
+      // Act & Assert
+      await expect(sut.edit(updatedClient)).rejects.toThrow();
     });
   });
 });

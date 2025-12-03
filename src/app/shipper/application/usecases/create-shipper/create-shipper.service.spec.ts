@@ -1,17 +1,25 @@
 import { createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
-import { ShipperDuplicateCnpjError } from 'src/app/shipper/domain/errors/duplicate-cnpj.error';
-import { ShipperModule } from 'src/app/shipper/shipper.module';
+import { Company } from '@prisma/client';
+import { FindCompanyById } from 'src/app/company/application/usecases/find-company-by-id/find-company-by-id.service';
+import { CompanyNotFoundError } from 'src/app/company/domain/errors/company-not-found.error';
 import { ConfigModule } from 'src/core/config/config.module';
+import { TOKENS } from 'src/core/di/token';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
+import { ShipperDuplicateCnpjError } from '../../../domain/errors/duplicate-cnpj.error';
+import { ShipperModule } from '../../../shipper.module';
 import { ShipperDto } from '../../dtos/shipper.dto';
+import type { IShipperDao } from '../../persistence/dao/shipper-dao.interface';
+import type { IShipperRepository } from '../../persistence/repository/shipper-repository.interface';
+import { FindShipperById } from '../find-shipper-by-id/find-shipper-by-id.service';
 import { CreateShipper } from './create-shipper.service';
 import { CreateShipperInputDto, CreateShipperOutputDto } from './dtos/create-shipper.dto';
 
 describe('CreateShipper', () => {
   let sut: CreateShipper;
   let prisma: PrismaService;
-  let data: CreateShipperInputDto;
+  let findShipperById: FindShipperById;
+  let findCompanyById: FindCompanyById;
 
   beforeEach(async() => {
     const module: TestingModule = await Test.createTestingModule({
@@ -23,29 +31,16 @@ describe('CreateShipper', () => {
 
     sut = module.get(CreateShipper);
     prisma = module.get(PrismaService);
+    findShipperById = module.get(FindShipperById);
+    findCompanyById = module.get(FindCompanyById);
 
-    // Clean database for integration tests
     await prisma.shipper.deleteMany();
-
-    data = {
-      companyName: 'Transportadora Express Ltda',
-      fantasyName: 'Express Transportes',
-      cnpj: '12345678000195',
-      contact: 'João Silva',
-      representative: 'Maria Santos',
-      zipCode: '01234567',
-      street: 'Rua das Transportadoras',
-      number: '123',
-      complement: 'Galpão 10',
-      reference: 'Próximo ao terminal rodoviário',
-      neighborhood: 'Centro',
-      city: 'São Paulo',
-      state: 'SP',
-    };
+    await prisma.company.deleteMany();
   });
 
   afterEach(async() => {
     await prisma.shipper.deleteMany();
+    await prisma.company.deleteMany();
     await prisma.$disconnect();
   });
 
@@ -54,190 +49,458 @@ describe('CreateShipper', () => {
   });
 
   describe('unit tests', () => {
-    it('should throw ShipperDuplicateCnpjError when cnpj already exists', async() => {
+    let shipperDao: IShipperDao;
+    let shipperRepository: IShipperRepository;
+
+    beforeEach(async() => {
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [
+          CreateShipper,
+          {
+            provide: TOKENS.ShipperDao,
+            useValue: createMock<IShipperDao>(),
+          },
+          {
+            provide: TOKENS.ShipperRepository,
+            useValue: createMock<IShipperRepository>(),
+          },
+          {
+            provide: FindCompanyById,
+            useValue: createMock<FindCompanyById>(),
+          },
+        ],
+      }).compile();
+
+      sut = module.get(CreateShipper);
+      shipperDao = module.get(TOKENS.ShipperDao);
+      shipperRepository = module.get(TOKENS.ShipperRepository);
+      findCompanyById = module.get(FindCompanyById);
+    });
+
+    it('should throw error when CNPJ is duplicated', async() => {
       // Arrange
+      const input: CreateShipperInputDto = {
+        companyName: 'Transportadora ABC Ltda',
+        fantasyName: 'ABC Transportes',
+        cnpj: '68529158000197',
+        contact: '(11) 98765-4321',
+        representative: 'João Silva',
+        zipCode: '01234-567',
+        street: 'Rua das Flores',
+        number: '100',
+        complement: 'Sala 5',
+        reference: 'Próximo ao mercado',
+        neighborhood: 'Centro',
+        city: 'São Paulo',
+        state: 'SP',
+        companyIds: ['company-id-1'],
+      };
+
       const existingShipper = createMock<ShipperDto>();
-      const findByCnpjSpy = jest.spyOn(sut['shipperDao'], 'findByCnpj').mockResolvedValue(existingShipper);
-      const saveSpy = jest.spyOn(sut['shipperDao'], 'save').mockResolvedValue('new-shipper-id');
+      jest.spyOn(shipperDao, 'findByCnpj').mockResolvedValue(existingShipper);
 
       // Act & Assert
-      expect.assertions(3);
-      await expect(sut.execute(data)).rejects.toBeInstanceOf(ShipperDuplicateCnpjError);
-      expect(findByCnpjSpy).toHaveBeenCalledWith(data.cnpj);
-      expect(saveSpy).not.toHaveBeenCalled();
+      await expect(sut.execute(input)).rejects.toThrow(ShipperDuplicateCnpjError);
     });
 
-    it('should create shipper successfully when cnpj does not exist', async() => {
+    it('should verify all companies exist', async() => {
       // Arrange
-      const expectedId = 'new-shipper-id';
-      const findByCnpjSpy = jest.spyOn(sut['shipperDao'], 'findByCnpj').mockResolvedValue(null);
-      const saveSpy = jest.spyOn(sut['shipperDao'], 'save').mockResolvedValue(expectedId);
+      const input: CreateShipperInputDto = {
+        companyName: 'Transportadora ABC Ltda',
+        fantasyName: 'ABC Transportes',
+        cnpj: '11240693000106',
+        contact: '(11) 98765-4321',
+        representative: 'João Silva',
+        zipCode: '01234-567',
+        street: 'Rua das Flores',
+        number: '100',
+        complement: null,
+        reference: null,
+        neighborhood: 'Centro',
+        city: 'São Paulo',
+        state: 'SP',
+        companyIds: ['company-id-1', 'company-id-2'],
+      };
+
+      jest.spyOn(shipperDao, 'findByCnpj').mockResolvedValue(null);
+      const findCompanySpy = jest.spyOn(findCompanyById, 'execute').mockResolvedValue(createMock());
+      jest.spyOn(shipperRepository, 'save').mockResolvedValue();
 
       // Act
-      const result = await sut.execute(data);
+      await sut.execute(input);
 
       // Assert
-      expect(findByCnpjSpy).toHaveBeenCalledWith(data.cnpj);
-      expect(saveSpy).toHaveBeenCalledWith(data);
-      expect(result).toEqual<CreateShipperOutputDto>({ id: expectedId });
+      expect(findCompanySpy).toHaveBeenCalledTimes(2);
+      expect(findCompanySpy).toHaveBeenCalledWith('company-id-1');
+      expect(findCompanySpy).toHaveBeenCalledWith('company-id-2');
     });
 
-    it('should call dao methods with correct parameters', async() => {
+    it('should call shipperRepository.save with created shipper', async() => {
       // Arrange
-      const findByCnpjSpy = jest.spyOn(sut['shipperDao'], 'findByCnpj').mockResolvedValue(null);
-      const saveSpy = jest.spyOn(sut['shipperDao'], 'save').mockResolvedValue('shipper-id');
+      const input: CreateShipperInputDto = {
+        companyName: 'Transportadora ABC Ltda',
+        fantasyName: 'ABC Transportes',
+        cnpj: '22231440000192',
+        contact: '(11) 98765-4321',
+        representative: 'João Silva',
+        zipCode: '01234-567',
+        street: 'Rua das Flores',
+        number: '100',
+        complement: null,
+        reference: null,
+        neighborhood: 'Centro',
+        city: 'São Paulo',
+        state: 'SP',
+        companyIds: ['company-id-1'],
+      };
+
+      jest.spyOn(shipperDao, 'findByCnpj').mockResolvedValue(null);
+      jest.spyOn(findCompanyById, 'execute').mockResolvedValue(createMock());
+      const saveSpy = jest.spyOn(shipperRepository, 'save').mockResolvedValue();
 
       // Act
-      await sut.execute(data);
+      await sut.execute(input);
 
       // Assert
-      expect(findByCnpjSpy).toHaveBeenCalledTimes(1);
-      expect(findByCnpjSpy).toHaveBeenCalledWith(data.cnpj);
       expect(saveSpy).toHaveBeenCalledTimes(1);
-      expect(saveSpy).toHaveBeenCalledWith(data);
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          _props: expect.objectContaining({
+            id: expect.any(String),
+            companyName: input.companyName,
+            fantasyName: input.fantasyName,
+            cnpj: expect.any(String), // CNPJ is formatted by the value object
+            contact: input.contact,
+            representative: input.representative,
+            zipCode: input.zipCode,
+            street: input.street,
+            number: input.number,
+            complement: input.complement,
+            reference: input.reference,
+            neighborhood: input.neighborhood,
+            city: input.city,
+            state: input.state,
+            companyIds: input.companyIds,
+            active: true,
+            createdAt: expect.any(Date),
+            updatedAt: expect.any(Date),
+          }),
+        }),
+      );
+    });
+
+    it('should return created shipper id', async() => {
+      // Arrange
+      const input: CreateShipperInputDto = {
+        companyName: 'Transportadora ABC Ltda',
+        fantasyName: 'ABC Transportes',
+        cnpj: '22231440000192',
+        contact: '(11) 98765-4321',
+        representative: 'João Silva',
+        zipCode: '01234-567',
+        street: 'Rua das Flores',
+        number: '100',
+        complement: null,
+        reference: null,
+        neighborhood: 'Centro',
+        city: 'São Paulo',
+        state: 'SP',
+        companyIds: ['company-id-1'],
+      };
+
+      jest.spyOn(shipperDao, 'findByCnpj').mockResolvedValue(null);
+      jest.spyOn(findCompanyById, 'execute').mockResolvedValue(createMock());
+      jest.spyOn(shipperRepository, 'save').mockResolvedValue();
+
+      // Act
+      const result = await sut.execute(input);
+
+      // Assert
+      expect(result).toEqual<CreateShipperOutputDto>({
+        id: expect.any(String),
+      });
     });
   });
 
   describe('integration tests', () => {
-    it('should throw ShipperDuplicateCnpjError when cnpj already exists in database', async() => {
+    let company01: Company;
+    let company02: Company;
+
+    beforeEach(async() => {
+      company01 = await prisma.company.create({
+        data: {
+          name: 'Company 01',
+          fantasyName: 'Company 01 Fantasy',
+          document: '63193451000102',
+          ie: '123456789',
+          zipCode: '01234-567',
+          street: 'Street 01',
+          number: '100',
+          neighborhood: 'Neighborhood 01',
+          complement: null,
+          reference: null,
+          city: 'São Paulo',
+          state: 'SP',
+          cellphone: '11987654321',
+          phone01: '1133334444',
+          phone02: null,
+          email01: 'company01@test.com',
+          email02: null,
+          active: true,
+        },
+      });
+
+      company02 = await prisma.company.create({
+        data: {
+          name: 'Company 02',
+          fantasyName: 'Company 02 Fantasy',
+          document: '03747069000171',
+          ie: '987654321',
+          zipCode: '09876-543',
+          street: 'Street 02',
+          number: '200',
+          neighborhood: 'Neighborhood 02',
+          complement: null,
+          reference: null,
+          city: 'Rio de Janeiro',
+          state: 'RJ',
+          cellphone: '21987654321',
+          phone01: '2133334444',
+          phone02: null,
+          email01: 'company02@test.com',
+          email02: null,
+          active: true,
+        },
+      });
+    });
+
+    it('should throw error when CNPJ is duplicated', async() => {
       // Arrange
-      await sut.execute(data);
+      const input: CreateShipperInputDto = {
+        companyName: 'Transportadora ABC Ltda',
+        fantasyName: 'ABC Transportes',
+        cnpj: '63193451000102',
+        contact: '(11) 98765-4321',
+        representative: 'João Silva',
+        zipCode: '01234-567',
+        street: 'Rua das Flores',
+        number: '100',
+        complement: 'Sala 5',
+        reference: 'Próximo ao mercado',
+        neighborhood: 'Centro',
+        city: 'São Paulo',
+        state: 'SP',
+        companyIds: [company01.id],
+      };
+
+      await sut.execute(input);
 
       // Act & Assert
-      expect.assertions(1);
-      await expect(sut.execute(data)).rejects.toBeInstanceOf(ShipperDuplicateCnpjError);
+      await expect(sut.execute(input)).rejects.toThrow(ShipperDuplicateCnpjError);
     });
 
-    it('should persist shipper in database and return generated id', async() => {
-      // Act
-      const result = await sut.execute(data);
-
-      // Assert
-      expect(result).toBeDefined();
-      expect(result.id).toBeDefined();
-      expect(typeof result.id).toBe('string');
-
-      // Verify shipper was actually saved in database
-      const savedShipper = await prisma.shipper.findUnique({
-        where: { id: result.id },
-      });
-
-      expect(savedShipper).toBeDefined();
-      expect(savedShipper).toEqual<ShipperDto>({
-        id: result.id,
-        companyName: data.companyName,
-        fantasyName: data.fantasyName,
-        cnpj: data.cnpj,
-        contact: data.contact,
-        representative: data.representative,
-        zipCode: data.zipCode,
-        street: data.street,
-        number: data.number,
-        complement: data.complement,
-        reference: data.reference,
-        neighborhood: data.neighborhood,
-        city: data.city,
-        state: data.state,
-        createdAt: savedShipper!.createdAt,
-        updatedAt: savedShipper!.updatedAt,
-      });
-    });
-
-    it('should create multiple shippers with different cnpjs', async() => {
+    it('should throw error when company does not exist', async() => {
       // Arrange
-      const secondShipperData: CreateShipperInputDto = {
-        ...data,
-        companyName: 'Transportadora Veloz Ltda',
-        cnpj: '98765432000187',
+      const input: CreateShipperInputDto = {
+        companyName: 'Transportadora ABC Ltda',
+        fantasyName: 'ABC Transportes',
+        cnpj: '63193451000102',
+        contact: '(11) 98765-4321',
+        representative: 'João Silva',
+        zipCode: '01234-567',
+        street: 'Rua das Flores',
+        number: '100',
+        complement: null,
+        reference: null,
+        neighborhood: 'Centro',
+        city: 'São Paulo',
+        state: 'SP',
+        companyIds: ['non-existing-company-id'],
+      };
+
+      // Act & Assert
+      await expect(sut.execute(input)).rejects.toThrow(CompanyNotFoundError);
+    });
+
+    it('should create a shipper successfully with all fields', async() => {
+      // Arrange
+      const input: CreateShipperInputDto = {
+        companyName: 'Transportadora ABC Ltda',
+        fantasyName: 'ABC Transportes',
+        cnpj: '63193451000102',
+        contact: '(11) 98765-4321',
+        representative: 'João Silva',
+        zipCode: '01234-567',
+        street: 'Rua das Flores',
+        number: '100',
+        complement: 'Sala 5',
+        reference: 'Próximo ao mercado',
+        neighborhood: 'Centro',
+        city: 'São Paulo',
+        state: 'SP',
+        companyIds: [company01.id],
       };
 
       // Act
-      const firstResult = await sut.execute(data);
-      const secondResult = await sut.execute(secondShipperData);
+      const output = await sut.execute(input);
 
       // Assert
-      expect(firstResult.id).not.toBe(secondResult.id);
-
-      const firstShipper = await prisma.shipper.findUnique({
-        where: { id: firstResult.id },
-      });
-      const secondShipper = await prisma.shipper.findUnique({
-        where: { id: secondResult.id },
+      expect(output).toEqual<CreateShipperOutputDto>({
+        id: expect.any(String),
       });
 
-      expect(firstShipper).toBeDefined();
-      expect(secondShipper).toBeDefined();
-      expect(firstShipper?.cnpj).toBe(data.cnpj);
-      expect(secondShipper?.cnpj).toBe(secondShipperData.cnpj);
+      const createdShipper = await findShipperById.execute(output.id);
+      expect(createdShipper).toBeDefined();
+      expect(createdShipper).toEqual<ShipperDto>({
+        id: output.id,
+        companyName: input.companyName,
+        fantasyName: input.fantasyName,
+        cnpj: '63193451000102',
+        contact: input.contact,
+        representative: input.representative,
+        zipCode: input.zipCode,
+        street: input.street,
+        number: input.number,
+        complement: input.complement,
+        reference: input.reference,
+        neighborhood: input.neighborhood,
+        city: input.city,
+        state: input.state,
+        active: true,
+        createdAt: expect.any(Date),
+        updatedAt: expect.any(Date),
+        companies: [
+          {
+            id: company01.id,
+            name: company01.name,
+          },
+        ],
+      });
     });
 
-    it('should handle optional fields correctly', async() => {
+    it('should create a shipper successfully with optional fields as null', async() => {
       // Arrange
-      const dataWithNulls: CreateShipperInputDto = {
-        ...data,
+      const input: CreateShipperInputDto = {
+        companyName: 'Transportadora XYZ Ltda',
+        fantasyName: 'XYZ Transportes',
+        cnpj: '63193451000102',
+        contact: '(21) 98765-4321',
+        representative: 'Maria Santos',
+        zipCode: '09876-543',
+        street: 'Avenida Principal',
+        number: '200',
         complement: null,
         reference: null,
+        neighborhood: 'Centro',
+        city: 'Rio de Janeiro',
+        state: 'RJ',
+        companyIds: [company02.id],
       };
 
       // Act
-      const result = await sut.execute(dataWithNulls);
+      const output = await sut.execute(input);
 
       // Assert
-      expect(result).toBeDefined();
+      const createdShipper = await findShipperById.execute(output.id);
+      expect(createdShipper).toBeDefined();
+      expect(createdShipper!.complement).toBeNull();
+      expect(createdShipper!.reference).toBeNull();
+    });
 
-      const savedShipper = await prisma.shipper.findUnique({
-        where: { id: result.id },
-      });
-
-      expect(savedShipper).toBeDefined();
-      expect(savedShipper).toEqual<ShipperDto>({
-        ...data,
+    it('should create a shipper with multiple companies', async() => {
+      // Arrange
+      const input: CreateShipperInputDto = {
+        companyName: 'Transportadora Multi Ltda',
+        fantasyName: 'Multi Transportes',
+        cnpj: '63193451000102',
+        contact: '(11) 91111-1111',
+        representative: 'Carlos Alberto',
+        zipCode: '11111-111',
+        street: 'Rua Central',
+        number: '300',
         complement: null,
         reference: null,
-        id: result.id,
-        createdAt: savedShipper!.createdAt,
-        updatedAt: savedShipper!.updatedAt,
-      });
-    });
+        neighborhood: 'Centro',
+        city: 'Brasília',
+        state: 'DF',
+        companyIds: [company01.id, company02.id],
+      };
 
-    it('should preserve all field values correctly in database', async() => {
       // Act
-      const result = await sut.execute(data);
+      const output = await sut.execute(input);
 
       // Assert
-      const savedShipper = await prisma.shipper.findUnique({
-        where: { id: result.id },
-      });
-
-      expect(savedShipper?.companyName).toBe(data.companyName);
-      expect(savedShipper?.fantasyName).toBe(data.fantasyName);
-      expect(savedShipper?.cnpj).toBe(data.cnpj);
-      expect(savedShipper?.contact).toBe(data.contact);
-      expect(savedShipper?.representative).toBe(data.representative);
-      expect(savedShipper?.zipCode).toBe(data.zipCode);
-      expect(savedShipper?.street).toBe(data.street);
-      expect(savedShipper?.number).toBe(data.number);
-      expect(savedShipper?.complement).toBe(data.complement);
-      expect(savedShipper?.reference).toBe(data.reference);
-      expect(savedShipper?.neighborhood).toBe(data.neighborhood);
-      expect(savedShipper?.city).toBe(data.city);
-      expect(savedShipper?.state).toBe(data.state);
+      const createdShipper = await findShipperById.execute(output.id);
+      expect(createdShipper).toBeDefined();
+      expect(createdShipper!.companies).toHaveLength(2);
+      expect(createdShipper!.companies).toEqual(
+        expect.arrayContaining([
+          {
+            id: company01.id,
+            name: company01.name,
+          },
+          {
+            id: company02.id,
+            name: company02.name,
+          },
+        ]),
+      );
     });
 
-    it('should generate unique ids for each shipper', async() => {
+    it('should create a shipper with active status as true by default', async() => {
       // Arrange
-      const secondData: CreateShipperInputDto = { ...data, cnpj: '11111111000111' };
-      const thirdData: CreateShipperInputDto = { ...data, cnpj: '22222222000222' };
+      const input: CreateShipperInputDto = {
+        companyName: 'Transportadora DEF Ltda',
+        fantasyName: 'DEF Transportes',
+        cnpj: '63193451000102',
+        contact: '(31) 92222-2222',
+        representative: 'Ana Paula',
+        zipCode: '22222-222',
+        street: 'Rua Nova',
+        number: '400',
+        complement: null,
+        reference: null,
+        neighborhood: 'Bairro Novo',
+        city: 'Belo Horizonte',
+        state: 'MG',
+        companyIds: [company01.id],
+      };
 
       // Act
-      const result1 = await sut.execute(data);
-      const result2 = await sut.execute(secondData);
-      const result3 = await sut.execute(thirdData);
+      const output = await sut.execute(input);
 
       // Assert
-      expect(result1.id).not.toBe(result2.id);
-      expect(result1.id).not.toBe(result3.id);
-      expect(result2.id).not.toBe(result3.id);
+      const createdShipper = await findShipperById.execute(output.id);
+      expect(createdShipper).toBeDefined();
+      expect(createdShipper!.active).toBe(true);
+    });
+
+    it('should format CNPJ correctly', async() => {
+      // Arrange
+      const input: CreateShipperInputDto = {
+        companyName: 'Transportadora GHI Ltda',
+        fantasyName: 'GHI Transportes',
+        cnpj: '79.380.058/0001-68',
+        contact: '(41) 93333-3333',
+        representative: 'Pedro Oliveira',
+        zipCode: '33333-333',
+        street: 'Avenida Teste',
+        number: '500',
+        complement: null,
+        reference: null,
+        neighborhood: 'Bairro Teste',
+        city: 'Curitiba',
+        state: 'PR',
+        companyIds: [company01.id],
+      };
+
+      // Act
+      const output = await sut.execute(input);
+
+      // Assert
+      const createdShipper = await findShipperById.execute(output.id);
+      expect(createdShipper).toBeDefined();
+      expect(createdShipper!.cnpj).toBe('79380058000168');
     });
   });
 });

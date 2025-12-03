@@ -1,8 +1,6 @@
 import { Test } from '@nestjs/testing';
-import { ShipperDto } from 'src/app/shipper/application/dtos/shipper.dto';
+import { Company } from '@prisma/client';
 import { ShipperPersistenceModule } from 'src/app/shipper/application/persistence/shipper-persistence.module';
-import { CreateShipperInputDto } from 'src/app/shipper/application/usecases/create-shipper/dtos/create-shipper.dto';
-import { EditShipperInputDto } from 'src/app/shipper/application/usecases/edit-shipper/dtos/edit-shipper.dto';
 import { FindAllShipperQueryDto } from 'src/app/shipper/application/usecases/find-all-shipper/dtos/find-all-shipper.dto';
 import { ConfigModule } from 'src/core/config/config.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
@@ -12,9 +10,13 @@ describe('ShipperDaoAdapterPrisma', () => {
   let sut: ShipperDaoAdapterPrisma;
   let prisma: PrismaService;
   let testShipperIds: string[] = [];
+  let company1: Company;
+  let company2: Company;
+  let company3: Company;
 
   const createTestShippers = async(): Promise<void> => {
-    const shippers: CreateShipperInputDto[] = [
+    const shippers = [
+      // Shipper 1: No companies
       {
         companyName: 'Transportadora Alpha Ltda',
         fantasyName: 'Alpha Express',
@@ -29,7 +31,9 @@ describe('ShipperDaoAdapterPrisma', () => {
         neighborhood: 'Alpha District',
         city: 'São Paulo',
         state: 'SP',
+        active: true,
       },
+      // Shipper 2: Company A
       {
         companyName: 'Transportadora Beta Ltda',
         fantasyName: 'Beta Logistics',
@@ -44,7 +48,10 @@ describe('ShipperDaoAdapterPrisma', () => {
         neighborhood: 'Beta Center',
         city: 'Rio de Janeiro',
         state: 'RJ',
+        active: true,
+        companies: { connect: { id: company1.id } },
       },
+      // Shipper 3: Companies A and B
       {
         companyName: 'Transportadora Gamma Ltda',
         fantasyName: 'Gamma Transport',
@@ -59,7 +66,10 @@ describe('ShipperDaoAdapterPrisma', () => {
         neighborhood: 'Gamma Zone',
         city: 'Belo Horizonte',
         state: 'MG',
+        active: true,
+        companies: { connect: [{ id: company1.id }, { id: company2.id }] },
       },
+      // Shipper 4: Company B
       {
         companyName: 'Transportadora Delta Ltda',
         fantasyName: 'Delta Cargo',
@@ -74,7 +84,10 @@ describe('ShipperDaoAdapterPrisma', () => {
         neighborhood: 'Delta Park',
         city: 'Santos',
         state: 'SP',
+        active: true,
+        companies: { connect: { id: company2.id } },
       },
+      // Shipper 5: Company C - INACTIVE
       {
         companyName: 'Transportadora Epsilon Ltda',
         fantasyName: 'Epsilon Speed',
@@ -89,7 +102,10 @@ describe('ShipperDaoAdapterPrisma', () => {
         neighborhood: 'Epsilon Hills',
         city: 'Curitiba',
         state: 'PR',
+        active: false,
+        companies: { connect: { id: company3.id } },
       },
+      // Shipper 6: All companies
       {
         companyName: 'Transportadora Zeta Ltda',
         fantasyName: 'Zeta Fast',
@@ -104,13 +120,15 @@ describe('ShipperDaoAdapterPrisma', () => {
         neighborhood: 'Zeta District',
         city: 'Campinas',
         state: 'SP',
+        active: true,
+        companies: { connect: [{ id: company1.id }, { id: company2.id }, { id: company3.id }] },
       },
     ];
 
     testShipperIds = [];
     for (const shipper of shippers) {
-      const id = await sut.save(shipper);
-      testShipperIds.push(id);
+      const created = await prisma.shipper.create({ data: shipper });
+      testShipperIds.push(created.id);
     }
   };
 
@@ -129,99 +147,74 @@ describe('ShipperDaoAdapterPrisma', () => {
     prisma = module.get(PrismaService);
 
     await prisma.shipper.deleteMany();
+    await prisma.company.deleteMany();
+
+    // Create test companies
+    company1 = await prisma.company.create({
+      data: {
+        name: 'Company A',
+        fantasyName: 'Company A Fantasy',
+        document: '11111111000101',
+        ie: 'IE-A',
+        zipCode: '11111111',
+        street: 'Street A',
+        number: '100',
+        neighborhood: 'District A',
+        city: 'City A',
+        state: 'CA',
+        phone01: '1111111111',
+        email01: 'companyA@test.com',
+        active: true,
+      },
+    });
+
+    company2 = await prisma.company.create({
+      data: {
+        name: 'Company B',
+        fantasyName: 'Company B Fantasy',
+        document: '22222222000102',
+        ie: 'IE-B',
+        zipCode: '22222222',
+        street: 'Street B',
+        number: '200',
+        neighborhood: 'District B',
+        city: 'City B',
+        state: 'CB',
+        phone01: '2222222222',
+        email01: 'companyB@test.com',
+        active: true,
+      },
+    });
+
+    company3 = await prisma.company.create({
+      data: {
+        name: 'Company C',
+        fantasyName: 'Company C Fantasy',
+        document: '33333333000103',
+        ie: 'IE-C',
+        zipCode: '33333333',
+        street: 'Street C',
+        number: '300',
+        neighborhood: 'District C',
+        city: 'City C',
+        state: 'CC',
+        phone01: '3333333333',
+        email01: 'companyC@test.com',
+        active: true,
+      },
+    });
+
     await createTestShippers();
   });
 
   afterEach(async() => {
     await prisma.shipper.deleteMany();
+    await prisma.company.deleteMany();
     await prisma.$disconnect();
   });
 
   it('should be defined', () => {
     expect(sut).toBeDefined();
-  });
-
-  describe('save', () => {
-    it('should save a new shipper and return its id', async() => {
-      // Arrange
-      const newShipper: CreateShipperInputDto = {
-        companyName: 'Nova Transportadora Ltda',
-        fantasyName: 'Nova Trans',
-        cnpj: '99999999000999',
-        contact: 'Novo Contato',
-        representative: 'Novo Representante',
-        zipCode: '09999999',
-        street: 'Nova Rua',
-        number: '999',
-        complement: null,
-        reference: null,
-        neighborhood: 'Novo Bairro',
-        city: 'Nova Cidade',
-        state: 'NC',
-      };
-
-      // Act
-      const id = await sut.save(newShipper);
-
-      // Assert
-      expect(id).toBeDefined();
-      expect(typeof id).toBe('string');
-
-      const saved = await prisma.shipper.findUnique({ where: { id } });
-      expect(saved).toBeDefined();
-      expect(saved).toEqual<ShipperDto>({
-        id,
-        companyName: newShipper.companyName,
-        fantasyName: newShipper.fantasyName,
-        cnpj: newShipper.cnpj,
-        contact: newShipper.contact,
-        representative: newShipper.representative,
-        zipCode: newShipper.zipCode,
-        street: newShipper.street,
-        number: newShipper.number,
-        complement: newShipper.complement,
-        reference: newShipper.reference,
-        neighborhood: newShipper.neighborhood,
-        city: newShipper.city,
-        state: newShipper.state,
-        createdAt: saved!.createdAt,
-        updatedAt: saved!.updatedAt,
-      });
-    });
-
-    it('should save shipper with optional fields as null', async() => {
-      // Arrange
-      const shipper: CreateShipperInputDto = {
-        companyName: 'Transportadora Minimal Ltda',
-        fantasyName: 'Minimal',
-        cnpj: '88888888000888',
-        contact: 'Contato Minimal',
-        representative: 'Rep Minimal',
-        zipCode: '08888888',
-        street: 'Rua Minimal',
-        number: '888',
-        complement: null,
-        reference: null,
-        neighborhood: 'Bairro Minimal',
-        city: 'Cidade Minimal',
-        state: 'MN',
-      };
-
-      // Act
-      const id = await sut.save(shipper);
-
-      // Assert
-      const saved = await prisma.shipper.findUnique({ where: { id } });
-      expect(saved).toBeDefined();
-      expect(saved).toEqual<ShipperDto>({
-        ...shipper,
-        complement: null,
-        reference: null,
-        id,
-        createdAt: saved!.createdAt,
-        updatedAt: saved!.updatedAt,
-      });
-    });
   });
 
   describe('findById', () => {
@@ -233,6 +226,7 @@ describe('ShipperDaoAdapterPrisma', () => {
       expect(result).toBeDefined();
       expect(result?.companyName).toBe('Transportadora Alpha Ltda');
       expect(result?.cnpj).toBe('11111111000111');
+      expect(result?.companies).toEqual([]);
     });
 
     it('should return null for non-existent id', async() => {
@@ -241,6 +235,30 @@ describe('ShipperDaoAdapterPrisma', () => {
 
       // Assert
       expect(result).toBeNull();
+    });
+
+    it('should return shipper with companies', async() => {
+      // Act
+      const result = await sut.findById(testShipperIds[1]); // Beta has Company A
+
+      // Assert
+      expect(result).toBeDefined();
+      expect(result?.companies).toHaveLength(1);
+      expect(result?.companies[0].id).toBe(company1.id);
+      expect(result?.companies[0].name).toBe('Company A');
+    });
+
+    it('should return shipper with multiple companies', async() => {
+      // Act
+      const result = await sut.findById(testShipperIds[5]); // Zeta has all companies
+
+      // Assert
+      expect(result).toBeDefined();
+      expect(result?.companies).toHaveLength(3);
+      const companyIds = result?.companies.map(c => c.id);
+      expect(companyIds).toContain(company1.id);
+      expect(companyIds).toContain(company2.id);
+      expect(companyIds).toContain(company3.id);
     });
   });
 
@@ -253,6 +271,8 @@ describe('ShipperDaoAdapterPrisma', () => {
       expect(result).toBeDefined();
       expect(result?.companyName).toBe('Transportadora Beta Ltda');
       expect(result?.cnpj).toBe('22222222000222');
+      expect(result?.companies).toHaveLength(1);
+      expect(result?.companies[0].id).toBe(company1.id);
     });
 
     it('should return null for non-existent cnpj', async() => {
@@ -261,67 +281,6 @@ describe('ShipperDaoAdapterPrisma', () => {
 
       // Assert
       expect(result).toBeNull();
-    });
-  });
-
-  describe('edit', () => {
-    it('should update shipper successfully', async() => {
-      // Arrange
-      const updateData: EditShipperInputDto = {
-        companyName: 'Transportadora Alpha Atualizada Ltda',
-        contact: 'João Silva Atualizado',
-      };
-
-      // Act
-      await sut.edit(testShipperIds[0], updateData);
-
-      // Assert
-      const updated = await prisma.shipper.findUnique({ where: { id: testShipperIds[0] } });
-      expect(updated?.companyName).toBe('Transportadora Alpha Atualizada Ltda');
-      expect(updated?.contact).toBe('João Silva Atualizado');
-      expect(updated?.cnpj).toBe('11111111000111'); // Should remain unchanged
-    });
-
-    it('should update only provided fields', async() => {
-      // Arrange
-      const originalShipper = await prisma.shipper.findUnique({ where: { id: testShipperIds[0] } });
-      const updateData: EditShipperInputDto = { companyName: 'Only Company Name Updated' };
-
-      // Act
-      await sut.edit(testShipperIds[0], updateData);
-
-      // Assert
-      const updated = await prisma.shipper.findUnique({ where: { id: testShipperIds[0] } });
-      expect(updated?.companyName).toBe('Only Company Name Updated');
-      expect(updated?.fantasyName).toBe(originalShipper?.fantasyName);
-      expect(updated?.cnpj).toBe(originalShipper?.cnpj);
-    });
-
-    it('should allow setting fields to null', async() => {
-      // Arrange
-      const updateData: EditShipperInputDto = {
-        complement: null,
-        reference: null,
-      };
-
-      // Act
-      await sut.edit(testShipperIds[0], updateData);
-
-      // Assert
-      const updated = await prisma.shipper.findUnique({ where: { id: testShipperIds[0] } });
-      expect(updated?.complement).toBeNull();
-      expect(updated?.reference).toBeNull();
-    });
-  });
-
-  describe('delete', () => {
-    it('should delete shipper successfully', async() => {
-      // Act
-      await sut.delete(testShipperIds[0]);
-
-      // Assert
-      const deleted = await prisma.shipper.findUnique({ where: { id: testShipperIds[0] } });
-      expect(deleted).toBeNull();
     });
   });
 
@@ -928,6 +887,321 @@ describe('ShipperDaoAdapterPrisma', () => {
       // Assert
       expect(shippers1).toHaveLength(shippers2.length);
       expect(shippers1[0].id).toBe(shippers2[0].id);
+    });
+  });
+
+  describe('findAll - active filter tests', () => {
+    it('should filter by active status - true', async() => {
+      // Arrange
+      const queries: FindAllShipperQueryDto = { active: true };
+
+      // Act
+      const [shippers, total] = await sut.findAll(queries);
+
+      // Assert
+      expect(shippers).toHaveLength(5); // All except Epsilon
+      expect(total).toBe(5);
+      shippers.forEach(shipper => {
+        expect(shipper.active).toBe(true);
+      });
+    });
+
+    it('should filter by active status - false', async() => {
+      // Arrange
+      const queries: FindAllShipperQueryDto = { active: false };
+
+      // Act
+      const [shippers, total] = await sut.findAll(queries);
+
+      // Assert
+      expect(shippers).toHaveLength(1); // Only Epsilon
+      expect(total).toBe(1);
+      expect(shippers[0].companyName).toBe('Transportadora Epsilon Ltda');
+      expect(shippers[0].active).toBe(false);
+    });
+
+    it('should return all shippers when active filter is not provided', async() => {
+      // Arrange
+      const queries: FindAllShipperQueryDto = {};
+
+      // Act
+      const [shippers, total] = await sut.findAll(queries);
+
+      // Assert
+      expect(shippers).toHaveLength(6);
+      expect(total).toBe(6);
+    });
+
+    it('should combine active filter with other filters', async() => {
+      // Arrange
+      const queries: FindAllShipperQueryDto = {
+        active: true,
+        address: 'SP',
+      };
+
+      // Act
+      const [shippers, total] = await sut.findAll(queries);
+
+      // Assert
+      expect(shippers.length).toBeGreaterThan(0);
+      expect(total).toBeGreaterThan(0);
+      shippers.forEach(shipper => {
+        expect(shipper.active).toBe(true);
+        expect(shipper.state).toBe('SP');
+      });
+    });
+
+    it('should combine active=false with pagination', async() => {
+      // Arrange
+      const queries: FindAllShipperQueryDto = {
+        active: false,
+        page: 1,
+        size: 10,
+      };
+
+      // Act
+      const [shippers, total] = await sut.findAll(queries);
+
+      // Assert
+      expect(shippers).toHaveLength(1);
+      expect(total).toBe(1);
+      expect(shippers[0].active).toBe(false);
+    });
+  });
+
+  describe('findAll - companyIds filter tests', () => {
+    it('should filter by single companyId - Company A', async() => {
+      // Arrange
+      const queries: FindAllShipperQueryDto = { companyIds: [company1.id] };
+
+      // Act
+      const [shippers, total] = await sut.findAll(queries);
+
+      // Assert
+      expect(shippers).toHaveLength(3); // Beta, Gamma, Zeta have Company A
+      expect(total).toBe(3);
+      shippers.forEach(shipper => {
+        const companyIds = shipper.companies.map(c => c.id);
+        expect(companyIds).toContain(company1.id);
+      });
+    });
+
+    it('should filter by single companyId - Company B', async() => {
+      // Arrange
+      const queries: FindAllShipperQueryDto = { companyIds: [company2.id] };
+
+      // Act
+      const [shippers, total] = await sut.findAll(queries);
+
+      // Assert
+      expect(shippers).toHaveLength(3); // Gamma, Delta, Zeta have Company B
+      expect(total).toBe(3);
+      shippers.forEach(shipper => {
+        const companyIds = shipper.companies.map(c => c.id);
+        expect(companyIds).toContain(company2.id);
+      });
+    });
+
+    it('should filter by single companyId - Company C', async() => {
+      // Arrange
+      const queries: FindAllShipperQueryDto = { companyIds: [company3.id] };
+
+      // Act
+      const [shippers, total] = await sut.findAll(queries);
+
+      // Assert
+      expect(shippers).toHaveLength(2); // Epsilon, Zeta have Company C
+      expect(total).toBe(2);
+      shippers.forEach(shipper => {
+        const companyIds = shipper.companies.map(c => c.id);
+        expect(companyIds).toContain(company3.id);
+      });
+    });
+
+    it('should filter by multiple companyIds - Companies A and B', async() => {
+      // Arrange
+      const queries: FindAllShipperQueryDto = {
+        companyIds: [company1.id, company2.id],
+      };
+
+      // Act
+      const [shippers, total] = await sut.findAll(queries);
+
+      // Assert
+      expect(shippers).toHaveLength(4); // Beta, Gamma, Delta, Zeta (have Company A OR B)
+      expect(total).toBe(4);
+    });
+
+    it('should filter by multiple companyIds - Companies B and C', async() => {
+      // Arrange
+      const queries: FindAllShipperQueryDto = {
+        companyIds: [company2.id, company3.id],
+      };
+
+      // Act
+      const [shippers, total] = await sut.findAll(queries);
+
+      // Assert
+      expect(shippers).toHaveLength(4); // Gamma, Delta, Epsilon, Zeta (have Company B OR C)
+      expect(total).toBe(4);
+    });
+
+    it('should filter by all companyIds', async() => {
+      // Arrange
+      const queries: FindAllShipperQueryDto = {
+        companyIds: [company1.id, company2.id, company3.id],
+      };
+
+      // Act
+      const [shippers, total] = await sut.findAll(queries);
+
+      // Assert
+      expect(shippers).toHaveLength(5); // All except Alpha (which has no companies)
+      expect(total).toBe(5);
+    });
+
+    it('should return empty when filtering by non-existent companyId', async() => {
+      // Arrange
+      const queries: FindAllShipperQueryDto = {
+        companyIds: ['non-existent-company-id'],
+      };
+
+      // Act
+      const [shippers, total] = await sut.findAll(queries);
+
+      // Assert
+      expect(shippers).toHaveLength(0);
+      expect(total).toBe(0);
+    });
+
+    it('should return all shippers when companyIds is empty array', async() => {
+      // Arrange
+      const queries: FindAllShipperQueryDto = { companyIds: [] };
+
+      // Act
+      const [shippers, total] = await sut.findAll(queries);
+
+      // Assert
+      expect(shippers).toHaveLength(6); // Should return all shippers (empty array is ignored)
+      expect(total).toBe(6);
+    });
+
+    it('should combine companyIds filter with companyName filter', async() => {
+      // Arrange
+      const queries: FindAllShipperQueryDto = {
+        companyIds: [company1.id],
+        companyName: 'Beta',
+      };
+
+      // Act
+      const [shippers, total] = await sut.findAll(queries);
+
+      // Assert
+      expect(shippers).toHaveLength(1); // Only Beta (has Company A AND name matches)
+      expect(total).toBe(1);
+      expect(shippers[0].companyName).toBe('Transportadora Beta Ltda');
+    });
+
+    it('should combine companyIds filter with address filter', async() => {
+      // Arrange
+      const queries: FindAllShipperQueryDto = {
+        companyIds: [company2.id],
+        address: 'SP',
+      };
+
+      // Act
+      const [shippers] = await sut.findAll(queries);
+
+      // Assert
+      expect(shippers.length).toBeGreaterThan(0);
+      shippers.forEach(shipper => {
+        expect(shipper.state).toBe('SP');
+        const companyIds = shipper.companies.map(c => c.id);
+        expect(companyIds).toContain(company2.id);
+      });
+    });
+
+    it('should combine companyIds with active filter', async() => {
+      // Arrange
+      const queries: FindAllShipperQueryDto = {
+        companyIds: [company3.id],
+        active: true,
+      };
+
+      // Act
+      const [shippers, total] = await sut.findAll(queries);
+
+      // Assert
+      expect(shippers).toHaveLength(1); // Only Zeta (Epsilon is inactive)
+      expect(total).toBe(1);
+      expect(shippers[0].companyName).toBe('Transportadora Zeta Ltda');
+      expect(shippers[0].active).toBe(true);
+    });
+
+    it('should combine companyIds with pagination', async() => {
+      // Arrange
+      const queries: FindAllShipperQueryDto = {
+        companyIds: [company1.id],
+        page: 1,
+        size: 2,
+      };
+
+      // Act
+      const [shippers, total] = await sut.findAll(queries);
+
+      // Assert
+      expect(shippers).toHaveLength(2); // Page size
+      expect(total).toBe(3); // Total shippers with Company A
+    });
+
+    it('should verify correct companies are returned in results', async() => {
+      // Arrange
+      const queries: FindAllShipperQueryDto = { companyIds: [company2.id] };
+
+      // Act
+      const [shippers] = await sut.findAll(queries);
+
+      // Assert
+      expect(shippers).toHaveLength(3);
+      shippers.forEach(shipper => {
+        const company2Data = shipper.companies.find(c => c.id === company2.id);
+        expect(company2Data).toBeDefined();
+        expect(company2Data?.name).toBe('Company B');
+      });
+    });
+
+    it('should return empty when companyIds filter does not match with other filters', async() => {
+      // Arrange
+      const queries: FindAllShipperQueryDto = {
+        companyIds: [company3.id],
+        companyName: 'Alpha', // Alpha has no companies
+      };
+
+      // Act
+      const [shippers, total] = await sut.findAll(queries);
+
+      // Assert
+      expect(shippers).toHaveLength(0);
+      expect(total).toBe(0);
+    });
+
+    it('should handle companyIds filter with multiple filters', async() => {
+      // Arrange
+      const queries: FindAllShipperQueryDto = {
+        companyIds: [company1.id, company2.id],
+        active: true,
+        address: 'SP',
+      };
+
+      // Act
+      const [shippers] = await sut.findAll(queries);
+
+      // Assert
+      expect(shippers.length).toBeGreaterThan(0);
+      shippers.forEach(shipper => {
+        expect(shipper.active).toBe(true);
+        expect(shipper.state).toBe('SP');
+      });
     });
   });
 });

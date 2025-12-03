@@ -2,22 +2,38 @@ import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { ShipperDto } from 'src/app/shipper/application/dtos/shipper.dto';
 import { IShipperDao } from 'src/app/shipper/application/persistence/dao/shipper-dao.interface';
-import { CreateShipperInputDto } from 'src/app/shipper/application/usecases/create-shipper/dtos/create-shipper.dto';
-import { EditShipperInputDto } from 'src/app/shipper/application/usecases/edit-shipper/dtos/edit-shipper.dto';
 import { FindAllShipperQueryDto } from 'src/app/shipper/application/usecases/find-all-shipper/dtos/find-all-shipper.dto';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 
+const shipperSelect = {
+  id: true,
+  companyName: true,
+  fantasyName: true,
+  cnpj: true,
+  contact: true,
+  representative: true,
+  zipCode: true,
+  street: true,
+  number: true,
+  complement: true,
+  reference: true,
+  neighborhood: true,
+  city: true,
+  state: true,
+  active: true,
+  createdAt: true,
+  updatedAt: true,
+  companies: {
+    select: {
+      id: true,
+      name: true,
+    },
+  },
+} satisfies Prisma.ShipperSelect;
+
 @Injectable()
 export class ShipperDaoAdapterPrisma implements IShipperDao {
-  constructor(private prisma: PrismaService) {}
-
-  public async save(data: CreateShipperInputDto): Promise<string> {
-    const result = await this.prisma.shipper.create({
-      data,
-    });
-
-    return result.id;
-  }
+  constructor(private readonly prisma: PrismaService) {}
 
   public async findAll(queries: FindAllShipperQueryDto): Promise<[ShipperDto[], number]> {
     const pagination = this.prisma.paginationFactory(queries.page, queries.size);
@@ -29,6 +45,8 @@ export class ShipperDaoAdapterPrisma implements IShipperDao {
         { cnpj: queries.cnpj ? { contains: queries.cnpj } : undefined },
         { contact: queries.contact ? { contains: queries.contact, mode: 'insensitive' } : undefined },
         { representative: queries.representative ? { contains: queries.representative, mode: 'insensitive' } : undefined },
+        { active: queries.active !== undefined ? queries.active : undefined },
+        { companies: queries.companyIds?.length ? { some: { id: { in: queries.companyIds } } } : undefined },
         {
           OR: [
             { zipCode: queries.address ? { contains: queries.address, mode: 'insensitive' } : undefined },
@@ -45,6 +63,7 @@ export class ShipperDaoAdapterPrisma implements IShipperDao {
     return this.prisma.$transaction([
       this.prisma.shipper.findMany({
         where,
+        select: shipperSelect,
         take: pagination.take,
         skip: pagination.skip,
         orderBy: { createdAt: 'desc' },
@@ -56,25 +75,14 @@ export class ShipperDaoAdapterPrisma implements IShipperDao {
   public async findById(id: string): Promise<ShipperDto | null> {
     return this.prisma.shipper.findUnique({
       where: { id },
+      select: shipperSelect,
     });
   }
 
   public async findByCnpj(cnpj: string): Promise<ShipperDto | null> {
     return this.prisma.shipper.findUnique({
       where: { cnpj },
-    });
-  }
-
-  public async edit(id: string, data: EditShipperInputDto): Promise<void> {
-    await this.prisma.shipper.update({
-      where: { id },
-      data,
-    });
-  }
-
-  public async delete(id: string): Promise<void> {
-    await this.prisma.shipper.delete({
-      where: { id },
+      select: shipperSelect,
     });
   }
 }

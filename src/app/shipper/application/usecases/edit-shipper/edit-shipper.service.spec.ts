@@ -1,14 +1,21 @@
 import { createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
-import { ShipperDuplicateCnpjError } from 'src/app/shipper/domain/errors/duplicate-cnpj.error';
-import { ShipperNotFoundError } from 'src/app/shipper/domain/errors/shipper-not-found';
-import { ShipperModule } from 'src/app/shipper/shipper.module';
+import { Company } from '@prisma/client';
+import { FindCompanyById } from 'src/app/company/application/usecases/find-company-by-id/find-company-by-id.service';
+import { CompanyNotFoundError } from 'src/app/company/domain/errors/company-not-found.error';
 import { ConfigModule } from 'src/core/config/config.module';
+import { TOKENS } from 'src/core/di/token';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
+import { ShipperDuplicateCnpjError } from '../../../domain/errors/duplicate-cnpj.error';
+import { ShipperNotFoundError } from '../../../domain/errors/shipper-not-found.error';
+import { ShipperModule } from '../../../shipper.module';
 import { ShipperDto } from '../../dtos/shipper.dto';
+import type { IShipperDao } from '../../persistence/dao/shipper-dao.interface';
+import type { IShipperRepository } from '../../persistence/repository/shipper-repository.interface';
 import { CreateShipper } from '../create-shipper/create-shipper.service';
 import { CreateShipperInputDto } from '../create-shipper/dtos/create-shipper.dto';
+import { FindShipperById } from '../find-shipper-by-id/find-shipper-by-id.service';
 import { EditShipperInputDto } from './dtos/edit-shipper.dto';
 import { EditShipper } from './edit-shipper.service';
 
@@ -16,8 +23,10 @@ describe('EditShipper', () => {
   let sut: EditShipper;
   let prisma: PrismaService;
   let createShipper: CreateShipper;
-  let existingShipperId: string;
-  let createShipperData: CreateShipperInputDto;
+  let findShipperById: FindShipperById;
+  let findCompanyById: FindCompanyById;
+  let data: CreateShipperInputDto;
+  let companyId: string;
 
   beforeEach(async() => {
     const module: TestingModule = await Test.createTestingModule({
@@ -30,33 +39,16 @@ describe('EditShipper', () => {
     sut = module.get(EditShipper);
     prisma = module.get(PrismaService);
     createShipper = module.get(CreateShipper);
+    findShipperById = module.get(FindShipperById);
+    findCompanyById = module.get(FindCompanyById);
 
-    // Clean database for integration tests
     await prisma.shipper.deleteMany();
-
-    // Create a shipper for testing edits
-    createShipperData = {
-      companyName: 'Transportadora Original Ltda',
-      fantasyName: 'Original Transport',
-      cnpj: '12345678000195',
-      contact: 'João Silva',
-      representative: 'Maria Santos',
-      zipCode: '01234567',
-      street: 'Rua Original',
-      number: '123',
-      complement: 'Galpão 1',
-      reference: 'Próximo ao terminal',
-      neighborhood: 'Centro',
-      city: 'São Paulo',
-      state: 'SP',
-    };
-
-    const createResult = await createShipper.execute(createShipperData);
-    existingShipperId = createResult.id;
+    await prisma.company.deleteMany();
   });
 
   afterEach(async() => {
     await prisma.shipper.deleteMany();
+    await prisma.company.deleteMany();
     await prisma.$disconnect();
   });
 
@@ -65,376 +57,547 @@ describe('EditShipper', () => {
   });
 
   describe('unit tests', () => {
-    it('should throw ShipperNotFoundError when shipper does not exist', async() => {
-      // Arrange
-      const nonExistentId = 'non-existent-id';
-      const editData: EditShipperInputDto = {};
+    let shipperDao: IShipperDao;
+    let shipperRepository: IShipperRepository;
 
-      const findByIdSpy = jest.spyOn(sut['shipperDao'], 'findById').mockResolvedValue(null);
-      const editSpy = jest.spyOn(sut['shipperDao'], 'edit').mockResolvedValue();
+    beforeEach(async() => {
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [
+          EditShipper,
+          {
+            provide: TOKENS.ShipperDao,
+            useValue: createMock<IShipperDao>(),
+          },
+          {
+            provide: TOKENS.ShipperRepository,
+            useValue: createMock<IShipperRepository>(),
+          },
+          {
+            provide: FindCompanyById,
+            useValue: createMock<FindCompanyById>(),
+          },
+        ],
+      }).compile();
 
-      // Act & Assert
-      expect.assertions(3);
-      await expect(sut.execute(nonExistentId, editData)).rejects.toBeInstanceOf(ShipperNotFoundError);
-      expect(findByIdSpy).toHaveBeenCalledWith(nonExistentId);
-      expect(editSpy).not.toHaveBeenCalled();
+      sut = module.get(EditShipper);
+      shipperDao = module.get(TOKENS.ShipperDao);
+      shipperRepository = module.get(TOKENS.ShipperRepository);
+      findCompanyById = module.get(FindCompanyById);
     });
 
-    it('should throw ShipperDuplicateCnpjError when cnpj already exists for another shipper', async() => {
+    it('should throw error when shipper does not exist', async() => {
       // Arrange
+      const shipperId = 'non-existing-shipper-id';
+      const input: EditShipperInputDto = {};
+
+      jest.spyOn(shipperDao, 'findById').mockResolvedValue(null);
+
+      // Act & Assert
+      await expect(sut.execute(shipperId, input)).rejects.toThrow(ShipperNotFoundError);
+    });
+
+    it('should throw error when CNPJ is duplicated', async() => {
+      // Arrange
+      const shipperId = 'shipper-id-1';
+      const input: EditShipperInputDto = {
+        cnpj: '33.119.159/0001-89',
+      };
+
       const existingShipper = createMock<ShipperDto>({
-        id: existingShipperId,
-        cnpj: '12345678000195',
+        id: shipperId,
+        cnpj: '20.975.708/0001-75',
+        companies: [{ id: 'company-id-1', name: 'Company 1' }],
       });
+
       const duplicateShipper = createMock<ShipperDto>({
-        id: 'another-id',
-        cnpj: '98765432000187',
+        id: 'other-shipper-id',
+        cnpj: '43.927.286/0001-68',
       });
-      const editData: EditShipperInputDto = { cnpj: '98765432000187' };
 
-      const findByIdSpy = jest.spyOn(sut['shipperDao'], 'findById').mockResolvedValue(existingShipper);
-      const findByCnpjSpy = jest.spyOn(sut['shipperDao'], 'findByCnpj').mockResolvedValue(duplicateShipper);
-      const editSpy = jest.spyOn(sut['shipperDao'], 'edit').mockResolvedValue();
+      jest.spyOn(shipperDao, 'findById').mockResolvedValue(existingShipper);
+      jest.spyOn(shipperDao, 'findByCnpj').mockResolvedValue(duplicateShipper);
 
       // Act & Assert
-      expect.assertions(4);
-      await expect(sut.execute(existingShipperId, editData)).rejects.toBeInstanceOf(ShipperDuplicateCnpjError);
-      expect(findByIdSpy).toHaveBeenCalledWith(existingShipperId);
-      expect(findByCnpjSpy).toHaveBeenCalledWith(editData.cnpj);
-      expect(editSpy).not.toHaveBeenCalled();
+      await expect(sut.execute(shipperId, input)).rejects.toThrow(ShipperDuplicateCnpjError);
     });
 
-    it('should not check for cnpj duplication when cnpj is not being changed', async() => {
+    it('should not throw error when CNPJ is unchanged', async() => {
       // Arrange
-      const existingShipper = createMock<ShipperDto>({
-        id: existingShipperId,
-        cnpj: '12345678000195',
-      });
-      const editData: EditShipperInputDto = { companyName: 'Updated Company Name' };
-
-      const findByIdSpy = jest.spyOn(sut['shipperDao'], 'findById').mockResolvedValue(existingShipper);
-      const findByCnpjSpy = jest.spyOn(sut['shipperDao'], 'findByCnpj').mockResolvedValue(null);
-      jest.spyOn(sut['shipperDao'], 'edit').mockResolvedValue();
-
-      // Act
-      const result = await sut.execute(existingShipperId, editData);
-
-      // Assert
-      expect(findByIdSpy).toHaveBeenCalledWith(existingShipperId);
-      expect(findByCnpjSpy).not.toHaveBeenCalled();
-      expect(result).toEqual<SuccessMessage>({ message: 'Transportadora atualizada com sucesso!' });
-    });
-
-    it('should allow same cnpj when updating the same shipper', async() => {
-      // Arrange
-      const existingShipper = createMock<ShipperDto>({
-        id: existingShipperId,
-        cnpj: '12345678000195',
-      });
-      const editData: EditShipperInputDto = {
-        companyName: 'Updated Name',
-        cnpj: '12345678000195',
+      const shipperId = 'shipper-id-1';
+      const input: EditShipperInputDto = {
+        cnpj: '43.927.286/0001-68',
+        companyName: 'New Company Name',
       };
 
-      const findByIdSpy = jest.spyOn(sut['shipperDao'], 'findById').mockResolvedValue(existingShipper);
-      const findByCnpjSpy = jest.spyOn(sut['shipperDao'], 'findByCnpj').mockResolvedValue(null);
-      jest.spyOn(sut['shipperDao'], 'edit').mockResolvedValue();
+      const existingShipper = createMock<ShipperDto>({
+        id: shipperId,
+        cnpj: '43927286000168',
+        companies: [{ id: 'company-id-1', name: 'Company 1' }],
+      });
+
+      jest.spyOn(shipperDao, 'findById').mockResolvedValue(existingShipper);
+      jest.spyOn(shipperRepository, 'edit').mockResolvedValue();
 
       // Act
-      const result = await sut.execute(existingShipperId, editData);
+      const result = await sut.execute(shipperId, input);
 
       // Assert
-      expect(findByIdSpy).toHaveBeenCalledWith(existingShipperId);
-      expect(findByCnpjSpy).not.toHaveBeenCalled();
       expect(result).toEqual<SuccessMessage>({ message: 'Transportadora atualizada com sucesso!' });
     });
 
-    it('should successfully update shipper when all validations pass', async() => {
+    it('should verify all companies exist when companyIds are provided', async() => {
       // Arrange
-      const existingShipper = createMock<ShipperDto>({
-        id: existingShipperId,
-        cnpj: '12345678000195',
-      });
-      const editData: EditShipperInputDto = {
-        companyName: 'Updated Company Name',
-        fantasyName: 'Updated Fantasy',
-        contact: 'Pedro Oliveira',
+      const shipperId = 'shipper-id-1';
+      const input: EditShipperInputDto = {
+        companyIds: ['company-id-1', 'company-id-2'],
       };
 
-      const findByIdSpy = jest.spyOn(sut['shipperDao'], 'findById').mockResolvedValue(existingShipper);
-      const editSpy = jest.spyOn(sut['shipperDao'], 'edit').mockResolvedValue();
+      const existingShipper = createMock<ShipperDto>({
+        id: shipperId,
+        cnpj: '43927286000168',
+        companies: [{ id: 'company-id-old', name: 'Old Company' }],
+      });
+
+      jest.spyOn(shipperDao, 'findById').mockResolvedValue(existingShipper);
+      const findCompanySpy = jest.spyOn(findCompanyById, 'execute').mockResolvedValue(createMock());
+      jest.spyOn(shipperRepository, 'edit').mockResolvedValue();
 
       // Act
-      const result = await sut.execute(existingShipperId, editData);
+      await sut.execute(shipperId, input);
 
       // Assert
-      expect(findByIdSpy).toHaveBeenCalledWith(existingShipperId);
-      expect(editSpy).toHaveBeenCalledWith(existingShipperId, editData);
-      expect(result).toEqual<SuccessMessage>({ message: 'Transportadora atualizada com sucesso!' });
+      expect(findCompanySpy).toHaveBeenCalledTimes(2);
+      expect(findCompanySpy).toHaveBeenCalledWith('company-id-1');
+      expect(findCompanySpy).toHaveBeenCalledWith('company-id-2');
     });
 
-    it('should call dao methods with correct parameters', async() => {
+    it('should not verify companies when companyIds are not provided', async() => {
       // Arrange
-      const existingShipper = createMock<ShipperDto>({ id: existingShipperId });
-      const editData: EditShipperInputDto = { companyName: 'New Name' };
+      const shipperId = 'shipper-id-1';
+      const input: EditShipperInputDto = {
+        companyName: 'New Company Name',
+      };
 
-      const findByIdSpy = jest.spyOn(sut['shipperDao'], 'findById').mockResolvedValue(existingShipper);
-      const editSpy = jest.spyOn(sut['shipperDao'], 'edit').mockResolvedValue();
+      const existingShipper = createMock<ShipperDto>({
+        id: shipperId,
+        cnpj: '05158719000179',
+        companies: [{ id: 'company-id-1', name: 'Company 1' }],
+      });
+
+      jest.spyOn(shipperDao, 'findById').mockResolvedValue(existingShipper);
+      const findCompanySpy = jest.spyOn(findCompanyById, 'execute');
+      jest.spyOn(shipperRepository, 'edit').mockResolvedValue();
 
       // Act
-      await sut.execute(existingShipperId, editData);
+      await sut.execute(shipperId, input);
 
       // Assert
-      expect(findByIdSpy).toHaveBeenCalledTimes(1);
+      expect(findCompanySpy).not.toHaveBeenCalled();
+    });
+
+    it('should call shipperRepository.edit with updated shipper', async() => {
+      // Arrange
+      const shipperId = 'shipper-id-1';
+      const input: EditShipperInputDto = {
+        companyName: 'New Company Name',
+        fantasyName: 'New Fantasy Name',
+      };
+
+      const existingShipper = createMock<ShipperDto>({
+        id: shipperId,
+        companyName: 'Old Company Name',
+        fantasyName: 'Old Fantasy Name',
+        cnpj: '05158719000179',
+        companies: [{ id: 'company-id-1', name: 'Company 1' }],
+      });
+
+      jest.spyOn(shipperDao, 'findById').mockResolvedValue(existingShipper);
+      const editSpy = jest.spyOn(shipperRepository, 'edit').mockResolvedValue();
+
+      // Act
+      await sut.execute(shipperId, input);
+
+      // Assert
       expect(editSpy).toHaveBeenCalledTimes(1);
-      expect(editSpy).toHaveBeenCalledWith(existingShipperId, editData);
+      expect(editSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          _props: expect.objectContaining({
+            id: shipperId,
+            companyName: input.companyName,
+            fantasyName: input.fantasyName,
+          }),
+        }),
+      );
+    });
+
+    it('should return success message', async() => {
+      // Arrange
+      const shipperId = 'shipper-id-1';
+      const input: EditShipperInputDto = {
+        companyName: 'New Company Name',
+      };
+
+      const existingShipper = createMock<ShipperDto>({
+        id: shipperId,
+        cnpj: '05158719000179',
+        companies: [{ id: 'company-id-1', name: 'Company 1' }],
+      });
+
+      jest.spyOn(shipperDao, 'findById').mockResolvedValue(existingShipper);
+      jest.spyOn(shipperRepository, 'edit').mockResolvedValue();
+
+      // Act
+      const result = await sut.execute(shipperId, input);
+
+      // Assert
+      expect(result).toEqual<SuccessMessage>({
+        message: 'Transportadora atualizada com sucesso!',
+      });
     });
   });
 
   describe('integration tests', () => {
-    it('should throw ShipperNotFoundError when shipper does not exist in database', async() => {
-      // Arrange
-      const nonExistentId = 'non-existent-id';
-      const editData: EditShipperInputDto = { companyName: 'Updated Shipper' };
+    let company01: Company;
+    let company02: Company;
 
-      // Act & Assert
-      expect.assertions(1);
-      await expect(sut.execute(nonExistentId, editData)).rejects.toBeInstanceOf(ShipperNotFoundError);
-    });
+    beforeEach(async() => {
+      company01 = await prisma.company.create({
+        data: {
+          name: 'Company 01',
+          fantasyName: 'Company 01 Fantasy',
+          document: '05158719000179',
+          ie: '123456789',
+          zipCode: '01234-567',
+          street: 'Street 01',
+          number: '100',
+          neighborhood: 'Neighborhood 01',
+          complement: null,
+          reference: null,
+          city: 'São Paulo',
+          state: 'SP',
+          cellphone: '11987654321',
+          phone01: '1133334444',
+          phone02: null,
+          email01: 'company01@test.com',
+          email02: null,
+          active: true,
+        },
+      });
 
-    it('should throw ShipperDuplicateCnpjError when cnpj already exists for another shipper in database', async() => {
-      // Arrange
-      const anotherShipperData: CreateShipperInputDto = {
-        ...createShipperData,
-        cnpj: '98765432000187',
+      company02 = await prisma.company.create({
+        data: {
+          name: 'Company 02',
+          fantasyName: 'Company 02 Fantasy',
+          document: '43345060000159',
+          ie: '987654321',
+          zipCode: '09876-543',
+          street: 'Street 02',
+          number: '200',
+          neighborhood: 'Neighborhood 02',
+          complement: null,
+          reference: null,
+          city: 'Rio de Janeiro',
+          state: 'RJ',
+          cellphone: '21987654321',
+          phone01: '2133334444',
+          phone02: null,
+          email01: 'company02@test.com',
+          email02: null,
+          active: true,
+        },
+      });
+
+      companyId = company01.id;
+
+      data = {
+        companyName: 'Transportadora ABC Ltda',
+        fantasyName: 'ABC Transportes',
+        cnpj: '08260358000165',
+        contact: '(11) 98765-4321',
+        representative: 'João Silva',
+        zipCode: '01234-567',
+        street: 'Rua das Flores',
+        number: '100',
+        complement: 'Sala 5',
+        reference: 'Próximo ao mercado',
+        neighborhood: 'Centro',
+        city: 'São Paulo',
+        state: 'SP',
+        companyIds: [companyId],
       };
-      await createShipper.execute(anotherShipperData);
+    });
 
-      const editData: EditShipperInputDto = { cnpj: '98765432000187' };
+    it('should throw an error when shipper does not exist', async() => {
+      // Arrange
+      const shipperId = 'non-existing-shipper-id';
 
       // Act & Assert
       expect.assertions(1);
-      await expect(sut.execute(existingShipperId, editData)).rejects.toBeInstanceOf(ShipperDuplicateCnpjError);
+      return sut.execute(shipperId, {}).catch((error) => {
+        expect(error).toBeInstanceOf(ShipperNotFoundError);
+      });
     });
 
-    it('should successfully update shipper companyName in database', async() => {
+    it('should throw an error when cnpj is already used by another shipper', async() => {
       // Arrange
+      await createShipper.execute(data);
+      const shipper2 = await createShipper.execute({ ...data, cnpj: '25245792000195' });
+
       const editData: EditShipperInputDto = {
-        companyName: 'Updated Transportadora Name',
+        cnpj: data.cnpj,
+      };
+
+      // Act & Assert
+      expect.assertions(1);
+      return sut.execute(shipper2.id, editData).catch((error) => {
+        expect(error).toBeInstanceOf(ShipperDuplicateCnpjError);
+      });
+    });
+
+    it('should throw an error when company does not exist', async() => {
+      // Arrange
+      const shipper = await createShipper.execute(data);
+
+      const editData: EditShipperInputDto = {
+        companyIds: ['non-existing-company-id'],
+      };
+
+      // Act & Assert
+      expect.assertions(1);
+      return sut.execute(shipper.id, editData).catch((error) => {
+        expect(error).toBeInstanceOf(CompanyNotFoundError);
+      });
+    });
+
+    it('should not throw an error when cnpj and company are unchanged', async() => {
+      // Arrange
+      const shipper = await createShipper.execute(data);
+
+      const editData: EditShipperInputDto = {
+        companyName: 'New Company Name',
       };
 
       // Act
-      const result = await sut.execute(existingShipperId, editData);
+      const result = await sut.execute(shipper.id, editData);
 
       // Assert
       expect(result).toEqual<SuccessMessage>({ message: 'Transportadora atualizada com sucesso!' });
+    });
 
-      // Verify update in database
-      const updatedShipper = await prisma.shipper.findUnique({
-        where: { id: existingShipperId },
-      });
+    it('should not throw an error when cnpj is "changed" but remains the same', async() => {
+      // Arrange
+      const shipper = await createShipper.execute(data);
 
-      expect(updatedShipper).toBeDefined();
-      expect(updatedShipper).toEqual<ShipperDto>({
-        ...createShipperData,
-        companyName: 'Updated Transportadora Name',
-        id: existingShipperId,
-        createdAt: updatedShipper!.createdAt,
-        updatedAt: updatedShipper!.updatedAt,
+      const editData: EditShipperInputDto = {
+        cnpj: data.cnpj,
+      };
+
+      // Act
+      const result = await sut.execute(shipper.id, editData);
+
+      // Assert
+      expect(result).toEqual<SuccessMessage>({ message: 'Transportadora atualizada com sucesso!' });
+    });
+
+    it('should not edit anything when no data is provided', async() => {
+      // Arrange
+      const shipper = await createShipper.execute(data);
+      const shipperBeforeEdit = await findShipperById.execute(shipper.id);
+
+      const editData: EditShipperInputDto = {};
+
+      // Act
+      await sut.execute(shipper.id, editData);
+
+      // Assert
+      const editedShipper = await findShipperById.execute(shipper.id);
+      expect(editedShipper).toMatchObject(shipperBeforeEdit!);
+    });
+
+    it('should edit a shipper successfully', async() => {
+      // Arrange
+      const shipper = await createShipper.execute(data);
+
+      const editData: EditShipperInputDto = {
+        companyName: 'Transportadora XYZ Ltda',
+        fantasyName: 'XYZ Transportes',
+        cnpj: '36980496000154',
+        contact: '(21) 91234-5678',
+        representative: 'Maria Santos',
+      };
+
+      // Act
+      await sut.execute(shipper.id, editData);
+
+      // Assert
+      const editedShipper = await findShipperById.execute(shipper.id);
+      expect(editedShipper).toEqual<ShipperDto>({
+        id: shipper.id,
+        companyName: editData.companyName!,
+        fantasyName: editData.fantasyName!,
+        cnpj: '36980496000154',
+        contact: editData.contact!,
+        representative: editData.representative!,
+        zipCode: data.zipCode,
+        street: data.street,
+        number: data.number,
+        complement: data.complement,
+        reference: data.reference,
+        neighborhood: data.neighborhood,
+        city: data.city,
+        state: data.state,
+        active: true,
+        createdAt: editedShipper!.createdAt,
+        updatedAt: editedShipper!.updatedAt,
+        companies: editedShipper!.companies,
       });
     });
 
-    it('should successfully update multiple fields in database', async() => {
+    it('should change the company of a shipper successfully', async() => {
       // Arrange
+      const shipper = await createShipper.execute(data);
+
       const editData: EditShipperInputDto = {
-        companyName: 'Completely Updated Transportadora',
-        fantasyName: 'Updated Express',
-        contact: 'Carlos Almeida',
-        representative: 'Fernanda Costa',
+        companyIds: [company02.id],
+      };
+
+      // Act
+      await sut.execute(shipper.id, editData);
+
+      // Assert
+      const editedShipper = await findShipperById.execute(shipper.id);
+      expect(editedShipper!.companies[0].id).toBe(company02.id);
+    });
+
+    it('should edit multiple companies of a shipper successfully', async() => {
+      // Arrange
+      const shipper = await createShipper.execute(data);
+
+      const editData: EditShipperInputDto = {
+        companyIds: [company01.id, company02.id],
+      };
+
+      // Act
+      await sut.execute(shipper.id, editData);
+
+      // Assert
+      const editedShipper = await findShipperById.execute(shipper.id);
+      expect(editedShipper!.companies).toHaveLength(2);
+      expect(editedShipper!.companies).toEqual(
+        expect.arrayContaining([
+          {
+            id: company01.id,
+            name: company01.name,
+          },
+          {
+            id: company02.id,
+            name: company02.name,
+          },
+        ]),
+      );
+    });
+
+    it('should edit address fields successfully', async() => {
+      // Arrange
+      const shipper = await createShipper.execute(data);
+
+      const editData: EditShipperInputDto = {
+        zipCode: '09876-543',
+        street: 'Avenida Principal',
+        number: '999',
+        complement: 'Andar 10',
+        reference: 'Perto da praça',
+        neighborhood: 'Centro Novo',
         city: 'Rio de Janeiro',
         state: 'RJ',
       };
 
       // Act
-      const result = await sut.execute(existingShipperId, editData);
+      await sut.execute(shipper.id, editData);
 
       // Assert
-      expect(result).toEqual<SuccessMessage>({ message: 'Transportadora atualizada com sucesso!' });
-
-      // Verify updates in database
-      const updatedShipper = await prisma.shipper.findUnique({
-        where: { id: existingShipperId },
-      });
-
-      expect(updatedShipper).toBeDefined();
-      expect(updatedShipper).toEqual<ShipperDto>({
-        ...createShipperData,
-        ...editData,
-        id: existingShipperId,
-        createdAt: updatedShipper!.createdAt,
-        updatedAt: updatedShipper!.updatedAt,
+      const editedShipper = await findShipperById.execute(shipper.id);
+      expect(editedShipper).toMatchObject({
+        zipCode: editData.zipCode,
+        street: editData.street,
+        number: editData.number,
+        complement: editData.complement,
+        reference: editData.reference,
+        neighborhood: editData.neighborhood,
+        city: editData.city,
+        state: editData.state,
       });
     });
 
-    it('should successfully update cnpj to new unique value', async() => {
+    it('should set optional fields to null', async() => {
       // Arrange
-      const editData: EditShipperInputDto = {
-        cnpj: '11111111000111',
-      };
+      const shipper = await createShipper.execute(data);
 
-      // Act
-      const result = await sut.execute(existingShipperId, editData);
-
-      // Assert
-      expect(result).toEqual<SuccessMessage>({ message: 'Transportadora atualizada com sucesso!' });
-
-      // Verify update in database
-      const updatedShipper = await prisma.shipper.findUnique({
-        where: { id: existingShipperId },
-      });
-
-      expect(updatedShipper).toBeDefined();
-      expect(updatedShipper?.cnpj).toBe(editData.cnpj);
-    });
-
-    it('should handle optional fields being set to null', async() => {
-      // Arrange
       const editData: EditShipperInputDto = {
         complement: null,
         reference: null,
       };
 
       // Act
-      const result = await sut.execute(existingShipperId, editData);
+      await sut.execute(shipper.id, editData);
 
       // Assert
-      expect(result).toEqual<SuccessMessage>({ message: 'Transportadora atualizada com sucesso!' });
-
-      // Verify updates in database
-      const updatedShipper = await prisma.shipper.findUnique({
-        where: { id: existingShipperId },
-      });
-
-      expect(updatedShipper).toBeDefined();
-      expect(updatedShipper?.complement).toBeNull();
-      expect(updatedShipper?.reference).toBeNull();
+      const editedShipper = await findShipperById.execute(shipper.id);
+      expect(editedShipper!.complement).toBeNull();
+      expect(editedShipper!.reference).toBeNull();
     });
 
-    it('should update only specified fields leaving others unchanged', async() => {
+    it('should edit all fields at once successfully', async() => {
       // Arrange
-      const editData: EditShipperInputDto = {
-        contact: 'New Contact Person',
-      };
-
-      // Act
-      const result = await sut.execute(existingShipperId, editData);
-
-      // Assert
-      expect(result).toEqual<SuccessMessage>({ message: 'Transportadora atualizada com sucesso!' });
-
-      // Verify only contact was updated
-      const updatedShipper = await prisma.shipper.findUnique({
-        where: { id: existingShipperId },
-      });
-
-      expect(updatedShipper).toBeDefined();
-      expect(updatedShipper?.contact).toBe('New Contact Person');
-      expect(updatedShipper?.companyName).toBe(createShipperData.companyName);
-      expect(updatedShipper?.fantasyName).toBe(createShipperData.fantasyName);
-      expect(updatedShipper?.representative).toBe(createShipperData.representative);
-    });
-
-    it('should update all address fields successfully', async() => {
-      // Arrange
-      const editData: EditShipperInputDto = {
-        zipCode: '99999999',
-        street: 'Avenida Nova',
-        number: '999',
-        complement: 'Andar 9',
-        reference: 'Em frente ao shopping',
-        neighborhood: 'Novo Bairro',
-        city: 'Curitiba',
-        state: 'PR',
-      };
-
-      // Act
-      const result = await sut.execute(existingShipperId, editData);
-
-      // Assert
-      expect(result).toEqual<SuccessMessage>({ message: 'Transportadora atualizada com sucesso!' });
-
-      // Verify address updates in database
-      const updatedShipper = await prisma.shipper.findUnique({
-        where: { id: existingShipperId },
-      });
-
-      expect(updatedShipper).toBeDefined();
-      expect(updatedShipper?.zipCode).toBe(editData.zipCode);
-      expect(updatedShipper?.street).toBe(editData.street);
-      expect(updatedShipper?.number).toBe(editData.number);
-      expect(updatedShipper?.complement).toBe(editData.complement);
-      expect(updatedShipper?.reference).toBe(editData.reference);
-      expect(updatedShipper?.neighborhood).toBe(editData.neighborhood);
-      expect(updatedShipper?.city).toBe(editData.city);
-      expect(updatedShipper?.state).toBe(editData.state);
-    });
-
-    it('should not modify other shippers when updating one', async() => {
-      // Arrange - Create another shipper
-      const anotherShipperData: CreateShipperInputDto = {
-        companyName: 'Another Transportadora Ltda',
-        fantasyName: 'Another Transport',
-        cnpj: '22222222000222',
-        contact: 'Another Contact',
-        representative: 'Another Rep',
-        zipCode: '22222222',
-        street: 'Another Street',
-        number: '222',
-        complement: null,
-        reference: null,
-        neighborhood: 'Another Neighborhood',
-        city: 'Another City',
-        state: 'AC',
-      };
-      const anotherResult = await createShipper.execute(anotherShipperData);
+      const shipper = await createShipper.execute(data);
 
       const editData: EditShipperInputDto = {
-        companyName: 'Updated First Shipper',
+        companyName: 'Transportadora Completa Ltda',
+        fantasyName: 'Completa Transportes',
+        cnpj: '39839945000137',
+        contact: '(31) 94444-4444',
+        representative: 'Carlos Souza',
+        zipCode: '44444-444',
+        street: 'Rua Completa',
+        number: '444',
+        complement: 'Complemento Completo',
+        reference: 'Referência Completa',
+        neighborhood: 'Bairro Completo',
+        city: 'Belo Horizonte',
+        state: 'MG',
+        companyIds: [company02.id],
       };
 
       // Act
-      await sut.execute(existingShipperId, editData);
+      await sut.execute(shipper.id, editData);
 
       // Assert
-      const firstShipper = await prisma.shipper.findUnique({
-        where: { id: existingShipperId },
+      const editedShipper = await findShipperById.execute(shipper.id);
+      expect(editedShipper).toEqual<ShipperDto>({
+        id: shipper.id,
+        companyName: editData.companyName!,
+        fantasyName: editData.fantasyName!,
+        cnpj: editData.cnpj!,
+        contact: editData.contact!,
+        representative: editData.representative!,
+        zipCode: editData.zipCode!,
+        street: editData.street!,
+        number: editData.number!,
+        complement: editData.complement ?? null,
+        reference: editData.reference ?? null,
+        neighborhood: editData.neighborhood!,
+        city: editData.city!,
+        state: editData.state!,
+        active: true,
+        createdAt: editedShipper!.createdAt,
+        updatedAt: editedShipper!.updatedAt,
+        companies: [
+          {
+            id: company02.id,
+            name: company02.name,
+          },
+        ],
       });
-
-      const secondShipper = await prisma.shipper.findUnique({
-        where: { id: anotherResult.id },
-      });
-
-      expect(firstShipper?.companyName).toBe('Updated First Shipper');
-      expect(secondShipper?.companyName).toBe(anotherShipperData.companyName);
-    });
-
-    it('should handle empty update data object', async() => {
-      // Arrange
-      const editData: EditShipperInputDto = {};
-
-      // Act
-      const result = await sut.execute(existingShipperId, editData);
-
-      // Assert
-      expect(result).toEqual<SuccessMessage>({ message: 'Transportadora atualizada com sucesso!' });
-
-      // Verify nothing changed
-      const shipper = await prisma.shipper.findUnique({
-        where: { id: existingShipperId },
-      });
-
-      expect(shipper?.companyName).toBe(createShipperData.companyName);
-      expect(shipper?.cnpj).toBe(createShipperData.cnpj);
     });
   });
 });

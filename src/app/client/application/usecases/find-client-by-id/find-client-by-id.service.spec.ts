@@ -1,5 +1,7 @@
+import { createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ClientModule } from 'src/app/client/client.module';
+import { ClientNotFoundError } from 'src/app/client/domain/errors/client-not-found.error';
 import { CreateCompany } from 'src/app/company/application/usecases/create-company/create-company.service';
 import { ConfigModule } from 'src/core/config/config.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
@@ -29,11 +31,12 @@ describe('FindClientById', () => {
     createCompany = module.get(CreateCompany);
 
     await prisma.company.deleteMany();
+    await prisma.client.deleteMany();
 
     companyId = (await createCompany.execute({
       name: 'name teste',
       fantasyName: 'fantasyName teste',
-      document: 'document teste',
+      document: '91699347000120',
       ie: 'ie teste',
       zipCode: 'zipCode teste',
       street: 'street teste',
@@ -43,16 +46,17 @@ describe('FindClientById', () => {
       reference: null,
       city: 'city teste',
       state: 'state teste',
-      cellphone: 'cellphone teste',
-      phone01: 'phone01 teste',
-      phone02: 'phone02 teste',
-      email01: 'email01 teste',
-      email02: 'email02 teste',
+      cellphone: '1199887766',
+      phone01: '1199887766',
+      phone02: '1199887766',
+      email01: 'email01@teste.com',
+      email02: 'email02@teste.com',
     })).id;
   });
 
   afterEach(async() => {
     await prisma.company.deleteMany();
+    await prisma.client.deleteMany();
     await prisma.$disconnect();
   });
 
@@ -61,33 +65,46 @@ describe('FindClientById', () => {
   });
 
   describe('unit tests', () => {
-    it('should call clientDao with correct arguments', async() => {
+    it('should throw ClientNotFoundError when client does not exist', async() => {
       // Arrange
-      const id = 'client-id';
-      const clientDaoSpy = jest.spyOn(sut['clientDao'], 'findById');
+      const nonExistentId = 'non-existent-id';
+      jest.spyOn(sut['clientDao'], 'findById').mockResolvedValue(null);
+
+      // Act & Assert
+      expect.assertions(2);
+      await expect(sut.execute(nonExistentId)).rejects.toBeInstanceOf(ClientNotFoundError);
+      expect(sut['clientDao'].findById).toHaveBeenCalledWith(nonExistentId);
+    });
+
+    it('should return client data when client exists', async() => {
+      // Arrange
+      const client = createMock<ClientDto>();
+      const findByIdSpy = jest.spyOn(sut['clientDao'], 'findById').mockResolvedValue(client);
 
       // Act
-      await sut.execute(id);
+      const result = await sut.execute('existing-client-id');
 
       // Assert
-      expect(clientDaoSpy).toHaveBeenNthCalledWith(1, id);
+      expect(findByIdSpy).toHaveBeenCalledWith('existing-client-id');
+      expect(result).toBe(client);
     });
   });
 
   describe('integration tests', () => {
-    it('should return null if client is not found', async() => {
-      // Act
-      const result = await sut.execute('id');
+    it('should throw ClientNotFoundError when client does not exist', async() => {
+      // Arrange
+      const nonExistentId = 'non-existent-id';
 
-      // Assert
-      expect(result).toBeNull();
+      // Act & Assert
+      expect.assertions(1);
+      await expect(sut.execute(nonExistentId)).rejects.toBeInstanceOf(ClientNotFoundError);
     });
 
     it('should return correct dto when client is found', async() => {
       // Arrange
       const data: CreateClientInputDto = {
         kind: 'individual',
-        cnpj: '12345678000199',
+        cnpj: '51540177000111',
         ie: '123456789',
         group: 'default',
         type: 'customer',
@@ -96,7 +113,7 @@ describe('FindClientById', () => {
         fantasyName: 'John Doe',
         owner: 'John Doe',
         headquarters: '123 Main St, City, State, ZIP',
-        companyId,
+        companyIds: [companyId],
       };
       const createdClient = await createClient.execute(data);
 
@@ -117,9 +134,14 @@ describe('FindClientById', () => {
         owner: data.owner,
         headquarters: data.headquarters,
         active: true,
-        companyId,
         createdAt: expect.any(Date),
         updatedAt: expect.any(Date),
+        companies: [
+          {
+            id: companyId,
+            name: 'name teste',
+          },
+        ],
       });
     });
   });

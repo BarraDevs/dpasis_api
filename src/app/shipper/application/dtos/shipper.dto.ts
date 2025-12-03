@@ -1,3 +1,5 @@
+import { CompanySummaryDto } from 'src/app/company/application/dtos/company.dto';
+
 export class ShipperDto {
   id: string;
   companyName: string;
@@ -13,6 +15,8 @@ export class ShipperDto {
   neighborhood: string;
   city: string;
   state: string;
+  active: boolean;
   createdAt: Date;
   updatedAt: Date;
+  companies: CompanySummaryDto[];
 }

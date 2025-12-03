@@ -11,6 +11,7 @@ describe('ClientDaoAdapterPrisma', () => {
   let prisma: PrismaService;
   let company01: Company;
   let company02: Company;
+  let company03: Company;
 
   beforeEach(async() => {
     const module = await Test.createTestingModule({
@@ -42,6 +43,7 @@ describe('ClientDaoAdapterPrisma', () => {
         state: 'state teste',
         phone01: 'phone01 teste',
         email01: 'email01 teste',
+        active: true,
       },
     });
 
@@ -59,6 +61,25 @@ describe('ClientDaoAdapterPrisma', () => {
         state: 'state teste 02',
         phone01: 'phone01 teste 02',
         email01: 'email01 teste 02',
+        active: true,
+      },
+    });
+
+    company03 = await prisma.company.create({
+      data: {
+        name: 'name teste 03',
+        fantasyName: 'fantasyName teste 03',
+        document: 'document teste 03',
+        ie: 'ie teste 03',
+        zipCode: 'zipCode teste 03',
+        street: 'street teste 03',
+        number: 'number teste 03',
+        neighborhood: 'neighborhood teste 03',
+        city: 'city teste 03',
+        state: 'state teste 03',
+        phone01: 'phone01 teste 03',
+        email01: 'email01 teste 03',
+        active: true,
       },
     });
   });
@@ -75,105 +96,128 @@ describe('ClientDaoAdapterPrisma', () => {
   describe('findAll', () => {
     beforeEach(async() => {
       // Seed test data with diverse values for comprehensive testing
-      await prisma.client.createMany({
-        data: [
-          {
-            id: 'client-1',
-            kind: 'PJ',
-            cnpj: '11.111.111/0001-11',
-            ie: '111.111.111.111',
-            group: 'Group Technology',
-            type: 'Premium',
-            generateInvoice: true,
-            companyName: 'Alpha Tech Solutions',
-            fantasyName: 'Alpha Tech',
-            owner: 'John Alpha Smith',
-            headquarters: 'Main Office Alpha São Paulo',
-            active: true,
-            companyId: company01.id,
-            createdAt: new Date('2023-01-01T10:00:00Z'),
+      await prisma.client.create({
+        data: {
+          id: 'client-1',
+          kind: 'PJ',
+          cnpj: '11.111.111/0001-11',
+          ie: '111.111.111.111',
+          group: 'Group Technology',
+          type: 'Premium',
+          generateInvoice: true,
+          companyName: 'Alpha Tech Solutions',
+          fantasyName: 'Alpha Tech',
+          owner: 'John Alpha Smith',
+          headquarters: 'Main Office Alpha São Paulo',
+          active: true,
+          createdAt: new Date('2023-01-01T10:00:00Z'),
+          companies: {
+            connect: { id: company01.id },
           },
-          {
-            id: 'client-2',
-            kind: 'PF',
-            cnpj: '22.222.222/0001-22',
-            ie: '222.222.222.222',
-            group: 'Group Industrial',
-            type: 'Basic',
-            generateInvoice: false,
-            companyName: 'Beta Industries Inc',
-            fantasyName: 'Beta Industries',
-            owner: 'Jane Beta Santos',
-            headquarters: 'Branch Office Beta Rio de Janeiro',
-            active: true,
-            companyId: company01.id,
-            createdAt: new Date('2023-02-01T10:00:00Z'),
+        },
+      });
+      await prisma.client.create({
+        data: {
+          id: 'client-2',
+          kind: 'PF',
+          cnpj: '22.222.222/0001-22',
+          ie: '222.222.222.222',
+          group: 'Group Industrial',
+          type: 'Basic',
+          generateInvoice: false,
+          companyName: 'Beta Industries Inc',
+          fantasyName: 'Beta Industries',
+          owner: 'Jane Beta Santos',
+          headquarters: 'Branch Office Beta Rio de Janeiro',
+          active: true,
+          createdAt: new Date('2023-02-01T10:00:00Z'),
+          companies: {
+            connect: { id: company01.id },
           },
-          {
-            id: 'client-3',
-            kind: 'PJ',
-            cnpj: '33.333.333/0001-33',
-            ie: '333.333.333.333',
-            group: 'Group Technology',
-            type: 'Premium',
-            generateInvoice: true,
-            companyName: 'Gamma Corporation Ltd',
-            fantasyName: 'Gamma Corp',
-            owner: 'Robert Gamma Johnson',
-            headquarters: 'Headquarters Gamma Belo Horizonte',
-            active: false,
-            companyId: company01.id,
-            createdAt: new Date('2023-03-01T10:00:00Z'),
+        },
+      });
+      await prisma.client.create({
+        data: {
+          id: 'client-3',
+          kind: 'PJ',
+          cnpj: '33.333.333/0001-33',
+          ie: '333.333.333.333',
+          group: 'Group Technology',
+          type: 'Premium',
+          generateInvoice: true,
+          companyName: 'Gamma Corporation Ltd',
+          fantasyName: 'Gamma Corp',
+          owner: 'Robert Gamma Johnson',
+          headquarters: 'Headquarters Gamma Belo Horizonte',
+          active: false,
+          createdAt: new Date('2023-03-01T10:00:00Z'),
+          companies: {
+            connect: { id: company01.id },
           },
-          {
-            id: 'client-4',
-            kind: 'PJ',
-            cnpj: '44.444.444/0001-44',
-            ie: '444.444.444.444',
-            group: 'Group Services',
-            type: 'Standard',
-            generateInvoice: true,
-            companyName: 'Delta Services Ltd',
-            fantasyName: 'Delta Services',
-            owner: 'Sarah Delta Williams',
-            headquarters: 'Office Delta Porto Alegre',
-            active: true,
-            companyId: company02.id,
-            createdAt: new Date('2023-04-01T10:00:00Z'),
+        },
+      });
+      await prisma.client.create({
+        data: {
+          id: 'client-4',
+          kind: 'PJ',
+          cnpj: '44.444.444/0001-44',
+          ie: '444.444.444.444',
+          group: 'Group Services',
+          type: 'Standard',
+          generateInvoice: true,
+          companyName: 'Delta Services Ltd',
+          fantasyName: 'Delta Services',
+          owner: 'Sarah Delta Williams',
+          headquarters: 'Office Delta Porto Alegre',
+          active: true,
+          createdAt: new Date('2023-04-01T10:00:00Z'),
+          companies: {
+            connect: { id: company02.id },
           },
-          {
-            id: 'client-5',
-            kind: 'PF',
-            cnpj: '55.555.555/0001-55',
-            ie: '555.555.555.555',
-            group: 'Group Consulting',
-            type: 'Basic',
-            generateInvoice: false,
-            companyName: 'Echo Consulting Solutions',
-            fantasyName: 'Echo Consulting',
-            owner: 'Mike Echo Brown',
-            headquarters: 'Echo Office Recife',
-            active: true,
-            companyId: company02.id,
-            createdAt: new Date('2023-05-01T10:00:00Z'),
+        },
+      });
+      await prisma.client.create({
+        data: {
+          id: 'client-5',
+          kind: 'PF',
+          cnpj: '55.555.555/0001-55',
+          ie: '555.555.555.555',
+          group: 'Group Consulting',
+          type: 'Basic',
+          generateInvoice: false,
+          companyName: 'Echo Consulting Solutions',
+          fantasyName: 'Echo Consulting',
+          owner: 'Mike Echo Brown',
+          headquarters: 'Echo Office Recife',
+          active: true,
+          createdAt: new Date('2023-05-01T10:00:00Z'),
+          companies: {
+            connect: { id: company02.id },
           },
-          {
-            id: 'client-6',
-            kind: 'PJ',
-            cnpj: '66.666.666/0001-66',
-            ie: '666.666.666.666',
-            group: 'Group Industrial',
-            type: 'Premium',
-            generateInvoice: true,
-            companyName: 'Foxtrot Manufacturing Corp',
-            fantasyName: 'Foxtrot Manufacturing',
-            owner: 'Lisa Foxtrot Davis',
-            headquarters: 'Manufacturing Plant Foxtrot Salvador',
-            active: false,
-            companyId: company02.id,
-            createdAt: new Date('2023-06-01T10:00:00Z'),
+        },
+      });
+      await prisma.client.create({
+        data: {
+          id: 'client-6',
+          kind: 'PJ',
+          cnpj: '66.666.666/0001-66',
+          ie: '666.666.666.666',
+          group: 'Group Industrial',
+          type: 'Premium',
+          generateInvoice: true,
+          companyName: 'Foxtrot Manufacturing Corp',
+          fantasyName: 'Foxtrot Manufacturing',
+          owner: 'Lisa Foxtrot Davis',
+          headquarters: 'Manufacturing Plant Foxtrot Salvador',
+          active: false,
+          createdAt: new Date('2023-06-01T10:00:00Z'),
+          companies: {
+            connect: [
+              { id: company01.id },
+              { id: company03.id },
+            ],
           },
-        ],
+        },
       });
     });
 
@@ -475,21 +519,87 @@ describe('ClientDaoAdapterPrisma', () => {
         });
       });
 
-      describe('by companyId', () => {
-        it('should filter by companyId', async() => {
+      describe('by companyIds', () => {
+        it('should filter by companyIds', async() => {
           // Arrange
           const query: FindAllClientQueryDto = {
-            companyId: company01.id,
+            companyIds: [company01.id],
           };
 
           // Act
           const [clients, total] = await sut.findAll(query);
 
           // Assert
-          expect(total).toBe(3); // clients 1, 2, 3
-          expect(clients).toHaveLength(3);
+          expect(total).toBe(4); // clients 1, 2, 3, 6
+          expect(clients).toHaveLength(4);
           const clientIds = clients.map(c => c.id).sort();
-          expect(clientIds).toEqual(['client-1', 'client-2', 'client-3']);
+          expect(clientIds).toEqual(['client-1', 'client-2', 'client-3', 'client-6']);
+        });
+
+        it('should filter by multiple companyIds', async() => {
+          // Arrange
+          const query: FindAllClientQueryDto = {
+            companyIds: [company01.id, company02.id],
+          };
+
+          // Act
+          const [clients, total] = await sut.findAll(query);
+
+          // Assert
+          expect(total).toBe(6); // clients 1, 2, 3, 4, 5, 6
+          expect(clients).toHaveLength(6);
+          const clientIds = clients.map(c => c.id).sort();
+          expect(clientIds).toEqual(['client-1', 'client-2', 'client-3', 'client-4', 'client-5', 'client-6']);
+        });
+
+        it('should return empty when no clients match the companyIds', async() => {
+          // Arrange
+          const query: FindAllClientQueryDto = {
+            companyIds: ['non-existent-company-id'],
+          };
+
+          // Act
+          const [clients, total] = await sut.findAll(query);
+
+          // Assert
+          expect(total).toBe(0);
+          expect(clients).toHaveLength(0);
+        });
+      });
+
+      describe('by active status', () => {
+        it('should filter by active = true', async() => {
+          // Arrange
+          const query: FindAllClientQueryDto = {
+            active: true,
+          };
+
+          // Act
+          const [clients, total] = await sut.findAll(query);
+
+          // Assert
+          expect(total).toBe(4); // clients 1, 2, 4, 5
+          expect(clients).toHaveLength(4);
+          clients.forEach(client => {
+            expect(client.active).toBe(true);
+          });
+        });
+
+        it('should filter by active = false', async() => {
+          // Arrange
+          const query: FindAllClientQueryDto = {
+            active: false,
+          };
+
+          // Act
+          const [clients, total] = await sut.findAll(query);
+
+          // Assert
+          expect(total).toBe(2); // clients 3, 6
+          expect(clients).toHaveLength(2);
+          clients.forEach(client => {
+            expect(client.active).toBe(false);
+          });
         });
       });
     });
@@ -803,7 +913,7 @@ describe('ClientDaoAdapterPrisma', () => {
         active: true,
       };
 
-      await prisma.client.create({ data: { ...clientData, companyId: company01.id } });
+      await prisma.client.create({ data: { ...clientData, companies: { connect: { id: company01.id } } } });
 
       // Act
       const client = await sut.findById('test-client-id');
@@ -844,7 +954,7 @@ describe('ClientDaoAdapterPrisma', () => {
         active: true,
       };
 
-      await prisma.client.create({ data: { ...clientData, companyId: company01.id } });
+      await prisma.client.create({ data: { ...clientData, companies: { connect: { id: company01.id } } } });
 
       // Act
       const client = await sut.findByCnpj('55.555.555/0001-55');
@@ -873,7 +983,7 @@ describe('ClientDaoAdapterPrisma', () => {
         active: true,
       };
 
-      await prisma.client.create({ data: { ...clientData, companyId: company01.id } });
+      await prisma.client.create({ data: { ...clientData, companies: { connect: { id: company01.id } } } });
 
       // Act
       const client = await sut.findByCnpj('66.666.666/0001-66'.toUpperCase());
@@ -881,73 +991,6 @@ describe('ClientDaoAdapterPrisma', () => {
       // Assert
       expect(client).not.toBeNull();
       expect(client?.cnpj).toBe('66.666.666/0001-66');
-    });
-  });
-
-  describe('findByIe', () => {
-    it('should return null when client with ie not found', async() => {
-      // Act
-      const client = await sut.findByIe('999.999.999.999');
-
-      // Assert
-      expect(client).toBeNull();
-    });
-
-    it('should return the correct client when found by ie', async() => {
-      // Arrange
-      const clientData = {
-        id: 'ie-test-client',
-        kind: 'PF',
-        cnpj: '77.777.777/0001-77',
-        ie: '777.777.777.777',
-        group: 'IE Test Group',
-        type: 'Standard',
-        generateInvoice: true,
-        companyName: 'IE Test Company Ltd',
-        fantasyName: 'IE Test Company',
-        owner: 'IE Test Owner',
-        headquarters: 'IE Test Office',
-        active: false,
-      };
-
-      await prisma.client.create({ data: { ...clientData, companyId: company01.id } });
-
-      // Act
-      const client = await sut.findByIe('777.777.777.777');
-
-      // Assert
-      expect(client).not.toBeNull();
-      expect(client?.id).toBe('ie-test-client');
-      expect(client?.ie).toBe('777.777.777.777');
-      expect(client?.companyName).toBe('IE Test Company Ltd');
-      expect(client?.active).toBe(false);
-    });
-
-    it('should be case insensitive for ie search', async() => {
-      // Arrange
-      const clientData = {
-        id: 'ie-case-test-client',
-        kind: 'PJ',
-        cnpj: '88.888.888/0001-88',
-        ie: '888.888.888.888',
-        group: 'IE Case Test Group',
-        type: 'Premium',
-        generateInvoice: false,
-        companyName: 'IE Case Test Company Ltd',
-        fantasyName: 'IE Case Test Company',
-        owner: 'IE Case Test Owner',
-        headquarters: 'IE Case Test Office',
-        active: true,
-      };
-
-      await prisma.client.create({ data: { ...clientData, companyId: company01.id } });
-
-      // Act
-      const client = await sut.findByIe('888.888.888.888'.toUpperCase());
-
-      // Assert
-      expect(client).not.toBeNull();
-      expect(client?.ie).toBe('888.888.888.888');
     });
   });
 });
