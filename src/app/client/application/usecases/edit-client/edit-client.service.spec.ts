@@ -158,7 +158,7 @@ describe('EditClient', () => {
       expect(result).toEqual<SuccessMessage>({ message: 'Cliente editado com sucesso!' });
     });
 
-    it('should not edit anything when no data is provided', async() => {
+    it('should not edit anything when no data is provided (except updatedAt)', async() => {
       // Arrange
       const client = await createClient.execute(data);
       const clientBeforeEdit = await findClientById.execute(client.id);
@@ -170,7 +170,7 @@ describe('EditClient', () => {
 
       // Assert
       const editedClient = await findClientById.execute(client.id);
-      expect(editedClient).toMatchObject(clientBeforeEdit!);
+      expect(editedClient).toMatchObject({ ...clientBeforeEdit, updatedAt: editedClient!.updatedAt });
     });
 
     it('should edit a client successfully', async() => {

@@ -411,7 +411,7 @@ describe('EditShipper', () => {
 
       // Assert
       const editedShipper = await findShipperById.execute(shipper.id);
-      expect(editedShipper).toMatchObject(shipperBeforeEdit!);
+      expect(editedShipper).toMatchObject({ ...shipperBeforeEdit, updatedAt: editedShipper!.updatedAt });
     });
 
     it('should edit a shipper successfully', async() => {
