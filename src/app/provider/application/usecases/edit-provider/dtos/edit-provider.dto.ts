@@ -12,11 +12,11 @@ export class EditProviderInputDto extends PartialType(CreateProviderInputDto, {
   @Min(1, { message: '$property deve ser maior ou igual a $constraint1' })
   @Max(31, { message: '$property deve ser menor ou igual a $constraint1' })
   @IsNotEmpty({ message: '$property é obrigatório quando type é RECURRING' })
-  paymentDay: number | null;
+  paymentDay?: number | null;
 
   @ValidateIf((o) => o.type === ProviderType.ONE_TIME)
   @IsDate({ message: '$property deve ser uma data válida' })
   @Type(() => Date)
   @IsNotEmpty({ message: '$property é obrigatório quando type é ONE_TIME' })
-  paymentExpirationDate: Date | null;
+  paymentExpirationDate?: Date | null;
 }

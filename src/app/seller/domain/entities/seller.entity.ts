@@ -1,0 +1,84 @@
+import { Commission } from 'src/shared/value-objects/commission/commision.vo';
+import { Email } from 'src/shared/value-objects/email/email.vo';
+import { Phone } from 'src/shared/value-objects/phone/phone.vo';
+import { UUID } from 'src/shared/value-objects/uuid/uuid.vo';
+
+type SellerProps = SellerCreateProps & {
+  id: string;
+  active: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+type SellerCreateProps = {
+  name: string;
+  nickname: string | null;
+  phone: string;
+  cellphone: string;
+  email: string;
+  commission: number;
+  zipCode: string;
+  street: string;
+  number: string;
+  complement: string | null;
+  reference: string | null;
+  neighborhood: string;
+  city: string;
+  state: string;
+  observation: string | null;
+  avatarUrl: string | null;
+  companyIds: string[];
+}
+
+export class Seller {
+  private readonly _props: SellerProps;
+
+  static create(props: SellerCreateProps): Seller {
+    return new Seller({
+      ...props,
+      id: new UUID().value,
+      active: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+  }
+
+  static load(props: SellerProps): Seller {
+    return new Seller(props);
+  }
+
+  public get props(): Readonly<SellerProps> {
+    return { ...this._props, companyIds: [...this._props.companyIds] };
+  }
+
+  constructor(props: SellerProps) {
+    this._props = {
+      id: props.id,
+      name: props.name,
+      nickname: props.nickname,
+      active: props.active,
+      createdAt: props.createdAt,
+      updatedAt: props.updatedAt,
+      zipCode: props.zipCode,
+      street: props.street,
+      number: props.number,
+      complement: props.complement,
+      reference: props.reference,
+      neighborhood: props.neighborhood,
+      city: props.city,
+      state: props.state,
+      observation: props.observation,
+      avatarUrl: props.avatarUrl,
+      companyIds: props.companyIds,
+      phone: new Phone(props.phone).value,
+      cellphone: new Phone(props.cellphone).value,
+      email: new Email(props.email).value,
+      commission: new Commission(props.commission).value,
+    };
+  }
+
+  public toggleStatus(): void {
+    this._props.active = !this._props.active;
+  }
+}
+

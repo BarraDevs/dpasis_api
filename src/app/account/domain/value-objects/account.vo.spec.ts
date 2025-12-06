@@ -18,7 +18,7 @@ describe('Account Value Object', () => {
     const invalidRoles = [
       AccountRole.ADMIN,
       'INVALID_ROLE',
-      AccountRole.USER,
+      AccountRole.SELLER,
     ];
 
     // Act & Assert
@@ -41,8 +41,8 @@ describe('Account Value Object', () => {
 
   it('should correctly identify admin role', () => {
     // Arrange
-    const adminAccount = new Account(AccountStatus.ACTIVE, [AccountRole.ADMIN, AccountRole.USER]);
-    const userAccount = new Account(AccountStatus.ACTIVE, [AccountRole.USER]);
+    const adminAccount = new Account(AccountStatus.ACTIVE, [AccountRole.ADMIN, AccountRole.SELLER]);
+    const userAccount = new Account(AccountStatus.ACTIVE, [AccountRole.SELLER]);
 
     // Act & Assert
     expect(adminAccount.isAdmin).toBe(true);
@@ -52,7 +52,7 @@ describe('Account Value Object', () => {
   it('should create account with valid status and roles', () => {
     // Arrange
     const status = AccountStatus.ACTIVE;
-    const roles = [AccountRole.ADMIN, AccountRole.USER];
+    const roles = [AccountRole.ADMIN, AccountRole.SELLER];
 
     // Act
     const account = new Account(status, roles);
