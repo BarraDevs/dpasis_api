@@ -42,8 +42,18 @@ export class Supplier {
 
   constructor(props: SupplierProps) {
     this._props = {
-      ...props,
+      id: props.id,
+      active: props.active,
+      createdAt: props.createdAt,
+      updatedAt: props.updatedAt,
       cnpj: new CNPJ(props.cnpj).value,
+      ie: props.ie,
+      group: props.group,
+      type: props.type,
+      companyName: props.companyName,
+      fantasyName: props.fantasyName,
+      representative: props.representative,
+      companyIds: props.companyIds ? [...props.companyIds] : [],
     };
   }
 

@@ -470,4 +470,191 @@ describe('Supplier Entity', () => {
       expect(props).toHaveProperty('updatedAt');
     });
   });
+
+  describe('invariant protection', () => {
+    it('should ensure _props contains only valid entity properties without additional data', () => {
+      // Arrange
+      const createProps = {
+        cnpj: '55.967.002/0001-46',
+        ie: 'INV123456',
+        group: 'Test Group',
+        type: 'Test Type',
+        companyName: 'Invariant Supplier Ltda',
+        fantasyName: 'Invariant Supp',
+        representative: 'John Doe',
+        companyIds: ['comp-1', 'comp-2'],
+      };
+
+      // Act
+      const supplier = Supplier.create(createProps);
+
+      // Assert - Verify _props has exactly the expected keys
+      const expectedKeys = [
+        'id',
+        'cnpj',
+        'ie',
+        'group',
+        'type',
+        'companyName',
+        'fantasyName',
+        'representative',
+        'companyIds',
+        'active',
+        'createdAt',
+        'updatedAt',
+      ].sort();
+
+      const actualKeys = Object.keys(supplier.props).sort();
+
+      expect(actualKeys).toEqual(expectedKeys);
+      expect(actualKeys.length).toBe(expectedKeys.length);
+    });
+
+    it('should not allow additional properties to leak into _props when using create', () => {
+      // Arrange
+      const propsWithExtra = {
+        cnpj: '55.967.002/0001-46',
+        ie: 'EXTRA123',
+        group: 'Extra Group',
+        type: 'Extra Type',
+        companyName: 'Extra Supplier Ltda',
+        fantasyName: 'Extra Supp',
+        representative: 'Jane Smith',
+        companyIds: ['comp-x'],
+        extraProperty: 'should not exist',
+        maliciousData: { dangerous: true },
+        unauthorizedField: 'leaked data',
+        injectedCode: 'attack vector',
+      } as any;
+
+      // Act
+      const supplier = Supplier.create(propsWithExtra);
+
+      // Assert
+      expect(supplier.props).not.toHaveProperty('extraProperty');
+      expect(supplier.props).not.toHaveProperty('maliciousData');
+      expect(supplier.props).not.toHaveProperty('unauthorizedField');
+      expect(supplier.props).not.toHaveProperty('injectedCode');
+    });
+
+    it('should not allow additional properties to leak into _props when using load', () => {
+      // Arrange
+      const propsWithExtra = {
+        id: 'existing-supplier-id',
+        cnpj: '55.967.002/0001-46',
+        ie: 'LOAD456',
+        group: 'Load Group',
+        type: 'Load Type',
+        companyName: 'Loaded Supplier Ltda',
+        fantasyName: 'Loaded Supp',
+        representative: 'Bob Johnson',
+        companyIds: ['comp-y', 'comp-z'],
+        active: true,
+        createdAt: new Date('2024-01-01T00:00:00Z'),
+        updatedAt: new Date('2024-01-02T00:00:00Z'),
+        maliciousProperty: 'compromising invariant',
+        attackVector: { injection: 'attempt' },
+        leakedField: 'unauthorized',
+        pollutedData: 'should not be here',
+      } as any;
+
+      // Act
+      const supplier = Supplier.load(propsWithExtra);
+
+      // Assert
+      expect(supplier.props).not.toHaveProperty('maliciousProperty');
+      expect(supplier.props).not.toHaveProperty('attackVector');
+      expect(supplier.props).not.toHaveProperty('leakedField');
+      expect(supplier.props).not.toHaveProperty('pollutedData');
+    });
+
+    it('should maintain exact property count after operations', () => {
+      // Arrange
+      const createProps = {
+        cnpj: '55.967.002/0001-46',
+        ie: 'OPS789',
+        group: 'Ops Group',
+        type: 'Ops Type',
+        companyName: 'Operations Supplier Ltda',
+        fantasyName: 'Ops Supp',
+        representative: 'Alice Brown',
+        companyIds: ['comp-ops'],
+      };
+
+      const supplier = Supplier.create(createProps);
+      const initialKeyCount = Object.keys(supplier.props).length;
+
+      // Act - Perform operations
+      supplier.toggleStatus();
+      supplier.toggleStatus();
+      supplier.toggleStatus();
+      const props1 = supplier.props;
+      const props2 = supplier.props;
+
+      // Assert
+      const finalKeyCount = Object.keys(supplier.props).length;
+      expect(finalKeyCount).toBe(initialKeyCount);
+      expect(finalKeyCount).toBe(12); // Exact number of expected properties
+      expect(props1.active).toBe(props2.active); // Ensure consistency
+    });
+
+    it('should ensure props getter returns consistent data structure', () => {
+      // Arrange
+      const loadProps = {
+        id: 'consistent-supplier-id',
+        cnpj: '55.967.002/0001-46',
+        ie: 'CONS999',
+        group: 'Consistent Group',
+        type: 'Consistent Type',
+        companyName: 'Consistency Supplier Ltda',
+        fantasyName: 'Consistent Supp',
+        representative: 'Charlie Davis',
+        companyIds: ['comp-a', 'comp-b', 'comp-c'],
+        active: false,
+        createdAt: new Date('2024-06-15T10:00:00Z'),
+        updatedAt: new Date('2024-06-20T15:30:00Z'),
+      };
+
+      // Act
+      const supplier = Supplier.load(loadProps);
+      const props1 = supplier.props;
+      const props2 = supplier.props;
+
+      // Assert
+      expect(Object.keys(props1).length).toBe(Object.keys(props2).length);
+      expect(Object.keys(props1).sort()).toEqual(Object.keys(props2).sort());
+      expect(props1.id).toBe(props2.id);
+      expect(props1.cnpj).toBe(props2.cnpj);
+      expect(props1.companyName).toBe(props2.companyName);
+      expect(props1.fantasyName).toBe(props2.fantasyName);
+    });
+
+    it('should ensure companyIds array is properly copied and isolated', () => {
+      // Arrange
+      const createProps = {
+        cnpj: '55.967.002/0001-46',
+        ie: 'ARR123',
+        group: 'Array Group',
+        type: 'Array Type',
+        companyName: 'Array Supplier Ltda',
+        fantasyName: 'Array Supp',
+        representative: 'Diana Evans',
+        companyIds: ['comp-1', 'comp-2'],
+      };
+
+      // Act
+      const supplier = Supplier.create(createProps);
+      const companyIds1 = supplier.props.companyIds;
+      const companyIds2 = supplier.props.companyIds;
+
+      // Assert - Arrays should be different references (copies)
+      expect(companyIds1).toEqual(companyIds2);
+      expect(companyIds1).not.toBe(companyIds2);
+
+      // Mutating returned array should not affect internal state
+      companyIds1.push('new-company');
+      expect(supplier.props.companyIds).toEqual(['comp-1', 'comp-2']);
+      expect(supplier.props.companyIds.length).toBe(2);
+    });
+  });
 });

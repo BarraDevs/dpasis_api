@@ -45,8 +45,21 @@ export class Client {
 
   constructor(props: ClientProps) {
     this._props = {
-      ...props,
+      id: props.id,
+      active: props.active,
+      createdAt: props.createdAt,
+      updatedAt: props.updatedAt,
+      kind: props.kind,
       cnpj: new CNPJ(props.cnpj).value,
+      ie: props.ie,
+      group: props.group,
+      type: props.type,
+      generateInvoice: props.generateInvoice,
+      companyName: props.companyName,
+      fantasyName: props.fantasyName,
+      owner: props.owner,
+      headquarters: props.headquarters,
+      companyIds: props.companyIds ? [...props.companyIds] : [],
     };
   }
 

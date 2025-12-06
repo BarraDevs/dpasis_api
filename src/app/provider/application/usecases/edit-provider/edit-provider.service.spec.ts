@@ -120,7 +120,11 @@ describe('EditProvider', () => {
 
     it('should throw an error if new cnpj is duplicate', async() => {
       // Arrange
-      const providerData = createMock<ProviderDto>({ cnpj: '24089630000142', type: ProviderType.RECURRING });
+      const providerData = createMock<ProviderDto>({
+        email: 'jhondoe@email.com',
+        cnpj: '24089630000142',
+        type: ProviderType.RECURRING,
+      });
       const existingProvider = createMock<ProviderDto>({ cnpj: '22333444000105' });
       jest.spyOn(sut['providerDao'], 'findById').mockResolvedValue(providerData);
       jest.spyOn(sut['providerDao'], 'findByCnpj').mockResolvedValue(existingProvider);

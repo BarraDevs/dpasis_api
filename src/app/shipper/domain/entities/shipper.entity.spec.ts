@@ -692,4 +692,233 @@ describe('Shipper Entity', () => {
       expect(shipper.props.companyIds).not.toContain('new-company-id');
     });
   });
+
+  describe('invariant protection', () => {
+    it('should ensure _props contains only valid entity properties without additional data', () => {
+      // Arrange
+      const createProps = {
+        companyName: 'Invariant Shipper Ltda',
+        fantasyName: 'Invariant Ship',
+        cnpj: '55.967.002/0001-46',
+        contact: '(11) 91234-5678',
+        representative: 'Jane Smith',
+        zipCode: '11111-111',
+        street: 'Invariant Street',
+        number: '999',
+        complement: 'Suite A',
+        reference: 'Near park',
+        neighborhood: 'Test District',
+        city: 'São Paulo',
+        state: 'SP',
+        companyIds: ['comp-1', 'comp-2'],
+      };
+
+      // Act
+      const shipper = Shipper.create(createProps);
+
+      // Assert - Verify _props has exactly the expected keys
+      const expectedKeys = [
+        'id',
+        'companyName',
+        'fantasyName',
+        'cnpj',
+        'contact',
+        'representative',
+        'zipCode',
+        'street',
+        'number',
+        'complement',
+        'reference',
+        'neighborhood',
+        'city',
+        'state',
+        'companyIds',
+        'active',
+        'createdAt',
+        'updatedAt',
+      ].sort();
+
+      const actualKeys = Object.keys(shipper.props).sort();
+
+      expect(actualKeys).toEqual(expectedKeys);
+      expect(actualKeys.length).toBe(expectedKeys.length);
+    });
+
+    it('should not allow additional properties to leak into _props when using create', () => {
+      // Arrange
+      const propsWithExtra = {
+        companyName: 'Extra Shipper Ltda',
+        fantasyName: 'Extra Ship',
+        cnpj: '55.967.002/0001-46',
+        contact: '(11) 98888-7777',
+        representative: 'Extra Rep',
+        zipCode: '22222-222',
+        street: 'Extra St',
+        number: '200',
+        complement: null,
+        reference: null,
+        neighborhood: 'Extra',
+        city: 'Rio de Janeiro',
+        state: 'RJ',
+        companyIds: ['comp-x'],
+        extraProperty: 'should not exist',
+        maliciousData: { dangerous: true },
+        unauthorizedField: 'leaked data',
+        injectedCode: 'attack vector',
+      } as any;
+
+      // Act
+      const shipper = Shipper.create(propsWithExtra);
+
+      // Assert
+      expect(shipper.props).not.toHaveProperty('extraProperty');
+      expect(shipper.props).not.toHaveProperty('maliciousData');
+      expect(shipper.props).not.toHaveProperty('unauthorizedField');
+      expect(shipper.props).not.toHaveProperty('injectedCode');
+    });
+
+    it('should not allow additional properties to leak into _props when using load', () => {
+      // Arrange
+      const propsWithExtra = {
+        id: 'existing-shipper-id',
+        companyName: 'Loaded Shipper Ltda',
+        fantasyName: 'Loaded Ship',
+        cnpj: '55.967.002/0001-46',
+        contact: '(11) 97777-6666',
+        representative: 'Loaded Rep',
+        zipCode: '33333-333',
+        street: 'Load St',
+        number: '300',
+        complement: 'Floor 2',
+        reference: 'Next to mall',
+        neighborhood: 'Load District',
+        city: 'Belo Horizonte',
+        state: 'MG',
+        companyIds: ['comp-y', 'comp-z'],
+        active: true,
+        createdAt: new Date('2024-01-01T00:00:00Z'),
+        updatedAt: new Date('2024-01-02T00:00:00Z'),
+        maliciousProperty: 'compromising invariant',
+        attackVector: { injection: 'attempt' },
+        leakedField: 'unauthorized',
+        pollutedData: 'should not be here',
+      } as any;
+
+      // Act
+      const shipper = Shipper.load(propsWithExtra);
+
+      // Assert
+      expect(shipper.props).not.toHaveProperty('maliciousProperty');
+      expect(shipper.props).not.toHaveProperty('attackVector');
+      expect(shipper.props).not.toHaveProperty('leakedField');
+      expect(shipper.props).not.toHaveProperty('pollutedData');
+    });
+
+    it('should maintain exact property count after operations', () => {
+      // Arrange
+      const createProps = {
+        companyName: 'Operation Shipper Ltda',
+        fantasyName: 'Op Ship',
+        cnpj: '55.967.002/0001-46',
+        contact: '(11) 96666-5555',
+        representative: 'Op Rep',
+        zipCode: '44444-444',
+        street: 'Ops St',
+        number: '400',
+        complement: null,
+        reference: null,
+        neighborhood: 'Operations',
+        city: 'Brasília',
+        state: 'DF',
+        companyIds: ['comp-ops'],
+      };
+
+      const shipper = Shipper.create(createProps);
+      const initialKeyCount = Object.keys(shipper.props).length;
+
+      // Act - Perform operations
+      shipper.toggleStatus();
+      shipper.toggleStatus();
+      shipper.toggleStatus();
+      const props1 = shipper.props;
+      const props2 = shipper.props;
+
+      // Assert
+      const finalKeyCount = Object.keys(shipper.props).length;
+      expect(finalKeyCount).toBe(initialKeyCount);
+      expect(finalKeyCount).toBe(18); // Exact number of expected properties
+      expect(props1.active).toBe(props2.active); // Ensure consistency
+    });
+
+    it('should ensure props getter returns consistent data structure', () => {
+      // Arrange
+      const loadProps = {
+        id: 'consistent-shipper-id',
+        companyName: 'Consistency Shipper Ltda',
+        fantasyName: 'Consistent Ship',
+        cnpj: '55.967.002/0001-46',
+        contact: '(11) 95555-4444',
+        representative: 'Consistent Rep',
+        zipCode: '55555-555',
+        street: 'Consistent Ave',
+        number: '500',
+        complement: 'Building A',
+        reference: 'Corner location',
+        neighborhood: 'Consistent Area',
+        city: 'Fortaleza',
+        state: 'CE',
+        companyIds: ['comp-a', 'comp-b', 'comp-c'],
+        active: false,
+        createdAt: new Date('2024-06-15T10:00:00Z'),
+        updatedAt: new Date('2024-06-20T15:30:00Z'),
+      };
+
+      // Act
+      const shipper = Shipper.load(loadProps);
+      const props1 = shipper.props;
+      const props2 = shipper.props;
+
+      // Assert
+      expect(Object.keys(props1).length).toBe(Object.keys(props2).length);
+      expect(Object.keys(props1).sort()).toEqual(Object.keys(props2).sort());
+      expect(props1.id).toBe(props2.id);
+      expect(props1.companyName).toBe(props2.companyName);
+      expect(props1.fantasyName).toBe(props2.fantasyName);
+      expect(props1.cnpj).toBe(props2.cnpj);
+    });
+
+    it('should ensure companyIds array is properly copied and isolated', () => {
+      // Arrange
+      const createProps = {
+        companyName: 'Array Shipper Ltda',
+        fantasyName: 'Array Ship',
+        cnpj: '55.967.002/0001-46',
+        contact: '(11) 94444-3333',
+        representative: 'Array Rep',
+        zipCode: '66666-666',
+        street: 'Array St',
+        number: '600',
+        complement: null,
+        reference: null,
+        neighborhood: 'Array District',
+        city: 'Salvador',
+        state: 'BA',
+        companyIds: ['comp-1', 'comp-2'],
+      };
+
+      // Act
+      const shipper = Shipper.create(createProps);
+      const companyIds1 = shipper.props.companyIds;
+      const companyIds2 = shipper.props.companyIds;
+
+      // Assert - Arrays should be different references (copies)
+      expect(companyIds1).toEqual(companyIds2);
+      expect(companyIds1).not.toBe(companyIds2);
+
+      // Mutating returned array should not affect internal state
+      companyIds1.push('new-company');
+      expect(shipper.props.companyIds).toEqual(['comp-1', 'comp-2']);
+      expect(shipper.props.companyIds.length).toBe(2);
+    });
+  });
 });

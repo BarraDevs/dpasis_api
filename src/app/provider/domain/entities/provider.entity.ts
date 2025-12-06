@@ -1,4 +1,5 @@
 import { CNPJ } from 'src/shared/value-objects/cnpj/cnpj.vo';
+import { Email } from 'src/shared/value-objects/email/email.vo';
 import { UUID } from 'src/shared/value-objects/uuid/uuid.vo';
 import { ProviderType } from '../enums/provider-type.enum';
 import { InvalidProviderTypeError } from '../errors/invalid-provider-type.error';
@@ -60,10 +61,29 @@ export class Provider {
     }
 
     this._props = {
-      ...props,
+      id: props.id,
+      active: props.active,
+      createdAt: props.createdAt,
+      updatedAt: props.updatedAt,
+      name: props.name,
+      type: props.type,
+      valueInCents: props.valueInCents,
       cnpj: new CNPJ(props.cnpj).value,
+      ie: props.ie,
       paymentDay: props.type === ProviderType.RECURRING ? props.paymentDay : null,
       paymentExpirationDate: props.type === ProviderType.ONE_TIME ? props.paymentExpirationDate : null,
+      companyName: props.companyName,
+      zipCode: props.zipCode,
+      street: props.street,
+      number: props.number,
+      complement: props.complement,
+      reference: props.reference,
+      neighborhood: props.neighborhood,
+      city: props.city,
+      state: props.state,
+      email: new Email(props.email).value,
+      website: props.website,
+      companyIds: props.companyIds ? [...props.companyIds] : [],
     };
   }
 
@@ -71,5 +91,3 @@ export class Provider {
     this._props.active = !this._props.active;
   }
 }
-
-

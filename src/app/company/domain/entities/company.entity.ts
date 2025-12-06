@@ -51,13 +51,27 @@ export class Company {
 
   constructor(props: CompanyProps) {
     this._props = {
-      ...props,
+      id: props.id,
+      active: props.active,
+      createdAt: props.createdAt,
+      updatedAt: props.updatedAt,
+      name: props.name,
+      fantasyName: props.fantasyName,
       document: new Document(props.document).value,
-      email01: new Email(props.email01).value,
-      email02: props.email02 ? new Email(props.email02).value : null,
+      ie: props.ie,
+      zipCode: props.zipCode,
+      street: props.street,
+      number: props.number,
+      complement: props.complement,
+      reference: props.reference,
+      neighborhood: props.neighborhood,
+      city: props.city,
+      state: props.state,
       phone01: new Phone(props.phone01).value,
       phone02: props.phone02 ? new Phone(props.phone02).value : null,
       cellphone: props.cellphone ? new Phone(props.cellphone).value : null,
+      email01: new Email(props.email01).value,
+      email02: props.email02 ? new Email(props.email02).value : null,
     };
   }
 

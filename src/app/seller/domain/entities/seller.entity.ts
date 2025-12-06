@@ -54,11 +54,15 @@ export class Seller {
   constructor(props: SellerProps) {
     this._props = {
       id: props.id,
-      name: props.name,
-      nickname: props.nickname,
       active: props.active,
       createdAt: props.createdAt,
       updatedAt: props.updatedAt,
+      name: props.name,
+      nickname: props.nickname,
+      phone: new Phone(props.phone).value,
+      cellphone: new Phone(props.cellphone).value,
+      email: new Email(props.email).value,
+      commission: new Commission(props.commission).value,
       zipCode: props.zipCode,
       street: props.street,
       number: props.number,
@@ -69,11 +73,7 @@ export class Seller {
       state: props.state,
       observation: props.observation,
       avatarUrl: props.avatarUrl,
-      companyIds: props.companyIds,
-      phone: new Phone(props.phone).value,
-      cellphone: new Phone(props.cellphone).value,
-      email: new Email(props.email).value,
-      commission: new Commission(props.commission).value,
+      companyIds: props.companyIds ? [...props.companyIds] : [],
     };
   }
 

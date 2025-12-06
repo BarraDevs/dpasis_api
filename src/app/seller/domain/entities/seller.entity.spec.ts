@@ -948,4 +948,254 @@ describe('SellerEntity', () => {
       });
     });
   });
+
+  describe('invariant protection', () => {
+    it('should ensure _props contains only valid entity properties without additional data', () => {
+      // Arrange
+      const createProps = {
+        name: 'Invariant Test Seller',
+        nickname: 'InvTest',
+        phone: '1133334444',
+        cellphone: '11888887777',
+        email: 'invariant@test.com',
+        commission: 15,
+        zipCode: '11111111',
+        street: 'Invariant Street',
+        number: '999',
+        complement: 'Suite A',
+        reference: 'Near park',
+        neighborhood: 'Test District',
+        city: 'São Paulo',
+        state: 'SP',
+        observation: 'Test observation',
+        avatarUrl: 'https://test.com/avatar.jpg',
+        companyIds: ['comp-1', 'comp-2'],
+      };
+
+      // Act
+      const seller = Seller.create(createProps);
+
+      // Assert - Verify _props has exactly the expected keys
+      const expectedKeys = [
+        'id',
+        'name',
+        'nickname',
+        'phone',
+        'cellphone',
+        'email',
+        'commission',
+        'zipCode',
+        'street',
+        'number',
+        'complement',
+        'reference',
+        'neighborhood',
+        'city',
+        'state',
+        'observation',
+        'avatarUrl',
+        'companyIds',
+        'active',
+        'createdAt',
+        'updatedAt',
+      ].sort();
+
+      const actualKeys = Object.keys(seller.props).sort();
+
+      expect(actualKeys).toEqual(expectedKeys);
+      expect(actualKeys.length).toBe(expectedKeys.length);
+    });
+
+    it('should not allow additional properties to leak into _props when using create', () => {
+      // Arrange
+      const propsWithExtra = {
+        name: 'Extra Props Seller',
+        nickname: 'Extra',
+        phone: '1144445555',
+        cellphone: '11777776666',
+        email: 'extra@test.com',
+        commission: 20,
+        zipCode: '22222222',
+        street: 'Extra St',
+        number: '200',
+        complement: null,
+        reference: null,
+        neighborhood: 'Extra',
+        city: 'Rio de Janeiro',
+        state: 'RJ',
+        observation: null,
+        avatarUrl: null,
+        companyIds: ['comp-x'],
+        extraProperty: 'should not exist',
+        maliciousData: { dangerous: true },
+        unauthorizedField: 'leaked data',
+        injectedCode: 'attack vector',
+      } as any;
+
+      // Act
+      const seller = Seller.create(propsWithExtra);
+
+      // Assert
+      expect(seller.props).not.toHaveProperty('extraProperty');
+      expect(seller.props).not.toHaveProperty('maliciousData');
+      expect(seller.props).not.toHaveProperty('unauthorizedField');
+      expect(seller.props).not.toHaveProperty('injectedCode');
+    });
+
+    it('should not allow additional properties to leak into _props when using load', () => {
+      // Arrange
+      const propsWithExtra = {
+        id: 'existing-seller-id',
+        name: 'Loaded Seller',
+        nickname: 'Loaded',
+        phone: '1155556666',
+        cellphone: '11666665555',
+        email: 'loaded@test.com',
+        commission: 25,
+        zipCode: '33333333',
+        street: 'Load St',
+        number: '300',
+        complement: 'Floor 2',
+        reference: 'Next to mall',
+        neighborhood: 'Load District',
+        city: 'Belo Horizonte',
+        state: 'MG',
+        observation: 'Loaded obs',
+        avatarUrl: 'https://loaded.com/avatar.jpg',
+        companyIds: ['comp-y', 'comp-z'],
+        active: true,
+        createdAt: new Date('2024-01-01T00:00:00Z'),
+        updatedAt: new Date('2024-01-02T00:00:00Z'),
+        maliciousProperty: 'compromising invariant',
+        attackVector: { injection: 'attempt' },
+        leakedField: 'unauthorized',
+        pollutedData: 'should not be here',
+      } as any;
+
+      // Act
+      const seller = Seller.load(propsWithExtra);
+
+      // Assert
+      expect(seller.props).not.toHaveProperty('maliciousProperty');
+      expect(seller.props).not.toHaveProperty('attackVector');
+      expect(seller.props).not.toHaveProperty('leakedField');
+      expect(seller.props).not.toHaveProperty('pollutedData');
+    });
+
+    it('should maintain exact property count after operations', () => {
+      // Arrange
+      const createProps = {
+        name: 'Operation Test Seller',
+        nickname: 'OpTest',
+        phone: '1166667777',
+        cellphone: '11555554444',
+        email: 'ops@test.com',
+        commission: 12,
+        zipCode: '44444444',
+        street: 'Ops St',
+        number: '400',
+        complement: null,
+        reference: null,
+        neighborhood: 'Operations',
+        city: 'Brasília',
+        state: 'DF',
+        observation: null,
+        avatarUrl: null,
+        companyIds: ['comp-ops'],
+      };
+
+      const seller = Seller.create(createProps);
+      const initialKeyCount = Object.keys(seller.props).length;
+
+      // Act - Perform operations
+      seller.toggleStatus();
+      seller.toggleStatus();
+      seller.toggleStatus();
+      const props1 = seller.props;
+      const props2 = seller.props;
+
+      // Assert
+      const finalKeyCount = Object.keys(seller.props).length;
+      expect(finalKeyCount).toBe(initialKeyCount);
+      expect(finalKeyCount).toBe(21); // Exact number of expected properties
+      expect(props1.active).toBe(props2.active); // Ensure consistency
+    });
+
+    it('should ensure props getter returns consistent data structure', () => {
+      // Arrange
+      const loadProps = {
+        id: 'consistent-seller-id',
+        name: 'Consistency Seller',
+        nickname: 'Consistent',
+        phone: '1177778888',
+        cellphone: '11444443333',
+        email: 'consistent@test.com',
+        commission: 18,
+        zipCode: '55555555',
+        street: 'Consistent Ave',
+        number: '500',
+        complement: 'Building A',
+        reference: 'Corner location',
+        neighborhood: 'Consistent Area',
+        city: 'Fortaleza',
+        state: 'CE',
+        observation: 'Consistent seller',
+        avatarUrl: 'https://consistent.com/pic.jpg',
+        companyIds: ['comp-a', 'comp-b', 'comp-c'],
+        active: false,
+        createdAt: new Date('2024-06-15T10:00:00Z'),
+        updatedAt: new Date('2024-06-20T15:30:00Z'),
+      };
+
+      // Act
+      const seller = Seller.load(loadProps);
+      const props1 = seller.props;
+      const props2 = seller.props;
+
+      // Assert
+      expect(Object.keys(props1).length).toBe(Object.keys(props2).length);
+      expect(Object.keys(props1).sort()).toEqual(Object.keys(props2).sort());
+      expect(props1.id).toBe(props2.id);
+      expect(props1.name).toBe(props2.name);
+      expect(props1.email).toBe(props2.email);
+      expect(props1.commission).toBe(props2.commission);
+    });
+
+    it('should ensure companyIds array is properly copied and isolated', () => {
+      // Arrange
+      const createProps = {
+        name: 'Array Test Seller',
+        nickname: 'ArrTest',
+        phone: '1188889999',
+        cellphone: '11333332222',
+        email: 'array@test.com',
+        commission: 22,
+        zipCode: '66666666',
+        street: 'Array St',
+        number: '600',
+        complement: null,
+        reference: null,
+        neighborhood: 'Array District',
+        city: 'Salvador',
+        state: 'BA',
+        observation: null,
+        avatarUrl: null,
+        companyIds: ['comp-1', 'comp-2'],
+      };
+
+      // Act
+      const seller = Seller.create(createProps);
+      const companyIds1 = seller.props.companyIds;
+      const companyIds2 = seller.props.companyIds;
+
+      // Assert - Arrays should be different references (copies)
+      expect(companyIds1).toEqual(companyIds2);
+      expect(companyIds1).not.toBe(companyIds2);
+
+      // Mutating returned array should not affect internal state
+      companyIds1.push('new-company');
+      expect(seller.props.companyIds).toEqual(['comp-1', 'comp-2']);
+      expect(seller.props.companyIds.length).toBe(2);
+    });
+  });
 });
