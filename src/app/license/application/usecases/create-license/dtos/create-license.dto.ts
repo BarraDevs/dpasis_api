@@ -9,8 +9,8 @@ import {
   Max,
   Min,
 } from 'class-validator';
-import { StringToNumber } from 'src/infra/validators/class-*/decorators/string-number/string-number';
-import { Trim } from 'src/infra/validators/class-*/decorators/trim/trim';
+import { StringToNumber } from 'src/infra/validators/class/decorators/string-number/string-number';
+import { Trim } from 'src/infra/validators/class/decorators/trim/trim';
 
 export class CreateLicenseInputDto {
   @ApiProperty({

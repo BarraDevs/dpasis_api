@@ -12,7 +12,7 @@ import { FindAttachmentById } from 'src/app/attachment/application/usecases/find
 import { RequiredRoles } from 'src/app/authentication/infra/decorators/required-role.decorator';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
 import { Swagger } from 'src/infra/openapi/swagger';
-import { Params } from 'src/infra/validators/class-*/dtos/params/params.dto';
+import { Params } from 'src/infra/validators/class/dtos/params/params.dto';
 import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
 
 @Controller('attachment')

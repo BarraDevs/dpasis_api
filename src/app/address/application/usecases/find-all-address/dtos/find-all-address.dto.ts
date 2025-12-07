@@ -1,7 +1,7 @@
 import { ApiHideProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
-import { Trim } from 'src/infra/validators/class-*/decorators/trim/trim';
-import { Queries } from 'src/infra/validators/class-*/dtos/queries/queries.dto';
+import { Trim } from 'src/infra/validators/class/decorators/trim/trim';
+import { Queries } from 'src/infra/validators/class/dtos/queries/queries.dto';
 
 export class FindAllAddressQueryDto extends Queries {
   @IsNotEmpty({ message: '$property é obrigatório' })

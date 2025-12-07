@@ -6,7 +6,7 @@ import { FindAllSupplierQueryDto } from 'src/app/supplier/application/usecases/f
 import { SupplierModule } from 'src/app/supplier/supplier.module';
 import { ConfigModule } from 'src/core/config/config.module';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
-import { Params } from 'src/infra/validators/class-*/dtos/params/params.dto';
+import { Params } from 'src/infra/validators/class/dtos/params/params.dto';
 import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
 import { SupplierController } from './supplier.controller';
 

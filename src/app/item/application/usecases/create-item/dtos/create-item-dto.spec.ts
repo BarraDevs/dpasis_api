@@ -1,5 +1,5 @@
 import { ArgumentMetadata, ValidationPipe } from '@nestjs/common';
-import { pipeOptions } from 'src/infra/validators/class-*/config';
+import { pipeOptions } from 'src/infra/validators/class/config';
 import { CreateItemInputDto, CreateItemsInputDto } from './create-item.dto';
 
 const createItemsInputMetadata: ArgumentMetadata = {

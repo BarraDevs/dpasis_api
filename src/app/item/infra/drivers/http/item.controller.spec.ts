@@ -6,7 +6,7 @@ import { EditItemInputDto } from 'src/app/item/application/usecases/edit-item/dt
 import { FindAllItemQueryDto } from 'src/app/item/application/usecases/find-all-item/dtos/find-all-item.dto';
 import { ItemModule } from 'src/app/item/item.module';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
-import { Params } from 'src/infra/validators/class-*/dtos/params/params.dto';
+import { Params } from 'src/infra/validators/class/dtos/params/params.dto';
 import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
 import { ItemController } from './item.controller';
 

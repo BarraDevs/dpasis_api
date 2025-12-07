@@ -7,7 +7,7 @@ import { EditLicenseInputDto } from 'src/app/license/application/usecases/edit-l
 import { FindAllLicenseQueryDto } from 'src/app/license/application/usecases/find-all-license/dtos/find-all-license.dto';
 import { LicenseModule } from 'src/app/license/license.module';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
-import { Params } from 'src/infra/validators/class-*/dtos/params/params.dto';
+import { Params } from 'src/infra/validators/class/dtos/params/params.dto';
 import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
 import { LicenseController } from './license.controller';
 

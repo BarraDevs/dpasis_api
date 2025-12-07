@@ -7,7 +7,7 @@ import { FindAllShipperQueryDto } from 'src/app/shipper/application/usecases/fin
 import { ShipperModule } from 'src/app/shipper/shipper.module';
 import { ConfigModule } from 'src/core/config/config.module';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
-import { Params } from 'src/infra/validators/class-*/dtos/params/params.dto';
+import { Params } from 'src/infra/validators/class/dtos/params/params.dto';
 import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
 import { ShipperController } from './shipper.controller';
 

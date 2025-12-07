@@ -1,7 +1,7 @@
 import { Type } from 'class-transformer';
 import { ArrayMinSize, IsArray, IsDate, IsEmail, IsEnum, IsInt, IsNotEmpty, IsOptional, IsString, Max, MaxLength, Min, ValidateIf } from 'class-validator';
 import { ProviderType } from 'src/app/provider/domain/enums/provider-type.enum';
-import { Trim } from 'src/infra/validators/class-*/decorators/trim/trim';
+import { Trim } from 'src/infra/validators/class/decorators/trim/trim';
 
 export class CreateProviderInputDto {
   @IsString({ message: '$property deve ser uma string' })

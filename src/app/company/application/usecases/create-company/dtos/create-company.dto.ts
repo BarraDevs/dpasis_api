@@ -1,5 +1,5 @@
 import { IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
-import { Trim } from 'src/infra/validators/class-*/decorators/trim/trim';
+import { Trim } from 'src/infra/validators/class/decorators/trim/trim';
 
 export class CreateCompanyInputDto {
   @IsString({ message: '$property deve ser uma string' })

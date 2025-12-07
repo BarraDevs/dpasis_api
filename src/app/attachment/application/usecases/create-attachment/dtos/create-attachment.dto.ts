@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsOptional, IsString, IsUrl, MaxLength } from 'class-validator';
-import { Trim } from 'src/infra/validators/class-*/decorators/trim/trim';
+import { Trim } from 'src/infra/validators/class/decorators/trim/trim';
 
 export class CreateAttachmentInputDto {
   @ApiProperty({

@@ -58,7 +58,6 @@ export class CacheRedisAdapterGateway implements ICacheGateway {
       });
     }
     catch (error) {
-      console.log(error);
       this.logger.error(LogContext.CACHE, {
         adapter: 'redis',
         action: 'set',

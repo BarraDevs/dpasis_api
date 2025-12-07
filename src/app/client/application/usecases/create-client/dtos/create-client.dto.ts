@@ -1,5 +1,5 @@
 import { ArrayMinSize, IsArray, IsBoolean, IsNotEmpty, IsString, MaxLength } from 'class-validator';
-import { Trim } from 'src/infra/validators/class-*/decorators/trim/trim';
+import { Trim } from 'src/infra/validators/class/decorators/trim/trim';
 
 export class CreateClientInputDto {
   @IsString({ message: '$property deve ser uma string' })

@@ -12,7 +12,7 @@ import { FindSellerById } from 'src/app/seller/application/usecases/find-seller-
 import { UpdateSellerStatus } from 'src/app/seller/application/usecases/update-seller-status/update-seller-status.service';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
 import { Swagger } from 'src/infra/openapi/swagger';
-import { Params } from 'src/infra/validators/class-*/dtos/params/params.dto';
+import { Params } from 'src/infra/validators/class/dtos/params/params.dto';
 import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
 
 @Controller('sellers')

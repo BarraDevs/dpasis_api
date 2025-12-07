@@ -1,5 +1,5 @@
 import { ArgumentMetadata, ValidationPipe } from '@nestjs/common';
-import { pipeOptions } from 'src/infra/validators/class-*/config';
+import { pipeOptions } from 'src/infra/validators/class/config';
 import { FindAllLicenseQueryDto } from './find-all-license.dto';
 
 const metadata: ArgumentMetadata = {

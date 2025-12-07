@@ -10,8 +10,8 @@ import {
   Min,
   ValidateNested,
 } from 'class-validator';
-import { StringToNumber } from 'src/infra/validators/class-*/decorators/string-number/string-number';
-import { Trim } from 'src/infra/validators/class-*/decorators/trim/trim';
+import { StringToNumber } from 'src/infra/validators/class/decorators/string-number/string-number';
+import { Trim } from 'src/infra/validators/class/decorators/trim/trim';
 
 // Este é o DTO para CADA item no array
 export class CreateItemInputDto {

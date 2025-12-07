@@ -1,6 +1,6 @@
 import { ArgumentMetadata, ValidationPipe } from '@nestjs/common';
 import { ProviderType } from 'src/app/provider/domain/enums/provider-type.enum';
-import { pipeOptions } from 'src/infra/validators/class-*/config';
+import { pipeOptions } from 'src/infra/validators/class/config';
 import { CreateProviderInputDto } from './create-provider.dto';
 
 const metadata: ArgumentMetadata = {

@@ -5,8 +5,8 @@ import { CreateSellerInputDto, CreateSellerOutputDto } from 'src/app/seller/appl
 import { SellerModule } from 'src/app/seller/seller.module';
 import { ConfigModule } from 'src/core/config/config.module';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
-import { Params } from 'src/infra/validators/class-*/dtos/params/params.dto';
-import { Queries } from 'src/infra/validators/class-*/dtos/queries/queries.dto';
+import { Params } from 'src/infra/validators/class/dtos/params/params.dto';
+import { Queries } from 'src/infra/validators/class/dtos/queries/queries.dto';
 import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
 import { SellerController } from './seller.controller';
 

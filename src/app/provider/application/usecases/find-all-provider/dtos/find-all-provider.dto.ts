@@ -1,8 +1,8 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { ArrayMinSize, IsArray, IsBoolean, IsEnum, IsOptional, IsString, MaxLength } from 'class-validator';
 import { ProviderType } from 'src/app/provider/domain/enums/provider-type.enum';
-import { Trim } from 'src/infra/validators/class-*/decorators/trim/trim';
-import { Queries } from 'src/infra/validators/class-*/dtos/queries/queries.dto';
+import { Trim } from 'src/infra/validators/class/decorators/trim/trim';
+import { Queries } from 'src/infra/validators/class/dtos/queries/queries.dto';
 
 export class FindAllProviderQueryDto extends Queries {
   @ApiPropertyOptional()
