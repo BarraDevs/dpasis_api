@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { FileTooBigError } from 'src/app/upload-file/domain/errors/file-too-big.error';
-import { FileIsRequiredError } from 'src/app/upload-file/domain/errors/generic-upload-file.error';
 import { InvalidFileError } from 'src/app/upload-file/domain/errors/invalid-file.error';
+import { RequiredFileError } from 'src/app/upload-file/domain/errors/required-file.error';
 import { TOKENS } from 'src/core/di/token';
 import type { IUploadGateway } from '../../gateway/upload.gateway';
 import { UploadSingleOutputDto } from './dtos/upload-single.dto';
@@ -23,7 +23,7 @@ export class UploadSingle {
 
   public async execute(file: Express.Multer.File, folder?: string): Promise<UploadSingleOutputDto> {
     if (!file) {
-      throw new FileIsRequiredError();
+      throw new RequiredFileError();
     }
     if (file.size > this.TWENTY_MEGABYTES) {
       throw new FileTooBigError();

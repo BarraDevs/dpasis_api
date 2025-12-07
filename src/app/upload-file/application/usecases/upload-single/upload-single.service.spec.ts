@@ -1,8 +1,8 @@
 import { createMock } from '@golevelup/ts-jest';
 import { Test } from '@nestjs/testing';
 import { FileTooBigError } from 'src/app/upload-file/domain/errors/file-too-big.error';
-import { FileIsRequiredError } from 'src/app/upload-file/domain/errors/generic-upload-file.error';
 import { InvalidFileError } from 'src/app/upload-file/domain/errors/invalid-file.error';
+import { RequiredFileError } from 'src/app/upload-file/domain/errors/required-file.error';
 import { UploadFileModule } from 'src/app/upload-file/upload-file.module';
 import { ConfigModule } from 'src/core/config/config.module';
 import { UploadSingle } from './upload-single.service';
@@ -401,7 +401,7 @@ describe('UploadSingle', () => {
 
       expect.assertions(2);
       return sut.execute(null as any).catch((error) => {
-        expect(error).toBeInstanceOf(FileIsRequiredError);
+        expect(error).toBeInstanceOf(RequiredFileError);
         expect(uploadSpy).not.toHaveBeenCalled();
       });
     });
@@ -411,7 +411,7 @@ describe('UploadSingle', () => {
 
       expect.assertions(2);
       return sut.execute(undefined as any).catch((error) => {
-        expect(error).toBeInstanceOf(FileIsRequiredError);
+        expect(error).toBeInstanceOf(RequiredFileError);
         expect(uploadSpy).not.toHaveBeenCalled();
       });
     });
