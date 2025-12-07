@@ -40,6 +40,7 @@ export class EditSeller {
       );
     }
 
+    // TODO: se houver um novo upload, remover o antigo da storage (implementar usando events)
     let newAvatarUrl: string | null = null;
     if (image) {
       const imageUploaded = await this.uploadFileService.execute(image, 'sellers/avatars');

@@ -16,7 +16,6 @@ export class CreateLicense {
     const owner = await this.findOwnerById.execute(data.ownerId);
 
     // TODO: Verificar com cliente se billingStartDate pode ser no passado
-
     const licenseId = await this.licenseDao.save({
       ...data,
       ownerId: owner.id,
