@@ -7,7 +7,7 @@ import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { Environment } from './core/config/environment.enum';
-import { pipeOptions } from './infra/validators/class-*/config';
+import { pipeOptions } from './infra/validators/class/config';
 
 async function bootstrap() {
   const app = process.env.NODE_ENV !== Environment.Production

@@ -24,7 +24,8 @@ model Role {
   account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
   role      String
 
-  admin Admin?
+  admin  Admin?
+  seller Seller?
 
   @@unique([accountId, role])
   @@map("roles")
@@ -72,6 +73,8 @@ model Company {
   clients   Client[]
   suppliers Supplier[]
   shippers  Shipper[]
+  providers Provider[]
+  sellers   Seller[]
 
   @@map("companies")
 }
@@ -229,6 +232,61 @@ model Shipper {
   companies      Company[]
 
   @@map("shippers")
+}
+
+model Provider {
+  id                    String    @id @default(uuid())
+  name                  String    @db.VarChar(256)
+  type                  String    @db.VarChar(256)
+  valueInCents          Int
+  cnpj                  String    @unique @db.VarChar(256)
+  ie                    String    @db.VarChar(256)
+  paymentDay            Int?
+  paymentExpirationDate DateTime? @db.Date
+  companyName           String    @db.VarChar(256)
+  zipCode               String    @db.VarChar(256)
+  street                String    @db.VarChar(256)
+  number                String    @db.VarChar(256)
+  complement            String?   @db.VarChar(256)
+  reference             String?   @db.VarChar(256)
+  neighborhood          String    @db.VarChar(256)
+  city                  String    @db.VarChar(256)
+  state                 String    @db.VarChar(256)
+  email                 String    @db.VarChar(256)
+  website               String?   @db.VarChar(256)
+  active                Boolean
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  companies             Company[]
+
+  @@map("providers")
+}
+
+model Seller {
+  id           String   @id @default(uuid())
+  name         String   @db.VarChar(256)
+  nickname     String?  @db.VarChar(256)
+  phone        String   @db.VarChar(256)
+  cellphone    String   @db.VarChar(256)
+  commission   Float
+  zipCode      String   @db.VarChar(256)
+  street       String   @db.VarChar(256)
+  number       String   @db.VarChar(256)
+  complement   String?  @db.VarChar(256)
+  reference    String?  @db.VarChar(256)
+  neighborhood String   @db.VarChar(256)
+  city         String   @db.VarChar(256)
+  state        String   @db.VarChar(256)
+  observation  String?  @db.Text
+  avatarUrl    String?  @db.Text
+  active       Boolean
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  role         Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  roleId       String   @unique
+  companies    Company[]
+
+  @@map("sellers")
 }
 
 model Faq {

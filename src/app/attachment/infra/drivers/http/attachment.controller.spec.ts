@@ -7,7 +7,7 @@ import { FindAllAttachmentQueryDto } from 'src/app/attachment/application/usecas
 import { AttachmentModule } from 'src/app/attachment/attachment.module';
 import { AuthorizationGuard } from 'src/app/authentication/application/guards/authorization/authorization.guard';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
-import { Params } from 'src/infra/validators/class-*/dtos/params/params.dto';
+import { Params } from 'src/infra/validators/class/dtos/params/params.dto';
 import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
 import { AttachmentController } from './attachment.controller';
 

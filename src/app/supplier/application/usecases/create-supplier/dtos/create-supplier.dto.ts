@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { ArrayMinSize, IsArray, IsNotEmpty, IsString, MaxLength } from 'class-validator';
-import { Trim } from 'src/infra/validators/class-*/decorators/trim/trim';
+import { Trim } from 'src/infra/validators/class/decorators/trim/trim';
 
 export class CreateSupplierInputDto {
   @ApiProperty({ description: 'CNPJ do fornecedor', example: '11.222.333/0001-44' })

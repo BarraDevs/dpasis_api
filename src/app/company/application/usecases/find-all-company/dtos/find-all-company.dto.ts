@@ -1,7 +1,7 @@
 import { ApiPropertyOptional, OmitType } from '@nestjs/swagger';
 import { IsBoolean, IsOptional, IsString } from 'class-validator';
-import { Trim } from 'src/infra/validators/class-*/decorators/trim/trim';
-import { Queries } from 'src/infra/validators/class-*/dtos/queries/queries.dto';
+import { Trim } from 'src/infra/validators/class/decorators/trim/trim';
+import { Queries } from 'src/infra/validators/class/dtos/queries/queries.dto';
 
 export class FindAllCompanyQueryDto extends OmitType(Queries, ['search']) {
   @ApiPropertyOptional()

@@ -12,7 +12,7 @@ import { FindAllItem } from 'src/app/item/application/usecases/find-all-item/fin
 import { FindItemById } from 'src/app/item/application/usecases/find-item-by-id/find-item-by-id.service';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
 import { Swagger } from 'src/infra/openapi/swagger';
-import { Params } from 'src/infra/validators/class-*/dtos/params/params.dto';
+import { Params } from 'src/infra/validators/class/dtos/params/params.dto';
 import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
 
 @Controller('item')

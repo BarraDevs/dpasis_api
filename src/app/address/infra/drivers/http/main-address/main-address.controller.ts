@@ -9,7 +9,7 @@ import { FindMainAddress } from 'src/app/address/application/usecases/find-main-
 import { RequiredRoles } from 'src/app/authentication/infra/decorators/required-role.decorator';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
 import { Swagger } from 'src/infra/openapi/swagger';
-import { Params } from 'src/infra/validators/class-*/dtos/params/params.dto';
+import { Params } from 'src/infra/validators/class/dtos/params/params.dto';
 
 @Controller('address/main')
 @RequiredRoles(AccountRole.ADMIN)

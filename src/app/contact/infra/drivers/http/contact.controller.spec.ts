@@ -4,7 +4,7 @@ import { CreateContactInputDto, CreateContactOutputDto } from 'src/app/contact/a
 import { EditContactInputDto } from 'src/app/contact/application/usecases/edit-contact/dtos/edit-contact.dto';
 import { FindAllContactQueryDto } from 'src/app/contact/application/usecases/find-all-contact/dtos/find-all-contact.dto';
 import { ContactModule } from 'src/app/contact/contact.module';
-import { Params } from 'src/infra/validators/class-*/dtos/params/params.dto';
+import { Params } from 'src/infra/validators/class/dtos/params/params.dto';
 import { ContactController } from './contact.controller';
 
 describe('ContactController', () => {

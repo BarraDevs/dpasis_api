@@ -567,4 +567,134 @@ describe('Item Entity', () => {
       });
     });
   });
+
+  describe('invariant protection', () => {
+    it('should ensure _props contains only valid entity properties without additional data', () => {
+      // Arrange
+      const createProps = {
+        ownerId: 'owner-123',
+        description: 'Test Item Description',
+        serviceCode: 'SKU-001',
+        quantity: 5,
+        unitPriceInCents: 10000,
+      };
+
+      // Act
+      const item = Item.create(createProps);
+
+      // Assert - Verify _props has exactly the expected keys
+      const expectedKeys = [
+        'id',
+        'ownerId',
+        'description',
+        'serviceCode',
+        'quantity',
+        'unitPriceInCents',
+        'createdAt',
+        'updatedAt',
+      ].sort();
+
+      const actualKeys = Object.keys(item.props).sort();
+
+      expect(actualKeys).toEqual(expectedKeys);
+      expect(actualKeys.length).toBe(expectedKeys.length);
+    });
+
+    it('should not allow additional properties to leak into _props when using create', () => {
+      // Arrange
+      const propsWithExtra = {
+        ownerId: 'owner-123',
+        description: 'Test Item',
+        serviceCode: 'SKU-001',
+        quantity: 5,
+        unitPriceInCents: 10000,
+        extraProperty: 'should not exist',
+        anotherExtra: 123,
+        maliciousData: { dangerous: true },
+      } as any;
+
+      // Act
+      const item = Item.create(propsWithExtra);
+
+      // Assert
+      expect(item.props).not.toHaveProperty('extraProperty');
+      expect(item.props).not.toHaveProperty('anotherExtra');
+      expect(item.props).not.toHaveProperty('maliciousData');
+    });
+
+    it('should not allow additional properties to leak into _props when using load', () => {
+      // Arrange
+      const propsWithExtra = {
+        id: 'existing-item-id',
+        ownerId: 'owner-456',
+        description: 'Loaded Item',
+        serviceCode: 'LOAD-001',
+        quantity: 3,
+        unitPriceInCents: 5000,
+        createdAt: new Date('2024-01-01T00:00:00Z'),
+        updatedAt: new Date('2024-01-02T00:00:00Z'),
+        maliciousProperty: 'compromising invariant',
+        injectedField: { attack: 'vector' },
+        unauthorizedData: 'leaked',
+      } as any;
+
+      // Act
+      const item = Item.load(propsWithExtra);
+
+      // Assert
+      expect(item.props).not.toHaveProperty('maliciousProperty');
+      expect(item.props).not.toHaveProperty('injectedField');
+      expect(item.props).not.toHaveProperty('unauthorizedData');
+    });
+
+    it('should maintain exact property count after operations', () => {
+      // Arrange
+      const createProps = {
+        ownerId: 'owner-789',
+        description: 'Operation Test Item',
+        serviceCode: 'OPS-001',
+        quantity: 2,
+        unitPriceInCents: 3000,
+      };
+
+      const item = Item.create(createProps);
+      const initialKeyCount = Object.keys(item.props).length;
+
+      // Act - Perform operations
+      const subtotal1 = item.calculateSubtotal();
+      const subtotal2 = item.calculateSubtotal();
+
+      // Assert
+      const finalKeyCount = Object.keys(item.props).length;
+      expect(finalKeyCount).toBe(initialKeyCount);
+      expect(finalKeyCount).toBe(8); // Exact number of expected properties
+      expect(subtotal1).toBe(subtotal2); // Ensure calculations don't affect props
+    });
+
+    it('should ensure props getter returns consistent data structure', () => {
+      // Arrange
+      const loadProps = {
+        id: 'consistent-id',
+        ownerId: 'owner-consistent',
+        description: 'Consistency Test',
+        serviceCode: 'CONS-001',
+        quantity: 5,
+        unitPriceInCents: 7500,
+        createdAt: new Date('2024-06-15T10:00:00Z'),
+        updatedAt: new Date('2024-06-20T15:30:00Z'),
+      };
+
+      // Act
+      const item = Item.load(loadProps);
+      const props1 = item.props;
+      const props2 = item.props;
+
+      // Assert
+      expect(Object.keys(props1).length).toBe(Object.keys(props2).length);
+      expect(Object.keys(props1).sort()).toEqual(Object.keys(props2).sort());
+      expect(props1.id).toBe(props2.id);
+      expect(props1.ownerId).toBe(props2.ownerId);
+      expect(props1.description).toBe(props2.description);
+    });
+  });
 });

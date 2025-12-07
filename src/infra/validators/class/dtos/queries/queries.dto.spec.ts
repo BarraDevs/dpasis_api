@@ -1,5 +1,5 @@
 import { ArgumentMetadata, ValidationPipe } from '@nestjs/common';
-import { pipeOptions } from 'src/infra/validators/class-*/config';
+import { pipeOptions } from 'src/infra/validators/class/config';
 import { Queries } from './queries.dto';
 
 const metadata: ArgumentMetadata = {

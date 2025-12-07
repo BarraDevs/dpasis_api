@@ -1,6 +1,7 @@
 const TOKENS = {
   CacheGateway: Symbol.for('CacheGateway'),
   LoggerGateway: Symbol.for('LoggerGateway'),
+  UploadGateway: Symbol.for('UploadGateway'),
 
   AccountDao: Symbol.for('AccountDao'),
 
@@ -18,6 +19,12 @@ const TOKENS = {
 
   ItemDao: Symbol.for('ItemDao'),
   ItemRepository: Symbol.for('ItemRepository'),
+
+  ProviderDao: Symbol.for('ProviderDao'),
+  ProviderRepository: Symbol.for('ProviderRepository'),
+
+  SellerDao: Symbol.for('SellerDao'),
+  SellerRepository: Symbol.for('SellerRepository'),
 
   ShipperDao: Symbol.for('ShipperDao'),
   ShipperRepository: Symbol.for('ShipperRepository'),

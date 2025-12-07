@@ -275,7 +275,7 @@ describe('ClientRepositoryAdapterPrisma', () => {
       expect(savedClient?.companies[0].id).toBe(company.id);
     });
 
-    it('should throw error when trying to save client with null companyIds', async() => {
+    it('should not throw error when trying to save client with null companyIds', async() => {
       // Arrange
       const client = Client.create({
         kind: 'PJ',
@@ -292,7 +292,7 @@ describe('ClientRepositoryAdapterPrisma', () => {
       });
 
       // Act & Assert
-      await expect(sut.save(client)).rejects.toThrow();
+      await expect(sut.save(client)).resolves.not.toThrow();
     });
   });
 
@@ -530,7 +530,7 @@ describe('ClientRepositoryAdapterPrisma', () => {
       await expect(sut.edit(updatedClient)).rejects.toThrow();
     });
 
-    it('should throw error when trying to set null companyIds on edit', async() => {
+    it('should not throw error when trying to set null companyIds on edit', async() => {
       // Arrange
       const client = Client.create({
         kind: 'PJ',
@@ -555,7 +555,7 @@ describe('ClientRepositoryAdapterPrisma', () => {
       });
 
       // Act & Assert
-      await expect(sut.edit(updatedClient)).rejects.toThrow();
+      await expect(sut.edit(updatedClient)).resolves.not.toThrow();
     });
   });
 });

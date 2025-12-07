@@ -1,5 +1,11 @@
 import { PositiveInt } from 'src/shared/value-objects/positive-int/positive-int.vo';
 
+type ItemProps = ItemCreateProps & {
+  id: string;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
 type ItemCreateProps = {
   ownerId: string;
   description: string;
@@ -8,14 +14,7 @@ type ItemCreateProps = {
   unitPriceInCents: number;
 };
 
-type ItemProps = ItemCreateProps & {
-  id: string;
-  createdAt: Date;
-  updatedAt: Date;
-};
-
 export class Item {
-  private readonly _id: string;
   private readonly _props: ItemProps;
 
   static create(props: ItemCreateProps): Item {
@@ -37,12 +36,20 @@ export class Item {
   }
 
   public get props(): Readonly<ItemProps> {
-    return { ...this._props, id: this._id };
+    return { ...this._props };
   }
 
   private constructor(props: ItemProps) {
-    this._id = props.id;
-    this._props = props;
+    this._props = {
+      id: props.id,
+      createdAt: props.createdAt,
+      updatedAt: props.updatedAt,
+      ownerId: props.ownerId,
+      description: props.description,
+      serviceCode: props.serviceCode,
+      quantity: props.quantity,
+      unitPriceInCents: props.unitPriceInCents,
+    };
   }
 
   public calculateSubtotal(): number {

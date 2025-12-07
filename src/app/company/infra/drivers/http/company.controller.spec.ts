@@ -7,7 +7,7 @@ import { FindAllCompanyQueryDto } from 'src/app/company/application/usecases/fin
 import { CompanyModule } from 'src/app/company/company.module';
 import { ConfigModule } from 'src/core/config/config.module';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
-import { Params } from 'src/infra/validators/class-*/dtos/params/params.dto';
+import { Params } from 'src/infra/validators/class/dtos/params/params.dto';
 import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
 import { CompanyController } from './company.controller';
 

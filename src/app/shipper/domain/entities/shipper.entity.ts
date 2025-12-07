@@ -48,8 +48,24 @@ export class Shipper {
 
   constructor(props: ShipperProps) {
     this._props = {
-      ...props,
+      id: props.id,
+      active: props.active,
+      createdAt: props.createdAt,
+      updatedAt: props.updatedAt,
+      companyName: props.companyName,
+      fantasyName: props.fantasyName,
       cnpj: new CNPJ(props.cnpj).value,
+      contact: props.contact,
+      representative: props.representative,
+      zipCode: props.zipCode,
+      street: props.street,
+      number: props.number,
+      complement: props.complement,
+      reference: props.reference,
+      neighborhood: props.neighborhood,
+      city: props.city,
+      state: props.state,
+      companyIds: props.companyIds ? [...props.companyIds] : [],
     };
   }
 

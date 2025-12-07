@@ -486,4 +486,164 @@ describe('Company Entity', () => {
       expect(company.props.name).not.toBe('Modified Name');
     });
   });
+
+  describe('invariant protection', () => {
+    it('should ensure _props contains only valid entity properties without additional data', () => {
+      // Arrange
+      const props = {
+        name: 'Tech Solutions Ltda',
+        fantasyName: 'Tech Solutions',
+        document: '55.967.002/0001-46',
+        ie: '123.456.789.012',
+        zipCode: '12345-678',
+        street: 'Avenida Paulista',
+        number: '1000',
+        complement: 'Sala 101',
+        reference: 'Próximo ao metrô',
+        neighborhood: 'Bela Vista',
+        city: 'São Paulo',
+        state: 'SP',
+        phone01: '(11) 3333-4444',
+        phone02: '(11) 3333-5555',
+        cellphone: '(11) 99999-8888',
+        email01: 'contato@techsolutions.com',
+        email02: 'vendas@techsolutions.com',
+      };
+
+      // Act
+      const company = Company.create(props);
+
+      // Assert - Verify _props has exactly the expected keys
+      const expectedKeys = [
+        'id',
+        'name',
+        'fantasyName',
+        'document',
+        'ie',
+        'zipCode',
+        'street',
+        'number',
+        'complement',
+        'reference',
+        'neighborhood',
+        'city',
+        'state',
+        'phone01',
+        'phone02',
+        'cellphone',
+        'email01',
+        'email02',
+        'active',
+        'createdAt',
+        'updatedAt',
+      ].sort();
+
+      const actualKeys = Object.keys(company.props).sort();
+
+      expect(actualKeys).toEqual(expectedKeys);
+      expect(actualKeys.length).toBe(expectedKeys.length);
+    });
+
+    it('should not allow additional properties to leak into _props when using create', () => {
+      // Arrange
+      const propsWithExtra = {
+        name: 'Tech Solutions Ltda',
+        fantasyName: 'Tech Solutions',
+        document: '55.967.002/0001-46',
+        ie: '123.456.789.012',
+        zipCode: '12345-678',
+        street: 'Avenida Paulista',
+        number: '1000',
+        complement: 'Sala 101',
+        reference: 'Próximo ao metrô',
+        neighborhood: 'Bela Vista',
+        city: 'São Paulo',
+        state: 'SP',
+        phone01: '(11) 3333-4444',
+        phone02: '(11) 3333-5555',
+        cellphone: '(11) 99999-8888',
+        email01: 'contato@techsolutions.com',
+        email02: 'vendas@techsolutions.com',
+        extraProperty: 'should not exist',
+        anotherExtra: 123,
+      } as any;
+
+      // Act
+      const company = Company.create(propsWithExtra);
+
+      // Assert
+      expect(company.props).not.toHaveProperty('extraProperty');
+      expect(company.props).not.toHaveProperty('anotherExtra');
+    });
+
+    it('should not allow additional properties to leak into _props when using load', () => {
+      // Arrange
+      const propsWithExtra = {
+        id: '123e4567-e89b-12d3-a456-426614174000',
+        name: 'Existing Company Ltda',
+        fantasyName: 'Existing Company',
+        document: '55967002000146',
+        ie: '987.654.321.098',
+        zipCode: '54321-876',
+        street: 'Rua Existing',
+        number: '500',
+        complement: 'Andar 5',
+        reference: 'Ao lado do banco',
+        neighborhood: 'Centro',
+        city: 'Rio de Janeiro',
+        state: 'RJ',
+        phone01: '2122223333',
+        phone02: '2144445555',
+        cellphone: '21987654321',
+        email01: 'existing@company.com',
+        email02: 'contact@company.com',
+        active: true,
+        createdAt: new Date('2024-01-15T10:30:00Z'),
+        updatedAt: new Date('2024-01-20T14:45:00Z'),
+        maliciousProperty: 'compromising invariant',
+      } as any;
+
+      // Act
+      const company = Company.load(propsWithExtra);
+
+      // Assert
+      expect(company.props).not.toHaveProperty('maliciousProperty');
+      expect(company.props).not.toHaveProperty('dangerous');
+    });
+
+    it('should maintain exact property count after operations', () => {
+      // Arrange
+      const props = {
+        name: 'Tech Solutions Ltda',
+        fantasyName: 'Tech Solutions',
+        document: '55.967.002/0001-46',
+        ie: '123.456.789.012',
+        zipCode: '12345-678',
+        street: 'Avenida Paulista',
+        number: '1000',
+        complement: 'Sala 101',
+        reference: 'Próximo ao metrô',
+        neighborhood: 'Bela Vista',
+        city: 'São Paulo',
+        state: 'SP',
+        phone01: '(11) 3333-4444',
+        phone02: '(11) 3333-5555',
+        cellphone: '(11) 99999-8888',
+        email01: 'contato@techsolutions.com',
+        email02: 'vendas@techsolutions.com',
+      };
+
+      const company = Company.create(props);
+      const initialKeyCount = Object.keys(company.props).length;
+
+      // Act
+      company.toggleStatus();
+      company.toggleStatus();
+
+      // Assert
+      const finalKeyCount = Object.keys(company.props).length;
+      expect(finalKeyCount).toBe(initialKeyCount);
+      expect(finalKeyCount).toBe(21); // Exact number of expected properties
+    });
+  });
 });
