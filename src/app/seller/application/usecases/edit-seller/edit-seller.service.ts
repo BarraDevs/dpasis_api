@@ -3,6 +3,7 @@ import { FindCompanyById } from 'src/app/company/application/usecases/find-compa
 import { Seller } from 'src/app/seller/domain/entities/seller.entity';
 import { SellerDuplicateEmailError } from 'src/app/seller/domain/errors/duplicate-email.error';
 import { SellerNotFoundError } from 'src/app/seller/domain/errors/seller-not-found.error';
+import { UploadSingle } from 'src/app/upload-file/application/usecases/upload-single/upload-single.service';
 import { TOKENS } from 'src/core/di/token';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
 import type { ISellerDao } from '../../persistence/dao/seller-dao.interface';
@@ -15,24 +16,17 @@ export class EditSeller {
     @Inject(TOKENS.SellerDao) private readonly sellerDao: ISellerDao,
     @Inject(TOKENS.SellerRepository) private readonly sellerRepository: ISellerRepository,
     private readonly findCompanyById: FindCompanyById,
+    private readonly uploadFileService: UploadSingle,
   ) {}
 
-  public async execute(id: string, data: EditSellerInputDto): Promise<SuccessMessage> {
+  public async execute(id: string, data: EditSellerInputDto, image?: Express.Multer.File): Promise<SuccessMessage> {
     const sellerData = await this.sellerDao.findById(id);
     if (!sellerData) {
       throw new SellerNotFoundError();
     }
 
-    const { companies, ...rest } = sellerData;
-
-    const seller = Seller.load({
-      ...rest,
-      ...data,
-      companyIds: data.companyIds ?? companies.map((company) => company.id),
-    });
-
-    if (data.email && seller.props.email !== sellerData.email) {
-      const existingSellerWithEmail = await this.sellerDao.findByEmail(seller.props.email);
+    if (data.email && data.email !== sellerData.email) {
+      const existingSellerWithEmail = await this.sellerDao.findByEmail(data.email);
       if (existingSellerWithEmail) {
         throw new SellerDuplicateEmailError();
       }
@@ -40,11 +34,25 @@ export class EditSeller {
 
     if (data.companyIds) {
       await Promise.all(
-        seller.props.companyIds.map(
+        data.companyIds.map(
           async(companyId) => await this.findCompanyById.execute(companyId),
         ),
       );
     }
+
+    let newAvatarUrl: string | null = null;
+    if (image) {
+      const imageUploaded = await this.uploadFileService.execute(image, 'sellers/avatars');
+      newAvatarUrl = imageUploaded.url;
+    }
+
+    const { companies, ...rest } = sellerData;
+    const seller = Seller.load({
+      ...rest,
+      ...data,
+      avatarUrl: newAvatarUrl ?? sellerData.avatarUrl,
+      companyIds: data.companyIds ?? companies.map((company) => company.id),
+    });
 
     await this.sellerRepository.edit(seller);
 

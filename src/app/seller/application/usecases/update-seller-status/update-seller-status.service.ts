@@ -22,4 +22,3 @@ export class UpdateSellerStatus {
     return { message: 'Status atualizado com sucesso.' };
   }
 }
-

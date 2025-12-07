@@ -97,6 +97,7 @@ describe('FindAllSeller', () => {
       name: 'Base Seller',
       nickname: 'Base',
       email: 'base@test.com',
+      password: 'BasePassword123!',
       phone: '1122223333',
       cellphone: '11999998888',
       zipCode: '01000000',
@@ -108,7 +109,6 @@ describe('FindAllSeller', () => {
       city: 'São Paulo',
       state: 'SP',
       observation: null,
-      avatarUrl: null,
       commission: 5,
       companyIds: [],
     };

@@ -32,6 +32,12 @@ export class CreateSellerInputDto {
   @Trim()
   email: string;
 
+  @IsString({ message: '$property deve ser uma string' })
+  @IsNotEmpty({ message: '$property é obrigatório' })
+  @MaxLength(256, { message: '$property deve ter no máximo $constraint1 caracteres' })
+  @Trim()
+  password: string;
+
   @Min(0, { message: '$property deve ser maior ou igual a $constraint1' })
   @Max(100, { message: '$property deve ser menor ou igual a $constraint1' })
   @IsNotEmpty({ message: '$property é obrigatório' })
@@ -89,11 +95,6 @@ export class CreateSellerInputDto {
   @IsOptional()
   @Trim()
   observation: string | null;
-
-  @IsString({ message: '$property deve ser uma string' })
-  @IsOptional()
-  @Trim()
-  avatarUrl: string | null;
 
   @Trim()
   @IsString({ message: '$property deve ser uma string', each: true })

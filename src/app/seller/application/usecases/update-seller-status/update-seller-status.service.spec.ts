@@ -227,6 +227,7 @@ describe('UpdateSellerStatus', () => {
         name: 'Test Seller',
         nickname: 'Tester',
         email: 'test@seller.com',
+        password: 'TestPassword123!',
         phone: '1144445555',
         cellphone: '11977776666',
         commission: 10,
@@ -239,7 +240,6 @@ describe('UpdateSellerStatus', () => {
         city: 'São Paulo',
         state: 'SP',
         observation: null,
-        avatarUrl: null,
         companyIds: [companyId],
       });
 
@@ -265,6 +265,7 @@ describe('UpdateSellerStatus', () => {
         name: 'Inactive Seller',
         nickname: 'Inactive',
         email: 'inactive@seller.com',
+        password: 'InactivePass123!',
         phone: '2155556666',
         cellphone: '21966665555',
         commission: 15,
@@ -277,7 +278,6 @@ describe('UpdateSellerStatus', () => {
         city: 'Rio de Janeiro',
         state: 'RJ',
         observation: null,
-        avatarUrl: null,
         companyIds: [companyId],
       });
 
@@ -304,6 +304,7 @@ describe('UpdateSellerStatus', () => {
         name: 'Multiple Toggle Seller',
         nickname: 'Toggle',
         email: 'toggle@seller.com',
+        password: 'TogglePass123!',
         phone: '3166667777',
         cellphone: '31955554444',
         commission: 20,
@@ -316,7 +317,6 @@ describe('UpdateSellerStatus', () => {
         city: 'Belo Horizonte',
         state: 'MG',
         observation: null,
-        avatarUrl: null,
         companyIds: [companyId],
       });
 
@@ -351,6 +351,7 @@ describe('UpdateSellerStatus', () => {
         name: 'Timestamp Test Seller',
         nickname: 'Timestamp',
         email: 'timestamp@seller.com',
+        password: 'TimestampPass123!',
         phone: '4177778888',
         cellphone: '41944443333',
         commission: 8,
@@ -363,7 +364,6 @@ describe('UpdateSellerStatus', () => {
         city: 'Curitiba',
         state: 'PR',
         observation: null,
-        avatarUrl: null,
         companyIds: [companyId],
       });
 
@@ -387,6 +387,7 @@ describe('UpdateSellerStatus', () => {
         name: 'Preserve Props Seller',
         nickname: 'Props',
         email: 'preserve@seller.com',
+        password: 'PreservePass123!',
         phone: '5188889999',
         cellphone: '51933332222',
         commission: 25,
@@ -399,7 +400,6 @@ describe('UpdateSellerStatus', () => {
         city: 'Porto Alegre',
         state: 'RS',
         observation: 'Top seller',
-        avatarUrl: null,
         companyIds: [companyId],
       };
 
@@ -428,7 +428,6 @@ describe('UpdateSellerStatus', () => {
       expect(toggledSeller!.city).toBe(originalData.city);
       expect(toggledSeller!.state).toBe(originalData.state);
       expect(toggledSeller!.observation).toBe(originalData.observation);
-      expect(toggledSeller!.avatarUrl).toBe(originalData.avatarUrl);
       expect(toggledSeller!.companies).toEqual(initialSeller!.companies);
       expect(toggledSeller!.createdAt).toEqual(initialSeller!.createdAt);
       // Only active and updatedAt should change
@@ -461,6 +460,7 @@ describe('UpdateSellerStatus', () => {
         name: 'Multi Company Seller',
         nickname: 'Multi',
         email: 'multi@seller.com',
+        password: 'MultiPass123!',
         phone: '6199990000',
         cellphone: '61922221111',
         commission: 12,
@@ -473,7 +473,6 @@ describe('UpdateSellerStatus', () => {
         city: 'Brasília',
         state: 'DF',
         observation: null,
-        avatarUrl: null,
         companyIds: [companyId, company2Id],
       });
 
@@ -498,6 +497,7 @@ describe('UpdateSellerStatus', () => {
         name: 'Message Test Seller',
         nickname: 'Message',
         email: 'message@seller.com',
+        password: 'MessagePass123!',
         phone: '8511112222',
         cellphone: '85911112222',
         commission: 18,
@@ -510,7 +510,6 @@ describe('UpdateSellerStatus', () => {
         city: 'Fortaleza',
         state: 'CE',
         observation: null,
-        avatarUrl: null,
         companyIds: [companyId],
       });
 
@@ -530,6 +529,7 @@ describe('UpdateSellerStatus', () => {
         name: 'Commission Test Seller',
         nickname: 'Commission',
         email: 'commission@seller.com',
+        password: 'CommissionPass123!',
         phone: '7122223333',
         cellphone: '71922223333',
         commission: 50,
@@ -542,7 +542,6 @@ describe('UpdateSellerStatus', () => {
         city: 'Salvador',
         state: 'BA',
         observation: null,
-        avatarUrl: null,
         companyIds: [companyId],
       });
 
@@ -566,6 +565,7 @@ describe('UpdateSellerStatus', () => {
         name: 'Null Fields Seller',
         nickname: null,
         email: 'nullfields@seller.com',
+        password: 'NullFieldsPass123!',
         phone: '8133334444',
         cellphone: '81933334444',
         commission: 10,
@@ -578,7 +578,6 @@ describe('UpdateSellerStatus', () => {
         city: 'Recife',
         state: 'PE',
         observation: null,
-        avatarUrl: null,
         companyIds: [companyId],
       });
 
