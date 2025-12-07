@@ -1,7 +1,7 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class UploadSingleInputDto {
-  @ApiProperty({
+  @ApiPropertyOptional({
     type: 'string',
     format: 'binary',
   })

@@ -12,6 +12,7 @@ import { FindAllSellerQueryDto } from 'src/app/seller/application/usecases/find-
 import { FindAllSeller } from 'src/app/seller/application/usecases/find-all-seller/find-all-seller.service';
 import { FindSellerById } from 'src/app/seller/application/usecases/find-seller-by-id/find-seller-by-id.service';
 import { UpdateSellerStatus } from 'src/app/seller/application/usecases/update-seller-status/update-seller-status.service';
+import { UploadSingleInputDto } from 'src/app/upload-file/application/usecases/upload-single/dtos/upload-single.dto';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
 import { Swagger } from 'src/infra/openapi/swagger';
 import { Params } from 'src/infra/validators/class/dtos/params/params.dto';
@@ -34,6 +35,7 @@ export class SellerController {
   @Swagger({
     tags: ['Vendedores'],
     summary: 'Rota para criar um vendedor',
+    mergeRequestBody: [CreateSellerInputDto, UploadSingleInputDto],
     applyBadRequest: true,
     applyConflict: true,
     createdResponse: CreateSellerOutputDto,
@@ -73,6 +75,7 @@ export class SellerController {
   @Swagger({
     tags: ['Vendedores'],
     summary: 'Rota para editar vendedor',
+    mergeRequestBody: [EditSellerInputDto, UploadSingleInputDto],
     applyBadRequest: true,
     applyNotFound: true,
     okResponse: SuccessMessage,

@@ -1,6 +1,7 @@
 import { applyDecorators, Type } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
+  ApiBody,
   ApiConflictResponse,
   ApiCreatedResponse,
   ApiExtraModels,
@@ -20,6 +21,7 @@ type swaggerProps = {
   tags: string[];
   summary: string;
   description?: string;
+  mergeRequestBody?: any;
   okResponse?: any;
   okPaginatedResponse?: any;
   createdResponse?: any;
@@ -35,6 +37,7 @@ export function Swagger(props: swaggerProps) {
     ApiTags(...props.tags),
     ApiOperation({ summary: props.summary, description: props.description }),
 
+    applyMergeRequestBody(props.mergeRequestBody),
     applyOkResponse(props.okResponse),
     applyOkPaginatedResponse(props.okPaginatedResponse),
     applyPaginationModels(props.okPaginatedResponse),
@@ -47,6 +50,19 @@ export function Swagger(props: swaggerProps) {
 
     ApiInternalServerErrorResponse({ type: ServerError, description: 'Internal Server Error' }),
   );
+}
+
+function applyMergeRequestBody(dtos?: any[]) {
+  return dtos?.length ? applyDecorators(
+    ApiExtraModels(...dtos),
+    ApiBody({
+      schema: {
+        allOf: dtos.map(dto => ({
+          $ref: getSchemaPath(dto),
+        })),
+      },
+    })
+  ) : () => {};
 }
 
 function applyOkResponse(dto?: any) {
