@@ -1,6 +1,7 @@
 const TOKENS = {
   CacheGateway: Symbol.for('CacheGateway'),
   LoggerGateway: Symbol.for('LoggerGateway'),
+  UploadGateway: Symbol.for('UploadGateway'),
 
   AccountDao: Symbol.for('AccountDao'),
 

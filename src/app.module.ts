@@ -11,6 +11,7 @@ import { ProviderModule } from './app/provider/provider.module';
 import { SellerModule } from './app/seller/seller.module';
 import { ShipperModule } from './app/shipper/shipper.module';
 import { SupplierModule } from './app/supplier/supplier.module';
+import { UploadFileModule } from './app/upload-file/upload-file.module';
 import { CoreModule } from './core/core.module';
 import { InfraModule } from './infra/infra.module';
 
@@ -30,6 +31,7 @@ import { InfraModule } from './infra/infra.module';
     SellerModule,
     ShipperModule,
     SupplierModule,
+    UploadFileModule,
   ],
 })
 export class AppModule {}
