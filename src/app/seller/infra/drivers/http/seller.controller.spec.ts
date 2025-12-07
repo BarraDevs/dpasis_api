@@ -32,14 +32,15 @@ describe('SellerController', () => {
     it('should call createSellerService with correct parameters', async() => {
       // Arrange
       const input = createMock<CreateSellerInputDto>();
+      const file = createMock<Express.Multer.File>();
       const output = createMock<CreateSellerOutputDto>();
       const createSellerSpy = jest.spyOn(sut['createSellerService'], 'execute').mockResolvedValue(output);
 
       // Act
-      const result = await sut.create(input);
+      const result = await sut.create(input, file);
 
       // Assert
-      expect(createSellerSpy).toHaveBeenCalledWith(input);
+      expect(createSellerSpy).toHaveBeenCalledWith(input, file);
       expect(result).toEqual(output);
     });
   });
@@ -81,14 +82,15 @@ describe('SellerController', () => {
       // Arrange
       const params = createMock<Params>();
       const body = createMock<CreateSellerInputDto>();
+      const file = createMock<Express.Multer.File>();
       const output = createMock<SuccessMessage>();
       const editSellerSpy = jest.spyOn(sut['editSellerService'], 'execute').mockResolvedValue(output);
 
       // Act
-      const result = await sut.update(params, body);
+      const result = await sut.update(params, body, file);
 
       // Assert
-      expect(editSellerSpy).toHaveBeenCalledWith(params.id, body);
+      expect(editSellerSpy).toHaveBeenCalledWith(params.id, body, file);
       expect(result).toEqual(output);
     });
   });

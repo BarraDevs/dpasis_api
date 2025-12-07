@@ -1,4 +1,6 @@
-import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiConsumes } from '@nestjs/swagger';
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
 import { RequiredRoles } from 'src/app/authentication/infra/decorators/required-role.decorator';
 import { SellerDto } from 'src/app/seller/application/dtos/seller.dto';
@@ -27,6 +29,8 @@ export class SellerController {
   ) {}
 
   @Post()
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileInterceptor('file'))
   @Swagger({
     tags: ['Vendedores'],
     summary: 'Rota para criar um vendedor',
@@ -34,8 +38,11 @@ export class SellerController {
     applyConflict: true,
     createdResponse: CreateSellerOutputDto,
   })
-  public create(@Body() body: CreateSellerInputDto): Promise<CreateSellerOutputDto> {
-    return this.createSellerService.execute(body);
+  public create(
+    @Body() body: CreateSellerInputDto,
+    @UploadedFile() image: Express.Multer.File
+  ): Promise<CreateSellerOutputDto> {
+    return this.createSellerService.execute(body, image);
   }
 
   @Get()
@@ -61,6 +68,8 @@ export class SellerController {
   }
 
   @Patch(':id')
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileInterceptor('file'))
   @Swagger({
     tags: ['Vendedores'],
     summary: 'Rota para editar vendedor',
@@ -68,8 +77,12 @@ export class SellerController {
     applyNotFound: true,
     okResponse: SuccessMessage,
   })
-  public update(@Param() params: Params, @Body() body: EditSellerInputDto): Promise<SuccessMessage> {
-    return this.editSellerService.execute(params.id, body);
+  public update(
+    @Param() params: Params,
+    @Body() body: EditSellerInputDto,
+  @UploadedFile() image: Express.Multer.File
+  ): Promise<SuccessMessage> {
+    return this.editSellerService.execute(params.id, body, image);
   }
 
   @Patch(':id/status')

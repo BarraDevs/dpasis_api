@@ -1,4 +1,5 @@
 import { ArrayMinSize, IsArray, IsEmail, IsNotEmpty, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
+import { StringToNumber } from 'src/infra/validators/class/decorators/string-number/string-number';
 import { Trim } from 'src/infra/validators/class/decorators/trim/trim';
 
 export class CreateSellerInputDto {
@@ -41,6 +42,7 @@ export class CreateSellerInputDto {
   @Min(0, { message: '$property deve ser maior ou igual a $constraint1' })
   @Max(100, { message: '$property deve ser menor ou igual a $constraint1' })
   @IsNotEmpty({ message: '$property é obrigatório' })
+  @StringToNumber()
   commission: number;
 
   @IsString({ message: '$property deve ser uma string' })
