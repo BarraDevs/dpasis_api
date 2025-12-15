@@ -67,14 +67,15 @@ model Company {
   email01   String  @db.VarChar(256)
   email02   String? @db.VarChar(256)
 
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   clients   Client[]
   suppliers Supplier[]
   shippers  Shipper[]
   providers Provider[]
   sellers   Seller[]
+  products  Product[]
 
   @@map("companies")
 }
@@ -114,6 +115,7 @@ model Supplier {
   updatedAt      DateTime  @updatedAt
   resource       Owner? // resource no sentido de proprietário
   companies      Company[]
+  products       Product[]
 
   @@map("suppliers")
 }
@@ -212,23 +214,23 @@ model Item {
 }
 
 model Shipper {
-  id             String   @id @default(uuid())
-  companyName    String   @db.VarChar(256)
-  fantasyName    String   @db.VarChar(256)
-  cnpj           String   @unique @db.VarChar(256)
-  contact        String   @db.VarChar(256)
-  representative String   @db.VarChar(256)
-  zipCode        String   @db.VarChar(256)
-  street         String   @db.VarChar(256)
-  number         String   @db.VarChar(256)
-  complement     String?  @db.VarChar(256)
-  reference      String?  @db.VarChar(256)
-  neighborhood   String   @db.VarChar(256)
-  city           String   @db.VarChar(256)
-  state          String   @db.VarChar(256)
+  id             String    @id @default(uuid())
+  companyName    String    @db.VarChar(256)
+  fantasyName    String    @db.VarChar(256)
+  cnpj           String    @unique @db.VarChar(256)
+  contact        String    @db.VarChar(256)
+  representative String    @db.VarChar(256)
+  zipCode        String    @db.VarChar(256)
+  street         String    @db.VarChar(256)
+  number         String    @db.VarChar(256)
+  complement     String?   @db.VarChar(256)
+  reference      String?   @db.VarChar(256)
+  neighborhood   String    @db.VarChar(256)
+  city           String    @db.VarChar(256)
+  state          String    @db.VarChar(256)
   active         Boolean
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
   companies      Company[]
 
   @@map("shippers")
@@ -263,30 +265,81 @@ model Provider {
 }
 
 model Seller {
-  id           String   @id @default(uuid())
-  name         String   @db.VarChar(256)
-  nickname     String?  @db.VarChar(256)
-  phone        String   @db.VarChar(256)
-  cellphone    String   @db.VarChar(256)
+  id           String    @id @default(uuid())
+  name         String    @db.VarChar(256)
+  nickname     String?   @db.VarChar(256)
+  phone        String    @db.VarChar(256)
+  cellphone    String    @db.VarChar(256)
   commission   Float
-  zipCode      String   @db.VarChar(256)
-  street       String   @db.VarChar(256)
-  number       String   @db.VarChar(256)
-  complement   String?  @db.VarChar(256)
-  reference    String?  @db.VarChar(256)
-  neighborhood String   @db.VarChar(256)
-  city         String   @db.VarChar(256)
-  state        String   @db.VarChar(256)
-  observation  String?  @db.Text
-  avatarUrl    String?  @db.Text
+  zipCode      String    @db.VarChar(256)
+  street       String    @db.VarChar(256)
+  number       String    @db.VarChar(256)
+  complement   String?   @db.VarChar(256)
+  reference    String?   @db.VarChar(256)
+  neighborhood String    @db.VarChar(256)
+  city         String    @db.VarChar(256)
+  state        String    @db.VarChar(256)
+  observation  String?   @db.Text
+  avatarUrl    String?   @db.Text
   active       Boolean
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  role         Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
-  roleId       String   @unique
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  role         Role      @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  roleId       String    @unique
   companies    Company[]
 
   @@map("sellers")
+}
+
+model Product {
+  id               String          @id @default(uuid())
+  type             String          @db.VarChar(256)
+  group01          String          @db.VarChar(256)
+  group02          String          @db.VarChar(256)
+  description      String          @db.Text
+  complement       String?         @db.Text
+  manufacturerCode String?         @db.VarChar(256)
+  brand            String          @db.VarChar(256)
+  measureUnit      String          @db.VarChar(256)
+  ncm              String          @db.VarChar(256)
+  economicBatch    String          @db.VarChar(256)
+  minimumStock     Int
+  maximumStock     Int
+  warrantyDays     Int
+  weightInKg       Float
+  heightInCm       Float
+  lengthInCm       Float
+  widthInCm        Float
+  markup           Int
+  marginB          Int
+  currency         String          @db.VarChar(10)
+  exchangeRate     Float
+  unitCostInCents  Int
+  unitPriceInCents Int
+  ean              String          @db.VarChar(256)
+  additionalInfo   String?         @db.Text
+  images           String[]
+  currentStock     Int             @default(0)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  companyId        String
+  company          Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  movements        StockMovement[]
+  suppliers        Supplier[]
+
+  @@map("products")
+}
+
+model StockMovement {
+  id        String   @id @default(uuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  type      String   @db.VarChar(50)
+  quantity  Int
+  unitValue Int
+  createdAt DateTime @default(now())
+
+  @@map("stock_movements")
 }
 
 model Faq {
