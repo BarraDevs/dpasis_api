@@ -298,7 +298,7 @@ model Product {
   group02          String          @db.VarChar(256)
   description      String          @db.Text
   complement       String?         @db.Text
-  manufacturerCode String?         @db.VarChar(256)
+  manufacturerCode String          @db.VarChar(256)
   brand            String          @db.VarChar(256)
   measureUnit      String          @db.VarChar(256)
   ncm              String          @db.VarChar(256)
