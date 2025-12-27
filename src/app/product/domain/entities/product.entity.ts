@@ -113,5 +113,12 @@ export class Product {
     };
   }
 
-  // TODO: Métodos de negócio para atualizar currentStock via movimentos
+  public hasStock(): boolean {
+    return this._props.currentStock > 0;
+  }
+
+  public updateStock(newStock: number): void {
+    this._props.currentStock = this.props.currentStock + newStock;
+    this._props.updatedAt = new Date();
+  }
 }

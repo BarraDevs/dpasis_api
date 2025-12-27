@@ -22,6 +22,7 @@ const TOKENS = {
 
   ProductDao: Symbol.for('ProductDao'),
   ProductRepository: Symbol.for('ProductRepository'),
+  ProductStockMovementRepository: Symbol.for('ProductStockMovementRepository'),
 
   ProviderDao: Symbol.for('ProviderDao'),
   ProviderRepository: Symbol.for('ProviderRepository'),

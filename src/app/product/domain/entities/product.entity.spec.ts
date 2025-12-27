@@ -1304,4 +1304,219 @@ describe('Product Entity', () => {
       expect(product.props.supplierIds).not.toContain('supplier-3');
     });
   });
+
+  describe('hasStock', () => {
+    it('should return true when currentStock is positive', () => {
+      // Arrange
+      const product = Product.load({ ...mockLoadProps, currentStock: 10 });
+
+      // Act
+      const result = product.hasStock();
+
+      // Assert
+      expect(result).toBe(true);
+    });
+
+    it('should return true when currentStock is 1', () => {
+      // Arrange
+      const product = Product.load({ ...mockLoadProps, currentStock: 1 });
+
+      // Act
+      const result = product.hasStock();
+
+      // Assert
+      expect(result).toBe(true);
+    });
+
+    it('should return false when currentStock is zero', () => {
+      // Arrange
+      const product = Product.load({ ...mockLoadProps, currentStock: 0 });
+
+      // Act
+      const result = product.hasStock();
+
+      // Assert
+      expect(result).toBe(false);
+    });
+
+    it('should return false when currentStock is negative', () => {
+      // Arrange
+      const product = Product.load({ ...mockLoadProps, currentStock: -5 });
+
+      // Act
+      const result = product.hasStock();
+
+      // Assert
+      expect(result).toBe(false);
+    });
+
+    it('should return true when currentStock is very large', () => {
+      // Arrange
+      const product = Product.load({ ...mockLoadProps, currentStock: 999999 });
+
+      // Act
+      const result = product.hasStock();
+
+      // Assert
+      expect(result).toBe(true);
+    });
+
+    it('should return false for newly created product (currentStock = 0)', () => {
+      // Arrange
+      const product = Product.create(mockCreateProps);
+
+      // Act
+      const result = product.hasStock();
+
+      // Assert
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('updateStock', () => {
+    it('should increase stock when adding positive quantity', () => {
+      // Arrange
+      const product = Product.load({ ...mockLoadProps, currentStock: 10 });
+
+      // Act
+      product.updateStock(5);
+
+      // Assert
+      expect(product.props.currentStock).toBe(15);
+    });
+
+    it('should decrease stock when adding negative quantity', () => {
+      // Arrange
+      const product = Product.load({ ...mockLoadProps, currentStock: 10 });
+
+      // Act
+      product.updateStock(-3);
+
+      // Assert
+      expect(product.props.currentStock).toBe(7);
+    });
+
+    it('should set stock to zero when subtracting exact amount', () => {
+      // Arrange
+      const product = Product.load({ ...mockLoadProps, currentStock: 10 });
+
+      // Act
+      product.updateStock(-10);
+
+      // Assert
+      expect(product.props.currentStock).toBe(0);
+    });
+
+    it('should allow stock to go negative', () => {
+      // Arrange
+      const product = Product.load({ ...mockLoadProps, currentStock: 5 });
+
+      // Act
+      product.updateStock(-10);
+
+      // Assert
+      expect(product.props.currentStock).toBe(-5);
+    });
+
+    it('should update stock from zero to positive', () => {
+      // Arrange
+      const product = Product.create(mockCreateProps); // currentStock = 0
+
+      // Act
+      product.updateStock(20);
+
+      // Assert
+      expect(product.props.currentStock).toBe(20);
+    });
+
+    it('should update stock multiple times correctly', () => {
+      // Arrange
+      const product = Product.load({ ...mockLoadProps, currentStock: 10 });
+
+      // Act
+      product.updateStock(5); // 15
+      product.updateStock(-3); // 12
+      product.updateStock(8); // 20
+      product.updateStock(-10); // 10
+
+      // Assert
+      expect(product.props.currentStock).toBe(10);
+    });
+
+    it('should handle adding zero to stock', () => {
+      // Arrange
+      const product = Product.load({ ...mockLoadProps, currentStock: 10 });
+
+      // Act
+      product.updateStock(0);
+
+      // Assert
+      expect(product.props.currentStock).toBe(10);
+    });
+
+    it('should handle very large stock additions', () => {
+      // Arrange
+      const product = Product.load({ ...mockLoadProps, currentStock: 100 });
+
+      // Act
+      product.updateStock(999999);
+
+      // Assert
+      expect(product.props.currentStock).toBe(1000099);
+    });
+
+    it('should update updatedAt timestamp when stock is updated', () => {
+      // Arrange
+      const originalDate = new Date('2024-01-01T00:00:00Z');
+      const product = Product.load({ ...mockLoadProps, updatedAt: originalDate });
+      const beforeUpdate = new Date();
+
+      // Act
+      product.updateStock(5);
+
+      // Assert
+      const afterUpdate = new Date();
+      expect(product.props.updatedAt).toBeInstanceOf(Date);
+      expect(product.props.updatedAt.getTime()).toBeGreaterThanOrEqual(beforeUpdate.getTime());
+      expect(product.props.updatedAt.getTime()).toBeLessThanOrEqual(afterUpdate.getTime());
+      expect(product.props.updatedAt.getTime()).toBeGreaterThan(originalDate.getTime());
+    });
+
+    it('should not update createdAt when stock is updated', () => {
+      // Arrange
+      const createdAt = new Date('2024-01-01T00:00:00Z');
+      const product = Product.load({ ...mockLoadProps, createdAt });
+
+      // Act
+      product.updateStock(5);
+
+      // Assert
+      expect(product.props.createdAt).toEqual(createdAt);
+    });
+
+    it('should handle decimal quantities', () => {
+      // Arrange
+      const product = Product.load({ ...mockLoadProps, currentStock: 10.5 });
+
+      // Act
+      product.updateStock(2.3);
+
+      // Assert
+      expect(product.props.currentStock).toBeCloseTo(12.8);
+    });
+
+    it('should handle multiple sequential decimal and integer updates', () => {
+      // Arrange
+      const product = Product.load({ ...mockLoadProps, currentStock: 0 });
+
+      // Act
+      product.updateStock(5.5); // 5.5
+      product.updateStock(-2.2); // 3.3
+      product.updateStock(4); // 7.3
+      product.updateStock(-1.3); // 6.0
+
+      // Assert
+      expect(product.props.currentStock).toBeCloseTo(6.0);
+    });
+  });
 });

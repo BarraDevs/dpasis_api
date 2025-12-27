@@ -40,7 +40,7 @@ describe('DeleteProduct', () => {
     createCompany = module.get(CreateCompany);
     createSupplier = module.get(CreateSupplier);
 
-    await prisma.stockMovement.deleteMany();
+    await prisma.productStockMovement.deleteMany();
     await prisma.product.deleteMany();
     await prisma.supplier.deleteMany();
     await prisma.company.deleteMany();
@@ -109,7 +109,7 @@ describe('DeleteProduct', () => {
   });
 
   afterEach(async() => {
-    await prisma.stockMovement.deleteMany();
+    await prisma.productStockMovement.deleteMany();
     await prisma.product.deleteMany();
     await prisma.supplier.deleteMany();
     await prisma.company.deleteMany();
@@ -267,25 +267,25 @@ describe('DeleteProduct', () => {
       const product = await createProduct.execute(data);
 
       // Create stock movements
-      await prisma.stockMovement.createMany({
+      await prisma.productStockMovement.createMany({
         data: [
           {
             productId: product.id,
             type: 'IN',
             quantity: 10,
-            unitValue: 1000,
+            unitPriceInCents: 1000,
           },
           {
             productId: product.id,
             type: 'OUT',
             quantity: 5,
-            unitValue: 1000,
+            unitPriceInCents: 1000,
           },
         ],
       });
 
       // Verify stock movements were created
-      const movementsBefore = await prisma.stockMovement.findMany({
+      const movementsBefore = await prisma.productStockMovement.findMany({
         where: { productId: product.id },
       });
       expect(movementsBefore).toHaveLength(2);
@@ -295,7 +295,7 @@ describe('DeleteProduct', () => {
 
       // Assert - Product should be deleted
       expect.assertions(3);
-      const movementsAfter = await prisma.stockMovement.findMany({
+      const movementsAfter = await prisma.productStockMovement.findMany({
         where: { productId: product.id },
       });
       expect(movementsAfter).toHaveLength(0);
