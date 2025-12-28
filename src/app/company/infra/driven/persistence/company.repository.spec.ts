@@ -53,6 +53,220 @@ describe('CompanyRepositoryAdapterPrisma (Integration)', () => {
     await prisma.$disconnect();
   });
 
+  describe('findById', () => {
+    it('should return a company when found by id', async() => {
+      // Arrange
+      const company = Company.create(companyProps);
+      await sut.save(company);
+
+      // Act
+      const foundCompany = await sut.findById(company.props.id);
+
+      // Assert
+      expect(foundCompany).toBeDefined();
+      expect(foundCompany).toBeInstanceOf(Company);
+      expect(foundCompany?.props.id).toBe(company.props.id);
+      expect(foundCompany?.props.name).toBe(companyProps.name);
+      expect(foundCompany?.props.fantasyName).toBe(companyProps.fantasyName);
+      expect(foundCompany?.props.document).toBe(company.props.document);
+      expect(foundCompany?.props.ie).toBe(companyProps.ie);
+      expect(foundCompany?.props.zipCode).toBe(companyProps.zipCode);
+      expect(foundCompany?.props.street).toBe(companyProps.street);
+      expect(foundCompany?.props.number).toBe(companyProps.number);
+      expect(foundCompany?.props.complement).toBe(companyProps.complement);
+      expect(foundCompany?.props.reference).toBe(companyProps.reference);
+      expect(foundCompany?.props.neighborhood).toBe(companyProps.neighborhood);
+      expect(foundCompany?.props.city).toBe(companyProps.city);
+      expect(foundCompany?.props.state).toBe(companyProps.state);
+      expect(foundCompany?.props.phone01).toBe(company.props.phone01);
+      expect(foundCompany?.props.phone02).toBe(company.props.phone02);
+      expect(foundCompany?.props.cellphone).toBe(company.props.cellphone);
+      expect(foundCompany?.props.email01).toBe(companyProps.email01);
+      expect(foundCompany?.props.email02).toBe(companyProps.email02);
+      expect(foundCompany?.props.active).toBe(true);
+      expect(foundCompany?.props.createdAt).toBeInstanceOf(Date);
+      expect(foundCompany?.props.updatedAt).toBeInstanceOf(Date);
+    });
+
+    it('should return null when company is not found by id', async() => {
+      // Arrange
+      const nonExistentId = 'non-existent-id-12345';
+
+      // Act
+      const foundCompany = await sut.findById(nonExistentId);
+
+      // Assert
+      expect(foundCompany).toBeNull();
+    });
+
+    it('should return the correct company when multiple companies exist', async() => {
+      // Arrange
+      const company1 = Company.create(companyProps);
+      const company2 = Company.create({
+        ...companyProps,
+        name: 'Second Company Ltda',
+        document: '45.926.939/0001-10',
+        ie: '111222333444',
+        email01: 'second@company.com',
+      });
+      const company3 = Company.create({
+        ...companyProps,
+        name: 'Third Company Ltda',
+        document: '10.249.823/0001-09',
+        ie: '999888777666',
+        email01: 'third@company.com',
+      });
+
+      await sut.save(company1);
+      await sut.save(company2);
+      await sut.save(company3);
+
+      // Act
+      const foundCompany = await sut.findById(company2.props.id);
+
+      // Assert
+      expect(foundCompany).toBeDefined();
+      expect(foundCompany?.props.id).toBe(company2.props.id);
+      expect(foundCompany?.props.name).toBe('Second Company Ltda');
+      expect(foundCompany?.props.document).toBe(company2.props.document);
+    });
+
+    it('should return company with null optional fields', async() => {
+      // Arrange
+      const company = Company.create({
+        ...companyProps,
+        complement: null,
+        reference: null,
+        phone02: null,
+        cellphone: null,
+        email02: null,
+      });
+      await sut.save(company);
+
+      // Act
+      const foundCompany = await sut.findById(company.props.id);
+
+      // Assert
+      expect(foundCompany).toBeDefined();
+      expect(foundCompany?.props.complement).toBeNull();
+      expect(foundCompany?.props.reference).toBeNull();
+      expect(foundCompany?.props.phone02).toBeNull();
+      expect(foundCompany?.props.cellphone).toBeNull();
+      expect(foundCompany?.props.email02).toBeNull();
+    });
+
+    it('should return inactive company when searching by id', async() => {
+      // Arrange
+      const company = Company.create(companyProps);
+      await sut.save(company);
+
+      const inactiveCompany = Company.load({
+        ...company.props,
+        active: false,
+        updatedAt: new Date(),
+      });
+      await sut.edit(inactiveCompany);
+
+      // Act
+      const foundCompany = await sut.findById(company.props.id);
+
+      // Assert
+      expect(foundCompany).toBeDefined();
+      expect(foundCompany?.props.active).toBe(false);
+    });
+
+    it('should return Company instance with correct entity structure', async() => {
+      // Arrange
+      const company = Company.create(companyProps);
+      await sut.save(company);
+
+      // Act
+      const foundCompany = await sut.findById(company.props.id);
+
+      // Assert
+      expect(foundCompany).toBeInstanceOf(Company);
+      expect(foundCompany?.props).toBeDefined();
+      expect(typeof foundCompany?.props.id).toBe('string');
+      expect(typeof foundCompany?.props.name).toBe('string');
+      expect(typeof foundCompany?.props.active).toBe('boolean');
+      expect(foundCompany?.props.createdAt).toBeInstanceOf(Date);
+      expect(foundCompany?.props.updatedAt).toBeInstanceOf(Date);
+    });
+
+    it('should return updated data after company edit', async() => {
+      // Arrange
+      const company = Company.create(companyProps);
+      await sut.save(company);
+
+      const editedCompany = Company.load({
+        ...company.props,
+        name: 'Updated Company Name',
+        fantasyName: 'Updated Fantasy Name',
+        updatedAt: new Date(),
+      });
+      await sut.edit(editedCompany);
+
+      // Act
+      const foundCompany = await sut.findById(company.props.id);
+
+      // Assert
+      expect(foundCompany).toBeDefined();
+      expect(foundCompany?.props.name).toBe('Updated Company Name');
+      expect(foundCompany?.props.fantasyName).toBe('Updated Fantasy Name');
+      expect(foundCompany?.props.updatedAt.getTime()).toBeGreaterThan(company.props.createdAt.getTime());
+    });
+
+    it('should handle UUID format validation implicitly', async() => {
+      // Arrange
+      const invalidIds = [
+        '',
+        '   ',
+        'invalid-uuid',
+        '12345',
+        'abc-def-ghi',
+      ];
+
+      // Act & Assert
+      for (const invalidId of invalidIds) {
+        const foundCompany = await sut.findById(invalidId);
+        expect(foundCompany).toBeNull();
+      }
+    });
+
+    it('should return null after company is saved and then database is cleared', async() => {
+      // Arrange
+      const company = Company.create(companyProps);
+      await sut.save(company);
+      const companyId = company.props.id;
+
+      // Clear database
+      await prisma.company.deleteMany();
+
+      // Act
+      const foundCompany = await sut.findById(companyId);
+
+      // Assert
+      expect(foundCompany).toBeNull();
+    });
+
+    it('should consistently return same data on multiple findById calls', async() => {
+      // Arrange
+      const company = Company.create(companyProps);
+      await sut.save(company);
+
+      // Act
+      const foundCompany1 = await sut.findById(company.props.id);
+      const foundCompany2 = await sut.findById(company.props.id);
+      const foundCompany3 = await sut.findById(company.props.id);
+
+      // Assert
+      expect(foundCompany1?.props.id).toBe(foundCompany2?.props.id);
+      expect(foundCompany2?.props.id).toBe(foundCompany3?.props.id);
+      expect(foundCompany1?.props.name).toBe(foundCompany2?.props.name);
+      expect(foundCompany2?.props.name).toBe(foundCompany3?.props.name);
+    });
+  });
+
   describe('save', () => {
     it('should save a company successfully', async() => {
       // Arrange

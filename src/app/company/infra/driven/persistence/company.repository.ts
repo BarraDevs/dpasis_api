@@ -26,8 +26,7 @@ export class CompanyRepositoryAdapterPrisma implements ICompanyRepository {
   }
 
   public async edit(company: Company): Promise<void> {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { id, updatedAt, ...data } = company.props;
+    const { id, ...data } = company.props;
 
     await this.prisma.company.update({
       where: { id },

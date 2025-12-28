@@ -24,6 +24,7 @@ export class EditCompany {
     const company = Company.load({
       ...companyData,
       ...data,
+      updatedAt: new Date(),
     });
 
     if (data.document && company.props.document !== companyData.document) {
