@@ -13,7 +13,7 @@ describe('Document Value Object', () => {
   });
 
   it('should throw an error when providing an invalid document', () => {
-    expect(() => new Document('123')).toThrow('CPF/CNPJ inválido');
+    expect(() => new Document('123')).toThrow('CPF/CNPJ inválido: ' + '123');
     expect(() => new Document('123')).toThrow(InvalidDocumentError);
   });
 

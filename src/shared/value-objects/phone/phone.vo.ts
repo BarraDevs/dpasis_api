@@ -9,7 +9,7 @@ export class Phone {
 
   constructor(phone: string) {
     if (!this.validate(phone)) {
-      throw new InvalidPhoneError();
+      throw new InvalidPhoneError(phone);
     }
     this._value = this.sanitize(phone);
   }

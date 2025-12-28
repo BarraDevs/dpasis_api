@@ -12,7 +12,7 @@ export class CPF {
     const cpf = this.sanitize(rawCpf);
 
     if (!this.validate(cpf)) {
-      throw new InvalidCpfError();
+      throw new InvalidCpfError(rawCpf);
     }
     this._value = cpf;
   }

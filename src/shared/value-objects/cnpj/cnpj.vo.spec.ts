@@ -18,7 +18,7 @@ describe('CNPJ Value Object', () => {
       '47.846.258/0001-71',
     ]
   )('should throw an error when providing invalid cnpj (%s)', (cnpj: string) => {
-    expect(() => new CNPJ(cnpj)).toThrow('CNPJ inválido');
+    expect(() => new CNPJ(cnpj)).toThrow('CNPJ inválido: ' + cnpj);
     expect(() => new CNPJ(cnpj)).toThrow(InvalidCnpjError);
   });
 

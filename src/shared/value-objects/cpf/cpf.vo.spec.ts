@@ -16,7 +16,7 @@ describe('CPF Value Object', () => {
       '374.852.529-07',
     ]
   )('should throw an error when providing invalid cpf (%s)', (cpf: string) => {
-    expect(() => new CPF(cpf)).toThrow('CPF inválido');
+    expect(() => new CPF(cpf)).toThrow('CPF inválido: ' + cpf);
     expect(() => new CPF(cpf)).toThrow(InvalidCpfError);
   });
 

@@ -21,7 +21,7 @@ export class Document {
       this._value = new CNPJ(document).value;
     }
     else {
-      throw new InvalidDocumentError();
+      throw new InvalidDocumentError(raw);
     }
   }
 

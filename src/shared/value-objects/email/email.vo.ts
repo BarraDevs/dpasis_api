@@ -9,7 +9,7 @@ export class Email {
 
   constructor(email: string) {
     if (!this.validate(email)) {
-      throw new InvalidEmailError();
+      throw new InvalidEmailError(email);
     }
     this._value = email;
   }

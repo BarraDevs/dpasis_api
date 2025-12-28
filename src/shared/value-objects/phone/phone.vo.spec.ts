@@ -17,7 +17,7 @@ describe('Phone Value Object', () => {
       '123456789123456',
     ]
   )('should throw an error when providing invalid phone (%s)', (phone: string) => {
-    expect(() => new Phone(phone)).toThrow('Telefone inválido');
+    expect(() => new Phone(phone)).toThrow('Telefone inválido: ' + phone);
     expect(() => new Phone(phone)).toThrow(InvalidPhoneError);
   });
 

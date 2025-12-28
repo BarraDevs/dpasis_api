@@ -14,7 +14,7 @@ export class CNPJ {
     const cnpj = this.sanitize(rawCnpj);
 
     if (!this.validate(cnpj)) {
-      throw new InvalidCnpjError();
+      throw new InvalidCnpjError(rawCnpj);
     }
     this._value = cnpj;
   }

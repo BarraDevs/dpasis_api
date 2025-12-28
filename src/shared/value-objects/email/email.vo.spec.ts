@@ -18,7 +18,7 @@ describe('Email Value Object', () => {
       'invalid-email@invalid-domain.c',
     ]
   )('should throw an error when providing invalid email (%s)', (email: string) => {
-    expect(() => new Email(email)).toThrow('E-mail inválido');
+    expect(() => new Email(email)).toThrow('E-mail inválido: ' + email);
     expect(() => new Email(email)).toThrow(InvalidEmailError);
   });
 
