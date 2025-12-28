@@ -21,6 +21,35 @@ describe('UploadSingle', () => {
     sut = module.get<UploadSingle>(UploadSingle);
   });
 
+  describe('file existence validation', () => {
+    it('should throw RequiredFileError when file is null', async() => {
+      expect.assertions(1);
+      return sut.execute(null as any).catch((error) => {
+        expect(error).toBeInstanceOf(RequiredFileError);
+      });
+    });
+
+    it('should throw RequiredFileError when file is undefined', async() => {
+      expect.assertions(1);
+      return sut.execute(undefined as any).catch((error) => {
+        expect(error).toBeInstanceOf(RequiredFileError);
+      });
+    });
+
+    it('should proceed when file is provided', async() => {
+      const file = createMock<Express.Multer.File>({
+        size: 1024,
+        mimetype: 'image/jpeg',
+      });
+      const uploadSpy = jest.spyOn(sut['uploadGateway'], 'upload').mockResolvedValue('url');
+
+      const result = await sut.execute(file);
+
+      expect(result).toEqual({ url: 'url' });
+      expect(uploadSpy).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe('file size validation', () => {
     it('should accept file with exactly 20MB', async() => {
       const TWENTY_MB = 20 * 1024 * 1024;

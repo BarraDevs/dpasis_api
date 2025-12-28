@@ -2,7 +2,7 @@ import { S3 } from '@aws-sdk/client-s3';
 import { Upload } from '@aws-sdk/lib-storage';
 import { Inject, Injectable } from '@nestjs/common';
 import { IUploadGateway } from 'src/app/upload-file/application/gateway/upload.gateway';
-import { RequiredFileError } from 'src/app/upload-file/domain/errors/required-file.error';
+import { GenericUploadError } from 'src/app/upload-file/domain/errors/generic-upload.error';
 import { ConfigService } from 'src/core/config/config.service';
 import { TOKENS } from 'src/core/di/token';
 import { type ILoggerGateway, LogContext } from 'src/infra/logger/logger.gateway';
@@ -46,7 +46,7 @@ export class UploadS3AdapterGateway implements IUploadGateway {
         fileType: file.mimetype,
         error,
       });
-      throw new RequiredFileError();
+      throw new GenericUploadError();
     }
   }
 }
