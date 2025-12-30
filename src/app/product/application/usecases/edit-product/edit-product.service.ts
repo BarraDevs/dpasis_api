@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Product } from 'src/app/product/domain/entities/product.entity';
+import { ProductDuplicateEanError } from 'src/app/product/domain/errors/duplicate-ean.error';
 import { ProductNotFoundError } from 'src/app/product/domain/errors/product-not-found.error';
 import { TOKENS } from 'src/core/di/token';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
@@ -18,6 +19,13 @@ export class EditProduct {
     const productDto = await this.productDao.findById(id);
     if (!productDto) {
       throw new ProductNotFoundError();
+    }
+
+    if (data.ean && data.ean !== productDto.ean) {
+      const existingProductWithEan = await this.productDao.findByEan(data.ean, productDto.companyId);
+      if (existingProductWithEan) {
+        throw new ProductDuplicateEanError();
+      }
     }
 
     const product = Product.load({

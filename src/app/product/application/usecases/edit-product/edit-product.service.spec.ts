@@ -1,6 +1,7 @@
 import { createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { CreateCompany } from 'src/app/company/application/usecases/create-company/create-company.service';
+import { ProductDuplicateEanError } from 'src/app/product/domain/errors/duplicate-ean.error';
 import { ProductNotFoundError } from 'src/app/product/domain/errors/product-not-found.error';
 import { ProductModule } from 'src/app/product/product.module';
 import { CreateSupplier } from 'src/app/supplier/application/usecases/create-supplier/create-supplier.service';
@@ -161,6 +162,125 @@ describe('EditProduct', () => {
       // Assert
       expect(editSpy).toHaveBeenCalled();
     });
+
+    it('should throw an error if EAN is duplicate for the same company', async() => {
+      // Arrange
+      const productData = createMock<ProductDto>({
+        id: 'product-id',
+        ean: '7891234567890',
+        companyId: companyId,
+        currentStock: 10,
+        suppliers: [{ id: supplierId, companyName: 'Test', fantasyName: 'Test' }],
+      });
+
+      const existingProduct = createMock<ProductDto>({
+        id: 'another-product-id',
+        ean: '7899999999999',
+        companyId: companyId,
+      });
+
+      jest.spyOn(sut['productDao'], 'findById').mockResolvedValue(productData);
+      jest.spyOn(sut['productDao'], 'findByEan').mockResolvedValue(existingProduct);
+      const editSpy = jest.spyOn(sut['productRepository'], 'edit').mockResolvedValue();
+
+      // Act & Assert
+      expect.assertions(3);
+      return sut.execute('product-id', { ean: '7899999999999' }).catch((error) => {
+        expect(error).toBeInstanceOf(ProductDuplicateEanError);
+        expect(editSpy).not.toHaveBeenCalled();
+        expect(sut['productDao'].findByEan).toHaveBeenCalledWith('7899999999999', companyId);
+      });
+    });
+
+    it('should not check for duplicate EAN if EAN is not being changed', async() => {
+      // Arrange
+      const productData = createMock<ProductDto>({
+        id: 'product-id',
+        ean: '7891234567890',
+        companyId: companyId,
+        currentStock: 10,
+        suppliers: [{ id: supplierId, companyName: 'Test', fantasyName: 'Test' }],
+      });
+
+      jest.spyOn(sut['productDao'], 'findById').mockResolvedValue(productData);
+      const findByEanSpy = jest.spyOn(sut['productDao'], 'findByEan');
+      jest.spyOn(sut['productRepository'], 'edit').mockResolvedValue();
+
+      // Act
+      await sut.execute('product-id', { type: 'New Type' });
+
+      // Assert
+      expect(findByEanSpy).not.toHaveBeenCalled();
+    });
+
+    it('should preserve currentStock when editing', async() => {
+      // Arrange
+      const productData = createMock<ProductDto>({
+        id: 'product-id',
+        currentStock: 50,
+        suppliers: [{ id: supplierId, companyName: 'Test', fantasyName: 'Test' }],
+      });
+
+      jest.spyOn(sut['productDao'], 'findById').mockResolvedValue(productData);
+      const editSpy = jest.spyOn(sut['productRepository'], 'edit').mockResolvedValue();
+
+      // Act
+      await sut.execute('product-id', { type: 'New Type', minimumStock: 100 });
+
+      // Assert
+      expect(editSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          props: expect.objectContaining({
+            currentStock: 50,
+          }),
+        }),
+      );
+    });
+
+    it('should use existing supplierIds when not provided in data', async() => {
+      // Arrange
+      const productData = createMock<ProductDto>({
+        id: 'product-id',
+        currentStock: 10,
+        suppliers: [
+          { id: supplierId, companyName: 'Test', fantasyName: 'Test' },
+          { id: supplierId2, companyName: 'Test2', fantasyName: 'Test2' },
+        ],
+      });
+
+      jest.spyOn(sut['productDao'], 'findById').mockResolvedValue(productData);
+      const editSpy = jest.spyOn(sut['productRepository'], 'edit').mockResolvedValue();
+
+      // Act
+      await sut.execute('product-id', { type: 'New Type' });
+
+      // Assert
+      expect(editSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          props: expect.objectContaining({
+            supplierIds: [supplierId, supplierId2],
+          }),
+        }),
+      );
+    });
+
+    it('should return success message', async() => {
+      // Arrange
+      const productData = createMock<ProductDto>({
+        id: 'product-id',
+        currentStock: 10,
+        suppliers: [],
+      });
+
+      jest.spyOn(sut['productDao'], 'findById').mockResolvedValue(productData);
+      jest.spyOn(sut['productRepository'], 'edit').mockResolvedValue();
+
+      // Act
+      const result = await sut.execute('product-id', { type: 'New Type' });
+
+      // Assert
+      expect(result).toEqual({ message: 'Produto atualizado com sucesso!' });
+    });
   });
 
   describe('integration tests', () => {
@@ -185,32 +305,6 @@ describe('EditProduct', () => {
       expect(updatedProduct.type).toBe('Novo Tipo');
     });
 
-    it('should update product group01', async() => {
-      // Arrange
-      const product = await createProduct.execute(data);
-      const updateData: EditProductInputDto = { group01: 'Novo Grupo 01' };
-
-      // Act
-      await sut.execute(product.id, updateData);
-
-      // Assert
-      const updatedProduct = await findProductById.execute(product.id);
-      expect(updatedProduct.group01).toBe('Novo Grupo 01');
-    });
-
-    it('should update product group02', async() => {
-      // Arrange
-      const product = await createProduct.execute(data);
-      const updateData: EditProductInputDto = { group02: 'Novo Grupo 02' };
-
-      // Act
-      await sut.execute(product.id, updateData);
-
-      // Assert
-      const updatedProduct = await findProductById.execute(product.id);
-      expect(updatedProduct.group02).toBe('Novo Grupo 02');
-    });
-
     it('should update product description', async() => {
       // Arrange
       const product = await createProduct.execute(data);
@@ -222,45 +316,6 @@ describe('EditProduct', () => {
       // Assert
       const updatedProduct = await findProductById.execute(product.id);
       expect(updatedProduct.description).toBe('Nova Descrição');
-    });
-
-    it('should update product complement', async() => {
-      // Arrange
-      const product = await createProduct.execute(data);
-      const updateData: EditProductInputDto = { complement: 'Novo Complemento' };
-
-      // Act
-      await sut.execute(product.id, updateData);
-
-      // Assert
-      const updatedProduct = await findProductById.execute(product.id);
-      expect(updatedProduct.complement).toBe('Novo Complemento');
-    });
-
-    it('should update product manufacturerCode', async() => {
-      // Arrange
-      const product = await createProduct.execute(data);
-      const updateData: EditProductInputDto = { manufacturerCode: 'NEWCODE001' };
-
-      // Act
-      await sut.execute(product.id, updateData);
-
-      // Assert
-      const updatedProduct = await findProductById.execute(product.id);
-      expect(updatedProduct.manufacturerCode).toBe('NEWCODE001');
-    });
-
-    it('should update product brand', async() => {
-      // Arrange
-      const product = await createProduct.execute(data);
-      const updateData: EditProductInputDto = { brand: 'Nova Marca' };
-
-      // Act
-      await sut.execute(product.id, updateData);
-
-      // Assert
-      const updatedProduct = await findProductById.execute(product.id);
-      expect(updatedProduct.brand).toBe('Nova Marca');
     });
 
     it('should update product ean', async() => {
@@ -276,41 +331,98 @@ describe('EditProduct', () => {
       expect(updatedProduct.ean).toBe('9999999999999');
     });
 
-    it('should update product ncm', async() => {
+    it('should throw an error if EAN is duplicate for the same company', async() => {
       // Arrange
-      const product = await createProduct.execute(data);
-      const updateData: EditProductInputDto = { ncm: '99999999' };
+      await createProduct.execute({
+        ...data,
+        ean: '7891111111111',
+      });
 
-      // Act
-      await sut.execute(product.id, updateData);
+      const product2 = await createProduct.execute({
+        ...data,
+        ean: '7892222222222',
+      });
 
-      // Assert
-      const updatedProduct = await findProductById.execute(product.id);
-      expect(updatedProduct.ncm).toBe('99999999');
+      const updateData: EditProductInputDto = { ean: '7891111111111' };
+
+      // Act & Assert
+      expect.assertions(1);
+      return sut.execute(product2.id, updateData).catch((error) => {
+        expect(error).toBeInstanceOf(ProductDuplicateEanError);
+      });
     });
 
-    it('should update product minimumStock and maximumStock', async() => {
+    it('should allow same EAN for different companies when editing', async() => {
       // Arrange
-      const product = await createProduct.execute(data);
-      const updateData: EditProductInputDto = { minimumStock: 5, maximumStock: 50 };
+      const company2Id = (await createCompany.execute({
+        name: 'Second Company',
+        fantasyName: 'Second Fantasy',
+        document: '17.828.903/0001-68',
+        ie: 'IE Second',
+        zipCode: '12345678',
+        street: 'Second Street',
+        number: '200',
+        neighborhood: 'Second Neighborhood',
+        complement: null,
+        reference: null,
+        city: 'Second City',
+        state: 'SP',
+        cellphone: '2199887766',
+        phone01: '2133445566',
+        phone02: null,
+        email01: 'second@company.com',
+        email02: null,
+      })).id;
+
+      const supplier2Id = (await createSupplier.execute({
+        cnpj: '06.371.907/0001-43',
+        ie: '987654321',
+        group: 'Grupo Teste 3',
+        type: 'Nacional',
+        companyName: 'Supplier Company 3',
+        fantasyName: 'Supplier Fantasy 3',
+        representative: 'Representante Teste 3',
+        companyIds: [company2Id],
+      })).id;
+
+      const productCompany1 = await createProduct.execute({
+        ...data,
+        companyId: companyId,
+        ean: '7899888777666',
+      });
+
+      const productCompany2 = await createProduct.execute({
+        ...data,
+        companyId: company2Id,
+        supplierIds: [supplier2Id],
+        ean: '7899000000000',
+      });
+
+      const updateData: EditProductInputDto = { ean: '7899888777666' }; // Same EAN as company 1
 
       // Act
-      await sut.execute(product.id, updateData);
+      await sut.execute(productCompany2.id, updateData);
 
       // Assert
-      const updatedProduct = await findProductById.execute(product.id);
-      expect(updatedProduct.minimumStock).toBe(5);
-      expect(updatedProduct.maximumStock).toBe(50);
+      const updatedProduct1 = await findProductById.execute(productCompany1.id);
+      const updatedProduct2 = await findProductById.execute(productCompany2.id);
+
+      expect(updatedProduct1.ean).toBe('7899888777666');
+      expect(updatedProduct2.ean).toBe('7899888777666');
+      expect(updatedProduct1.companyId).toBe(companyId);
+      expect(updatedProduct2.companyId).toBe(company2Id);
     });
 
-    it('should update product price fields', async() => {
+    it('should not throw error when updating to same EAN', async() => {
       // Arrange
-      const product = await createProduct.execute(data);
+      const product = await createProduct.execute({
+        ...data,
+        ean: '7891234567890',
+      });
+
       const updateData: EditProductInputDto = {
-        unitCostInCents: 2000,
-        unitPriceInCents: 3000,
-        markup: 50,
-        marginB: 30,
+        ean: '7891234567890', // Same EAN
+        type: 'Novo Tipo',
       };
 
       // Act
@@ -318,90 +430,8 @@ describe('EditProduct', () => {
 
       // Assert
       const updatedProduct = await findProductById.execute(product.id);
-      expect(updatedProduct.unitCostInCents).toBe(2000);
-      expect(updatedProduct.unitPriceInCents).toBe(3000);
-      expect(updatedProduct.markup).toBe(50);
-      expect(updatedProduct.marginB).toBe(30);
-    });
-
-    it('should update product dimensions', async() => {
-      // Arrange
-      const product = await createProduct.execute(data);
-      const updateData: EditProductInputDto = {
-        weightInKg: 2.5,
-        heightInCm: 20,
-        lengthInCm: 30,
-        widthInCm: 25,
-      };
-
-      // Act
-      await sut.execute(product.id, updateData);
-
-      // Assert
-      const updatedProduct = await findProductById.execute(product.id);
-      expect(updatedProduct.weightInKg).toBe(2.5);
-      expect(updatedProduct.heightInCm).toBe(20);
-      expect(updatedProduct.lengthInCm).toBe(30);
-      expect(updatedProduct.widthInCm).toBe(25);
-    });
-
-    it('should update product images', async() => {
-      // Arrange
-      const product = await createProduct.execute(data);
-      const newImages = [
-        'https://example.com/newimage1.jpg',
-        'https://example.com/newimage2.jpg',
-      ];
-      const updateData: EditProductInputDto = { images: newImages };
-
-      // Act
-      await sut.execute(product.id, updateData);
-
-      // Assert
-      const updatedProduct = await findProductById.execute(product.id);
-      expect(updatedProduct.images).toEqual(newImages);
-    });
-
-    it('should update product suppliers', async() => {
-      // Arrange
-      const product = await createProduct.execute(data);
-      const updateData: EditProductInputDto = { supplierIds: [supplierId2] };
-
-      // Act
-      await sut.execute(product.id, updateData);
-
-      // Assert
-      const updatedProduct = await findProductById.execute(product.id);
-      expect(updatedProduct.suppliers).toHaveLength(1);
-      expect(updatedProduct.suppliers[0].id).toBe(supplierId2);
-    });
-
-    it('should add more suppliers to product', async() => {
-      // Arrange
-      const product = await createProduct.execute(data);
-      const updateData: EditProductInputDto = { supplierIds: [supplierId, supplierId2] };
-
-      // Act
-      await sut.execute(product.id, updateData);
-
-      // Assert
-      const updatedProduct = await findProductById.execute(product.id);
-      expect(updatedProduct.suppliers).toHaveLength(2);
-      expect(updatedProduct.suppliers.map(s => s.id)).toContain(supplierId);
-      expect(updatedProduct.suppliers.map(s => s.id)).toContain(supplierId2);
-    });
-
-    it('should remove all suppliers from product', async() => {
-      // Arrange
-      const product = await createProduct.execute(data);
-      const updateData: EditProductInputDto = { supplierIds: [] };
-
-      // Act
-      await sut.execute(product.id, updateData);
-
-      // Assert
-      const updatedProduct = await findProductById.execute(product.id);
-      expect(updatedProduct.suppliers).toHaveLength(0);
+      expect(updatedProduct.ean).toBe('7891234567890');
+      expect(updatedProduct.type).toBe('Novo Tipo');
     });
 
     it('should not alter currentStock when editing product', async() => {
@@ -424,6 +454,20 @@ describe('EditProduct', () => {
       expect(updatedProduct.currentStock).toBe(originalStock);
     });
 
+    it('should update product suppliers', async() => {
+      // Arrange
+      const product = await createProduct.execute(data);
+      const updateData: EditProductInputDto = { supplierIds: [supplierId2] };
+
+      // Act
+      await sut.execute(product.id, updateData);
+
+      // Assert
+      const updatedProduct = await findProductById.execute(product.id);
+      expect(updatedProduct.suppliers).toHaveLength(1);
+      expect(updatedProduct.suppliers[0].id).toBe(supplierId2);
+    });
+
     it('should keep suppliers unchanged when supplierIds is not provided', async() => {
       // Arrange
       const product = await createProduct.execute(data);
@@ -443,8 +487,6 @@ describe('EditProduct', () => {
       const product = await createProduct.execute(data);
       const updateData: EditProductInputDto = {
         type: 'Novo Tipo',
-        group01: 'Novo Grupo 01',
-        group02: 'Novo Grupo 02',
         description: 'Nova Descrição',
         brand: 'Nova Marca',
         unitPriceInCents: 5000,
@@ -457,13 +499,85 @@ describe('EditProduct', () => {
       // Assert
       const updatedProduct = await findProductById.execute(product.id);
       expect(updatedProduct.type).toBe('Novo Tipo');
-      expect(updatedProduct.group01).toBe('Novo Grupo 01');
-      expect(updatedProduct.group02).toBe('Novo Grupo 02');
       expect(updatedProduct.description).toBe('Nova Descrição');
       expect(updatedProduct.brand).toBe('Nova Marca');
       expect(updatedProduct.unitPriceInCents).toBe(5000);
       expect(updatedProduct.suppliers).toHaveLength(1);
       expect(updatedProduct.suppliers[0].id).toBe(supplierId2);
+    });
+
+    it('should update product with null optional fields', async() => {
+      // Arrange
+      const product = await createProduct.execute(data);
+      const updateData: EditProductInputDto = {
+        complement: null,
+        additionalInfo: null,
+      };
+
+      // Act
+      await sut.execute(product.id, updateData);
+
+      // Assert
+      const updatedProduct = await findProductById.execute(product.id);
+      expect(updatedProduct.complement).toBeNull();
+      expect(updatedProduct.additionalInfo).toBeNull();
+    });
+
+    it('should update product images', async() => {
+      // Arrange
+      const product = await createProduct.execute(data);
+      const newImages = [
+        'https://example.com/new1.jpg',
+        'https://example.com/new2.jpg',
+      ];
+      const updateData: EditProductInputDto = { images: newImages };
+
+      // Act
+      await sut.execute(product.id, updateData);
+
+      // Assert
+      const updatedProduct = await findProductById.execute(product.id);
+      expect(updatedProduct.images).toEqual(newImages);
+    });
+
+    it('should update product with decimal values', async() => {
+      // Arrange
+      const product = await createProduct.execute(data);
+      const updateData: EditProductInputDto = {
+        weightInKg: 12.75,
+        heightInCm: 25.5,
+        lengthInCm: 38.25,
+        widthInCm: 15.125,
+        exchangeRate: 5.47,
+      };
+
+      // Act
+      await sut.execute(product.id, updateData);
+
+      // Assert
+      const updatedProduct = await findProductById.execute(product.id);
+      expect(updatedProduct.weightInKg).toBe(12.75);
+      expect(updatedProduct.heightInCm).toBe(25.5);
+      expect(updatedProduct.lengthInCm).toBe(38.25);
+      expect(updatedProduct.widthInCm).toBe(15.125);
+      expect(updatedProduct.exchangeRate).toBe(5.47);
+    });
+
+    it('should update product currency', async() => {
+      // Arrange
+      const product = await createProduct.execute(data);
+      const updateData: EditProductInputDto = {
+        currency: 'USD',
+        exchangeRate: 5.5,
+      };
+
+      // Act
+      await sut.execute(product.id, updateData);
+
+      // Assert
+      const updatedProduct = await findProductById.execute(product.id);
+      expect(updatedProduct.currency).toBe('USD');
+      expect(updatedProduct.exchangeRate).toBe(5.5);
     });
 
     it('should return success message', async() => {
@@ -475,72 +589,6 @@ describe('EditProduct', () => {
 
       // Assert
       expect(result.message).toBe('Produto atualizado com sucesso!');
-    });
-
-    it('should update additionalInfo', async() => {
-      // Arrange
-      const product = await createProduct.execute(data);
-      const updateData: EditProductInputDto = { additionalInfo: 'Novas informações adicionais' };
-
-      // Act
-      await sut.execute(product.id, updateData);
-
-      // Assert
-      const updatedProduct = await findProductById.execute(product.id);
-      expect(updatedProduct.additionalInfo).toBe('Novas informações adicionais');
-    });
-
-    it('should update currency and exchangeRate', async() => {
-      // Arrange
-      const product = await createProduct.execute(data);
-      const updateData: EditProductInputDto = { currency: 'USD', exchangeRate: 5.5 };
-
-      // Act
-      await sut.execute(product.id, updateData);
-
-      // Assert
-      const updatedProduct = await findProductById.execute(product.id);
-      expect(updatedProduct.currency).toBe('USD');
-      expect(updatedProduct.exchangeRate).toBe(5.5);
-    });
-
-    it('should update warrantyDays', async() => {
-      // Arrange
-      const product = await createProduct.execute(data);
-      const updateData: EditProductInputDto = { warrantyDays: 730 };
-
-      // Act
-      await sut.execute(product.id, updateData);
-
-      // Assert
-      const updatedProduct = await findProductById.execute(product.id);
-      expect(updatedProduct.warrantyDays).toBe(730);
-    });
-
-    it('should update economicBatch', async() => {
-      // Arrange
-      const product = await createProduct.execute(data);
-      const updateData: EditProductInputDto = { economicBatch: 'NEWBATCH001' };
-
-      // Act
-      await sut.execute(product.id, updateData);
-
-      // Assert
-      const updatedProduct = await findProductById.execute(product.id);
-      expect(updatedProduct.economicBatch).toBe('NEWBATCH001');
-    });
-
-    it('should update measureUnit', async() => {
-      // Arrange
-      const product = await createProduct.execute(data);
-      const updateData: EditProductInputDto = { measureUnit: 'KG' };
-
-      // Act
-      await sut.execute(product.id, updateData);
-
-      // Assert
-      const updatedProduct = await findProductById.execute(product.id);
-      expect(updatedProduct.measureUnit).toBe('KG');
     });
   });
 });

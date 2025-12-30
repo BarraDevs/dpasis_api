@@ -1,9 +1,12 @@
+import { createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { CreateCompany } from 'src/app/company/application/usecases/create-company/create-company.service';
 import { CompanyNotFoundError } from 'src/app/company/domain/errors/company-not-found.error';
 import { Product } from 'src/app/product/domain/entities/product.entity';
+import { ProductDuplicateEanError } from 'src/app/product/domain/errors/duplicate-ean.error';
 import { ProductModule } from 'src/app/product/product.module';
 import { CreateSupplier } from 'src/app/supplier/application/usecases/create-supplier/create-supplier.service';
+import { SupplierNotFoundError } from 'src/app/supplier/domain/errors/supplier-not-found.error';
 import { SupplierModule } from 'src/app/supplier/supplier.module';
 import { ConfigModule } from 'src/core/config/config.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
@@ -125,6 +128,36 @@ describe('CreateProduct', () => {
       expect.assertions(2);
       return sut.execute(invalidData).catch((error) => {
         expect(error).toBeInstanceOf(CompanyNotFoundError);
+        expect(saveSpy).not.toHaveBeenCalled();
+      });
+    });
+
+    it('should throw an error if EAN is duplicate for the same company', async() => {
+      // Arrange
+      const productData = createMock<ProductDto>();
+      const findByEanSpy = jest.spyOn(sut['productDao'], 'findByEan').mockResolvedValue(productData);
+      const saveSpy = jest.spyOn(sut['productRepo'], 'save').mockResolvedValue();
+
+      // Act & Assert
+      expect.assertions(3);
+      return sut.execute(data).catch((error) => {
+        expect(error).toBeInstanceOf(ProductDuplicateEanError);
+        expect(findByEanSpy).toHaveBeenCalledWith(data.ean, data.companyId);
+        expect(saveSpy).not.toHaveBeenCalled();
+      });
+    });
+
+    it('should throw an error if a supplier does not exist', async() => {
+      // Arrange
+      const invalidData = { ...data, supplierIds: ['non-existent-supplier-id'] };
+      const findByEanSpy = jest.spyOn(sut['productDao'], 'findByEan').mockResolvedValue(null);
+      const saveSpy = jest.spyOn(sut['productRepo'], 'save').mockResolvedValue();
+
+      // Act & Assert
+      expect.assertions(3);
+      return sut.execute(invalidData).catch((error) => {
+        expect(error).toBeInstanceOf(SupplierNotFoundError);
+        expect(findByEanSpy).toHaveBeenCalledWith(data.ean, data.companyId);
         expect(saveSpy).not.toHaveBeenCalled();
       });
     });
@@ -309,6 +342,262 @@ describe('CreateProduct', () => {
       // Assert
       expect(productDto).toBeDefined();
       expect(productDto.currentStock).toBe(0);
+    });
+
+    it('should throw an error if EAN is duplicate for the same company', async() => {
+      // Arrange
+      await sut.execute(data);
+
+      // Act & Assert
+      expect.assertions(1);
+      return sut.execute(data).catch((error) => {
+        expect(error).toBeInstanceOf(ProductDuplicateEanError);
+      });
+    });
+
+    it('should throw an error if one of the suppliers does not exist', async() => {
+      // Arrange
+      const invalidData = {
+        ...data,
+        supplierIds: [supplierId, 'non-existent-supplier-id'],
+      };
+
+      // Act & Assert
+      expect.assertions(1);
+      return sut.execute(invalidData).catch((error) => {
+        expect(error).toBeInstanceOf(SupplierNotFoundError);
+      });
+    });
+
+    it('should persist the product with minimum stock values', async() => {
+      // Arrange
+      const dataWithMinValues: CreateProductInputDto = {
+        ...data,
+        minimumStock: 0,
+        maximumStock: 0,
+        warrantyDays: 0,
+        weightInKg: 0,
+        heightInCm: 0,
+        lengthInCm: 0,
+        widthInCm: 0,
+        markup: 0,
+        marginB: 0,
+        exchangeRate: 0,
+        unitCostInCents: 0,
+        unitPriceInCents: 0,
+      };
+
+      // Act
+      const createResult = await sut.execute(dataWithMinValues);
+      const productDto = await findProductById.execute(createResult.id);
+
+      // Assert
+      expect(productDto).toMatchObject({
+        minimumStock: 0,
+        maximumStock: 0,
+        warrantyDays: 0,
+        weightInKg: 0,
+        heightInCm: 0,
+        lengthInCm: 0,
+        widthInCm: 0,
+        markup: 0,
+        marginB: 0,
+        exchangeRate: 0,
+        unitCostInCents: 0,
+        unitPriceInCents: 0,
+      });
+    });
+
+    it('should persist the product with large stock values', async() => {
+      // Arrange
+      const dataWithLargeValues: CreateProductInputDto = {
+        ...data,
+        minimumStock: 1000,
+        maximumStock: 10000,
+        warrantyDays: 3650, // 10 years
+        weightInKg: 999.99,
+        heightInCm: 500,
+        lengthInCm: 1000,
+        widthInCm: 800,
+        markup: 100,
+        marginB: 80,
+        unitCostInCents: 1000000, // R$ 10,000.00
+        unitPriceInCents: 2000000, // R$ 20,000.00
+      };
+
+      // Act
+      const createResult = await sut.execute(dataWithLargeValues);
+      const productDto = await findProductById.execute(createResult.id);
+
+      // Assert
+      expect(productDto).toMatchObject({
+        minimumStock: 1000,
+        maximumStock: 10000,
+        warrantyDays: 3650,
+        weightInKg: 999.99,
+        heightInCm: 500,
+        lengthInCm: 1000,
+        widthInCm: 800,
+        markup: 100,
+        marginB: 80,
+        unitCostInCents: 1000000,
+        unitPriceInCents: 2000000,
+      });
+    });
+
+    it('should persist the product with different currencies', async() => {
+      // Arrange
+      const currencies = ['BRL', 'USD', 'EUR'];
+
+      for (const currency of currencies) {
+        const dataWithCurrency: CreateProductInputDto = {
+          ...data,
+          ean: `EAN${currency}${Date.now()}`, // Unique EAN for each iteration
+          currency,
+          exchangeRate: currency === 'BRL' ? 1 : 5.5,
+        };
+
+        // Act
+        const createResult = await sut.execute(dataWithCurrency);
+        const productDto = await findProductById.execute(createResult.id);
+
+        // Assert
+        expect(productDto.currency).toBe(currency);
+        expect(productDto.exchangeRate).toBe(dataWithCurrency.exchangeRate);
+      }
+    });
+
+    it('should validate all suppliers exist before creating product', async() => {
+      // Arrange
+      const supplier2Id = (await createSupplier.execute({
+        cnpj: '55967002000146',
+        ie: '999888777',
+        group: 'Grupo Validação',
+        type: 'Nacional',
+        companyName: 'Validation Supplier',
+        fantasyName: 'Validation',
+        representative: 'Rep Validation',
+        companyIds: [companyId],
+      })).id;
+
+      const dataWith2Suppliers: CreateProductInputDto = {
+        ...data,
+        ean: `VALIDATION${Date.now()}`,
+        supplierIds: [supplierId, supplier2Id],
+      };
+
+      // Act
+      const createResult = await sut.execute(dataWith2Suppliers);
+      const productDto = await findProductById.execute(createResult.id);
+
+      // Assert
+      expect(productDto.suppliers).toHaveLength(2);
+      const supplierIds = productDto.suppliers.map(s => s.id);
+      expect(supplierIds).toContain(supplierId);
+      expect(supplierIds).toContain(supplier2Id);
+    });
+
+    it('should persist product with very long description', async() => {
+      // Arrange
+      const longDescription = 'A'.repeat(1000);
+      const dataWithLongDescription: CreateProductInputDto = {
+        ...data,
+        ean: `LONGDESC${Date.now()}`,
+        description: longDescription,
+      };
+
+      // Act
+      const createResult = await sut.execute(dataWithLongDescription);
+      const productDto = await findProductById.execute(createResult.id);
+
+      // Assert
+      expect(productDto.description).toBe(longDescription);
+      expect(productDto.description.length).toBe(1000);
+    });
+
+    it('should persist product with decimal weight and dimensions', async() => {
+      // Arrange
+      const dataWithDecimals: CreateProductInputDto = {
+        ...data,
+        ean: `DECIMAL${Date.now()}`,
+        weightInKg: 12.75,
+        heightInCm: 25.5,
+        lengthInCm: 38.25,
+        widthInCm: 15.125,
+        exchangeRate: 5.47,
+      };
+
+      // Act
+      const createResult = await sut.execute(dataWithDecimals);
+      const productDto = await findProductById.execute(createResult.id);
+
+      // Assert
+      expect(productDto.weightInKg).toBe(12.75);
+      expect(productDto.heightInCm).toBe(25.5);
+      expect(productDto.lengthInCm).toBe(38.25);
+      expect(productDto.widthInCm).toBe(15.125);
+      expect(productDto.exchangeRate).toBe(5.47);
+    });
+
+    it('should allow the same EAN for different companies', async() => {
+      // Arrange
+      const company2Id = (await createCompany.execute({
+        name: 'Second Company',
+        fantasyName: 'Second Fantasy',
+        document: '88.202.511/0001-37',
+        ie: 'IE Second',
+        zipCode: '12345678',
+        street: 'Second Street',
+        number: '200',
+        neighborhood: 'Second Neighborhood',
+        complement: null,
+        reference: null,
+        city: 'Second City',
+        state: 'SP',
+        cellphone: '2199887766',
+        phone01: '2133445566',
+        phone02: null,
+        email01: 'second@company.com',
+        email02: null,
+      })).id;
+
+      const supplier2Id = (await createSupplier.execute({
+        cnpj: '26.970.311/0001-77',
+        ie: '987654321',
+        group: 'Cross Company Group',
+        type: 'Nacional',
+        companyName: 'Cross Company Supplier',
+        fantasyName: 'Cross Supplier',
+        representative: 'Cross Rep',
+        companyIds: [company2Id],
+      })).id;
+
+      const productCompany1: CreateProductInputDto = {
+        ...data,
+        ean: '7899000000018',
+      };
+
+      const productCompany2: CreateProductInputDto = {
+        ...data,
+        companyId: company2Id,
+        ean: '7899000000018', // Same EAN as company 1
+        supplierIds: [supplier2Id],
+      };
+
+      // Act
+      const result1 = await sut.execute(productCompany1);
+      const result2 = await sut.execute(productCompany2);
+
+      const product1 = await findProductById.execute(result1.id);
+      const product2 = await findProductById.execute(result2.id);
+
+      // Assert
+      expect(product1).toBeDefined();
+      expect(product2).toBeDefined();
+      expect(product1.ean).toBe('7899000000018');
+      expect(product2.ean).toBe('7899000000018');
+      expect(product1.companyId).toBe(companyId);
+      expect(product2.companyId).toBe(company2Id);
     });
   });
 });

@@ -937,12 +937,16 @@ describe('ProductRepositoryAdapterPrisma', () => {
 
     it('should save products with same properties but different IDs', async() => {
       // Arrange
-      const props = createProductProps({
+      const props01 = createProductProps({
         description: 'Identical Product',
         ean: '9999999999999',
       });
-      const product1 = Product.create(props);
-      const product2 = Product.create(props);
+      const props02 = createProductProps({
+        description: 'Identical Product',
+        ean: '9999999999998',
+      });
+      const product1 = Product.create(props01);
+      const product2 = Product.create(props02);
 
       // Act
       await sut.save(product1);
@@ -1342,6 +1346,215 @@ describe('ProductRepositoryAdapterPrisma', () => {
       expect(found1?.props.id).toBe(product1.props.id);
       expect(found2?.props.id).toBe(product2.props.id);
       expect(found3?.props.id).toBe(product3.props.id);
+    });
+
+    it('should enforce uniqueness of EAN + companyId combination', async() => {
+      // Arrange
+      const product1 = Product.create(createProductProps({
+        ean: '7899999999999',
+      }));
+
+      await sut.save(product1);
+
+      const product2 = Product.create(createProductProps({
+        ean: '7899999999999', // Same EAN as product1
+      }));
+
+      // Act & Assert
+      expect.assertions(1);
+      await expect(sut.save(product2)).rejects.toThrow();
+    });
+
+    it('should allow same EAN for different companies', async() => {
+      // Arrange
+      const company2 = await prisma.company.create({
+        data: {
+          name: 'Company Test 2',
+          fantasyName: 'Company Test Fantasy 2',
+          document: '98765432000199',
+          ie: 'ie teste 2',
+          zipCode: 'zipCode teste 2',
+          street: 'street teste 2',
+          number: 'number teste 2',
+          neighborhood: 'neighborhood teste 2',
+          city: 'city teste 2',
+          state: 'state teste 2',
+          phone01: 'phone01 teste 2',
+          email01: 'email01@teste2.com',
+          active: true,
+        },
+      });
+
+      const product1 = Product.create(createProductProps({
+        companyId: company.id,
+        ean: '7899888777666',
+      }));
+
+      const product2 = Product.create(createProductProps({
+        companyId: company2.id,
+        ean: '7899888777666', // Same EAN but different company
+      }));
+
+      // Act
+      await sut.save(product1);
+      await sut.save(product2);
+
+      // Assert
+      const savedProduct1 = await prisma.product.findUnique({
+        where: { id: product1.props.id },
+      });
+
+      const savedProduct2 = await prisma.product.findUnique({
+        where: { id: product2.props.id },
+      });
+
+      expect(savedProduct1).toBeDefined();
+      expect(savedProduct2).toBeDefined();
+      expect(savedProduct1?.ean).toBe('7899888777666');
+      expect(savedProduct2?.ean).toBe('7899888777666');
+      expect(savedProduct1?.companyId).toBe(company.id);
+      expect(savedProduct2?.companyId).toBe(company2.id);
+    });
+
+    it('should save and retrieve product with all currency types', async() => {
+      // Arrange
+      const currencies = ['BRL', 'USD', 'EUR'];
+      const products = currencies.map((currency, index) =>
+        Product.create(createProductProps({
+          ean: `CURR${index}${Date.now()}`,
+          currency,
+          exchangeRate: currency === 'BRL' ? 1.0 : 5.5,
+        })),
+      );
+
+      // Act
+      await Promise.all(products.map(p => sut.save(p)));
+
+      // Assert
+      for (let i = 0; i < products.length; i++) {
+        const saved = await prisma.product.findUnique({
+          where: { id: products[i].props.id },
+        });
+        expect(saved?.currency).toBe(currencies[i]);
+      }
+    });
+
+    it('should maintain data integrity when updating suppliers', async() => {
+      // Arrange
+      const product = Product.create(createProductProps({
+        supplierIds: [supplier01.id],
+      }));
+
+      await sut.save(product);
+
+      // Act - Update product with different suppliers
+      const updatedProduct = Product.load({
+        ...product.props,
+        supplierIds: [supplier02.id],
+      });
+
+      await sut.edit(updatedProduct);
+
+      // Assert
+      const savedProduct = await prisma.product.findUnique({
+        where: { id: product.props.id },
+        include: { suppliers: true },
+      });
+
+      expect(savedProduct?.suppliers).toHaveLength(1);
+      expect(savedProduct?.suppliers[0].id).toBe(supplier02.id);
+    });
+
+    it('should handle products with empty string fields', async() => {
+      // Arrange
+      const product = Product.create(createProductProps({
+        complement: '',
+        additionalInfo: '',
+        manufacturerCode: '',
+      }));
+
+      // Act
+      await sut.save(product);
+
+      // Assert
+      const savedProduct = await prisma.product.findUnique({
+        where: { id: product.props.id },
+      });
+
+      expect(savedProduct?.complement).toBe('');
+      expect(savedProduct?.additionalInfo).toBe('');
+      expect(savedProduct?.manufacturerCode).toBe('');
+    });
+
+    it('should preserve exact decimal precision for financial values', async() => {
+      // Arrange
+      const product = Product.create(createProductProps({
+        exchangeRate: 5.4732,
+        weightInKg: 12.3456,
+        markup: 33.33,
+        marginB: 25.75,
+      }));
+
+      // Act
+      await sut.save(product);
+
+      // Assert
+      const savedProduct = await prisma.product.findUnique({
+        where: { id: product.props.id },
+      });
+
+      expect(savedProduct?.exchangeRate).toBeCloseTo(5.4732, 4);
+      expect(savedProduct?.weightInKg).toBeCloseTo(12.3456, 4);
+      expect(savedProduct?.markup).toBeCloseTo(33.33, 2);
+      expect(savedProduct?.marginB).toBeCloseTo(25.75, 2);
+    });
+
+    it('should handle product deletion and recreation with same EAN', async() => {
+      // Arrange
+      const ean = '7899555444333';
+      const product1 = Product.create(createProductProps({ ean }));
+
+      await sut.save(product1);
+      await sut.delete(product1.props.id);
+
+      const product2 = Product.create(createProductProps({ ean }));
+
+      // Act
+      await sut.save(product2);
+
+      // Assert
+      const savedProduct = await prisma.product.findUnique({
+        where: { id: product2.props.id },
+      });
+
+      expect(savedProduct).toBeDefined();
+      expect(savedProduct?.ean).toBe(ean);
+      expect(savedProduct?.id).toBe(product2.props.id);
+      expect(savedProduct?.id).not.toBe(product1.props.id);
+    });
+
+    it('should validate image URLs are preserved correctly', async() => {
+      // Arrange
+      const images = [
+        'https://example.com/product/image1.jpg',
+        'https://cdn.example.com/images/product-2.png',
+        'https://storage.example.com/media/product_3.webp',
+      ];
+      const product = Product.create(createProductProps({ images }));
+
+      // Act
+      await sut.save(product);
+
+      // Assert
+      const savedProduct = await prisma.product.findUnique({
+        where: { id: product.props.id },
+      });
+
+      expect(savedProduct?.images).toHaveLength(3);
+      expect(savedProduct?.images).toEqual(images);
+      images.forEach((image, index) => {
+        expect(savedProduct?.images[index]).toBe(image);
+      });
     });
   });
 });

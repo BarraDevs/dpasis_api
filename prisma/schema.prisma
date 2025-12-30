@@ -310,8 +310,8 @@ model Product {
   heightInCm       Float
   lengthInCm       Float
   widthInCm        Float
-  markup           Int
-  marginB          Int
+  markup           Float
+  marginB          Float
   currency         String                 @db.VarChar(10)
   exchangeRate     Float
   unitCostInCents  Int
@@ -328,6 +328,7 @@ model Product {
   suppliers        Supplier[]
 
   @@map("products")
+  @@unique([ean, companyId])
 }
 
 model ProductStockMovement {
