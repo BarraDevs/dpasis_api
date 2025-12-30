@@ -37,7 +37,6 @@ export class CreateSeller {
       avatarUrl = imageUploaded.url;
     }
 
-    // Generate random password and hash it
     const seller = Seller.create({ ...data, avatarUrl });
     const hashedPassword = new Password(data.password).value;
 
