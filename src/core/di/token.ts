@@ -10,6 +10,7 @@ const TOKENS = {
   ContactDao: Symbol.for('ContactDao'),
   LicenseDao: Symbol.for('LicenseDao'),
   OwnerDao: Symbol.for('OwnerDao'),
+  ServiceCategoryDao: Symbol.for('ServiceCategoryDao'),
 
   CompanyDao: Symbol.for('CompanyDao'),
   CompanyRepository: Symbol.for('CompanyRepository'),

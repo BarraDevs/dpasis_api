@@ -128,9 +128,8 @@ model Owner {
   attachments Attachment[]
   items       Item[]
 
-  clientId String? @unique
-  client   Client? @relation(fields: [clientId], references: [id], onDelete: Cascade)
-
+  clientId   String?   @unique
+  client     Client?   @relation(fields: [clientId], references: [id], onDelete: Cascade)
   supplierId String?   @unique
   supplier   Supplier? @relation(fields: [supplierId], references: [id], onDelete: Cascade)
 
@@ -319,7 +318,7 @@ model Product {
   ean              String                 @db.VarChar(256)
   additionalInfo   String?                @db.Text
   images           String[]
-  currentStock     Int                  @default(0)
+  currentStock     Int                    @default(0)
   createdAt        DateTime               @default(now())
   updatedAt        DateTime               @updatedAt
   companyId        String
@@ -327,15 +326,15 @@ model Product {
   movements        ProductStockMovement[]
   suppliers        Supplier[]
 
-  @@map("products")
   @@unique([ean, companyId])
+  @@map("products")
 }
 
 model ProductStockMovement {
   id               String   @id @default(uuid())
   productId        String
   product          Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  type             String   @db.VarChar(50)
+  type             String
   quantity         Int
   unitPriceInCents Int
   createdAt        DateTime @default(now())
@@ -343,22 +342,12 @@ model ProductStockMovement {
   @@map("stock_movements")
 }
 
-model Faq {
+model ServiceCategory {
   id        String   @id @default(uuid())
-  question  String   @db.Text
-  answer    String   @db.Text
+  name      String   @unique @db.VarChar(256)
+  active    Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@map("faqs")
-}
-
-model Text {
-  id        String   @id @default(uuid())
-  type      String   @unique
-  content   String   @db.Text
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("texts")
+  @@map("service_categories")
 }
