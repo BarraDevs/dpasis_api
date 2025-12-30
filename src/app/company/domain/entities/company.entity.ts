@@ -1,6 +1,7 @@
 import { Document } from 'src/shared/value-objects/document/document.vo';
 import { Email } from 'src/shared/value-objects/email/email.vo';
 import { Phone } from 'src/shared/value-objects/phone/phone.vo';
+import { UTCDate } from 'src/shared/value-objects/utc-date/utc-date.vo';
 import { UUID } from 'src/shared/value-objects/uuid/uuid.vo';
 
 type CompanyProps = CompanyCreateProps & {
@@ -40,8 +41,8 @@ export class Company {
       ...props,
       id: new UUID().value,
       active: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      createdAt: UTCDate.create().value,
+      updatedAt: UTCDate.create().value,
     });
   }
 
@@ -53,8 +54,8 @@ export class Company {
     this._props = {
       id: props.id,
       active: props.active,
-      createdAt: props.createdAt,
-      updatedAt: props.updatedAt,
+      createdAt: UTCDate.from(props.createdAt).value,
+      updatedAt: UTCDate.from(props.updatedAt).value,
       name: props.name,
       fantasyName: props.fantasyName,
       document: new Document(props.document).value,
@@ -81,6 +82,6 @@ export class Company {
 
   public toggleStatus(): void {
     this._props.active = !this._props.active;
-    this._props.updatedAt = new Date();
+    this._props.updatedAt = UTCDate.create().value;
   }
 }

@@ -1,4 +1,5 @@
 import { PositiveInt } from 'src/shared/value-objects/positive-int/positive-int.vo';
+import { UTCDate } from 'src/shared/value-objects/utc-date/utc-date.vo';
 import { UUID } from 'src/shared/value-objects/uuid/uuid.vo';
 
 type ItemProps = ItemCreateProps & {
@@ -22,8 +23,8 @@ export class Item {
     return new Item({
       ...props,
       id: new UUID().value,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      createdAt: UTCDate.create().value,
+      updatedAt: UTCDate.create().value,
     });
   }
 
@@ -41,8 +42,8 @@ export class Item {
 
     this._props = {
       id: props.id,
-      createdAt: props.createdAt,
-      updatedAt: props.updatedAt,
+      createdAt: UTCDate.from(props.createdAt).value,
+      updatedAt: UTCDate.from(props.updatedAt).value,
       ownerId: props.ownerId,
       description: props.description,
       serviceCode: props.serviceCode,

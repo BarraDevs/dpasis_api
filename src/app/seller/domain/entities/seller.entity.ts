@@ -1,6 +1,7 @@
 import { Commission } from 'src/shared/value-objects/commission/commision.vo';
 import { Email } from 'src/shared/value-objects/email/email.vo';
 import { Phone } from 'src/shared/value-objects/phone/phone.vo';
+import { UTCDate } from 'src/shared/value-objects/utc-date/utc-date.vo';
 import { UUID } from 'src/shared/value-objects/uuid/uuid.vo';
 
 type SellerProps = SellerCreateProps & {
@@ -38,8 +39,8 @@ export class Seller {
       ...props,
       id: new UUID().value,
       active: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      createdAt: UTCDate.create().value,
+      updatedAt: UTCDate.create().value,
     });
   }
 
@@ -55,8 +56,8 @@ export class Seller {
     this._props = {
       id: props.id,
       active: props.active,
-      createdAt: props.createdAt,
-      updatedAt: props.updatedAt,
+      createdAt: UTCDate.from(props.createdAt).value,
+      updatedAt: UTCDate.from(props.updatedAt).value,
       name: props.name,
       nickname: props.nickname,
       phone: new Phone(props.phone).value,

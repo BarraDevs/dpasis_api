@@ -1,3 +1,4 @@
+import { UTCDate } from 'src/shared/value-objects/utc-date/utc-date.vo';
 import { UUID } from 'src/shared/value-objects/uuid/uuid.vo';
 import { InvalidMaximumStockError } from '../errors/invalid-maximum-stock.error';
 import { InvalidMinimumStockError } from '../errors/invalid-minimum-stock.error';
@@ -49,8 +50,8 @@ export class Product {
       ...props,
       id: new UUID().value,
       currentStock: 0,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      createdAt: UTCDate.create().value,
+      updatedAt: UTCDate.create().value,
     });
   }
 
@@ -80,8 +81,8 @@ export class Product {
     this._props = {
       id: props.id,
       currentStock: props.currentStock,
-      createdAt: props.createdAt,
-      updatedAt: props.updatedAt,
+      createdAt: UTCDate.from(props.createdAt).value,
+      updatedAt: UTCDate.from(props.updatedAt).value,
       companyId: props.companyId,
       type: props.type,
       group01: props.group01,
@@ -119,6 +120,6 @@ export class Product {
 
   public updateStock(newStock: number): void {
     this._props.currentStock = this.props.currentStock + newStock;
-    this._props.updatedAt = new Date();
+    this._props.updatedAt = UTCDate.create().value;
   }
 }

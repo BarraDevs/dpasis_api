@@ -1,4 +1,5 @@
 import { CNPJ } from 'src/shared/value-objects/cnpj/cnpj.vo';
+import { UTCDate } from 'src/shared/value-objects/utc-date/utc-date.vo';
 import { UUID } from 'src/shared/value-objects/uuid/uuid.vo';
 
 type SupplierProps = SupplierCreateProps & {
@@ -27,8 +28,8 @@ export class Supplier {
       ...props,
       id: new UUID().value,
       active: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      createdAt: UTCDate.create().value,
+      updatedAt: UTCDate.create().value,
     });
   }
 
@@ -44,8 +45,8 @@ export class Supplier {
     this._props = {
       id: props.id,
       active: props.active,
-      createdAt: props.createdAt,
-      updatedAt: props.updatedAt,
+      createdAt: UTCDate.from(props.createdAt).value,
+      updatedAt: UTCDate.from(props.updatedAt).value,
       cnpj: new CNPJ(props.cnpj).value,
       ie: props.ie,
       group: props.group,

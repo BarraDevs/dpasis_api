@@ -511,8 +511,8 @@ describe('Product Entity', () => {
       // Assert
       expect(product.props.id).toBe(mockLoadProps.id);
       expect(product.props.currentStock).toBe(mockLoadProps.currentStock);
-      expect(product.props.createdAt).toBe(mockLoadProps.createdAt);
-      expect(product.props.updatedAt).toBe(mockLoadProps.updatedAt);
+      expect(product.props.createdAt).toStrictEqual(mockLoadProps.createdAt);
+      expect(product.props.updatedAt).toStrictEqual(mockLoadProps.updatedAt);
       expect(product.props.companyId).toBe(mockLoadProps.companyId);
       expect(product.props.type).toBe(mockLoadProps.type);
       expect(product.props.group01).toBe(mockLoadProps.group01);
@@ -638,8 +638,8 @@ describe('Product Entity', () => {
       // Assert
       expect(product.props.id).toBe(mockLoadProps.id);
       expect(product.props.currentStock).toBe(mockLoadProps.currentStock);
-      expect(product.props.createdAt).toBe(mockLoadProps.createdAt);
-      expect(product.props.updatedAt).toBe(mockLoadProps.updatedAt);
+      expect(product.props.createdAt).toStrictEqual(mockLoadProps.createdAt);
+      expect(product.props.updatedAt).toStrictEqual(mockLoadProps.updatedAt);
       expect(product.props.companyId).toBe(mockLoadProps.companyId);
       expect(product.props.type).toBe(mockLoadProps.type);
       expect(product.props.group01).toBe(mockLoadProps.group01);

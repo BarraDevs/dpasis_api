@@ -230,8 +230,8 @@ describe('SellerEntity', () => {
       const seller = Seller.load(existingProps);
 
       // Assert
-      expect(seller.props.createdAt).toBe(createdDate);
-      expect(seller.props.updatedAt).toBe(updatedDate);
+      expect(seller.props.createdAt).toStrictEqual(createdDate);
+      expect(seller.props.updatedAt).toStrictEqual(updatedDate);
     });
   });
 

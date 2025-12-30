@@ -261,8 +261,8 @@ describe('Shipper Entity', () => {
       expect(shipper.props.city).toBe(existingProps.city);
       expect(shipper.props.state).toBe(existingProps.state);
       expect(shipper.props.active).toBe(existingProps.active);
-      expect(shipper.props.createdAt).toBe(existingProps.createdAt);
-      expect(shipper.props.updatedAt).toBe(existingProps.updatedAt);
+      expect(shipper.props.createdAt).toStrictEqual(existingProps.createdAt);
+      expect(shipper.props.updatedAt).toStrictEqual(existingProps.updatedAt);
       expect(shipper.props.companyIds).toEqual(existingProps.companyIds);
     });
 
@@ -382,8 +382,8 @@ describe('Shipper Entity', () => {
       const shipper = Shipper.load(existingProps);
 
       // Assert
-      expect(shipper.props.createdAt).toBe(createdAt);
-      expect(shipper.props.updatedAt).toBe(updatedAt);
+      expect(shipper.props.createdAt).toStrictEqual(createdAt);
+      expect(shipper.props.updatedAt).toStrictEqual(updatedAt);
       expect(shipper.props.createdAt.getTime()).toBe(createdAt.getTime());
       expect(shipper.props.updatedAt.getTime()).toBe(updatedAt.getTime());
     });

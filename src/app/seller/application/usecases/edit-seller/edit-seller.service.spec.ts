@@ -46,6 +46,8 @@ describe('EditSeller', () => {
       { id: 'company-id-1', name: 'Company 1' },
       { id: 'company-id-2', name: 'Company 2' },
     ],
+    createdAt: new Date(),
+    updatedAt: new Date(),
   };
 
   const mockEditDto: EditSellerInputDto = {

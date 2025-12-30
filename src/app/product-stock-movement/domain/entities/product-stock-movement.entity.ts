@@ -1,5 +1,6 @@
 import { Product } from 'src/app/product/domain/entities/product.entity';
 import { AppException } from 'src/core/filters/app.exception';
+import { UTCDate } from 'src/shared/value-objects/utc-date/utc-date.vo';
 import { UUID } from 'src/shared/value-objects/uuid/uuid.vo';
 import { ProductStockMovementTypeEnum } from '../enums/product-stock-movement.enum';
 import { InsufficientStockError } from '../errors/insufficient-stock.error';
@@ -38,7 +39,7 @@ export class ProductStockMovement {
       type: props.type,
       quantity: props.quantity,
       unitPriceInCents: props.unitPriceInCents,
-      createdAt: new Date(),
+      createdAt: UTCDate.create().value,
     });
 
     if (props.type === ProductStockMovementTypeEnum.INPUT) {
@@ -69,7 +70,7 @@ export class ProductStockMovement {
       type: props.type,
       quantity: props.quantity,
       unitPriceInCents: props.unitPriceInCents,
-      createdAt: props.createdAt,
+      createdAt: UTCDate.from(props.createdAt).value,
     };
   }
 }

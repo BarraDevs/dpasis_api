@@ -107,6 +107,8 @@ describe('EditShipper', () => {
         id: shipperId,
         cnpj: '20.975.708/0001-75',
         companies: [{ id: 'company-id-1', name: 'Company 1' }],
+        createdAt: new Date(),
+        updatedAt: new Date(),
       });
 
       const duplicateShipper = createMock<ShipperDto>({
@@ -133,6 +135,8 @@ describe('EditShipper', () => {
         id: shipperId,
         cnpj: '43927286000168',
         companies: [{ id: 'company-id-1', name: 'Company 1' }],
+        createdAt: new Date(),
+        updatedAt: new Date(),
       });
 
       jest.spyOn(shipperDao, 'findById').mockResolvedValue(existingShipper);
@@ -156,6 +160,8 @@ describe('EditShipper', () => {
         id: shipperId,
         cnpj: '43927286000168',
         companies: [{ id: 'company-id-old', name: 'Old Company' }],
+        createdAt: new Date(),
+        updatedAt: new Date(),
       });
 
       jest.spyOn(shipperDao, 'findById').mockResolvedValue(existingShipper);
@@ -182,6 +188,8 @@ describe('EditShipper', () => {
         id: shipperId,
         cnpj: '05158719000179',
         companies: [{ id: 'company-id-1', name: 'Company 1' }],
+        createdAt: new Date(),
+        updatedAt: new Date(),
       });
 
       jest.spyOn(shipperDao, 'findById').mockResolvedValue(existingShipper);
@@ -209,6 +217,8 @@ describe('EditShipper', () => {
         fantasyName: 'Old Fantasy Name',
         cnpj: '05158719000179',
         companies: [{ id: 'company-id-1', name: 'Company 1' }],
+        createdAt: new Date(),
+        updatedAt: new Date(),
       });
 
       jest.spyOn(shipperDao, 'findById').mockResolvedValue(existingShipper);
@@ -241,6 +251,8 @@ describe('EditShipper', () => {
         id: shipperId,
         cnpj: '05158719000179',
         companies: [{ id: 'company-id-1', name: 'Company 1' }],
+        createdAt: new Date(),
+        updatedAt: new Date(),
       });
 
       jest.spyOn(shipperDao, 'findById').mockResolvedValue(existingShipper);

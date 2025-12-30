@@ -159,8 +159,8 @@ describe('Supplier Entity', () => {
       expect(supplier.props.fantasyName).toBe(existingProps.fantasyName);
       expect(supplier.props.representative).toBe(existingProps.representative);
       expect(supplier.props.active).toBe(existingProps.active);
-      expect(supplier.props.createdAt).toBe(existingProps.createdAt);
-      expect(supplier.props.updatedAt).toBe(existingProps.updatedAt);
+      expect(supplier.props.createdAt).toStrictEqual(existingProps.createdAt);
+      expect(supplier.props.updatedAt).toStrictEqual(existingProps.updatedAt);
       expect(supplier.props.companyIds).toEqual(existingProps.companyIds);
     });
 
@@ -256,8 +256,8 @@ describe('Supplier Entity', () => {
       const supplier = Supplier.load(existingProps);
 
       // Assert
-      expect(supplier.props.createdAt).toBe(createdAt);
-      expect(supplier.props.updatedAt).toBe(updatedAt);
+      expect(supplier.props.createdAt).toStrictEqual(createdAt);
+      expect(supplier.props.updatedAt).toStrictEqual(updatedAt);
       expect(supplier.props.createdAt.getTime()).toBe(createdAt.getTime());
       expect(supplier.props.updatedAt.getTime()).toBe(updatedAt.getTime());
     });

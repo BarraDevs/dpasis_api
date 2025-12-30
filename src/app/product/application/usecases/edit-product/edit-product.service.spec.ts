@@ -152,6 +152,8 @@ describe('EditProduct', () => {
         type: 'Old Type',
         currentStock: 10,
         suppliers: [{ id: supplierId, companyName: 'Test', fantasyName: 'Test' }],
+        createdAt: new Date(),
+        updatedAt: new Date(),
       });
       jest.spyOn(sut['productDao'], 'findById').mockResolvedValue(productData);
       const editSpy = jest.spyOn(sut['productRepository'], 'edit').mockResolvedValue();
@@ -200,6 +202,8 @@ describe('EditProduct', () => {
         companyId: companyId,
         currentStock: 10,
         suppliers: [{ id: supplierId, companyName: 'Test', fantasyName: 'Test' }],
+        createdAt: new Date(),
+        updatedAt: new Date(),
       });
 
       jest.spyOn(sut['productDao'], 'findById').mockResolvedValue(productData);
@@ -219,6 +223,8 @@ describe('EditProduct', () => {
         id: 'product-id',
         currentStock: 50,
         suppliers: [{ id: supplierId, companyName: 'Test', fantasyName: 'Test' }],
+        createdAt: new Date(),
+        updatedAt: new Date(),
       });
 
       jest.spyOn(sut['productDao'], 'findById').mockResolvedValue(productData);
@@ -246,6 +252,8 @@ describe('EditProduct', () => {
           { id: supplierId, companyName: 'Test', fantasyName: 'Test' },
           { id: supplierId2, companyName: 'Test2', fantasyName: 'Test2' },
         ],
+        createdAt: new Date(),
+        updatedAt: new Date(),
       });
 
       jest.spyOn(sut['productDao'], 'findById').mockResolvedValue(productData);
@@ -270,6 +278,8 @@ describe('EditProduct', () => {
         id: 'product-id',
         currentStock: 10,
         suppliers: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
       });
 
       jest.spyOn(sut['productDao'], 'findById').mockResolvedValue(productData);

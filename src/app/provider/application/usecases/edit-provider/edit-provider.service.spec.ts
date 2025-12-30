@@ -124,6 +124,8 @@ describe('EditProvider', () => {
         email: 'jhondoe@email.com',
         cnpj: '24089630000142',
         type: ProviderType.RECURRING,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       });
       const existingProvider = createMock<ProviderDto>({ cnpj: '22333444000105' });
       jest.spyOn(sut['providerDao'], 'findById').mockResolvedValue(providerData);

@@ -4,6 +4,7 @@ import { CompanyNotFoundError } from 'src/app/company/domain/errors/company-not-
 import { CompanyDuplicateDocumentError } from 'src/app/company/domain/errors/duplicate-document.error';
 import { TOKENS } from 'src/core/di/token';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
+import { UTCDate } from 'src/shared/value-objects/utc-date/utc-date.vo';
 import type { ICompanyDao } from '../../persistence/dao/company-dao.interface';
 import type { ICompanyRepository } from '../../persistence/repository/company-repository.interface';
 import { EditCompanyInputDto } from './dtos/edit-company.dto';
@@ -24,7 +25,7 @@ export class EditCompany {
     const company = Company.load({
       ...companyData,
       ...data,
-      updatedAt: new Date(),
+      updatedAt: UTCDate.create().value,
     });
 
     if (data.document && company.props.document !== companyData.document) {

@@ -4,6 +4,7 @@ import { ProductDuplicateEanError } from 'src/app/product/domain/errors/duplicat
 import { ProductNotFoundError } from 'src/app/product/domain/errors/product-not-found.error';
 import { TOKENS } from 'src/core/di/token';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
+import { UTCDate } from 'src/shared/value-objects/utc-date/utc-date.vo';
 import type { IProductDao } from '../../persistence/dao/product-dao.interface';
 import type { IProductRepository } from '../../persistence/repository/product-repository.interface';
 import { EditProductInputDto } from './dtos/edit-product.dto';
@@ -33,7 +34,7 @@ export class EditProduct {
       ...data,
       supplierIds: data.supplierIds ?? productDto.suppliers.map(supplier => supplier.id),
       currentStock: productDto.currentStock, // ensure currentStock is not altered
-      updatedAt: new Date(),
+      updatedAt: UTCDate.create().value,
     });
 
     await this.productRepository.edit(product);

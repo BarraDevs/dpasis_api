@@ -1,5 +1,6 @@
 import { CNPJ } from 'src/shared/value-objects/cnpj/cnpj.vo';
 import { Email } from 'src/shared/value-objects/email/email.vo';
+import { UTCDate } from 'src/shared/value-objects/utc-date/utc-date.vo';
 import { UUID } from 'src/shared/value-objects/uuid/uuid.vo';
 import { ProviderType } from '../enums/provider-type.enum';
 import { InvalidProviderTypeError } from '../errors/invalid-provider-type.error';
@@ -41,8 +42,8 @@ export class Provider {
       ...props,
       id: new UUID().value,
       active: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      createdAt: UTCDate.create().value,
+      updatedAt: UTCDate.create().value,
     });
   }
 
@@ -63,8 +64,8 @@ export class Provider {
     this._props = {
       id: props.id,
       active: props.active,
-      createdAt: props.createdAt,
-      updatedAt: props.updatedAt,
+      createdAt: UTCDate.from(props.createdAt).value,
+      updatedAt: UTCDate.from(props.updatedAt).value,
       name: props.name,
       type: props.type,
       valueInCents: props.valueInCents,

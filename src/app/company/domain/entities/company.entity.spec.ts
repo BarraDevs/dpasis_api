@@ -362,8 +362,8 @@ describe('Company Entity', () => {
       const company = Company.load({ ...existingProps, createdAt, updatedAt });
 
       // Assert
-      expect(company.props.createdAt).toBe(createdAt);
-      expect(company.props.updatedAt).toBe(updatedAt);
+      expect(company.props.createdAt).toStrictEqual(createdAt);
+      expect(company.props.updatedAt).toStrictEqual(updatedAt);
       expect(company.props.createdAt.getTime()).toBe(createdAt.getTime());
       expect(company.props.updatedAt.getTime()).toBe(updatedAt.getTime());
     });
