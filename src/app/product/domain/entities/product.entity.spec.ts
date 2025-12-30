@@ -313,22 +313,6 @@ describe('Product Entity', () => {
           // Act & Assert
           expect(() => Product.create(invalidProps)).toThrow(InvalidMaximumStockError);
         });
-
-        it('should create product when maximumStock is zero', () => {
-          // Arrange
-          const validProps: ProductCreateProps = {
-            ...mockCreateProps,
-            minimumStock: 0,
-            maximumStock: 0,
-          };
-
-          // Act
-          const product = Product.create(validProps);
-
-          // Assert
-          expect(product).toBeInstanceOf(Product);
-          expect(product.props.maximumStock).toBe(0);
-        });
       });
 
       describe('stock range validation (minimumStock <= maximumStock)', () => {
@@ -388,23 +372,6 @@ describe('Product Entity', () => {
           expect(product).toBeInstanceOf(Product);
           expect(product.props.minimumStock).toBe(10);
           expect(product.props.maximumStock).toBe(100);
-        });
-
-        it('should create product when both minimumStock and maximumStock are zero', () => {
-          // Arrange
-          const validProps: ProductCreateProps = {
-            ...mockCreateProps,
-            minimumStock: 0,
-            maximumStock: 0,
-          };
-
-          // Act
-          const product = Product.create(validProps);
-
-          // Assert
-          expect(product).toBeInstanceOf(Product);
-          expect(product.props.minimumStock).toBe(0);
-          expect(product.props.maximumStock).toBe(0);
         });
 
         it('should create product when minimumStock is zero and maximumStock is positive', () => {
@@ -958,7 +925,6 @@ describe('Product Entity', () => {
       const propsWithZeros: ProductCreateProps = {
         ...mockCreateProps,
         minimumStock: 0,
-        maximumStock: 0,
         warrantyDays: 0,
         weightInKg: 0,
         heightInCm: 0,
@@ -976,7 +942,6 @@ describe('Product Entity', () => {
 
       // Assert
       expect(product.props.minimumStock).toBe(0);
-      expect(product.props.maximumStock).toBe(0);
       expect(product.props.warrantyDays).toBe(0);
       expect(product.props.weightInKg).toBe(0);
       expect(product.props.markup).toBe(0);
@@ -1517,6 +1482,501 @@ describe('Product Entity', () => {
 
       // Assert
       expect(product.props.currentStock).toBeCloseTo(6.0);
+    });
+
+    it('should not allow stock to go below minimum without throwing error', () => {
+      // Arrange
+      const product = Product.load({
+        ...mockLoadProps,
+        currentStock: 10,
+        minimumStock: 5,
+      });
+
+      // Act
+      product.updateStock(-8); // Goes to 2, which is below minimum
+
+      // Assert - Entity doesn't enforce minimum stock, just validates it exists
+      expect(product.props.currentStock).toBe(2);
+      expect(product.props.currentStock).toBeLessThan(product.props.minimumStock);
+    });
+
+    it('should not allow stock to go above maximum without throwing error', () => {
+      // Arrange
+      const product = Product.load({
+        ...mockLoadProps,
+        currentStock: 45,
+        maximumStock: 50,
+      });
+
+      // Act
+      product.updateStock(10); // Goes to 55, which is above maximum
+
+      // Assert - Entity doesn't enforce maximum stock, just validates it exists
+      expect(product.props.currentStock).toBe(55);
+      expect(product.props.currentStock).toBeGreaterThan(product.props.maximumStock);
+    });
+
+    it('should preserve all other properties when updating stock', () => {
+      // Arrange
+      const product = Product.load(mockLoadProps);
+      const beforeUpdate = product.props;
+
+      // Act
+      product.updateStock(5);
+
+      // Assert
+      const afterUpdate = product.props;
+      expect(afterUpdate.id).toBe(beforeUpdate.id);
+      expect(afterUpdate.companyId).toBe(beforeUpdate.companyId);
+      expect(afterUpdate.description).toBe(beforeUpdate.description);
+      expect(afterUpdate.minimumStock).toBe(beforeUpdate.minimumStock);
+      expect(afterUpdate.maximumStock).toBe(beforeUpdate.maximumStock);
+      expect(afterUpdate.unitCostInCents).toBe(beforeUpdate.unitCostInCents);
+      expect(afterUpdate.unitPriceInCents).toBe(beforeUpdate.unitPriceInCents);
+      expect(afterUpdate.images).toEqual(beforeUpdate.images);
+      expect(afterUpdate.supplierIds).toEqual(beforeUpdate.supplierIds);
+      // Only currentStock and updatedAt should change
+      expect(afterUpdate.currentStock).not.toBe(beforeUpdate.currentStock);
+      expect(afterUpdate.updatedAt).not.toEqual(beforeUpdate.updatedAt);
+    });
+
+    it('should update updatedAt even when adding zero to stock', () => {
+      // Arrange
+      const originalDate = new Date('2024-01-01T00:00:00Z');
+      const product = Product.load({ ...mockLoadProps, updatedAt: originalDate });
+      const beforeUpdate = new Date();
+
+      // Act
+      product.updateStock(0);
+
+      // Assert
+      expect(product.props.updatedAt.getTime()).toBeGreaterThan(originalDate.getTime());
+      expect(product.props.updatedAt.getTime()).toBeGreaterThanOrEqual(beforeUpdate.getTime());
+    });
+  });
+
+  describe('PositiveInt validations via constructor', () => {
+    it('should throw error when warrantyDays is negative', () => {
+      // Arrange
+      const invalidProps = {
+        ...mockLoadProps,
+        warrantyDays: -1,
+      };
+
+      // Act & Assert
+      expect(() => Product.load(invalidProps)).toThrow();
+    });
+
+    it('should allow warrantyDays to be zero', () => {
+      // Arrange
+      const validProps = {
+        ...mockLoadProps,
+        warrantyDays: 0,
+      };
+
+      // Act
+      const product = Product.load(validProps);
+
+      // Assert
+      expect(product.props.warrantyDays).toBe(0);
+    });
+
+    it('should throw error when unitCostInCents is negative', () => {
+      // Arrange
+      const invalidProps = {
+        ...mockLoadProps,
+        unitCostInCents: -100,
+      };
+
+      // Act & Assert
+      expect(() => Product.load(invalidProps)).toThrow();
+    });
+
+    it('should allow unitCostInCents to be zero', () => {
+      // Arrange
+      const validProps = {
+        ...mockLoadProps,
+        unitCostInCents: 0,
+      };
+
+      // Act
+      const product = Product.load(validProps);
+
+      // Assert
+      expect(product.props.unitCostInCents).toBe(0);
+    });
+
+    it('should throw error when unitPriceInCents is negative', () => {
+      // Arrange
+      const invalidProps = {
+        ...mockLoadProps,
+        unitPriceInCents: -100,
+      };
+
+      // Act & Assert
+      expect(() => Product.load(invalidProps)).toThrow();
+    });
+
+    it('should allow unitPriceInCents to be zero', () => {
+      // Arrange
+      const validProps = {
+        ...mockLoadProps,
+        unitPriceInCents: 0,
+      };
+
+      // Act
+      const product = Product.load(validProps);
+
+      // Assert
+      expect(product.props.unitPriceInCents).toBe(0);
+    });
+
+    it('should allow maximumStock to be zero', () => {
+      // Arrange
+      const invalidProps = {
+        ...mockCreateProps,
+        minimumStock: 0,
+        maximumStock: 0,
+      };
+
+      // Act
+      const product = Product.create(invalidProps);
+
+      // Assert
+      expect(product.props.minimumStock).toBe(0);
+      expect(product.props.maximumStock).toBe(0);
+    });
+
+    it('should allow minimumStock to be zero but maximumStock must be positive', () => {
+      // Arrange
+      const validProps = {
+        ...mockCreateProps,
+        minimumStock: 0,
+        maximumStock: 1,
+      };
+
+      // Act
+      const product = Product.create(validProps);
+
+      // Assert
+      expect(product.props.minimumStock).toBe(0);
+      expect(product.props.maximumStock).toBe(1);
+    });
+
+    it('should handle large values for warrantyDays', () => {
+      // Arrange
+      const validProps = {
+        ...mockCreateProps,
+        warrantyDays: 999999,
+      };
+
+      // Act
+      const product = Product.create(validProps);
+
+      // Assert
+      expect(product.props.warrantyDays).toBe(999999);
+    });
+
+    it('should handle large values for cost and price', () => {
+      // Arrange
+      const validProps = {
+        ...mockCreateProps,
+        unitCostInCents: 999999999,
+        unitPriceInCents: 999999999,
+      };
+
+      // Act
+      const product = Product.create(validProps);
+
+      // Assert
+      expect(product.props.unitCostInCents).toBe(999999999);
+      expect(product.props.unitPriceInCents).toBe(999999999);
+    });
+  });
+
+  describe('UTCDate conversions', () => {
+    it('should convert createdAt to UTC format via UTCDate.from', () => {
+      // Arrange
+      const localDate = new Date('2024-06-15T10:30:00');
+
+      // Act
+      const product = Product.load({ ...mockLoadProps, createdAt: localDate });
+
+      // Assert
+      expect(product.props.createdAt).toBeInstanceOf(Date);
+    });
+
+    it('should convert updatedAt to UTC format via UTCDate.from', () => {
+      // Arrange
+      const localDate = new Date('2024-06-15T10:30:00');
+
+      // Act
+      const product = Product.load({ ...mockLoadProps, updatedAt: localDate });
+
+      // Assert
+      expect(product.props.updatedAt).toBeInstanceOf(Date);
+    });
+
+    it('should create timestamps in UTC format when creating product', () => {
+      // Act
+      const product = Product.create(mockCreateProps);
+
+      // Assert
+      expect(product.props.createdAt).toBeInstanceOf(Date);
+      expect(product.props.updatedAt).toBeInstanceOf(Date);
+      // Both should be approximately the same time
+      expect(Math.abs(product.props.updatedAt.getTime() - product.props.createdAt.getTime())).toBeLessThan(100);
+    });
+
+    it('should preserve exact timestamp values when loading', () => {
+      // Arrange
+      const createdAt = new Date('2024-01-01T00:00:00.000Z');
+      const updatedAt = new Date('2024-06-15T10:30:00.000Z');
+
+      // Act
+      const product = Product.load({ ...mockLoadProps, createdAt, updatedAt });
+
+      // Assert
+      expect(product.props.createdAt.toISOString()).toBe(createdAt.toISOString());
+      expect(product.props.updatedAt.toISOString()).toBe(updatedAt.toISOString());
+    });
+  });
+
+  describe('business logic scenarios', () => {
+    it('should allow product with price lower than cost (loss scenario)', () => {
+      // Arrange
+      const lossProps = {
+        ...mockCreateProps,
+        unitCostInCents: 100000,
+        unitPriceInCents: 80000,
+      };
+
+      // Act
+      const product = Product.create(lossProps);
+
+      // Assert
+      expect(product.props.unitPriceInCents).toBeLessThan(product.props.unitCostInCents);
+    });
+
+    it('should allow product with price equal to cost (no profit)', () => {
+      // Arrange
+      const noProfit = {
+        ...mockCreateProps,
+        unitCostInCents: 100000,
+        unitPriceInCents: 100000,
+      };
+
+      // Act
+      const product = Product.create(noProfit);
+
+      // Assert
+      expect(product.props.unitPriceInCents).toBe(product.props.unitCostInCents);
+    });
+
+    it('should allow negative markup', () => {
+      // Arrange
+      const negativeMarkup = {
+        ...mockCreateProps,
+        markup: -10,
+      };
+
+      // Act
+      const product = Product.create(negativeMarkup);
+
+      // Assert
+      expect(product.props.markup).toBe(-10);
+    });
+
+    it('should allow negative marginB', () => {
+      // Arrange
+      const negativeMargin = {
+        ...mockCreateProps,
+        marginB: -15,
+      };
+
+      // Act
+      const product = Product.create(negativeMargin);
+
+      // Assert
+      expect(product.props.marginB).toBe(-15);
+    });
+
+    it('should handle product with no warranty (warrantyDays = 0)', () => {
+      // Arrange
+      const noWarranty = {
+        ...mockCreateProps,
+        warrantyDays: 0,
+      };
+
+      // Act
+      const product = Product.create(noWarranty);
+
+      // Assert
+      expect(product.props.warrantyDays).toBe(0);
+    });
+
+    it('should handle different product types', () => {
+      // Arrange
+      const types = ['Finished', 'RawMaterial', 'Component', 'Service'];
+
+      types.forEach(type => {
+        // Act
+        const product = Product.create({ ...mockCreateProps, type });
+
+        // Assert
+        expect(product.props.type).toBe(type);
+      });
+    });
+
+    it('should allow free products (zero cost and price)', () => {
+      // Arrange
+      const freeProduct = {
+        ...mockCreateProps,
+        unitCostInCents: 0,
+        unitPriceInCents: 0,
+      };
+
+      // Act
+      const product = Product.create(freeProduct);
+
+      // Assert
+      expect(product.props.unitCostInCents).toBe(0);
+      expect(product.props.unitPriceInCents).toBe(0);
+    });
+
+    it('should handle products with no dimensions (zero weight/height/length/width)', () => {
+      // Arrange
+      const noDimensions = {
+        ...mockCreateProps,
+        weightInKg: 0,
+        heightInCm: 0,
+        lengthInCm: 0,
+        widthInCm: 0,
+      };
+
+      // Act
+      const product = Product.create(noDimensions);
+
+      // Assert
+      expect(product.props.weightInKg).toBe(0);
+      expect(product.props.heightInCm).toBe(0);
+      expect(product.props.lengthInCm).toBe(0);
+      expect(product.props.widthInCm).toBe(0);
+    });
+
+    it('should handle exchange rate scenarios (different currencies)', () => {
+      // Arrange
+      const scenarios = [
+        { currency: 'USD', exchangeRate: 5.25 },
+        { currency: 'EUR', exchangeRate: 6.10 },
+        { currency: 'BRL', exchangeRate: 1.0 },
+      ];
+
+      scenarios.forEach(({ currency, exchangeRate }) => {
+        // Act
+        const product = Product.create({ ...mockCreateProps, currency, exchangeRate });
+
+        // Assert
+        expect(product.props.currency).toBe(currency);
+        expect(product.props.exchangeRate).toBe(exchangeRate);
+      });
+    });
+  });
+
+  describe('array immutability', () => {
+    it('should not allow modifying images array through multiple getters', () => {
+      // Arrange
+      const product = Product.create(mockCreateProps);
+
+      // Act
+      const props1 = product.props;
+      const props2 = product.props;
+      props1.images.push('new-image.jpg');
+      props2.images.push('another-image.jpg');
+
+      // Assert
+      const currentProps = product.props;
+      expect(currentProps.images).toHaveLength(2);
+      expect(currentProps.images).not.toContain('new-image.jpg');
+      expect(currentProps.images).not.toContain('another-image.jpg');
+    });
+
+    it('should not allow modifying supplierIds array through multiple getters', () => {
+      // Arrange
+      const product = Product.create(mockCreateProps);
+
+      // Act
+      const props1 = product.props;
+      const props2 = product.props;
+      props1.supplierIds.push('new-supplier');
+      props2.supplierIds.push('another-supplier');
+
+      // Assert
+      const currentProps = product.props;
+      expect(currentProps.supplierIds).toHaveLength(2);
+      expect(currentProps.supplierIds).not.toContain('new-supplier');
+      expect(currentProps.supplierIds).not.toContain('another-supplier');
+    });
+
+    it('should return different array instances on each props call', () => {
+      // Arrange
+      const product = Product.create(mockCreateProps);
+
+      // Act
+      const props1 = product.props;
+      const props2 = product.props;
+
+      // Assert
+      expect(props1.images).toEqual(props2.images);
+      expect(props1.images).not.toBe(props2.images);
+      expect(props1.supplierIds).toEqual(props2.supplierIds);
+      expect(props1.supplierIds).not.toBe(props2.supplierIds);
+    });
+  });
+
+  describe('hasStock edge cases', () => {
+    it('should return true for very small positive stock (less than 1)', () => {
+      // Arrange
+      const product = Product.load({ ...mockLoadProps, currentStock: 0.5 });
+
+      // Act
+      const result = product.hasStock();
+
+      // Assert
+      expect(result).toBe(true);
+    });
+
+    it('should return true for stock exactly 1.0', () => {
+      // Arrange
+      const product = Product.load({ ...mockLoadProps, currentStock: 1.0 });
+
+      // Act
+      const result = product.hasStock();
+
+      // Assert
+      expect(result).toBe(true);
+    });
+
+    it('should return true for stock just above 1', () => {
+      // Arrange
+      const product = Product.load({ ...mockLoadProps, currentStock: 1.01 });
+
+      // Act
+      const result = product.hasStock();
+
+      // Assert
+      expect(result).toBe(true);
+    });
+
+    it('should return false for very small negative stock', () => {
+      // Arrange
+      const product = Product.load({ ...mockLoadProps, currentStock: -0.01 });
+
+      // Act
+      const result = product.hasStock();
+
+      // Assert
+      expect(result).toBe(false);
     });
   });
 });

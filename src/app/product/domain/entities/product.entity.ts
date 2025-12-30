@@ -1,3 +1,4 @@
+import { PositiveInt } from 'src/shared/value-objects/positive-int/positive-int.vo';
 import { UTCDate } from 'src/shared/value-objects/utc-date/utc-date.vo';
 import { UUID } from 'src/shared/value-objects/uuid/uuid.vo';
 import { InvalidMaximumStockError } from '../errors/invalid-maximum-stock.error';
@@ -94,9 +95,9 @@ export class Product {
       measureUnit: props.measureUnit,
       ncm: props.ncm,
       economicBatch: props.economicBatch,
-      minimumStock: props.minimumStock,
-      maximumStock: props.maximumStock,
-      warrantyDays: props.warrantyDays,
+      minimumStock: new PositiveInt(props.minimumStock, 'Estoque mínimo', true).value,
+      maximumStock: new PositiveInt(props.maximumStock, 'Estoque máximo', true).value,
+      warrantyDays: new PositiveInt(props.warrantyDays, 'Dias de garantia', true).value,
       weightInKg: props.weightInKg,
       heightInCm: props.heightInCm,
       lengthInCm: props.lengthInCm,
@@ -105,8 +106,8 @@ export class Product {
       marginB: props.marginB,
       currency: props.currency,
       exchangeRate: props.exchangeRate,
-      unitCostInCents: props.unitCostInCents,
-      unitPriceInCents: props.unitPriceInCents,
+      unitCostInCents: new PositiveInt(props.unitCostInCents, 'Custo unitário', true).value,
+      unitPriceInCents: new PositiveInt(props.unitPriceInCents, 'Preço unitário', true).value,
       ean: props.ean,
       additionalInfo: props.additionalInfo ?? null,
       images: props.images ? [...props.images] : [],

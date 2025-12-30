@@ -150,7 +150,12 @@ describe('EditProduct', () => {
       const productData = createMock<ProductDto>({
         id: 'product-id',
         type: 'Old Type',
+        minimumStock: 5,
+        maximumStock: 100,
         currentStock: 10,
+        warrantyDays: 180,
+        unitPriceInCents: 2000,
+        unitCostInCents: 1500,
         suppliers: [{ id: supplierId, companyName: 'Test', fantasyName: 'Test' }],
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -200,7 +205,12 @@ describe('EditProduct', () => {
         id: 'product-id',
         ean: '7891234567890',
         companyId: companyId,
+        minimumStock: 0,
+        maximumStock: 100,
         currentStock: 10,
+        warrantyDays: 180,
+        unitPriceInCents: 2000,
+        unitCostInCents: 1500,
         suppliers: [{ id: supplierId, companyName: 'Test', fantasyName: 'Test' }],
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -221,6 +231,11 @@ describe('EditProduct', () => {
       // Arrange
       const productData = createMock<ProductDto>({
         id: 'product-id',
+        minimumStock: 0,
+        maximumStock: 100,
+        warrantyDays: 180,
+        unitPriceInCents: 2000,
+        unitCostInCents: 1500,
         currentStock: 50,
         suppliers: [{ id: supplierId, companyName: 'Test', fantasyName: 'Test' }],
         createdAt: new Date(),
@@ -247,7 +262,12 @@ describe('EditProduct', () => {
       // Arrange
       const productData = createMock<ProductDto>({
         id: 'product-id',
+        minimumStock: 0,
+        maximumStock: 100,
         currentStock: 10,
+        warrantyDays: 180,
+        unitPriceInCents: 2000,
+        unitCostInCents: 1500,
         suppliers: [
           { id: supplierId, companyName: 'Test', fantasyName: 'Test' },
           { id: supplierId2, companyName: 'Test2', fantasyName: 'Test2' },
@@ -276,7 +296,12 @@ describe('EditProduct', () => {
       // Arrange
       const productData = createMock<ProductDto>({
         id: 'product-id',
+        minimumStock: 0,
+        maximumStock: 10,
         currentStock: 10,
+        warrantyDays: 180,
+        unitPriceInCents: 2000,
+        unitCostInCents: 1500,
         suppliers: [],
         createdAt: new Date(),
         updatedAt: new Date(),
