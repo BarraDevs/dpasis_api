@@ -1,4 +1,5 @@
 import { PositiveInt } from 'src/shared/value-objects/positive-int/positive-int.vo';
+import { UUID } from 'src/shared/value-objects/uuid/uuid.vo';
 
 type ItemProps = ItemCreateProps & {
   id: string;
@@ -18,14 +19,9 @@ export class Item {
   private readonly _props: ItemProps;
 
   static create(props: ItemCreateProps): Item {
-    const quantity = new PositiveInt(props.quantity, 'Quantidade');
-    const unitPriceInCents = new PositiveInt(props.unitPriceInCents, 'Preço unitário');
-
     return new Item({
       ...props,
-      id: crypto.randomUUID(),
-      quantity: quantity.value,
-      unitPriceInCents: unitPriceInCents.value,
+      id: new UUID().value,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
@@ -40,6 +36,9 @@ export class Item {
   }
 
   private constructor(props: ItemProps) {
+    const quantity = new PositiveInt(props.quantity, 'Quantidade', false);
+    const unitPriceInCents = new PositiveInt(props.unitPriceInCents, 'Preço unitário', true);
+
     this._props = {
       id: props.id,
       createdAt: props.createdAt,
@@ -47,8 +46,8 @@ export class Item {
       ownerId: props.ownerId,
       description: props.description,
       serviceCode: props.serviceCode,
-      quantity: props.quantity,
-      unitPriceInCents: props.unitPriceInCents,
+      quantity: quantity.value,
+      unitPriceInCents: unitPriceInCents.value,
     };
   }
 

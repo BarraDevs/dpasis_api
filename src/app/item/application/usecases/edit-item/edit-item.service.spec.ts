@@ -64,7 +64,7 @@ describe('EditItem', () => {
       // Arrange
       const itemId = 'valid-item-id';
       const existingItemDto = createMock<ItemDto>();
-      const editData = createMock<EditItemInputDto>();
+      const editData = createMock<EditItemInputDto>({ quantity: 1, unitPriceInCents: 1000 });
 
       mockItemDao.findById.mockResolvedValue(existingItemDto);
       mockItemRepository.edit.mockResolvedValue(undefined);
@@ -93,7 +93,7 @@ describe('EditItem', () => {
     it('should propagate repository errors', async() => {
       // Arrange
       const itemId = 'valid-item-id';
-      const existingItemDto = createMock<ItemDto>();
+      const existingItemDto = createMock<ItemDto>({ quantity: 2, unitPriceInCents: 5000 });
       const editData = createMock<EditItemInputDto>();
       mockItemDao.findById.mockResolvedValue(existingItemDto);
       const repositoryError = new Error('Database update failed');
