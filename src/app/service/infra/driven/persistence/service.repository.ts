@@ -19,4 +19,19 @@ export class ServiceRepositoryAdapterPrisma implements IServiceRepository {
       },
     });
   }
+
+  public async edit(service: Service): Promise<void> {
+    const { id, productIds, ...data } = service.props;
+
+    await this.prisma.service.update({
+      where: { id },
+      data: {
+        ...data,
+        products: {
+          deleteMany: {},
+          create: productIds.map((productId) => ({ productId })),
+        },
+      },
+    });
+  }
 }

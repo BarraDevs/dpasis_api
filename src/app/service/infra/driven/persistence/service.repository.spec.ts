@@ -159,478 +159,1119 @@ describe('ServiceRepositoryAdapterPrisma', () => {
     expect(sut).toBeDefined();
   });
 
-  it('should save a service with products', async() => {
-    // Arrange
-    const service = Service.create(createServiceProps());
+  describe('save', () => {
 
-    // Act
-    await sut.save(service);
+    it('should save a service with products', async() => {
+      // Arrange
+      const service = Service.create(createServiceProps());
 
-    // Assert
-    const savedService = await prisma.service.findUnique({
-      where: { id: service.props.id },
-      include: { products: true },
+      // Act
+      await sut.save(service);
+
+      // Assert
+      const savedService = await prisma.service.findUnique({
+        where: { id: service.props.id },
+        include: { products: true },
+      });
+
+      expect(savedService).toBeDefined();
+      expect(savedService?.id).toBe(service.props.id);
+      expect(savedService?.companyId).toBe(company.id);
+      expect(savedService?.categoryId).toBe(serviceCategory.id);
+      expect(savedService?.products).toHaveLength(2);
+      const productIds = savedService?.products.map((link) => link.productId).sort();
+      expect(productIds).toEqual([product01.id, product02.id].sort());
     });
 
-    expect(savedService).toBeDefined();
-    expect(savedService?.id).toBe(service.props.id);
-    expect(savedService?.companyId).toBe(company.id);
-    expect(savedService?.categoryId).toBe(serviceCategory.id);
-    expect(savedService?.products).toHaveLength(2);
-    const productIds = savedService?.products.map((link) => link.productId).sort();
-    expect(productIds).toEqual([product01.id, product02.id].sort());
+    it('should create service_products rows for each product', async() => {
+      // Arrange
+      const service = Service.create(createServiceProps());
+
+      // Act
+      await sut.save(service);
+
+      // Assert
+      const links = await prisma.serviceProduct.findMany({
+        where: { serviceId: service.props.id },
+        orderBy: { productId: 'asc' },
+      });
+      expect(links).toHaveLength(2);
+      expect(links.map((link) => link.productId)).toEqual([product01.id, product02.id].sort());
+    });
+
+    it('should persist service fields correctly', async() => {
+      // Arrange
+      const service = Service.create(createServiceProps({
+        name: 'Instalação Técnica',
+        shippingValueInCents: 0,
+        commission: 7.5,
+        valueInCents: 10000,
+        description: 'Instalação de equipamento',
+      }));
+
+      // Act
+      await sut.save(service);
+
+      // Assert
+      const savedService = await prisma.service.findUnique({
+        where: { id: service.props.id },
+      });
+      expect(savedService).toMatchObject({
+        id: service.props.id,
+        companyId: company.id,
+        categoryId: serviceCategory.id,
+        name: 'Instalação Técnica',
+        shippingValueInCents: 0,
+        commission: 7.5,
+        valueInCents: 10000,
+        description: 'Instalação de equipamento',
+        active: true,
+      });
+    });
+
+    it('should save service with null optional fields', async() => {
+      // Arrange
+      const service = Service.create(createServiceProps({
+        nickname: null,
+        deadline: null,
+        shippingValueInCents: null,
+        warrant: null,
+        weight: null,
+        maxVolume: null,
+        dimensions: null,
+        description: null,
+      }));
+
+      // Act
+      await sut.save(service);
+
+      // Assert
+      const savedService = await prisma.service.findUnique({
+        where: { id: service.props.id },
+      });
+      expect(savedService?.nickname).toBeNull();
+      expect(savedService?.deadline).toBeNull();
+      expect(savedService?.shippingValueInCents).toBeNull();
+      expect(savedService?.warrant).toBeNull();
+      expect(savedService?.weight).toBeNull();
+      expect(savedService?.maxVolume).toBeNull();
+      expect(savedService?.dimensions).toBeNull();
+      expect(savedService?.description).toBeNull();
+    });
+
+    it('should persist timestamps (createdAt and updatedAt)', async() => {
+      // Arrange
+      const beforeSave = new Date();
+      const service = Service.create(createServiceProps());
+
+      // Act
+      await sut.save(service);
+
+      // Assert
+      const savedService = await prisma.service.findUnique({
+        where: { id: service.props.id },
+      });
+
+      expect(savedService?.createdAt).toBeInstanceOf(Date);
+      expect(savedService?.updatedAt).toBeInstanceOf(Date);
+      expect(savedService?.createdAt.getTime()).toBeGreaterThanOrEqual(beforeSave.getTime());
+      expect(savedService?.updatedAt.getTime()).toBeGreaterThanOrEqual(beforeSave.getTime());
+    });
+
+    it('should save service with commission as 0', async() => {
+      // Arrange
+      const service = Service.create(createServiceProps({
+        commission: 0,
+      }));
+
+      // Act
+      await sut.save(service);
+
+      // Assert
+      const savedService = await prisma.service.findUnique({
+        where: { id: service.props.id },
+      });
+      expect(savedService?.commission).toBe(0);
+    });
+
+    it('should save service with commission as 100', async() => {
+      // Arrange
+      const service = Service.create(createServiceProps({
+        commission: 100,
+      }));
+
+      // Act
+      await sut.save(service);
+
+      // Assert
+      const savedService = await prisma.service.findUnique({
+        where: { id: service.props.id },
+      });
+      expect(savedService?.commission).toBe(100);
+    });
+
+    it('should save service with valueInCents as 0', async() => {
+      // Arrange
+      const service = Service.create(createServiceProps({
+        valueInCents: 0,
+      }));
+
+      // Act
+      await sut.save(service);
+
+      // Assert
+      const savedService = await prisma.service.findUnique({
+        where: { id: service.props.id },
+      });
+      expect(savedService?.valueInCents).toBe(0);
+    });
+
+    it('should save service with high valueInCents', async() => {
+      // Arrange
+      const service = Service.create(createServiceProps({
+        valueInCents: 999999999,
+      }));
+
+      // Act
+      await sut.save(service);
+
+      // Assert
+      const savedService = await prisma.service.findUnique({
+        where: { id: service.props.id },
+      });
+      expect(savedService?.valueInCents).toBe(999999999);
+    });
+
+    it('should save service with shippingValueInCents as 0', async() => {
+      // Arrange
+      const service = Service.create(createServiceProps({
+        shippingValueInCents: 0,
+      }));
+
+      // Act
+      await sut.save(service);
+
+      // Assert
+      const savedService = await prisma.service.findUnique({
+        where: { id: service.props.id },
+      });
+      expect(savedService?.shippingValueInCents).toBe(0);
+    });
+
+    it('should save multiple services without conflicts', async() => {
+      // Arrange
+      const service1 = Service.create(createServiceProps({
+        name: 'Serviço 1',
+      }));
+      const service2 = Service.create(createServiceProps({
+        name: 'Serviço 2',
+      }));
+
+      // Act
+      await sut.save(service1);
+      await sut.save(service2);
+
+      // Assert
+      const savedServices = await prisma.service.findMany({
+        orderBy: { createdAt: 'asc' },
+      });
+      expect(savedServices).toHaveLength(2);
+      expect(savedServices[0].id).toBe(service1.props.id);
+      expect(savedServices[1].id).toBe(service2.props.id);
+    });
+
+    it('should create correct bidirectional relation between service and products', async() => {
+      // Arrange
+      const service = Service.create(createServiceProps());
+
+      // Act
+      await sut.save(service);
+
+      // Assert
+      // Verificar relação Service -> Product
+      const savedService = await prisma.service.findUnique({
+        where: { id: service.props.id },
+        include: { products: true },
+      });
+      expect(savedService?.products).toHaveLength(2);
+
+      // Verificar relação Product -> Service (via service_products)
+      const product01Links = await prisma.serviceProduct.findMany({
+        where: { productId: product01.id },
+      });
+      const product02Links = await prisma.serviceProduct.findMany({
+        where: { productId: product02.id },
+      });
+
+      expect(product01Links).toHaveLength(1);
+      expect(product01Links[0].serviceId).toBe(service.props.id);
+      expect(product02Links).toHaveLength(1);
+      expect(product02Links[0].serviceId).toBe(service.props.id);
+    });
+
+    it('should persist service with exactly 2 products', async() => {
+      // Arrange
+      const service = Service.create(createServiceProps());
+
+      // Act
+      await sut.save(service);
+
+      // Assert
+      const savedService = await prisma.service.findUnique({
+        where: { id: service.props.id },
+        include: { products: true },
+      });
+      expect(savedService?.products).toHaveLength(2);
+    });
+
+    it('should persist required fields as not null', async() => {
+      // Arrange
+      const service = Service.create(createServiceProps());
+
+      // Act
+      await sut.save(service);
+
+      // Assert
+      const savedService = await prisma.service.findUnique({
+        where: { id: service.props.id },
+      });
+
+      // Campos obrigatórios
+      expect(savedService?.id).toBeTruthy();
+      expect(savedService?.name).toBeTruthy();
+      expect(savedService?.companyId).toBeTruthy();
+      expect(savedService?.categoryId).toBeTruthy();
+      expect(savedService?.commission).toBeDefined();
+      expect(savedService?.valueInCents).toBeDefined();
+      expect(savedService?.active).toBeDefined();
+      expect(savedService?.createdAt).toBeDefined();
+      expect(savedService?.updatedAt).toBeDefined();
+    });
+
+    it('should save service with long text fields', async() => {
+      // Arrange
+      const longText = 'A'.repeat(1000);
+      const service = Service.create(createServiceProps({
+        deadline: longText,
+        warrant: longText,
+        weight: longText,
+        maxVolume: longText,
+        dimensions: longText,
+        description: longText,
+      }));
+
+      // Act
+      await sut.save(service);
+
+      // Assert
+      const savedService = await prisma.service.findUnique({
+        where: { id: service.props.id },
+      });
+
+      expect(savedService?.deadline).toBe(longText);
+      expect(savedService?.warrant).toBe(longText);
+      expect(savedService?.weight).toBe(longText);
+      expect(savedService?.maxVolume).toBe(longText);
+      expect(savedService?.dimensions).toBe(longText);
+      expect(savedService?.description).toBe(longText);
+    });
+
+    it('should save service with special characters in text fields', async() => {
+      // Arrange
+      const service = Service.create(createServiceProps({
+        name: 'Manutenção & Instalação (Premium)™',
+        nickname: 'M&I™',
+        deadline: '5 dias úteis + feriados',
+        warrant: 'Garantia de 90 dias @cliente',
+        weight: '< 10kg',
+        maxVolume: '≤ 0.5m³',
+        dimensions: '50x40x30 cm²',
+        description: 'Serviço com @#$%^&*()',
+      }));
+
+      // Act
+      await sut.save(service);
+
+      // Assert
+      const savedService = await prisma.service.findUnique({
+        where: { id: service.props.id },
+      });
+
+      expect(savedService?.name).toBe('Manutenção & Instalação (Premium)™');
+      expect(savedService?.nickname).toBe('M&I™');
+      expect(savedService?.deadline).toBe('5 dias úteis + feriados');
+      expect(savedService?.warrant).toBe('Garantia de 90 dias @cliente');
+      expect(savedService?.weight).toBe('< 10kg');
+      expect(savedService?.maxVolume).toBe('≤ 0.5m³');
+      expect(savedService?.dimensions).toBe('50x40x30 cm²');
+      expect(savedService?.description).toBe('Serviço com @#$%^&*()');
+    });
+
+    it('should save service with decimal commission', async() => {
+      // Arrange
+      const service = Service.create(createServiceProps({
+        commission: 12.75,
+      }));
+
+      // Act
+      await sut.save(service);
+
+      // Assert
+      const savedService = await prisma.service.findUnique({
+        where: { id: service.props.id },
+      });
+      expect(savedService?.commission).toBe(12.75);
+    });
+
+    it('should save service with active field as true by default', async() => {
+      // Arrange
+      const service = Service.create(createServiceProps());
+
+      // Act
+      await sut.save(service);
+
+      // Assert
+      const savedService = await prisma.service.findUnique({
+        where: { id: service.props.id },
+      });
+      expect(savedService?.active).toBe(true);
+    });
+
+    it('should preserve UUID format for service id', async() => {
+      // Arrange
+      const service = Service.create(createServiceProps());
+
+      // Act
+      await sut.save(service);
+
+      // Assert
+      const savedService = await prisma.service.findUnique({
+        where: { id: service.props.id },
+      });
+      expect(savedService?.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
+    });
+
+    it('should create service_products with correct foreign keys', async() => {
+      // Arrange
+      const service = Service.create(createServiceProps());
+
+      // Act
+      await sut.save(service);
+
+      // Assert
+      const links = await prisma.serviceProduct.findMany({
+        where: { serviceId: service.props.id },
+      });
+
+      expect(links).toHaveLength(2);
+      links.forEach((link) => {
+        expect(link.serviceId).toBe(service.props.id);
+        expect([product01.id, product02.id]).toContain(link.productId);
+      });
+    });
+
+    it('should allow same product to be linked to multiple services', async() => {
+      // Arrange
+      const service1 = Service.create(createServiceProps({
+        name: 'Serviço 1',
+      }));
+      const service2 = Service.create(createServiceProps({
+        name: 'Serviço 2',
+      }));
+
+      // Act
+      await sut.save(service1);
+      await sut.save(service2);
+
+      // Assert
+      const product01Links = await prisma.serviceProduct.findMany({
+        where: { productId: product01.id },
+      });
+
+      expect(product01Links).toHaveLength(2);
+      expect(product01Links.map(link => link.serviceId)).toContain(service1.props.id);
+      expect(product01Links.map(link => link.serviceId)).toContain(service2.props.id);
+    });
+
+    it('should save service with all fields filled', async() => {
+      // Arrange
+      const service = Service.create(createServiceProps({
+        name: 'Manutenção Completa',
+        nickname: 'Manutenção',
+        deadline: '10 dias úteis',
+        shippingValueInCents: 2500,
+        warrant: '180 dias',
+        weight: '15kg',
+        maxVolume: '1.0m³',
+        dimensions: '100x80x60',
+        commission: 15.5,
+        valueInCents: 50000,
+        description: 'Serviço completo de manutenção',
+      }));
+
+      // Act
+      await sut.save(service);
+
+      // Assert
+      const savedService = await prisma.service.findUnique({
+        where: { id: service.props.id },
+      });
+
+      expect(savedService).toMatchObject({
+        id: service.props.id,
+        name: 'Manutenção Completa',
+        nickname: 'Manutenção',
+        companyId: company.id,
+        categoryId: serviceCategory.id,
+        deadline: '10 dias úteis',
+        shippingValueInCents: 2500,
+        warrant: '180 dias',
+        weight: '15kg',
+        maxVolume: '1.0m³',
+        dimensions: '100x80x60',
+        commission: 15.5,
+        valueInCents: 50000,
+        description: 'Serviço completo de manutenção',
+        active: true,
+      });
+    });
   });
 
-  it('should create service_products rows for each product', async() => {
-    // Arrange
-    const service = Service.create(createServiceProps());
+  describe('edit', () => {
+    let product03: Product;
 
-    // Act
-    await sut.save(service);
-
-    // Assert
-    const links = await prisma.serviceProduct.findMany({
-      where: { serviceId: service.props.id },
-      orderBy: { productId: 'asc' },
-    });
-    expect(links).toHaveLength(2);
-    expect(links.map((link) => link.productId)).toEqual([product01.id, product02.id].sort());
-  });
-
-  it('should persist service fields correctly', async() => {
-    // Arrange
-    const service = Service.create(createServiceProps({
-      name: 'Instalação Técnica',
-      shippingValueInCents: 0,
-      commission: 7.5,
-      valueInCents: 10000,
-      description: 'Instalação de equipamento',
-    }));
-
-    // Act
-    await sut.save(service);
-
-    // Assert
-    const savedService = await prisma.service.findUnique({
-      where: { id: service.props.id },
-    });
-    expect(savedService).toMatchObject({
-      id: service.props.id,
-      companyId: company.id,
-      categoryId: serviceCategory.id,
-      name: 'Instalação Técnica',
-      shippingValueInCents: 0,
-      commission: 7.5,
-      valueInCents: 10000,
-      description: 'Instalação de equipamento',
-      active: true,
-    });
-  });
-
-  it('should save service with null optional fields', async() => {
-    // Arrange
-    const service = Service.create(createServiceProps({
-      nickname: null,
-      deadline: null,
-      shippingValueInCents: null,
-      warrant: null,
-      weight: null,
-      maxVolume: null,
-      dimensions: null,
-      description: null,
-    }));
-
-    // Act
-    await sut.save(service);
-
-    // Assert
-    const savedService = await prisma.service.findUnique({
-      where: { id: service.props.id },
-    });
-    expect(savedService?.nickname).toBeNull();
-    expect(savedService?.deadline).toBeNull();
-    expect(savedService?.shippingValueInCents).toBeNull();
-    expect(savedService?.warrant).toBeNull();
-    expect(savedService?.weight).toBeNull();
-    expect(savedService?.maxVolume).toBeNull();
-    expect(savedService?.dimensions).toBeNull();
-    expect(savedService?.description).toBeNull();
-  });
-
-  it('should persist timestamps (createdAt and updatedAt)', async() => {
-    // Arrange
-    const beforeSave = new Date();
-    const service = Service.create(createServiceProps());
-
-    // Act
-    await sut.save(service);
-
-    // Assert
-    const savedService = await prisma.service.findUnique({
-      where: { id: service.props.id },
+    beforeEach(async() => {
+      product03 = await prisma.product.create({
+        data: {
+          id: 'product-03',
+          companyId: company.id,
+          type: 'Eletrônico',
+          group01: 'Informática',
+          group02: 'Periféricos',
+          description: 'Mouse Logitech',
+          complement: 'Wireless',
+          manufacturerCode: 'LOG-001',
+          brand: 'Logitech',
+          measureUnit: 'UN',
+          ncm: '84716060',
+          economicBatch: 'BATCH003',
+          minimumStock: 0,
+          maximumStock: 0,
+          warrantyDays: 0,
+          weightInKg: 0.1,
+          heightInCm: 4.0,
+          lengthInCm: 12.0,
+          widthInCm: 7.0,
+          markup: 0,
+          marginB: 0,
+          currency: 'BRL',
+          exchangeRate: 1.0,
+          unitCostInCents: 0,
+          unitPriceInCents: 0,
+          ean: '7891234567892',
+          additionalInfo: null,
+          images: [],
+          currentStock: 0,
+        },
+      });
     });
 
-    expect(savedService?.createdAt).toBeInstanceOf(Date);
-    expect(savedService?.updatedAt).toBeInstanceOf(Date);
-    expect(savedService?.createdAt.getTime()).toBeGreaterThanOrEqual(beforeSave.getTime());
-    expect(savedService?.updatedAt.getTime()).toBeGreaterThanOrEqual(beforeSave.getTime());
-  });
-
-  it('should save service with commission as 0', async() => {
-    // Arrange
-    const service = Service.create(createServiceProps({
-      commission: 0,
-    }));
-
-    // Act
-    await sut.save(service);
-
-    // Assert
-    const savedService = await prisma.service.findUnique({
-      where: { id: service.props.id },
-    });
-    expect(savedService?.commission).toBe(0);
-  });
-
-  it('should save service with commission as 100', async() => {
-    // Arrange
-    const service = Service.create(createServiceProps({
-      commission: 100,
-    }));
-
-    // Act
-    await sut.save(service);
-
-    // Assert
-    const savedService = await prisma.service.findUnique({
-      where: { id: service.props.id },
-    });
-    expect(savedService?.commission).toBe(100);
-  });
-
-  it('should save service with valueInCents as 0', async() => {
-    // Arrange
-    const service = Service.create(createServiceProps({
-      valueInCents: 0,
-    }));
-
-    // Act
-    await sut.save(service);
-
-    // Assert
-    const savedService = await prisma.service.findUnique({
-      where: { id: service.props.id },
-    });
-    expect(savedService?.valueInCents).toBe(0);
-  });
-
-  it('should save service with high valueInCents', async() => {
-    // Arrange
-    const service = Service.create(createServiceProps({
-      valueInCents: 999999999,
-    }));
-
-    // Act
-    await sut.save(service);
-
-    // Assert
-    const savedService = await prisma.service.findUnique({
-      where: { id: service.props.id },
-    });
-    expect(savedService?.valueInCents).toBe(999999999);
-  });
-
-  it('should save service with shippingValueInCents as 0', async() => {
-    // Arrange
-    const service = Service.create(createServiceProps({
-      shippingValueInCents: 0,
-    }));
-
-    // Act
-    await sut.save(service);
-
-    // Assert
-    const savedService = await prisma.service.findUnique({
-      where: { id: service.props.id },
-    });
-    expect(savedService?.shippingValueInCents).toBe(0);
-  });
-
-  it('should save multiple services without conflicts', async() => {
-    // Arrange
-    const service1 = Service.create(createServiceProps({
-      name: 'Serviço 1',
-    }));
-    const service2 = Service.create(createServiceProps({
-      name: 'Serviço 2',
-    }));
-
-    // Act
-    await sut.save(service1);
-    await sut.save(service2);
-
-    // Assert
-    const savedServices = await prisma.service.findMany({
-      orderBy: { createdAt: 'asc' },
-    });
-    expect(savedServices).toHaveLength(2);
-    expect(savedServices[0].id).toBe(service1.props.id);
-    expect(savedServices[1].id).toBe(service2.props.id);
-  });
-
-  it('should create correct bidirectional relation between service and products', async() => {
-    // Arrange
-    const service = Service.create(createServiceProps());
-
-    // Act
-    await sut.save(service);
-
-    // Assert
-    // Verificar relação Service -> Product
-    const savedService = await prisma.service.findUnique({
-      where: { id: service.props.id },
-      include: { products: true },
-    });
-    expect(savedService?.products).toHaveLength(2);
-
-    // Verificar relação Product -> Service (via service_products)
-    const product01Links = await prisma.serviceProduct.findMany({
-      where: { productId: product01.id },
-    });
-    const product02Links = await prisma.serviceProduct.findMany({
-      where: { productId: product02.id },
+    afterEach(async() => {
+      await prisma.product.deleteMany({ where: { id: product03.id } });
     });
 
-    expect(product01Links).toHaveLength(1);
-    expect(product01Links[0].serviceId).toBe(service.props.id);
-    expect(product02Links).toHaveLength(1);
-    expect(product02Links[0].serviceId).toBe(service.props.id);
-  });
+    it('should update service fields', async() => {
+      // Arrange
+      const service = Service.create(createServiceProps());
+      await sut.save(service);
 
-  it('should persist service with exactly 2 products', async() => {
-    // Arrange
-    const service = Service.create(createServiceProps());
+      const updatedService = Service.load({
+        ...service.props,
+        name: 'Manutenção Atualizada',
+        nickname: 'Atualizada',
+        commission: 20,
+        valueInCents: 30000,
+        updatedAt: new Date(),
+      });
 
-    // Act
-    await sut.save(service);
+      // Act
+      await sut.edit(updatedService);
 
-    // Assert
-    const savedService = await prisma.service.findUnique({
-      where: { id: service.props.id },
-      include: { products: true },
-    });
-    expect(savedService?.products).toHaveLength(2);
-  });
+      // Assert
+      const editedService = await prisma.service.findUnique({
+        where: { id: service.props.id },
+      });
 
-  it('should persist required fields as not null', async() => {
-    // Arrange
-    const service = Service.create(createServiceProps());
-
-    // Act
-    await sut.save(service);
-
-    // Assert
-    const savedService = await prisma.service.findUnique({
-      where: { id: service.props.id },
+      expect(editedService).toMatchObject({
+        id: service.props.id,
+        name: 'Manutenção Atualizada',
+        nickname: 'Atualizada',
+        commission: 20,
+        valueInCents: 30000,
+      });
     });
 
-    // Campos obrigatórios
-    expect(savedService?.id).toBeTruthy();
-    expect(savedService?.name).toBeTruthy();
-    expect(savedService?.companyId).toBeTruthy();
-    expect(savedService?.categoryId).toBeTruthy();
-    expect(savedService?.commission).toBeDefined();
-    expect(savedService?.valueInCents).toBeDefined();
-    expect(savedService?.active).toBeDefined();
-    expect(savedService?.createdAt).toBeDefined();
-    expect(savedService?.updatedAt).toBeDefined();
-  });
+    it('should update service products', async() => {
+      // Arrange
+      const service = Service.create(createServiceProps());
+      await sut.save(service);
 
-  it('should save service with long text fields', async() => {
-    // Arrange
-    const longText = 'A'.repeat(1000);
-    const service = Service.create(createServiceProps({
-      deadline: longText,
-      warrant: longText,
-      weight: longText,
-      maxVolume: longText,
-      dimensions: longText,
-      description: longText,
-    }));
+      const updatedService = Service.load({
+        ...service.props,
+        productIds: [product01.id, product03.id],
+        updatedAt: new Date(),
+      });
 
-    // Act
-    await sut.save(service);
+      // Act
+      await sut.edit(updatedService);
 
-    // Assert
-    const savedService = await prisma.service.findUnique({
-      where: { id: service.props.id },
+      // Assert
+      const links = await prisma.serviceProduct.findMany({
+        where: { serviceId: service.props.id },
+        orderBy: { productId: 'asc' },
+      });
+
+      expect(links).toHaveLength(2);
+      expect(links.map(link => link.productId).sort()).toEqual([product01.id, product03.id].sort());
     });
 
-    expect(savedService?.deadline).toBe(longText);
-    expect(savedService?.warrant).toBe(longText);
-    expect(savedService?.weight).toBe(longText);
-    expect(savedService?.maxVolume).toBe(longText);
-    expect(savedService?.dimensions).toBe(longText);
-    expect(savedService?.description).toBe(longText);
-  });
+    it('should delete old product links and create new ones', async() => {
+      // Arrange
+      const service = Service.create(createServiceProps({
+        productIds: [product01.id, product02.id],
+      }));
+      await sut.save(service);
 
-  it('should save service with special characters in text fields', async() => {
-    // Arrange
-    const service = Service.create(createServiceProps({
-      name: 'Manutenção & Instalação (Premium)™',
-      nickname: 'M&I™',
-      deadline: '5 dias úteis + feriados',
-      warrant: 'Garantia de 90 dias @cliente',
-      weight: '< 10kg',
-      maxVolume: '≤ 0.5m³',
-      dimensions: '50x40x30 cm²',
-      description: 'Serviço com @#$%^&*()',
-    }));
+      const updatedService = Service.load({
+        ...service.props,
+        productIds: [product02.id, product03.id],
+        updatedAt: new Date(),
+      });
 
-    // Act
-    await sut.save(service);
+      // Act
+      await sut.edit(updatedService);
 
-    // Assert
-    const savedService = await prisma.service.findUnique({
-      where: { id: service.props.id },
+      // Assert
+      const links = await prisma.serviceProduct.findMany({
+        where: { serviceId: service.props.id },
+        orderBy: { productId: 'asc' },
+      });
+
+      expect(links).toHaveLength(2);
+      expect(links.map(link => link.productId).sort()).toEqual([product02.id, product03.id].sort());
+
+      // Verificar que o link antigo com product01 foi removido
+      const oldLink = await prisma.serviceProduct.findFirst({
+        where: {
+          serviceId: service.props.id,
+          productId: product01.id,
+        },
+      });
+      expect(oldLink).toBeNull();
     });
 
-    expect(savedService?.name).toBe('Manutenção & Instalação (Premium)™');
-    expect(savedService?.nickname).toBe('M&I™');
-    expect(savedService?.deadline).toBe('5 dias úteis + feriados');
-    expect(savedService?.warrant).toBe('Garantia de 90 dias @cliente');
-    expect(savedService?.weight).toBe('< 10kg');
-    expect(savedService?.maxVolume).toBe('≤ 0.5m³');
-    expect(savedService?.dimensions).toBe('50x40x30 cm²');
-    expect(savedService?.description).toBe('Serviço com @#$%^&*()');
-  });
+    it('should update optional fields to null', async() => {
+      // Arrange
+      const service = Service.create(createServiceProps({
+        nickname: 'Original',
+        deadline: '5 dias',
+        shippingValueInCents: 1500,
+        warrant: '90 dias',
+        weight: '10kg',
+        maxVolume: '0.5m³',
+        dimensions: '50x40x30',
+        description: 'Descrição original',
+      }));
+      await sut.save(service);
 
-  it('should save service with decimal commission', async() => {
-    // Arrange
-    const service = Service.create(createServiceProps({
-      commission: 12.75,
-    }));
+      const updatedService = Service.load({
+        ...service.props,
+        nickname: null,
+        deadline: null,
+        shippingValueInCents: null,
+        warrant: null,
+        weight: null,
+        maxVolume: null,
+        dimensions: null,
+        description: null,
+        updatedAt: new Date(),
+      });
 
-    // Act
-    await sut.save(service);
+      // Act
+      await sut.edit(updatedService);
 
-    // Assert
-    const savedService = await prisma.service.findUnique({
-      where: { id: service.props.id },
-    });
-    expect(savedService?.commission).toBe(12.75);
-  });
+      // Assert
+      const editedService = await prisma.service.findUnique({
+        where: { id: service.props.id },
+      });
 
-  it('should save service with active field as true by default', async() => {
-    // Arrange
-    const service = Service.create(createServiceProps());
-
-    // Act
-    await sut.save(service);
-
-    // Assert
-    const savedService = await prisma.service.findUnique({
-      where: { id: service.props.id },
-    });
-    expect(savedService?.active).toBe(true);
-  });
-
-  it('should preserve UUID format for service id', async() => {
-    // Arrange
-    const service = Service.create(createServiceProps());
-
-    // Act
-    await sut.save(service);
-
-    // Assert
-    const savedService = await prisma.service.findUnique({
-      where: { id: service.props.id },
-    });
-    expect(savedService?.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
-  });
-
-  it('should create service_products with correct foreign keys', async() => {
-    // Arrange
-    const service = Service.create(createServiceProps());
-
-    // Act
-    await sut.save(service);
-
-    // Assert
-    const links = await prisma.serviceProduct.findMany({
-      where: { serviceId: service.props.id },
+      expect(editedService?.nickname).toBeNull();
+      expect(editedService?.deadline).toBeNull();
+      expect(editedService?.shippingValueInCents).toBeNull();
+      expect(editedService?.warrant).toBeNull();
+      expect(editedService?.weight).toBeNull();
+      expect(editedService?.maxVolume).toBeNull();
+      expect(editedService?.dimensions).toBeNull();
+      expect(editedService?.description).toBeNull();
     });
 
-    expect(links).toHaveLength(2);
-    links.forEach((link) => {
-      expect(link.serviceId).toBe(service.props.id);
-      expect([product01.id, product02.id]).toContain(link.productId);
-    });
-  });
+    it('should update null fields to values', async() => {
+      // Arrange
+      const service = Service.create(createServiceProps({
+        nickname: null,
+        deadline: null,
+        shippingValueInCents: null,
+        warrant: null,
+        weight: null,
+        maxVolume: null,
+        dimensions: null,
+        description: null,
+      }));
+      await sut.save(service);
 
-  it('should allow same product to be linked to multiple services', async() => {
-    // Arrange
-    const service1 = Service.create(createServiceProps({
-      name: 'Serviço 1',
-    }));
-    const service2 = Service.create(createServiceProps({
-      name: 'Serviço 2',
-    }));
+      const updatedService = Service.load({
+        ...service.props,
+        nickname: 'Novo Apelido',
+        deadline: '7 dias',
+        shippingValueInCents: 2000,
+        warrant: '120 dias',
+        weight: '12kg',
+        maxVolume: '0.8m³',
+        dimensions: '60x50x40',
+        description: 'Nova descrição',
+        updatedAt: new Date(),
+      });
 
-    // Act
-    await sut.save(service1);
-    await sut.save(service2);
+      // Act
+      await sut.edit(updatedService);
 
-    // Assert
-    const product01Links = await prisma.serviceProduct.findMany({
-      where: { productId: product01.id },
-    });
+      // Assert
+      const editedService = await prisma.service.findUnique({
+        where: { id: service.props.id },
+      });
 
-    expect(product01Links).toHaveLength(2);
-    expect(product01Links.map(link => link.serviceId)).toContain(service1.props.id);
-    expect(product01Links.map(link => link.serviceId)).toContain(service2.props.id);
-  });
-
-  it('should save service with all fields filled', async() => {
-    // Arrange
-    const service = Service.create(createServiceProps({
-      name: 'Manutenção Completa',
-      nickname: 'Manutenção',
-      deadline: '10 dias úteis',
-      shippingValueInCents: 2500,
-      warrant: '180 dias',
-      weight: '15kg',
-      maxVolume: '1.0m³',
-      dimensions: '100x80x60',
-      commission: 15.5,
-      valueInCents: 50000,
-      description: 'Serviço completo de manutenção',
-    }));
-
-    // Act
-    await sut.save(service);
-
-    // Assert
-    const savedService = await prisma.service.findUnique({
-      where: { id: service.props.id },
+      expect(editedService).toMatchObject({
+        nickname: 'Novo Apelido',
+        deadline: '7 dias',
+        shippingValueInCents: 2000,
+        warrant: '120 dias',
+        weight: '12kg',
+        maxVolume: '0.8m³',
+        dimensions: '60x50x40',
+        description: 'Nova descrição',
+      });
     });
 
-    expect(savedService).toMatchObject({
-      id: service.props.id,
-      name: 'Manutenção Completa',
-      nickname: 'Manutenção',
-      companyId: company.id,
-      categoryId: serviceCategory.id,
-      deadline: '10 dias úteis',
-      shippingValueInCents: 2500,
-      warrant: '180 dias',
-      weight: '15kg',
-      maxVolume: '1.0m³',
-      dimensions: '100x80x60',
-      commission: 15.5,
-      valueInCents: 50000,
-      description: 'Serviço completo de manutenção',
-      active: true,
+    it('should update updatedAt timestamp', async() => {
+      // Arrange
+      const service = Service.create(createServiceProps());
+      await sut.save(service);
+
+      const originalService = await prisma.service.findUnique({
+        where: { id: service.props.id },
+      });
+
+      // Wait a bit to ensure timestamp difference
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      const updatedService = Service.load({
+        ...service.props,
+        name: 'Nome Atualizado',
+        updatedAt: new Date(),
+      });
+
+      // Act
+      await sut.edit(updatedService);
+
+      // Assert
+      const editedService = await prisma.service.findUnique({
+        where: { id: service.props.id },
+      });
+
+      expect(editedService?.updatedAt.getTime()).toBeGreaterThan(originalService!.updatedAt.getTime());
+    });
+
+    it('should not change createdAt timestamp', async() => {
+      // Arrange
+      const service = Service.create(createServiceProps());
+      await sut.save(service);
+
+      const originalService = await prisma.service.findUnique({
+        where: { id: service.props.id },
+      });
+
+      const updatedService = Service.load({
+        ...service.props,
+        name: 'Nome Atualizado',
+        updatedAt: new Date(),
+      });
+
+      // Act
+      await sut.edit(updatedService);
+
+      // Assert
+      const editedService = await prisma.service.findUnique({
+        where: { id: service.props.id },
+      });
+
+      expect(editedService?.createdAt.getTime()).toBe(originalService!.createdAt.getTime());
+    });
+
+    it('should update commission to 0', async() => {
+      // Arrange
+      const service = Service.create(createServiceProps({ commission: 10 }));
+      await sut.save(service);
+
+      const updatedService = Service.load({
+        ...service.props,
+        commission: 0,
+        updatedAt: new Date(),
+      });
+
+      // Act
+      await sut.edit(updatedService);
+
+      // Assert
+      const editedService = await prisma.service.findUnique({
+        where: { id: service.props.id },
+      });
+
+      expect(editedService?.commission).toBe(0);
+    });
+
+    it('should update commission to 100', async() => {
+      // Arrange
+      const service = Service.create(createServiceProps({ commission: 10 }));
+      await sut.save(service);
+
+      const updatedService = Service.load({
+        ...service.props,
+        commission: 100,
+        updatedAt: new Date(),
+      });
+
+      // Act
+      await sut.edit(updatedService);
+
+      // Assert
+      const editedService = await prisma.service.findUnique({
+        where: { id: service.props.id },
+      });
+
+      expect(editedService?.commission).toBe(100);
+    });
+
+    it('should update valueInCents to 0', async() => {
+      // Arrange
+      const service = Service.create(createServiceProps({ valueInCents: 25000 }));
+      await sut.save(service);
+
+      const updatedService = Service.load({
+        ...service.props,
+        valueInCents: 0,
+        updatedAt: new Date(),
+      });
+
+      // Act
+      await sut.edit(updatedService);
+
+      // Assert
+      const editedService = await prisma.service.findUnique({
+        where: { id: service.props.id },
+      });
+
+      expect(editedService?.valueInCents).toBe(0);
+    });
+
+    it('should update shippingValueInCents to 0', async() => {
+      // Arrange
+      const service = Service.create(createServiceProps({ shippingValueInCents: 1500 }));
+      await sut.save(service);
+
+      const updatedService = Service.load({
+        ...service.props,
+        shippingValueInCents: 0,
+        updatedAt: new Date(),
+      });
+
+      // Act
+      await sut.edit(updatedService);
+
+      // Assert
+      const editedService = await prisma.service.findUnique({
+        where: { id: service.props.id },
+      });
+
+      expect(editedService?.shippingValueInCents).toBe(0);
+    });
+
+    it('should update active status', async() => {
+      // Arrange
+      const service = Service.create(createServiceProps());
+      await sut.save(service);
+
+      const updatedService = Service.load({
+        ...service.props,
+        active: false,
+        updatedAt: new Date(),
+      });
+
+      // Act
+      await sut.edit(updatedService);
+
+      // Assert
+      const editedService = await prisma.service.findUnique({
+        where: { id: service.props.id },
+      });
+
+      expect(editedService?.active).toBe(false);
+    });
+
+    it('should update service with special characters', async() => {
+      // Arrange
+      const service = Service.create(createServiceProps());
+      await sut.save(service);
+
+      const updatedService = Service.load({
+        ...service.props,
+        name: 'Manutenção & Instalação (Premium)™',
+        nickname: 'M&I™',
+        deadline: '5 dias úteis + feriados',
+        warrant: 'Garantia de 90 dias @cliente',
+        weight: '< 10kg',
+        maxVolume: '≤ 0.5m³',
+        dimensions: '50x40x30 cm²',
+        description: 'Serviço com @#$%^&*()',
+        updatedAt: new Date(),
+      });
+
+      // Act
+      await sut.edit(updatedService);
+
+      // Assert
+      const editedService = await prisma.service.findUnique({
+        where: { id: service.props.id },
+      });
+
+      expect(editedService).toMatchObject({
+        name: 'Manutenção & Instalação (Premium)™',
+        nickname: 'M&I™',
+        deadline: '5 dias úteis + feriados',
+        warrant: 'Garantia de 90 dias @cliente',
+        weight: '< 10kg',
+        maxVolume: '≤ 0.5m³',
+        dimensions: '50x40x30 cm²',
+        description: 'Serviço com @#$%^&*()',
+      });
+    });
+
+    it('should update service with long text fields', async() => {
+      // Arrange
+      const service = Service.create(createServiceProps());
+      await sut.save(service);
+
+      const longText = 'B'.repeat(1000);
+      const updatedService = Service.load({
+        ...service.props,
+        deadline: longText,
+        warrant: longText,
+        weight: longText,
+        maxVolume: longText,
+        dimensions: longText,
+        description: longText,
+        updatedAt: new Date(),
+      });
+
+      // Act
+      await sut.edit(updatedService);
+
+      // Assert
+      const editedService = await prisma.service.findUnique({
+        where: { id: service.props.id },
+      });
+
+      expect(editedService?.deadline).toBe(longText);
+      expect(editedService?.warrant).toBe(longText);
+      expect(editedService?.weight).toBe(longText);
+      expect(editedService?.maxVolume).toBe(longText);
+      expect(editedService?.dimensions).toBe(longText);
+      expect(editedService?.description).toBe(longText);
+    });
+
+    it('should update decimal commission', async() => {
+      // Arrange
+      const service = Service.create(createServiceProps({ commission: 10 }));
+      await sut.save(service);
+
+      const updatedService = Service.load({
+        ...service.props,
+        commission: 12.75,
+        updatedAt: new Date(),
+      });
+
+      // Act
+      await sut.edit(updatedService);
+
+      // Assert
+      const editedService = await prisma.service.findUnique({
+        where: { id: service.props.id },
+      });
+
+      expect(editedService?.commission).toBe(12.75);
+    });
+
+    it('should not allow changing service id', async() => {
+      // Arrange
+      const service = Service.create(createServiceProps());
+      await sut.save(service);
+
+      const updatedService = Service.load({
+        ...service.props,
+        name: 'Nome Atualizado',
+        updatedAt: new Date(),
+      });
+
+      // Act
+      await sut.edit(updatedService);
+
+      // Assert
+      const editedService = await prisma.service.findUnique({
+        where: { id: service.props.id },
+      });
+
+      expect(editedService?.id).toBe(service.props.id);
+    });
+
+    it('should update all editable fields at once', async() => {
+      // Arrange
+      const service = Service.create(createServiceProps());
+      await sut.save(service);
+
+      const updatedService = Service.load({
+        ...service.props,
+        name: 'Novo Nome',
+        nickname: 'Novo Apelido',
+        deadline: '15 dias',
+        shippingValueInCents: 3000,
+        warrant: '365 dias',
+        weight: '20kg',
+        maxVolume: '2.0m³',
+        dimensions: '100x100x100',
+        commission: 25.5,
+        valueInCents: 100000,
+        description: 'Nova descrição completa',
+        productIds: [product02.id, product03.id],
+        updatedAt: new Date(),
+      });
+
+      // Act
+      await sut.edit(updatedService);
+
+      // Assert
+      const editedService = await prisma.service.findUnique({
+        where: { id: service.props.id },
+        include: { products: true },
+      });
+
+      expect(editedService).toMatchObject({
+        id: service.props.id,
+        name: 'Novo Nome',
+        nickname: 'Novo Apelido',
+        deadline: '15 dias',
+        shippingValueInCents: 3000,
+        warrant: '365 dias',
+        weight: '20kg',
+        maxVolume: '2.0m³',
+        dimensions: '100x100x100',
+        commission: 25.5,
+        valueInCents: 100000,
+        description: 'Nova descrição completa',
+      });
+
+      expect(editedService?.products).toHaveLength(2);
+      expect(editedService?.products.map(p => p.productId).sort()).toEqual([product02.id, product03.id].sort());
+    });
+
+    it('should maintain exactly 2 products after update', async() => {
+      // Arrange
+      const service = Service.create(createServiceProps());
+      await sut.save(service);
+
+      const updatedService = Service.load({
+        ...service.props,
+        productIds: [product01.id, product03.id],
+        updatedAt: new Date(),
+      });
+
+      // Act
+      await sut.edit(updatedService);
+
+      // Assert
+      const editedService = await prisma.service.findUnique({
+        where: { id: service.props.id },
+        include: { products: true },
+      });
+
+      expect(editedService?.products).toHaveLength(2);
+    });
+
+    it('should allow multiple edits on same service', async() => {
+      // Arrange
+      const service = Service.create(createServiceProps({ name: 'Nome 1' }));
+      await sut.save(service);
+
+      // First edit
+      const updatedService1 = Service.load({
+        ...service.props,
+        name: 'Nome 2',
+        updatedAt: new Date(),
+      });
+      await sut.edit(updatedService1);
+
+      // Second edit
+      const updatedService2 = Service.load({
+        ...service.props,
+        name: 'Nome 3',
+        updatedAt: new Date(),
+      });
+
+      // Act
+      await sut.edit(updatedService2);
+
+      // Assert
+      const editedService = await prisma.service.findUnique({
+        where: { id: service.props.id },
+      });
+
+      expect(editedService?.name).toBe('Nome 3');
+    });
+
+    it('should not affect other services when editing one', async() => {
+      // Arrange
+      const service1 = Service.create(createServiceProps({ name: 'Serviço 1' }));
+      const service2 = Service.create(createServiceProps({ name: 'Serviço 2' }));
+      await sut.save(service1);
+      await sut.save(service2);
+
+      const updatedService1 = Service.load({
+        ...service1.props,
+        name: 'Serviço 1 Atualizado',
+        updatedAt: new Date(),
+      });
+
+      // Act
+      await sut.edit(updatedService1);
+
+      // Assert
+      const editedService1 = await prisma.service.findUnique({
+        where: { id: service1.props.id },
+      });
+      const unchangedService2 = await prisma.service.findUnique({
+        where: { id: service2.props.id },
+      });
+
+      expect(editedService1?.name).toBe('Serviço 1 Atualizado');
+      expect(unchangedService2?.name).toBe('Serviço 2');
     });
   });
 });

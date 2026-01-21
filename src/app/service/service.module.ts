@@ -4,6 +4,7 @@ import { ProductModule } from 'src/app/product/product.module';
 import { ServiceCategoryModule } from 'src/app/service-category/service-category.module';
 import { ServicePersistenceModule } from './application/persistence/service-persistence.module';
 import { CreateService } from './application/usecases/create-service/create-service.service';
+import { EditService } from './application/usecases/edit-service/edit-service.service';
 import { FindAllService } from './application/usecases/find-all-service/find-all-service.service';
 import { FindServiceById } from './application/usecases/find-service-by-id/find-service-by-id.service';
 
@@ -16,6 +17,7 @@ import { FindServiceById } from './application/usecases/find-service-by-id/find-
   ],
   providers: [
     CreateService,
+    EditService,
     FindAllService,
     FindServiceById,
   ],
