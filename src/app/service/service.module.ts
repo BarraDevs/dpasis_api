@@ -4,6 +4,7 @@ import { ProductModule } from 'src/app/product/product.module';
 import { ServiceCategoryModule } from 'src/app/service-category/service-category.module';
 import { ServicePersistenceModule } from './application/persistence/service-persistence.module';
 import { CreateService } from './application/usecases/create-service/create-service.service';
+import { FindServiceById } from './application/usecases/find-service-by-id/find-service-by-id.service';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { CreateService } from './application/usecases/create-service/create-serv
   ],
   providers: [
     CreateService,
+    FindServiceById,
   ],
   exports: [],
 })

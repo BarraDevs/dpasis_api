@@ -1,9 +1,14 @@
 import { Module, Provider } from '@nestjs/common';
 import { TOKENS } from 'src/core/di/token';
 import { DatabaseModule } from 'src/infra/database/database.module';
-import { ServiceRepositoryAdapterPrisma } from '../../infra/driven/persistence/prisma/service.repository';
+import { ServiceDaoAdapterPrisma } from '../../infra/driven/persistence/service.dao';
+import { ServiceRepositoryAdapterPrisma } from '../../infra/driven/persistence/service.repository';
 
 const adapters: Provider[] = [
+  {
+    provide: TOKENS.ServiceDao,
+    useClass: ServiceDaoAdapterPrisma,
+  },
   {
     provide: TOKENS.ServiceRepository,
     useClass: ServiceRepositoryAdapterPrisma,
