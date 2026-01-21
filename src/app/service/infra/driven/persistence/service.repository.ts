@@ -7,6 +7,22 @@ import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 export class ServiceRepositoryAdapterPrisma implements IServiceRepository {
   constructor(private readonly prisma: PrismaService) {}
 
+  public async findById(id: string): Promise<Service | null> {
+    const serviceRecord = await this.prisma.service.findUnique({
+      where: { id },
+      include: { products: true },
+    });
+
+    if (!serviceRecord) {
+      return null;
+    }
+
+    return Service.load({
+      ...serviceRecord,
+      productIds: serviceRecord.products.map((product) => product.productId),
+    });
+  }
+
   public async save(service: Service): Promise<void> {
     const { productIds, ...data } = service.props;
 

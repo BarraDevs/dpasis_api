@@ -7,6 +7,7 @@ import { CreateService } from './application/usecases/create-service/create-serv
 import { EditService } from './application/usecases/edit-service/edit-service.service';
 import { FindAllService } from './application/usecases/find-all-service/find-all-service.service';
 import { FindServiceById } from './application/usecases/find-service-by-id/find-service-by-id.service';
+import { UpdateServiceStatus } from './application/usecases/update-service-status/update-service-status.service';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { FindServiceById } from './application/usecases/find-service-by-id/find-
     EditService,
     FindAllService,
     FindServiceById,
+    UpdateServiceStatus,
   ],
   exports: [
     FindServiceById,
