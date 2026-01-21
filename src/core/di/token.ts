@@ -36,6 +36,8 @@ const TOKENS = {
 
   SupplierDao: Symbol.for('SupplierDao'),
   SupplierRepository: Symbol.for('SupplierRepository'),
+
+  ServiceRepository: Symbol.for('ServiceRepository'),
 };
 
 export { TOKENS };

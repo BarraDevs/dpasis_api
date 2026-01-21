@@ -27,6 +27,8 @@ import { ProductController } from './infra/drivers/http/product.controller';
     FindAllProduct,
     FindProductById,
   ],
-  exports: [],
+  exports: [
+    FindProductById,
+  ],
 })
 export class ProductModule {}

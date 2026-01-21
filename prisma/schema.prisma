@@ -76,6 +76,7 @@ model Company {
   providers Provider[]
   sellers   Seller[]
   products  Product[]
+  services  Service[]
 
   @@map("companies")
 }
@@ -325,6 +326,7 @@ model Product {
   company          Company                @relation(fields: [companyId], references: [id], onDelete: Cascade)
   movements        ProductStockMovement[]
   suppliers        Supplier[]
+  services         ServiceProduct[]
 
   @@unique([ean, companyId])
   @@map("products")
@@ -348,6 +350,42 @@ model ServiceCategory {
   active    Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  services  Service[]
 
   @@map("service_categories")
+}
+
+model Service {
+  id                   String           @id @default(uuid())
+  name                 String           @db.VarChar(256)
+  nickname             String?          @db.VarChar(256)
+  companyId            String
+  company              Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  categoryId           String
+  category             ServiceCategory  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  deadline             String?          @db.Text
+  shippingValueInCents Int?
+  warrant              String?          @db.Text
+  weight               String?          @db.Text
+  maxVolume            String?          @db.Text
+  dimensions           String?          @db.Text
+  commission           Float
+  valueInCents         Int
+  active               Boolean          @default(true)
+  description          String?          @db.Text
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+  products             ServiceProduct[]
+
+  @@map("services")
+}
+
+model ServiceProduct {
+  serviceId String
+  service   Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@id([serviceId, productId])
+  @@map("service_products")
 }
