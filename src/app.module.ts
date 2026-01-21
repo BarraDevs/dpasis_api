@@ -11,6 +11,7 @@ import { ProductModule } from './app/product/product.module';
 import { ProviderModule } from './app/provider/provider.module';
 import { SellerModule } from './app/seller/seller.module';
 import { ServiceCategoryModule } from './app/service-category/service-category.module';
+import { ServiceModule } from './app/service/service.module';
 import { ShipperModule } from './app/shipper/shipper.module';
 import { SupplierModule } from './app/supplier/supplier.module';
 import { UploadFileModule } from './app/upload-file/upload-file.module';
@@ -32,6 +33,7 @@ import { InfraModule } from './infra/infra.module';
     ProductModule,
     ProviderModule,
     SellerModule,
+    ServiceModule,
     ServiceCategoryModule,
     ShipperModule,
     SupplierModule,
