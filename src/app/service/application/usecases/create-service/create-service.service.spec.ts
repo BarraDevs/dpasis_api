@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { CreateCompany } from 'src/app/company/application/usecases/create-company/create-company.service';
+import { CompanyNotActiveError } from 'src/app/company/domain/errors/company-not-active.error';
 import { CompanyNotFoundError } from 'src/app/company/domain/errors/company-not-found.error';
 import { CreateProduct } from 'src/app/product/application/usecases/create-product/create-product.service';
 import { ProductNotFoundError } from 'src/app/product/domain/errors/product-not-found.error';
@@ -325,6 +326,20 @@ describe('CreateService', () => {
       expect.assertions(1);
       return sut.execute(invalidData).catch((error) => {
         expect(error).toBeInstanceOf(CompanyNotFoundError);
+      });
+    });
+
+    it('should throw CompanyNotActiveError if company is inactive', async() => {
+      // Arrange
+      await prisma.company.update({
+        where: { id: companyId },
+        data: { active: false },
+      });
+
+      // Act & Assert
+      expect.assertions(1);
+      return sut.execute(data).catch((error) => {
+        expect(error).toBeInstanceOf(CompanyNotActiveError);
       });
     });
 

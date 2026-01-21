@@ -1,11 +1,15 @@
 import { createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
+import { CompanyDto } from 'src/app/company/application/dtos/company.dto';
 import { CreateCompany } from 'src/app/company/application/usecases/create-company/create-company.service';
+import { CompanyNotActiveError } from 'src/app/company/domain/errors/company-not-active.error';
 import { CompanyNotFoundError } from 'src/app/company/domain/errors/company-not-found.error';
 import { Product } from 'src/app/product/domain/entities/product.entity';
 import { ProductDuplicateEanError } from 'src/app/product/domain/errors/duplicate-ean.error';
 import { ProductModule } from 'src/app/product/product.module';
+import { SupplierDto } from 'src/app/supplier/application/dtos/supplier.dto';
 import { CreateSupplier } from 'src/app/supplier/application/usecases/create-supplier/create-supplier.service';
+import { SupplierNotActiveError } from 'src/app/supplier/domain/errors/supplier-not-active.error';
 import { SupplierNotFoundError } from 'src/app/supplier/domain/errors/supplier-not-found.error';
 import { SupplierModule } from 'src/app/supplier/supplier.module';
 import { ConfigModule } from 'src/core/config/config.module';
@@ -132,6 +136,41 @@ describe('CreateProduct', () => {
       });
     });
 
+    it('should throw CompanyNotActiveError when company is inactive', async() => {
+      // Arrange
+      const inactiveCompany = createMock<CompanyDto>({
+        id: companyId,
+        name: 'Inactive Company',
+        fantasyName: 'Inactive Company',
+        document: '00000000000000',
+        ie: '000000000',
+        active: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        zipCode: '00000-000',
+        street: 'Inactive Street',
+        number: '0',
+        complement: null,
+        reference: null,
+        neighborhood: 'Center',
+        city: 'Sao Paulo',
+        state: 'SP',
+        phone01: '0000000000',
+        phone02: null,
+        cellphone: null,
+        email01: 'inactive@company.com',
+        email02: null,
+      });
+      const findCompanySpy = jest.spyOn(sut['findCompanyById'], 'execute').mockResolvedValue(inactiveCompany);
+      const saveSpy = jest.spyOn(sut['productRepo'], 'save').mockResolvedValue();
+
+      // Act & Assert
+      expect.assertions(3);
+      await expect(sut.execute(data)).rejects.toThrow(CompanyNotActiveError);
+      expect(findCompanySpy).toHaveBeenCalledWith(companyId);
+      expect(saveSpy).not.toHaveBeenCalled();
+    });
+
     it('should throw an error if EAN is duplicate for the same company', async() => {
       // Arrange
       const productData = createMock<ProductDto>();
@@ -162,6 +201,80 @@ describe('CreateProduct', () => {
       });
     });
 
+    it('should throw SupplierNotActiveError when supplier is inactive', async() => {
+      // Arrange
+      const inactiveSupplier = createMock<SupplierDto>({
+        id: supplierId,
+        cnpj: '11222333000181',
+        ie: '123456789',
+        group: 'Group',
+        type: 'Nacional',
+        companyName: 'Supplier Company',
+        fantasyName: 'Inactive Supplier',
+        representative: 'Representante',
+        active: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        companies: [],
+      });
+      const findByEanSpy = jest.spyOn(sut['productDao'], 'findByEan').mockResolvedValue(null);
+      const findSupplierSpy = jest.spyOn(sut['findSupplierById'], 'execute').mockResolvedValue(inactiveSupplier);
+      const saveSpy = jest.spyOn(sut['productRepo'], 'save').mockResolvedValue();
+
+      // Act & Assert
+      expect.assertions(4);
+      await expect(sut.execute(data)).rejects.toThrow(SupplierNotActiveError);
+      expect(findByEanSpy).toHaveBeenCalledWith(data.ean, data.companyId);
+      expect(findSupplierSpy).toHaveBeenCalledWith(supplierId);
+      expect(saveSpy).not.toHaveBeenCalled();
+    });
+
+    it('should throw SupplierNotActiveError when any supplier is inactive', async() => {
+      // Arrange
+      const supplierId2 = 'supplier-id-2';
+      const input = { ...data, supplierIds: [supplierId, supplierId2] };
+      const activeSupplier = createMock<SupplierDto>({
+        id: supplierId,
+        cnpj: '11222333000181',
+        ie: '123456789',
+        group: 'Group',
+        type: 'Nacional',
+        companyName: 'Supplier Company',
+        fantasyName: 'Active Supplier',
+        representative: 'Representante',
+        active: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        companies: [],
+      });
+      const inactiveSupplier = createMock<SupplierDto>({
+        id: supplierId2,
+        cnpj: '75279173000190',
+        ie: '111111111',
+        group: 'Group 2',
+        type: 'Nacional',
+        companyName: 'Supplier Company 2',
+        fantasyName: 'Inactive Supplier',
+        representative: 'Representante 2',
+        active: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        companies: [],
+      });
+      const findByEanSpy = jest.spyOn(sut['productDao'], 'findByEan').mockResolvedValue(null);
+      const findSupplierSpy = jest.spyOn(sut['findSupplierById'], 'execute')
+        .mockResolvedValueOnce(activeSupplier)
+        .mockResolvedValueOnce(inactiveSupplier);
+      const saveSpy = jest.spyOn(sut['productRepo'], 'save').mockResolvedValue();
+
+      // Act & Assert
+      expect.assertions(4);
+      await expect(sut.execute(input)).rejects.toThrow(SupplierNotActiveError);
+      expect(findByEanSpy).toHaveBeenCalledWith(input.ean, input.companyId);
+      expect(findSupplierSpy).toHaveBeenCalledTimes(2);
+      expect(saveSpy).not.toHaveBeenCalled();
+    });
+
     it('should create a product and return its id', async() => {
       // Arrange
       const saveSpy = jest.spyOn(sut['productRepo'], 'save').mockResolvedValue();
@@ -185,6 +298,18 @@ describe('CreateProduct', () => {
       return sut.execute(invalidData).catch((error) => {
         expect(error).toBeInstanceOf(CompanyNotFoundError);
       });
+    });
+
+    it('should throw CompanyNotActiveError when company is inactive', async() => {
+      // Arrange
+      await prisma.company.update({
+        where: { id: companyId },
+        data: { active: false },
+      });
+
+      // Act & Assert
+      expect.assertions(1);
+      await expect(sut.execute(data)).rejects.toThrow(CompanyNotActiveError);
     });
 
     it('should persist the product in the database', async() => {
@@ -367,6 +492,43 @@ describe('CreateProduct', () => {
       return sut.execute(invalidData).catch((error) => {
         expect(error).toBeInstanceOf(SupplierNotFoundError);
       });
+    });
+
+    it('should throw SupplierNotActiveError when supplier is inactive', async() => {
+      // Arrange
+      await prisma.supplier.update({
+        where: { id: supplierId },
+        data: { active: false },
+      });
+
+      // Act & Assert
+      expect.assertions(1);
+      await expect(sut.execute(data)).rejects.toThrow(SupplierNotActiveError);
+    });
+
+    it('should throw SupplierNotActiveError when any supplier is inactive', async() => {
+      // Arrange
+      const supplierId2 = (await createSupplier.execute({
+        cnpj: '75279173000190',
+        ie: '111111111',
+        group: 'Group 2',
+        type: 'Nacional',
+        companyName: 'Supplier Company 2',
+        fantasyName: 'Supplier Fantasy 2',
+        representative: 'Representante 2',
+        companyIds: [companyId],
+      })).id;
+
+      await prisma.supplier.update({
+        where: { id: supplierId2 },
+        data: { active: false },
+      });
+
+      const input = { ...data, supplierIds: [supplierId, supplierId2] };
+
+      // Act & Assert
+      expect.assertions(1);
+      await expect(sut.execute(input)).rejects.toThrow(SupplierNotActiveError);
     });
 
     it('should persist the product with minimum stock values', async() => {

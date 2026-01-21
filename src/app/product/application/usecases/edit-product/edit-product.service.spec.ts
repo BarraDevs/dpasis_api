@@ -4,7 +4,9 @@ import { CreateCompany } from 'src/app/company/application/usecases/create-compa
 import { ProductDuplicateEanError } from 'src/app/product/domain/errors/duplicate-ean.error';
 import { ProductNotFoundError } from 'src/app/product/domain/errors/product-not-found.error';
 import { ProductModule } from 'src/app/product/product.module';
+import { SupplierDto } from 'src/app/supplier/application/dtos/supplier.dto';
 import { CreateSupplier } from 'src/app/supplier/application/usecases/create-supplier/create-supplier.service';
+import { SupplierNotActiveError } from 'src/app/supplier/domain/errors/supplier-not-active.error';
 import { SupplierModule } from 'src/app/supplier/supplier.module';
 import { ConfigModule } from 'src/core/config/config.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
@@ -225,6 +227,94 @@ describe('EditProduct', () => {
 
       // Assert
       expect(findByEanSpy).not.toHaveBeenCalled();
+    });
+
+    it('should throw SupplierNotActiveError when supplier is inactive', async() => {
+      // Arrange
+      const productData = createMock<ProductDto>({
+        id: 'product-id',
+        ean: '7891234567890',
+        companyId: companyId,
+        currentStock: 10,
+        suppliers: [{ id: supplierId, companyName: 'Test', fantasyName: 'Test' }],
+      });
+      const inactiveSupplier = createMock<SupplierDto>({
+        id: supplierId,
+        cnpj: '11222333000181',
+        ie: '123456789',
+        group: 'Grupo',
+        type: 'Nacional',
+        companyName: 'Supplier Company 1',
+        fantasyName: 'Inactive Supplier',
+        representative: 'Representante Teste',
+        active: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        companies: [],
+      });
+
+      jest.spyOn(sut['productDao'], 'findById').mockResolvedValue(productData);
+      const findSupplierSpy = jest.spyOn(sut['findSupplierById'], 'execute').mockResolvedValue(inactiveSupplier);
+      const editSpy = jest.spyOn(sut['productRepository'], 'edit').mockResolvedValue();
+
+      // Act & Assert
+      expect.assertions(3);
+      await expect(sut.execute('product-id', { supplierIds: [supplierId] }))
+        .rejects.toThrow(SupplierNotActiveError);
+      expect(findSupplierSpy).toHaveBeenCalledWith(supplierId);
+      expect(editSpy).not.toHaveBeenCalled();
+    });
+
+    it('should throw SupplierNotActiveError when any supplier is inactive', async() => {
+      // Arrange
+      const productData = createMock<ProductDto>({
+        id: 'product-id',
+        ean: '7891234567890',
+        companyId: companyId,
+        currentStock: 10,
+        suppliers: [{ id: supplierId, companyName: 'Test', fantasyName: 'Test' }],
+      });
+      const activeSupplier = createMock<SupplierDto>({
+        id: supplierId,
+        cnpj: '11222333000181',
+        ie: '123456789',
+        group: 'Grupo',
+        type: 'Nacional',
+        companyName: 'Supplier Company 1',
+        fantasyName: 'Active Supplier',
+        representative: 'Representante Teste',
+        active: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        companies: [],
+      });
+      const inactiveSupplier = createMock<SupplierDto>({
+        id: supplierId2,
+        cnpj: '96588142000190',
+        ie: '987654321',
+        group: 'Grupo Teste 2',
+        type: 'Internacional',
+        companyName: 'Supplier Company 2',
+        fantasyName: 'Inactive Supplier',
+        representative: 'Representante Teste 2',
+        active: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        companies: [],
+      });
+
+      jest.spyOn(sut['productDao'], 'findById').mockResolvedValue(productData);
+      const findSupplierSpy = jest.spyOn(sut['findSupplierById'], 'execute')
+        .mockResolvedValueOnce(activeSupplier)
+        .mockResolvedValueOnce(inactiveSupplier);
+      const editSpy = jest.spyOn(sut['productRepository'], 'edit').mockResolvedValue();
+
+      // Act & Assert
+      expect.assertions(3);
+      await expect(sut.execute('product-id', { supplierIds: [supplierId, supplierId2] }))
+        .rejects.toThrow(SupplierNotActiveError);
+      expect(findSupplierSpy).toHaveBeenCalledTimes(2);
+      expect(editSpy).not.toHaveBeenCalled();
     });
 
     it('should preserve currentStock when editing', async() => {
@@ -501,6 +591,38 @@ describe('EditProduct', () => {
       const updatedProduct = await findProductById.execute(product.id);
       expect(updatedProduct.suppliers).toHaveLength(1);
       expect(updatedProduct.suppliers[0].id).toBe(supplierId2);
+    });
+
+    it('should throw SupplierNotActiveError when supplier is inactive', async() => {
+      // Arrange
+      const product = await createProduct.execute(data);
+
+      await prisma.supplier.update({
+        where: { id: supplierId2 },
+        data: { active: false },
+      });
+
+      const updateData: EditProductInputDto = { supplierIds: [supplierId2] };
+
+      // Act & Assert
+      expect.assertions(1);
+      await expect(sut.execute(product.id, updateData)).rejects.toThrow(SupplierNotActiveError);
+    });
+
+    it('should throw SupplierNotActiveError when any supplier is inactive', async() => {
+      // Arrange
+      const product = await createProduct.execute(data);
+
+      await prisma.supplier.update({
+        where: { id: supplierId2 },
+        data: { active: false },
+      });
+
+      const updateData: EditProductInputDto = { supplierIds: [supplierId, supplierId2] };
+
+      // Act & Assert
+      expect.assertions(1);
+      await expect(sut.execute(product.id, updateData)).rejects.toThrow(SupplierNotActiveError);
     });
 
     it('should keep suppliers unchanged when supplierIds is not provided', async() => {

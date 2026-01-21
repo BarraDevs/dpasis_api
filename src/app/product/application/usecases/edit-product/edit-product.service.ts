@@ -2,6 +2,8 @@ import { Inject, Injectable } from '@nestjs/common';
 import { Product } from 'src/app/product/domain/entities/product.entity';
 import { ProductDuplicateEanError } from 'src/app/product/domain/errors/duplicate-ean.error';
 import { ProductNotFoundError } from 'src/app/product/domain/errors/product-not-found.error';
+import { FindSupplierById } from 'src/app/supplier/application/usecases/find-supplier-by-id/find-supplier-by-id.service';
+import { SupplierNotActiveError } from 'src/app/supplier/domain/errors/supplier-not-active.error';
 import { TOKENS } from 'src/core/di/token';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
 import { UTCDate } from 'src/shared/value-objects/utc-date/utc-date.vo';
@@ -14,6 +16,7 @@ export class EditProduct {
   constructor(
     @Inject(TOKENS.ProductDao) private readonly productDao: IProductDao,
     @Inject(TOKENS.ProductRepository) private readonly productRepository: IProductRepository,
+    private readonly findSupplierById: FindSupplierById,
   ) {}
 
   public async execute(id: string, data: EditProductInputDto): Promise<SuccessMessage> {
@@ -27,6 +30,19 @@ export class EditProduct {
       if (existingProductWithEan) {
         throw new ProductDuplicateEanError();
       }
+    }
+
+    if (data.supplierIds) {
+      const suppliers = await Promise.all(
+        data.supplierIds.map(
+          async(supplierId) => this.findSupplierById.execute(supplierId),
+        ),
+      );
+      suppliers.forEach((supplier) => {
+        if (!supplier.active) {
+          throw new SupplierNotActiveError(supplier.fantasyName);
+        }
+      });
     }
 
     const product = Product.load({

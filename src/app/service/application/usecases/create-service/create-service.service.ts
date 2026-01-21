@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { FindCompanyById } from 'src/app/company/application/usecases/find-company-by-id/find-company-by-id.service';
+import { CompanyNotActiveError } from 'src/app/company/domain/errors/company-not-active.error';
 import { FindProductById } from 'src/app/product/application/usecases/find-product-by-id/find-product-by-id.service';
 import { FindServiceCategoryById } from 'src/app/service-category/application/usecases/find-service-category-by-id/find-service-category-by-id.service';
 import { ServiceCategoryNotActiveError } from 'src/app/service-category/domain/errors/service-category-not-active.error';
@@ -18,7 +19,10 @@ export class CreateService {
   ) {}
 
   public async execute(data: CreateServiceInputDto): Promise<CreateServiceOutputDto> {
-    await this.findCompanyById.execute(data.companyId);
+    const company = await this.findCompanyById.execute(data.companyId);
+    if (!company.active) {
+      throw new CompanyNotActiveError(company.fantasyName);
+    }
 
     const serviceCategory = await this.findServiceCategoryById.execute(data.categoryId);
     if (!serviceCategory.active) {
