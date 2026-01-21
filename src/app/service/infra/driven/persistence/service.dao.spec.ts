@@ -138,6 +138,718 @@ describe('ServiceDaoAdapterPrisma', () => {
     expect(sut).toBeDefined();
   });
 
+  describe('findAll', () => {
+    let company2: Company;
+    let category2: ServiceCategory;
+    let product03: Product;
+    let product04: Product;
+
+    beforeEach(async() => {
+      // Create additional test data
+      company2 = await prisma.company.create({
+        data: {
+          name: 'Company Test 2',
+          fantasyName: 'Company Test 2 Fantasy',
+          document: '22333444000105',
+          ie: 'ie teste 2',
+          zipCode: '87654321',
+          street: 'Rua Teste 2',
+          number: '200',
+          neighborhood: 'Centro 2',
+          city: 'Cidade 2',
+          state: 'RJ',
+          phone01: '2133334444',
+          email01: 'company2@test.com',
+          active: true,
+        },
+      });
+
+      category2 = await prisma.serviceCategory.create({
+        data: {
+          name: 'Instalação',
+          active: true,
+        },
+      });
+
+      product03 = await prisma.product.create({
+        data: {
+          id: 'product-03',
+          companyId: company.id,
+          type: 'MERCADORIA',
+          group01: 'Geral',
+          group02: 'Geral',
+          description: 'Produto 03',
+          manufacturerCode: 'MFG003',
+          brand: 'Marca',
+          measureUnit: 'UN',
+          ncm: '00000000',
+          economicBatch: 'BATCH003',
+          minimumStock: 0,
+          maximumStock: 100,
+          warrantyDays: 0,
+          weightInKg: 1,
+          heightInCm: 10,
+          lengthInCm: 10,
+          widthInCm: 10,
+          markup: 0,
+          marginB: 0,
+          currency: 'BRL',
+          exchangeRate: 1,
+          unitCostInCents: 1000,
+          unitPriceInCents: 2000,
+          ean: '7891234567892',
+          additionalInfo: null,
+          images: [],
+          currentStock: 10,
+        },
+      });
+
+      product04 = await prisma.product.create({
+        data: {
+          id: 'product-04',
+          companyId: company.id,
+          type: 'MERCADORIA',
+          group01: 'Geral',
+          group02: 'Geral',
+          description: 'Produto 04',
+          manufacturerCode: 'MFG004',
+          brand: 'Marca',
+          measureUnit: 'UN',
+          ncm: '00000000',
+          economicBatch: 'BATCH004',
+          minimumStock: 0,
+          maximumStock: 100,
+          warrantyDays: 0,
+          weightInKg: 1,
+          heightInCm: 10,
+          lengthInCm: 10,
+          widthInCm: 10,
+          markup: 0,
+          marginB: 0,
+          currency: 'BRL',
+          exchangeRate: 1,
+          unitCostInCents: 1000,
+          unitPriceInCents: 2000,
+          ean: '7891234567893',
+          additionalInfo: null,
+          images: [],
+          currentStock: 10,
+        },
+      });
+
+      // Create test services
+      await prisma.service.create({
+        data: {
+          name: 'Manutenção Preventiva',
+          nickname: 'Preventiva',
+          companyId: company.id,
+          categoryId: serviceCategory.id,
+          deadline: '5 dias',
+          shippingValueInCents: 1500,
+          warrant: '90 dias',
+          weight: '10kg',
+          maxVolume: '0.5m³',
+          dimensions: '50x40x30',
+          commission: 10,
+          valueInCents: 25000,
+          description: 'Serviço de manutenção preventiva',
+          active: true,
+          products: {
+            create: [
+              { productId: product01.id },
+              { productId: product02.id },
+            ],
+          },
+        },
+      });
+
+      await prisma.service.create({
+        data: {
+          name: 'Manutenção Corretiva',
+          nickname: 'Corretiva',
+          companyId: company.id,
+          categoryId: serviceCategory.id,
+          deadline: '3 dias',
+          shippingValueInCents: 2000,
+          warrant: '60 dias',
+          weight: '15kg',
+          maxVolume: '1m³',
+          dimensions: '100x80x60',
+          commission: 15,
+          valueInCents: 35000,
+          description: 'Serviço de manutenção corretiva urgente',
+          active: true,
+          products: {
+            create: [
+              { productId: product01.id },
+              { productId: product02.id },
+            ],
+          },
+        },
+      });
+
+      await prisma.service.create({
+        data: {
+          name: 'Instalação Elétrica',
+          nickname: null,
+          companyId: company.id,
+          categoryId: category2.id,
+          deadline: '7 dias',
+          shippingValueInCents: null,
+          warrant: '180 dias',
+          weight: null,
+          maxVolume: null,
+          dimensions: null,
+          commission: 20,
+          valueInCents: 50000,
+          description: null,
+          active: true,
+          products: {
+            create: [
+              { productId: product03.id },
+              { productId: product04.id },
+            ],
+          },
+        },
+      });
+
+      await prisma.service.create({
+        data: {
+          name: 'Consultoria Técnica',
+          nickname: null,
+          companyId: company2.id,
+          categoryId: serviceCategory.id,
+          deadline: null,
+          shippingValueInCents: null,
+          warrant: null,
+          weight: null,
+          maxVolume: null,
+          dimensions: null,
+          commission: 25,
+          valueInCents: 100000,
+          description: 'Consultoria especializada',
+          active: true,
+          products: {
+            create: [
+              { productId: product01.id },
+              { productId: product02.id },
+            ],
+          },
+        },
+      });
+
+      await prisma.service.create({
+        data: {
+          name: 'Serviço Inativo',
+          nickname: null,
+          companyId: company.id,
+          categoryId: serviceCategory.id,
+          deadline: null,
+          shippingValueInCents: null,
+          warrant: null,
+          weight: null,
+          maxVolume: null,
+          dimensions: null,
+          commission: 0,
+          valueInCents: 0,
+          description: null,
+          active: false,
+          products: {
+            create: [
+              { productId: product01.id },
+              { productId: product02.id },
+            ],
+          },
+        },
+      });
+    });
+
+    it('should return all services without filters', async() => {
+      // Act
+      const [services, total] = await sut.findAll({});
+
+      // Assert
+      expect(total).toBe(5);
+      expect(services).toHaveLength(5);
+    });
+
+    it('should order results by createdAt desc', async() => {
+      // Act
+      const [services] = await sut.findAll({});
+
+      // Assert
+      expect(services[0].createdAt.getTime()).toBeGreaterThanOrEqual(services[1].createdAt.getTime());
+      expect(services[1].createdAt.getTime()).toBeGreaterThanOrEqual(services[2].createdAt.getTime());
+    });
+
+    it('should return services with pagination', async() => {
+      // Act
+      const [services, total] = await sut.findAll({ page: 1, size: 2 });
+
+      // Assert
+      expect(total).toBe(5);
+      expect(services).toHaveLength(2);
+    });
+
+    it('should return second page correctly', async() => {
+      // Act
+      const [services, total] = await sut.findAll({ page: 2, size: 2 });
+
+      // Assert
+      expect(total).toBe(5);
+      expect(services).toHaveLength(2);
+    });
+
+    describe('filter by companyId', () => {
+      it('should filter by companyId', async() => {
+        // Act
+        const [services, total] = await sut.findAll({ companyId: company.id });
+
+        // Assert
+        expect(total).toBe(4);
+        expect(services).toHaveLength(4);
+        services.forEach((service) => {
+          expect(service.companyId).toBe(company.id);
+        });
+      });
+
+      it('should filter by companyId (case insensitive)', async() => {
+        // Act
+        const [services, total] = await sut.findAll({ companyId: company.id.toUpperCase() });
+
+        // Assert
+        expect(total).toBe(4);
+        expect(services).toHaveLength(4);
+      });
+
+      it('should return empty if companyId has no services', async() => {
+        // Arrange
+        const company3 = await prisma.company.create({
+          data: {
+            name: 'Company Test 3',
+            fantasyName: 'Company Test 3 Fantasy',
+            document: '33444555000172',
+            ie: 'ie teste 3',
+            zipCode: '11111111',
+            street: 'Rua Teste 3',
+            number: '300',
+            neighborhood: 'Centro 3',
+            city: 'Cidade 3',
+            state: 'MG',
+            phone01: '3133334444',
+            email01: 'company3@test.com',
+            active: true,
+          },
+        });
+
+        // Act
+        const [services, total] = await sut.findAll({ companyId: company3.id });
+
+        // Assert
+        expect(total).toBe(0);
+        expect(services).toHaveLength(0);
+      });
+    });
+
+    describe('filter by categoryId', () => {
+      it('should filter by categoryId', async() => {
+        // Act
+        const [services, total] = await sut.findAll({ categoryId: serviceCategory.id });
+
+        // Assert
+        expect(total).toBe(4);
+        expect(services).toHaveLength(4);
+        services.forEach((service) => {
+          expect(service.category.id).toBe(serviceCategory.id);
+        });
+      });
+
+      it('should filter by categoryId (case insensitive)', async() => {
+        // Act
+        const [services, total] = await sut.findAll({ categoryId: serviceCategory.id.toUpperCase() });
+
+        // Assert
+        expect(total).toBe(4);
+        expect(services).toHaveLength(4);
+      });
+
+      it('should return empty if categoryId has no services', async() => {
+        // Arrange
+        const category3 = await prisma.serviceCategory.create({
+          data: {
+            name: 'Categoria Vazia',
+            active: true,
+          },
+        });
+
+        // Act
+        const [services, total] = await sut.findAll({ categoryId: category3.id });
+
+        // Assert
+        expect(total).toBe(0);
+        expect(services).toHaveLength(0);
+      });
+    });
+
+    describe('filter by name', () => {
+      it('should filter by name - exact match', async() => {
+        // Act
+        const [services, total] = await sut.findAll({ name: 'Manutenção Preventiva' });
+
+        // Assert
+        expect(total).toBe(1);
+        expect(services[0].name).toBe('Manutenção Preventiva');
+      });
+
+      it('should filter by name - partial match', async() => {
+        // Act
+        const [services, total] = await sut.findAll({ name: 'Manutenção' });
+
+        // Assert
+        expect(total).toBe(2);
+        services.forEach((service) => {
+          expect(service.name).toContain('Manutenção');
+        });
+      });
+
+      it('should filter by name - case insensitive', async() => {
+        // Act
+        const [services, total] = await sut.findAll({ name: 'MANUTENÇÃO' });
+
+        // Assert
+        expect(total).toBe(2);
+        services.forEach((service) => {
+          expect(service.name).toContain('Manutenção');
+        });
+      });
+
+      it('should return empty if name does not match', async() => {
+        // Act
+        const [services, total] = await sut.findAll({ name: 'Inexistente' });
+
+        // Assert
+        expect(total).toBe(0);
+        expect(services).toHaveLength(0);
+      });
+    });
+
+    describe('filter by active', () => {
+      it('should filter by active=true', async() => {
+        // Act
+        const [services, total] = await sut.findAll({ active: true });
+
+        // Assert
+        expect(total).toBe(4);
+        expect(services).toHaveLength(4);
+        services.forEach((service) => {
+          expect(service.active).toBe(true);
+        });
+      });
+
+      it('should filter by active=false', async() => {
+        // Act
+        const [services, total] = await sut.findAll({ active: false });
+
+        // Assert
+        expect(total).toBe(1);
+        expect(services).toHaveLength(1);
+        expect(services[0].active).toBe(false);
+        expect(services[0].name).toBe('Serviço Inativo');
+      });
+    });
+
+    describe('filter by productId', () => {
+      it('should filter by productId', async() => {
+        // Act
+        const [services, total] = await sut.findAll({ productId: product01.id });
+
+        // Assert
+        expect(total).toBe(4);
+        expect(services).toHaveLength(4);
+        services.forEach((service) => {
+          const hasProduct = service.products.some(p => p.id === product01.id);
+          expect(hasProduct).toBe(true);
+        });
+      });
+
+      it('should filter by product03', async() => {
+        // Act
+        const [services, total] = await sut.findAll({ productId: product03.id });
+
+        // Assert
+        expect(total).toBe(1);
+        expect(services).toHaveLength(1);
+        expect(services[0].name).toBe('Instalação Elétrica');
+      });
+
+      it('should return empty if productId is not used', async() => {
+        // Arrange
+        const product05 = await prisma.product.create({
+          data: {
+            id: 'product-05',
+            companyId: company.id,
+            type: 'MERCADORIA',
+            group01: 'Geral',
+            group02: 'Geral',
+            description: 'Produto Sem Uso',
+            manufacturerCode: 'MFG005',
+            brand: 'Marca',
+            measureUnit: 'UN',
+            ncm: '00000000',
+            economicBatch: 'BATCH005',
+            minimumStock: 0,
+            maximumStock: 100,
+            warrantyDays: 0,
+            weightInKg: 1,
+            heightInCm: 10,
+            lengthInCm: 10,
+            widthInCm: 10,
+            markup: 0,
+            marginB: 0,
+            currency: 'BRL',
+            exchangeRate: 1,
+            unitCostInCents: 1000,
+            unitPriceInCents: 2000,
+            ean: '7891234567894',
+            additionalInfo: null,
+            images: [],
+            currentStock: 10,
+          },
+        });
+
+        // Act
+        const [services, total] = await sut.findAll({ productId: product05.id });
+
+        // Assert
+        expect(total).toBe(0);
+        expect(services).toHaveLength(0);
+      });
+    });
+
+    describe('filter by search', () => {
+      it('should search in name field', async() => {
+        // Act
+        const [services, total] = await sut.findAll({ search: 'Manutenção' });
+
+        // Assert
+        expect(total).toBeGreaterThanOrEqual(2);
+        const names = services.map(s => s.name);
+        expect(names).toEqual(
+          expect.arrayContaining([
+            'Manutenção Preventiva',
+            'Manutenção Corretiva',
+          ])
+        );
+      });
+
+      it('should search in nickname field', async() => {
+        // Act
+        const [services, total] = await sut.findAll({ search: 'Preventiva' });
+
+        // Assert
+        expect(total).toBeGreaterThanOrEqual(1);
+        expect(services.some(s => s.nickname === 'Preventiva')).toBe(true);
+      });
+
+      it('should search in description field', async() => {
+        // Act
+        const [services, total] = await sut.findAll({ search: 'urgente' });
+
+        // Assert
+        expect(total).toBe(1);
+        expect(services[0].name).toBe('Manutenção Corretiva');
+      });
+
+      it('should search case insensitive', async() => {
+        // Act
+        const [services, total] = await sut.findAll({ search: 'CONSULTORIA' });
+
+        // Assert
+        expect(total).toBe(1);
+        expect(services[0].name).toBe('Consultoria Técnica');
+      });
+
+      it('should return empty if search does not match', async() => {
+        // Act
+        const [services, total] = await sut.findAll({ search: 'xyzabc' });
+
+        // Assert
+        expect(total).toBe(0);
+        expect(services).toHaveLength(0);
+      });
+    });
+
+    describe('combined filters', () => {
+      it('should filter by companyId and categoryId', async() => {
+        // Act
+        const [services, total] = await sut.findAll({
+          companyId: company.id,
+          categoryId: serviceCategory.id,
+        });
+
+        // Assert
+        expect(total).toBe(3);
+        services.forEach((service) => {
+          expect(service.companyId).toBe(company.id);
+          expect(service.category.id).toBe(serviceCategory.id);
+        });
+      });
+
+      it('should filter by companyId and active', async() => {
+        // Act
+        const [services, total] = await sut.findAll({
+          companyId: company.id,
+          active: true,
+        });
+
+        // Assert
+        expect(total).toBe(3);
+        services.forEach((service) => {
+          expect(service.companyId).toBe(company.id);
+          expect(service.active).toBe(true);
+        });
+      });
+
+      it('should filter by name and active', async() => {
+        // Act
+        const [services, total] = await sut.findAll({
+          name: 'Manutenção',
+          active: true,
+        });
+
+        // Assert
+        expect(total).toBe(2);
+        services.forEach((service) => {
+          expect(service.name).toContain('Manutenção');
+          expect(service.active).toBe(true);
+        });
+      });
+
+      it('should filter by categoryId and productId', async() => {
+        // Act
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const [_, total] = await sut.findAll({
+          categoryId: serviceCategory.id,
+          productId: product01.id,
+        });
+
+        // Assert
+        expect(total).toBe(4);
+      });
+
+      it('should return empty if combined filters match nothing', async() => {
+        // Act
+        const [services, total] = await sut.findAll({
+          companyId: company.id,
+          name: 'Consultoria',
+        });
+
+        // Assert
+        expect(total).toBe(0);
+        expect(services).toHaveLength(0);
+      });
+    });
+
+    describe('response structure', () => {
+      it('should return services with all fields', async() => {
+        // Act
+        const [services] = await sut.findAll({});
+
+        // Assert
+        const service = services[0];
+        expect(service).toHaveProperty('id');
+        expect(service).toHaveProperty('name');
+        expect(service).toHaveProperty('nickname');
+        expect(service).toHaveProperty('companyId');
+        expect(service).toHaveProperty('category');
+        expect(service.category).toHaveProperty('id');
+        expect(service.category).toHaveProperty('name');
+        expect(service).toHaveProperty('products');
+        expect(service.products).toHaveLength(2);
+        expect(service.products[0]).toHaveProperty('id');
+        expect(service.products[0]).toHaveProperty('description');
+        expect(service).toHaveProperty('deadline');
+        expect(service).toHaveProperty('shippingValueInCents');
+        expect(service).toHaveProperty('warrant');
+        expect(service).toHaveProperty('weight');
+        expect(service).toHaveProperty('maxVolume');
+        expect(service).toHaveProperty('dimensions');
+        expect(service).toHaveProperty('commission');
+        expect(service).toHaveProperty('valueInCents');
+        expect(service).toHaveProperty('active');
+        expect(service).toHaveProperty('description');
+        expect(service).toHaveProperty('createdAt');
+        expect(service).toHaveProperty('updatedAt');
+      });
+
+      it('should return services with category details', async() => {
+        // Act
+        const [services] = await sut.findAll({});
+
+        // Assert
+        services.forEach((service) => {
+          expect(service.category).toBeDefined();
+          expect(service.category.id).toBeTruthy();
+          expect(service.category.name).toBeTruthy();
+        });
+      });
+
+      it('should return services with product details', async() => {
+        // Act
+        const [services] = await sut.findAll({});
+
+        // Assert
+        services.forEach((service) => {
+          expect(service.products).toBeDefined();
+          expect(service.products.length).toBeGreaterThan(0);
+          service.products.forEach((product) => {
+            expect(product.id).toBeTruthy();
+            expect(product.description).toBeTruthy();
+          });
+        });
+      });
+    });
+
+    describe('edge cases', () => {
+      it('should handle empty result', async() => {
+        // Act
+        const [services, total] = await sut.findAll({ name: 'NonExistent' });
+
+        // Assert
+        expect(total).toBe(0);
+        expect(services).toHaveLength(0);
+        expect(services).toEqual([]);
+      });
+
+      it('should handle pagination beyond total', async() => {
+        // Act
+        const [services, total] = await sut.findAll({ page: 100, size: 10 });
+
+        // Assert
+        expect(total).toBe(5);
+        expect(services).toHaveLength(0);
+      });
+
+      it('should handle large page size', async() => {
+        // Act
+        const [services, total] = await sut.findAll({ page: 1, size: 1000 });
+
+        // Assert
+        expect(total).toBe(5);
+        expect(services).toHaveLength(5);
+      });
+
+      it('should work without any filters', async() => {
+        // Act
+        const [services, total] = await sut.findAll({});
+
+        // Assert
+        expect(total).toBe(5);
+        expect(services).toHaveLength(5);
+      });
+    });
+  });
+
   describe('findById', () => {
     it('should return null if service not found', async() => {
       // Act
