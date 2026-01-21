@@ -231,7 +231,10 @@ describe('EditItem', () => {
       });
 
       // All fields should remain the same
-      expect(updatedItem).toEqual<ItemDto>(existingItem);
+      expect(updatedItem).toEqual<ItemDto>({
+        ...existingItem,
+        updatedAt: expect.any(Date),
+      });
     });
 
     it('should handle items with special characters and boundary values', async() => {

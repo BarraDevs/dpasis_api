@@ -5,6 +5,7 @@ import { SupplierDuplicateCnpjError } from 'src/app/supplier/domain/errors/dupli
 import { SupplierNotFoundError } from 'src/app/supplier/domain/errors/supplier-not-found.error';
 import { TOKENS } from 'src/core/di/token';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
+import { UTCDate } from 'src/shared/value-objects/utc-date/utc-date.vo';
 import type { ISupplierDao } from '../../persistence/dao/supplier-dao.interface';
 import type { ISupplierRepository } from '../../persistence/repository/supplier-repository.interface';
 import { EditSupplierInputDto } from './dtos/edit-supplier.dto';
@@ -27,6 +28,7 @@ export class EditSupplier {
       ...supplierData,
       ...data,
       companyIds: data.companyIds ?? supplierData.companies.map((company) => company.id),
+      updatedAt: UTCDate.create().value,
     });
 
     if (data.cnpj && supplier.props.cnpj !== supplierData.cnpj) {

@@ -5,6 +5,7 @@ import { ClientDuplicateCnpjError } from 'src/app/client/domain/errors/duplicate
 import { FindCompanyById } from 'src/app/company/application/usecases/find-company-by-id/find-company-by-id.service';
 import { TOKENS } from 'src/core/di/token';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
+import { UTCDate } from 'src/shared/value-objects/utc-date/utc-date.vo';
 import type { IClientDao } from '../../persistence/dao/client-dao.interface';
 import type { IClientRepository } from '../../persistence/repository/client-repository.interface';
 import { EditClientInputDto } from './dtos/edit-client.dto';
@@ -29,6 +30,7 @@ export class EditClient {
       ...rest,
       ...data,
       companyIds: data.companyIds ?? companies.map((company) => company.id),
+      updatedAt: UTCDate.create().value,
     });
 
     if (data.cnpj && client.props.cnpj !== clientData.cnpj) {

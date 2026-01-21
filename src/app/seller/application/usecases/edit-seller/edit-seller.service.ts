@@ -6,6 +6,7 @@ import { SellerNotFoundError } from 'src/app/seller/domain/errors/seller-not-fou
 import { UploadSingle } from 'src/app/upload-file/application/usecases/upload-single/upload-single.service';
 import { TOKENS } from 'src/core/di/token';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
+import { UTCDate } from 'src/shared/value-objects/utc-date/utc-date.vo';
 import type { ISellerDao } from '../../persistence/dao/seller-dao.interface';
 import type { ISellerRepository } from '../../persistence/repository/seller-repository.interface';
 import { EditSellerInputDto } from './dtos/edit-seller.dto';
@@ -53,6 +54,7 @@ export class EditSeller {
       ...data,
       avatarUrl: newAvatarUrl ?? sellerData.avatarUrl,
       companyIds: data.companyIds ?? companies.map((company) => company.id),
+      updatedAt: UTCDate.create().value,
     });
 
     await this.sellerRepository.edit(seller);

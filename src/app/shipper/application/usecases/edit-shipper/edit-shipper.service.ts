@@ -5,6 +5,7 @@ import { ShipperDuplicateCnpjError } from 'src/app/shipper/domain/errors/duplica
 import { ShipperNotFoundError } from 'src/app/shipper/domain/errors/shipper-not-found.error';
 import { TOKENS } from 'src/core/di/token';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
+import { UTCDate } from 'src/shared/value-objects/utc-date/utc-date.vo';
 import type { IShipperDao } from '../../persistence/dao/shipper-dao.interface';
 import type { IShipperRepository } from '../../persistence/repository/shipper-repository.interface';
 import { EditShipperInputDto } from './dtos/edit-shipper.dto';
@@ -29,6 +30,7 @@ export class EditShipper {
       ...rest,
       ...data,
       companyIds: data.companyIds ?? companies.map((company) => company.id),
+      updatedAt: UTCDate.create().value,
     });
 
     if (data.cnpj && shipper.props.cnpj !== shipperData.cnpj) {

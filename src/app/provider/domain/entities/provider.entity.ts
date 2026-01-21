@@ -90,5 +90,6 @@ export class Provider {
 
   public toggleStatus(): void {
     this._props.active = !this._props.active;
+    this._props.updatedAt = UTCDate.create().value;
   }
 }

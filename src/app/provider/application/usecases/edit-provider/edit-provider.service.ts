@@ -5,6 +5,7 @@ import { ProviderDuplicateCnpjError } from 'src/app/provider/domain/errors/dupli
 import { ProviderNotFoundError } from 'src/app/provider/domain/errors/provider-not-found.error';
 import { TOKENS } from 'src/core/di/token';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
+import { UTCDate } from 'src/shared/value-objects/utc-date/utc-date.vo';
 import type { IProviderDao } from '../../persistence/dao/provider-dao.interface';
 import type { IProviderRepository } from '../../persistence/repository/provider-repository.interface';
 import { EditProviderInputDto } from './dtos/edit-provider.dto';
@@ -29,6 +30,7 @@ export class EditProvider {
       ...rest,
       ...data,
       companyIds: data.companyIds ?? companies.map((company) => company.id),
+      updatedAt: UTCDate.create().value,
     });
 
     if (data.cnpj && provider.props.cnpj !== providerData.cnpj) {

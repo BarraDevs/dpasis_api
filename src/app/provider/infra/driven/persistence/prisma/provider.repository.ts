@@ -37,8 +37,7 @@ export class ProviderRepositoryAdapterPrisma implements IProviderRepository {
   }
 
   public async edit(provider: Provider): Promise<void> {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { id, companyIds, updatedAt, ...data } = provider.props;
+    const { id, companyIds, ...data } = provider.props;
 
     await this.prisma.provider.update({
       where: { id },

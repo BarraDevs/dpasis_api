@@ -59,8 +59,7 @@ export class SellerRepositoryAdapterPrisma implements ISellerRepository {
   }
 
   public async edit(seller: Seller): Promise<void> {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { id, companyIds, updatedAt, email, ...data } = seller.props;
+    const { id, companyIds, email, ...data } = seller.props;
 
     const sellerRecord = await this.prisma.seller.findUnique({
       where: { id },

@@ -3,6 +3,7 @@ import { Item } from 'src/app/item/domain/entities/item.entity';
 import { ItemNotFoundError } from 'src/app/item/domain/errors/item-not-found.error';
 import { TOKENS } from 'src/core/di/token';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
+import { UTCDate } from 'src/shared/value-objects/utc-date/utc-date.vo';
 import type { IItemDao } from '../../persistence/dao/item-dao.interface';
 import type { IItemRepository } from '../../persistence/repository/item-repository.interface';
 import { EditItemInputDto } from './dtos/edit-item.dto';
@@ -20,7 +21,11 @@ export class EditItem {
       throw new ItemNotFoundError();
     }
 
-    const item = Item.load({ ...itemDto, ...data });
+    const item = Item.load({
+      ...itemDto,
+      ...data,
+      updatedAt: UTCDate.create().value,
+    });
     await this.itemRepository.edit(item);
 
     return { message: 'Item atualizado com sucesso!' };

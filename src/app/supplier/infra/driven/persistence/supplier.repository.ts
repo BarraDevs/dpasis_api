@@ -43,8 +43,7 @@ export class SupplierRepositoryAdapterPrisma implements ISupplierRepository {
   }
 
   public async edit(supplier: Supplier): Promise<void> {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { id, companyIds, updatedAt, ...data } = supplier.props;
+    const { id, companyIds, ...data } = supplier.props;
 
     await this.prisma.supplier.update({
       where: { id },
