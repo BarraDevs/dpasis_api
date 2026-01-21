@@ -14,39 +14,9 @@ describe('FindAllProductQueryDto', () => {
     target = new ValidationPipe(pipeOptions);
   });
 
-  describe('companyId field', () => {
-    it.each(
-      [
-        undefined,
-        null,
-        '',
-        '  ',
-      ]
-    )('should throw an error if companyId is empty (%s)', async(value: any) => {
-      // Arrange
-      const data = { companyId: value };
-
-      // Act & Assert
-      expect.assertions(1);
-      return target.transform(data, metadata).catch((error) => {
-        expect(error.getResponse().message).toContain('companyId é obrigatório');
-      });
-    });
-
-    it('should throw an error if companyId is not a valid UUID', async() => {
-      // Arrange
-      const data = { companyId: 'invalid-uuid' };
-
-      // Act & Assert
-      expect.assertions(1);
-      return target.transform(data, metadata).catch((error) => {
-        expect(error.getResponse().message).toContain('companyId deve ser um UUID válido');
-      });
-    });
-  });
-
   describe.each(
     [
+      'companyId',
       'type',
       'group01',
       'group02',
@@ -159,18 +129,15 @@ describe('FindAllProductQueryDto', () => {
     });
   });
 
-  it('should pass with only required field (companyId)', async() => {
+  it('should pass without any filter', async() => {
     // Arrange
-    const data = {
-      companyId: '550e8400-e29b-41d4-a716-446655440000',
-    };
+    const data = {};
 
     // Act
     const result = await target.transform(data, metadata);
 
     // Assert
     expect(result).toBeInstanceOf(FindAllProductQueryDto);
-    expect(result.companyId).toBe('550e8400-e29b-41d4-a716-446655440000');
   });
 
   it('should pass with all valid filter fields', async() => {

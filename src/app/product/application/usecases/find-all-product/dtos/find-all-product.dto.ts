@@ -1,13 +1,14 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 import { Trim } from 'src/infra/validators/class/decorators/trim/trim';
 import { Queries } from 'src/infra/validators/class/dtos/queries/queries.dto';
 
 export class FindAllProductQueryDto extends Queries {
-  @IsUUID('4', { message: '$property deve ser um UUID válido' })
-  @IsNotEmpty({ message: '$property é obrigatório' })
+  @ApiPropertyOptional()
+  @IsString({ message: '$property deve ser uma string' })
+  @IsOptional()
   @Trim()
-  companyId: string;
+  companyId?: string;
 
   @ApiPropertyOptional()
   @IsString({ message: '$property deve ser uma string' })

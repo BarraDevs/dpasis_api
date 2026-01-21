@@ -246,6 +246,20 @@ describe('FindAllProduct', () => {
   });
 
   describe('unit tests', () => {
+    it('should not validate company when companyId is not provided', async() => {
+      // Arrange
+      const queries: FindAllProductQueryDto = {};
+      const findAllSpy = jest.spyOn(sut['productDao'], 'findAll').mockResolvedValue([[], 0]);
+      const findCompanySpy = jest.spyOn(sut['findCompanyById'], 'execute');
+
+      // Act
+      await sut.execute(queries);
+
+      // Assert
+      expect(findCompanySpy).not.toHaveBeenCalled();
+      expect(findAllSpy).toHaveBeenCalledWith(queries);
+    });
+
     it('should throw an error if company does not exist', async() => {
       // Arrange
       const queries: FindAllProductQueryDto = {
@@ -295,6 +309,25 @@ describe('FindAllProduct', () => {
   });
 
   describe('integration tests - Basic functionality', () => {
+    it('should return products across companies when companyId is not provided', async() => {
+      // Arrange
+      const product = await createProduct.execute({
+        ...baseProductData,
+        companyId: companyId2,
+        description: 'Company 2 Product',
+        ean: '7891234567999',
+        manufacturerCode: 'COMP2001',
+      });
+
+      // Act
+      const result = await sut.execute({});
+
+      // Assert
+      expect(result.totalItems).toBe(7);
+      const returnedIds = result.data.map(p => p.id);
+      expect(returnedIds).toContain(product.id);
+    });
+
     it('should throw an error if company does not exist', async() => {
       // Arrange
       const queries: FindAllProductQueryDto = {

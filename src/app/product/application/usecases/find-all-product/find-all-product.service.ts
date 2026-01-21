@@ -15,9 +15,11 @@ export class FindAllProduct {
   ) {}
 
   public async execute(queries: FindAllProductQueryDto): Promise<IPagination<ProductDto>> {
-    const company = await this.findCompanyById.execute(queries.companyId);
-    if (!company) {
-      throw new CompanyNotFoundError();
+    if (queries.companyId) {
+      const company = await this.findCompanyById.execute(queries.companyId);
+      if (!company) {
+        throw new CompanyNotFoundError();
+      }
     }
 
     const [result, total] = await this.productDao.findAll(queries);
