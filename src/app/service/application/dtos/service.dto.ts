@@ -13,14 +13,18 @@ export class ServiceDto {
   valueInCents: number;
   active: boolean;
   description: string | null;
-  category: {
-    id: string;
-    name: string;
-  };
-  products: {
-    id: string;
-    description: string;
-  }[];
+  category: ServiceCategoryDto;
+  products: ServiceProductDto[];
   createdAt: Date;
   updatedAt: Date;
+}
+
+class ServiceCategoryDto {
+  id: string;
+  name: string;
+}
+
+class ServiceProductDto {
+  id: string;
+  description: string;
 }
