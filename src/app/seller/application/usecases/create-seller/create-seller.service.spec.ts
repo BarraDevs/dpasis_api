@@ -1,7 +1,9 @@
 import { createMock } from '@golevelup/ts-jest';
 import { Test } from '@nestjs/testing';
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
+import { CompanyDto } from 'src/app/company/application/dtos/company.dto';
 import { FindCompanyById } from 'src/app/company/application/usecases/find-company-by-id/find-company-by-id.service';
+import { CompanyNotActiveError } from 'src/app/company/domain/errors/company-not-active.error';
 import { CompanyNotFoundError } from 'src/app/company/domain/errors/company-not-found.error';
 import { SellerDuplicateEmailError } from 'src/app/seller/domain/errors/duplicate-email.error';
 import { SellerModule } from 'src/app/seller/seller.module';
@@ -96,10 +98,51 @@ describe('CreateSeller', () => {
       expect(sellerRepository.save).not.toHaveBeenCalled();
     });
 
-    it('should create seller without image', async() => {
+    it('should throw CompanyNotActiveError when company is inactive', async() => {
+      // Arrange
+      const inactiveCompany = createMock<CompanyDto>({
+        active: false,
+        fantasyName: 'Inactive Company',
+      });
+      const findCompanySpy = jest.spyOn(findCompanyById, 'execute').mockResolvedValue(inactiveCompany);
+      jest.spyOn(sellerDao, 'findByEmail').mockResolvedValue(null);
+
+      // Act & Assert
+      expect.assertions(3);
+      return sut.execute(mockSellerDto).catch((error) => {
+        expect(error).toBeInstanceOf(CompanyNotActiveError);
+        expect(findCompanySpy).toHaveBeenCalledTimes(2);
+        expect(sellerRepository.save).not.toHaveBeenCalled();
+      });
+    });
+
+    it('should throw CompanyNotActiveError when any company is inactive', async() => {
       // Arrange
       jest.spyOn(sellerDao, 'findByEmail').mockResolvedValue(null);
-      jest.spyOn(findCompanyById, 'execute').mockResolvedValue({} as any);
+      const activeCompany = createMock<CompanyDto>({ active: true });
+      const inactiveCompany = createMock<CompanyDto>({
+        active: false,
+        fantasyName: 'Inactive Company',
+      });
+      const findCompanySpy = jest.spyOn(findCompanyById, 'execute')
+        .mockResolvedValueOnce(activeCompany)
+        .mockResolvedValueOnce(inactiveCompany);
+
+      // Act & Assert
+      expect.assertions(3);
+      await expect(sut.execute(mockSellerDto)).rejects.toThrow(CompanyNotActiveError);
+      expect(findCompanySpy).toHaveBeenCalledTimes(2);
+      expect(sellerRepository.save).not.toHaveBeenCalled();
+    });
+
+    it('should create seller without image', async() => {
+      // Arrange
+      const company = createMock<CompanyDto>({
+        active: true,
+        fantasyName: 'Test Company',
+      });
+      jest.spyOn(sellerDao, 'findByEmail').mockResolvedValue(null);
+      jest.spyOn(findCompanyById, 'execute').mockResolvedValue(company);
       jest.spyOn(sellerRepository, 'save').mockResolvedValue();
 
       // Act
@@ -114,6 +157,10 @@ describe('CreateSeller', () => {
 
     it('should create seller with image', async() => {
       // Arrange
+      const company = createMock<CompanyDto>({
+        active: true,
+        fantasyName: 'Test Company',
+      });
       const mockFile = createMock<Express.Multer.File>({
         mimetype: 'image/jpeg',
         size: 1024,
@@ -121,7 +168,7 @@ describe('CreateSeller', () => {
       const mockImageUrl = 'https://cdn.example.com/avatar.jpg';
 
       jest.spyOn(sellerDao, 'findByEmail').mockResolvedValue(null);
-      jest.spyOn(findCompanyById, 'execute').mockResolvedValue({} as any);
+      jest.spyOn(findCompanyById, 'execute').mockResolvedValue(company);
       jest.spyOn(uploadSingle, 'execute').mockResolvedValue({ url: mockImageUrl });
       jest.spyOn(sellerRepository, 'save').mockResolvedValue();
 
@@ -139,8 +186,12 @@ describe('CreateSeller', () => {
 
     it('should verify all companies exist', async() => {
       // Arrange
+      const company = createMock<CompanyDto>({
+        active: true,
+        fantasyName: 'Test Company',
+      });
       jest.spyOn(sellerDao, 'findByEmail').mockResolvedValue(null);
-      jest.spyOn(findCompanyById, 'execute').mockResolvedValue({} as any);
+      jest.spyOn(findCompanyById, 'execute').mockResolvedValue(company);
       jest.spyOn(sellerRepository, 'save').mockResolvedValue();
 
       // Act
@@ -154,8 +205,12 @@ describe('CreateSeller', () => {
 
     it('should hash password before saving', async() => {
       // Arrange
+      const company = createMock<CompanyDto>({
+        active: true,
+        fantasyName: 'Test Company',
+      });
       jest.spyOn(sellerDao, 'findByEmail').mockResolvedValue(null);
-      jest.spyOn(findCompanyById, 'execute').mockResolvedValue({} as any);
+      jest.spyOn(findCompanyById, 'execute').mockResolvedValue(company);
       jest.spyOn(sellerRepository, 'save').mockResolvedValue();
 
       // Act
@@ -171,6 +226,10 @@ describe('CreateSeller', () => {
 
     it('should create seller with null optional fields', async() => {
       // Arrange
+      const company = createMock<CompanyDto>({
+        active: true,
+        fantasyName: 'Test Company',
+      });
       const dtoWithNulls: CreateSellerInputDto = {
         ...mockSellerDto,
         nickname: null,
@@ -180,7 +239,7 @@ describe('CreateSeller', () => {
       };
 
       jest.spyOn(sellerDao, 'findByEmail').mockResolvedValue(null);
-      jest.spyOn(findCompanyById, 'execute').mockResolvedValue({} as any);
+      jest.spyOn(findCompanyById, 'execute').mockResolvedValue(company);
       jest.spyOn(sellerRepository, 'save').mockResolvedValue();
 
       // Act
@@ -200,6 +259,10 @@ describe('CreateSeller', () => {
 
     it('should upload image to correct folder', async() => {
       // Arrange
+      const company = createMock<CompanyDto>({
+        active: true,
+        fantasyName: 'Test Company',
+      });
       const mockFile = createMock<Express.Multer.File>({
         mimetype: 'image/png',
         size: 2048,
@@ -207,7 +270,7 @@ describe('CreateSeller', () => {
       const mockImageUrl = 'https://cdn.example.com/sellers/avatars/image.png';
 
       jest.spyOn(sellerDao, 'findByEmail').mockResolvedValue(null);
-      jest.spyOn(findCompanyById, 'execute').mockResolvedValue({} as any);
+      jest.spyOn(findCompanyById, 'execute').mockResolvedValue(company);
       jest.spyOn(uploadSingle, 'execute').mockResolvedValue({ url: mockImageUrl });
       jest.spyOn(sellerRepository, 'save').mockResolvedValue();
 
@@ -221,8 +284,12 @@ describe('CreateSeller', () => {
 
     it('should check email before verifying companies', async() => {
       // Arrange
+      const company = createMock<CompanyDto>({
+        active: true,
+        fantasyName: 'Test Company',
+      });
       jest.spyOn(sellerDao, 'findByEmail').mockResolvedValue({ email: mockSellerDto.email } as any);
-      jest.spyOn(findCompanyById, 'execute').mockResolvedValue({} as any);
+      jest.spyOn(findCompanyById, 'execute').mockResolvedValue(company);
 
       // Act & Assert
       await expect(sut.execute(mockSellerDto)).rejects.toThrow(SellerDuplicateEmailError);
@@ -231,8 +298,12 @@ describe('CreateSeller', () => {
 
     it('should return seller id after creation', async() => {
       // Arrange
+      const company = createMock<CompanyDto>({
+        active: true,
+        fantasyName: 'Test Company',
+      });
       jest.spyOn(sellerDao, 'findByEmail').mockResolvedValue(null);
-      jest.spyOn(findCompanyById, 'execute').mockResolvedValue({} as any);
+      jest.spyOn(findCompanyById, 'execute').mockResolvedValue(company);
       jest.spyOn(sellerRepository, 'save').mockResolvedValue();
 
       // Act
@@ -246,6 +317,10 @@ describe('CreateSeller', () => {
 
     it('should propagate upload errors', async() => {
       // Arrange
+      const company = createMock<CompanyDto>({
+        active: true,
+        fantasyName: 'Test Company',
+      });
       const mockFile = createMock<Express.Multer.File>({
         mimetype: 'image/jpeg',
         size: 1024,
@@ -253,7 +328,7 @@ describe('CreateSeller', () => {
       const uploadError = new Error('S3 upload failed');
 
       jest.spyOn(sellerDao, 'findByEmail').mockResolvedValue(null);
-      jest.spyOn(findCompanyById, 'execute').mockResolvedValue({} as any);
+      jest.spyOn(findCompanyById, 'execute').mockResolvedValue(company);
       jest.spyOn(uploadSingle, 'execute').mockRejectedValue(uploadError);
 
       // Act & Assert
@@ -421,6 +496,43 @@ describe('CreateSeller', () => {
 
       // Act & Assert
       await expect(sut.execute(sellerData)).rejects.toThrow(CompanyNotFoundError);
+    });
+
+    it('should throw error when company is inactive in database', async() => {
+      // Arrange
+      const company = await createTestCompany('inactive');
+      await prisma.company.update({
+        where: { id: company.id },
+        data: { active: false },
+      });
+
+      const sellerData: CreateSellerInputDto = {
+        ...mockSellerDto,
+        email: 'inactive-company@test.com',
+        companyIds: [company.id],
+      };
+
+      // Act & Assert
+      await expect(sut.execute(sellerData)).rejects.toThrow(CompanyNotActiveError);
+    });
+
+    it('should throw error when any company is inactive in database', async() => {
+      // Arrange
+      const company1 = await createTestCompany('001');
+      const company2 = await createTestCompany('002');
+      await prisma.company.update({
+        where: { id: company2.id },
+        data: { active: false },
+      });
+
+      const sellerData: CreateSellerInputDto = {
+        ...mockSellerDto,
+        email: 'multi-inactive@test.com',
+        companyIds: [company1.id, company2.id],
+      };
+
+      // Act & Assert
+      await expect(sut.execute(sellerData)).rejects.toThrow(CompanyNotActiveError);
     });
 
     it('should create seller with multiple companies', async() => {

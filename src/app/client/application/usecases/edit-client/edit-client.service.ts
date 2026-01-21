@@ -3,6 +3,7 @@ import { Client } from 'src/app/client/domain/entities/client.entity';
 import { ClientNotFoundError } from 'src/app/client/domain/errors/client-not-found.error';
 import { ClientDuplicateCnpjError } from 'src/app/client/domain/errors/duplicate-cnpj.error';
 import { FindCompanyById } from 'src/app/company/application/usecases/find-company-by-id/find-company-by-id.service';
+import { CompanyNotActiveError } from 'src/app/company/domain/errors/company-not-active.error';
 import { TOKENS } from 'src/core/di/token';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
 import { UTCDate } from 'src/shared/value-objects/utc-date/utc-date.vo';
@@ -41,11 +42,16 @@ export class EditClient {
     }
 
     if (data.companyIds) {
-      await Promise.all(
+      const companies = await Promise.all(
         client.props.companyIds.map(
           async(companyId) => await this.findCompanyById.execute(companyId),
         ),
       );
+      companies.forEach((company) => {
+        if (!company.active) {
+          throw new CompanyNotActiveError(company.fantasyName);
+        }
+      });
     }
 
     await this.clientRepository.edit(client);

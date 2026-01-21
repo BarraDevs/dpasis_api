@@ -92,6 +92,7 @@ describe('DeleteAttachment', () => {
       owner01 = await prisma.owner.create({
         data: {
           id: 'owner-attachment-delete-test',
+          active: true,
         },
       });
     });

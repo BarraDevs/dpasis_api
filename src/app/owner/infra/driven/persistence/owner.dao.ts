@@ -10,6 +10,10 @@ export class OwnerDaoAdapterPrisma implements IOwnerDao {
   public async findById(id: string): Promise<OwnerDto | null> {
     return this.prisma.owner.findUnique({
       where: { id },
+      select: {
+        id: true,
+        active: true,
+      },
     });
   }
 }

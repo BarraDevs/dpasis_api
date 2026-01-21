@@ -95,6 +95,7 @@ describe('DeleteLicense', () => {
       const owner = await prisma.owner.create({
         data: {
           id: 'owner-123',
+          active: true,
         },
       });
 

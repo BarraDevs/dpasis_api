@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { Client } from 'src/app/client/domain/entities/client.entity';
 import { ClientDuplicateCnpjError } from 'src/app/client/domain/errors/duplicate-cnpj.error';
 import { FindCompanyById } from 'src/app/company/application/usecases/find-company-by-id/find-company-by-id.service';
+import { CompanyNotActiveError } from 'src/app/company/domain/errors/company-not-active.error';
 import { TOKENS } from 'src/core/di/token';
 import type { IClientDao } from '../../persistence/dao/client-dao.interface';
 import type { IClientRepository } from '../../persistence/repository/client-repository.interface';
@@ -24,11 +25,16 @@ export class CreateClient {
     }
 
     // Verify if each company exists
-    await Promise.all(
+    const companies = await Promise.all(
       client.props.companyIds.map(
         async(companyId) => this.findCompanyById.execute(companyId),
       ),
     );
+    companies.forEach((company) => {
+      if (!company.active) {
+        throw new CompanyNotActiveError(company.fantasyName);
+      }
+    });
 
     await this.clientRepository.save(client);
 

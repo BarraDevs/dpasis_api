@@ -3,6 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { Owner } from '@prisma/client';
 import { AddressModule } from 'src/app/address/address.module';
 import { AddressMainMustBeOneError } from 'src/app/address/domain/errors/address-main-must-be-one.error';
+import { OwnerNotActiveError } from 'src/app/owner/domain/errors/owner-not-active.error';
 import { OwnerNotFoundError } from 'src/app/owner/domain/errors/owner-not-found.error';
 import { ConfigModule } from 'src/core/config/config.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
@@ -70,6 +71,7 @@ describe('CreateAddress', () => {
       owner01 = await prisma.owner.create({
         data: {
           id: 'owner-1',
+          active: true,
         },
       });
     });
@@ -93,6 +95,33 @@ describe('CreateAddress', () => {
       expect.assertions(1);
       return sut.execute(data, false).catch((error) => {
         expect(error).toBeInstanceOf(OwnerNotFoundError);
+      });
+    });
+
+    it('should throw an error if owner is not active', async() => {
+      // Arrange
+      await prisma.owner.update({
+        where: { id: owner01.id },
+        data: { active: false },
+      });
+
+      const data: CreateAddressInputDto = {
+        zipCode: '12345-678',
+        street: 'Main St',
+        number: '123',
+        neighborhood: 'Downtown',
+        city: 'Metropolis',
+        state: 'State',
+        ownerId: owner01.id,
+        nickname: 'Home',
+        complement: 'Apt 4',
+        reference: null,
+      };
+
+      // Act & Assert
+      expect.assertions(1);
+      return sut.execute(data, false).catch((error) => {
+        expect(error).toBeInstanceOf(OwnerNotActiveError);
       });
     });
 

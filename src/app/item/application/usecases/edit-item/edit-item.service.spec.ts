@@ -133,7 +133,10 @@ describe('EditItem', () => {
 
     beforeEach(async() => {
       existingOwner = await prisma.owner.create({
-        data: { id: 'edit-test-owner' },
+        data: {
+          id: 'edit-test-owner',
+          active: true,
+        },
       });
 
       existingItem = await prisma.item.create({
@@ -174,6 +177,29 @@ describe('EditItem', () => {
       expect(updatedItem?.quantity).toBe(5);
       expect(updatedItem?.unitPriceInCents).toBe(25000);
       expect(updatedItem?.ownerId).toBe(existingOwner.id); // Should remain unchanged
+    });
+
+    it('should not change ownerId even when provided in input', async() => {
+      // Arrange
+      const newOwner = await prisma.owner.create({
+        data: { id: 'edit-test-owner-2', active: true },
+      });
+
+      const editData = {
+        ownerId: newOwner.id,
+        description: 'Attempt Owner Change',
+      } as EditItemInputDto;
+
+      // Act
+      await sut.execute(existingItem.id, editData);
+
+      // Assert
+      const updatedItem = await prisma.item.findUnique({
+        where: { id: existingItem.id },
+      });
+
+      expect(updatedItem?.description).toBe('Attempt Owner Change');
+      expect(updatedItem?.ownerId).toBe(existingOwner.id);
     });
 
     it('should throw ItemNotFoundError for non-existent item in database', async() => {

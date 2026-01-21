@@ -123,6 +123,7 @@ model Supplier {
 
 model Owner {
   id          String       @id
+  active      Boolean
   addresses   Address[]
   contacts    Contact[]
   licenses    License[]

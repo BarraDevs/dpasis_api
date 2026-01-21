@@ -1,7 +1,9 @@
 import { createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Company } from '@prisma/client';
+import { CompanyDto } from 'src/app/company/application/dtos/company.dto';
 import { FindCompanyById } from 'src/app/company/application/usecases/find-company-by-id/find-company-by-id.service';
+import { CompanyNotActiveError } from 'src/app/company/domain/errors/company-not-active.error';
 import { CompanyNotFoundError } from 'src/app/company/domain/errors/company-not-found.error';
 import { ConfigModule } from 'src/core/config/config.module';
 import { TOKENS } from 'src/core/di/token';
@@ -133,6 +135,59 @@ describe('CreateShipper', () => {
       expect(findCompanySpy).toHaveBeenCalledTimes(2);
       expect(findCompanySpy).toHaveBeenCalledWith('company-id-1');
       expect(findCompanySpy).toHaveBeenCalledWith('company-id-2');
+    });
+
+    it('should throw CompanyNotActiveError when company is inactive', async() => {
+      // Arrange
+      const input: CreateShipperInputDto = {
+        companyName: 'Transportadora ABC Ltda',
+        fantasyName: 'ABC Transportes',
+        cnpj: '11240693000106',
+        contact: '(11) 98765-4321',
+        representative: 'João Silva',
+        zipCode: '01234-567',
+        street: 'Rua das Flores',
+        number: '100',
+        complement: null,
+        reference: null,
+        neighborhood: 'Centro',
+        city: 'São Paulo',
+        state: 'SP',
+        companyIds: ['company-id-1'],
+      };
+
+      jest.spyOn(shipperDao, 'findByCnpj').mockResolvedValue(null);
+      const inactiveCompany = createMock<CompanyDto>({
+        id: 'company-id-1',
+        name: 'Empresa Inativa',
+        fantasyName: 'Empresa Inativa',
+        document: '00000000000000',
+        ie: '000000000',
+        active: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        zipCode: '00000-000',
+        street: 'Rua Inativa',
+        number: '0',
+        complement: null,
+        reference: null,
+        neighborhood: 'Centro',
+        city: 'São Paulo',
+        state: 'SP',
+        phone01: '0000000000',
+        phone02: null,
+        cellphone: null,
+        email01: 'inactive@company.com',
+        email02: null,
+      });
+      const findCompanySpy = jest.spyOn(findCompanyById, 'execute').mockResolvedValue(inactiveCompany);
+      const saveSpy = jest.spyOn(shipperRepository, 'save').mockResolvedValue();
+
+      // Act & Assert
+      expect.assertions(3);
+      await expect(sut.execute(input)).rejects.toBeInstanceOf(CompanyNotActiveError);
+      expect(findCompanySpy).toHaveBeenCalledWith('company-id-1');
+      expect(saveSpy).not.toHaveBeenCalled();
     });
 
     it('should call shipperRepository.save with created shipper', async() => {
@@ -320,6 +375,52 @@ describe('CreateShipper', () => {
 
       // Act & Assert
       await expect(sut.execute(input)).rejects.toThrow(CompanyNotFoundError);
+    });
+
+    it('should throw CompanyNotActiveError when company is inactive', async() => {
+      // Arrange
+      const inactiveCompany = await prisma.company.create({
+        data: {
+          name: 'Company Inactive',
+          fantasyName: 'Company Inactive Fantasy',
+          document: '42901774000180',
+          ie: '555666777',
+          zipCode: '12345-678',
+          street: 'Inactive Street',
+          number: '999',
+          neighborhood: 'Inactive Neighborhood',
+          complement: null,
+          reference: null,
+          city: 'São Paulo',
+          state: 'SP',
+          cellphone: '11999999999',
+          phone01: '1133334444',
+          phone02: null,
+          email01: 'inactive@test.com',
+          email02: null,
+          active: false,
+        },
+      });
+
+      const input: CreateShipperInputDto = {
+        companyName: 'Transportadora ABC Ltda',
+        fantasyName: 'ABC Transportes',
+        cnpj: '63193451000102',
+        contact: '(11) 98765-4321',
+        representative: 'João Silva',
+        zipCode: '01234-567',
+        street: 'Rua das Flores',
+        number: '100',
+        complement: null,
+        reference: null,
+        neighborhood: 'Centro',
+        city: 'São Paulo',
+        state: 'SP',
+        companyIds: [inactiveCompany.id],
+      };
+
+      // Act & Assert
+      await expect(sut.execute(input)).rejects.toThrow(CompanyNotActiveError);
     });
 
     it('should create a shipper successfully with all fields', async() => {

@@ -2,6 +2,7 @@ import { createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Owner } from '@prisma/client';
 import { ContactModule } from 'src/app/contact/contact.module';
+import { OwnerNotActiveError } from 'src/app/owner/domain/errors/owner-not-active.error';
 import { OwnerNotFoundError } from 'src/app/owner/domain/errors/owner-not-found.error';
 import { ConfigModule } from 'src/core/config/config.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
@@ -82,6 +83,7 @@ describe('CreateContact', () => {
       owner01 = await prisma.owner.create({
         data: {
           id: 'owner-123',
+          active: true,
         },
       });
     });
@@ -100,6 +102,27 @@ describe('CreateContact', () => {
 
       // Act & Assert
       await expect(sut.execute(input)).rejects.toThrow(OwnerNotFoundError);
+    });
+
+    it('should throw an error if owner is not active', async() => {
+      // Arrange
+      await prisma.owner.update({
+        where: { id: owner01.id },
+        data: { active: false },
+      });
+
+      const input: CreateContactInputDto = {
+        name: 'John Doe',
+        department: 'Sales',
+        email: 'john.doe@example.com',
+        phone: '123-456-7890',
+        whatsapp: '123-456-7890',
+        ownerId: owner01.id,
+        info: 'Additional information about John Doe',
+      };
+
+      // Act & Assert
+      await expect(sut.execute(input)).rejects.toThrow(OwnerNotActiveError);
     });
 
     it('should create a contact providing all fields', async() => {

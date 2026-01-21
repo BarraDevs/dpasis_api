@@ -36,6 +36,7 @@ export class ClientRepositoryAdapterPrisma implements IClientRepository {
           create: {
             // make sure to create a new resource with same client id
             id: data.id,
+            active: data.active,
           },
         },
       },
@@ -51,6 +52,11 @@ export class ClientRepositoryAdapterPrisma implements IClientRepository {
         ...data,
         companies: {
           set: companyIds.map((companyId) => ({ id: companyId })),
+        },
+        resource: {
+          update: {
+            active: data.active,
+          },
         },
       },
     });

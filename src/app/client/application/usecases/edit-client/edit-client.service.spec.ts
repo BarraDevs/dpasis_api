@@ -3,6 +3,7 @@ import { ClientModule } from 'src/app/client/client.module';
 import { ClientNotFoundError } from 'src/app/client/domain/errors/client-not-found.error';
 import { ClientDuplicateCnpjError } from 'src/app/client/domain/errors/duplicate-cnpj.error';
 import { CreateCompany } from 'src/app/company/application/usecases/create-company/create-company.service';
+import { CompanyNotActiveError } from 'src/app/company/domain/errors/company-not-active.error';
 import { CompanyNotFoundError } from 'src/app/company/domain/errors/company-not-found.error';
 import { ConfigModule } from 'src/core/config/config.module';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
@@ -128,6 +129,22 @@ describe('EditClient', () => {
       });
     });
 
+    it('should throw an error when company is not active', async() => {
+      // Arrange
+      const client = await createClient.execute(data);
+
+      await prisma.company.update({
+        where: { id: companyId },
+        data: { active: false },
+      });
+
+      // Act & Assert
+      expect.assertions(1);
+      return sut.execute(client.id, { companyIds: [companyId] }).catch((error) => {
+        expect(error).toBeInstanceOf(CompanyNotActiveError);
+      });
+    });
+
     it('should not throw an error when cnpj and company are unchanged', async() => {
       // Arrange
       const client = await createClient.execute(data);
@@ -171,6 +188,12 @@ describe('EditClient', () => {
       // Assert
       const editedClient = await findClientById.execute(client.id);
       expect(editedClient).toMatchObject({ ...clientBeforeEdit, updatedAt: editedClient!.updatedAt });
+
+      const persistedClient = await prisma.client.findUnique({
+        where: { id: client.id },
+        include: { resource: true },
+      });
+      expect(persistedClient?.resource?.active).toBe(persistedClient?.active);
     });
 
     it('should edit a client successfully', async() => {
@@ -207,6 +230,12 @@ describe('EditClient', () => {
         updatedAt: editedClient!.updatedAt,
         companies: editedClient!.companies,
       });
+
+      const persistedClient = await prisma.client.findUnique({
+        where: { id: client.id },
+        include: { resource: true },
+      });
+      expect(persistedClient?.resource?.active).toBe(persistedClient?.active);
     });
 
     it('should change the company of a client successfully', async() => {

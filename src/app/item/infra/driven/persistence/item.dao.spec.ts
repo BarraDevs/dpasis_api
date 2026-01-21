@@ -49,11 +49,11 @@ describe('ItemDaoAdapterPrisma', () => {
 
     beforeEach(async() => {
       owner1 = await prisma.owner.create({
-        data: { id: 'owner-dao-01' },
+        data: { id: 'owner-dao-01', active: true },
       });
 
       owner2 = await prisma.owner.create({
-        data: { id: 'owner-dao-02' },
+        data: { id: 'owner-dao-02', active: true },
       });
 
       // Create items for owner1
@@ -239,7 +239,7 @@ describe('ItemDaoAdapterPrisma', () => {
     it('should return empty result for owner with no items', async() => {
       // Arrange
       const emptyOwner = await prisma.owner.create({
-        data: { id: 'empty-owner' },
+        data: { id: 'empty-owner', active: true },
       });
 
       const queries: FindAllItemQueryDto = {
@@ -395,7 +395,7 @@ describe('ItemDaoAdapterPrisma', () => {
 
     beforeEach(async() => {
       owner = await prisma.owner.create({
-        data: { id: 'owner-findbyid-test' },
+        data: { id: 'owner-findbyid-test', active: true },
       });
 
       item = await prisma.item.create({
@@ -508,7 +508,7 @@ describe('ItemDaoAdapterPrisma', () => {
     it('should handle items with different owners correctly', async() => {
       // Arrange - Create another owner and item
       const owner2 = await prisma.owner.create({
-        data: { id: 'owner-findbyid-test-2' },
+        data: { id: 'owner-findbyid-test-2', active: true },
       });
 
       const item2 = await prisma.item.create({

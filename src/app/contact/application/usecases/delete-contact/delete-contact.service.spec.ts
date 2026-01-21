@@ -67,6 +67,7 @@ describe('DeleteContact', () => {
       owner = await prisma.owner.create({
         data: {
           id: 'owner-1',
+          active: true,
         },
       });
     });

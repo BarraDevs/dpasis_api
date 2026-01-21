@@ -24,6 +24,7 @@ export class EditItem {
     const item = Item.load({
       ...itemDto,
       ...data,
+      ownerId: itemDto.ownerId,
       updatedAt: UTCDate.create().value,
     });
     await this.itemRepository.edit(item);

@@ -1,4 +1,7 @@
+import { createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
+import { CompanyDto } from 'src/app/company/application/dtos/company.dto';
+import { CompanyNotActiveError } from 'src/app/company/domain/errors/company-not-active.error';
 import { SupplierDuplicateCnpjError } from 'src/app/supplier/domain/errors/duplicate-cnpj.error';
 import { SupplierNotFoundError } from 'src/app/supplier/domain/errors/supplier-not-found.error';
 import { SupplierModule } from 'src/app/supplier/supplier.module';
@@ -353,13 +356,17 @@ describe('EditSupplier', () => {
         updatedAt: new Date(),
         companies: [{ id: companyId1, name: 'Company 1' }],
       };
+      const company1 = createMock<CompanyDto>({
+        fantasyName: 'Test',
+        active: true,
+      });
 
       const editData: EditSupplierInputDto = {
         companyIds: [companyId1, companyId2],
       };
 
       jest.spyOn(sut['supplierDao'], 'findById').mockResolvedValue(existingSupplierData);
-      const findCompanyByIdSpy = jest.spyOn(sut['findCompanyById'], 'execute').mockResolvedValue({} as any);
+      const findCompanyByIdSpy = jest.spyOn(sut['findCompanyById'], 'execute').mockResolvedValue(company1);
       const editSpy = jest.spyOn(sut['supplierRepository'], 'edit').mockResolvedValue();
 
       // Act
@@ -374,6 +381,53 @@ describe('EditSupplier', () => {
           companyIds: [companyId1, companyId2],
         }),
       }));
+    });
+
+    it('should throw CompanyNotActiveError when any company is inactive', async() => {
+      // Arrange
+      const supplierId = 'supplier-id-334';
+      const companyId1 = 'company-id-1';
+      const companyId2 = 'company-id-2';
+
+      const existingSupplierData: SupplierDto = {
+        id: supplierId,
+        cnpj: '23741590000109',
+        ie: '777777777',
+        group: 'Company Test Group',
+        type: 'Company Test Type',
+        companyName: 'Company Test Supplier',
+        fantasyName: 'Company Test',
+        representative: 'Company Test Rep',
+        active: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        companies: [{ id: companyId1, name: 'Company 1' }],
+      };
+
+      const activeCompany = createMock<CompanyDto>({
+        fantasyName: 'Active Company',
+        active: true,
+      });
+      const inactiveCompany = createMock<CompanyDto>({
+        fantasyName: 'Inactive Company',
+        active: false,
+      });
+
+      const editData: EditSupplierInputDto = {
+        companyIds: [companyId1, companyId2],
+      };
+
+      jest.spyOn(sut['supplierDao'], 'findById').mockResolvedValue(existingSupplierData);
+      const findCompanyByIdSpy = jest.spyOn(sut['findCompanyById'], 'execute')
+        .mockResolvedValueOnce(activeCompany)
+        .mockResolvedValueOnce(inactiveCompany);
+      const editSpy = jest.spyOn(sut['supplierRepository'], 'edit').mockResolvedValue();
+
+      // Act & Assert
+      expect.assertions(3);
+      await expect(sut.execute(supplierId, editData)).rejects.toBeInstanceOf(CompanyNotActiveError);
+      expect(findCompanyByIdSpy).toHaveBeenCalledTimes(2);
+      expect(editSpy).not.toHaveBeenCalled();
     });
 
     it('should not call findCompanyById when companyIds is not provided', async() => {
@@ -691,6 +745,34 @@ describe('EditSupplier', () => {
 
       // Act & Assert
       await expect(sut.execute(existingSupplierId, editData)).rejects.toThrow();
+    });
+
+    it('should throw CompanyNotActiveError when editing with inactive company', async() => {
+      // Arrange
+      const inactiveCompany = await prisma.company.create({
+        data: {
+          name: 'Inactive Company',
+          fantasyName: 'Inactive Company',
+          document: '11122233000190',
+          ie: '111222333',
+          zipCode: '11223344',
+          street: 'Inactive Street',
+          number: '999',
+          neighborhood: 'Inactive District',
+          city: 'Inactive City',
+          state: 'IN',
+          phone01: '1112223333',
+          email01: 'inactive@company.com',
+          active: false,
+        },
+      });
+
+      const editData: EditSupplierInputDto = {
+        companyIds: [inactiveCompany.id],
+      };
+
+      // Act & Assert
+      await expect(sut.execute(existingSupplierId, editData)).rejects.toThrow(CompanyNotActiveError);
     });
 
     it('should update company associations successfully', async() => {

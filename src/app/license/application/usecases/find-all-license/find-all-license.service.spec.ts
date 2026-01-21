@@ -61,8 +61,8 @@ describe('FindAllLicense', () => {
 
     beforeEach(async() => {
       // Create test owners
-      owner01 = await prisma.owner.create({ data: { id: 'owner-1' } });
-      owner02 = await prisma.owner.create({ data: { id: 'owner-2' } });
+      owner01 = await prisma.owner.create({ data: { id: 'owner-1', active: true } });
+      owner02 = await prisma.owner.create({ data: { id: 'owner-2', active: true } });
     });
 
     it('should return an empty pagination object when no licenses exist', async() => {

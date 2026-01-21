@@ -193,7 +193,10 @@ describe('FindItemById', () => {
 
     beforeEach(async() => {
       existingOwner = await prisma.owner.create({
-        data: { id: 'find-by-id-test-owner' },
+        data: {
+          id: 'find-by-id-test-owner',
+          active: true,
+        },
       });
 
       existingItem = await prisma.item.create({

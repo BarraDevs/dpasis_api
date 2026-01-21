@@ -157,7 +157,10 @@ describe('FindAllItem', () => {
 
     beforeEach(async() => {
       existingOwner = await prisma.owner.create({
-        data: { id: 'find-all-test-owner' },
+        data: {
+          id: 'find-all-test-owner',
+          active: true,
+        },
       });
     });
 
@@ -224,7 +227,10 @@ describe('FindAllItem', () => {
     it('should return empty result when owner has no items', async() => {
       // Arrange
       const emptyOwner = await prisma.owner.create({
-        data: { id: 'empty-owner' },
+        data: {
+          id: 'empty-owner',
+          active: true,
+        },
       });
 
       const queryDto: FindAllItemQueryDto = {
@@ -248,7 +254,10 @@ describe('FindAllItem', () => {
     it('should not return items from other owners', async() => {
       // Arrange - Create another owner with items
       const otherOwner = await prisma.owner.create({
-        data: { id: 'other-owner' },
+        data: {
+          id: 'other-owner',
+          active: true,
+        },
       });
 
       await prisma.item.create({

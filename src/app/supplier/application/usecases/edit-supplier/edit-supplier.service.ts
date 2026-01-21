@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { FindCompanyById } from 'src/app/company/application/usecases/find-company-by-id/find-company-by-id.service';
+import { CompanyNotActiveError } from 'src/app/company/domain/errors/company-not-active.error';
 import { Supplier } from 'src/app/supplier/domain/entities/supplier.entity';
 import { SupplierDuplicateCnpjError } from 'src/app/supplier/domain/errors/duplicate-cnpj.error';
 import { SupplierNotFoundError } from 'src/app/supplier/domain/errors/supplier-not-found.error';
@@ -39,11 +40,16 @@ export class EditSupplier {
     }
 
     if (data.companyIds) {
-      await Promise.all(
+      const companies = await Promise.all(
         supplier.props.companyIds.map(
           async(companyId) => this.findCompanyById.execute(companyId),
         ),
       );
+      companies.forEach((company) => {
+        if (!company.active) {
+          throw new CompanyNotActiveError(company.fantasyName);
+        }
+      });
     }
 
     await this.supplierRepository.edit(supplier);

@@ -64,6 +64,7 @@ describe('FindAddressById', () => {
       owner01 = await prisma.owner.create({
         data: {
           id: 'owner-01',
+          active: true,
         },
       });
     });

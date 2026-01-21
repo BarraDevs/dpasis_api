@@ -46,10 +46,10 @@ describe('FindAllContact', () => {
 
     beforeEach(async() => {
       owner01 = await prisma.owner.create({
-        data: { id: 'owner-456' },
+        data: { id: 'owner-456', active: true },
       });
       owner02 = await prisma.owner.create({
-        data: { id: 'owner-789' },
+        data: { id: 'owner-789', active: true },
       });
 
       data = {

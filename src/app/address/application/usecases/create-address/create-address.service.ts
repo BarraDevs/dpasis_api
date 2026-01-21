@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { AddressMainMustBeOneError } from 'src/app/address/domain/errors/address-main-must-be-one.error';
 import { FindOwnerById } from 'src/app/owner/application/usecases/find-owner-by-id/find-owner-by-id.service';
+import { OwnerNotActiveError } from 'src/app/owner/domain/errors/owner-not-active.error';
 import { TOKENS } from 'src/core/di/token';
 import type { IAddressDao } from '../../persistence/dao/address-dao.interface';
 import { CreateAddressInputDto, CreateAddressOutputDto } from './dtos/create-address.dto';
@@ -13,17 +14,18 @@ export class CreateAddress {
   ) {}
 
   public async execute(data: CreateAddressInputDto, isMain: boolean): Promise<CreateAddressOutputDto> {
-    // Validate owner existence
     const owner = await this.findOwnerById.execute(data.ownerId);
-
-    // Validate main address constraint
-    const existingMainAddress = await this.addressDao.findMainAddress(owner.id);
-    if (isMain && existingMainAddress) {
-      throw new AddressMainMustBeOneError();
+    if (!owner.active) {
+      throw new OwnerNotActiveError();
     }
 
-    const createdAddressId = await this.addressDao.save(data, isMain);
+    if (isMain) {
+      const existingMainAddress = await this.addressDao.findMainAddress(owner.id);
+      if (existingMainAddress) {
+        throw new AddressMainMustBeOneError();
+      }
+    }
 
-    return { id: createdAddressId };
+    return { id: await this.addressDao.save(data, isMain) };
   }
 }

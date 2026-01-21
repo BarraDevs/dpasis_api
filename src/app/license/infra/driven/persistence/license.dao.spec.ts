@@ -34,11 +34,13 @@ describe('LicenseDaoAdapterPrisma', () => {
     owner01 = await prisma.owner.create({
       data: {
         id: 'owner-license-dao-01',
+        active: true,
       },
     });
     owner02 = await prisma.owner.create({
       data: {
         id: 'owner-license-dao-02',
+        active: true,
       },
     });
   });

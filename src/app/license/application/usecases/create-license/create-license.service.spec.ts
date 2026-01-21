@@ -2,6 +2,7 @@ import { createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { LicenseModule } from 'src/app/license/license.module';
 import { OwnerDto } from 'src/app/owner/application/dtos/owner.dto';
+import { OwnerNotActiveError } from 'src/app/owner/domain/errors/owner-not-active.error';
 import { OwnerNotFoundError } from 'src/app/owner/domain/errors/owner-not-found.error';
 import { ConfigModule } from 'src/core/config/config.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
@@ -94,11 +95,38 @@ describe('CreateLicense', () => {
       await expect(sut.execute(input)).rejects.toThrow(OwnerNotFoundError);
     });
 
+    it('should throw an error if owner is not active', async() => {
+      // Arrange
+      const owner = await prisma.owner.create({
+        data: {
+          id: 'owner-id',
+          active: true,
+        },
+      });
+
+      await prisma.owner.update({
+        where: { id: owner.id },
+        data: { active: false },
+      });
+
+      const input: CreateLicenseInputDto = {
+        paymentDay: 10,
+        bonusInCents: 5000,
+        billingStartDate: new Date('2024-12-01'),
+        license: '{"features": ["basic", "advanced"]}',
+        ownerId: owner.id,
+      };
+
+      // Act & Assert
+      await expect(sut.execute(input)).rejects.toThrow(OwnerNotActiveError);
+    });
+
     it('should create a license with valid data', async() => {
       // Arrange
       const owner = await prisma.owner.create({
         data: {
           id: 'owner-id',
+          active: true,
         },
       });
 

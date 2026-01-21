@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { FindOwnerById } from 'src/app/owner/application/usecases/find-owner-by-id/find-owner-by-id.service';
+import { OwnerNotActiveError } from 'src/app/owner/domain/errors/owner-not-active.error';
 import { TOKENS } from 'src/core/di/token';
 import { UTCDate } from 'src/shared/value-objects/utc-date/utc-date.vo';
 import type { ILicenseDao } from '../../persistence/dao/license-dao.interface';
@@ -14,6 +15,9 @@ export class CreateLicense {
 
   public async execute(data: CreateLicenseInputDto): Promise<CreateLicenseOutputDto> {
     const owner = await this.findOwnerById.execute(data.ownerId);
+    if (!owner.active) {
+      throw new OwnerNotActiveError();
+    }
 
     // TODO: Verificar com cliente se billingStartDate pode ser no passado
     const licenseId = await this.licenseDao.save({

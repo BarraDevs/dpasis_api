@@ -2,6 +2,7 @@ import { createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Owner } from '@prisma/client';
 import { AttachmentModule } from 'src/app/attachment/attachment.module'; // Adjust import path
+import { OwnerNotActiveError } from 'src/app/owner/domain/errors/owner-not-active.error';
 import { OwnerNotFoundError } from 'src/app/owner/domain/errors/owner-not-found.error';
 import { ConfigModule } from 'src/core/config/config.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
@@ -80,7 +81,10 @@ describe('CreateAttachment', () => {
 
     beforeEach(async() => {
       owner01 = await prisma.owner.create({
-        data: { id: 'owner-integration-test' },
+        data: {
+          id: 'owner-integration-test',
+          active: true,
+        },
       });
     });
 
@@ -94,6 +98,23 @@ describe('CreateAttachment', () => {
 
       // Act & Assert
       await expect(sut.execute(input)).rejects.toThrow(OwnerNotFoundError);
+    });
+
+    it('should throw an error if owner is not active', async() => {
+      // Arrange
+      await prisma.owner.update({
+        where: { id: owner01.id },
+        data: { active: false },
+      });
+
+      const input: CreateAttachmentInputDto = {
+        name: 'my_document.pdf',
+        link: 'https://example.com/path/to/my_document.pdf',
+        ownerId: owner01.id,
+      };
+
+      // Act & Assert
+      await expect(sut.execute(input)).rejects.toThrow(OwnerNotActiveError);
     });
 
     it('should create an attachment with valid data', async() => {

@@ -1,7 +1,9 @@
 import { createMock } from '@golevelup/ts-jest';
 import { Test } from '@nestjs/testing';
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
+import { CompanyDto } from 'src/app/company/application/dtos/company.dto';
 import { FindCompanyById } from 'src/app/company/application/usecases/find-company-by-id/find-company-by-id.service';
+import { CompanyNotActiveError } from 'src/app/company/domain/errors/company-not-active.error';
 import { CompanyNotFoundError } from 'src/app/company/domain/errors/company-not-found.error';
 import { SellerDuplicateEmailError } from 'src/app/seller/domain/errors/duplicate-email.error';
 import { SellerNotFoundError } from 'src/app/seller/domain/errors/seller-not-found.error';
@@ -198,9 +200,13 @@ describe('EditSeller', () => {
       const editData: EditSellerInputDto = {
         companyIds: ['new-company-id-1', 'new-company-id-2'],
       };
+      const activeCompany = createMock<CompanyDto>({
+        active: true,
+        fantasyName: 'Active Company',
+      });
 
       jest.spyOn(sellerDao, 'findById').mockResolvedValue(mockSellerData as any);
-      jest.spyOn(findCompanyById, 'execute').mockResolvedValue({} as any);
+      jest.spyOn(findCompanyById, 'execute').mockResolvedValue(activeCompany);
       jest.spyOn(sellerRepository, 'edit').mockResolvedValue();
 
       // Act
@@ -214,12 +220,16 @@ describe('EditSeller', () => {
 
     it('should not verify companies when companyIds is not provided', async() => {
       // Arrange
+      const company = createMock<CompanyDto>({
+        active: true,
+        fantasyName: 'Test Company',
+      });
       const editData: EditSellerInputDto = {
         name: 'Updated Name',
       };
 
       jest.spyOn(sellerDao, 'findById').mockResolvedValue(mockSellerData as any);
-      jest.spyOn(findCompanyById, 'execute').mockResolvedValue({} as any);
+      jest.spyOn(findCompanyById, 'execute').mockResolvedValue(company);
       jest.spyOn(sellerRepository, 'edit').mockResolvedValue();
 
       // Act
@@ -243,6 +253,29 @@ describe('EditSeller', () => {
 
       // Act & Assert
       await expect(sut.execute('seller-id-123', editData)).rejects.toThrow(CompanyNotFoundError);
+      expect(sellerRepository.edit).not.toHaveBeenCalled();
+    });
+
+    it('should throw CompanyNotActiveError when any company is inactive', async() => {
+      // Arrange
+      const editData: EditSellerInputDto = {
+        companyIds: ['company-id-1', 'company-id-2'],
+      };
+
+      jest.spyOn(sellerDao, 'findById').mockResolvedValue(mockSellerData as any);
+      const activeCompany = createMock<CompanyDto>({ active: true });
+      const inactiveCompany = createMock<CompanyDto>({
+        active: false,
+        fantasyName: 'Inactive Company',
+      });
+      const findCompanySpy = jest.spyOn(findCompanyById, 'execute')
+        .mockResolvedValueOnce(activeCompany)
+        .mockResolvedValueOnce(inactiveCompany);
+
+      // Act & Assert
+      expect.assertions(3);
+      await expect(sut.execute('seller-id-123', editData)).rejects.toThrow(CompanyNotActiveError);
+      expect(findCompanySpy).toHaveBeenCalledTimes(2);
       expect(sellerRepository.edit).not.toHaveBeenCalled();
     });
 
@@ -332,9 +365,13 @@ describe('EditSeller', () => {
       const editData: EditSellerInputDto = {
         companyIds: ['new-company-id-1'],
       };
+      const activeCompany = createMock<CompanyDto>({
+        active: true,
+        fantasyName: 'Active Company',
+      });
 
       jest.spyOn(sellerDao, 'findById').mockResolvedValue(mockSellerData as any);
-      jest.spyOn(findCompanyById, 'execute').mockResolvedValue({} as any);
+      jest.spyOn(findCompanyById, 'execute').mockResolvedValue(activeCompany);
       jest.spyOn(sellerRepository, 'edit').mockResolvedValue();
 
       // Act
@@ -566,6 +603,41 @@ describe('EditSeller', () => {
 
       // Act & Assert
       await expect(sut.execute(seller.id, editData)).rejects.toThrow(CompanyNotFoundError);
+    });
+
+    it('should throw error when company is inactive in database', async() => {
+      // Arrange
+      const company = await createTestCompany('001');
+      await prisma.company.update({
+        where: { id: company.id },
+        data: { active: false },
+      });
+
+      const seller = await createTestSeller('001', [company]);
+      const editData: EditSellerInputDto = {
+        companyIds: [company.id],
+      };
+
+      // Act & Assert
+      await expect(sut.execute(seller.id, editData)).rejects.toThrow(CompanyNotActiveError);
+    });
+
+    it('should throw error when any company is inactive in database', async() => {
+      // Arrange
+      const company1 = await createTestCompany('001');
+      const company2 = await createTestCompany('002');
+      await prisma.company.update({
+        where: { id: company2.id },
+        data: { active: false },
+      });
+
+      const seller = await createTestSeller('001', [company1]);
+      const editData: EditSellerInputDto = {
+        companyIds: [company1.id, company2.id],
+      };
+
+      // Act & Assert
+      await expect(sut.execute(seller.id, editData)).rejects.toThrow(CompanyNotActiveError);
     });
 
     it('should edit seller with uploaded image', async() => {

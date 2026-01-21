@@ -139,7 +139,10 @@ describe('DeleteItem', () => {
 
     beforeEach(async() => {
       existingOwner = await prisma.owner.create({
-        data: { id: 'delete-test-owner' },
+        data: {
+          id: 'delete-test-owner',
+          active: true,
+        },
       });
 
       existingItem = await prisma.item.create({

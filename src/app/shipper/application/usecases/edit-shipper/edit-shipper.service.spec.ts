@@ -1,7 +1,9 @@
 import { createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Company } from '@prisma/client';
+import { CompanyDto } from 'src/app/company/application/dtos/company.dto';
 import { FindCompanyById } from 'src/app/company/application/usecases/find-company-by-id/find-company-by-id.service';
+import { CompanyNotActiveError } from 'src/app/company/domain/errors/company-not-active.error';
 import { CompanyNotFoundError } from 'src/app/company/domain/errors/company-not-found.error';
 import { ConfigModule } from 'src/core/config/config.module';
 import { TOKENS } from 'src/core/di/token';
@@ -175,6 +177,43 @@ describe('EditShipper', () => {
       expect(findCompanySpy).toHaveBeenCalledTimes(2);
       expect(findCompanySpy).toHaveBeenCalledWith('company-id-1');
       expect(findCompanySpy).toHaveBeenCalledWith('company-id-2');
+    });
+
+    it('should throw CompanyNotActiveError when any company is inactive', async() => {
+      // Arrange
+      const shipperId = 'shipper-id-2';
+      const input: EditShipperInputDto = {
+        companyIds: ['company-id-1', 'company-id-2'],
+      };
+
+      const existingShipper = createMock<ShipperDto>({
+        id: shipperId,
+        cnpj: '43927286000168',
+        companies: [{ id: 'company-id-old', name: 'Old Company' }],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      const activeCompany = createMock<CompanyDto>({
+        fantasyName: 'Company Active',
+        active: true,
+      });
+      const inactiveCompany = createMock<CompanyDto>({
+        fantasyName: 'Company Inactive',
+        active: false,
+      });
+
+      jest.spyOn(shipperDao, 'findById').mockResolvedValue(existingShipper);
+      const findCompanySpy = jest.spyOn(findCompanyById, 'execute')
+        .mockResolvedValueOnce(activeCompany)
+        .mockResolvedValueOnce(inactiveCompany);
+      const editSpy = jest.spyOn(shipperRepository, 'edit').mockResolvedValue();
+
+      // Act & Assert
+      expect.assertions(3);
+      await expect(sut.execute(shipperId, input)).rejects.toBeInstanceOf(CompanyNotActiveError);
+      expect(findCompanySpy).toHaveBeenCalledTimes(2);
+      expect(editSpy).not.toHaveBeenCalled();
     });
 
     it('should not verify companies when companyIds are not provided', async() => {
@@ -379,6 +418,41 @@ describe('EditShipper', () => {
       return sut.execute(shipper.id, editData).catch((error) => {
         expect(error).toBeInstanceOf(CompanyNotFoundError);
       });
+    });
+
+    it('should throw CompanyNotActiveError when company is inactive', async() => {
+      // Arrange
+      const inactiveCompany = await prisma.company.create({
+        data: {
+          name: 'Company Inactive',
+          fantasyName: 'Company Inactive Fantasy',
+          document: '58137278000106',
+          ie: '555666777',
+          zipCode: '12345-678',
+          street: 'Inactive Street',
+          number: '999',
+          neighborhood: 'Inactive Neighborhood',
+          complement: null,
+          reference: null,
+          city: 'São Paulo',
+          state: 'SP',
+          cellphone: '11999999999',
+          phone01: '1133334444',
+          phone02: null,
+          email01: 'inactive@test.com',
+          email02: null,
+          active: false,
+        },
+      });
+
+      const shipper = await createShipper.execute(data);
+
+      const editData: EditShipperInputDto = {
+        companyIds: [inactiveCompany.id],
+      };
+
+      // Act & Assert
+      await expect(sut.execute(shipper.id, editData)).rejects.toThrow(CompanyNotActiveError);
     });
 
     it('should not throw an error when cnpj and company are unchanged', async() => {

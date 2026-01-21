@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Item } from 'src/app/item/domain/entities/item.entity';
 import { FindOwnerById } from 'src/app/owner/application/usecases/find-owner-by-id/find-owner-by-id.service';
-import { OwnerNotFoundError } from 'src/app/owner/domain/errors/owner-not-found.error'; // Reutilizando erro
+import { OwnerNotActiveError } from 'src/app/owner/domain/errors/owner-not-active.error';
 import { TOKENS } from 'src/core/di/token';
 import type { IItemRepository } from '../../persistence/repository/item-repository.interface';
 import { CreateItemsInputDto, CreateItemsOutputDto } from './dtos/create-item.dto';
@@ -15,8 +15,8 @@ export class CreateItems {
 
   public async execute(data: CreateItemsInputDto): Promise<CreateItemsOutputDto> {
     const owner = await this.findOwnerById.execute(data.ownerId);
-    if (!owner) {
-      throw new OwnerNotFoundError();
+    if (!owner.active) {
+      throw new OwnerNotActiveError();
     }
 
     const itemsToCreate: Item[] = data.items.map((itemDto) => {

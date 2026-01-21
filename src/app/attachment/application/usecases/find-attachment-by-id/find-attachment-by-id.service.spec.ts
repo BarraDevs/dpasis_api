@@ -71,6 +71,7 @@ describe('FindAttachmentById', () => {
       owner01 = await prisma.owner.create({
         data: {
           id: 'owner-find-attachment-by-id',
+          active: true,
         },
       });
     });

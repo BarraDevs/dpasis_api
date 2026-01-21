@@ -34,11 +34,13 @@ describe('AttachmentDaoAdapterPrisma', () => {
     owner01 = await prisma.owner.create({
       data: {
         id: 'owner-attachment-dao-01',
+        active: true,
       },
     });
     owner02 = await prisma.owner.create({
       data: {
         id: 'owner-attachment-dao-02',
+        active: true,
       },
     });
   });

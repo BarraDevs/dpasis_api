@@ -19,6 +19,7 @@ describe('SupplierRepositoryAdapterPrisma (Integration)', () => {
     companyName: 'Repository Test Supplier Ltda',
     fantasyName: 'Repo Test Supplier',
     representative: 'John Doe',
+    active: true,
     companyIds: [] as string[],
   };
 
@@ -132,6 +133,11 @@ describe('SupplierRepositoryAdapterPrisma (Integration)', () => {
       expect(savedSupplier?.active).toBe(true);
       expect(savedSupplier?.companies).toHaveLength(1);
       expect(savedSupplier?.companies[0].id).toBe(companyId1);
+
+      const savedOwner = await prisma.owner.findUnique({
+        where: { supplierId: supplier.props.id },
+      });
+      expect(savedOwner?.active).toBe(supplier.props.active);
     });
 
     it('should save supplier with sanitized CNPJ', async() => {
@@ -162,6 +168,10 @@ describe('SupplierRepositoryAdapterPrisma (Integration)', () => {
       });
 
       expect(savedSupplier?.active).toBe(true);
+      const savedOwner = await prisma.owner.findUnique({
+        where: { supplierId: supplier.props.id },
+      });
+      expect(savedOwner?.active).toBe(true);
     });
 
     it('should save supplier with timestamps', async() => {
@@ -219,6 +229,7 @@ describe('SupplierRepositoryAdapterPrisma (Integration)', () => {
 
       expect(savedOwner).toBeDefined();
       expect(savedOwner?.id).toBe(supplier.props.id);
+      expect(savedOwner?.active).toBe(supplier.props.active);
     });
 
     it('should save all supplier properties correctly', async() => {
@@ -325,6 +336,44 @@ describe('SupplierRepositoryAdapterPrisma (Integration)', () => {
       expect(editedSupplier?.type).toBe('Updated Type');
       expect(editedSupplier?.ie).toBe('999.888.777.666');
       expect(editedSupplier?.representative).toBe('Jane Smith');
+      const savedOwner = await prisma.owner.findUnique({
+        where: { supplierId: supplier.props.id },
+      });
+      expect(savedOwner?.active).toBe(updatedSupplier.props.active);
+    });
+
+    it('should update resource active when supplier status changes', async() => {
+      // Arrange
+      const supplier = Supplier.create(supplierProps);
+      await sut.save(supplier);
+
+      const originalSupplier = await prisma.supplier.findUnique({
+        where: { id: supplier.props.id },
+      });
+      const originalOwner = await prisma.owner.findUnique({
+        where: { supplierId: supplier.props.id },
+      });
+      expect(originalSupplier?.active).toBe(true);
+      expect(originalOwner?.active).toBe(true);
+
+      const updatedSupplier = Supplier.load({
+        ...supplier.props,
+        active: false,
+      });
+
+      // Act
+      await sut.edit(updatedSupplier);
+
+      // Assert
+      const editedSupplier = await prisma.supplier.findUnique({
+        where: { id: supplier.props.id },
+      });
+      const savedOwner = await prisma.owner.findUnique({
+        where: { supplierId: supplier.props.id },
+      });
+
+      expect(editedSupplier?.active).toBe(false);
+      expect(savedOwner?.active).toBe(false);
     });
 
     it('should preserve createdAt timestamp when editing', async() => {

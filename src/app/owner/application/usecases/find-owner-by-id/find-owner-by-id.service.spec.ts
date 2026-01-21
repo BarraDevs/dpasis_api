@@ -44,6 +44,7 @@ describe('FindOwnerById', () => {
     const createdOwner = await prisma.owner.create({
       data: {
         id: ownerId,
+        active: true,
       },
     });
 

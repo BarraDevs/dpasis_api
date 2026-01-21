@@ -78,11 +78,13 @@ describe('FindAllAddress', () => {
       owner01 = await prisma.owner.create({
         data: {
           id: 'owner-1',
+          active: true,
         },
       });
       owner02 = await prisma.owner.create({
         data: {
           id: 'owner-2',
+          active: true,
         },
       });
     });

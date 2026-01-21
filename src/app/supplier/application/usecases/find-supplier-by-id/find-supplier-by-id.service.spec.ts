@@ -185,6 +185,7 @@ describe('FindSupplierById', () => {
           resource: {
             create: {
               id: 'second-supplier-id',
+              active: false,
             },
           },
         },
@@ -204,6 +205,7 @@ describe('FindSupplierById', () => {
           resource: {
             create: {
               id: 'third-supplier-id',
+              active: true,
             },
           },
         },

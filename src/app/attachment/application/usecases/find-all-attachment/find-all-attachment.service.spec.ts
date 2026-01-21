@@ -63,12 +63,14 @@ describe('FindAllAttachment', () => {
       owner01 = await prisma.owner.create({
         data: {
           id: 'owner-find-all-01',
+          active: true,
         },
       });
 
       owner02 = await prisma.owner.create({
         data: {
           id: 'owner-find-all-02',
+          active: true,
         },
       });
     });

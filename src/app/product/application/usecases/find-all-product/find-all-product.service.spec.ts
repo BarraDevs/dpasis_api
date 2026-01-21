@@ -1,6 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { CreateCompany } from 'src/app/company/application/usecases/create-company/create-company.service';
-import { CompanyNotFoundError } from 'src/app/company/domain/errors/company-not-found.error';
 import { ProductModule } from 'src/app/product/product.module';
 import { CreateSupplier } from 'src/app/supplier/application/usecases/create-supplier/create-supplier.service';
 import { SupplierModule } from 'src/app/supplier/supplier.module';
@@ -260,21 +259,6 @@ describe('FindAllProduct', () => {
       expect(findAllSpy).toHaveBeenCalledWith(queries);
     });
 
-    it('should throw an error if company does not exist', async() => {
-      // Arrange
-      const queries: FindAllProductQueryDto = {
-        companyId: 'non-existent-company-id',
-      };
-      const findAllSpy = jest.spyOn(sut['productDao'], 'findAll').mockResolvedValue([[], 0]);
-
-      // Act & Assert
-      expect.assertions(2);
-      return sut.execute(queries).catch((error) => {
-        expect(error).toBeInstanceOf(CompanyNotFoundError);
-        expect(findAllSpy).not.toHaveBeenCalled();
-      });
-    });
-
     it('should call productDao with correct parameters', async() => {
       // Arrange
       const queries: FindAllProductQueryDto = {
@@ -326,19 +310,6 @@ describe('FindAllProduct', () => {
       expect(result.totalItems).toBe(7);
       const returnedIds = result.data.map(p => p.id);
       expect(returnedIds).toContain(product.id);
-    });
-
-    it('should throw an error if company does not exist', async() => {
-      // Arrange
-      const queries: FindAllProductQueryDto = {
-        companyId: 'non-existent-company-id',
-      };
-
-      // Act & Assert
-      expect.assertions(1);
-      return sut.execute(queries).catch((error) => {
-        expect(error).toBeInstanceOf(CompanyNotFoundError);
-      });
     });
 
     it('should return an empty result when no products exist for company', async() => {

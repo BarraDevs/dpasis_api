@@ -82,6 +82,7 @@ describe('EditContact', () => {
       owner = await prisma.owner.create({
         data: {
           id: 'owner-id-1',
+          active: true,
         },
       });
     });

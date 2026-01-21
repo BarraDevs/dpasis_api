@@ -1,4 +1,7 @@
+import { createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
+import { CompanyDto } from 'src/app/company/application/dtos/company.dto';
+import { CompanyNotActiveError } from 'src/app/company/domain/errors/company-not-active.error';
 import { Supplier } from 'src/app/supplier/domain/entities/supplier.entity';
 import { SupplierDuplicateCnpjError } from 'src/app/supplier/domain/errors/duplicate-cnpj.error';
 import { SupplierModule } from 'src/app/supplier/supplier.module';
@@ -74,9 +77,13 @@ describe('CreateSupplier', () => {
         representative: 'John Doe',
         companyIds: [companyId],
       };
+      const company = createMock<CompanyDto>({
+        fantasyName: 'Test',
+        active: true,
+      });
 
       const findByCnpjSpy = jest.spyOn(sut['supplierDao'], 'findByCnpj').mockResolvedValue(null);
-      const findCompanyByIdSpy = jest.spyOn(sut['findCompanyById'], 'execute').mockResolvedValue({} as any);
+      const findCompanyByIdSpy = jest.spyOn(sut['findCompanyById'], 'execute').mockResolvedValue(company);
       const saveSpy = jest.spyOn(sut['supplierRepository'], 'save').mockResolvedValue();
 
       // Act
@@ -115,9 +122,13 @@ describe('CreateSupplier', () => {
         representative: 'Jane Smith',
         companyIds: [companyId],
       };
+      const company = createMock<CompanyDto>({
+        fantasyName: 'Test',
+        active: true,
+      });
 
       jest.spyOn(sut['supplierDao'], 'findByCnpj').mockResolvedValue(null);
-      jest.spyOn(sut['findCompanyById'], 'execute').mockResolvedValue({} as any);
+      jest.spyOn(sut['findCompanyById'], 'execute').mockResolvedValue(company);
       const saveSpy = jest.spyOn(sut['supplierRepository'], 'save').mockResolvedValue();
 
       // Act
@@ -182,9 +193,13 @@ describe('CreateSupplier', () => {
         representative: 'Sanitize Rep',
         companyIds: [companyId],
       };
+      const company = createMock<CompanyDto>({
+        fantasyName: 'Test',
+        active: true,
+      });
 
       const findByCnpjSpy = jest.spyOn(sut['supplierDao'], 'findByCnpj').mockResolvedValue(null);
-      jest.spyOn(sut['findCompanyById'], 'execute').mockResolvedValue({} as any);
+      jest.spyOn(sut['findCompanyById'], 'execute').mockResolvedValue(company);
       jest.spyOn(sut['supplierRepository'], 'save').mockResolvedValue();
 
       // Act
@@ -192,6 +207,84 @@ describe('CreateSupplier', () => {
 
       // Assert
       expect(findByCnpjSpy).toHaveBeenCalledWith('55967002000146'); // Without formatting
+    });
+
+    it('should throw CompanyNotActiveError when company is inactive', async() => {
+      // Arrange
+      const createData: CreateSupplierInputDto = {
+        cnpj: '00365466000190',
+        ie: '111222333',
+        group: 'Inactive Group',
+        type: 'Inactive Type',
+        companyName: 'Inactive Supplier',
+        fantasyName: 'Inactive',
+        representative: 'Inactive Rep',
+        companyIds: [companyId],
+      };
+      const inactiveCompany = createMock<CompanyDto>({
+        id: companyId,
+        name: 'Inactive Company',
+        fantasyName: 'Inactive Company',
+        document: '00000000000000',
+        ie: '000000000',
+        active: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        zipCode: '00000-000',
+        street: 'Inactive Street',
+        number: '0',
+        complement: null,
+        reference: null,
+        neighborhood: 'Center',
+        city: 'Sao Paulo',
+        state: 'SP',
+        phone01: '0000000000',
+        phone02: null,
+        cellphone: null,
+        email01: 'inactive@company.com',
+        email02: null,
+      });
+
+      jest.spyOn(sut['supplierDao'], 'findByCnpj').mockResolvedValue(null);
+      const findCompanySpy = jest.spyOn(sut['findCompanyById'], 'execute').mockResolvedValue(inactiveCompany);
+      const saveSpy = jest.spyOn(sut['supplierRepository'], 'save').mockResolvedValue();
+
+      // Act & Assert
+      expect.assertions(3);
+      await expect(sut.execute(createData)).rejects.toThrow(CompanyNotActiveError);
+      expect(findCompanySpy).toHaveBeenCalledWith(companyId);
+      expect(saveSpy).not.toHaveBeenCalled();
+    });
+
+    it('should throw CompanyNotActiveError when any company is inactive', async() => {
+      // Arrange
+      const createData: CreateSupplierInputDto = {
+        cnpj: '00365466000190',
+        ie: '111222333',
+        group: 'Inactive Group',
+        type: 'Inactive Type',
+        companyName: 'Inactive Supplier',
+        fantasyName: 'Inactive',
+        representative: 'Inactive Rep',
+        companyIds: ['company-id-1', 'company-id-2'],
+      };
+      const activeCompany = createMock<CompanyDto>({ active: true });
+      const inactiveCompany = createMock<CompanyDto>({
+        active: false,
+        fantasyName: 'Inactive Company',
+      });
+
+      jest.spyOn(sut['supplierDao'], 'findByCnpj').mockResolvedValue(null);
+      const findCompanySpy = jest.spyOn(sut['findCompanyById'], 'execute')
+        .mockResolvedValueOnce(activeCompany)
+        .mockResolvedValueOnce(inactiveCompany);
+      const saveSpy = jest.spyOn(sut['supplierRepository'], 'save').mockResolvedValue();
+
+      // Act & Assert
+      expect.assertions(3);
+      await expect(sut.execute(createData)).rejects.toThrow(CompanyNotActiveError);
+      expect(findCompanySpy).toHaveBeenCalledTimes(2);
+      expect(saveSpy).not.toHaveBeenCalled();
     });
 
     it('should return object with id property', async() => {
@@ -206,9 +299,13 @@ describe('CreateSupplier', () => {
         representative: 'Return Rep',
         companyIds: [companyId],
       };
+      const company = createMock<CompanyDto>({
+        fantasyName: 'Test',
+        active: true,
+      });
 
       jest.spyOn(sut['supplierDao'], 'findByCnpj').mockResolvedValue(null);
-      jest.spyOn(sut['findCompanyById'], 'execute').mockResolvedValue({} as any);
+      jest.spyOn(sut['findCompanyById'], 'execute').mockResolvedValue(company);
       jest.spyOn(sut['supplierRepository'], 'save').mockResolvedValue();
 
       // Act
@@ -397,6 +494,70 @@ describe('CreateSupplier', () => {
 
       // Assert
       await expect(sut.execute(duplicateSupplier)).rejects.toThrow(SupplierDuplicateCnpjError);
+    });
+
+    it('should throw CompanyNotActiveError when company is inactive', async() => {
+      // Arrange
+      await prisma.company.update({
+        where: { id: companyId },
+        data: { active: false },
+      });
+
+      const createData: CreateSupplierInputDto = {
+        cnpj: '01427316000127',
+        ie: '333444555666',
+        group: 'Inactive Group',
+        type: 'Inactive Type',
+        companyName: 'Inactive Supplier',
+        fantasyName: 'Inactive',
+        representative: 'Inactive Rep',
+        companyIds: [companyId],
+      };
+
+      // Act & Assert
+      await expect(sut.execute(createData)).rejects.toThrow(CompanyNotActiveError);
+    });
+
+    it('should throw CompanyNotActiveError when any company is inactive', async() => {
+      // Arrange
+      const company2 = await prisma.company.create({
+        data: {
+          name: 'Test Company 2',
+          fantasyName: 'Test 2',
+          document: '22.930.133/0001-08',
+          ie: '987654321',
+          zipCode: '87654321',
+          street: 'Street 02',
+          number: '200',
+          neighborhood: 'District 02',
+          complement: null,
+          reference: null,
+          city: 'Rio',
+          state: 'RJ',
+          phone01: '2133334444',
+          email01: 'company02@test.com',
+          active: true,
+        },
+      });
+
+      await prisma.company.update({
+        where: { id: company2.id },
+        data: { active: false },
+      });
+
+      const createData: CreateSupplierInputDto = {
+        cnpj: '12911198000144',
+        ie: '333333333',
+        group: 'Multi Group',
+        type: 'Multi Type',
+        companyName: 'Multi Supplier',
+        fantasyName: 'Multi',
+        representative: 'Multi Rep',
+        companyIds: [companyId, company2.id],
+      };
+
+      // Act & Assert
+      await expect(sut.execute(createData)).rejects.toThrow(CompanyNotActiveError);
     });
 
     it('should create multiple suppliers with different CNPJs', async() => {

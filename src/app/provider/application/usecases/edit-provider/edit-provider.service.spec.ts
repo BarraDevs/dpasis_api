@@ -1,6 +1,7 @@
 import { createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { CreateCompany } from 'src/app/company/application/usecases/create-company/create-company.service';
+import { CompanyNotActiveError } from 'src/app/company/domain/errors/company-not-active.error';
 import { CompanyNotFoundError } from 'src/app/company/domain/errors/company-not-found.error';
 import { ProviderType } from 'src/app/provider/domain/enums/provider-type.enum';
 import { ProviderDuplicateCnpjError } from 'src/app/provider/domain/errors/duplicate-cnpj.error';
@@ -168,6 +169,58 @@ describe('EditProvider', () => {
       expect.assertions(1);
       return sut.execute(provider.id, { companyIds: ['non-existent-company-id'] }).catch((error) => {
         expect(error).toBeInstanceOf(CompanyNotFoundError);
+      });
+    });
+
+    it('should throw an error if company is inactive', async() => {
+      // Arrange
+      const provider = await createProvider.execute(data);
+
+      await prisma.company.update({
+        where: { id: companyId },
+        data: { active: false },
+      });
+
+      // Act & Assert
+      expect.assertions(1);
+      return sut.execute(provider.id, { companyIds: [companyId] }).catch((error) => {
+        expect(error).toBeInstanceOf(CompanyNotActiveError);
+      });
+    });
+
+    it('should throw an error if any company is inactive', async() => {
+      // Arrange
+      const provider = await createProvider.execute(data);
+
+      const company2 = await createCompany.execute({
+        name: 'Company 02',
+        fantasyName: 'Company 02',
+        document: '22.930.133/0001-08',
+        ie: '987654321',
+        zipCode: '87654321',
+        street: 'Street 02',
+        number: '200',
+        neighborhood: 'District 02',
+        complement: null,
+        reference: null,
+        city: 'Rio',
+        state: 'RJ',
+        cellphone: '21987654321',
+        phone01: '2133334444',
+        phone02: null,
+        email01: 'company02@test.com',
+        email02: null,
+      });
+
+      await prisma.company.update({
+        where: { id: company2.id },
+        data: { active: false },
+      });
+
+      // Act & Assert
+      expect.assertions(1);
+      return sut.execute(provider.id, { companyIds: [companyId, company2.id] }).catch((error) => {
+        expect(error).toBeInstanceOf(CompanyNotActiveError);
       });
     });
 

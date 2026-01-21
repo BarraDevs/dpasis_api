@@ -4,6 +4,7 @@ import { Item } from 'src/app/item/domain/entities/item.entity';
 import { ItemModule } from 'src/app/item/item.module';
 import { OwnerDto } from 'src/app/owner/application/dtos/owner.dto';
 import { FindOwnerById } from 'src/app/owner/application/usecases/find-owner-by-id/find-owner-by-id.service';
+import { OwnerNotActiveError } from 'src/app/owner/domain/errors/owner-not-active.error';
 import { OwnerNotFoundError } from 'src/app/owner/domain/errors/owner-not-found.error';
 import { ConfigModule } from 'src/core/config/config.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
@@ -128,12 +129,14 @@ describe('CreateItems', () => {
       expect(result.ids).toHaveLength(1);
     });
 
-    it('should throw OwnerNotFoundError when owner does not exist', async() => {
+    it('should throw an error if owner is not active', async() => {
       // Arrange
-      mockFindOwnerById.execute.mockResolvedValue(null as any);
+      const mockOwner = createMock<OwnerDto>();
+      mockOwner.active = false;
+      mockFindOwnerById.execute.mockResolvedValue(mockOwner);
 
       const inputDto: CreateItemsInputDto = {
-        ownerId: 'non-existent-owner-id',
+        ownerId: 'valid-owner-id',
         items: [
           {
             description: 'Test Item',
@@ -145,9 +148,7 @@ describe('CreateItems', () => {
       };
 
       // Act & Assert
-      await expect(sut.execute(inputDto)).rejects.toThrow(OwnerNotFoundError);
-      expect(mockFindOwnerById.execute).toHaveBeenCalledWith('non-existent-owner-id');
-      expect(mockItemRepository.createMany).not.toHaveBeenCalled();
+      await expect(sut.execute(inputDto)).rejects.toThrow(OwnerNotActiveError);
     });
 
     it('should create Item entities with correct properties', async() => {
@@ -307,7 +308,10 @@ describe('CreateItems', () => {
 
     beforeEach(async() => {
       existingOwner = await prisma.owner.create({
-        data: { id: 'integration-test-owner' },
+        data: {
+          id: 'integration-test-owner',
+          active: true,
+        },
       });
     });
 
@@ -436,6 +440,29 @@ describe('CreateItems', () => {
         where: { ownerId: 'non-existent-owner-uuid' },
       });
       expect(itemCount).toBe(0);
+    });
+
+    it('should throw an error if owner is not active', async() => {
+      // Arrange
+      await prisma.owner.update({
+        where: { id: existingOwner.id },
+        data: { active: false },
+      });
+
+      const inputDto: CreateItemsInputDto = {
+        ownerId: existingOwner.id,
+        items: [
+          {
+            description: 'Test Item',
+            serviceCode: 'TEST-001',
+            quantity: 1,
+            unitPriceInCents: 1000,
+          },
+        ],
+      };
+
+      // Act & Assert
+      await expect(sut.execute(inputDto)).rejects.toThrow(OwnerNotActiveError);
     });
 
     it('should handle items with boundary values', async() => {

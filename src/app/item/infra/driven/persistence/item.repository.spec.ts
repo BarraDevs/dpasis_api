@@ -43,7 +43,7 @@ describe('ItemRepositoryAdapterPrisma', () => {
 
     beforeEach(async() => {
       existingOwner = await prisma.owner.create({
-        data: { id: 'repository-test-owner' },
+        data: { id: 'repository-test-owner', active: true },
       });
     });
 
@@ -282,7 +282,7 @@ describe('ItemRepositoryAdapterPrisma', () => {
 
     beforeEach(async() => {
       existingOwner = await prisma.owner.create({
-        data: { id: 'repository-edit-test-owner' },
+        data: { id: 'repository-edit-test-owner', active: true },
       });
 
       existingItem = await prisma.item.create({
@@ -501,7 +501,7 @@ describe('ItemRepositoryAdapterPrisma', () => {
 
     beforeEach(async() => {
       existingOwner = await prisma.owner.create({
-        data: { id: 'repository-delete-test-owner' },
+        data: { id: 'repository-delete-test-owner', active: true },
       });
 
       existingItem = await prisma.item.create({

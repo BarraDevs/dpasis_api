@@ -3,7 +3,9 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ClientModule } from 'src/app/client/client.module';
 import { Client } from 'src/app/client/domain/entities/client.entity';
 import { ClientDuplicateCnpjError } from 'src/app/client/domain/errors/duplicate-cnpj.error';
+import { CompanyDto } from 'src/app/company/application/dtos/company.dto';
 import { CreateCompany } from 'src/app/company/application/usecases/create-company/create-company.service';
+import { CompanyNotActiveError } from 'src/app/company/domain/errors/company-not-active.error';
 import { CompanyNotFoundError } from 'src/app/company/domain/errors/company-not-found.error';
 import { ConfigModule } from 'src/core/config/config.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
@@ -113,6 +115,28 @@ describe('CreateClient', () => {
       });
     });
 
+    it('should throw an error if company is not active', async() => {
+      // Arrange
+      const input = { ...data, companyIds: [companyId] };
+      const company = createMock<CompanyDto>({
+        active: false,
+        fantasyName: 'Empresa Inativa',
+      });
+      const findByCnpjSpy = jest.spyOn(sut['clientDao'], 'findByCnpj').mockResolvedValue(null);
+      const findCompanySpy = jest.spyOn(sut['findCompanyById'], 'execute').mockResolvedValue(company);
+      const saveSpy = jest.spyOn(sut['clientRepository'], 'save').mockResolvedValue();
+
+      // Act & Assert
+      expect.assertions(5);
+      return sut.execute(input).catch((error) => {
+        expect(error).toBeInstanceOf(CompanyNotActiveError);
+        expect(error.message).toContain('Empresa Inativa');
+        expect(findByCnpjSpy).toHaveBeenCalledWith(input.cnpj);
+        expect(findCompanySpy).toHaveBeenCalledWith(companyId);
+        expect(saveSpy).not.toHaveBeenCalled();
+      });
+    });
+
     it('should create a client and return its id', async() => {
       // Arrange
       const findByCnpjSpy = jest.spyOn(sut['clientDao'], 'findByCnpj').mockResolvedValue(null);
@@ -160,6 +184,20 @@ describe('CreateClient', () => {
       expect.assertions(1);
       return sut.execute(invalidData).catch((error) => {
         expect(error).toBeInstanceOf(CompanyNotFoundError);
+      });
+    });
+
+    it('should throw an error if company is not active', async() => {
+      // Arrange
+      await prisma.company.update({
+        where: { id: companyId },
+        data: { active: false },
+      });
+
+      // Act & Assert
+      expect.assertions(1);
+      return sut.execute(data).catch((error) => {
+        expect(error).toBeInstanceOf(CompanyNotActiveError);
       });
     });
 

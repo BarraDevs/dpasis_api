@@ -136,9 +136,10 @@ describe('ClientRepositoryAdapterPrisma', () => {
       expect(savedClient?.headquarters).toBe(client.props.headquarters);
       expect(savedClient?.active).toBe(client.props.active);
 
-      // Check if resource was created with the same id
+      // Check if resource was created with the same id and active status
       expect(savedClient?.resource).toBeDefined();
       expect(savedClient?.resource?.id).toBe(client.props.id);
+      expect(savedClient?.resource?.active).toBe(client.props.active);
     });
 
     it('should save multiple clients with unique cnpj', async() => {
@@ -331,6 +332,7 @@ describe('ClientRepositoryAdapterPrisma', () => {
       // Assert
       const editedClient = await prisma.client.findUnique({
         where: { id: originalClient.props.id },
+        include: { resource: true },
       });
 
       expect(editedClient).toBeDefined();
@@ -340,6 +342,7 @@ describe('ClientRepositoryAdapterPrisma', () => {
       expect(editedClient?.owner).toBe(updatedClient.props.owner);
       expect(editedClient?.type).toBe(updatedClient.props.type);
       expect(editedClient?.generateInvoice).toBe(updatedClient.props.generateInvoice);
+      expect(editedClient?.resource?.active).toBe(updatedClient.props.active);
 
       // These should remain unchanged
       expect(editedClient?.cnpj).toBe(originalClient.props.cnpj);
@@ -401,10 +404,12 @@ describe('ClientRepositoryAdapterPrisma', () => {
       // Assert
       const editedClient = await prisma.client.findUnique({
         where: { id: client.props.id },
+        include: { resource: true },
       });
 
       expect(editedClient).toBeDefined();
       expect(editedClient?.active).toBe(false);
+      expect(editedClient?.resource?.active).toBe(false);
     });
 
     it('should update client companies', async() => {

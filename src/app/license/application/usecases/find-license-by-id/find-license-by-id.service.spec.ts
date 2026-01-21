@@ -72,7 +72,10 @@ describe('FindLicenseById', () => {
     it('should return a license if found', async() => {
       // Arrange
       const owner = await prisma.owner.create({
-        data: { id: 'owner-id' },
+        data: {
+          id: 'owner-id',
+          active: true,
+        },
       });
 
       const createData = {

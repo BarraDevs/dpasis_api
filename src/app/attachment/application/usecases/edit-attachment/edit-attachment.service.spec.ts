@@ -94,6 +94,7 @@ describe('EditAttachment', () => {
       owner01 = await prisma.owner.create({
         data: {
           id: 'owner-edit-attachment-test',
+          active: true,
         },
       });
     });
