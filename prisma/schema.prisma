@@ -77,6 +77,7 @@ model Company {
   sellers   Seller[]
   products  Product[]
   services  Service[]
+  budgets   Budget[]
 
   @@map("companies")
 }
@@ -96,8 +97,9 @@ model Client {
   active          Boolean
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
-  resource        Owner? // resource no sentido de proprietário
+  resource        Owner?
   companies       Company[]
+  budgets         Budget[]
 
   @@map("clients")
 }
@@ -233,6 +235,7 @@ model Shipper {
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
   companies      Company[]
+  budgets        Budget[]
 
   @@map("shippers")
 }
@@ -288,6 +291,7 @@ model Seller {
   role         Role      @relation(fields: [roleId], references: [id], onDelete: Cascade)
   roleId       String    @unique
   companies    Company[]
+  budgets      Budget[]
 
   @@map("sellers")
 }
@@ -328,6 +332,7 @@ model Product {
   movements        ProductStockMovement[]
   suppliers        Supplier[]
   services         ServiceProduct[]
+  budgetItems      BudgetItem[]
 
   @@unique([ean, companyId])
   @@map("products")
@@ -377,6 +382,7 @@ model Service {
   createdAt            DateTime         @default(now())
   updatedAt            DateTime         @updatedAt
   products             ServiceProduct[]
+  budgetItems          BudgetItem[]
 
   @@map("services")
 }
@@ -389,4 +395,60 @@ model ServiceProduct {
 
   @@id([serviceId, productId])
   @@map("service_products")
+}
+
+model Budget {
+  id                  String       @id @default(uuid())
+  companyId           String
+  company             Company      @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  clientId            String
+  client              Client       @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  sellerId            String
+  seller              Seller       @relation(fields: [sellerId], references: [id], onDelete: Restrict)
+  freightType         String       @db.VarChar(256)
+  shipperId           String?
+  shipper             Shipper?     @relation(fields: [shipperId], references: [id], onDelete: SetNull)
+  freightValueInCents Int
+  subtotalInCents     Int
+  discountInCents     Int
+  totalInCents        Int
+  commercialProcess   String?      @db.VarChar(256)
+  commercialNote      String?      @db.Text
+  observations        String?      @db.Text
+  status              String       @db.VarChar(256)
+  approvedBy          String?      @db.VarChar(256)
+  approvedAt          DateTime?
+  rejectedBy          String?      @db.VarChar(256)
+  rejectedAt          DateTime?
+  rejectionReason     String?      @db.Text
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+  items               BudgetItem[]
+
+  @@index([status])
+  @@index([clientId])
+  @@index([sellerId])
+  @@index([companyId])
+  @@index([createdAt])
+  @@map("budgets")
+}
+
+model BudgetItem {
+  id               String   @id @default(uuid())
+  budgetId         String
+  budget           Budget   @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+  itemType         String   @db.VarChar(256)
+  productId        String?
+  product          Product? @relation(fields: [productId], references: [id], onDelete: Restrict)
+  serviceId        String?
+  service          Service? @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+  description      String   @db.VarChar(512)
+  quantity         Int
+  unitPriceInCents Int
+  discountInCents  Int
+  subtotalInCents  Int
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@map("budget_items")
 }
