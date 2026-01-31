@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { AuthenticationGuardsModule } from '../authentication/application/guards/guards.module';
 import { ClientModule } from '../client/client.module';
 import { CompanyModule } from '../company/company.module';
 import { ProductModule } from '../product/product.module';
@@ -15,10 +16,12 @@ import { EditBudget } from './application/usecases/edit-budget/edit-budget.servi
 import { FindAllBudget } from './application/usecases/find-all-budget/find-all-budget.service';
 import { FindBudgetById } from './application/usecases/find-budget-by-id/find-budget-by-id.service';
 import { RejectBudget } from './application/usecases/reject-budget/reject-budget.service';
+import { BudgetController } from './infra/drivers/http/budget.controller';
 
 @Module({
   imports: [
     BudgetPersistenceModule,
+    AuthenticationGuardsModule,
     CompanyModule,
     ClientModule,
     SellerModule,
@@ -27,18 +30,8 @@ import { RejectBudget } from './application/usecases/reject-budget/reject-budget
     ServiceModule,
     SupplierModule,
   ],
-  controllers: [],
+  controllers: [BudgetController],
   providers: [
-    CreateBudget,
-    FindBudgetById,
-    FindAllBudget,
-    EditBudget,
-    DeleteBudget,
-    CancelBudget,
-    ApproveBudget,
-    RejectBudget,
-  ],
-  exports: [
     CreateBudget,
     FindBudgetById,
     FindAllBudget,

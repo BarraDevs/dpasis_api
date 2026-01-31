@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { AddressModule } from './app/address/address.module';
 import { AttachmentModule } from './app/attachment/attachment.module';
 import { AuthenticationModule } from './app/authentication/authentication.module';
+import { BudgetModule } from './app/budget/budget.module';
 import { ClientModule } from './app/client/client.module';
 import { CompanyModule } from './app/company/company.module';
 import { ContactModule } from './app/contact/contact.module';
@@ -25,6 +26,7 @@ import { InfraModule } from './infra/infra.module';
     AuthenticationModule,
     AddressModule,
     AttachmentModule,
+    BudgetModule,
     ClientModule,
     CompanyModule,
     ContactModule,
