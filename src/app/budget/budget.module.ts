@@ -7,6 +7,7 @@ import { ServiceModule } from '../service/service.module';
 import { ShipperModule } from '../shipper/shipper.module';
 import { SupplierModule } from '../supplier/supplier.module';
 import { BudgetPersistenceModule } from './application/persistence/budget-persistence.module';
+import { ApproveBudget } from './application/usecases/approve-budget/approve-budget.service';
 import { CancelBudget } from './application/usecases/cancel-budget/cancel-budget.service';
 import { CreateBudget } from './application/usecases/create-budget/create-budget.service';
 import { DeleteBudget } from './application/usecases/delete-budget/delete-budget.service';
@@ -33,6 +34,7 @@ import { FindBudgetById } from './application/usecases/find-budget-by-id/find-bu
     EditBudget,
     DeleteBudget,
     CancelBudget,
+    ApproveBudget,
   ],
   exports: [
     CreateBudget,
@@ -41,6 +43,7 @@ import { FindBudgetById } from './application/usecases/find-budget-by-id/find-bu
     EditBudget,
     DeleteBudget,
     CancelBudget,
+    ApproveBudget,
   ],
 })
 export class BudgetModule {}
