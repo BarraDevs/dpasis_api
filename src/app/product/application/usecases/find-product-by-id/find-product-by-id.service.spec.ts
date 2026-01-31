@@ -36,9 +36,7 @@ describe('FindProductById', () => {
     createCompany = module.get(CreateCompany);
     createSupplier = module.get(CreateSupplier);
 
-    await prisma.product.deleteMany();
-    await prisma.supplier.deleteMany();
-    await prisma.company.deleteMany();
+    await prisma.truncate();
 
     companyId = (await createCompany.execute({
       name: 'Test Company',
@@ -73,9 +71,6 @@ describe('FindProductById', () => {
   });
 
   afterEach(async() => {
-    await prisma.product.deleteMany();
-    await prisma.supplier.deleteMany();
-    await prisma.company.deleteMany();
     await prisma.$disconnect();
   });
 

@@ -31,9 +31,7 @@ describe('FindAllSeller', () => {
     prisma = module.get(PrismaService);
     createSeller = module.get(CreateSeller);
 
-    await prisma.seller.deleteMany();
-    await prisma.account.deleteMany();
-    await prisma.company.deleteMany();
+    await prisma.truncate();
 
     // Create test companies
     const company1 = await prisma.company.create({
@@ -214,9 +212,6 @@ describe('FindAllSeller', () => {
   });
 
   afterEach(async() => {
-    await prisma.seller.deleteMany();
-    await prisma.account.deleteMany();
-    await prisma.company.deleteMany();
     await prisma.$disconnect();
   });
 
@@ -743,7 +738,7 @@ describe('FindAllSeller', () => {
 
       it('should handle empty database gracefully', async() => {
         // Arrange
-        await prisma.seller.deleteMany();
+        await prisma.truncate();
         const queries: FindAllSellerQueryDto = { page: 1, size: 10 };
 
         // Act

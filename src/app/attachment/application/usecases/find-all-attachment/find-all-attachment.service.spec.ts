@@ -27,13 +27,10 @@ describe('FindAllAttachment', () => {
     prisma = module.get(PrismaService);
     createAttachment = module.get(CreateAttachment);
 
-    await prisma.owner.deleteMany();
-    await prisma.attachment.deleteMany();
+    await prisma.truncate();
   });
 
   afterEach(async() => {
-    await prisma.owner.deleteMany();
-    await prisma.attachment.deleteMany();
     await prisma.$disconnect();
   });
 

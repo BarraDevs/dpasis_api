@@ -27,13 +27,10 @@ describe('FindAllLicense', () => {
     prisma = module.get(PrismaService);
     createLicense = module.get(CreateLicense);
 
-    await prisma.owner.deleteMany();
-    await prisma.license.deleteMany();
+    await prisma.truncate();
   });
 
   afterEach(async() => {
-    await prisma.owner.deleteMany();
-    await prisma.license.deleteMany();
     await prisma.$disconnect();
   });
 

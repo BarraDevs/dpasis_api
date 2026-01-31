@@ -44,8 +44,7 @@ describe('ShipperRepositoryAdapterPrisma (Integration)', () => {
   });
 
   beforeEach(async() => {
-    await prisma.shipper.deleteMany();
-    await prisma.company.deleteMany();
+    await prisma.truncate();
 
     // Create test companies
     const company1 = await prisma.company.create({
@@ -107,8 +106,6 @@ describe('ShipperRepositoryAdapterPrisma (Integration)', () => {
   });
 
   afterEach(async() => {
-    await prisma.shipper.deleteMany();
-    await prisma.company.deleteMany();
     await prisma.$disconnect();
   });
 

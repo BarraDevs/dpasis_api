@@ -29,11 +29,10 @@ describe('DeleteServiceCategory', () => {
     createServiceCategory = module.get(CreateServiceCategory);
     findServiceCategoryById = module.get(FindServiceCategoryById);
 
-    await prisma.serviceCategory.deleteMany();
+    await prisma.truncate();
   });
 
   afterEach(async() => {
-    await prisma.serviceCategory.deleteMany();
     await prisma.$disconnect();
   });
 
@@ -494,9 +493,6 @@ describe('DeleteServiceCategory', () => {
       });
 
       it('should handle deletion when database is empty', async() => {
-        // Arrange
-        await prisma.serviceCategory.deleteMany();
-
         // Act & Assert
         await expect(sut.execute('any-id')).rejects.toThrow(ServiceCategoryNotFoundError);
       });

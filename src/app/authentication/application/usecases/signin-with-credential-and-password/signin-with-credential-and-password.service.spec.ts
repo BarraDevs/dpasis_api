@@ -26,11 +26,10 @@ describe('SigninWithCredentialAndPassword', () => {
     sut = module.get(SignInWithCredentialAndPassword);
     prisma = module.get(PrismaService);
 
-    await prisma.account.deleteMany();
+    await prisma.truncate();
   });
 
   afterEach(async() => {
-    await prisma.account.deleteMany();
     await prisma.$disconnect();
   });
 

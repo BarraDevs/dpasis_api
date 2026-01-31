@@ -36,13 +36,10 @@ describe('CreateShipper', () => {
     findShipperById = module.get(FindShipperById);
     findCompanyById = module.get(FindCompanyById);
 
-    await prisma.shipper.deleteMany();
-    await prisma.company.deleteMany();
+    await prisma.truncate();
   });
 
   afterEach(async() => {
-    await prisma.shipper.deleteMany();
-    await prisma.company.deleteMany();
     await prisma.$disconnect();
   });
 

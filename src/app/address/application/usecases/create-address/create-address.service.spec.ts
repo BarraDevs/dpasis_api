@@ -29,13 +29,10 @@ describe('CreateAddress', () => {
     prisma = module.get(PrismaService);
     findAddressById = module.get(FindAddressById);
 
-    await prisma.owner.deleteMany();
-    await prisma.address.deleteMany();
+    await prisma.truncate();
   });
 
   afterEach(async() => {
-    await prisma.owner.deleteMany();
-    await prisma.address.deleteMany();
     await prisma.$disconnect();
   });
 

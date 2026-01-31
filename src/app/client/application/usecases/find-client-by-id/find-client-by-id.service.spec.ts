@@ -30,8 +30,7 @@ describe('FindClientById', () => {
     createClient = module.get(CreateClient);
     createCompany = module.get(CreateCompany);
 
-    await prisma.company.deleteMany();
-    await prisma.client.deleteMany();
+    await prisma.truncate();
 
     companyId = (await createCompany.execute({
       name: 'name teste',
@@ -55,8 +54,6 @@ describe('FindClientById', () => {
   });
 
   afterEach(async() => {
-    await prisma.company.deleteMany();
-    await prisma.client.deleteMany();
     await prisma.$disconnect();
   });
 

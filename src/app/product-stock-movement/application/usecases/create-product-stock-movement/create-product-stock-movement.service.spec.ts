@@ -19,11 +19,10 @@ describe('CreateProductStockMovement', () => {
     sut = module.get(CreateProductStockMovement);
     prisma = module.get(PrismaService);
 
-    await prisma.productStockMovement.deleteMany();
+    await prisma.truncate();
   });
 
   afterEach(async() => {
-    await prisma.productStockMovement.deleteMany();
   });
 
   it('should be defined', () => {

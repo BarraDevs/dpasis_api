@@ -28,13 +28,10 @@ describe('CreateContact', () => {
     prisma = module.get(PrismaService);
     findContactById = module.get(FindContactById);
 
-    await prisma.owner.deleteMany();
-    await prisma.contact.deleteMany();
+    await prisma.truncate();
   });
 
   afterEach(async() => {
-    await prisma.owner.deleteMany();
-    await prisma.contact.deleteMany();
     await prisma.$disconnect();
   });
 

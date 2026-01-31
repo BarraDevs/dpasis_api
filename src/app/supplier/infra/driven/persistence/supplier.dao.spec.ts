@@ -25,13 +25,10 @@ describe('SupplierDaoAdapterPrisma', () => {
     sut = module.get(SupplierDaoAdapterPrisma);
     prisma = module.get(PrismaService);
 
-    await prisma.company.deleteMany();
-    await prisma.supplier.deleteMany();
+    await prisma.truncate();
   });
 
   afterEach(async() => {
-    await prisma.company.deleteMany();
-    await prisma.supplier.deleteMany();
     await prisma.$disconnect();
   });
 

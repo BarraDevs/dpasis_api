@@ -146,8 +146,7 @@ describe('ShipperDaoAdapterPrisma', () => {
     sut = module.get(ShipperDaoAdapterPrisma);
     prisma = module.get(PrismaService);
 
-    await prisma.shipper.deleteMany();
-    await prisma.company.deleteMany();
+    await prisma.truncate();
 
     // Create test companies
     company1 = await prisma.company.create({
@@ -208,8 +207,6 @@ describe('ShipperDaoAdapterPrisma', () => {
   });
 
   afterEach(async() => {
-    await prisma.shipper.deleteMany();
-    await prisma.company.deleteMany();
     await prisma.$disconnect();
   });
 

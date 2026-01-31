@@ -139,14 +139,13 @@ describe('FindAllCompany', () => {
     createCompany = module.get(CreateCompany);
 
     // Clean database
-    await prisma.company.deleteMany();
+    await prisma.truncate();
 
     // Create test companies for integration tests
     await createTestCompanies();
   });
 
   afterEach(async() => {
-    await prisma.company.deleteMany();
     await prisma.$disconnect();
   });
 

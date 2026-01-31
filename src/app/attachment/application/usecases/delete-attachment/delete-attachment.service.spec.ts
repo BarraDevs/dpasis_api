@@ -30,13 +30,10 @@ describe('DeleteAttachment', () => {
     createAttachment = module.get(CreateAttachment);
     findAttachmentById = module.get(FindAttachmentById);
 
-    await prisma.owner.deleteMany();
-    await prisma.attachment.deleteMany();
+    await prisma.truncate();
   });
 
   afterEach(async() => {
-    await prisma.owner.deleteMany();
-    await prisma.attachment.deleteMany();
     await prisma.$disconnect();
   });
 

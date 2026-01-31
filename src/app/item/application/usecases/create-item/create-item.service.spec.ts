@@ -27,13 +27,10 @@ describe('CreateItems', () => {
     sut = module.get(CreateItems);
     prisma = module.get(PrismaService);
 
-    await prisma.owner.deleteMany();
-    await prisma.item.deleteMany();
+    await prisma.truncate();
   });
 
   afterEach(async() => {
-    await prisma.owner.deleteMany();
-    await prisma.item.deleteMany();
     await prisma.$disconnect();
   });
 

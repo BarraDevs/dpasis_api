@@ -41,8 +41,8 @@ export class AccountPrismaAdapterDao implements IAccountDao {
   }
 
   public async findByEmail(email: string): Promise<AccountWithSensitiveDataDto | null> {
-    const account = await this.prisma.account.findUnique({
-      where: { email },
+    const account = await this.prisma.account.findFirst({
+      where: { email: { equals: email, mode: 'insensitive' } },
       select: AccountWithSensitiveDataSelect,
     });
     if (!account) {

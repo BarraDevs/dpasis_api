@@ -27,8 +27,7 @@ describe('AttachmentDaoAdapterPrisma', () => {
     sut = module.get(AttachmentDaoAdapterPrisma);
     prisma = module.get(PrismaService);
 
-    await prisma.owner.deleteMany();
-    await prisma.attachment.deleteMany();
+    await prisma.truncate();
 
     // Create owners for attachment ownership
     owner01 = await prisma.owner.create({
@@ -46,8 +45,6 @@ describe('AttachmentDaoAdapterPrisma', () => {
   });
 
   afterEach(async() => {
-    await prisma.owner.deleteMany();
-    await prisma.attachment.deleteMany();
     await prisma.$disconnect();
   });
 

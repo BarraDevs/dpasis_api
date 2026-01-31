@@ -151,12 +151,11 @@ describe('CompanyDaoAdapterPrisma', () => {
     sut = module.get(CompanyDaoAdapterPrisma);
     prisma = module.get(PrismaService);
 
-    await prisma.company.deleteMany();
+    await prisma.truncate();
     await createTestCompanies();
   });
 
   afterEach(async() => {
-    await prisma.company.deleteMany();
     await prisma.$disconnect();
   });
 

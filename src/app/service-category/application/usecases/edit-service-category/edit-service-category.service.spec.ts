@@ -31,11 +31,10 @@ describe('EditServiceCategory', () => {
     createServiceCategory = module.get(CreateServiceCategory);
     findServiceCategoryById = module.get(FindServiceCategoryById);
 
-    await prisma.serviceCategory.deleteMany();
+    await prisma.truncate();
   });
 
   afterEach(async() => {
-    await prisma.serviceCategory.deleteMany();
     await prisma.$disconnect();
   });
 

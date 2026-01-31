@@ -27,8 +27,7 @@ describe('LicenseDaoAdapterPrisma', () => {
     sut = module.get(LicenseDaoAdapterPrisma);
     prisma = module.get(PrismaService);
 
-    await prisma.owner.deleteMany();
-    await prisma.license.deleteMany();
+    await prisma.truncate();
 
     // Create owners for license ownership
     owner01 = await prisma.owner.create({
@@ -46,8 +45,6 @@ describe('LicenseDaoAdapterPrisma', () => {
   });
 
   afterEach(async() => {
-    await prisma.owner.deleteMany();
-    await prisma.license.deleteMany();
     await prisma.$disconnect();
   });
 

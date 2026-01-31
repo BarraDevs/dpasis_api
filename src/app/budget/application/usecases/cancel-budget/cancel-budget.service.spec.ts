@@ -54,16 +54,7 @@ describe('CancelBudget', () => {
     createBudget = module.get(CreateBudget);
     findBudgetById = module.get(FindBudgetById);
 
-    await prisma.budget.deleteMany();
-    await prisma.account.deleteMany();
-    await prisma.product.deleteMany();
-    await prisma.service.deleteMany();
-    await prisma.serviceCategory.deleteMany();
-    await prisma.account.deleteMany();
-    await prisma.seller.deleteMany();
-    await prisma.client.deleteMany();
-    await prisma.supplier.deleteMany();
-    await prisma.company.deleteMany();
+    await prisma.truncate();
 
     // Create company
     companyId = (await createCompany.execute({
@@ -253,14 +244,6 @@ describe('CancelBudget', () => {
   });
 
   afterEach(async() => {
-    await prisma.budget.deleteMany();
-    await prisma.product.deleteMany();
-    await prisma.service.deleteMany();
-    await prisma.account.deleteMany();
-    await prisma.seller.deleteMany();
-    await prisma.client.deleteMany();
-    await prisma.supplier.deleteMany();
-    await prisma.company.deleteMany();
     await prisma.$disconnect();
   });
 

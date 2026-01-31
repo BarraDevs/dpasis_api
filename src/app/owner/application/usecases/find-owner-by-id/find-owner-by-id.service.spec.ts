@@ -20,11 +20,10 @@ describe('FindOwnerById', () => {
     sut = module.get(FindOwnerById);
     prisma = module.get(PrismaService);
 
-    await prisma.owner.deleteMany();
+    await prisma.truncate();
   });
 
   afterEach(async() => {
-    await prisma.owner.deleteMany();
     await prisma.$disconnect();
   });
 

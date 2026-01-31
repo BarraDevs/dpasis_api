@@ -29,7 +29,7 @@ describe('CreateCompany', () => {
     findCompanyById = module.get(FindCompanyById);
 
     // Clean database for integration tests
-    await prisma.company.deleteMany();
+    await prisma.truncate();
 
     data = {
       name: 'Tech Solutions Ltda',
@@ -53,7 +53,6 @@ describe('CreateCompany', () => {
   });
 
   afterEach(async() => {
-    await prisma.company.deleteMany();
     await prisma.$disconnect();
   });
 

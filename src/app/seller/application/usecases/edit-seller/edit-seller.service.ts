@@ -27,7 +27,7 @@ export class EditSeller {
       throw new SellerNotFoundError();
     }
 
-    if (data.email && data.email !== sellerData.email) {
+    if (data.email && data.email.toLowerCase() !== sellerData.email.toLowerCase()) {
       const existingSellerWithEmail = await this.sellerDao.findByEmail(data.email);
       if (existingSellerWithEmail) {
         throw new SellerDuplicateEmailError();

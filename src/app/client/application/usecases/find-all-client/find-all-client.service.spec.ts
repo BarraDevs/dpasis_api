@@ -32,8 +32,7 @@ describe('FindAllClient', () => {
     createClient = module.get(CreateClient);
     createCompany = module.get(CreateCompany);
 
-    await prisma.company.deleteMany();
-    await prisma.client.deleteMany();
+    await prisma.truncate();
 
     const company = await createCompany.execute({
       name: 'name teste',
@@ -164,8 +163,6 @@ describe('FindAllClient', () => {
   });
 
   afterEach(async() => {
-    await prisma.company.deleteMany();
-    await prisma.client.deleteMany();
     await prisma.$disconnect();
   });
 
@@ -206,7 +203,7 @@ describe('FindAllClient', () => {
   describe('Integration tests - Basic functionality', () => {
     it('should return an empty result when no clients exist', async() => {
       // Arrange
-      await prisma.client.deleteMany(); // Ensure database is clean
+      await prisma.truncate();
 
       // Act
       const result = await sut.execute({});

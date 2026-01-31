@@ -24,11 +24,10 @@ describe('ServiceCategoryDaoAdapterPrisma', () => {
     sut = module.get(ServiceCategoryDaoAdapterPrisma);
     prisma = module.get(PrismaService);
 
-    await prisma.serviceCategory.deleteMany();
+    await prisma.truncate();
   });
 
   afterEach(async() => {
-    await prisma.serviceCategory.deleteMany();
     await prisma.$disconnect();
   });
 

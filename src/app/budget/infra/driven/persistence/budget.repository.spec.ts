@@ -35,28 +35,7 @@ describe('BudgetRepositoryAdapterPrisma', () => {
     sut = module.get(BudgetRepositoryAdapterPrisma);
     prisma = module.get(PrismaService);
 
-    await prisma.budgetItem.deleteMany();
-    await prisma.budget.deleteMany();
-    await prisma.item.deleteMany();
-    await prisma.attachment.deleteMany();
-    await prisma.license.deleteMany();
-    await prisma.contact.deleteMany();
-    await prisma.address.deleteMany();
-    await prisma.productStockMovement.deleteMany();
-    await prisma.serviceProduct.deleteMany();
-    await prisma.product.deleteMany();
-    await prisma.service.deleteMany();
-    await prisma.serviceCategory.deleteMany();
-    await prisma.owner.deleteMany();
-    await prisma.supplier.deleteMany();
-    await prisma.seller.deleteMany();
-    await prisma.shipper.deleteMany();
-    await prisma.provider.deleteMany();
-    await prisma.client.deleteMany();
-    await prisma.admin.deleteMany();
-    await prisma.role.deleteMany();
-    await prisma.account.deleteMany();
-    await prisma.company.deleteMany();
+    await prisma.truncate();
 
     // Create test data
     company = await prisma.company.create({
@@ -197,28 +176,6 @@ describe('BudgetRepositoryAdapterPrisma', () => {
   });
 
   afterEach(async() => {
-    await prisma.budgetItem.deleteMany();
-    await prisma.budget.deleteMany();
-    await prisma.item.deleteMany();
-    await prisma.attachment.deleteMany();
-    await prisma.license.deleteMany();
-    await prisma.contact.deleteMany();
-    await prisma.address.deleteMany();
-    await prisma.productStockMovement.deleteMany();
-    await prisma.serviceProduct.deleteMany();
-    await prisma.product.deleteMany();
-    await prisma.service.deleteMany();
-    await prisma.serviceCategory.deleteMany();
-    await prisma.owner.deleteMany();
-    await prisma.supplier.deleteMany();
-    await prisma.seller.deleteMany();
-    await prisma.shipper.deleteMany();
-    await prisma.provider.deleteMany();
-    await prisma.client.deleteMany();
-    await prisma.admin.deleteMany();
-    await prisma.role.deleteMany();
-    await prisma.account.deleteMany();
-    await prisma.company.deleteMany();
   });
 
   describe('findById', () => {

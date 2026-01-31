@@ -45,11 +45,10 @@ describe('CompanyRepositoryAdapterPrisma (Integration)', () => {
   });
 
   beforeEach(async() => {
-    await prisma.company.deleteMany();
+    await prisma.truncate();
   });
 
   afterEach(async() => {
-    await prisma.company.deleteMany();
     await prisma.$disconnect();
   });
 

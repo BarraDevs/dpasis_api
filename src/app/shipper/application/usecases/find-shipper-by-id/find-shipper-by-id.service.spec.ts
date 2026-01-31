@@ -29,7 +29,7 @@ describe('FindShipperById', () => {
     createShipper = module.get(CreateShipper);
 
     // Clean database for integration tests
-    await prisma.shipper.deleteMany();
+    await prisma.truncate();
 
     // Create a shipper for testing
     createShipperData = {
@@ -54,7 +54,6 @@ describe('FindShipperById', () => {
   });
 
   afterEach(async() => {
-    await prisma.shipper.deleteMany();
     await prisma.$disconnect();
   });
 

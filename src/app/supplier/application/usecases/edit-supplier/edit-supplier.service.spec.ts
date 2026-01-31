@@ -38,8 +38,7 @@ describe('EditSupplier', () => {
     findSupplierById = module.get(FindSupplierById);
 
     // Clean database for integration tests
-    await prisma.supplier.deleteMany();
-    await prisma.company.deleteMany();
+    await prisma.truncate();
 
     // Create a test company
     const company = await prisma.company.create({
@@ -78,8 +77,6 @@ describe('EditSupplier', () => {
   });
 
   afterEach(async() => {
-    await prisma.supplier.deleteMany();
-    await prisma.company.deleteMany();
     await prisma.$disconnect();
   });
 

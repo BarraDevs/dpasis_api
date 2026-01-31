@@ -41,11 +41,7 @@ describe('EditService', () => {
     createProduct = module.get(CreateProduct);
     createServiceCategory = module.get(CreateServiceCategory);
 
-    await prisma.serviceProduct.deleteMany();
-    await prisma.service.deleteMany();
-    await prisma.product.deleteMany();
-    await prisma.serviceCategory.deleteMany();
-    await prisma.company.deleteMany();
+    await prisma.truncate();
 
     // Create company
     companyId = (await prisma.company.create({
@@ -159,11 +155,6 @@ describe('EditService', () => {
   });
 
   afterEach(async() => {
-    await prisma.serviceProduct.deleteMany();
-    await prisma.service.deleteMany();
-    await prisma.product.deleteMany();
-    await prisma.serviceCategory.deleteMany();
-    await prisma.company.deleteMany();
     await prisma.$disconnect();
   });
 

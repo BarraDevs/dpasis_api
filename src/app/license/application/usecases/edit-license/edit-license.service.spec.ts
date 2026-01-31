@@ -31,13 +31,10 @@ describe('EditLicense', () => {
     createLicense = module.get(CreateLicense);
     findLicenseById = module.get(FindLicenseById);
 
-    await prisma.owner.deleteMany();
-    await prisma.license.deleteMany();
+    await prisma.truncate();
   });
 
   afterEach(async() => {
-    await prisma.owner.deleteMany();
-    await prisma.license.deleteMany();
     await prisma.$disconnect();
   });
 

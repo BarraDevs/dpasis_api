@@ -127,7 +127,7 @@ export class SellerDaoAdapterPrisma implements ISellerDao {
       where: {
         role: {
           account: {
-            email,
+            email: { equals: email, mode: 'insensitive' },
           },
         },
       },

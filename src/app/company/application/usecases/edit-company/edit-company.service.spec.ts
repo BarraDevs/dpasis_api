@@ -34,7 +34,7 @@ describe('EditCompany', () => {
     findCompanyById = module.get(FindCompanyById);
 
     // Clean database for integration tests
-    await prisma.company.deleteMany();
+    await prisma.truncate();
 
     // Create a company for testing edits
     createCompanyData = {
@@ -62,7 +62,6 @@ describe('EditCompany', () => {
   });
 
   afterEach(async() => {
-    await prisma.company.deleteMany();
     await prisma.$disconnect();
   });
 

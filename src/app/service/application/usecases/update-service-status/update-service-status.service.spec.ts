@@ -40,11 +40,7 @@ describe('UpdateServiceStatus', () => {
     createProduct = module.get(CreateProduct);
     createServiceCategory = module.get(CreateServiceCategory);
 
-    await prisma.serviceProduct.deleteMany();
-    await prisma.service.deleteMany();
-    await prisma.product.deleteMany();
-    await prisma.serviceCategory.deleteMany();
-    await prisma.company.deleteMany();
+    await prisma.truncate();
 
     companyId = (await prisma.company.create({
       data: {
@@ -154,11 +150,6 @@ describe('UpdateServiceStatus', () => {
   });
 
   afterEach(async() => {
-    await prisma.serviceProduct.deleteMany();
-    await prisma.service.deleteMany();
-    await prisma.product.deleteMany();
-    await prisma.serviceCategory.deleteMany();
-    await prisma.company.deleteMany();
     await prisma.$disconnect();
   });
 

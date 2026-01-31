@@ -1,8 +1,8 @@
 import { Module, Provider } from '@nestjs/common';
 import { TOKENS } from 'src/core/di/token';
 import { DatabaseModule } from 'src/infra/database/database.module';
-import { ClientDaoAdapterPrisma } from '../../infra/driven/persistence/prisma/client.dao';
-import { ClientRepositoryAdapterPrisma } from '../../infra/driven/persistence/prisma/client.repository';
+import { ClientDaoAdapterPrisma } from '../../infra/driven/persistence/client.dao';
+import { ClientRepositoryAdapterPrisma } from '../../infra/driven/persistence/client.repository';
 
 const adapters: Provider[] = [
   {

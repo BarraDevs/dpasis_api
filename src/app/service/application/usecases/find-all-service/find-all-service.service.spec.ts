@@ -23,13 +23,10 @@ describe('FindAllService', () => {
     sut = module.get(FindAllService);
     prisma = module.get(PrismaService);
 
-    await prisma.serviceProduct.deleteMany();
-    await prisma.service.deleteMany();
+    await prisma.truncate();
   });
 
   afterEach(async() => {
-    await prisma.serviceProduct.deleteMany();
-    await prisma.service.deleteMany();
     await prisma.$disconnect();
   });
 
@@ -217,9 +214,6 @@ describe('FindAllService', () => {
     });
 
     afterEach(async() => {
-      await prisma.product.deleteMany();
-      await prisma.serviceCategory.deleteMany();
-      await prisma.company.deleteMany();
     });
 
     describe('empty database scenarios', () => {
@@ -356,7 +350,8 @@ describe('FindAllService', () => {
 
       it('should return single service', async() => {
         // Arrange
-        await prisma.service.deleteMany();
+        await prisma.service.deleteMany({});
+
         await prisma.service.create({
           data: {
             name: 'Único Serviço',

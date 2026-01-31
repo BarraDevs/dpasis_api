@@ -31,8 +31,7 @@ describe('FindAllShipper', () => {
     prisma = module.get(PrismaService);
     createShipper = module.get(CreateShipper);
 
-    await prisma.shipper.deleteMany();
-    await prisma.company.deleteMany();
+    await prisma.truncate();
 
     // Create test companies
     const company1 = await prisma.company.create({
@@ -225,8 +224,6 @@ describe('FindAllShipper', () => {
   });
 
   afterEach(async() => {
-    await prisma.shipper.deleteMany();
-    await prisma.company.deleteMany();
     await prisma.$disconnect();
   });
 

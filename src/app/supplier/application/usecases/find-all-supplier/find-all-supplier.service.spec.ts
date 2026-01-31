@@ -31,8 +31,7 @@ describe('FindAllSupplier', () => {
     prisma = module.get(PrismaService);
     createSupplier = module.get(CreateSupplier);
 
-    await prisma.supplier.deleteMany();
-    await prisma.company.deleteMany();
+    await prisma.truncate();
 
     // Create test companies
     const company1 = await prisma.company.create({
@@ -192,8 +191,6 @@ describe('FindAllSupplier', () => {
   });
 
   afterEach(async() => {
-    await prisma.supplier.deleteMany();
-    await prisma.company.deleteMany();
     await prisma.$disconnect();
   });
 
@@ -233,8 +230,8 @@ describe('FindAllSupplier', () => {
 
   describe('Integration tests - Basic functionality', () => {
     it('should return an empty result when no suppliers exist', async() => {
-      // Arrange
-      await prisma.supplier.deleteMany(); // Ensure database is clean
+      // Arrange - Clear all suppliers
+      await prisma.truncate();
 
       // Act
       const result = await sut.execute({});

@@ -1,494 +1,250 @@
 import { createMock } from '@golevelup/ts-jest';
-import { Test } from '@nestjs/testing';
-import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
+import { Test, TestingModule } from '@nestjs/testing';
+import { CreateCompany } from 'src/app/company/application/usecases/create-company/create-company.service';
 import { SellerNotFoundError } from 'src/app/seller/domain/errors/seller-not-found.error';
 import { SellerModule } from 'src/app/seller/seller.module';
 import { ConfigModule } from 'src/core/config/config.module';
-import { TOKENS } from 'src/core/di/token';
-import { DatabaseModule } from 'src/infra/database/database.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
-import type { SellerDto } from '../../dtos/seller.dto';
-import type { ISellerDao } from '../../persistence/dao/seller-dao.interface';
+import { SellerDto } from '../../dtos/seller.dto';
+import { CreateSeller } from '../create-seller/create-seller.service';
+import { CreateSellerInputDto } from '../create-seller/dtos/create-seller.dto';
 import { FindSellerById } from './find-seller-by-id.service';
 
 describe('FindSellerById', () => {
   let sut: FindSellerById;
-  let sellerDao: ISellerDao;
+  let prisma: PrismaService;
+  let createSeller: CreateSeller;
+  let createCompany: CreateCompany;
+  let companyId: string;
 
-  const mockSellerWithAvatar: SellerDto = {
-    id: 'seller-id-123',
-    name: 'John Doe',
-    nickname: 'Johnny',
-    phone: '1122223333',
-    cellphone: '11999998888',
-    email: 'john@example.com',
-    commission: 10,
-    zipCode: '01310100',
-    street: 'Avenida Paulista',
-    number: '1000',
-    complement: 'Sala 101',
-    reference: 'Próximo ao metrô',
-    neighborhood: 'Bela Vista',
-    city: 'São Paulo',
-    state: 'SP',
-    observation: 'Vendedor experiente',
-    avatarUrl: 'https://cdn.example.com/avatar.jpg',
-    active: true,
-    createdAt: new Date('2024-01-01'),
-    updatedAt: new Date('2024-01-15'),
-    companies: [
-      {
-        id: 'company-id-1',
-        name: 'Company 1',
-      },
-      {
-        id: 'company-id-2',
-        name: 'Company 2',
-      },
-    ],
-  };
+  beforeEach(async() => {
+    const module: TestingModule = await Test.createTestingModule({
+      imports: [
+        SellerModule,
+        ConfigModule,
+      ],
+    }).compile();
 
-  const mockSellerWithoutAvatar: SellerDto = {
-    id: 'seller-id-456',
-    name: 'Jane Doe',
-    nickname: null,
-    phone: '1133334444',
-    cellphone: '11888887777',
-    email: 'jane@example.com',
-    commission: 15,
-    zipCode: '01310100',
-    street: 'Rua Augusta',
-    number: '500',
-    complement: null,
-    reference: null,
-    neighborhood: 'Consolação',
-    city: 'São Paulo',
-    state: 'SP',
-    observation: null,
-    avatarUrl: null,
-    active: true,
-    createdAt: new Date('2024-02-01'),
-    updatedAt: new Date('2024-02-15'),
-    companies: [],
-  };
+    sut = module.get(FindSellerById);
+    prisma = module.get(PrismaService);
+    createSeller = module.get(CreateSeller);
+    createCompany = module.get(CreateCompany);
 
-  describe('Unit Tests', () => {
-    beforeEach(async() => {
-      const module = await Test.createTestingModule({
-        providers: [
-          FindSellerById,
-          {
-            provide: TOKENS.SellerDao,
-            useValue: createMock<ISellerDao>(),
-          },
-        ],
-      }).compile();
+    await prisma.truncate();
 
-      sut = module.get<FindSellerById>(FindSellerById);
-      sellerDao = module.get<ISellerDao>(TOKENS.SellerDao);
-    });
+    // Create a company for seller association
+    companyId = (await createCompany.execute({
+      name: 'Test Company',
+      fantasyName: 'TC Test',
+      document: '73321315000104',
+      ie: 'ie teste',
+      zipCode: '12345-678',
+      street: 'Test Street',
+      number: '100',
+      neighborhood: 'Test Neighborhood',
+      complement: null,
+      reference: null,
+      city: 'Test City',
+      state: 'TC',
+      cellphone: '11912345678',
+      phone01: '1112345678',
+      phone02: null,
+      email01: 'company@test.com',
+      email02: 'company.alt@test.com',
+    })).id;
+  });
 
-    it('should be defined', () => {
-      expect(sut).toBeDefined();
-    });
+  afterEach(async() => {
+    await prisma.$disconnect();
+  });
 
+  it('should be defined', () => {
+    expect(sut).toBeDefined();
+  });
+
+  describe('unit tests', () => {
     it('should throw SellerNotFoundError when seller does not exist', async() => {
       // Arrange
-      jest.spyOn(sellerDao, 'findById').mockResolvedValue(null);
+      const nonExistentId = 'non-existent-id';
+      jest.spyOn(sut['sellerDao'], 'findById').mockResolvedValue(null);
 
       // Act & Assert
-      await expect(sut.execute('non-existent-id')).rejects.toThrow(SellerNotFoundError);
+      expect.assertions(2);
+      await expect(sut.execute(nonExistentId)).rejects.toBeInstanceOf(SellerNotFoundError);
+      expect(sut['sellerDao'].findById).toHaveBeenCalledWith(nonExistentId);
     });
 
-    it('should return seller with avatar when found', async() => {
+    it('should return seller data when seller exists', async() => {
       // Arrange
-      jest.spyOn(sellerDao, 'findById').mockResolvedValue(mockSellerWithAvatar);
+      const seller = createMock<SellerDto>({
+        id: 'seller-id-123',
+        name: 'John Seller',
+        email: 'john@test.com',
+        active: true,
+      });
+      const findByIdSpy = jest.spyOn(sut['sellerDao'], 'findById').mockResolvedValue(seller);
 
       // Act
       const result = await sut.execute('seller-id-123');
 
       // Assert
-      expect(result).toEqual(mockSellerWithAvatar);
-      expect(result.avatarUrl).toBe('https://cdn.example.com/avatar.jpg');
-      expect(sellerDao.findById).toHaveBeenCalledWith('seller-id-123');
-      expect(sellerDao.findById).toHaveBeenCalledTimes(1);
-    });
-
-    it('should return seller without avatar when found', async() => {
-      // Arrange
-      jest.spyOn(sellerDao, 'findById').mockResolvedValue(mockSellerWithoutAvatar);
-
-      // Act
-      const result = await sut.execute('seller-id-456');
-
-      // Assert
-      expect(result).toEqual(mockSellerWithoutAvatar);
-      expect(result.avatarUrl).toBeNull();
-      expect(sellerDao.findById).toHaveBeenCalledWith('seller-id-456');
-      expect(sellerDao.findById).toHaveBeenCalledTimes(1);
-    });
-
-    it('should return seller with all properties', async() => {
-      // Arrange
-      jest.spyOn(sellerDao, 'findById').mockResolvedValue(mockSellerWithAvatar);
-
-      // Act
-      const result = await sut.execute('seller-id-123');
-
-      // Assert
-      expect(result).toHaveProperty('id');
-      expect(result).toHaveProperty('name');
-      expect(result).toHaveProperty('nickname');
-      expect(result).toHaveProperty('phone');
-      expect(result).toHaveProperty('cellphone');
-      expect(result).toHaveProperty('email');
-      expect(result).toHaveProperty('commission');
-      expect(result).toHaveProperty('zipCode');
-      expect(result).toHaveProperty('street');
-      expect(result).toHaveProperty('number');
-      expect(result).toHaveProperty('complement');
-      expect(result).toHaveProperty('reference');
-      expect(result).toHaveProperty('neighborhood');
-      expect(result).toHaveProperty('city');
-      expect(result).toHaveProperty('state');
-      expect(result).toHaveProperty('observation');
-      expect(result).toHaveProperty('avatarUrl');
-      expect(result).toHaveProperty('active');
-      expect(result).toHaveProperty('createdAt');
-      expect(result).toHaveProperty('updatedAt');
-      expect(result).toHaveProperty('companies');
-    });
-
-    it('should return seller with companies', async() => {
-      // Arrange
-      jest.spyOn(sellerDao, 'findById').mockResolvedValue(mockSellerWithAvatar);
-
-      // Act
-      const result = await sut.execute('seller-id-123');
-
-      // Assert
-      expect(result.companies).toHaveLength(2);
-      expect(result.companies[0]).toHaveProperty('id');
-      expect(result.companies[0]).toHaveProperty('name');
-    });
-
-    it('should return seller with empty companies array', async() => {
-      // Arrange
-      jest.spyOn(sellerDao, 'findById').mockResolvedValue(mockSellerWithoutAvatar);
-
-      // Act
-      const result = await sut.execute('seller-id-456');
-
-      // Assert
-      expect(result.companies).toEqual([]);
-      expect(result.companies).toHaveLength(0);
-    });
-
-    it('should return seller with null optional fields', async() => {
-      // Arrange
-      jest.spyOn(sellerDao, 'findById').mockResolvedValue(mockSellerWithoutAvatar);
-
-      // Act
-      const result = await sut.execute('seller-id-456');
-
-      // Assert
-      expect(result.nickname).toBeNull();
-      expect(result.complement).toBeNull();
-      expect(result.reference).toBeNull();
-      expect(result.observation).toBeNull();
-      expect(result.avatarUrl).toBeNull();
-    });
-
-    it('should return seller with filled optional fields', async() => {
-      // Arrange
-      jest.spyOn(sellerDao, 'findById').mockResolvedValue(mockSellerWithAvatar);
-
-      // Act
-      const result = await sut.execute('seller-id-123');
-
-      // Assert
-      expect(result.nickname).toBe('Johnny');
-      expect(result.complement).toBe('Sala 101');
-      expect(result.reference).toBe('Próximo ao metrô');
-      expect(result.observation).toBe('Vendedor experiente');
-      expect(result.avatarUrl).toBe('https://cdn.example.com/avatar.jpg');
-    });
-
-    it('should return seller with correct data types', async() => {
-      // Arrange
-      jest.spyOn(sellerDao, 'findById').mockResolvedValue(mockSellerWithAvatar);
-
-      // Act
-      const result = await sut.execute('seller-id-123');
-
-      // Assert
-      expect(typeof result.id).toBe('string');
-      expect(typeof result.name).toBe('string');
-      expect(typeof result.phone).toBe('string');
-      expect(typeof result.cellphone).toBe('string');
-      expect(typeof result.email).toBe('string');
-      expect(typeof result.commission).toBe('number');
-      expect(typeof result.active).toBe('boolean');
-      expect(result.createdAt).toBeInstanceOf(Date);
-      expect(result.updatedAt).toBeInstanceOf(Date);
-      expect(Array.isArray(result.companies)).toBe(true);
+      expect(findByIdSpy).toHaveBeenCalledWith('seller-id-123');
+      expect(result).toBe(seller);
+      expect(result.id).toBe('seller-id-123');
+      expect(result.name).toBe('John Seller');
     });
 
     it('should call sellerDao.findById with correct id', async() => {
       // Arrange
-      const sellerId = 'specific-seller-id';
-      jest.spyOn(sellerDao, 'findById').mockResolvedValue(mockSellerWithAvatar);
+      const testId = 'test-seller-id';
+      const seller = createMock<SellerDto>();
+      const findByIdSpy = jest.spyOn(sut['sellerDao'], 'findById').mockResolvedValue(seller);
 
       // Act
-      await sut.execute(sellerId);
+      await sut.execute(testId);
 
       // Assert
-      expect(sellerDao.findById).toHaveBeenCalledWith(sellerId);
+      expect(findByIdSpy).toHaveBeenCalledTimes(1);
+      expect(findByIdSpy).toHaveBeenCalledWith(testId);
     });
   });
 
-  describe('Integration Tests', () => {
-    let prisma: PrismaService;
+  describe('integration tests', () => {
+    it('should throw SellerNotFoundError when seller does not exist', async() => {
+      // Arrange
+      const nonExistentId = 'non-existent-id';
 
-    const createTestCompany = async(documentSuffix: string = '001') => {
-      return await prisma.company.create({
-        data: {
-          name: `Test Company ${documentSuffix}`,
-          fantasyName: `Test ${documentSuffix}`,
-          document: `12345678${documentSuffix}190`,
-          ie: `IE${documentSuffix}`,
-          phone01: '1111111111',
-          email01: `company${documentSuffix}@test.com`,
-          zipCode: '12345678',
-          street: 'Test St',
-          number: '123',
-          neighborhood: 'Test',
-          city: 'Test City',
-          state: 'TS',
-          active: true,
-        },
-      });
-    };
-
-    const createTestSellerWithAvatar = async(emailSuffix: string = '001', companies: any[] = []) => {
-      const account = await prisma.account.create({
-        data: {
-          email: `seller${emailSuffix}@test.com`,
-          password: 'hashedPassword',
-          status: 'active',
-        },
-      });
-
-      const role = await prisma.role.create({
-        data: {
-          accountId: account.id,
-          role: AccountRole.SELLER,
-        },
-      });
-
-      return await prisma.seller.create({
-        data: {
-          roleId: role.id,
-          name: `Seller ${emailSuffix}`,
-          nickname: `Nick ${emailSuffix}`,
-          phone: '1111111111',
-          cellphone: '11999999999',
-          commission: 10,
-          zipCode: '12345678',
-          street: 'Test St',
-          number: '123',
-          complement: 'Apt 10',
-          reference: 'Near park',
-          neighborhood: 'Test',
-          city: 'Test City',
-          state: 'TS',
-          observation: 'Good seller',
-          avatarUrl: 'https://cdn.example.com/avatar-test.jpg',
-          active: true,
-          companies: {
-            connect: companies.map(c => ({ id: c.id })),
-          },
-        },
-      });
-    };
-
-    const createTestSellerWithoutAvatar = async(emailSuffix: string = '002', companies: any[] = []) => {
-      const account = await prisma.account.create({
-        data: {
-          email: `seller${emailSuffix}@test.com`,
-          password: 'hashedPassword',
-          status: 'active',
-        },
-      });
-
-      const role = await prisma.role.create({
-        data: {
-          accountId: account.id,
-          role: AccountRole.SELLER,
-        },
-      });
-
-      return await prisma.seller.create({
-        data: {
-          roleId: role.id,
-          name: `Seller ${emailSuffix}`,
-          nickname: null,
-          phone: '2222222222',
-          cellphone: '22888888888',
-          commission: 15,
-          zipCode: '87654321',
-          street: 'Another St',
-          number: '456',
-          complement: null,
-          reference: null,
-          neighborhood: 'Another',
-          city: 'Another City',
-          state: 'AC',
-          observation: null,
-          avatarUrl: null,
-          active: true,
-          companies: {
-            connect: companies.map(c => ({ id: c.id })),
-          },
-        },
-      });
-    };
-
-    beforeEach(async() => {
-      const module = await Test.createTestingModule({
-        imports: [
-          SellerModule,
-          ConfigModule,
-          DatabaseModule,
-        ],
-      }).compile();
-
-      sut = module.get<FindSellerById>(FindSellerById);
-      prisma = module.get<PrismaService>(PrismaService);
-
-      // Clean database
-      await prisma.seller.deleteMany();
-      await prisma.role.deleteMany();
-      await prisma.account.deleteMany();
-      await prisma.company.deleteMany();
-    });
-
-    afterEach(async() => {
-      await prisma.seller.deleteMany();
-      await prisma.role.deleteMany();
-      await prisma.account.deleteMany();
-      await prisma.company.deleteMany();
-    });
-
-    it('should throw error when seller does not exist in database', async() => {
       // Act & Assert
-      await expect(sut.execute('non-existent-id')).rejects.toThrow(SellerNotFoundError);
+      expect.assertions(1);
+      await expect(sut.execute(nonExistentId)).rejects.toBeInstanceOf(SellerNotFoundError);
     });
 
-    it('should find seller with avatar from database', async() => {
+    it('should return correct dto when seller is found', async() => {
       // Arrange
-      const company = await createTestCompany('001');
-      const seller = await createTestSellerWithAvatar('001', [company]);
+      const sellerData: CreateSellerInputDto = {
+        name: 'Jane Doe Seller',
+        nickname: 'JD',
+        phone: '1134567890',
+        cellphone: '11987654321',
+        email: 'jane.seller@test.com',
+        password: 'SecurePassword123',
+        commission: 15,
+        zipCode: '11111-111',
+        street: 'Seller Avenue',
+        number: '200',
+        complement: 'Suite 5',
+        reference: 'Near the park',
+        neighborhood: 'Downtown',
+        city: 'Seller City',
+        state: 'SC',
+        observation: 'Excellent seller',
+        companyIds: [companyId],
+      };
+      const createResult = await createSeller.execute(sellerData);
 
       // Act
-      const result = await sut.execute(seller.id);
+      const result = await sut.execute(createResult.id);
 
       // Assert
       expect(result).toBeDefined();
-      expect(result.id).toBe(seller.id);
-      expect(result.name).toBe(seller.name);
-      expect(result.avatarUrl).toBe('https://cdn.example.com/avatar-test.jpg');
-      expect(result.avatarUrl).not.toBeNull();
+      expect(result).toEqual<SellerDto>({
+        id: createResult.id,
+        name: sellerData.name,
+        nickname: sellerData.nickname,
+        phone: sellerData.phone,
+        cellphone: sellerData.cellphone,
+        email: sellerData.email,
+        commission: sellerData.commission,
+        zipCode: sellerData.zipCode,
+        street: sellerData.street,
+        number: sellerData.number,
+        complement: sellerData.complement,
+        reference: sellerData.reference,
+        neighborhood: sellerData.neighborhood,
+        city: sellerData.city,
+        state: sellerData.state,
+        observation: sellerData.observation,
+        avatarUrl: null,
+        active: true,
+        createdAt: expect.any(Date),
+        updatedAt: expect.any(Date),
+        companies: expect.arrayContaining([
+          expect.objectContaining({
+            id: companyId,
+          }),
+        ]),
+      });
     });
 
-    it('should find seller without avatar from database', async() => {
+    it('should return seller with all fields populated', async() => {
       // Arrange
-      const company = await createTestCompany('002');
-      const seller = await createTestSellerWithoutAvatar('002', [company]);
+      const sellerData: CreateSellerInputDto = {
+        name: 'Full Data Seller',
+        nickname: 'FDS',
+        phone: '2133333333',
+        cellphone: '21999999999',
+        email: 'fulldata@test.com',
+        password: 'Password123',
+        commission: 20,
+        zipCode: '22222-222',
+        street: 'Complete Street',
+        number: '300',
+        complement: 'Floor 3',
+        reference: 'Next to the mall',
+        neighborhood: 'Full Neighborhood',
+        city: 'Full City',
+        state: 'FC',
+        observation: 'Has all data filled',
+        companyIds: [companyId],
+      };
+      const createResult = await createSeller.execute(sellerData);
 
       // Act
-      const result = await sut.execute(seller.id);
+      const result = await sut.execute(createResult.id);
 
       // Assert
-      expect(result).toBeDefined();
-      expect(result.id).toBe(seller.id);
-      expect(result.name).toBe(seller.name);
-      expect(result.avatarUrl).toBeNull();
+      expect(result.name).toBe(sellerData.name);
+      expect(result.nickname).toBe(sellerData.nickname);
+      expect(result.phone).toBe(sellerData.phone);
+      expect(result.cellphone).toBe(sellerData.cellphone);
+      expect(result.email).toBe(sellerData.email);
+      expect(result.commission).toBe(sellerData.commission);
+      expect(result.zipCode).toBe(sellerData.zipCode);
+      expect(result.street).toBe(sellerData.street);
+      expect(result.number).toBe(sellerData.number);
+      expect(result.complement).toBe(sellerData.complement);
+      expect(result.reference).toBe(sellerData.reference);
+      expect(result.neighborhood).toBe(sellerData.neighborhood);
+      expect(result.city).toBe(sellerData.city);
+      expect(result.state).toBe(sellerData.state);
+      expect(result.observation).toBe(sellerData.observation);
     });
 
-    it('should return seller with all fields from database', async() => {
+    it('should return seller with null optional fields', async() => {
       // Arrange
-      const company = await createTestCompany('003');
-      const seller = await createTestSellerWithAvatar('003', [company]);
+      const sellerData: CreateSellerInputDto = {
+        name: 'Minimal Seller',
+        nickname: null,
+        phone: '(31) 4444-4444',
+        cellphone: '(31) 98888-8888',
+        email: 'minimal@test.com',
+        password: 'Password456',
+        commission: 5,
+        zipCode: '33333-333',
+        street: 'Minimal Street',
+        number: '400',
+        complement: null,
+        reference: null,
+        neighborhood: 'Minimal Neighborhood',
+        city: 'Minimal City',
+        state: 'MC',
+        observation: null,
+        companyIds: [companyId],
+      };
+      const createResult = await createSeller.execute(sellerData);
 
       // Act
-      const result = await sut.execute(seller.id);
-
-      // Assert
-      expect(result.id).toBe(seller.id);
-      expect(result.name).toBe(seller.name);
-      expect(result.nickname).toBe(seller.nickname);
-      expect(result.phone).toBe(seller.phone);
-      expect(result.cellphone).toBe(seller.cellphone);
-      expect(result.commission).toBe(seller.commission);
-      expect(result.zipCode).toBe(seller.zipCode);
-      expect(result.street).toBe(seller.street);
-      expect(result.number).toBe(seller.number);
-      expect(result.complement).toBe(seller.complement);
-      expect(result.reference).toBe(seller.reference);
-      expect(result.neighborhood).toBe(seller.neighborhood);
-      expect(result.city).toBe(seller.city);
-      expect(result.state).toBe(seller.state);
-      expect(result.observation).toBe(seller.observation);
-      expect(result.avatarUrl).toBe(seller.avatarUrl);
-      expect(result.active).toBe(seller.active);
-    });
-
-    it('should return seller with companies from database', async() => {
-      // Arrange
-      const company1 = await createTestCompany('001');
-      const company2 = await createTestCompany('002');
-      const seller = await createTestSellerWithAvatar('004', [company1, company2]);
-
-      // Act
-      const result = await sut.execute(seller.id);
-
-      // Assert
-      expect(result.companies).toHaveLength(2);
-      expect(result.companies.map(c => c.id)).toContain(company1.id);
-      expect(result.companies.map(c => c.id)).toContain(company2.id);
-    });
-
-    it('should return seller without companies from database', async() => {
-      // Arrange
-      const seller = await createTestSellerWithoutAvatar('005', []);
-
-      // Act
-      const result = await sut.execute(seller.id);
-
-      // Assert
-      expect(result.companies).toEqual([]);
-      expect(result.companies).toHaveLength(0);
-    });
-
-    it('should return seller email from account relation', async() => {
-      // Arrange
-      const company = await createTestCompany('006');
-      const seller = await createTestSellerWithAvatar('006', [company]);
-
-      // Act
-      const result = await sut.execute(seller.id);
-
-      // Assert
-      expect(result.email).toBe('seller006@test.com');
-    });
-
-    it('should return seller with null optional fields from database', async() => {
-      // Arrange
-      const seller = await createTestSellerWithoutAvatar('007', []);
-
-      // Act
-      const result = await sut.execute(seller.id);
+      const result = await sut.execute(createResult.id);
 
       // Assert
       expect(result.nickname).toBeNull();
@@ -498,85 +254,185 @@ describe('FindSellerById', () => {
       expect(result.avatarUrl).toBeNull();
     });
 
-    it('should return seller with filled optional fields from database', async() => {
+    it('should return active seller by default', async() => {
       // Arrange
-      const company = await createTestCompany('008');
-      const seller = await createTestSellerWithAvatar('008', [company]);
+      const sellerData: CreateSellerInputDto = {
+        name: 'Active Seller',
+        nickname: null,
+        phone: '(41) 5555-5555',
+        cellphone: '(41) 97777-7777',
+        email: 'active@test.com',
+        password: 'Password789',
+        commission: 12,
+        zipCode: '44444-444',
+        street: 'Active Street',
+        number: '500',
+        complement: null,
+        reference: null,
+        neighborhood: 'Active Neighborhood',
+        city: 'Active City',
+        state: 'AC',
+        observation: null,
+        companyIds: [companyId],
+      };
+      const createResult = await createSeller.execute(sellerData);
 
       // Act
-      const result = await sut.execute(seller.id);
+      const result = await sut.execute(createResult.id);
 
       // Assert
-      expect(result.nickname).toBe('Nick 008');
-      expect(result.complement).toBe('Apt 10');
-      expect(result.reference).toBe('Near park');
-      expect(result.observation).toBe('Good seller');
-      expect(result.avatarUrl).toBe('https://cdn.example.com/avatar-test.jpg');
+      expect(result.active).toBe(true);
     });
 
-    it('should return seller with createdAt and updatedAt dates', async() => {
+    it('should return seller with associated companies', async() => {
       // Arrange
-      const company = await createTestCompany('009');
-      const seller = await createTestSellerWithAvatar('009', [company]);
+      const company02Id = (await createCompany.execute({
+        name: 'Second Company',
+        fantasyName: 'SC Test',
+        document: '52748657000135',
+        ie: 'ie teste 02',
+        zipCode: '54321-876',
+        street: 'Second Street',
+        number: '999',
+        neighborhood: 'Second Neighborhood',
+        complement: null,
+        reference: null,
+        city: 'Second City',
+        state: 'SC',
+        cellphone: '(21) 92222-2222',
+        phone01: '(21) 2222-2222',
+        phone02: null,
+        email01: 'company02@test.com',
+        email02: 'company02.alt@test.com',
+      })).id;
+
+      const sellerData: CreateSellerInputDto = {
+        name: 'Multi Company Seller',
+        nickname: null,
+        phone: '(51) 6666-6666',
+        cellphone: '(51) 96666-6666',
+        email: 'multicompany@test.com',
+        password: 'Password999',
+        commission: 8,
+        zipCode: '55555-555',
+        street: 'Multi Street',
+        number: '600',
+        complement: null,
+        reference: null,
+        neighborhood: 'Multi Neighborhood',
+        city: 'Multi City',
+        state: 'MC',
+        observation: null,
+        companyIds: [companyId, company02Id],
+      };
+      const createResult = await createSeller.execute(sellerData);
 
       // Act
-      const result = await sut.execute(seller.id);
+      const result = await sut.execute(createResult.id);
+
+      // Assert
+      expect(result.companies).toHaveLength(2);
+      expect(result.companies).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ id: companyId }),
+          expect.objectContaining({ id: company02Id }),
+        ]),
+      );
+    });
+
+    it('should return seller with createdAt and updatedAt timestamps', async() => {
+      // Arrange
+      const sellerData: CreateSellerInputDto = {
+        name: 'Timestamp Seller',
+        nickname: null,
+        phone: '(61) 7777-7777',
+        cellphone: '(61) 95555-5555',
+        email: 'timestamp@test.com',
+        password: 'Password111',
+        commission: 10,
+        zipCode: '66666-666',
+        street: 'Timestamp Street',
+        number: '700',
+        complement: null,
+        reference: null,
+        neighborhood: 'Timestamp Neighborhood',
+        city: 'Timestamp City',
+        state: 'TC',
+        observation: null,
+        companyIds: [companyId],
+      };
+      const createResult = await createSeller.execute(sellerData);
+
+      // Act
+      const result = await sut.execute(createResult.id);
 
       // Assert
       expect(result.createdAt).toBeInstanceOf(Date);
       expect(result.updatedAt).toBeInstanceOf(Date);
-      expect(result.createdAt).toBeDefined();
-      expect(result.updatedAt).toBeDefined();
+      expect(result.createdAt).toBeTruthy();
+      expect(result.updatedAt).toBeTruthy();
     });
 
-    it('should find inactive seller from database', async() => {
+    it('should throw error for invalid UUID format', async() => {
       // Arrange
-      const account = await prisma.account.create({
-        data: {
-          email: 'inactive@test.com',
-          password: 'hashedPassword',
-          status: 'active',
-        },
-      });
+      const invalidId = 'invalid-uuid-format';
 
-      const role = await prisma.role.create({
-        data: {
-          accountId: account.id,
-          role: AccountRole.SELLER,
-        },
-      });
-
-      const seller = await prisma.seller.create({
-        data: {
-          roleId: role.id,
-          name: 'Inactive Seller',
-          phone: '3333333333',
-          cellphone: '33999999999',
-          commission: 5,
-          zipCode: '11111111',
-          street: 'Inactive St',
-          number: '999',
-          neighborhood: 'Inactive',
-          city: 'Inactive City',
-          state: 'IC',
-          active: false,
-          avatarUrl: null,
-        },
-      });
-
-      // Act
-      const result = await sut.execute(seller.id);
-
-      // Assert
-      expect(result.active).toBe(false);
-      expect(result.id).toBe(seller.id);
+      // Act & Assert
+      expect.assertions(1);
+      await expect(sut.execute(invalidId)).rejects.toBeInstanceOf(SellerNotFoundError);
     });
 
-    it('should find multiple different sellers by id', async() => {
+    it('should throw error for empty id', async() => {
       // Arrange
-      const company = await createTestCompany('010');
-      const seller1 = await createTestSellerWithAvatar('010', [company]);
-      const seller2 = await createTestSellerWithoutAvatar('011', [company]);
+      const emptyId = '';
+
+      // Act & Assert
+      expect.assertions(1);
+      await expect(sut.execute(emptyId)).rejects.toBeInstanceOf(SellerNotFoundError);
+    });
+
+    it('should return different sellers for different ids', async() => {
+      // Arrange
+      const seller1Data: CreateSellerInputDto = {
+        name: 'First Seller',
+        nickname: null,
+        phone: '(71) 8888-8888',
+        cellphone: '(71) 94444-4444',
+        email: 'first@test.com',
+        password: 'Password222',
+        commission: 7,
+        zipCode: '77777-777',
+        street: 'First Street',
+        number: '800',
+        complement: null,
+        reference: null,
+        neighborhood: 'First Neighborhood',
+        city: 'First City',
+        state: 'FC',
+        observation: null,
+        companyIds: [companyId],
+      };
+      const seller2Data: CreateSellerInputDto = {
+        name: 'Second Seller',
+        nickname: null,
+        phone: '(81) 9999-9999',
+        cellphone: '(81) 93333-3333',
+        email: 'second@test.com',
+        password: 'Password333',
+        commission: 9,
+        zipCode: '88888-888',
+        street: 'Second Street',
+        number: '900',
+        complement: null,
+        reference: null,
+        neighborhood: 'Second Neighborhood',
+        city: 'Second City',
+        state: 'SC',
+        observation: null,
+        companyIds: [companyId],
+      };
+      const seller1 = await createSeller.execute(seller1Data);
+      const seller2 = await createSeller.execute(seller2Data);
 
       // Act
       const result1 = await sut.execute(seller1.id);
@@ -584,10 +440,10 @@ describe('FindSellerById', () => {
 
       // Assert
       expect(result1.id).toBe(seller1.id);
-      expect(result1.avatarUrl).not.toBeNull();
       expect(result2.id).toBe(seller2.id);
-      expect(result2.avatarUrl).toBeNull();
       expect(result1.id).not.toBe(result2.id);
+      expect(result1.email).toBe('first@test.com');
+      expect(result2.email).toBe('second@test.com');
     });
   });
 });

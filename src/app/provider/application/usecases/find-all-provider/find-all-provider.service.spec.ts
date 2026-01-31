@@ -32,8 +32,7 @@ describe('FindAllProvider', () => {
     prisma = module.get(PrismaService);
     createProvider = module.get(CreateProvider);
 
-    await prisma.provider.deleteMany();
-    await prisma.company.deleteMany();
+    await prisma.truncate();
 
     // Create test companies
     const company1 = await prisma.company.create({
@@ -261,8 +260,6 @@ describe('FindAllProvider', () => {
   });
 
   afterEach(async() => {
-    await prisma.provider.deleteMany();
-    await prisma.company.deleteMany();
     await prisma.$disconnect();
   });
 
@@ -302,8 +299,8 @@ describe('FindAllProvider', () => {
 
   describe('Integration tests - Basic functionality', () => {
     it('should return an empty result when no providers exist', async() => {
-      // Arrange
-      await prisma.provider.deleteMany(); // Ensure database is clean
+      // Arrange - Clear all providers
+      await prisma.truncate();
 
       // Act
       const result = await sut.execute({});

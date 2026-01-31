@@ -33,12 +33,7 @@ describe('BudgetDaoAdapterPrisma', () => {
     sut = module.get(BudgetDaoAdapterPrisma);
     prisma = module.get(PrismaService);
 
-    await prisma.budgetItem.deleteMany();
-    await prisma.budget.deleteMany();
-    await prisma.client.deleteMany();
-    await prisma.seller.deleteMany();
-    await prisma.shipper.deleteMany();
-    await prisma.company.deleteMany();
+    await prisma.truncate();
 
     company01 = await prisma.company.create({
       data: {
@@ -244,17 +239,6 @@ describe('BudgetDaoAdapterPrisma', () => {
   });
 
   afterEach(async() => {
-    await prisma.budgetItem.deleteMany();
-    await prisma.budget.deleteMany();
-    await prisma.service.deleteMany();
-    await prisma.serviceCategory.deleteMany();
-    await prisma.product.deleteMany();
-    await prisma.client.deleteMany();
-    await prisma.seller.deleteMany();
-    await prisma.role.deleteMany();
-    await prisma.account.deleteMany();
-    await prisma.shipper.deleteMany();
-    await prisma.company.deleteMany();
     await prisma.$disconnect();
   });
 

@@ -32,8 +32,7 @@ describe('UpdateShipperStatus', () => {
     findShipperById = module.get(FindShipperById);
     createCompany = module.get(CreateCompany);
 
-    await prisma.company.deleteMany();
-    await prisma.shipper.deleteMany();
+    await prisma.truncate();
 
     companyId = (await createCompany.execute({
       name: 'Test Company Ltd',
@@ -57,8 +56,6 @@ describe('UpdateShipperStatus', () => {
   });
 
   afterEach(async() => {
-    await prisma.company.deleteMany();
-    await prisma.shipper.deleteMany();
     await prisma.$disconnect();
   });
 

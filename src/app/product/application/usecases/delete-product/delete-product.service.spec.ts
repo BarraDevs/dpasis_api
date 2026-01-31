@@ -40,10 +40,7 @@ describe('DeleteProduct', () => {
     createCompany = module.get(CreateCompany);
     createSupplier = module.get(CreateSupplier);
 
-    await prisma.productStockMovement.deleteMany();
-    await prisma.product.deleteMany();
-    await prisma.supplier.deleteMany();
-    await prisma.company.deleteMany();
+    await prisma.truncate();
 
     companyId = (await createCompany.execute({
       name: 'Test Company',
@@ -109,10 +106,6 @@ describe('DeleteProduct', () => {
   });
 
   afterEach(async() => {
-    await prisma.productStockMovement.deleteMany();
-    await prisma.product.deleteMany();
-    await prisma.supplier.deleteMany();
-    await prisma.company.deleteMany();
     await prisma.$disconnect();
   });
 

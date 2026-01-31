@@ -29,10 +29,7 @@ describe('SellerDaoAdapterPrisma', () => {
     sut = module.get(SellerDaoAdapterPrisma);
     prisma = module.get(PrismaService);
 
-    await prisma.seller.deleteMany();
-    await prisma.role.deleteMany();
-    await prisma.account.deleteMany();
-    await prisma.company.deleteMany();
+    await prisma.truncate();
 
     company01 = await prisma.company.create({
       data: {
@@ -72,10 +69,6 @@ describe('SellerDaoAdapterPrisma', () => {
   });
 
   afterEach(async() => {
-    await prisma.seller.deleteMany();
-    await prisma.role.deleteMany();
-    await prisma.account.deleteMany();
-    await prisma.company.deleteMany();
     await prisma.$disconnect();
   });
 
@@ -1040,6 +1033,14 @@ describe('SellerDaoAdapterPrisma', () => {
     it('should find seller by exact email match', async() => {
       // Act
       const seller = await sut.findByEmail('testfindbyemail@test.com');
+
+      // Assert
+      expect(seller?.id).toBe('seller-email-test');
+    });
+
+    it('should find seller by case-insensitive email match', async() => {
+      // Act
+      const seller = await sut.findByEmail('TESTFINDBYEMAIL@TEST.COM');
 
       // Assert
       expect(seller?.id).toBe('seller-email-test');

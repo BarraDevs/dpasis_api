@@ -39,8 +39,7 @@ describe('SupplierRepositoryAdapterPrisma (Integration)', () => {
   });
 
   beforeEach(async() => {
-    await prisma.supplier.deleteMany();
-    await prisma.company.deleteMany();
+    await prisma.truncate();
 
     // Create test companies
     const company1 = await prisma.company.create({
@@ -102,8 +101,6 @@ describe('SupplierRepositoryAdapterPrisma (Integration)', () => {
   });
 
   afterEach(async() => {
-    await prisma.supplier.deleteMany();
-    await prisma.company.deleteMany();
     await prisma.$disconnect();
   });
 

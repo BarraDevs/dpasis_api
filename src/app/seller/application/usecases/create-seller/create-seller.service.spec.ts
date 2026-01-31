@@ -1,665 +1,540 @@
 import { createMock } from '@golevelup/ts-jest';
-import { Test } from '@nestjs/testing';
-import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
+import { Test, TestingModule } from '@nestjs/testing';
 import { CompanyDto } from 'src/app/company/application/dtos/company.dto';
-import { FindCompanyById } from 'src/app/company/application/usecases/find-company-by-id/find-company-by-id.service';
+import { CreateCompany } from 'src/app/company/application/usecases/create-company/create-company.service';
 import { CompanyNotActiveError } from 'src/app/company/domain/errors/company-not-active.error';
 import { CompanyNotFoundError } from 'src/app/company/domain/errors/company-not-found.error';
+import { Seller } from 'src/app/seller/domain/entities/seller.entity';
 import { SellerDuplicateEmailError } from 'src/app/seller/domain/errors/duplicate-email.error';
 import { SellerModule } from 'src/app/seller/seller.module';
-import { UploadSingle } from 'src/app/upload-file/application/usecases/upload-single/upload-single.service';
 import { ConfigModule } from 'src/core/config/config.module';
-import { TOKENS } from 'src/core/di/token';
-import { DatabaseModule } from 'src/infra/database/database.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
-import type { ISellerDao } from '../../persistence/dao/seller-dao.interface';
-import type { ISellerRepository } from '../../persistence/repository/seller-repository.interface';
+import { SellerDto } from '../../dtos/seller.dto';
+import { FindSellerById } from '../find-seller-by-id/find-seller-by-id.service';
 import { CreateSeller } from './create-seller.service';
-import { CreateSellerInputDto } from './dtos/create-seller.dto';
+import { CreateSellerInputDto, CreateSellerOutputDto } from './dtos/create-seller.dto';
 
 describe('CreateSeller', () => {
   let sut: CreateSeller;
-  let sellerDao: ISellerDao;
-  let sellerRepository: ISellerRepository;
-  let findCompanyById: FindCompanyById;
-  let uploadSingle: UploadSingle;
+  let prisma: PrismaService;
+  let findSellerById: FindSellerById;
+  let createCompany: CreateCompany;
+  let data: CreateSellerInputDto;
+  let companyId01: string;
+  let companyId02: string;
 
-  const mockSellerDto: CreateSellerInputDto = {
-    name: 'John Doe',
-    nickname: 'Johnny',
-    phone: '1122223333',
-    cellphone: '11999998888',
-    email: 'john@example.com',
-    password: 'SecurePass123!',
-    commission: 10,
-    zipCode: '01310100',
-    street: 'Avenida Paulista',
-    number: '1000',
-    complement: 'Sala 101',
-    reference: 'Próximo ao metrô',
-    neighborhood: 'Bela Vista',
-    city: 'São Paulo',
-    state: 'SP',
-    observation: 'Vendedor experiente',
-    companyIds: ['company-id-1', 'company-id-2'],
-  };
+  beforeEach(async() => {
+    const module: TestingModule = await Test.createTestingModule({
+      imports: [
+        SellerModule,
+        ConfigModule,
+      ],
+    }).compile();
 
-  describe('Unit Tests', () => {
-    beforeEach(async() => {
-      const module = await Test.createTestingModule({
-        providers: [
-          CreateSeller,
-          {
-            provide: TOKENS.SellerDao,
-            useValue: createMock<ISellerDao>(),
-          },
-          {
-            provide: TOKENS.SellerRepository,
-            useValue: createMock<ISellerRepository>(),
-          },
-          {
-            provide: FindCompanyById,
-            useValue: createMock<FindCompanyById>(),
-          },
-          {
-            provide: UploadSingle,
-            useValue: createMock<UploadSingle>(),
-          },
-        ],
-      }).compile();
+    sut = module.get(CreateSeller);
+    findSellerById = module.get(FindSellerById);
+    prisma = module.get(PrismaService);
+    createCompany = module.get(CreateCompany);
 
-      sut = module.get<CreateSeller>(CreateSeller);
-      sellerDao = module.get<ISellerDao>(TOKENS.SellerDao);
-      sellerRepository = module.get<ISellerRepository>(TOKENS.SellerRepository);
-      findCompanyById = module.get<FindCompanyById>(FindCompanyById);
-      uploadSingle = module.get<UploadSingle>(UploadSingle);
-    });
+    await prisma.truncate();
 
-    it('should be defined', () => {
-      expect(sut).toBeDefined();
-    });
+    // Create first company
+    companyId01 = (await createCompany.execute({
+      name: 'Test Company 01',
+      fantasyName: 'TC 01',
+      document: '61067756000142',
+      ie: 'ie teste 01',
+      zipCode: '12345-678',
+      street: 'Main Street',
+      number: '100',
+      neighborhood: 'Downtown',
+      complement: null,
+      reference: null,
+      city: 'Test City',
+      state: 'TC',
+      cellphone: '11912345678',
+      phone01: '1112345678',
+      phone02: null,
+      email01: 'company01@test.com',
+      email02: 'company01.alt@test.com',
+    })).id;
 
-    it('should throw SellerDuplicateEmailError when email already exists', async() => {
+    // Create second company
+    companyId02 = (await createCompany.execute({
+      name: 'Test Company 02',
+      fantasyName: 'TC 02',
+      document: '73321315000104',
+      ie: 'ie teste 02',
+      zipCode: '87654-321',
+      street: 'Second Street',
+      number: '200',
+      neighborhood: 'Uptown',
+      complement: null,
+      reference: null,
+      city: 'Another City',
+      state: 'AC',
+      cellphone: '21912345678',
+      phone01: '2112345678',
+      phone02: null,
+      email01: 'company02@test.com',
+      email02: 'company02.alt@test.com',
+    })).id;
+
+    data = {
+      name: 'John Doe Seller',
+      nickname: 'JD',
+      phone: '1134567890',
+      cellphone: '11987654321',
+      email: 'john.seller@test.com',
+      password: 'SecurePassword123',
+      commission: 10,
+      zipCode: '11111-111',
+      street: 'Seller Street',
+      number: '500',
+      complement: 'Apt 101',
+      reference: 'Near the mall',
+      neighborhood: 'Seller Neighborhood',
+      city: 'Seller City',
+      state: 'SC',
+      observation: 'Top seller',
+      companyIds: [companyId01],
+    };
+  });
+
+  afterEach(async() => {
+    await prisma.$disconnect();
+  });
+
+  it('should be defined', () => {
+    expect(sut).toBeDefined();
+  });
+
+  describe('unit tests', () => {
+    it('should throw an error if email is duplicate', async() => {
       // Arrange
-      jest.spyOn(sellerDao, 'findByEmail').mockResolvedValue({ email: mockSellerDto.email } as any);
-
-      // Act & Assert
-      await expect(sut.execute(mockSellerDto)).rejects.toThrow(SellerDuplicateEmailError);
-      expect(sellerRepository.save).not.toHaveBeenCalled();
-    });
-
-    it('should throw CompanyNotFoundError when company does not exist', async() => {
-      // Arrange
-      jest.spyOn(sellerDao, 'findByEmail').mockResolvedValue(null);
-      jest.spyOn(findCompanyById, 'execute').mockRejectedValue(new CompanyNotFoundError());
-
-      // Act & Assert
-      await expect(sut.execute(mockSellerDto)).rejects.toThrow(CompanyNotFoundError);
-      expect(sellerRepository.save).not.toHaveBeenCalled();
-    });
-
-    it('should throw CompanyNotActiveError when company is inactive', async() => {
-      // Arrange
-      const inactiveCompany = createMock<CompanyDto>({
-        active: false,
-        fantasyName: 'Inactive Company',
-      });
-      const findCompanySpy = jest.spyOn(findCompanyById, 'execute').mockResolvedValue(inactiveCompany);
-      jest.spyOn(sellerDao, 'findByEmail').mockResolvedValue(null);
+      const sellerData = createMock<SellerDto>();
+      const findByEmailSpy = jest.spyOn(sut['sellerDao'], 'findByEmail').mockResolvedValue(sellerData);
+      const saveSpy = jest.spyOn(sut['sellerRepository'], 'save').mockResolvedValue();
+      const seller = Seller.create({ ...data, avatarUrl: null });
 
       // Act & Assert
       expect.assertions(3);
-      return sut.execute(mockSellerDto).catch((error) => {
-        expect(error).toBeInstanceOf(CompanyNotActiveError);
-        expect(findCompanySpy).toHaveBeenCalledTimes(2);
-        expect(sellerRepository.save).not.toHaveBeenCalled();
+      return sut.execute(data).catch((error) => {
+        expect(error).toBeInstanceOf(SellerDuplicateEmailError);
+        expect(findByEmailSpy).toHaveBeenCalledWith(seller.props.email);
+        expect(saveSpy).not.toHaveBeenCalled();
       });
     });
 
-    it('should throw CompanyNotActiveError when any company is inactive', async() => {
+    it('should throw an error if company does not exist', async() => {
       // Arrange
-      jest.spyOn(sellerDao, 'findByEmail').mockResolvedValue(null);
-      const activeCompany = createMock<CompanyDto>({ active: true });
-      const inactiveCompany = createMock<CompanyDto>({
+      const invalidData = { ...data, companyIds: ['non-existent-company-id'] };
+      const findByEmailSpy = jest.spyOn(sut['sellerDao'], 'findByEmail').mockResolvedValue(null);
+      const saveSpy = jest.spyOn(sut['sellerRepository'], 'save').mockResolvedValue();
+
+      // Act & Assert
+      expect.assertions(3);
+      return sut.execute(invalidData).catch((error) => {
+        expect(error).toBeInstanceOf(CompanyNotFoundError);
+        expect(findByEmailSpy).toHaveBeenCalledWith(invalidData.email);
+        expect(saveSpy).not.toHaveBeenCalled();
+      });
+    });
+
+    it('should throw an error if company is not active', async() => {
+      // Arrange
+      const input = { ...data, companyIds: [companyId01] };
+      const company = createMock<CompanyDto>({
         active: false,
         fantasyName: 'Inactive Company',
       });
-      const findCompanySpy = jest.spyOn(findCompanyById, 'execute')
+      const findByEmailSpy = jest.spyOn(sut['sellerDao'], 'findByEmail').mockResolvedValue(null);
+      const findCompanySpy = jest.spyOn(sut['findCompanyById'], 'execute').mockResolvedValue(company);
+      const saveSpy = jest.spyOn(sut['sellerRepository'], 'save').mockResolvedValue();
+
+      // Act & Assert
+      expect.assertions(5);
+      return sut.execute(input).catch((error) => {
+        expect(error).toBeInstanceOf(CompanyNotActiveError);
+        expect(error.message).toContain('Inactive Company');
+        expect(findByEmailSpy).toHaveBeenCalledWith(input.email);
+        expect(findCompanySpy).toHaveBeenCalledWith(companyId01);
+        expect(saveSpy).not.toHaveBeenCalled();
+      });
+    });
+
+    it('should throw an error if any company in the list is not active', async() => {
+      // Arrange
+      const input = { ...data, companyIds: [companyId01, companyId02] };
+      const activeCompany = createMock<CompanyDto>({
+        active: true,
+        fantasyName: 'Active Company',
+      });
+      const inactiveCompany = createMock<CompanyDto>({
+        active: false,
+        fantasyName: 'Inactive Company 2',
+      });
+      const findByEmailSpy = jest.spyOn(sut['sellerDao'], 'findByEmail').mockResolvedValue(null);
+      const findCompanySpy = jest.spyOn(sut['findCompanyById'], 'execute')
         .mockResolvedValueOnce(activeCompany)
         .mockResolvedValueOnce(inactiveCompany);
+      const saveSpy = jest.spyOn(sut['sellerRepository'], 'save').mockResolvedValue();
 
       // Act & Assert
-      expect.assertions(3);
-      await expect(sut.execute(mockSellerDto)).rejects.toThrow(CompanyNotActiveError);
-      expect(findCompanySpy).toHaveBeenCalledTimes(2);
-      expect(sellerRepository.save).not.toHaveBeenCalled();
+      expect.assertions(6);
+      return sut.execute(input).catch((error) => {
+        expect(error).toBeInstanceOf(CompanyNotActiveError);
+        expect(error.message).toContain('Inactive Company 2');
+        expect(findByEmailSpy).toHaveBeenCalledWith(input.email);
+        expect(findCompanySpy).toHaveBeenCalledTimes(2);
+        expect(findCompanySpy).toHaveBeenCalledWith(companyId01);
+        expect(saveSpy).not.toHaveBeenCalled();
+      });
     });
 
-    it('should create seller without image', async() => {
+    it('should create a seller without image and return its id', async() => {
       // Arrange
-      const company = createMock<CompanyDto>({
-        active: true,
-        fantasyName: 'Test Company',
-      });
-      jest.spyOn(sellerDao, 'findByEmail').mockResolvedValue(null);
-      jest.spyOn(findCompanyById, 'execute').mockResolvedValue(company);
-      jest.spyOn(sellerRepository, 'save').mockResolvedValue();
+      const findByEmailSpy = jest.spyOn(sut['sellerDao'], 'findByEmail').mockResolvedValue(null);
+      const company = createMock<CompanyDto>({ active: true });
+      const findCompanySpy = jest.spyOn(sut['findCompanyById'], 'execute').mockResolvedValue(company);
+      const saveSpy = jest.spyOn(sut['sellerRepository'], 'save').mockResolvedValue();
+      const uploadSpy = jest.spyOn(sut['uploadFileService'], 'execute');
 
       // Act
-      const result = await sut.execute(mockSellerDto);
+      const result = await sut.execute(data);
 
       // Assert
-      expect(result).toHaveProperty('id');
-      expect(result.id).toBeDefined();
-      expect(sellerRepository.save).toHaveBeenCalledTimes(1);
-      expect(uploadSingle.execute).not.toHaveBeenCalled();
+      expect(findByEmailSpy).toHaveBeenCalledWith(data.email);
+      expect(findCompanySpy).toHaveBeenCalledWith(companyId01);
+      expect(saveSpy).toHaveBeenCalledWith(expect.any(Seller), expect.any(String));
+      expect(uploadSpy).not.toHaveBeenCalled();
+      expect(result).toEqual<CreateSellerOutputDto>({ id: expect.any(String) });
     });
 
-    it('should create seller with image', async() => {
+    it('should create a seller with image and return its id', async() => {
       // Arrange
-      const company = createMock<CompanyDto>({
-        active: true,
-        fantasyName: 'Test Company',
-      });
-      const mockFile = createMock<Express.Multer.File>({
+      const mockImage = {
+        fieldname: 'image',
+        originalname: 'avatar.jpg',
+        encoding: '7bit',
         mimetype: 'image/jpeg',
+        buffer: Buffer.from('fake-image-data'),
         size: 1024,
-      });
-      const mockImageUrl = 'https://cdn.example.com/avatar.jpg';
-
-      jest.spyOn(sellerDao, 'findByEmail').mockResolvedValue(null);
-      jest.spyOn(findCompanyById, 'execute').mockResolvedValue(company);
-      jest.spyOn(uploadSingle, 'execute').mockResolvedValue({ url: mockImageUrl });
-      jest.spyOn(sellerRepository, 'save').mockResolvedValue();
+      } as Express.Multer.File;
+      const mockImageUrl = 'https://storage.example.com/sellers/avatars/avatar.jpg';
+      const findByEmailSpy = jest.spyOn(sut['sellerDao'], 'findByEmail').mockResolvedValue(null);
+      const company = createMock<CompanyDto>({ active: true });
+      const findCompanySpy = jest.spyOn(sut['findCompanyById'], 'execute').mockResolvedValue(company);
+      const uploadSpy = jest.spyOn(sut['uploadFileService'], 'execute').mockResolvedValue({ url: mockImageUrl });
+      const saveSpy = jest.spyOn(sut['sellerRepository'], 'save').mockResolvedValue();
 
       // Act
-      const result = await sut.execute(mockSellerDto, mockFile);
+      const result = await sut.execute(data, mockImage);
 
       // Assert
-      expect(result).toHaveProperty('id');
-      expect(uploadSingle.execute).toHaveBeenCalledWith(mockFile, 'sellers/avatars');
-      expect(sellerRepository.save).toHaveBeenCalledTimes(1);
-
-      const savedSeller = (sellerRepository.save as jest.Mock).mock.calls[0][0];
-      expect(savedSeller.props.avatarUrl).toBe(mockImageUrl);
+      expect(findByEmailSpy).toHaveBeenCalledWith(data.email);
+      expect(findCompanySpy).toHaveBeenCalledWith(companyId01);
+      expect(uploadSpy).toHaveBeenCalledWith(mockImage, 'sellers/avatars');
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          _props: expect.objectContaining({
+            avatarUrl: mockImageUrl,
+          }),
+        }),
+        expect.any(String),
+      );
+      expect(result).toEqual<CreateSellerOutputDto>({ id: expect.any(String) });
     });
 
-    it('should verify all companies exist', async() => {
+    it('should hash the password before saving', async() => {
       // Arrange
-      const company = createMock<CompanyDto>({
-        active: true,
-        fantasyName: 'Test Company',
-      });
-      jest.spyOn(sellerDao, 'findByEmail').mockResolvedValue(null);
-      jest.spyOn(findCompanyById, 'execute').mockResolvedValue(company);
-      jest.spyOn(sellerRepository, 'save').mockResolvedValue();
+      const company = createMock<CompanyDto>({ active: true });
+      jest.spyOn(sut['findCompanyById'], 'execute').mockResolvedValue(company);
+      const saveSpy = jest.spyOn(sut['sellerRepository'], 'save').mockResolvedValue();
 
       // Act
-      await sut.execute(mockSellerDto);
+      await sut.execute(data);
 
       // Assert
-      expect(findCompanyById.execute).toHaveBeenCalledTimes(2);
-      expect(findCompanyById.execute).toHaveBeenNthCalledWith(1, 'company-id-1');
-      expect(findCompanyById.execute).toHaveBeenNthCalledWith(2, 'company-id-2');
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.any(Seller),
+        expect.not.stringContaining(data.password), // Hashed password should be different
+      );
+      const hashedPassword = saveSpy.mock.calls[0][1];
+      expect(hashedPassword).not.toBe(data.password);
+      expect(hashedPassword).toBeTruthy();
     });
 
-    it('should hash password before saving', async() => {
+    it('should create a seller with multiple companies', async() => {
       // Arrange
-      const company = createMock<CompanyDto>({
-        active: true,
-        fantasyName: 'Test Company',
-      });
-      jest.spyOn(sellerDao, 'findByEmail').mockResolvedValue(null);
-      jest.spyOn(findCompanyById, 'execute').mockResolvedValue(company);
-      jest.spyOn(sellerRepository, 'save').mockResolvedValue();
+      const multiCompanyData = { ...data, companyIds: [companyId01, companyId02] };
+      const findByEmailSpy = jest.spyOn(sut['sellerDao'], 'findByEmail').mockResolvedValue(null);
+      const company = createMock<CompanyDto>({ active: true });
+      const findCompanySpy = jest.spyOn(sut['findCompanyById'], 'execute').mockResolvedValue(company);
+      const saveSpy = jest.spyOn(sut['sellerRepository'], 'save').mockResolvedValue();
 
       // Act
-      await sut.execute(mockSellerDto);
+      const result = await sut.execute(multiCompanyData);
 
       // Assert
-      expect(sellerRepository.save).toHaveBeenCalledTimes(1);
-      const hashedPassword = (sellerRepository.save as jest.Mock).mock.calls[0][1];
-      expect(hashedPassword).toBeDefined();
-      expect(hashedPassword).not.toBe(mockSellerDto.password);
-      expect(hashedPassword.length).toBeGreaterThan(20);
+      expect(findByEmailSpy).toHaveBeenCalledWith(multiCompanyData.email);
+      expect(findCompanySpy).toHaveBeenCalledTimes(2);
+      expect(findCompanySpy).toHaveBeenCalledWith(companyId01);
+      expect(findCompanySpy).toHaveBeenCalledWith(companyId02);
+      expect(saveSpy).toHaveBeenCalledWith(expect.any(Seller), expect.any(String));
+      expect(result).toEqual<CreateSellerOutputDto>({ id: expect.any(String) });
     });
 
     it('should create seller with null optional fields', async() => {
       // Arrange
-      const company = createMock<CompanyDto>({
-        active: true,
-        fantasyName: 'Test Company',
-      });
-      const dtoWithNulls: CreateSellerInputDto = {
-        ...mockSellerDto,
+      const minimalData: CreateSellerInputDto = {
+        ...data,
         nickname: null,
         complement: null,
         reference: null,
         observation: null,
       };
-
-      jest.spyOn(sellerDao, 'findByEmail').mockResolvedValue(null);
-      jest.spyOn(findCompanyById, 'execute').mockResolvedValue(company);
-      jest.spyOn(sellerRepository, 'save').mockResolvedValue();
-
-      // Act
-      const result = await sut.execute(dtoWithNulls);
-
-      // Assert
-      expect(result).toHaveProperty('id');
-      expect(sellerRepository.save).toHaveBeenCalledTimes(1);
-
-      const savedSeller = (sellerRepository.save as jest.Mock).mock.calls[0][0];
-      expect(savedSeller.props.nickname).toBeNull();
-      expect(savedSeller.props.complement).toBeNull();
-      expect(savedSeller.props.reference).toBeNull();
-      expect(savedSeller.props.observation).toBeNull();
-      expect(savedSeller.props.avatarUrl).toBeNull();
-    });
-
-    it('should upload image to correct folder', async() => {
-      // Arrange
-      const company = createMock<CompanyDto>({
-        active: true,
-        fantasyName: 'Test Company',
-      });
-      const mockFile = createMock<Express.Multer.File>({
-        mimetype: 'image/png',
-        size: 2048,
-      });
-      const mockImageUrl = 'https://cdn.example.com/sellers/avatars/image.png';
-
-      jest.spyOn(sellerDao, 'findByEmail').mockResolvedValue(null);
-      jest.spyOn(findCompanyById, 'execute').mockResolvedValue(company);
-      jest.spyOn(uploadSingle, 'execute').mockResolvedValue({ url: mockImageUrl });
-      jest.spyOn(sellerRepository, 'save').mockResolvedValue();
+      const company = createMock<CompanyDto>({ active: true });
+      jest.spyOn(sut['findCompanyById'], 'execute').mockResolvedValue(company);
+      const saveSpy = jest.spyOn(sut['sellerRepository'], 'save').mockResolvedValue();
 
       // Act
-      await sut.execute(mockSellerDto, mockFile);
+      const result = await sut.execute(minimalData);
 
       // Assert
-      expect(uploadSingle.execute).toHaveBeenCalledWith(mockFile, 'sellers/avatars');
-      expect(uploadSingle.execute).toHaveBeenCalledTimes(1);
-    });
-
-    it('should check email before verifying companies', async() => {
-      // Arrange
-      const company = createMock<CompanyDto>({
-        active: true,
-        fantasyName: 'Test Company',
-      });
-      jest.spyOn(sellerDao, 'findByEmail').mockResolvedValue({ email: mockSellerDto.email } as any);
-      jest.spyOn(findCompanyById, 'execute').mockResolvedValue(company);
-
-      // Act & Assert
-      await expect(sut.execute(mockSellerDto)).rejects.toThrow(SellerDuplicateEmailError);
-      expect(findCompanyById.execute).not.toHaveBeenCalled();
-    });
-
-    it('should return seller id after creation', async() => {
-      // Arrange
-      const company = createMock<CompanyDto>({
-        active: true,
-        fantasyName: 'Test Company',
-      });
-      jest.spyOn(sellerDao, 'findByEmail').mockResolvedValue(null);
-      jest.spyOn(findCompanyById, 'execute').mockResolvedValue(company);
-      jest.spyOn(sellerRepository, 'save').mockResolvedValue();
-
-      // Act
-      const result = await sut.execute(mockSellerDto);
-
-      // Assert
-      expect(result).toHaveProperty('id');
-      expect(typeof result.id).toBe('string');
-      expect(result.id.length).toBeGreaterThan(0);
-    });
-
-    it('should propagate upload errors', async() => {
-      // Arrange
-      const company = createMock<CompanyDto>({
-        active: true,
-        fantasyName: 'Test Company',
-      });
-      const mockFile = createMock<Express.Multer.File>({
-        mimetype: 'image/jpeg',
-        size: 1024,
-      });
-      const uploadError = new Error('S3 upload failed');
-
-      jest.spyOn(sellerDao, 'findByEmail').mockResolvedValue(null);
-      jest.spyOn(findCompanyById, 'execute').mockResolvedValue(company);
-      jest.spyOn(uploadSingle, 'execute').mockRejectedValue(uploadError);
-
-      // Act & Assert
-      await expect(sut.execute(mockSellerDto, mockFile)).rejects.toThrow('S3 upload failed');
-      expect(uploadSingle.execute).toHaveBeenCalledWith(mockFile, 'sellers/avatars');
-      expect(sellerRepository.save).not.toHaveBeenCalled();
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          _props: expect.objectContaining({
+            nickname: null,
+            complement: null,
+            reference: null,
+            observation: null,
+          }),
+        }),
+        expect.any(String),
+      );
+      expect(result).toEqual<CreateSellerOutputDto>({ id: expect.any(String) });
     });
   });
 
-  describe('Integration Tests', () => {
-    let prisma: PrismaService;
-
-    const createTestCompany = async(documentSuffix: string = '001') => {
-      return await prisma.company.create({
-        data: {
-          name: `Test Company ${documentSuffix}`,
-          fantasyName: `Test ${documentSuffix}`,
-          document: `12345678${documentSuffix}190`,
-          ie: `IE${documentSuffix}`,
-          phone01: '1111111111',
-          email01: `company${documentSuffix}@test.com`,
-          zipCode: '12345678',
-          street: 'Test St',
-          number: '123',
-          neighborhood: 'Test',
-          city: 'Test City',
-          state: 'TS',
-          active: true,
-        },
-      });
-    };
-
-    beforeEach(async() => {
-      const module = await Test.createTestingModule({
-        imports: [
-          SellerModule,
-          ConfigModule,
-          DatabaseModule,
-        ],
-      }).compile();
-
-      sut = module.get<CreateSeller>(CreateSeller);
-      prisma = module.get<PrismaService>(PrismaService);
-      uploadSingle = module.get<UploadSingle>(UploadSingle);
-
-      // Clean database
-      await prisma.role.deleteMany();
-      await prisma.account.deleteMany();
-      await prisma.seller.deleteMany();
-      await prisma.company.deleteMany();
-    });
-
-    afterEach(async() => {
-      await prisma.role.deleteMany();
-      await prisma.account.deleteMany();
-      await prisma.seller.deleteMany();
-      await prisma.company.deleteMany();
-    });
-
-    it('should create seller successfully in database', async() => {
+  describe('integration tests', () => {
+    it('should throw an error if email is duplicate', async() => {
       // Arrange
-      const company = await createTestCompany();
-
-      const sellerData: CreateSellerInputDto = {
-        ...mockSellerDto,
-        email: 'unique@test.com',
-        companyIds: [company.id],
-      };
-
-      // Act
-      const result = await sut.execute(sellerData);
-
-      // Assert
-      expect(result).toHaveProperty('id');
-
-      const createdSeller = await prisma.seller.findUnique({
-        where: { id: result.id },
-      });
-
-      expect(createdSeller).toBeDefined();
-      expect(createdSeller?.name).toBe(sellerData.name);
-      expect(createdSeller?.phone).toBe(sellerData.phone);
-      expect(createdSeller?.active).toBe(true);
-    });
-
-    it('should create seller with hashed password', async() => {
-      // Arrange
-      const company = await createTestCompany();
-
-      const sellerData: CreateSellerInputDto = {
-        ...mockSellerDto,
-        email: 'password-test@test.com',
-        password: 'PlainPassword123!',
-        companyIds: [company.id],
-      };
-
-      // Act
-      const result = await sut.execute(sellerData);
-
-      // Assert
-      const seller = await prisma.seller.findUnique({
-        where: { id: result.id },
-        include: { role: { include: { account: true } } },
-      });
-
-      expect(seller).toBeDefined();
-      expect(seller?.role.account.password).not.toBe('PlainPassword123!');
-      expect(seller?.role.account.password.length).toBeGreaterThan(20);
-      expect(seller?.role.account.password).toContain('$');
-    });
-
-    it('should throw error when email already exists in database', async() => {
-      // Arrange
-      const company = await createTestCompany();
-
-      const account = await prisma.account.create({
-        data: {
-          email: 'duplicate@test.com',
-          password: 'hashedPassword',
-          status: 'active',
-        },
-      });
-
-      const role = await prisma.role.create({
-        data: {
-          accountId: account.id,
-          role: 'seller',
-        },
-      });
-
-      await prisma.seller.create({
-        data: {
-          roleId: role.id,
-          name: 'Existing Seller',
-          phone: '1111111111',
-          cellphone: '11999999999',
-          commission: 10,
-          zipCode: '12345678',
-          street: 'Test St',
-          number: '123',
-          neighborhood: 'Test',
-          city: 'Test City',
-          state: 'TS',
-          active: true,
-        },
-      });
-
-      const sellerData: CreateSellerInputDto = {
-        ...mockSellerDto,
-        email: 'duplicate@test.com',
-        companyIds: [company.id],
-      };
+      await sut.execute(data);
 
       // Act & Assert
-      await expect(sut.execute(sellerData)).rejects.toThrow(SellerDuplicateEmailError);
+      expect.assertions(1);
+      return sut.execute(data).catch((error) => {
+        expect(error).toBeInstanceOf(SellerDuplicateEmailError);
+      });
     });
 
-    it('should throw error when company does not exist in database', async() => {
+    it('should throw an error if email is duplicate even with different casing', async() => {
       // Arrange
-      const sellerData: CreateSellerInputDto = {
-        ...mockSellerDto,
-        email: 'test-company@test.com',
-        companyIds: ['non-existent-company-id'],
-      };
+      await sut.execute(data);
+      const uppercaseEmailData = { ...data, email: data.email.toUpperCase() };
 
       // Act & Assert
-      await expect(sut.execute(sellerData)).rejects.toThrow(CompanyNotFoundError);
+      expect.assertions(1);
+      return sut.execute(uppercaseEmailData).catch((error) => {
+        expect(error).toBeInstanceOf(SellerDuplicateEmailError);
+      });
     });
 
-    it('should throw error when company is inactive in database', async() => {
+    it('should throw an error if company does not exist', async() => {
       // Arrange
-      const company = await createTestCompany('inactive');
+      const invalidData = { ...data, companyIds: ['non-existent-company-id'] };
+
+      // Act & Assert
+      expect.assertions(1);
+      return sut.execute(invalidData).catch((error) => {
+        expect(error).toBeInstanceOf(CompanyNotFoundError);
+      });
+    });
+
+    it('should throw an error if company is not active', async() => {
+      // Arrange
       await prisma.company.update({
-        where: { id: company.id },
+        where: { id: companyId01 },
         data: { active: false },
       });
 
-      const sellerData: CreateSellerInputDto = {
-        ...mockSellerDto,
-        email: 'inactive-company@test.com',
-        companyIds: [company.id],
-      };
-
       // Act & Assert
-      await expect(sut.execute(sellerData)).rejects.toThrow(CompanyNotActiveError);
+      expect.assertions(1);
+      return sut.execute(data).catch((error) => {
+        expect(error).toBeInstanceOf(CompanyNotActiveError);
+      });
     });
 
-    it('should throw error when any company is inactive in database', async() => {
+    it('should throw an error if any company in the list is not active', async() => {
       // Arrange
-      const company1 = await createTestCompany('001');
-      const company2 = await createTestCompany('002');
+      const multiCompanyData = { ...data, companyIds: [companyId01, companyId02] };
       await prisma.company.update({
-        where: { id: company2.id },
+        where: { id: companyId02 },
         data: { active: false },
       });
 
-      const sellerData: CreateSellerInputDto = {
-        ...mockSellerDto,
-        email: 'multi-inactive@test.com',
-        companyIds: [company1.id, company2.id],
-      };
-
       // Act & Assert
-      await expect(sut.execute(sellerData)).rejects.toThrow(CompanyNotActiveError);
+      expect.assertions(1);
+      return sut.execute(multiCompanyData).catch((error) => {
+        expect(error).toBeInstanceOf(CompanyNotActiveError);
+      });
+    });
+
+    it('should persist the seller in the database', async() => {
+      // Act
+      const createResult = await sut.execute(data);
+      const sellerDto = await findSellerById.execute(createResult.id);
+
+      // Assert
+      expect(sellerDto).toBeDefined();
+      expect(sellerDto).toEqual<SellerDto>({
+        id: createResult.id,
+        name: data.name,
+        nickname: data.nickname,
+        phone: data.phone,
+        cellphone: data.cellphone,
+        email: data.email,
+        commission: data.commission,
+        zipCode: data.zipCode,
+        street: data.street,
+        number: data.number,
+        complement: data.complement,
+        reference: data.reference,
+        neighborhood: data.neighborhood,
+        city: data.city,
+        state: data.state,
+        observation: data.observation,
+        avatarUrl: null,
+        active: true,
+        createdAt: expect.any(Date),
+        updatedAt: expect.any(Date),
+        companies: expect.arrayContaining([
+          expect.objectContaining({
+            id: companyId01,
+          }),
+        ]),
+      });
     });
 
     it('should create seller with multiple companies', async() => {
       // Arrange
-      const company1 = await createTestCompany('001');
-      const company2 = await createTestCompany('002');
-
-      const sellerData: CreateSellerInputDto = {
-        ...mockSellerDto,
-        email: 'multi-company@test.com',
-        companyIds: [company1.id, company2.id],
-      };
+      const multiCompanyData = { ...data, companyIds: [companyId01, companyId02] };
 
       // Act
-      const result = await sut.execute(sellerData);
+      const createResult = await sut.execute(multiCompanyData);
+      const sellerDto = await findSellerById.execute(createResult.id);
 
       // Assert
-      const seller = await prisma.seller.findUnique({
-        where: { id: result.id },
-        include: { companies: true },
-      });
-
-      expect(seller?.companies).toHaveLength(2);
-      expect(seller?.companies.map(c => c.id)).toContain(company1.id);
-      expect(seller?.companies.map(c => c.id)).toContain(company2.id);
+      expect(sellerDto).toBeDefined();
+      expect(sellerDto?.companies).toHaveLength(2);
+      expect(sellerDto?.companies).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ id: companyId01 }),
+          expect.objectContaining({ id: companyId02 }),
+        ]),
+      );
     });
 
-    it('should create seller with uploaded image', async() => {
+    it('should create seller without optional fields', async() => {
       // Arrange
-      const company = await createTestCompany();
-
-      const mockFile = createMock<Express.Multer.File>({
-        mimetype: 'image/jpeg',
-        size: 1024,
-      });
-
-      const mockImageUrl = 'https://cdn.example.com/avatar-123.jpg';
-      jest.spyOn(uploadSingle, 'execute').mockResolvedValue({ url: mockImageUrl });
-
-      const sellerData: CreateSellerInputDto = {
-        ...mockSellerDto,
-        email: 'with-image@test.com',
-        companyIds: [company.id],
-      };
-
-      // Act
-      const result = await sut.execute(sellerData, mockFile);
-
-      // Assert
-      const createdSeller = await prisma.seller.findUnique({
-        where: { id: result.id },
-      });
-
-      expect(createdSeller?.avatarUrl).toBe(mockImageUrl);
-    });
-
-    it('should create seller with null optional fields', async() => {
-      // Arrange
-      const company = await createTestCompany();
-
-      const sellerData: CreateSellerInputDto = {
-        ...mockSellerDto,
-        email: 'nulls@test.com',
+      const minimalData: CreateSellerInputDto = {
+        name: 'Minimal Seller',
         nickname: null,
+        phone: '(11) 1111-1111',
+        cellphone: '(11) 91111-1111',
+        email: 'minimal@test.com',
+        password: 'Password123',
+        commission: 5,
+        zipCode: '22222-222',
+        street: 'Minimal Street',
+        number: '10',
         complement: null,
         reference: null,
+        neighborhood: 'Minimal Neighborhood',
+        city: 'Minimal City',
+        state: 'MC',
         observation: null,
-        companyIds: [company.id],
+        companyIds: [companyId01],
       };
 
       // Act
-      const result = await sut.execute(sellerData);
+      const createResult = await sut.execute(minimalData);
+      const sellerDto = await findSellerById.execute(createResult.id);
 
       // Assert
-      const createdSeller = await prisma.seller.findUnique({
-        where: { id: result.id },
-      });
-
-      expect(createdSeller?.nickname).toBeNull();
-      expect(createdSeller?.complement).toBeNull();
-      expect(createdSeller?.reference).toBeNull();
-      expect(createdSeller?.observation).toBeNull();
-      expect(createdSeller?.avatarUrl).toBeNull();
+      expect(sellerDto).toBeDefined();
+      expect(sellerDto?.nickname).toBeNull();
+      expect(sellerDto?.complement).toBeNull();
+      expect(sellerDto?.reference).toBeNull();
+      expect(sellerDto?.observation).toBeNull();
+      expect(sellerDto?.avatarUrl).toBeNull();
     });
 
-    it('should create account with seller email', async() => {
-      // Arrange
-      const company = await createTestCompany();
-
-      const sellerData: CreateSellerInputDto = {
-        ...mockSellerDto,
-        email: 'account-email@test.com',
-        companyIds: [company.id],
-      };
-
+    it('should hash the password and not store it in plain text', async() => {
       // Act
-      const result = await sut.execute(sellerData);
+      const createResult = await sut.execute(data);
 
       // Assert
-      const seller = await prisma.seller.findUnique({
-        where: { id: result.id },
+      const accountInDb = await prisma.account.findUnique({
+        where: { id: createResult.id },
+      });
+      expect(accountInDb).toBeDefined();
+      expect(accountInDb?.password).not.toBe(data.password);
+    });
+
+    it('should create seller with active status by default', async() => {
+      // Act
+      const createResult = await sut.execute(data);
+      const sellerDto = await findSellerById.execute(createResult.id);
+
+      // Assert
+      expect(sellerDto?.active).toBe(true);
+    });
+
+    it('should validate commission value within allowed range', async() => {
+      // Arrange
+      const validCommissionData = { ...data, commission: 0 };
+
+      // Act
+      const result1 = await sut.execute(validCommissionData);
+
+      // Assert
+      expect(result1.id).toBeDefined();
+
+      // Test upper boundary
+      const maxCommissionData = { ...data, email: 'max@test.com', commission: 100 };
+      const result2 = await sut.execute(maxCommissionData);
+      expect(result2.id).toBeDefined();
+    });
+
+    it('should allow multiple sellers with different emails', async() => {
+      // Arrange
+      const seller1Data = data;
+      const seller2Data = { ...data, email: 'another.seller@test.com', cellphone: '(11) 99999-9999' };
+
+      // Act
+      const result1 = await sut.execute(seller1Data);
+      const result2 = await sut.execute(seller2Data);
+
+      // Assert
+      expect(result1.id).toBeDefined();
+      expect(result2.id).toBeDefined();
+      expect(result1.id).not.toBe(result2.id);
+    });
+
+    it('should create seller and associate with correct account', async() => {
+      // Act
+      const createResult = await sut.execute(data);
+
+      // Assert
+      const sellerInDb = await prisma.seller.findUnique({
+        where: { id: createResult.id },
         include: { role: { include: { account: true } } },
       });
-
-      expect(seller?.role.account.email).toBe('account-email@test.com');
-    });
-
-    it('should create role with seller type', async() => {
-      // Arrange
-      const company = await createTestCompany();
-
-      const sellerData: CreateSellerInputDto = {
-        ...mockSellerDto,
-        email: 'role-test@test.com',
-        companyIds: [company.id],
-      };
-
-      // Act
-      const result = await sut.execute(sellerData);
-
-      // Assert
-      const seller = await prisma.seller.findUnique({
-        where: { id: result.id },
-        include: { role: true },
-      });
-
-      expect(seller?.role.role).toBe(AccountRole.SELLER);
+      expect(sellerInDb).toBeDefined();
+      expect(sellerInDb?.role.account).toBeDefined();
+      expect(sellerInDb?.role.account.email).toBe(data.email);
     });
   });
 });

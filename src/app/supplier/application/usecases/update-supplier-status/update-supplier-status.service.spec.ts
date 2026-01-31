@@ -27,8 +27,7 @@ describe('UpdateSupplierStatus', () => {
     createSupplier = module.get(CreateSupplier);
     findSupplierById = module.get(FindSupplierById);
 
-    await prisma.supplier.deleteMany();
-    await prisma.company.deleteMany();
+    await prisma.truncate();
 
     // Create a test company
     const company = await prisma.company.create({
@@ -52,8 +51,6 @@ describe('UpdateSupplierStatus', () => {
   });
 
   afterEach(async() => {
-    await prisma.supplier.deleteMany();
-    await prisma.company.deleteMany();
     await prisma.$disconnect();
   });
 

@@ -36,8 +36,7 @@ describe('CreateProvider', () => {
     prisma = module.get(PrismaService);
     createCompany = module.get(CreateCompany);
 
-    await prisma.provider.deleteMany();
-    await prisma.company.deleteMany();
+    await prisma.truncate();
 
     companyId = (await createCompany.execute({
       name: 'name teste',
@@ -83,8 +82,6 @@ describe('CreateProvider', () => {
   });
 
   afterEach(async() => {
-    await prisma.provider.deleteMany();
-    await prisma.company.deleteMany();
     await prisma.$disconnect();
   });
 

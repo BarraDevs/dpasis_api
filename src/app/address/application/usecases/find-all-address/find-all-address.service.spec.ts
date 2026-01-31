@@ -42,13 +42,10 @@ describe('FindAllAddress', () => {
       reference: null,
     };
 
-    await prisma.owner.deleteMany();
-    await prisma.address.deleteMany();
+    await prisma.truncate();
   });
 
   afterEach(async() => {
-    await prisma.owner.deleteMany();
-    await prisma.address.deleteMany();
     await prisma.$disconnect();
   });
 

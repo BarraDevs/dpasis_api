@@ -28,11 +28,10 @@ describe('UpdateCompanyStatus', () => {
     createCompany = module.get(CreateCompany);
     findCompanyById = module.get(FindCompanyById);
 
-    await prisma.company.deleteMany();
+    await prisma.truncate();
   });
 
   afterEach(async() => {
-    await prisma.company.deleteMany();
     await prisma.$disconnect();
   });
 

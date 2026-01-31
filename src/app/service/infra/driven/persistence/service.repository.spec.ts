@@ -46,11 +46,7 @@ describe('ServiceRepositoryAdapterPrisma', () => {
     sut = module.get(ServiceRepositoryAdapterPrisma);
     prisma = module.get(PrismaService);
 
-    await prisma.serviceProduct.deleteMany();
-    await prisma.service.deleteMany();
-    await prisma.product.deleteMany();
-    await prisma.serviceCategory.deleteMany();
-    await prisma.company.deleteMany();
+    await prisma.truncate();
 
     company = await prisma.company.create({
       data: {
@@ -147,11 +143,6 @@ describe('ServiceRepositoryAdapterPrisma', () => {
   });
 
   afterEach(async() => {
-    await prisma.serviceProduct.deleteMany();
-    await prisma.service.deleteMany();
-    await prisma.product.deleteMany();
-    await prisma.serviceCategory.deleteMany();
-    await prisma.company.deleteMany();
     await prisma.$disconnect();
   });
 

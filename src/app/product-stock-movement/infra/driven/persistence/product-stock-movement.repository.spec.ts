@@ -25,9 +25,7 @@ describe('ProductStockMovementRepositoryAdapterPrisma', () => {
     sut = module.get(ProductStockMovementRepositoryAdapterPrisma);
     prisma = module.get(PrismaService);
 
-    await prisma.productStockMovement.deleteMany();
-    await prisma.product.deleteMany();
-    await prisma.company.deleteMany();
+    await prisma.truncate();
 
     company = await prisma.company.create({
       data: {
@@ -78,9 +76,6 @@ describe('ProductStockMovementRepositoryAdapterPrisma', () => {
   });
 
   afterEach(async() => {
-    await prisma.productStockMovement.deleteMany();
-    await prisma.product.deleteMany();
-    await prisma.company.deleteMany();
     await prisma.$disconnect();
   });
 

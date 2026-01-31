@@ -24,13 +24,10 @@ describe('FindItemById', () => {
     sut = module.get(FindItemById);
     prisma = module.get(PrismaService);
 
-    await prisma.owner.deleteMany();
-    await prisma.item.deleteMany();
+    await prisma.truncate();
   });
 
   afterEach(async() => {
-    await prisma.owner.deleteMany();
-    await prisma.item.deleteMany();
     await prisma.$disconnect();
   });
 
