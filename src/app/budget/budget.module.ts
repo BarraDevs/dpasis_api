@@ -14,6 +14,7 @@ import { DeleteBudget } from './application/usecases/delete-budget/delete-budget
 import { EditBudget } from './application/usecases/edit-budget/edit-budget.service';
 import { FindAllBudget } from './application/usecases/find-all-budget/find-all-budget.service';
 import { FindBudgetById } from './application/usecases/find-budget-by-id/find-budget-by-id.service';
+import { RejectBudget } from './application/usecases/reject-budget/reject-budget.service';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { FindBudgetById } from './application/usecases/find-budget-by-id/find-bu
     DeleteBudget,
     CancelBudget,
     ApproveBudget,
+    RejectBudget,
   ],
   exports: [
     CreateBudget,
@@ -44,6 +46,7 @@ import { FindBudgetById } from './application/usecases/find-budget-by-id/find-bu
     DeleteBudget,
     CancelBudget,
     ApproveBudget,
+    RejectBudget,
   ],
 })
 export class BudgetModule {}
