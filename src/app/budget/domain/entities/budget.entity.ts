@@ -124,11 +124,7 @@ export class Budget {
 
   private recalculateTotals(): void {
     this._props.subtotalInCents = Budget.calculateBudgetSubtotal(this._items);
-    this._props.totalInCents = Budget.calculateBudgetTotal(
-      this._props.subtotalInCents,
-      this._props.freightValueInCents,
-      this._props.discountInCents,
-    );
+    this._props.totalInCents = Budget.calculateBudgetTotal(this._props.subtotalInCents, this._props.freightValueInCents, this._props.discountInCents);
     this._props.updatedAt = UTCDate.create().value;
   }
 
@@ -164,47 +160,39 @@ export class Budget {
     this._props.updatedAt = UTCDate.create().value;
   }
 
-  public addItem(item: BudgetItemCreateProps): void {
+  public update(updates: Partial<Omit<BudgetCreateProps, 'items'>>): void {
     if (!this.isPending()) {
       throw new InvalidBudgetStatusError(this._props.status, 'PENDING');
     }
 
-    const newItem = BudgetItem.create(item);
-    this._items.push(newItem);
-    this.recalculateTotals();
+    if (updates.companyId !== undefined) this._props.companyId = updates.companyId;
+    if (updates.clientId !== undefined) this._props.clientId = updates.clientId;
+    if (updates.sellerId !== undefined) this._props.sellerId = updates.sellerId;
+    if (updates.freightType !== undefined) this._props.freightType = updates.freightType;
+    if (updates.shipperId !== undefined) this._props.shipperId = updates.shipperId;
+    if (updates.commercialProcess !== undefined) this._props.commercialProcess = updates.commercialProcess;
+    if (updates.commercialNote !== undefined) this._props.commercialNote = updates.commercialNote;
+    if (updates.observations !== undefined) this._props.observations = updates.observations;
+    if (updates.freightValueInCents !== undefined) this._props.freightValueInCents = new PositiveInt(updates.freightValueInCents, 'Valor do frete', true).value;
+    if (updates.discountInCents !== undefined) this._props.discountInCents = new PositiveInt(updates.discountInCents, 'Desconto', true).value;
+
+    if (updates.freightValueInCents !== undefined || updates.discountInCents !== undefined) {
+      this._props.totalInCents = Budget.calculateBudgetTotal(this._props.subtotalInCents, this._props.freightValueInCents, this._props.discountInCents);
+    }
+
+    this._props.updatedAt = UTCDate.create().value;
   }
 
-  public removeItem(itemId: string): void {
+  public replaceItems(items: BudgetItemCreateProps[]): void {
     if (!this.isPending()) {
       throw new InvalidBudgetStatusError(this._props.status, 'PENDING');
     }
 
-    const itemIndex = this._items.findIndex((item) => item.props.id === itemId);
-    if (itemIndex === -1) {
-      return;
-    }
-
-    this._items.splice(itemIndex, 1);
-
-    if (this._items.length === 0) {
+    if (items.length === 0) {
       throw new BudgetMustHaveItemsError();
     }
 
-    this.recalculateTotals();
-  }
-
-  public updateItem(itemId: string, updates: Partial<BudgetItemCreateProps>): void {
-    if (!this.isPending()) {
-      throw new InvalidBudgetStatusError(this._props.status, 'PENDING');
-    }
-
-    const itemIndex = this._items.findIndex((item) => item.props.id === itemId);
-    if (itemIndex === -1) {
-      return;
-    }
-
-    const updatedItem = this._items[itemIndex].update(updates);
-    this._items[itemIndex] = updatedItem;
+    this._items = items.map((item) => BudgetItem.create(item));
     this.recalculateTotals();
   }
 }

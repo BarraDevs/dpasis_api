@@ -452,207 +452,191 @@ describe('Budget Entity', () => {
     });
   });
 
-  describe('addItem', () => {
-    it('should add item to PENDING budget', () => {
+  describe('update', () => {
+    it('should update basic properties in PENDING budget', () => {
       // Arrange
       const budget = Budget.create(validCreateProps);
-      const initialItemCount = budget.items.length;
-      const newItem: BudgetItemCreateProps = {
-        itemType: BudgetItemType.PRODUCT,
-        productId: 'new-product-id',
-        serviceId: null,
-        description: 'New Product',
-        quantity: 1,
-        unitPriceInCents: 50000,
-        discountInCents: 0,
-      };
 
       // Act
-      budget.addItem(newItem);
+      budget.update({
+        freightType: 'FOB',
+        observations: 'Updated observations',
+      });
 
       // Assert
-      expect(budget.items).toHaveLength(initialItemCount + 1);
-      expect(budget.items[initialItemCount].props.description).toBe('New Product');
+      expect(budget.props.freightType).toBe('FOB');
+      expect(budget.props.observations).toBe('Updated observations');
     });
 
-    it('should recalculate totals when adding item', () => {
+    it('should update monetary values and recalculate total', () => {
       // Arrange
       const budget = Budget.create(validCreateProps);
       const initialSubtotal = budget.props.subtotalInCents;
-      const newItem: BudgetItemCreateProps = {
-        itemType: BudgetItemType.PRODUCT,
-        productId: 'new-product-id',
-        serviceId: null,
-        description: 'New Product',
-        quantity: 1,
-        unitPriceInCents: 50000,
-        discountInCents: 0,
-      };
 
       // Act
-      budget.addItem(newItem);
+      budget.update({
+        freightValueInCents: 10000,
+        discountInCents: 2000,
+      });
 
       // Assert
-      expect(budget.props.subtotalInCents).toBe(initialSubtotal + newItem.unitPriceInCents);
+      expect(budget.props.freightValueInCents).toBe(10000);
+      expect(budget.props.discountInCents).toBe(2000);
+      expect(budget.props.totalInCents).toBe(initialSubtotal + 10000 - 2000);
     });
 
-    it('should throw error when adding item to non-PENDING budget', () => {
+    it('should update nullable fields to null', () => {
+      // Arrange
+      const budget = Budget.create(validCreateProps);
+
+      // Act
+      budget.update({
+        shipperId: null,
+        commercialProcess: null,
+        commercialNote: null,
+        observations: null,
+      });
+
+      // Assert
+      expect(budget.props.shipperId).toBeNull();
+      expect(budget.props.commercialProcess).toBeNull();
+      expect(budget.props.commercialNote).toBeNull();
+      expect(budget.props.observations).toBeNull();
+    });
+
+    it('should not change unchanged fields (partial update)', () => {
+      // Arrange
+      const budget = Budget.create(validCreateProps);
+      const originalProps = budget.props;
+
+      // Act
+      budget.update({ freightType: 'FOB' });
+
+      // Assert
+      expect(budget.props).toEqual<BudgetProps>({ ...originalProps, freightType: 'FOB', updatedAt: expect.any(Date) });
+    });
+
+    it('should update updatedAt timestamp', async() => {
+      // Arrange
+      const budget = Budget.create(validCreateProps);
+      const originalUpdatedAt = budget.props.updatedAt;
+
+      // Act
+      await new Promise((resolve) => setTimeout(resolve, 10)); // Garantir timestamp diferente
+      budget.update({ freightType: 'FOB' });
+
+      // Assert
+      expect(budget.props.updatedAt).not.toEqual(originalUpdatedAt);
+    });
+
+    it('should throw error when updating non-PENDING budget', () => {
       // Arrange
       const budget = Budget.create(validCreateProps);
       budget.approve('admin-id');
 
       // Act & Assert
-      expect(() => budget.addItem(validItem)).toThrow(InvalidBudgetStatusError);
+      expect(() => budget.update({ freightType: 'FOB' })).toThrow(InvalidBudgetStatusError);
+    });
+
+    it('should validate positive values for monetary fields', () => {
+      // Arrange
+      const budget = Budget.create(validCreateProps);
+
+      // Act & Assert
+      expect(() => budget.update({ freightValueInCents: -100 })).toThrow();
+      expect(() => budget.update({ discountInCents: -100 })).toThrow();
     });
   });
 
-  describe('removeItem', () => {
-    it('should remove item from PENDING budget', () => {
+  describe('replaceItems', () => {
+    it('should replace all items in PENDING budget', () => {
       // Arrange
-      const props: BudgetCreateProps = {
-        ...validCreateProps,
-        items: [validItem, { ...validItem, description: 'Item 2' }],
-      };
-      const budget = Budget.create(props);
-      const itemToRemove = budget.items[0].props.id;
+      const budget = Budget.create(validCreateProps);
+      const newItems: BudgetItemCreateProps[] = [
+        {
+          itemType: BudgetItemType.PRODUCT,
+          productId: 'new-product-1',
+          serviceId: null,
+          description: 'New Product 1',
+          quantity: 2,
+          unitPriceInCents: 50000,
+          discountInCents: 0,
+        },
+        {
+          itemType: BudgetItemType.SERVICE,
+          productId: null,
+          serviceId: 'new-service-1',
+          description: 'New Service 1',
+          quantity: 1,
+          unitPriceInCents: 30000,
+          discountInCents: 0,
+        },
+      ];
+
+      // Act
+      budget.replaceItems(newItems);
+
+      // Assert
       expect(budget.items).toHaveLength(2);
-
-      // Act
-      budget.removeItem(itemToRemove);
-
-      // Assert
-      expect(budget.items).toHaveLength(1);
-      expect(budget.items[0].props.description).toBe('Item 2');
+      expect(budget.items[0].props.description).toBe('New Product 1');
+      expect(budget.items[1].props.description).toBe('New Service 1');
     });
 
-    it('should recalculate totals when removing item', () => {
-      // Arrange
-      const props: BudgetCreateProps = {
-        ...validCreateProps,
-        items: [
-          { ...validItem, quantity: 1, unitPriceInCents: 100000, discountInCents: 0 },
-          { ...validItem, quantity: 1, unitPriceInCents: 50000, discountInCents: 0 },
-        ],
-      };
-      const budget = Budget.create(props);
-      const itemToRemove = budget.items[0].props.id;
-
-      // Act
-      budget.removeItem(itemToRemove);
-
-      // Assert
-      expect(budget.props.subtotalInCents).toBe(50000);
-    });
-
-    it('should throw error when removing last item', () => {
+    it('should recalculate totals when replacing items', () => {
       // Arrange
       const budget = Budget.create(validCreateProps);
-      const itemToRemove = budget.items[0].props.id;
+      const newItems: BudgetItemCreateProps[] = [
+        {
+          itemType: BudgetItemType.PRODUCT,
+          productId: 'new-product',
+          serviceId: null,
+          description: 'New Product',
+          quantity: 3,
+          unitPriceInCents: 10000,
+          discountInCents: 100,
+        },
+      ];
+      const expectedSubtotal = 3 * 10000 - 100; // 29900
 
-      // Act & Assert
-      expect(() => budget.removeItem(itemToRemove)).toThrow(BudgetMustHaveItemsError);
+      // Act
+      budget.replaceItems(newItems);
+
+      // Assert
+      expect(budget.props.subtotalInCents).toBe(expectedSubtotal);
+      expect(budget.props.totalInCents).toBe(
+        expectedSubtotal + budget.props.freightValueInCents - budget.props.discountInCents,
+      );
     });
 
-    it('should throw error when removing item from non-PENDING budget', () => {
+    it('should throw error when replacing with empty array', () => {
+      // Arrange
+      const budget = Budget.create(validCreateProps);
+
+      // Act & Assert
+      expect(() => budget.replaceItems([])).toThrow(BudgetMustHaveItemsError);
+    });
+
+    it('should throw error when replacing items in non-PENDING budget', () => {
       // Arrange
       const budget = Budget.create(validCreateProps);
       budget.approve('admin-id');
-      const itemToRemove = budget.items[0].props.id;
+      const newItems: BudgetItemCreateProps[] = [validItem];
 
       // Act & Assert
-      expect(() => budget.removeItem(itemToRemove)).toThrow(InvalidBudgetStatusError);
+      expect(() => budget.replaceItems(newItems)).toThrow(InvalidBudgetStatusError);
     });
 
-    it('should do nothing when removing non-existent item', () => {
+    it('should create new item entities (not reference old ones)', () => {
       // Arrange
       const budget = Budget.create(validCreateProps);
-      const initialItemCount = budget.items.length;
+      const oldItemId = budget.items[0].props.id;
+      const newItems: BudgetItemCreateProps[] = [validItem];
 
       // Act
-      budget.removeItem('non-existent-item-id');
+      budget.replaceItems(newItems);
 
       // Assert
-      expect(budget.items).toHaveLength(initialItemCount);
-    });
-  });
-
-  describe('updateItem', () => {
-    it('should update item in PENDING budget', () => {
-      // Arrange
-      const budget = Budget.create(validCreateProps);
-      const itemToUpdate = budget.items[0].props.id;
-
-      // Act
-      budget.updateItem(itemToUpdate, { quantity: 5 });
-
-      // Assert
-      expect(budget.items[0].props.quantity).toBe(5);
-    });
-
-    it('should recalculate item subtotal when updating', () => {
-      // Arrange
-      const budget = Budget.create(validCreateProps);
-      const itemToUpdate = budget.items[0].props.id;
-
-      // Act
-      budget.updateItem(itemToUpdate, { quantity: 3, unitPriceInCents: 100000 });
-
-      // Assert
-      const expectedSubtotal = 3 * 100000 - budget.items[0].props.discountInCents;
-      expect(budget.items[0].props.subtotalInCents).toBe(expectedSubtotal);
-    });
-
-    it('should recalculate budget totals when updating item', () => {
-      // Arrange
-      const budget = Budget.create(validCreateProps);
-      const itemToUpdate = budget.items[0].props.id;
-      const initialTotal = budget.props.totalInCents;
-
-      // Act
-      budget.updateItem(itemToUpdate, { quantity: 10 });
-
-      // Assert
-      expect(budget.props.totalInCents).not.toBe(initialTotal);
-    });
-
-    it('should throw error when updating item in non-PENDING budget', () => {
-      // Arrange
-      const budget = Budget.create(validCreateProps);
-      budget.approve('admin-id');
-      const itemToUpdate = budget.items[0].props.id;
-
-      // Act & Assert
-      expect(() => budget.updateItem(itemToUpdate, { quantity: 5 })).toThrow(InvalidBudgetStatusError);
-    });
-
-    it('should do nothing when updating non-existent item', () => {
-      // Arrange
-      const budget = Budget.create(validCreateProps);
-      const initialItemProps = budget.items[0].props;
-
-      // Act
-      budget.updateItem('non-existent-item-id', { quantity: 5 });
-
-      // Assert
-      expect(budget.items[0].props).toEqual(initialItemProps);
-    });
-
-    it('should not affect other items when updating one item', () => {
-      // Arrange
-      const props: BudgetCreateProps = {
-        ...validCreateProps,
-        items: [validItem, { ...validItem, description: 'Item 2' }],
-      };
-      const budget = Budget.create(props);
-      const itemToUpdate = budget.items[0].props.id;
-      const otherItemInitialProps = budget.items[1].props;
-
-      // Act
-      budget.updateItem(itemToUpdate, { quantity: 5 });
-
-      // Assert
-      expect(budget.items[0].props.quantity).toBe(5);
-      expect(budget.items[1].props).toEqual(otherItemInitialProps);
+      expect(budget.items[0].props.id).not.toBe(oldItemId);
     });
   });
 

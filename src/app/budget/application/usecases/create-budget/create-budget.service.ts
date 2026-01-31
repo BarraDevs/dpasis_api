@@ -31,25 +31,21 @@ export class CreateBudget {
   ) {}
 
   public async execute(data: CreateBudgetInputDto): Promise<CreateBudgetOutputDto> {
-    // Verify if company exists and is active
     const company = await this.findCompanyById.execute(data.companyId);
     if (!company.active) {
       throw new CompanyNotActiveError(company.fantasyName);
     }
 
-    // Verify if client exists and is active
     const client = await this.findClientById.execute(data.clientId);
     if (!client.active) {
       throw new ClientNotActiveError(client.fantasyName);
     }
 
-    // Verify if seller exists and is active
     const seller = await this.findSellerById.execute(data.sellerId);
     if (!seller.active) {
       throw new SellerNotActiveError(seller.name);
     }
 
-    // Verify if shipper exists (when provided)
     if (data.shipperId) {
       const shipper = await this.findShipperById.execute(data.shipperId);
       if (!shipper.active) {
@@ -57,7 +53,6 @@ export class CreateBudget {
       }
     }
 
-    // Verify if each item's product or service exists
     for (const item of data.items) {
       if (item.itemType === BudgetItemType.PRODUCT && item.productId) {
         const product = await this.findProductById.execute(item.productId);
@@ -73,7 +68,6 @@ export class CreateBudget {
       }
     }
 
-    // Map items to domain props
     const items: BudgetItemCreateProps[] = data.items.map((item) => ({
       itemType: item.itemType,
       productId: item.productId ?? null,
@@ -84,7 +78,6 @@ export class CreateBudget {
       discountInCents: item.discountInCents,
     }));
 
-    // Create budget entity
     const budget = Budget.create({
       companyId: data.companyId,
       clientId: data.clientId,
@@ -99,7 +92,6 @@ export class CreateBudget {
       items,
     });
 
-    // Save budget
     await this.budgetRepository.save(budget);
 
     return { id: budget.props.id };
