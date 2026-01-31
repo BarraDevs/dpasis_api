@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { BudgetDto } from 'src/app/budget/application/dtos/budget.dto';
-import { FindAllBudgetQueroDto, IBudgetDao } from 'src/app/budget/application/persistence/dao/budget-dao.interface';
+import { IBudgetDao } from 'src/app/budget/application/persistence/dao/budget-dao.interface';
+import { FindAllBudgetQueryDto } from 'src/app/budget/application/usecases/find-all-budget/dtos/find-all-budget.dto';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 
 const budgetSelect = {
@@ -50,8 +51,8 @@ const budgetSelect = {
 export class BudgetDaoAdapterPrisma implements IBudgetDao {
   constructor(private prisma: PrismaService) {}
 
-  public async findAll(queries: FindAllBudgetQueroDto): Promise<[BudgetDto[], number]> {
-    const pagination = this.prisma.paginationFactory(queries.page, queries.limit);
+  public async findAll(queries: FindAllBudgetQueryDto): Promise<[BudgetDto[], number]> {
+    const pagination = this.prisma.paginationFactory(queries.page, queries.size);
 
     const where: Prisma.BudgetWhereInput = {
       AND: [

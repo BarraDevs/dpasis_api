@@ -4,7 +4,7 @@ import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
 import { AccountStatus } from 'src/app/account/domain/enums/account-status.enum';
 import { BudgetDto } from 'src/app/budget/application/dtos/budget.dto';
 import { BudgetPersistenceModule } from 'src/app/budget/application/persistence/budget-persistence.module';
-import { FindAllBudgetQueroDto } from 'src/app/budget/application/persistence/dao/budget-dao.interface';
+import { FindAllBudgetQueryDto } from 'src/app/budget/application/usecases/find-all-budget/dtos/find-all-budget.dto';
 import { BudgetItemType } from 'src/app/budget/enums/budget-item-type.enum';
 import { BudgetStatus } from 'src/app/budget/enums/budget-status.enum';
 import { ConfigModule } from 'src/core/config/config.module';
@@ -432,9 +432,9 @@ describe('BudgetDaoAdapterPrisma', () => {
 
     it('should return correct DTO', async() => {
       // Arrange
-      const queries: FindAllBudgetQueroDto = {
+      const queries: FindAllBudgetQueryDto = {
         page: 1,
-        limit: 10,
+        size: 10,
       };
 
       // Act
@@ -484,9 +484,9 @@ describe('BudgetDaoAdapterPrisma', () => {
 
     it('should return all budgets when no filters are provided', async() => {
       // Arrange
-      const queries: FindAllBudgetQueroDto = {
+      const queries: FindAllBudgetQueryDto = {
         page: 1,
-        limit: 10,
+        size: 10,
       };
 
       // Act
@@ -501,9 +501,9 @@ describe('BudgetDaoAdapterPrisma', () => {
 
     it('should filter budgets by companyId', async() => {
       // Arrange
-      const queries: FindAllBudgetQueroDto = {
+      const queries: FindAllBudgetQueryDto = {
         page: 1,
-        limit: 10,
+        size: 10,
         companyId: company01.id,
       };
 
@@ -518,9 +518,9 @@ describe('BudgetDaoAdapterPrisma', () => {
 
     it('should filter budgets by clientId', async() => {
       // Arrange
-      const queries: FindAllBudgetQueroDto = {
+      const queries: FindAllBudgetQueryDto = {
         page: 1,
-        limit: 10,
+        size: 10,
         clientId: client01.id,
       };
 
@@ -536,9 +536,9 @@ describe('BudgetDaoAdapterPrisma', () => {
 
     it('should filter budgets by sellerId', async() => {
       // Arrange
-      const queries: FindAllBudgetQueroDto = {
+      const queries: FindAllBudgetQueryDto = {
         page: 1,
-        limit: 10,
+        size: 10,
         sellerId: seller01.id,
       };
 
@@ -553,9 +553,9 @@ describe('BudgetDaoAdapterPrisma', () => {
 
     it('should filter budgets by shipperId', async() => {
       // Arrange
-      const queries: FindAllBudgetQueroDto = {
+      const queries: FindAllBudgetQueryDto = {
         page: 1,
-        limit: 10,
+        size: 10,
         shipperId: shipper01.id,
       };
 
@@ -571,9 +571,9 @@ describe('BudgetDaoAdapterPrisma', () => {
 
     it('should filter budgets by freightType', async() => {
       // Arrange
-      const queries: FindAllBudgetQueroDto = {
+      const queries: FindAllBudgetQueryDto = {
         page: 1,
-        limit: 10,
+        size: 10,
         freightType: 'CIF',
       };
 
@@ -588,9 +588,9 @@ describe('BudgetDaoAdapterPrisma', () => {
 
     it('should filter budgets by freightType case-insensitive', async() => {
       // Arrange
-      const queries: FindAllBudgetQueroDto = {
+      const queries: FindAllBudgetQueryDto = {
         page: 1,
-        limit: 10,
+        size: 10,
         freightType: 'cif',
       };
 
@@ -604,9 +604,9 @@ describe('BudgetDaoAdapterPrisma', () => {
 
     it('should filter budgets by status PENDING', async() => {
       // Arrange
-      const queries: FindAllBudgetQueroDto = {
+      const queries: FindAllBudgetQueryDto = {
         page: 1,
-        limit: 10,
+        size: 10,
         status: BudgetStatus.PENDING,
       };
 
@@ -622,9 +622,9 @@ describe('BudgetDaoAdapterPrisma', () => {
 
     it('should filter budgets by status APPROVED', async() => {
       // Arrange
-      const queries: FindAllBudgetQueroDto = {
+      const queries: FindAllBudgetQueryDto = {
         page: 1,
-        limit: 10,
+        size: 10,
         status: BudgetStatus.APPROVED,
       };
 
@@ -640,10 +640,10 @@ describe('BudgetDaoAdapterPrisma', () => {
 
     it('should filter budgets by createdAtStart', async() => {
       // Arrange
-      const queries: FindAllBudgetQueroDto = {
+      const queries: FindAllBudgetQueryDto = {
         page: 1,
-        limit: 10,
-        createdAtStart: new Date('2026-01-15T00:00:00Z'),
+        size: 10,
+        createdAtStart: '2026-01-15T00:00:00Z',
       };
 
       // Act
@@ -657,10 +657,10 @@ describe('BudgetDaoAdapterPrisma', () => {
 
     it('should filter budgets by createdAtEnd', async() => {
       // Arrange
-      const queries: FindAllBudgetQueroDto = {
+      const queries: FindAllBudgetQueryDto = {
         page: 1,
-        limit: 10,
-        createdAtEnd: new Date('2026-01-20T23:59:59Z'),
+        size: 10,
+        createdAtEnd: '2026-01-20T23:59:59Z',
       };
 
       // Act
@@ -674,11 +674,11 @@ describe('BudgetDaoAdapterPrisma', () => {
 
     it('should filter budgets by date range', async() => {
       // Arrange
-      const queries: FindAllBudgetQueroDto = {
+      const queries: FindAllBudgetQueryDto = {
         page: 1,
-        limit: 10,
-        createdAtStart: new Date('2026-01-15T00:00:00Z'),
-        createdAtEnd: new Date('2026-01-25T23:59:59Z'),
+        size: 10,
+        createdAtStart: '2026-01-15T00:00:00Z',
+        createdAtEnd: '2026-01-25T23:59:59Z',
       };
 
       // Act
@@ -692,9 +692,9 @@ describe('BudgetDaoAdapterPrisma', () => {
 
     it('should combine multiple filters', async() => {
       // Arrange
-      const queries: FindAllBudgetQueroDto = {
+      const queries: FindAllBudgetQueryDto = {
         page: 1,
-        limit: 10,
+        size: 10,
         companyId: company01.id,
         clientId: client01.id,
         status: BudgetStatus.PENDING,
@@ -714,17 +714,17 @@ describe('BudgetDaoAdapterPrisma', () => {
 
     it('should combine all filters', async() => {
       // Arrange
-      const queries: FindAllBudgetQueroDto = {
+      const queries: FindAllBudgetQueryDto = {
         page: 1,
-        limit: 10,
+        size: 10,
         companyId: company01.id,
         clientId: client01.id,
         sellerId: seller01.id,
         shipperId: shipper01.id,
         freightType: 'CIF',
         status: BudgetStatus.PENDING,
-        createdAtStart: new Date('2026-01-01T00:00:00Z'),
-        createdAtEnd: new Date('2026-01-31T23:59:59Z'),
+        createdAtStart: '2026-01-01T00:00:00Z',
+        createdAtEnd: '2026-01-31T23:59:59Z',
       };
 
       // Act
@@ -738,9 +738,9 @@ describe('BudgetDaoAdapterPrisma', () => {
 
     it('should return empty array when no budgets match filters', async() => {
       // Arrange
-      const queries: FindAllBudgetQueroDto = {
+      const queries: FindAllBudgetQueryDto = {
         page: 1,
-        limit: 10,
+        size: 10,
         companyId: company01.id,
         status: BudgetStatus.APPROVED,
         sellerId: seller02.id,
@@ -756,9 +756,9 @@ describe('BudgetDaoAdapterPrisma', () => {
 
     it('should paginate results correctly - page 1', async() => {
       // Arrange
-      const queries: FindAllBudgetQueroDto = {
+      const queries: FindAllBudgetQueryDto = {
         page: 1,
-        limit: 2,
+        size: 2,
       };
 
       // Act
@@ -772,9 +772,9 @@ describe('BudgetDaoAdapterPrisma', () => {
 
     it('should paginate results correctly - page 2', async() => {
       // Arrange
-      const queries: FindAllBudgetQueroDto = {
+      const queries: FindAllBudgetQueryDto = {
         page: 2,
-        limit: 2,
+        size: 2,
       };
 
       // Act
@@ -788,9 +788,9 @@ describe('BudgetDaoAdapterPrisma', () => {
 
     it('should paginate results correctly - page 3', async() => {
       // Arrange
-      const queries: FindAllBudgetQueroDto = {
+      const queries: FindAllBudgetQueryDto = {
         page: 3,
-        limit: 2,
+        size: 2,
       };
 
       // Act
@@ -804,9 +804,9 @@ describe('BudgetDaoAdapterPrisma', () => {
 
     it('should return budgets with all items included', async() => {
       // Arrange
-      const queries: FindAllBudgetQueroDto = {
+      const queries: FindAllBudgetQueryDto = {
         page: 1,
-        limit: 10,
+        size: 10,
         companyId: company01.id,
       };
 
@@ -826,9 +826,9 @@ describe('BudgetDaoAdapterPrisma', () => {
 
     it('should order results by createdAt desc (most recent first)', async() => {
       // Arrange
-      const queries: FindAllBudgetQueroDto = {
+      const queries: FindAllBudgetQueryDto = {
         page: 1,
-        limit: 10,
+        size: 10,
       };
 
       // Act
