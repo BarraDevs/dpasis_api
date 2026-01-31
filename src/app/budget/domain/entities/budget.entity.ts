@@ -160,6 +160,12 @@ export class Budget {
     this._props.updatedAt = UTCDate.create().value;
   }
 
+  public ensureCanBeDeleted(): void {
+    if (!this.isPending()) {
+      throw new InvalidBudgetStatusError(this._props.status, 'PENDING');
+    }
+  }
+
   public update(updates: Partial<Omit<BudgetCreateProps, 'items'>>): void {
     if (!this.isPending()) {
       throw new InvalidBudgetStatusError(this._props.status, 'PENDING');

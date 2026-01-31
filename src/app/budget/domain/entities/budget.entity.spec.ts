@@ -678,4 +678,42 @@ describe('Budget Entity', () => {
       expect(budget.items[0].props.description).not.toBe('Malicious');
     });
   });
+
+  describe('ensureCanBeDeleted', () => {
+    it('should not throw error when budget is PENDING', () => {
+      // Arrange
+      const budget = Budget.create(validCreateProps);
+      expect(budget.props.status).toBe(BudgetStatus.PENDING);
+
+      // Act & Assert
+      expect(() => budget.ensureCanBeDeleted()).not.toThrow();
+    });
+
+    it('should throw error when budget is APPROVED', () => {
+      // Arrange
+      const budget = Budget.create(validCreateProps);
+      budget.approve('admin-id');
+
+      // Act & Assert
+      expect(() => budget.ensureCanBeDeleted()).toThrow(InvalidBudgetStatusError);
+    });
+
+    it('should throw error when budget is REJECTED', () => {
+      // Arrange
+      const budget = Budget.create(validCreateProps);
+      budget.reject('admin-id', 'Test reason');
+
+      // Act & Assert
+      expect(() => budget.ensureCanBeDeleted()).toThrow(InvalidBudgetStatusError);
+    });
+
+    it('should throw error when budget is CANCELLED', () => {
+      // Arrange
+      const budget = Budget.create(validCreateProps);
+      budget.cancel();
+
+      // Act & Assert
+      expect(() => budget.ensureCanBeDeleted()).toThrow(InvalidBudgetStatusError);
+    });
+  });
 });
