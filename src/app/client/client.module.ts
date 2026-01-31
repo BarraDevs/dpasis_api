@@ -25,6 +25,9 @@ import { ClientController } from './infra/drivers/http/client.controller';
     FindClientById,
     UpdateClientStatus,
   ],
-  exports: [],
+  exports: [
+    CreateClient,
+    FindClientById,
+  ],
 })
 export class ClientModule {}

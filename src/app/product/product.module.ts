@@ -28,6 +28,7 @@ import { ProductController } from './infra/drivers/http/product.controller';
     FindProductById,
   ],
   exports: [
+    CreateProduct,
     FindProductById,
   ],
 })

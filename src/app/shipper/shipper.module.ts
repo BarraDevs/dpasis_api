@@ -25,6 +25,9 @@ import { ShipperController } from './infra/drivers/http/shipper.controller';
     FindShipperById,
     UpdateShipperStatus,
   ],
-  exports: [],
+  exports: [
+    CreateShipper,
+    FindShipperById,
+  ],
 })
 export class ShipperModule {}

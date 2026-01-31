@@ -24,6 +24,7 @@ import { CompanyController } from './infra/drivers/http/company.controller';
     UpdateCompanyStatus,
   ],
   exports: [
+    CreateCompany,
     FindCompanyById,
   ],
 })

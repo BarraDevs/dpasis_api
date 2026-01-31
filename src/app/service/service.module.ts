@@ -30,6 +30,7 @@ import { ServiceController } from './infra/drivers/http/service.controller';
     UpdateServiceStatus,
   ],
   exports: [
+    CreateService,
     FindServiceById,
   ],
 })

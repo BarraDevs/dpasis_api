@@ -14,6 +14,8 @@ export type BudgetProps = Omit<BudgetCreateProps, 'items'> & {
   rejectedBy: string | null;
   rejectedAt: Date | null;
   rejectionReason: string | null;
+  subtotalInCents: number;
+  totalInCents: number;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -25,9 +27,7 @@ export type BudgetCreateProps = {
   freightType: string;
   shipperId: string | null;
   freightValueInCents: number;
-  subtotalInCents: number;
   discountInCents: number;
-  totalInCents: number;
   commercialProcess: string | null;
   commercialNote: string | null;
   observations: string | null;

@@ -27,6 +27,9 @@ import { SellerController } from './infra/drivers/http/seller.controller';
     FindSellerById,
     UpdateSellerStatus,
   ],
-  exports: [],
+  exports: [
+    CreateSeller,
+    FindSellerById,
+  ],
 })
 export class SellerModule {}

@@ -23,9 +23,7 @@ describe('Budget Entity', () => {
     freightType: 'CIF',
     shipperId: 'shipper-id-123',
     freightValueInCents: 5000,
-    subtotalInCents: 0, // Será calculado
     discountInCents: 2000,
-    totalInCents: 0, // Será calculado
     commercialProcess: 'PROC-2026-001',
     commercialNote: 'Nota comercial sobre o orçamento',
     observations: 'Cliente preferencial',

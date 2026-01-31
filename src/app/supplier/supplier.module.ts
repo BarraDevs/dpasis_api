@@ -26,6 +26,7 @@ import { SupplierController } from './infra/drivers/http/supplier.controller';
     UpdateSupplierStatus,
   ],
   exports: [
+    CreateSupplier,
     FindSupplierById,
   ],
 })
