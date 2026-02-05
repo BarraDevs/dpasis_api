@@ -57,16 +57,7 @@ describe('OrderDao', () => {
     createSupplier = module.get(CreateSupplier);
     createBudget = module.get(CreateBudget);
 
-    await prisma.order.deleteMany();
-    await prisma.budget.deleteMany();
-    await prisma.product.deleteMany();
-    await prisma.service.deleteMany();
-    await prisma.serviceCategory.deleteMany();
-    await prisma.account.deleteMany();
-    await prisma.seller.deleteMany();
-    await prisma.client.deleteMany();
-    await prisma.supplier.deleteMany();
-    await prisma.company.deleteMany();
+    await prisma.truncate();
 
     // Create company
     companyId = (await createCompany.execute({
@@ -717,15 +708,15 @@ describe('OrderDao', () => {
         await orderRepo.save(order);
       }
 
-      // Act - página 1 (limit 10)
-      const [page1Data, page1Total] = await orderDao.findAll({ page: 1, limit: 10 });
+      // Act - página 1 (size 10)
+      const [page1Data, page1Total] = await orderDao.findAll({ page: 1, size: 10 });
 
       // Assert
       expect(page1Data).toHaveLength(10);
       expect(page1Total).toBe(15);
 
-      // Act - página 2 (limit 10)
-      const [page2Data, page2Total] = await orderDao.findAll({ page: 2, limit: 10 });
+      // Act - página 2 (size 10)
+      const [page2Data, page2Total] = await orderDao.findAll({ page: 2, size: 10 });
 
       // Assert
       expect(page2Data).toHaveLength(5);
@@ -769,8 +760,8 @@ describe('OrderDao', () => {
 
       // Act - filtro dentro do range
       const [result1, total1] = await orderDao.findAll({
-        dateFrom: yesterday,
-        dateTo: tomorrow,
+        dateFrom: yesterday.toISOString(),
+        dateTo: tomorrow.toISOString(),
       });
 
       // Assert
@@ -781,8 +772,8 @@ describe('OrderDao', () => {
       const twoDaysAgo = new Date(today);
       twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
       const [result2, total2] = await orderDao.findAll({
-        dateFrom: twoDaysAgo,
-        dateTo: yesterday,
+        dateFrom: twoDaysAgo.toISOString(),
+        dateTo: yesterday.toISOString(),
       });
 
       // Assert

@@ -1,18 +1,7 @@
 import { OrderDto } from '../../dtos/order.dto';
-
-// TODO: mover para o usecase find-all-orders
-export type FindAllOrderFilters = {
-  status?: string;
-  clientId?: string;
-  sellerId?: string;
-  companyId?: string;
-  dateFrom?: Date;
-  dateTo?: Date;
-  page?: number;
-  limit?: number;
-};
+import { FindAllOrdersQueryDto } from '../../usecases/find-all-orders/dtos/find-all-orders.dto';
 
 export interface IOrderDao {
-  findAll(filters: FindAllOrderFilters): Promise<[OrderDto[], number]>;
+  findAll(queries: FindAllOrdersQueryDto): Promise<[OrderDto[], number]>;
   findById(id: string): Promise<OrderDto | null>;
 }

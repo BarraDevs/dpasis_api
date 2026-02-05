@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { OrderDto, OrderStatusHistoryDto } from 'src/app/order/application/dtos/order.dto';
-import { FindAllOrderFilters, IOrderDao } from 'src/app/order/application/persistence/dao/order-dao.interface';
+import { IOrderDao } from 'src/app/order/application/persistence/dao/order-dao.interface';
+import { FindAllOrdersQueryDto } from 'src/app/order/application/usecases/find-all-orders/dtos/find-all-orders.dto';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 
 const orderSelect = {
@@ -51,22 +52,25 @@ export class OrderDaoAdapterPrisma implements IOrderDao {
     };
   }
 
-  public async findAll(filters: FindAllOrderFilters): Promise<[OrderDto[], number]> {
-    const pagination = this.prisma.paginationFactory(filters.page, filters.limit);
+  public async findAll(queries: FindAllOrdersQueryDto): Promise<[OrderDto[], number]> {
+    const pagination = this.prisma.paginationFactory(queries.page, queries.size);
+
+    const dateFrom = queries.dateFrom ? new Date(queries.dateFrom) : undefined;
+    const dateTo = queries.dateTo ? new Date(queries.dateTo) : undefined;
 
     const where: Prisma.OrderWhereInput = {
       AND: [
-        { status: filters.status ? { equals: filters.status } : undefined },
+        { status: queries.status ? { equals: queries.status } : undefined },
         {
           budget: {
-            clientId: filters.clientId ? { equals: filters.clientId } : undefined,
-            sellerId: filters.sellerId ? { equals: filters.sellerId } : undefined,
-            companyId: filters.companyId ? { equals: filters.companyId } : undefined,
+            clientId: queries.clientId ? { equals: queries.clientId } : undefined,
+            sellerId: queries.sellerId ? { equals: queries.sellerId } : undefined,
+            companyId: queries.companyId ? { equals: queries.companyId } : undefined,
           },
         },
         {
-          createdAt: filters.dateFrom || filters.dateTo
-            ? { gte: filters.dateFrom, lte: filters.dateTo }
+          createdAt: dateFrom || dateTo
+            ? { gte: dateFrom, lte: dateTo }
             : undefined,
         },
       ],

@@ -601,7 +601,7 @@ describe('ProductStockMovementRepositoryAdapterPrisma', () => {
         const isInput = i % 3 !== 0; // Mostly inputs
         const quantity = Math.floor(Math.random() * 50) + 1;
 
-        if (isInput || currentProduct.hasStock()) {
+        if (isInput || currentProduct.hasStock(quantity)) {
           try {
             const { movement, product: updatedProduct } = ProductStockMovement.create({
               productId: product.props.id,

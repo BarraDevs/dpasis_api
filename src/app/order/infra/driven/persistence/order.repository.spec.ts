@@ -53,16 +53,7 @@ describe('OrderRepository', () => {
     createSupplier = module.get(CreateSupplier);
     createBudget = module.get(CreateBudget);
 
-    await prisma.order.deleteMany();
-    await prisma.budget.deleteMany();
-    await prisma.product.deleteMany();
-    await prisma.serviceCategory.deleteMany();
-    await prisma.service.deleteMany();
-    await prisma.account.deleteMany();
-    await prisma.seller.deleteMany();
-    await prisma.client.deleteMany();
-    await prisma.supplier.deleteMany();
-    await prisma.company.deleteMany();
+    await prisma.truncate();
 
     // Create company
     companyId = (await createCompany.execute({
