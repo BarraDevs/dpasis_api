@@ -114,6 +114,12 @@ export class Budget {
     return subtotalInCents + freightInCents - discountInCents;
   }
 
+  private recalculateTotals(): void {
+    this._props.subtotalInCents = Budget.calculateBudgetSubtotal(this._items);
+    this._props.totalInCents = Budget.calculateBudgetTotal(this._props.subtotalInCents, this._props.freightValueInCents, this._props.discountInCents);
+    this._props.updatedAt = UTCDate.create().value;
+  }
+
   private isPending(): boolean {
     return this._props.status === BudgetStatus.PENDING;
   }
@@ -122,10 +128,8 @@ export class Budget {
     return this._props.status === BudgetStatus.CANCELLED;
   }
 
-  private recalculateTotals(): void {
-    this._props.subtotalInCents = Budget.calculateBudgetSubtotal(this._items);
-    this._props.totalInCents = Budget.calculateBudgetTotal(this._props.subtotalInCents, this._props.freightValueInCents, this._props.discountInCents);
-    this._props.updatedAt = UTCDate.create().value;
+  public isApproved(): boolean {
+    return this._props.status === BudgetStatus.APPROVED;
   }
 
   public approve(accountId: string): void {

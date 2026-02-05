@@ -35,7 +35,9 @@ import { BudgetController } from './infra/drivers/http/budget.controller';
     ServiceModule,
     SupplierModule,
   ],
-  controllers: [BudgetController],
+  controllers: [
+    BudgetController,
+  ],
   providers: [
     CreateBudget,
     FindBudgetById,

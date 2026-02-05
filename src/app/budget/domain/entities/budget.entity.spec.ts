@@ -315,6 +315,30 @@ describe('Budget Entity', () => {
     });
   });
 
+  describe('isApproved', () => {
+    it('should return true when budget status is APPROVED', () => {
+      // Arrange
+      const budget = Budget.create(validCreateProps);
+      budget.approve('admin-id');
+
+      // Assert
+      expect(budget.isApproved()).toBe(true);
+      expect(budget.props.status).toBe(BudgetStatus.APPROVED);
+    });
+
+    it.each(
+      Object.values(BudgetStatus).filter((status) => status !== BudgetStatus.APPROVED),
+    )('should return false when budget status is %s', (status) => {
+      // Arrange
+      const budget = Budget.create(validCreateProps);
+      (budget as any)._props.status = status;
+
+      // Assert
+      expect(budget.isApproved()).toBe(false);
+      expect(budget.props.status).toBe(status);
+    });
+  });
+
   describe('approve', () => {
     it('should approve budget when status is PENDING', async() => {
       // Arrange
