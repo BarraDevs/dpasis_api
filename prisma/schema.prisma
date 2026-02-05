@@ -351,11 +351,11 @@ model ProductStockMovement {
 }
 
 model ServiceCategory {
-  id        String   @id @default(uuid())
-  name      String   @unique @db.VarChar(256)
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id        String    @id @default(uuid())
+  name      String    @unique @db.VarChar(256)
+  active    Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   services  Service[]
 
   @@map("service_categories")
@@ -424,6 +424,7 @@ model Budget {
   createdAt           DateTime     @default(now())
   updatedAt           DateTime     @updatedAt
   items               BudgetItem[]
+  order               Order?
 
   @@index([status])
   @@index([clientId])
@@ -451,4 +452,24 @@ model BudgetItem {
   updatedAt        DateTime @updatedAt
 
   @@map("budget_items")
+}
+
+model Order {
+  id                 String    @id @default(uuid())
+  budgetId           String    @unique
+  budget             Budget    @relation(fields: [budgetId], references: [id], onDelete: Restrict)
+  status             String    @db.VarChar(256)
+  trackingCode       String?   @db.VarChar(256)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  createdBy          String    @db.VarChar(256)
+  cancelledAt        DateTime?
+  cancelledBy        String?   @db.VarChar(256)
+  cancellationReason String?   @db.Text
+  statusHistory      Json      @default("[]")
+
+  @@index([status])
+  @@index([budgetId])
+  @@index([createdAt])
+  @@map("orders")
 }
