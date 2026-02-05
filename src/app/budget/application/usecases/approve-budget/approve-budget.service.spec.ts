@@ -10,6 +10,7 @@ import { CreateProduct } from 'src/app/product/application/usecases/create-produ
 import { ProductOutOfStockError } from 'src/app/product/domain/errors/product-out-of-stock.error';
 import { CreateSeller } from 'src/app/seller/application/usecases/create-seller/create-seller.service';
 import { CreateService } from 'src/app/service/application/usecases/create-service/create-service.service';
+import { ServiceNotActiveError } from 'src/app/service/domain/errors/service-not-active.error';
 import { CreateSupplier } from 'src/app/supplier/application/usecases/create-supplier/create-supplier.service';
 import { ConfigModule } from 'src/core/config/config.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
@@ -282,6 +283,41 @@ describe('ApproveBudget', () => {
 
       // Act & Assert
       await expect(sut.execute(budgetId, accountId)).rejects.toThrow(ProductOutOfStockError);
+    });
+
+    it('should throw ServiceNotActiveError when service is inactive', async() => {
+      // Arrange
+      const budgetWithService = await createBudget.execute({
+        companyId,
+        clientId,
+        sellerId,
+        freightType: 'FOB',
+        shipperId: null,
+        freightValueInCents: 3000,
+        discountInCents: 0,
+        commercialProcess: null,
+        commercialNote: null,
+        observations: null,
+        items: [
+          {
+            itemType: BudgetItemType.SERVICE,
+            productId: null,
+            serviceId,
+            description: 'Test Service',
+            quantity: 2,
+            unitPriceInCents: 5000,
+            discountInCents: 0,
+          },
+        ],
+      });
+
+      await prisma.service.update({
+        where: { id: serviceId },
+        data: { active: false },
+      });
+
+      // Act & Assert
+      await expect(sut.execute(budgetWithService.id, accountId)).rejects.toThrow(ServiceNotActiveError);
     });
   });
 
@@ -569,6 +605,95 @@ describe('ApproveBudget', () => {
 
       const otherBudget = await findBudgetById.execute(anotherBudget.id);
       expect(otherBudget.status).toBe(originalStatus);
+    });
+
+    it('should not approve budget with inactive service', async() => {
+      // Arrange
+      const budgetWithInactiveService = await createBudget.execute({
+        companyId,
+        clientId,
+        sellerId,
+        freightType: 'FOB',
+        shipperId: null,
+        freightValueInCents: 1000,
+        discountInCents: 0,
+        commercialProcess: null,
+        commercialNote: null,
+        observations: null,
+        items: [
+          {
+            itemType: BudgetItemType.SERVICE,
+            productId: null,
+            serviceId,
+            description: 'Inactive Service',
+            quantity: 1,
+            unitPriceInCents: 5000,
+            discountInCents: 0,
+          },
+        ],
+      });
+
+      // Deactivate the service
+      await prisma.service.update({
+        where: { id: serviceId },
+        data: { active: false },
+      });
+
+      // Act & Assert
+      await expect(sut.execute(budgetWithInactiveService.id, accountId)).rejects.toThrow(ServiceNotActiveError);
+
+      // Verify budget remains PENDING
+      const budget = await findBudgetById.execute(budgetWithInactiveService.id);
+      expect(budget.status).toBe(BudgetStatus.PENDING);
+    });
+
+    it('should not approve budget with mixed items when service is inactive', async() => {
+      // Arrange
+      const mixedBudgetWithInactiveService = await createBudget.execute({
+        companyId,
+        clientId,
+        sellerId,
+        freightType: 'CIF',
+        shipperId: null,
+        freightValueInCents: 3000,
+        discountInCents: 0,
+        commercialProcess: null,
+        commercialNote: null,
+        observations: null,
+        items: [
+          {
+            itemType: BudgetItemType.PRODUCT,
+            productId: product01Id,
+            serviceId: null,
+            description: 'Product Item',
+            quantity: 5,
+            unitPriceInCents: 2000,
+            discountInCents: 0,
+          },
+          {
+            itemType: BudgetItemType.SERVICE,
+            productId: null,
+            serviceId,
+            description: 'Inactive Service Item',
+            quantity: 1,
+            unitPriceInCents: 3000,
+            discountInCents: 0,
+          },
+        ],
+      });
+
+      // Deactivate the service
+      await prisma.service.update({
+        where: { id: serviceId },
+        data: { active: false },
+      });
+
+      // Act & Assert
+      await expect(sut.execute(mixedBudgetWithInactiveService.id, accountId)).rejects.toThrow(ServiceNotActiveError);
+
+      // Verify budget remains PENDING
+      const budget = await findBudgetById.execute(mixedBudgetWithInactiveService.id);
+      expect(budget.status).toBe(BudgetStatus.PENDING);
     });
   });
 });

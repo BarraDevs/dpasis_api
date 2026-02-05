@@ -207,6 +207,30 @@ describe('Service Entity', () => {
     });
   });
 
+  describe('isActive', () => {
+    it('should return true when service is active', () => {
+      // Arrange
+      const service = Service.load(mockLoadProps);
+
+      // Act
+      const result = service.isActive();
+
+      // Assert
+      expect(result).toBe(true);
+    });
+
+    it('should return false when service is inactive', () => {
+      // Arrange
+      const service = Service.load({ ...mockLoadProps, active: false });
+
+      // Act
+      const result = service.isActive();
+
+      // Assert
+      expect(result).toBe(false);
+    });
+  });
+
   describe('props getter', () => {
     it('should not allow mutation of productIds array', () => {
       // Arrange

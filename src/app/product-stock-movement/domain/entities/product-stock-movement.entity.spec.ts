@@ -1,7 +1,7 @@
 import { Product } from 'src/app/product/domain/entities/product.entity';
+import { ProductOutOfStockError } from 'src/app/product/domain/errors/product-out-of-stock.error';
 import { AppException } from 'src/core/filters/app.exception';
 import { ProductStockMovementTypeEnum } from '../enums/product-stock-movement.enum';
-import { InsufficientStockError } from '../errors/insufficient-stock.error';
 import { QuantityMustBePositiveError } from '../errors/quantity-must-be-positive.error';
 import { ValueMustBePositiveError } from '../errors/value-must-be-positive.error';
 import { ProductStockMovement } from './product-stock-movement.entity';
@@ -332,7 +332,7 @@ describe('ProductStockMovement Entity', () => {
           quantity: 1,
           unitPriceInCents: 10000,
         }, emptyProduct);
-      }).toThrow(InsufficientStockError);
+      }).toThrow(ProductOutOfStockError);
     });
 
     it('should throw error when trying OUTPUT on product with zero initial stock', () => {
@@ -375,7 +375,7 @@ describe('ProductStockMovement Entity', () => {
           quantity: 1,
           unitPriceInCents: 10000,
         }, newProduct);
-      }).toThrow(InsufficientStockError);
+      }).toThrow(ProductOutOfStockError);
     });
 
     it('should throw error when OUTPUT quantity is zero', () => {
@@ -552,7 +552,7 @@ describe('ProductStockMovement Entity', () => {
           quantity: 1,
           unitPriceInCents: 10000,
         }, depleted);
-      }).toThrow(InsufficientStockError);
+      }).toThrow(ProductOutOfStockError);
     });
   });
 
@@ -1945,7 +1945,7 @@ describe('ProductStockMovement Entity', () => {
           quantity: 1,
           unitPriceInCents: 10000,
         }, p3);
-      }).toThrow(InsufficientStockError);
+      }).toThrow(ProductOutOfStockError);
 
       // Restock arrives
       const { product: p4 } = ProductStockMovement.create({

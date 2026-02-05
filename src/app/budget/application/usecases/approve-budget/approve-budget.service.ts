@@ -1,8 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { BudgetNotFoundError } from 'src/app/budget/domain/errors/budget-not-found.error';
-import { BudgetItemType } from 'src/app/budget/enums/budget-item-type.enum';
-import { FindProductById } from 'src/app/product/application/usecases/find-product-by-id/find-product-by-id.service';
-import { ProductOutOfStockError } from 'src/app/product/domain/errors/product-out-of-stock.error';
+import { StockValidator } from 'src/app/budget/domain/services/stock-validator/stock-validator.service';
+import type { IProductRepository } from 'src/app/product/application/persistence/repository/product-repository.interface';
+import type { IServiceRepository } from 'src/app/service/application/persistence/repository/service-repository.interface';
 import { TOKENS } from 'src/core/di/token';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
 import type { IBudgetRepository } from '../../persistence/repository/budget-repository.interface';
@@ -10,28 +10,33 @@ import type { IBudgetRepository } from '../../persistence/repository/budget-repo
 @Injectable()
 export class ApproveBudget {
   constructor(
-    @Inject(TOKENS.BudgetRepository) private readonly budgetRepo: IBudgetRepository,
-    private readonly findProductById: FindProductById,
+    @Inject(TOKENS.BudgetRepository) private readonly budgetRepository: IBudgetRepository,
+    @Inject(TOKENS.ProductRepository) private readonly productRepository: IProductRepository,
+    @Inject(TOKENS.ServiceRepository) private readonly serviceRepository: IServiceRepository,
+    private readonly stockValidator: StockValidator,
   ) {}
 
   public async execute(id: string, accountId: string): Promise<SuccessMessage> {
-    const budget = await this.budgetRepo.findById(id);
+    const budget = await this.budgetRepository.findById(id);
     if (!budget) {
       throw new BudgetNotFoundError();
     }
 
-    for (const item of budget.items) {
-      if (item.props.itemType === BudgetItemType.PRODUCT && item.props.productId) {
-        const product = await this.findProductById.execute(item.props.productId);
-        if (product.currentStock < item.props.quantity) {
-          throw new ProductOutOfStockError(product.description);
-        }
-      }
-    }
+    // check if products have stock and services are active
+    await this.stockValidator.validate(
+      budget.items.map((item) => ({
+        itemType: item.props.itemType,
+        productId: item.props.productId ?? null,
+        serviceId: item.props.serviceId ?? null,
+        quantity: item.props.quantity,
+      })),
+      this.productRepository,
+      this.serviceRepository,
+    );
 
     budget.approve(accountId);
 
-    await this.budgetRepo.edit(budget);
+    await this.budgetRepository.edit(budget);
 
     return { message: 'Orçamento aprovado com sucesso!' };
   }

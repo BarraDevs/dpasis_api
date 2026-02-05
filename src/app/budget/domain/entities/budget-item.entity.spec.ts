@@ -526,4 +526,60 @@ describe('BudgetItem Entity', () => {
       expect(item.props.description).not.toBe('Modified Description');
     });
   });
+
+  describe('isProduct', () => {
+    it('should return true if type is PRODUCT', () => {
+      // Arrange
+      const item = BudgetItem.create({
+        ...validProductItemProps,
+        itemType: BudgetItemType.PRODUCT,
+        productId: 'product-id-123',
+        serviceId: null,
+      });
+
+      // Assert
+      expect(item.isProduct()).toBe(true);
+    });
+
+    it('should return false if type is SERVICE', () => {
+      // Arrange
+      const item = BudgetItem.create({
+        ...validProductItemProps,
+        itemType: BudgetItemType.SERVICE,
+        productId: null,
+        serviceId: 'service-id-123',
+      });
+
+      // Assert
+      expect(item.isProduct()).toBe(false);
+    });
+  });
+
+  describe('isService', () => {
+    it('should return true if type is SERVICE', () => {
+      // Arrange
+      const item = BudgetItem.create({
+        ...validServiceItemProps,
+        itemType: BudgetItemType.SERVICE,
+        productId: null,
+        serviceId: 'service-id-123',
+      });
+
+      // Assert
+      expect(item.isService()).toBe(true);
+    });
+
+    it('should return false if type is PRODUCT', () => {
+      // Arrange
+      const item = BudgetItem.create({
+        ...validProductItemProps,
+        itemType: BudgetItemType.PRODUCT,
+        productId: 'product-id-123',
+        serviceId: null,
+      });
+
+      // Assert
+      expect(item.isService()).toBe(false);
+    });
+  });
 });

@@ -1271,67 +1271,78 @@ describe('Product Entity', () => {
   });
 
   describe('hasStock', () => {
-    it('should return true when currentStock is positive', () => {
+    it('should return true when currentStock is bigger than the quantity', () => {
       // Arrange
       const product = Product.load({ ...mockLoadProps, currentStock: 10 });
 
       // Act
-      const result = product.hasStock();
+      const result = product.hasStock(5);
 
       // Assert
       expect(result).toBe(true);
     });
 
-    it('should return true when currentStock is 1', () => {
+    it('should return true when currentStock is equal to the quantity', () => {
       // Arrange
       const product = Product.load({ ...mockLoadProps, currentStock: 1 });
 
       // Act
-      const result = product.hasStock();
+      const result = product.hasStock(1);
 
       // Assert
       expect(result).toBe(true);
     });
 
-    it('should return false when currentStock is zero', () => {
+    it('should return false when currentStock is less than the quantity', () => {
       // Arrange
-      const product = Product.load({ ...mockLoadProps, currentStock: 0 });
+      const product = Product.load({ ...mockLoadProps, currentStock: 5 });
 
       // Act
-      const result = product.hasStock();
+      const result = product.hasStock(10);
 
       // Assert
       expect(result).toBe(false);
     });
 
-    it('should return false when currentStock is negative', () => {
+    it('should return false when currentStock is less than the quantity', () => {
       // Arrange
       const product = Product.load({ ...mockLoadProps, currentStock: -5 });
 
       // Act
-      const result = product.hasStock();
+      const result = product.hasStock(10);
 
       // Assert
       expect(result).toBe(false);
     });
 
-    it('should return true when currentStock is very large', () => {
+    it('should return true for very small positive stock (less than 1)', () => {
       // Arrange
-      const product = Product.load({ ...mockLoadProps, currentStock: 999999 });
+      const product = Product.load({ ...mockLoadProps, currentStock: 0.5 });
 
       // Act
-      const result = product.hasStock();
+      const result = product.hasStock(0.4);
 
       // Assert
       expect(result).toBe(true);
     });
 
-    it('should return false for newly created product (currentStock = 0)', () => {
+    it('should return true for stock just above 1', () => {
       // Arrange
-      const product = Product.create(mockCreateProps);
+      const product = Product.load({ ...mockLoadProps, currentStock: 1.01 });
 
       // Act
-      const result = product.hasStock();
+      const result = product.hasStock(1.01);
+
+      // Assert
+      expect(result).toBe(true);
+    });
+
+    it('should return false for stock less than the quantity', () => {
+      // Arrange
+      const product = Product.load({ ...mockLoadProps, currentStock: -0.01 });
+
+      // Act
+      const result = product.hasStock(0.01);
 
       // Assert
       expect(result).toBe(false);
@@ -1931,52 +1942,6 @@ describe('Product Entity', () => {
       expect(props1.images).not.toBe(props2.images);
       expect(props1.supplierIds).toEqual(props2.supplierIds);
       expect(props1.supplierIds).not.toBe(props2.supplierIds);
-    });
-  });
-
-  describe('hasStock edge cases', () => {
-    it('should return true for very small positive stock (less than 1)', () => {
-      // Arrange
-      const product = Product.load({ ...mockLoadProps, currentStock: 0.5 });
-
-      // Act
-      const result = product.hasStock();
-
-      // Assert
-      expect(result).toBe(true);
-    });
-
-    it('should return true for stock exactly 1.0', () => {
-      // Arrange
-      const product = Product.load({ ...mockLoadProps, currentStock: 1.0 });
-
-      // Act
-      const result = product.hasStock();
-
-      // Assert
-      expect(result).toBe(true);
-    });
-
-    it('should return true for stock just above 1', () => {
-      // Arrange
-      const product = Product.load({ ...mockLoadProps, currentStock: 1.01 });
-
-      // Act
-      const result = product.hasStock();
-
-      // Assert
-      expect(result).toBe(true);
-    });
-
-    it('should return false for very small negative stock', () => {
-      // Arrange
-      const product = Product.load({ ...mockLoadProps, currentStock: -0.01 });
-
-      // Act
-      const result = product.hasStock();
-
-      // Assert
-      expect(result).toBe(false);
     });
   });
 });

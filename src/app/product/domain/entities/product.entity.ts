@@ -115,8 +115,8 @@ export class Product {
     };
   }
 
-  public hasStock(): boolean {
-    return this._props.currentStock > 0;
+  public hasStock(quantity: number): boolean {
+    return this._props.currentStock >= quantity;
   }
 
   public updateStock(newStock: number): void {

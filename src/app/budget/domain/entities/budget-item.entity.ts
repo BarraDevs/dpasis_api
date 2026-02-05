@@ -25,7 +25,11 @@ export type BudgetItemCreateProps = {
 export class BudgetItem {
   private readonly _props: BudgetItemProps;
 
-  static create(props: BudgetItemCreateProps): BudgetItem {
+  private static calculateSubtotal(quantity: number, unitPriceInCents: number, discountInCents: number): number {
+    return (quantity * unitPriceInCents) - discountInCents;
+  }
+
+  public static create(props: BudgetItemCreateProps): BudgetItem {
     const subtotal = BudgetItem.calculateSubtotal(props.quantity, props.unitPriceInCents, props.discountInCents);
 
     return new BudgetItem({
@@ -37,31 +41,8 @@ export class BudgetItem {
     });
   }
 
-  static load(props: BudgetItemProps): BudgetItem {
+  public static load(props: BudgetItemProps): BudgetItem {
     return new BudgetItem(props);
-  }
-
-  public get props(): Readonly<BudgetItemProps> {
-    return { ...this._props };
-  }
-
-  private constructor(props: BudgetItemProps) {
-    this.validateItemType(props.itemType);
-    this.validateProductOrService(props.itemType, props.productId, props.serviceId);
-
-    this._props = {
-      id: props.id,
-      itemType: props.itemType,
-      productId: props.productId,
-      serviceId: props.serviceId,
-      description: props.description,
-      quantity: new PositiveInt(props.quantity, 'Quantidade', false).value,
-      unitPriceInCents: new PositiveInt(props.unitPriceInCents, 'Preço unitário', true).value,
-      discountInCents: new PositiveInt(props.discountInCents, 'Desconto', true).value,
-      subtotalInCents: new PositiveInt(props.subtotalInCents, 'Subtotal do item', true).value,
-      createdAt: UTCDate.from(props.createdAt).value,
-      updatedAt: UTCDate.from(props.updatedAt).value,
-    };
   }
 
   private validateItemType(itemType: BudgetItemType): void {
@@ -83,8 +64,35 @@ export class BudgetItem {
     }
   }
 
-  private static calculateSubtotal(quantity: number, unitPriceInCents: number, discountInCents: number): number {
-    return (quantity * unitPriceInCents) - discountInCents;
+  private constructor(props: BudgetItemProps) {
+    this.validateItemType(props.itemType);
+    this.validateProductOrService(props.itemType, props.productId, props.serviceId);
+
+    this._props = {
+      id: props.id,
+      itemType: props.itemType,
+      productId: props.productId,
+      serviceId: props.serviceId,
+      description: props.description,
+      quantity: new PositiveInt(props.quantity, 'Quantidade', false).value,
+      unitPriceInCents: new PositiveInt(props.unitPriceInCents, 'Preço unitário', true).value,
+      discountInCents: new PositiveInt(props.discountInCents, 'Desconto', true).value,
+      subtotalInCents: new PositiveInt(props.subtotalInCents, 'Subtotal do item', true).value,
+      createdAt: UTCDate.from(props.createdAt).value,
+      updatedAt: UTCDate.from(props.updatedAt).value,
+    };
+  }
+
+  public get props(): Readonly<BudgetItemProps> {
+    return { ...this._props };
+  }
+
+  public isProduct(): boolean {
+    return this._props.itemType === BudgetItemType.PRODUCT;
+  }
+
+  public isService(): boolean {
+    return this._props.itemType === BudgetItemType.SERVICE;
   }
 
   public update(updates: Partial<BudgetItemCreateProps>): BudgetItem {

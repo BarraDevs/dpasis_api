@@ -38,9 +38,9 @@ export class Budget {
   private _props: BudgetProps;
   private _items: BudgetItem[];
 
-  static create(props: BudgetCreateProps): Budget {
-    const items = props.items.map((item) => BudgetItem.create(item));
-    const calculatedSubtotal = Budget.calculateBudgetSubtotal(items);
+  static create({ items, ...props }: BudgetCreateProps): Budget {
+    const budgetItems = items.map((item) => BudgetItem.create(item));
+    const calculatedSubtotal = Budget.calculateBudgetSubtotal(budgetItems);
     const calculatedTotal = Budget.calculateBudgetTotal(calculatedSubtotal, props.freightValueInCents, props.discountInCents);
 
     return new Budget(
@@ -58,7 +58,7 @@ export class Budget {
         createdAt: UTCDate.create().value,
         updatedAt: UTCDate.create().value,
       },
-      items,
+      budgetItems,
     );
   }
 

@@ -528,60 +528,6 @@ describe('CreateBudget', () => {
       // Assert
       expect(findShipperSpy).not.toHaveBeenCalled();
     });
-
-    it('should not call FindProductById when item type is SERVICE', async() => {
-      // Arrange
-      const dataWithService = {
-        ...data,
-        items: [
-          {
-            itemType: BudgetItemType.SERVICE,
-            productId: null,
-            serviceId,
-            description: 'Service Test',
-            quantity: 1,
-            unitPriceInCents: 5000,
-            discountInCents: 0,
-          },
-        ],
-      };
-      const findProductSpy = jest.spyOn(sut['findProductById'], 'execute');
-      const findServiceSpy = jest.spyOn(sut['findServiceById'], 'execute');
-
-      // Act
-      await sut.execute(dataWithService);
-
-      // Assert
-      expect(findProductSpy).not.toHaveBeenCalled();
-      expect(findServiceSpy).toHaveBeenCalledWith(serviceId);
-    });
-
-    it('should not call FindServiceById when item type is PRODUCT', async() => {
-      // Arrange
-      const dataWithProduct = {
-        ...data,
-        items: [
-          {
-            itemType: BudgetItemType.PRODUCT,
-            productId: product01Id,
-            serviceId: null,
-            description: 'Product Test',
-            quantity: 10,
-            unitPriceInCents: 1500,
-            discountInCents: 100,
-          },
-        ],
-      };
-      const findProductSpy = jest.spyOn(sut['findProductById'], 'execute');
-      const findServiceSpy = jest.spyOn(sut['findServiceById'], 'execute');
-
-      // Act
-      await sut.execute(dataWithProduct);
-
-      // Assert
-      expect(findServiceSpy).not.toHaveBeenCalled();
-      expect(findProductSpy).toHaveBeenCalledWith(product01Id);
-    });
   });
 
   describe('integration tests', () => {
@@ -735,6 +681,59 @@ describe('CreateBudget', () => {
       expect(budgetCreated.commercialProcess).toBe('PROC-2024-001');
       expect(budgetCreated.commercialNote).toBe('Nota comercial');
       expect(budgetCreated.observations).toBe('Observações gerais');
+    });
+
+    it('should throw ProductOutOfStockError when product does not have enough stock', async() => {
+      // Arrange
+      const insufficientStockData = {
+        ...data,
+        items: [
+          {
+            itemType: BudgetItemType.PRODUCT,
+            productId: product01Id,
+            serviceId: null,
+            description: 'Product Test',
+            quantity: 100, // More than available stock (50)
+            unitPriceInCents: 1500,
+            discountInCents: 100,
+          },
+        ],
+      };
+
+      // Act & Assert
+      expect.assertions(1);
+      return sut.execute(insufficientStockData).catch((error) => {
+        expect(error).toBeInstanceOf(ProductOutOfStockError);
+      });
+    });
+
+    it('should throw ServiceNotActiveError when service is inactive', async() => {
+      // Arrange
+      await prisma.service.update({
+        where: { id: serviceId },
+        data: { active: false },
+      });
+
+      const inactiveServiceData = {
+        ...data,
+        items: [
+          {
+            itemType: BudgetItemType.SERVICE,
+            productId: null,
+            serviceId,
+            description: 'Service Test',
+            quantity: 1,
+            unitPriceInCents: 5000,
+            discountInCents: 0,
+          },
+        ],
+      };
+
+      // Act & Assert
+      expect.assertions(1);
+      return sut.execute(inactiveServiceData).catch((error) => {
+        expect(error).toBeInstanceOf(ServiceNotActiveError);
+      });
     });
   });
 });

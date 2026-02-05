@@ -80,6 +80,10 @@ export class Service {
     };
   }
 
+  public isActive(): boolean {
+    return this._props.active;
+  }
+
   public toggleStatus(): void {
     this._props.active = !this._props.active;
     this._props.updatedAt = UTCDate.create().value;

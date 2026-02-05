@@ -8,11 +8,13 @@ import { CreateClient } from 'src/app/client/application/usecases/create-client/
 import { CreateCompany } from 'src/app/company/application/usecases/create-company/create-company.service';
 import { CompanyNotActiveError } from 'src/app/company/domain/errors/company-not-active.error';
 import { CreateProduct } from 'src/app/product/application/usecases/create-product/create-product.service';
+import { ProductNotFoundError } from 'src/app/product/domain/errors/product-not-found.error';
 import { ProductOutOfStockError } from 'src/app/product/domain/errors/product-out-of-stock.error';
 import { CreateSeller } from 'src/app/seller/application/usecases/create-seller/create-seller.service';
 import { SellerNotActiveError } from 'src/app/seller/domain/errors/seller-not-active.error';
 import { CreateService } from 'src/app/service/application/usecases/create-service/create-service.service';
 import { ServiceNotActiveError } from 'src/app/service/domain/errors/service-not-active.error';
+import { ServiceNotFoundError } from 'src/app/service/domain/errors/service-not-found.error';
 import { CreateShipper } from 'src/app/shipper/application/usecases/create-shipper/create-shipper.service';
 import { ShipperNotActiveError } from 'src/app/shipper/domain/errors/shipper-not-active.error';
 import { CreateSupplier } from 'src/app/supplier/application/usecases/create-supplier/create-supplier.service';
@@ -376,6 +378,26 @@ describe('EditBudget', () => {
       await expect(sut.execute(budgetId, data)).rejects.toThrow(ShipperNotActiveError);
     });
 
+    it('should throw ProductNotFoundError when product does not exist', async() => {
+      // Arrange
+      const data: EditBudgetInputDto = {
+        items: [
+          {
+            itemType: BudgetItemType.PRODUCT,
+            productId: 'non-existent-product-id',
+            serviceId: null,
+            description: 'Product Test',
+            quantity: 1,
+            unitPriceInCents: 1500,
+            discountInCents: 0,
+          },
+        ],
+      };
+
+      // Act & Assert
+      await expect(sut.execute(budgetId, data)).rejects.toThrow(ProductNotFoundError);
+    });
+
     it('should throw ProductOutOfStockError when product does not have enough stock', async() => {
       // Arrange
       const data: EditBudgetInputDto = {
@@ -394,6 +416,26 @@ describe('EditBudget', () => {
 
       // Act & Assert
       await expect(sut.execute(budgetId, data)).rejects.toThrow(ProductOutOfStockError);
+    });
+
+    it('should throw ServiceNotFoundError when service does not exist', async() => {
+      // Arrange
+      const data: EditBudgetInputDto = {
+        items: [
+          {
+            itemType: BudgetItemType.SERVICE,
+            productId: null,
+            serviceId: 'non-existent-service-id',
+            description: 'Service Test',
+            quantity: 1,
+            unitPriceInCents: 5000,
+            discountInCents: 0,
+          },
+        ],
+      };
+
+      // Act & Assert
+      await expect(sut.execute(budgetId, data)).rejects.toThrow(ServiceNotFoundError);
     });
 
     it('should throw ServiceNotActiveError when service is inactive', async() => {
