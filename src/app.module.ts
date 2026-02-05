@@ -8,6 +8,7 @@ import { CompanyModule } from './app/company/company.module';
 import { ContactModule } from './app/contact/contact.module';
 import { ItemModule } from './app/item/item.module';
 import { LicenseModule } from './app/license/license.module';
+import { OrderModule } from './app/order/order.module';
 import { ProductModule } from './app/product/product.module';
 import { ProviderModule } from './app/provider/provider.module';
 import { SellerModule } from './app/seller/seller.module';
@@ -32,6 +33,7 @@ import { InfraModule } from './infra/infra.module';
     ContactModule,
     ItemModule,
     LicenseModule,
+    OrderModule,
     ProductModule,
     ProviderModule,
     SellerModule,
