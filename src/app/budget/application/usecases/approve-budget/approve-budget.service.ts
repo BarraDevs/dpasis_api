@@ -35,7 +35,6 @@ export class ApproveBudget {
     );
 
     budget.approve(accountId);
-
     await this.budgetRepository.edit(budget);
 
     return { message: 'Orçamento aprovado com sucesso!' };

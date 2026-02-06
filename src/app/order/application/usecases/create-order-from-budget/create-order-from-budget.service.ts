@@ -34,6 +34,9 @@ export class CreateOrderFromBudget {
       createdBy: data.accountId,
     });
 
+    // TODO: Dar baixa de estoque
+    // -- função aqui --
+
     await this.orderRepository.save(order);
 
     return {
