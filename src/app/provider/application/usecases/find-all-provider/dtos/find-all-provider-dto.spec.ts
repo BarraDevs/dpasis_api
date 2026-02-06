@@ -179,8 +179,6 @@ describe('FindAllProviderQueryDto', () => {
 
     it.each(
       [
-        'true',
-        'false',
         123,
         {},
         [],

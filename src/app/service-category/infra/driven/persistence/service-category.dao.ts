@@ -24,6 +24,7 @@ export class ServiceCategoryDaoAdapterPrisma implements IServiceCategoryDao {
 
     const where: Prisma.ServiceCategoryWhereInput = {
       AND: [
+        { active: queries.active !== undefined ? queries.active : undefined },
         {
           OR: [
             { name: { contains: queries.search, mode: 'insensitive' } },

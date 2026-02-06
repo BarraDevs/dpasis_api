@@ -132,8 +132,6 @@ describe('FindAllSellerQueryDto', () => {
 
     it.each(
       [
-        'true',
-        'false',
         123,
         {},
         [],

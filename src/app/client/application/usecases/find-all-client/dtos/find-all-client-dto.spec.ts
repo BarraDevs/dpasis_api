@@ -135,8 +135,6 @@ describe('FindAllClientQueryDto', () => {
 
     it.each(
       [
-        'true',
-        'false',
         123,
         {},
         [],

@@ -133,8 +133,6 @@ describe('FindAllSupplierQueryDto', () => {
 
     it.each(
       [
-        'true',
-        'false',
         123,
         {},
         [],

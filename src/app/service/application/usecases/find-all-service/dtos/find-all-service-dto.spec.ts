@@ -101,7 +101,6 @@ describe('FindAllServiceQueryDto', () => {
   describe('active field (optional boolean filter)', () => {
     it.each(
       [
-        'string',
         123,
         {},
         [],

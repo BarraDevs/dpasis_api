@@ -132,8 +132,6 @@ describe('FindAllShipperQueryDto', () => {
 
     it.each(
       [
-        'true',
-        'false',
         123,
         {},
         [],

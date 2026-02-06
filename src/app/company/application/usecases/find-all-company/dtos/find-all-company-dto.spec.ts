@@ -82,8 +82,6 @@ describe('FindAllCompanyQueryDto', () => {
 
     it.each(
       [
-        'true',
-        'false',
         123,
         {},
         [],

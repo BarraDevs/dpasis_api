@@ -59,11 +59,11 @@ describe('ServiceCategoryDaoAdapterPrisma', () => {
       // Seed data for findAll tests
       await prisma.serviceCategory.createMany({
         data: [
-          { name: 'Manutenção Preventiva' },
-          { name: 'Instalação' },
-          { name: 'Consultoria' },
-          { name: 'Suporte Técnico' },
-          { name: 'Treinamento' },
+          { name: 'Manutenção Preventiva', active: true },
+          { name: 'Instalação', active: true },
+          { name: 'Consultoria', active: true },
+          { name: 'Suporte Técnico', active: false },
+          { name: 'Treinamento', active: false },
         ],
       });
     });
@@ -134,6 +134,21 @@ describe('ServiceCategoryDaoAdapterPrisma', () => {
       expect(categories[2].name).toBe('Manutenção Preventiva');
       expect(categories[3].name).toBe('Suporte Técnico');
       expect(categories[4].name).toBe('Treinamento');
+    });
+
+    it('should filter service categories by active status', async() => {
+      // Act
+      const [activeCategories, activeTotal] = await sut.findAll({ page: 1, size: 10, active: true });
+      const [inactiveCategories, inactiveTotal] = await sut.findAll({ page: 1, size: 10, active: false });
+
+      // Assert
+      expect(activeTotal).toBe(3);
+      expect(activeCategories).toHaveLength(3);
+      expect(activeCategories.every(cat => cat.active)).toBe(true);
+
+      expect(inactiveTotal).toBe(2);
+      expect(inactiveCategories).toHaveLength(2);
+      expect(inactiveCategories.every(cat => !cat.active)).toBe(true);
     });
   });
 
