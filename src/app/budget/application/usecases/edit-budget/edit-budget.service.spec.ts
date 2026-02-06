@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { BudgetModule } from 'src/app/budget/budget.module';
+import { BudgetLockedError } from 'src/app/budget/domain/errors/budget-locked.error';
 import { BudgetNotFoundError } from 'src/app/budget/domain/errors/budget-not-found.error';
 import { InvalidBudgetStatusError } from 'src/app/budget/domain/errors/invalid-budget-status.error';
 import { BudgetItemType } from 'src/app/budget/enums/budget-item-type.enum';
@@ -7,6 +8,7 @@ import { BudgetStatus } from 'src/app/budget/enums/budget-status.enum';
 import { CreateClient } from 'src/app/client/application/usecases/create-client/create-client.service';
 import { CreateCompany } from 'src/app/company/application/usecases/create-company/create-company.service';
 import { CompanyNotActiveError } from 'src/app/company/domain/errors/company-not-active.error';
+import { CreateOrderFromBudget } from 'src/app/order/application/usecases/create-order-from-budget/create-order-from-budget.service';
 import { CreateProduct } from 'src/app/product/application/usecases/create-product/create-product.service';
 import { ProductNotFoundError } from 'src/app/product/domain/errors/product-not-found.error';
 import { ProductOutOfStockError } from 'src/app/product/domain/errors/product-out-of-stock.error';
@@ -36,6 +38,7 @@ describe('EditBudget', () => {
   let createService: CreateService;
   let createSupplier: CreateSupplier;
   let createBudget: CreateBudget;
+  let createOrderFromBudget: CreateOrderFromBudget;
   let findBudgetById: FindBudgetById;
   let companyId: string;
   let clientId1: string;
@@ -47,6 +50,7 @@ describe('EditBudget', () => {
   let product02Id: string;
   let serviceId: string;
   let budgetId: string;
+  const accountId = 'account-123';
 
   beforeEach(async() => {
     const module: TestingModule = await Test.createTestingModule({
@@ -66,6 +70,7 @@ describe('EditBudget', () => {
     createService = module.get(CreateService);
     createSupplier = module.get(CreateSupplier);
     createBudget = module.get(CreateBudget);
+    createOrderFromBudget = module.get(CreateOrderFromBudget);
     findBudgetById = module.get(FindBudgetById);
 
     await prisma.truncate();
@@ -652,6 +657,44 @@ describe('EditBudget', () => {
 
       // Act & Assert
       await expect(sut.execute(budgetId, data)).rejects.toThrow(InvalidBudgetStatusError);
+    });
+
+    it('should not allow editing when budget has an order linked', async() => {
+      // Arrange
+      await prisma.budget.update({
+        where: { id: budgetId },
+        data: { status: BudgetStatus.APPROVED },
+      });
+
+      await createOrderFromBudget.execute({ budgetId, accountId });
+
+      // Reset budget status to PENDING to ensure the lock is due to order, not status
+      await prisma.budget.update({
+        where: { id: budgetId },
+        data: { status: BudgetStatus.PENDING },
+      });
+
+      const data: EditBudgetInputDto = { freightType: 'FOB' };
+
+      // Act & Assert
+      await expect(sut.execute(budgetId, data)).rejects.toThrow(BudgetLockedError);
+    });
+
+    it('should allow editing when budget does not have an order linked', async() => {
+      // Arrange
+      const data: EditBudgetInputDto = {
+        freightType: 'FOB',
+        observations: 'New observation',
+      };
+
+      // Act
+      const result = await sut.execute(budgetId, data);
+
+      // Assert
+      expect(result.message).toBe('Orçamento editado com sucesso!');
+      const updatedBudget = await findBudgetById.execute(budgetId);
+      expect(updatedBudget.freightType).toBe('FOB');
+      expect(updatedBudget.observations).toBe('New observation');
     });
   });
 });

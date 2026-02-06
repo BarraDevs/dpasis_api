@@ -102,4 +102,17 @@ export class OrderDaoAdapterPrisma implements IOrderDao {
 
     return this.mapToDto(order);
   }
+
+  public async findByBudgetId(budgetId: string): Promise<OrderDto | null> {
+    const order = await this.prisma.order.findUnique({
+      where: { budgetId },
+      select: orderSelect,
+    });
+
+    if (!order) {
+      return null;
+    }
+
+    return this.mapToDto(order);
+  }
 }

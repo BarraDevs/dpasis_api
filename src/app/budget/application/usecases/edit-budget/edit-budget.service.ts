@@ -1,8 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { BudgetLockedError } from 'src/app/budget/domain/errors/budget-locked.error';
 import { BudgetNotFoundError } from 'src/app/budget/domain/errors/budget-not-found.error';
 import { StockValidator } from 'src/app/budget/domain/services/stock-validator/stock-validator.service';
 import { FindCompanyById } from 'src/app/company/application/usecases/find-company-by-id/find-company-by-id.service';
 import { CompanyNotActiveError } from 'src/app/company/domain/errors/company-not-active.error';
+import { FindOrderByBudgetId } from 'src/app/order/application/usecases/find-order-by-budget-id/find-order-by-budget-id.service';
 import type { IProductRepository } from 'src/app/product/application/persistence/repository/product-repository.interface';
 import { FindSellerById } from 'src/app/seller/application/usecases/find-seller-by-id/find-seller-by-id.service';
 import { SellerNotActiveError } from 'src/app/seller/domain/errors/seller-not-active.error';
@@ -20,6 +22,7 @@ export class EditBudget {
     @Inject(TOKENS.BudgetRepository) private readonly budgetRepo: IBudgetRepository,
     @Inject(TOKENS.ProductRepository) private readonly productRepository: IProductRepository,
     @Inject(TOKENS.ServiceRepository) private readonly serviceRepository: IServiceRepository,
+    private readonly findOrderByBudgetId: FindOrderByBudgetId,
     private readonly findCompanyById: FindCompanyById,
     private readonly findSellerById: FindSellerById,
     private readonly findShipperById: FindShipperById,
@@ -30,6 +33,11 @@ export class EditBudget {
     const budget = await this.budgetRepo.findById(id);
     if (!budget) {
       throw new BudgetNotFoundError();
+    }
+
+    const existingOrder = await this.findOrderByBudgetId.execute(id);
+    if (existingOrder) {
+      throw new BudgetLockedError();
     }
 
     if (data.companyId) {

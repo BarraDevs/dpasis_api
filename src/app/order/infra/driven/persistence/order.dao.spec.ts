@@ -902,4 +902,90 @@ describe('OrderDao', () => {
       );
     });
   });
+
+  describe('findByBudgetId', () => {
+    it('should return order when budget has an order', async() => {
+      // Arrange
+      const budget = await createBudget.execute({
+        companyId,
+        clientId,
+        sellerId,
+        freightType: 'CIF',
+        shipperId: null,
+        freightValueInCents: 5000,
+        discountInCents: 1000,
+        commercialProcess: null,
+        commercialNote: null,
+        observations: null,
+        items: [
+          {
+            itemType: BudgetItemType.PRODUCT,
+            productId: product01Id,
+            serviceId: null,
+            description: 'Test Product',
+            quantity: 10,
+            unitPriceInCents: 1500,
+            discountInCents: 100,
+          },
+        ],
+      });
+
+      const order = Order.create({ budgetId: budget.id, createdBy: accountId });
+      await orderRepo.save(order);
+
+      // Act
+      const result = await orderDao.findByBudgetId(budget.id);
+
+      // Assert
+      expect(result).toBeDefined();
+      expect(result?.id).toBe(order.props.id);
+      expect(result?.budgetId).toBe(budget.id);
+      expect(result?.status).toBe(OrderStatus.CREATED);
+      expect(result?.createdBy).toBe(accountId);
+    });
+
+    it('should return null when budget does not have an order', async() => {
+      // Arrange
+      const budget = await createBudget.execute({
+        companyId,
+        clientId,
+        sellerId,
+        freightType: 'CIF',
+        shipperId: null,
+        freightValueInCents: 5000,
+        discountInCents: 1000,
+        commercialProcess: null,
+        commercialNote: null,
+        observations: null,
+        items: [
+          {
+            itemType: BudgetItemType.PRODUCT,
+            productId: product01Id,
+            serviceId: null,
+            description: 'Test Product',
+            quantity: 10,
+            unitPriceInCents: 1500,
+            discountInCents: 100,
+          },
+        ],
+      });
+
+      // Act
+      const result = await orderDao.findByBudgetId(budget.id);
+
+      // Assert
+      expect(result).toBeNull();
+    });
+
+    it('should return null when budgetId does not exist', async() => {
+      // Arrange
+      const nonExistentBudgetId = 'non-existent-budget-id';
+
+      // Act
+      const result = await orderDao.findByBudgetId(nonExistentBudgetId);
+
+      // Assert
+      expect(result).toBeNull();
+    });
+  });
 });

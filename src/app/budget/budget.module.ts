@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { AuthenticationGuardsModule } from '../authentication/application/guards/guards.module';
 import { ClientModule } from '../client/client.module';
 import { CompanyModule } from '../company/company.module';
+import { OrderModule } from '../order/order.module';
 import { ProductPersistenceModule } from '../product/application/persistence/product-persistence.module';
 import { ProductModule } from '../product/product.module';
 import { SellerModule } from '../seller/seller.module';
@@ -29,9 +30,10 @@ import { BudgetController } from './infra/drivers/http/budget.controller';
     AuthenticationGuardsModule,
     CompanyModule,
     ClientModule,
-    SellerModule,
-    ShipperModule,
     ProductModule,
+    OrderModule,
+    ShipperModule,
+    SellerModule,
     ServiceModule,
     SupplierModule,
   ],

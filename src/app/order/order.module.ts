@@ -6,6 +6,7 @@ import { CancelOrder } from './application/usecases/cancel-order/cancel-order.se
 import { CreateOrderFromBudget } from './application/usecases/create-order-from-budget/create-order-from-budget.service';
 import { DeliverOrder } from './application/usecases/deliver-order/deliver-order.service';
 import { FindAllOrders } from './application/usecases/find-all-orders/find-all-orders.service';
+import { FindOrderByBudgetId } from './application/usecases/find-order-by-budget-id/find-order-by-budget-id.service';
 import { FindOrderById } from './application/usecases/find-order-by-id/find-order-by-id.service';
 import { InvoiceOrder } from './application/usecases/invoice-order/invoice-order.service';
 import { ShipOrder } from './application/usecases/ship-order/ship-order.service';
@@ -24,12 +25,16 @@ import { OrderController } from './infra/drivers/http/order.controller';
   providers: [
     CreateOrderFromBudget,
     FindOrderById,
+    FindOrderByBudgetId,
     FindAllOrders,
     StartProduction,
     InvoiceOrder,
     ShipOrder,
     DeliverOrder,
     CancelOrder,
+  ],
+  exports: [
+    FindOrderByBudgetId,
   ],
 })
 export class OrderModule {}
