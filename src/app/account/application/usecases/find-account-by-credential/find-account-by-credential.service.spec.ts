@@ -1,22 +1,27 @@
 import { createMock } from '@golevelup/ts-jest';
 import { Test } from '@nestjs/testing';
-import { AccountModule } from 'src/app/account/account.module';
-import { ConfigModule } from 'src/core/config/config.module';
+import { TOKENS } from 'src/core/di/token';
 import { AccountWithSensitiveDataDto } from '../../dtos/account.dto';
+import { IAccountDao } from '../../persistence/dao/account-dao.interface';
 import { FindAccountByCredential } from './find-account-by-credential.service';
 
 describe('FindAccountByCredential - Unit tests', () => {
   let sut: FindAccountByCredential;
+  let accountDao: IAccountDao;
 
   beforeEach(async() => {
     const module = await Test.createTestingModule({
-      imports: [
-        AccountModule,
-        ConfigModule,
+      providers: [
+        FindAccountByCredential,
+        {
+          provide: TOKENS.AccountDao,
+          useValue: createMock<IAccountDao>(),
+        },
       ],
     }).compile();
 
     sut = module.get(FindAccountByCredential);
+    accountDao = module.get(TOKENS.AccountDao);
   });
 
   it('should be defined', () => {
@@ -26,7 +31,7 @@ describe('FindAccountByCredential - Unit tests', () => {
   it('should call accountDao.findByCredential with correct values', async() => {
     // Arrange
     const credential = 'any-credential';
-    const findByCredentialSpy = jest.spyOn(sut['accountDao'], 'findByCredential');
+    const findByCredentialSpy = jest.spyOn(accountDao, 'findByCredential');
 
     // Act
     await sut.execute(credential);
@@ -38,7 +43,7 @@ describe('FindAccountByCredential - Unit tests', () => {
   it('should return null if account is not found', async() => {
     // Arrange
     const credential = 'non-existing-credential';
-    jest.spyOn(sut['accountDao'], 'findByCredential').mockResolvedValue(null);
+    jest.spyOn(accountDao, 'findByCredential').mockResolvedValue(null);
 
     // Act
     const result = await sut.execute(credential);
@@ -51,7 +56,7 @@ describe('FindAccountByCredential - Unit tests', () => {
     // Arrange
     const credential = 'jhondoe@email.com';
     const account = createMock<AccountWithSensitiveDataDto>();
-    jest.spyOn(sut['accountDao'], 'findByCredential').mockResolvedValue(account);
+    jest.spyOn(accountDao, 'findByCredential').mockResolvedValue(account);
 
     // Act
     const result = await sut.execute(credential);

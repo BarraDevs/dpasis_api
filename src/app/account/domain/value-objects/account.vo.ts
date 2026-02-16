@@ -1,6 +1,7 @@
 import { AccountRole } from '../enums/account-role.enum';
 import { AccountStatus } from '../enums/account-status.enum';
-import { InvalidAccountRoleError, InvalidAccountStatusError } from './account.error';
+import { InvalidAccountRoleError } from '../errors/invalid-account-role.error';
+import { InvalidAccountStatusError } from '../errors/invalid-account-status.error';
 
 export class Account {
   private _role: AccountRole;

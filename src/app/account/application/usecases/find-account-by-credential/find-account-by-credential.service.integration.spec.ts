@@ -11,7 +11,7 @@ describe('FindAccountByCredential - Integration tests', () => {
   let sut: FindAccountByCredential;
   let prisma: PrismaService;
 
-  beforeEach(async() => {
+  beforeAll(async() => {
     const module = await Test.createTestingModule({
       imports: [
         AccountModule,
@@ -21,7 +21,9 @@ describe('FindAccountByCredential - Integration tests', () => {
 
     sut = module.get(FindAccountByCredential);
     prisma = module.get(PrismaService);
+  });
 
+  beforeEach(async() => {
     await prisma.truncate();
   });
 

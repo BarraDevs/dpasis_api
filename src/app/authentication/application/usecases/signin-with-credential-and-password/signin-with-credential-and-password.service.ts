@@ -7,7 +7,7 @@ import { Password } from 'src/shared/value-objects/password/password.vo';
 import { ForbiddenAccountError } from '../../errors/forbidden-account.error';
 import { InactiveAccountError } from '../../errors/inactive-account.error';
 import { InvalidCredentialError } from '../../errors/invalid-credential.error';
-import { SigninWithCredentialAndPasswordInputDto, SigninWithCredentialAndPasswordOutputDto } from './dtos/signin-with-credential-and-password.dto';
+import { SignInWithCredentialAndPasswordInputDto, SignInWithCredentialAndPasswordOutputDto } from './dtos/signin-with-credential-and-password.dto';
 
 @Injectable()
 export class SignInWithCredentialAndPassword {
@@ -16,7 +16,7 @@ export class SignInWithCredentialAndPassword {
     private readonly findAccountByCredential: FindAccountByCredential,
   ) {}
 
-  public async execute(data: SigninWithCredentialAndPasswordInputDto): Promise<SigninWithCredentialAndPasswordOutputDto> {
+  public async execute(data: SignInWithCredentialAndPasswordInputDto): Promise<SignInWithCredentialAndPasswordOutputDto> {
     const accountData = await this.findAccountByCredential.execute(data.credential);
     if (!accountData) {
       throw new InvalidCredentialError();

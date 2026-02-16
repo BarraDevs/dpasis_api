@@ -17,7 +17,7 @@ export class JwtWebSocketStrategy extends PassportStrategy(Strategy, 'jwt-ws') {
   public validate(payload: any): Payload {
     return {
       sub: payload.sub,
-      roles: payload.roles,
+      role: payload.role,
     };
   }
 

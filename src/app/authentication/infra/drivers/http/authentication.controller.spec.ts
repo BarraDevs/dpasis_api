@@ -1,6 +1,6 @@
 import { createMock } from '@golevelup/ts-jest';
 import { Test } from '@nestjs/testing';
-import { SigninWithCredentialAndPasswordInputDto, SigninWithCredentialAndPasswordOutputDto } from 'src/app/authentication/application/usecases/signin-with-credential-and-password/dtos/signin-with-credential-and-password.dto';
+import { SignInWithCredentialAndPasswordInputDto, SignInWithCredentialAndPasswordOutputDto } from 'src/app/authentication/application/usecases/signin-with-credential-and-password/dtos/signin-with-credential-and-password.dto';
 import { AuthenticationModule } from 'src/app/authentication/authentication.module';
 import { AuthenticationController } from './authentication.controller';
 
@@ -17,8 +17,8 @@ describe('AuthenticationController', () => {
 
   it('should login', async() => {
     // Arrange
-    const body = createMock<SigninWithCredentialAndPasswordInputDto>();
-    const output = createMock<SigninWithCredentialAndPasswordOutputDto>();
+    const body = createMock<SignInWithCredentialAndPasswordInputDto>();
+    const output = createMock<SignInWithCredentialAndPasswordOutputDto>();
     const signinSpy = jest.spyOn(sut['signInWithCredentialAndPassword'], 'execute').mockResolvedValue(output);
 
     // Act

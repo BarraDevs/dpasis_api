@@ -21,7 +21,7 @@ const AccountWithSensitiveDataSelect = {
 } satisfies Prisma.AccountSelect;
 
 @Injectable()
-export class AccountPrismaAdapterDao implements IAccountDao {
+export class AccountDaoAdapterPrisma implements IAccountDao {
   constructor(private readonly prisma: PrismaService) {}
 
   public async findByCredential(credential: string): Promise<AccountWithSensitiveDataDto | null> {

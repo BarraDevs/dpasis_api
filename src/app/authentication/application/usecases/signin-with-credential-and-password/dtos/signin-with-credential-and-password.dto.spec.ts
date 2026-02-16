@@ -1,13 +1,13 @@
 import { ArgumentMetadata, ValidationPipe } from '@nestjs/common';
 import { pipeOptions } from 'src/infra/validators/class/config';
-import { SigninWithCredentialAndPasswordInputDto } from './signin-with-credential-and-password.dto';
+import { SignInWithCredentialAndPasswordInputDto } from './signin-with-credential-and-password.dto';
 
 const metadata: ArgumentMetadata = {
   type: 'body',
-  metatype: SigninWithCredentialAndPasswordInputDto,
+  metatype: SignInWithCredentialAndPasswordInputDto,
 };
 
-describe('SigninWithCredentialAndPasswordInputDto', () => {
+describe('SignInWithCredentialAndPasswordInputDto', () => {
   let target: ValidationPipe;
 
   beforeEach(() => {
@@ -62,7 +62,7 @@ describe('SigninWithCredentialAndPasswordInputDto', () => {
 
     const result = await target.transform(data, metadata);
 
-    expect(result).toBeInstanceOf(SigninWithCredentialAndPasswordInputDto);
+    expect(result).toBeInstanceOf(SignInWithCredentialAndPasswordInputDto);
     expect(result).toEqual(data);
   });
 });

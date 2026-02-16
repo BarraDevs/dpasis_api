@@ -1,22 +1,27 @@
 import { createMock } from '@golevelup/ts-jest';
 import { Test } from '@nestjs/testing';
-import { AccountModule } from 'src/app/account/account.module';
-import { ConfigModule } from 'src/core/config/config.module';
+import { TOKENS } from 'src/core/di/token';
 import { AccountDto } from '../../dtos/account.dto';
+import { IAccountDao } from '../../persistence/dao/account-dao.interface';
 import { FindAccountById } from './find-account-by-id.service';
 
 describe('FindAccountById - Unit tests', () => {
   let sut: FindAccountById;
+  let accountDao: IAccountDao;
 
   beforeEach(async() => {
     const module = await Test.createTestingModule({
-      imports: [
-        AccountModule,
-        ConfigModule,
+      providers: [
+        FindAccountById,
+        {
+          provide: TOKENS.AccountDao,
+          useValue: createMock<IAccountDao>(),
+        },
       ],
     }).compile();
 
     sut = module.get(FindAccountById);
+    accountDao = module.get(TOKENS.AccountDao);
   });
 
   it('should be defined', () => {
@@ -26,7 +31,7 @@ describe('FindAccountById - Unit tests', () => {
   it('should call accountDao.findById with correct values', async() => {
     // Arrange
     const id = 'any-id';
-    const findByIdSpy = jest.spyOn(sut['accountDao'], 'findById');
+    const findByIdSpy = jest.spyOn(accountDao, 'findById');
 
     // Act
     await sut.execute(id);
@@ -38,7 +43,7 @@ describe('FindAccountById - Unit tests', () => {
   it('should return null if account is not found', async() => {
     // Arrange
     const id = 'non-existing-id';
-    jest.spyOn(sut['accountDao'], 'findById').mockResolvedValue(null);
+    jest.spyOn(accountDao, 'findById').mockResolvedValue(null);
 
     // Act
     const result = await sut.execute(id);
@@ -51,7 +56,7 @@ describe('FindAccountById - Unit tests', () => {
     // Arrange
     const id = 'any-id';
     const account = createMock<AccountDto>();
-    jest.spyOn(sut['accountDao'], 'findById').mockResolvedValue(account);
+    jest.spyOn(accountDao, 'findById').mockResolvedValue(account);
 
     // Act
     const result = await sut.execute(id);

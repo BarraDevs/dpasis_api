@@ -2,30 +2,28 @@ import { Test } from '@nestjs/testing';
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
 import { AccountStatus } from 'src/app/account/domain/enums/account-status.enum';
 import { AuthenticationModule } from 'src/app/authentication/authentication.module';
-import { ConfigModule } from 'src/core/config/config.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { Password } from 'src/shared/value-objects/password/password.vo';
 import { ForbiddenAccountError } from '../../errors/forbidden-account.error';
 import { InactiveAccountError } from '../../errors/inactive-account.error';
 import { InvalidCredentialError } from '../../errors/invalid-credential.error';
-import { SigninWithCredentialAndPasswordInputDto } from './dtos/signin-with-credential-and-password.dto';
+import { SignInWithCredentialAndPasswordInputDto } from './dtos/signin-with-credential-and-password.dto';
 import { SignInWithCredentialAndPassword } from './signin-with-credential-and-password.service';
 
-describe('SigninWithCredentialAndPassword - Integration tests', () => {
+describe('SignInWithCredentialAndPassword - Integration tests', () => {
   let sut: SignInWithCredentialAndPassword;
   let prisma: PrismaService;
 
-  beforeEach(async() => {
+  beforeAll(async() => {
     const module = await Test.createTestingModule({
-      imports: [
-        AuthenticationModule,
-        ConfigModule,
-      ],
+      imports: [AuthenticationModule],
     }).compile();
 
     sut = module.get(SignInWithCredentialAndPassword);
     prisma = module.get(PrismaService);
+  });
 
+  beforeEach(async() => {
     await prisma.truncate();
   });
 
@@ -40,7 +38,7 @@ describe('SigninWithCredentialAndPassword - Integration tests', () => {
 
   it('should throw an error if account is not found', async() => {
     // Arrange
-    const data: SigninWithCredentialAndPasswordInputDto = {
+    const data: SignInWithCredentialAndPasswordInputDto = {
       credential: 'credential',
       password: 'password',
     };
@@ -69,7 +67,7 @@ describe('SigninWithCredentialAndPassword - Integration tests', () => {
       },
     });
 
-    const data: SigninWithCredentialAndPasswordInputDto = {
+    const data: SignInWithCredentialAndPasswordInputDto = {
       credential: email,
       password: 'another-password',
     };
@@ -98,7 +96,7 @@ describe('SigninWithCredentialAndPassword - Integration tests', () => {
       },
     });
 
-    const data: SigninWithCredentialAndPasswordInputDto = {
+    const data: SignInWithCredentialAndPasswordInputDto = {
       credential: email,
       password,
     };
@@ -127,7 +125,7 @@ describe('SigninWithCredentialAndPassword - Integration tests', () => {
       },
     });
 
-    const data: SigninWithCredentialAndPasswordInputDto = {
+    const data: SignInWithCredentialAndPasswordInputDto = {
       credential: email,
       password,
     };
@@ -156,7 +154,7 @@ describe('SigninWithCredentialAndPassword - Integration tests', () => {
       },
     });
 
-    const data: SigninWithCredentialAndPasswordInputDto = {
+    const data: SignInWithCredentialAndPasswordInputDto = {
       credential: email,
       password,
     };
