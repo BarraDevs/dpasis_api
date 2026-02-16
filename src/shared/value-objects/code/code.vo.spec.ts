@@ -1,5 +1,5 @@
 import { isNumber } from 'class-validator';
-import { NumberMustBePositiveAndInt } from '../positive-int/positive-int.error';
+import { InvalidExpirationTimeError } from './code.error';
 import { Code } from './code.vo';
 
 describe('Code Value Object', () => {
@@ -33,12 +33,12 @@ describe('Code Value Object', () => {
   });
 
   it('should throw an error when providing a negative expiration time', () => {
-    expect(() => new Code(-1)).toThrow('Tempo de expiração deve ser um número inteiro positivo');
-    expect(() => new Code(-1)).toThrow(NumberMustBePositiveAndInt);
+    expect(() => new Code(-1)).toThrow('Tempo de expiração inválido');
+    expect(() => new Code(-1)).toThrow(InvalidExpirationTimeError);
   });
 
   it('should throw an error when providing a zero expiration time', () => {
-    expect(() => new Code(0)).toThrow('Tempo de expiração deve ser um número inteiro positivo');
-    expect(() => new Code(0)).toThrow(NumberMustBePositiveAndInt);
+    expect(() => new Code(0)).toThrow('Tempo de expiração inválido');
+    expect(() => new Code(0)).toThrow(InvalidExpirationTimeError);
   });
 });

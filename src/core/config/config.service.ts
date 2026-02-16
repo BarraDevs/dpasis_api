@@ -87,4 +87,10 @@ export class ConfigService {
   get redisUrl(): string {
     return this.nestConfigService.get<string>('REDIS_URL')!;
   }
+  get redisCacheDatabase(): number {
+    return 0;
+  }
+  get redisQueueDatabase(): number {
+    return 1;
+  }
 }

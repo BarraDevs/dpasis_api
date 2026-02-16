@@ -1,5 +1,5 @@
-import { InvalidCommissionError } from '../../../app/seller/domain/errors/invalid-commission.error';
 import { Commission } from './commision.vo';
+import { InvalidCommissionError } from './commision.vo.error';
 
 describe('Commission Value Object', () => {
   describe('valid commissions', () => {

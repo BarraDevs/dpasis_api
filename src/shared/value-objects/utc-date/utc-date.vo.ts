@@ -8,10 +8,7 @@ export class UTCDate {
     return new UTCDate();
   }
 
-  public static from(value: Date | string): UTCDate {
-    if (typeof value === 'string') {
-      return new UTCDate(DateTime.fromISO(value, { zone: 'utc' }));
-    }
+  public static from(value: Date): UTCDate {
     return new UTCDate(DateTime.fromJSDate(value, { zone: 'utc' }));
   }
 

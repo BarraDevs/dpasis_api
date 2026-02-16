@@ -1,4 +1,4 @@
-import { PositiveInt } from '../positive-int/positive-int.vo';
+import { InvalidExpirationTimeError } from './code.error';
 
 export class Code {
   private readonly SECONDS_IN_A_MINUTE = 60;
@@ -14,10 +14,12 @@ export class Code {
   }
 
   constructor(expirationTimeInMinutes: number) {
-    const expirationTime = new PositiveInt(expirationTimeInMinutes, 'Tempo de expiração');
+    if (expirationTimeInMinutes <= 0) {
+      throw new InvalidExpirationTimeError();
+    }
 
     this._value = this.generateCode();
-    this._expiresIn = Date.now() + this.minutesToMiliseconds(expirationTime.value);
+    this._expiresIn = Date.now() + this.minutesToMiliseconds(expirationTimeInMinutes);
   }
 
   private minutesToMiliseconds(minutes: number): number {

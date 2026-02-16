@@ -22,10 +22,11 @@ describe('FindAccountById', () => {
     sut = module.get(FindAccountById);
     prisma = module.get(PrismaService);
 
-    await prisma.truncate();
+    await prisma.account.deleteMany();
   });
 
   afterEach(async() => {
+    await prisma.account.deleteMany();
     await prisma.$disconnect();
   });
 

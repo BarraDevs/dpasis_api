@@ -281,6 +281,28 @@ describe('ConfigService', () => {
         expect(result).toBe(mockUrl);
       });
     });
+
+    describe('redisCacheDatabase', () => {
+      it('should return the REDIS_CACHE_DATABASE value as number', () => {
+        const mockDatabase = 0;
+        nestConfigService.get.mockReturnValue(mockDatabase);
+
+        const result = sut.redisCacheDatabase;
+
+        expect(result).toBe(mockDatabase);
+      });
+    });
+
+    describe('redisQueueDatabase', () => {
+      it('should return the REDIS_QUEUE_DATABASE value as number', () => {
+        const mockDatabase = 1;
+        nestConfigService.get.mockReturnValue(mockDatabase);
+
+        const result = sut.redisQueueDatabase;
+
+        expect(result).toBe(mockDatabase);
+      });
+    });
   });
 
   describe('integration scenarios', () => {

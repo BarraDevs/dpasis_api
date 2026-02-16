@@ -25,6 +25,7 @@ export class CacheRedisAdapterGateway implements ICacheGateway {
     try {
       this.client = createClient({
         url: this.configService.redisUrl,
+        database: this.configService.redisCacheDatabase,
       });
       await this.client.connect();
     }
