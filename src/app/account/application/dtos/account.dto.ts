@@ -3,9 +3,10 @@ import { AccountStatus } from '../../domain/enums/account-status.enum';
 
 export class AccountDto {
   id: string;
+  role: AccountRole;
+  name: string;
   email: string;
   status: AccountStatus;
-  roles: AccountRole[];
 }
 
 export class AccountWithSensitiveDataDto extends AccountDto {

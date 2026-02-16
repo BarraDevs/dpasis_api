@@ -29,7 +29,7 @@ export class AuthenticationGuard implements CanActivate {
       return false;
     }
 
-    const account = new Account(accountData.status, accountData.roles);
+    const account = new Account(accountData.role, accountData.status);
     if (account.isInactive) {
       throw new InactiveAccountError();
     }

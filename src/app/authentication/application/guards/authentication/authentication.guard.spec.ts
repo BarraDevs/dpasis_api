@@ -2,6 +2,7 @@ import { createMock } from '@golevelup/ts-jest';
 import { ExecutionContext } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { AccountDto } from 'src/app/account/application/dtos/account.dto';
+import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
 import { AccountStatus } from 'src/app/account/domain/enums/account-status.enum';
 import { Payload } from 'src/app/authentication/domain/types/payload.type';
 import { InactiveAccountError } from '../../errors/inactive-account.error';
@@ -90,7 +91,7 @@ describe('AuthenticationGuard', () => {
       const user = createMock<Payload>({ sub: '123' });
       const context = contextMockFactory(user, type);
 
-      const account = createMock<AccountDto>({ status: AccountStatus.INACTIVE });
+      const account = createMock<AccountDto>({ role: AccountRole.ADMIN, status: AccountStatus.INACTIVE });
       jest.spyOn(AuthenticationGuard.prototype as any, 'getAccount').mockResolvedValue(account);
 
       // Act & Assert
@@ -105,7 +106,7 @@ describe('AuthenticationGuard', () => {
       const user = createMock<Payload>({ sub: '123' });
       const context = contextMockFactory(user, type);
 
-      const account = createMock<AccountDto>({ status: AccountStatus.ACTIVE });
+      const account = createMock<AccountDto>({ role: AccountRole.ADMIN, status: AccountStatus.ACTIVE });
       jest.spyOn(AuthenticationGuard.prototype as any, 'getAccount').mockResolvedValue(account);
 
       // Act
@@ -120,7 +121,7 @@ describe('AuthenticationGuard', () => {
       const user = createMock<Payload>({ sub: '123' });
       const context = contextMockFactory(user, type);
 
-      const account = createMock<AccountDto>({ status: AccountStatus.ACTIVE });
+      const account = createMock<AccountDto>({ role: AccountRole.ADMIN, status: AccountStatus.ACTIVE });
       const cacheSetSpy = jest.spyOn(guard['cacheGateway'], 'set');
       const cacheGetSpy = jest.spyOn(guard['cacheGateway'], 'get').mockResolvedValue(account);
       const findAccountByIdSpy = jest.spyOn(guard['findAccountByIdService'], 'execute').mockResolvedValue(null);
@@ -140,7 +141,7 @@ describe('AuthenticationGuard', () => {
       const context = contextMockFactory(user, type);
       const cacheKey = `cache:global:account:detail:${user.sub}`;
 
-      const account = createMock<AccountDto>({ status: AccountStatus.ACTIVE });
+      const account = createMock<AccountDto>({ role: AccountRole.ADMIN, status: AccountStatus.ACTIVE });
       const cacheSetSpy = jest.spyOn(guard['cacheGateway'], 'set');
       const cacheGetSpy = jest.spyOn(guard['cacheGateway'], 'get').mockResolvedValue(null);
       const findAccountByIdSpy = jest.spyOn(guard['findAccountByIdService'], 'execute').mockResolvedValue(account);

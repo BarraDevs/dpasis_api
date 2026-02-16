@@ -72,7 +72,7 @@ describe('AuthorizationGuard', () => {
   it('should return true when user has required role', async() => {
     // Arrange
     const requiredRoles = [AccountRole.ADMIN, AccountRole.SELLER];
-    const user = createMock<Payload>({ roles: [AccountRole.SELLER] });
+    const user = createMock<Payload>({ role: AccountRole.SELLER });
     const context = contextMockFactory(user);
     jest.spyOn(guard['reflector'], 'getAllAndOverride').mockReturnValue(requiredRoles);
 
@@ -86,7 +86,7 @@ describe('AuthorizationGuard', () => {
   it('should return false when user does not have required role', async() => {
     // Arrange
     const requiredRoles = [AccountRole.ADMIN];
-    const user = createMock<Payload>({ roles: [AccountRole.SELLER] });
+    const user = createMock<Payload>({ role: AccountRole.SELLER });
     const context = contextMockFactory(user);
     jest.spyOn(guard['reflector'], 'getAllAndOverride').mockReturnValue(requiredRoles);
 

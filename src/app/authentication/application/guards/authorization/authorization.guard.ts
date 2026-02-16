@@ -10,7 +10,7 @@ export class AuthorizationGuard implements CanActivate {
 
   public async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
-    if (!request?.user?.roles) {
+    if (!request?.user?.role) {
       return false;
     }
 
@@ -23,6 +23,6 @@ export class AuthorizationGuard implements CanActivate {
       return true;
     }
 
-    return !!requiredRoles.some(role => (request.user as Payload).roles.includes(role));
+    return !!requiredRoles.some(role => (request.user as Payload).role === role);
   }
 }

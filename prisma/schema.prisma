@@ -9,34 +9,28 @@ datasource db {
 
 model Account {
   id                 String  @id @default(uuid())
+  role               String
+  name               String
   email              String  @unique
   password           String  @db.Text
   passwordResetToken String? @db.VarChar(64)
   status             String
-  roles              Role[]
-}
-
-model Role {
-  id        String  @id @default(uuid())
-  accountId String
-  account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  role      String
 
   admin Admin?
 
-  @@unique([accountId, role])
+  @@unique([id, role])
+  @@map("accounts")
 }
 
 model Admin {
-  accountId String   @unique
-  name      String
-  document  String   @unique
+  accountId String  @unique
+  account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  document  String  @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  role      Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
-  roleId    String   @unique
 
   @@id([accountId])
+  @@map("admins")
 }
 
 model Faq {

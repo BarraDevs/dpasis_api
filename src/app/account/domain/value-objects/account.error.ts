@@ -7,9 +7,9 @@ export class InvalidAccountStatusError extends AppException {
   }
 }
 
-export class InvalidAccountRolesError extends AppException {
-  constructor(roles: string[]) {
-    super(`Roles inválidos - ${roles.join(', ')}`, 400);
-    this.name = 'InvalidAccountRolesError';
+export class InvalidAccountRoleError extends AppException {
+  constructor(role: string) {
+    super(`Role inválido - ${role}`, 400);
+    this.name = 'InvalidAccountRoleError';
   }
 }

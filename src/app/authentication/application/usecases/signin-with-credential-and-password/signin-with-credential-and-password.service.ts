@@ -27,7 +27,7 @@ export class SignInWithCredentialAndPassword {
       throw new InvalidCredentialError();
     }
 
-    const account = new Account(accountData.status, accountData.roles);
+    const account = new Account(accountData.role, accountData.status);
     if (account.isInactive) {
       throw new InactiveAccountError();
     }
@@ -37,7 +37,7 @@ export class SignInWithCredentialAndPassword {
 
     const payload: Payload = {
       sub: accountData.id,
-      roles: accountData.roles,
+      role: accountData.role,
     };
     const accessToken = this.jwtService.sign(payload);
 

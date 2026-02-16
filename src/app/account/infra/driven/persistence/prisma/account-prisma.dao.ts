@@ -8,9 +8,10 @@ import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 
 const AccountSelect = {
   id: true,
-  roles: true,
-  status: true,
+  role: true,
+  name: true,
   email: true,
+  status: true,
 } satisfies Prisma.AccountSelect;
 
 const AccountWithSensitiveDataSelect = {
@@ -36,7 +37,7 @@ export class AccountPrismaAdapterDao implements IAccountDao {
     return {
       ...account,
       status: account.status as AccountStatus,
-      roles: account.roles.map(r => r.role) as AccountRole[],
+      role: account.role as AccountRole,
     };
   }
 
@@ -52,7 +53,7 @@ export class AccountPrismaAdapterDao implements IAccountDao {
     return {
       ...account,
       status: account.status as AccountStatus,
-      roles: account.roles.map(r => r.role) as AccountRole[],
+      role: account.role as AccountRole,
     };
   }
 
@@ -68,7 +69,7 @@ export class AccountPrismaAdapterDao implements IAccountDao {
     return {
       ...account,
       status: account.status as AccountStatus,
-      roles: account.roles.map(r => r.role) as AccountRole[],
+      role: account.role as AccountRole,
     };
   }
 
