@@ -10,6 +10,7 @@ import {
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
+  ApiServiceUnavailableResponse,
   ApiTags,
   ApiUnsupportedMediaTypeResponse,
   getSchemaPath,
@@ -30,6 +31,7 @@ type swaggerProps = {
   applyNotFound?: boolean;
   applyConflict?: boolean;
   applyUnsupportedMediaType?: boolean;
+  applyServiceUnavailable?: boolean;
 }
 
 export function Swagger(props: swaggerProps) {
@@ -47,6 +49,7 @@ export function Swagger(props: swaggerProps) {
     applyNotFoundResponse(props.applyNotFound),
     applyConflictResponse(props.applyConflict),
     applyUnsupportedMediaTypeResponse(props.applyUnsupportedMediaType),
+    applyServiceUnavailableResponse(props.applyServiceUnavailable),
 
     ApiInternalServerErrorResponse({ type: ServerError, description: 'Internal Server Error' }),
   );
@@ -114,4 +117,8 @@ function applyConflictResponse(apply?: boolean) {
 
 function applyUnsupportedMediaTypeResponse(apply?: boolean) {
   return apply ? ApiUnsupportedMediaTypeResponse({ type: ClientError, description: 'Unsupported Media Type' }) : () => {};
+}
+
+function applyServiceUnavailableResponse(apply?: boolean) {
+  return apply ? ApiServiceUnavailableResponse({ type: ClientError, description: 'Service Unavailable' }) : () => {};
 }
