@@ -3,6 +3,7 @@ const TOKENS = {
   LoggerGateway: Symbol.for('LoggerGateway'),
 
   AccountDao: Symbol.for('AccountDao'),
+  ClientGroupDao: Symbol.for('ClientGroupDao'),
   FaqDao: Symbol.for('FaqDao'),
 };
 
