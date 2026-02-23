@@ -26,14 +26,14 @@ describe('Create{{moduleNamePascal}}InputDto', () => {
         '',
         '  ',
       ]
-    )(`should throw an error if {{field}} is empty (%s)`, async(value: any) => {
+    )(`should throw an error if ${field} is empty (%s)`, async(value: any) => {
       // Arrange
       const data = { [field]: value };
 
       // Act & Assert
       expect.assertions(1);
       return target.transform(data, metadata).catch((error) => {
-        expect(error.getResponse().message).toContain(`{{field}} é obrigatório`);
+        expect(error.getResponse().message).toContain(`${field} é obrigatório`);
       });
     });
 
@@ -45,14 +45,14 @@ describe('Create{{moduleNamePascal}}InputDto', () => {
         {},
         [],
       ]
-    )('should throw an error if %s is not a string (%s)', async(value: any) => {
+    )(`should throw an error if ${field} is not a string (%s)`, async(value: any) => {
       // Arrange
       const data = { [field]: value };
 
       // Act & Assert
       expect.assertions(1);
       return target.transform(data, metadata).catch((error) => {
-        expect(error.getResponse().message).toContain(`{{field}} deve ser uma string`);
+        expect(error.getResponse().message).toContain(`${field} deve ser uma string`);
       });
     });
   });
