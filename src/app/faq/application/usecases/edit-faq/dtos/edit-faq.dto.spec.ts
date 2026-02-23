@@ -32,7 +32,7 @@ describe('EditFaqInputDto', () => {
 
       expect.assertions(1);
       return target.transform(data, metadata).catch((error) => {
-        expect(error.getResponse().message).toContain('question must be a string');
+        expect(error.getResponse().message).toContain('question deve ser uma string');
       });
     });
 
@@ -41,7 +41,7 @@ describe('EditFaqInputDto', () => {
 
       expect.assertions(1);
       return target.transform(data, metadata).catch((error) => {
-        expect(error.getResponse().message).toContain('question must be shorter than or equal to 512 characters');
+        expect(error.getResponse().message).toContain('question deve ter no máximo 512 caracteres');
       });
     });
 
@@ -82,7 +82,7 @@ describe('EditFaqInputDto', () => {
 
       expect.assertions(1);
       return target.transform(data, metadata).catch((error) => {
-        expect(error.getResponse().message).toContain('answer must be a string');
+        expect(error.getResponse().message).toContain('answer deve ser uma string');
       });
     });
 
@@ -91,7 +91,7 @@ describe('EditFaqInputDto', () => {
 
       expect.assertions(1);
       return target.transform(data, metadata).catch((error) => {
-        expect(error.getResponse().message).toContain('answer must be shorter than or equal to 8192 characters');
+        expect(error.getResponse().message).toContain('answer deve ter no máximo 8192 caracteres');
       });
     });
 
