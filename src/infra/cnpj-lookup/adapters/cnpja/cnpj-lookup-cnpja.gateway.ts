@@ -4,6 +4,7 @@ import { ConfigService } from 'src/core/config/config.service';
 import { TOKENS } from 'src/core/di/token';
 import { LogContext, type ILoggerGateway } from 'src/infra/logger/logger.gateway';
 import { ExternalApiError } from 'src/shared/errors/external-api.error';
+import { CNPJ } from 'src/shared/value-objects/cnpj/cnpj.vo';
 import { ICnpjLookupGateway } from '../../cnpj-lookup.gateway';
 import { CnpjLookupOutputDto } from '../../dtos/cnpj-lookup.dto';
 import { CnpjaOutputDto } from './dtos/cnpja.dto';
@@ -17,8 +18,10 @@ export class CnpjLookupCnpjaAdapterGateway implements ICnpjLookupGateway {
   ) {}
 
   public async lookup(cnpj: string): Promise<CnpjLookupOutputDto> {
+    const validCnpj = new CNPJ(cnpj).value;
+
     try {
-      const result = await this.httpService.axiosRef.get<CnpjaOutputDto>(`${this.configService.cnpjaApiUrl}/${cnpj}`);
+      const result = await this.httpService.axiosRef.get<CnpjaOutputDto>(`${this.configService.cnpjaApiUrl}/${validCnpj}`);
 
       if (!result.data?.company?.name) {
         throw new ExternalApiError('CNPJ não encontrado');

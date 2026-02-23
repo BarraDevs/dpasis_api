@@ -5,6 +5,7 @@ import { ConfigService } from 'src/core/config/config.service';
 import { TOKENS } from 'src/core/di/token';
 import { LogContext, type ILoggerGateway } from 'src/infra/logger/logger.gateway';
 import { ExternalApiError } from 'src/shared/errors/external-api.error';
+import { InvalidCnpjError } from 'src/shared/value-objects/cnpj/cnpj.error';
 import { CnpjLookupCnpjaAdapterGateway } from './cnpj-lookup-cnpja.gateway';
 import { CnpjaOutputDto } from './dtos/cnpja.dto';
 
@@ -14,7 +15,8 @@ describe('CnpjLookupCnpjaAdapterGateway', () => {
   let configService: jest.Mocked<ConfigService>;
   let logger: jest.Mocked<ILoggerGateway>;
 
-  const CNPJ = '12345678000199';
+  const VALID_CNPJ = '09.748.165/0001-10';
+  const VALID_CNPJ_NORMALIZED = '09748165000110';
   const API_URL = 'https://api.cnpja.com/companies';
 
   beforeEach(async() => {
@@ -61,6 +63,43 @@ describe('CnpjLookupCnpjaAdapterGateway', () => {
   });
 
   describe('lookup', () => {
+    describe('invalid CNPJ format (value-object validation)', () => {
+      it('should throw InvalidCnpjError when CNPJ is empty', async() => {
+        await expect(sut.lookup('')).rejects.toThrow(InvalidCnpjError);
+        await expect(sut.lookup('')).rejects.toThrow('CNPJ inválido');
+
+        expect(httpService.axiosRef.get).not.toHaveBeenCalled();
+      });
+
+      it('should throw InvalidCnpjError when CNPJ has wrong length', async() => {
+        await expect(sut.lookup('1234567890123')).rejects.toThrow(InvalidCnpjError);
+        await expect(sut.lookup('1234567890123')).rejects.toThrow('CNPJ inválido');
+
+        expect(httpService.axiosRef.get).not.toHaveBeenCalled();
+      });
+
+      it('should throw InvalidCnpjError when CNPJ has invalid check digits', async() => {
+        await expect(sut.lookup('09.748.165/0001-11')).rejects.toThrow(InvalidCnpjError);
+        await expect(sut.lookup('09.748.165/0001-11')).rejects.toThrow('CNPJ inválido');
+
+        expect(httpService.axiosRef.get).not.toHaveBeenCalled();
+      });
+
+      it('should throw InvalidCnpjError when CNPJ has all digits equal', async() => {
+        await expect(sut.lookup('11.111.111/1111-11')).rejects.toThrow(InvalidCnpjError);
+        await expect(sut.lookup('11.111.111/1111-11')).rejects.toThrow('CNPJ inválido');
+
+        expect(httpService.axiosRef.get).not.toHaveBeenCalled();
+      });
+
+      it('should throw InvalidCnpjError when CNPJ contains letters', async() => {
+        await expect(sut.lookup('invalid-cnpj')).rejects.toThrow(InvalidCnpjError);
+        await expect(sut.lookup('invalid-cnpj')).rejects.toThrow('CNPJ inválido');
+
+        expect(httpService.axiosRef.get).not.toHaveBeenCalled();
+      });
+    });
+
     describe('success scenarios', () => {
       it('should return fantasyName and companyName when API returns valid data', async() => {
         const mockResponse = createMock<CnpjaOutputDto>({
@@ -70,13 +109,13 @@ describe('CnpjLookupCnpjaAdapterGateway', () => {
 
         httpService.axiosRef.get = jest.fn().mockResolvedValue({ data: mockResponse });
 
-        const result = await sut.lookup(CNPJ);
+        const result = await sut.lookup(VALID_CNPJ);
 
         expect(result).toEqual({
           fantasyName: 'Empresa Fantasia',
           companyName: 'Empresa Razão Social LTDA',
         });
-        expect(httpService.axiosRef.get).toHaveBeenCalledWith(`${API_URL}/${CNPJ}`);
+        expect(httpService.axiosRef.get).toHaveBeenCalledWith(`${API_URL}/${VALID_CNPJ_NORMALIZED}`);
       });
 
       it('should return empty fantasyName when alias is null', async() => {
@@ -87,7 +126,7 @@ describe('CnpjLookupCnpjaAdapterGateway', () => {
 
         httpService.axiosRef.get = jest.fn().mockResolvedValue({ data: mockResponse });
 
-        const result = await sut.lookup(CNPJ);
+        const result = await sut.lookup(VALID_CNPJ);
 
         expect(result).toEqual({
           fantasyName: '',
@@ -103,12 +142,25 @@ describe('CnpjLookupCnpjaAdapterGateway', () => {
 
         httpService.axiosRef.get = jest.fn().mockResolvedValue({ data: mockResponse });
 
-        const result = await sut.lookup(CNPJ);
+        const result = await sut.lookup(VALID_CNPJ);
 
         expect(result).toEqual({
           fantasyName: '',
           companyName: 'Empresa Razão Social LTDA',
         });
+      });
+
+      it('should use normalized CNPJ in API request', async() => {
+        const mockResponse = createMock<CnpjaOutputDto>({
+          alias: 'Fantasia',
+          company: { name: 'Razão Social' },
+        });
+
+        httpService.axiosRef.get = jest.fn().mockResolvedValue({ data: mockResponse });
+
+        await sut.lookup('27.190.423/0001-78');
+
+        expect(httpService.axiosRef.get).toHaveBeenCalledWith(`${API_URL}/27190423000178`);
       });
     });
 
@@ -121,8 +173,14 @@ describe('CnpjLookupCnpjaAdapterGateway', () => {
 
         httpService.axiosRef.get = jest.fn().mockResolvedValue({ data: mockResponse });
 
-        await expect(sut.lookup(CNPJ)).rejects.toThrow(ExternalApiError);
-        await expect(sut.lookup(CNPJ)).rejects.toThrow('CNPJ não encontrado');
+        await expect(sut.lookup(VALID_CNPJ)).rejects.toThrow(ExternalApiError);
+        await expect(sut.lookup(VALID_CNPJ)).rejects.toThrow('CNPJ não encontrado');
+
+        expect(logger.error).toHaveBeenCalledWith(LogContext.CNPJ_LOOKUP, {
+          adapter: 'cnpja',
+          cnpj: VALID_CNPJ,
+          error: expect.any(ExternalApiError),
+        });
       });
 
       it('should throw ExternalApiError when company.name is null', async() => {
@@ -133,8 +191,14 @@ describe('CnpjLookupCnpjaAdapterGateway', () => {
 
         httpService.axiosRef.get = jest.fn().mockResolvedValue({ data: mockResponse });
 
-        await expect(sut.lookup(CNPJ)).rejects.toThrow(ExternalApiError);
-        await expect(sut.lookup(CNPJ)).rejects.toThrow('CNPJ não encontrado');
+        await expect(sut.lookup(VALID_CNPJ)).rejects.toThrow(ExternalApiError);
+        await expect(sut.lookup(VALID_CNPJ)).rejects.toThrow('CNPJ não encontrado');
+
+        expect(logger.error).toHaveBeenCalledWith(LogContext.CNPJ_LOOKUP, {
+          adapter: 'cnpja',
+          cnpj: VALID_CNPJ,
+          error: expect.any(ExternalApiError),
+        });
       });
 
       it('should throw ExternalApiError when company.name is undefined', async() => {
@@ -145,8 +209,14 @@ describe('CnpjLookupCnpjaAdapterGateway', () => {
 
         httpService.axiosRef.get = jest.fn().mockResolvedValue({ data: mockResponse });
 
-        await expect(sut.lookup(CNPJ)).rejects.toThrow(ExternalApiError);
-        await expect(sut.lookup(CNPJ)).rejects.toThrow('CNPJ não encontrado');
+        await expect(sut.lookup(VALID_CNPJ)).rejects.toThrow(ExternalApiError);
+        await expect(sut.lookup(VALID_CNPJ)).rejects.toThrow('CNPJ não encontrado');
+
+        expect(logger.error).toHaveBeenCalledWith(LogContext.CNPJ_LOOKUP, {
+          adapter: 'cnpja',
+          cnpj: VALID_CNPJ,
+          error: expect.any(ExternalApiError),
+        });
       });
     });
 
@@ -159,12 +229,12 @@ describe('CnpjLookupCnpjaAdapterGateway', () => {
 
         httpService.axiosRef.get = jest.fn().mockResolvedValue({ data: mockResponse });
 
-        await expect(sut.lookup(CNPJ)).rejects.toThrow(ExternalApiError);
-        await expect(sut.lookup(CNPJ)).rejects.toThrow('CNPJ não encontrado');
+        await expect(sut.lookup(VALID_CNPJ)).rejects.toThrow(ExternalApiError);
+        await expect(sut.lookup(VALID_CNPJ)).rejects.toThrow('CNPJ não encontrado');
 
         expect(logger.error).toHaveBeenCalledWith(LogContext.CNPJ_LOOKUP, {
           adapter: 'cnpja',
-          cnpj: CNPJ,
+          cnpj: VALID_CNPJ,
           error: expect.any(ExternalApiError),
         });
       });
@@ -172,12 +242,12 @@ describe('CnpjLookupCnpjaAdapterGateway', () => {
       it('should throw ExternalApiError and log when data is missing', async() => {
         httpService.axiosRef.get = jest.fn().mockResolvedValue({ data: undefined });
 
-        await expect(sut.lookup(CNPJ)).rejects.toThrow(ExternalApiError);
-        await expect(sut.lookup(CNPJ)).rejects.toThrow('CNPJ não encontrado');
+        await expect(sut.lookup(VALID_CNPJ)).rejects.toThrow(ExternalApiError);
+        await expect(sut.lookup(VALID_CNPJ)).rejects.toThrow('CNPJ não encontrado');
 
         expect(logger.error).toHaveBeenCalledWith(LogContext.CNPJ_LOOKUP, {
           adapter: 'cnpja',
-          cnpj: CNPJ,
+          cnpj: VALID_CNPJ,
           error: expect.any(ExternalApiError),
         });
       });
@@ -190,12 +260,12 @@ describe('CnpjLookupCnpjaAdapterGateway', () => {
 
         httpService.axiosRef.get = jest.fn().mockResolvedValue({ data: mockResponse });
 
-        await expect(sut.lookup(CNPJ)).rejects.toThrow(ExternalApiError);
-        await expect(sut.lookup(CNPJ)).rejects.toThrow('CNPJ não encontrado');
+        await expect(sut.lookup(VALID_CNPJ)).rejects.toThrow(ExternalApiError);
+        await expect(sut.lookup(VALID_CNPJ)).rejects.toThrow('CNPJ não encontrado');
 
         expect(logger.error).toHaveBeenCalledWith(LogContext.CNPJ_LOOKUP, {
           adapter: 'cnpja',
-          cnpj: CNPJ,
+          cnpj: VALID_CNPJ,
           error: expect.any(ExternalApiError),
         });
       });
@@ -212,12 +282,12 @@ describe('CnpjLookupCnpjaAdapterGateway', () => {
 
         httpService.axiosRef.get = jest.fn().mockResolvedValue(mockResponse);
 
-        await expect(sut.lookup(CNPJ)).rejects.toThrow(ExternalApiError);
-        await expect(sut.lookup(CNPJ)).rejects.toThrow('CNPJ não encontrado');
+        await expect(sut.lookup(VALID_CNPJ)).rejects.toThrow(ExternalApiError);
+        await expect(sut.lookup(VALID_CNPJ)).rejects.toThrow('CNPJ não encontrado');
 
         expect(logger.error).toHaveBeenCalledWith(LogContext.CNPJ_LOOKUP, {
           adapter: 'cnpja',
-          cnpj: CNPJ,
+          cnpj: VALID_CNPJ,
           error: expect.any(ExternalApiError),
         });
       });
@@ -231,29 +301,29 @@ describe('CnpjLookupCnpjaAdapterGateway', () => {
 
         httpService.axiosRef.get = jest.fn().mockResolvedValue(mockResponse);
 
-        await expect(sut.lookup(CNPJ)).rejects.toThrow(ExternalApiError);
-        await expect(sut.lookup(CNPJ)).rejects.toThrow('CNPJ não encontrado');
+        await expect(sut.lookup(VALID_CNPJ)).rejects.toThrow(ExternalApiError);
+        await expect(sut.lookup(VALID_CNPJ)).rejects.toThrow('CNPJ não encontrado');
 
         expect(logger.error).toHaveBeenCalledWith(LogContext.CNPJ_LOOKUP, {
           adapter: 'cnpja',
-          cnpj: CNPJ,
+          cnpj: VALID_CNPJ,
           error: expect.any(ExternalApiError),
         });
       });
 
       it('should throw ExternalApiError and log when API returns string instead of object', async() => {
         const mockResponse = {
-          data: 'resposta inválida',
+          data: 'invalid response',
         };
 
         httpService.axiosRef.get = jest.fn().mockResolvedValue(mockResponse);
 
-        await expect(sut.lookup(CNPJ)).rejects.toThrow(ExternalApiError);
-        await expect(sut.lookup(CNPJ)).rejects.toThrow('CNPJ não encontrado');
+        await expect(sut.lookup(VALID_CNPJ)).rejects.toThrow(ExternalApiError);
+        await expect(sut.lookup(VALID_CNPJ)).rejects.toThrow('CNPJ não encontrado');
 
         expect(logger.error).toHaveBeenCalledWith(LogContext.CNPJ_LOOKUP, {
           adapter: 'cnpja',
-          cnpj: CNPJ,
+          cnpj: VALID_CNPJ,
           error: expect.any(ExternalApiError),
         });
       });
@@ -264,12 +334,12 @@ describe('CnpjLookupCnpjaAdapterGateway', () => {
         const networkError = new Error('Network Error');
         httpService.axiosRef.get = jest.fn().mockRejectedValue(networkError);
 
-        await expect(sut.lookup(CNPJ)).rejects.toThrow(ExternalApiError);
-        await expect(sut.lookup(CNPJ)).rejects.toThrow('Network Error');
+        await expect(sut.lookup(VALID_CNPJ)).rejects.toThrow(ExternalApiError);
+        await expect(sut.lookup(VALID_CNPJ)).rejects.toThrow('Network Error');
 
         expect(logger.error).toHaveBeenCalledWith(LogContext.CNPJ_LOOKUP, {
           adapter: 'cnpja',
-          cnpj: CNPJ,
+          cnpj: VALID_CNPJ,
           error: networkError,
         });
       });
@@ -281,12 +351,12 @@ describe('CnpjLookupCnpjaAdapterGateway', () => {
         };
         httpService.axiosRef.get = jest.fn().mockRejectedValue(axiosError);
 
-        await expect(sut.lookup(CNPJ)).rejects.toThrow(ExternalApiError);
-        await expect(sut.lookup(CNPJ)).rejects.toThrow('Request failed with status code 404');
+        await expect(sut.lookup(VALID_CNPJ)).rejects.toThrow(ExternalApiError);
+        await expect(sut.lookup(VALID_CNPJ)).rejects.toThrow('Request failed with status code 404');
 
         expect(logger.error).toHaveBeenCalledWith(LogContext.CNPJ_LOOKUP, {
           adapter: 'cnpja',
-          cnpj: CNPJ,
+          cnpj: VALID_CNPJ,
           error: axiosError,
         });
       });
@@ -298,12 +368,12 @@ describe('CnpjLookupCnpjaAdapterGateway', () => {
         };
         httpService.axiosRef.get = jest.fn().mockRejectedValue(axiosError);
 
-        await expect(sut.lookup(CNPJ)).rejects.toThrow(ExternalApiError);
-        await expect(sut.lookup(CNPJ)).rejects.toThrow('Request failed with status code 500');
+        await expect(sut.lookup(VALID_CNPJ)).rejects.toThrow(ExternalApiError);
+        await expect(sut.lookup(VALID_CNPJ)).rejects.toThrow('Request failed with status code 500');
 
         expect(logger.error).toHaveBeenCalledWith(LogContext.CNPJ_LOOKUP, {
           adapter: 'cnpja',
-          cnpj: CNPJ,
+          cnpj: VALID_CNPJ,
           error: axiosError,
         });
       });
@@ -312,12 +382,12 @@ describe('CnpjLookupCnpjaAdapterGateway', () => {
         const timeoutError = new Error('timeout of 5000ms exceeded');
         httpService.axiosRef.get = jest.fn().mockRejectedValue(timeoutError);
 
-        await expect(sut.lookup(CNPJ)).rejects.toThrow(ExternalApiError);
-        await expect(sut.lookup(CNPJ)).rejects.toThrow('timeout of 5000ms exceeded');
+        await expect(sut.lookup(VALID_CNPJ)).rejects.toThrow(ExternalApiError);
+        await expect(sut.lookup(VALID_CNPJ)).rejects.toThrow('timeout of 5000ms exceeded');
 
         expect(logger.error).toHaveBeenCalledWith(LogContext.CNPJ_LOOKUP, {
           adapter: 'cnpja',
-          cnpj: CNPJ,
+          cnpj: VALID_CNPJ,
           error: timeoutError,
         });
       });
@@ -334,22 +404,9 @@ describe('CnpjLookupCnpjaAdapterGateway', () => {
         });
         httpService.axiosRef.get = jest.fn().mockResolvedValue({ data: mockResponse });
 
-        await sut.lookup(CNPJ);
+        await sut.lookup(VALID_CNPJ);
 
-        expect(httpService.axiosRef.get).toHaveBeenCalledWith(`${customUrl}/${CNPJ}`);
-      });
-
-      it('should pass correct CNPJ in URL', async() => {
-        const cnpj = '98765432000111';
-        const mockResponse = createMock<CnpjaOutputDto>({
-          alias: 'Fantasia',
-          company: { name: 'Razão Social' },
-        });
-        httpService.axiosRef.get = jest.fn().mockResolvedValue({ data: mockResponse });
-
-        await sut.lookup(cnpj);
-
-        expect(httpService.axiosRef.get).toHaveBeenCalledWith(`${API_URL}/${cnpj}`);
+        expect(httpService.axiosRef.get).toHaveBeenCalledWith(`${customUrl}/${VALID_CNPJ_NORMALIZED}`);
       });
     });
   });
