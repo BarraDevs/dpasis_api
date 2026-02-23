@@ -1,3 +1,4 @@
+import { HttpModule } from '@nestjs/axios';
 import { DynamicModule, Module } from '@nestjs/common';
 import { ConfigModule } from 'src/core/config/config.module';
 import { Environment } from 'src/core/config/environment.enum';
@@ -14,6 +15,7 @@ export class CnpjLookupModule {
       module: CnpjLookupModule,
       imports: [
         ConfigModule,
+        HttpModule,
       ],
       providers: [
         {
