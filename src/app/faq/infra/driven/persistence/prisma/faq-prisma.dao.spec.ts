@@ -184,7 +184,7 @@ describe('FaqDaoAdapterPrisma - Integration tests', () => {
   describe('findById', () => {
     it('should return null when faq does not exist', async() => {
       // Arrange
-      const id = 'non-existing-id';
+      const id = 0;
 
       // Act
       const result = await sut.findById(id);
@@ -243,7 +243,7 @@ describe('FaqDaoAdapterPrisma - Integration tests', () => {
 
       // Assert
       expect(id).toBeDefined();
-      expect(typeof id).toBe('string');
+      expect(typeof id).toBe('number');
 
       const saved = await prisma.faq.findUnique({ where: { id } });
       expect(saved).not.toBeNull();

@@ -39,7 +39,7 @@ describe('CreateFaq - Unit tests', () => {
   it('should call faqDao.save with correct data', async() => {
     // Arrange
     const input = makeValidCreateFaqInput();
-    const saveSpy = jest.spyOn(faqDao, 'save').mockResolvedValue('faq-id-123');
+    const saveSpy = jest.spyOn(faqDao, 'save').mockResolvedValue(1);
 
     // Act
     await sut.execute(input);
@@ -52,7 +52,7 @@ describe('CreateFaq - Unit tests', () => {
   it('should return id from faqDao.save', async() => {
     // Arrange
     const input = makeValidCreateFaqInput();
-    const id = 'generated-faq-id';
+    const id = 1;
     jest.spyOn(faqDao, 'save').mockResolvedValue(id);
 
     // Act
@@ -68,7 +68,7 @@ describe('CreateFaq - Unit tests', () => {
       question: 'Qual o horário de funcionamento?',
       answer: 'Segunda a sexta, das 8h às 18h.',
     });
-    const saveSpy = jest.spyOn(faqDao, 'save').mockResolvedValue('id');
+    const saveSpy = jest.spyOn(faqDao, 'save').mockResolvedValue(1);
 
     // Act
     await sut.execute(input);

@@ -10,7 +10,7 @@ export class DeleteFaq {
     @Inject(TOKENS.FaqDao) private readonly faqDao: IFaqDao,
   ) {}
 
-  public async execute(id: string): Promise<SuccessMessage> {
+  public async execute(id: number): Promise<SuccessMessage> {
     const faq = await this.faqDao.findById(id);
     if (!faq) {
       throw new FaqNotFoundError();

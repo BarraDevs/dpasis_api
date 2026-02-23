@@ -33,7 +33,7 @@ describe('EditFaq - Unit tests', () => {
 
   it('should throw FaqNotFoundError when faq does not exist', async() => {
     // Arrange
-    const id = 'non-existing-id';
+    const id = 0;
     const data: EditFaqInputDto = { question: 'Nova pergunta' };
     jest.spyOn(faqDao, 'findById').mockResolvedValue(null);
 
@@ -43,7 +43,7 @@ describe('EditFaq - Unit tests', () => {
 
   it('should call faqDao.findById to validate existence', async() => {
     // Arrange
-    const id = 'faq-id';
+    const id = 1;
     const data: EditFaqInputDto = { question: 'Nova pergunta' };
     jest.spyOn(faqDao, 'findById').mockResolvedValue(createMock<FaqDto>());
     const findByIdSpy = jest.spyOn(faqDao, 'findById');
@@ -58,7 +58,7 @@ describe('EditFaq - Unit tests', () => {
 
   it('should call faqDao.edit with id and data', async() => {
     // Arrange
-    const id = 'faq-id';
+    const id = 1;
     const data: EditFaqInputDto = { question: 'Nova pergunta', answer: 'Nova resposta' };
     jest.spyOn(faqDao, 'findById').mockResolvedValue(createMock<FaqDto>());
     const editSpy = jest.spyOn(faqDao, 'edit');
@@ -73,7 +73,7 @@ describe('EditFaq - Unit tests', () => {
 
   it('should return success message', async() => {
     // Arrange
-    const id = 'faq-id';
+    const id = 1;
     const data: EditFaqInputDto = { question: 'Nova pergunta' };
     jest.spyOn(faqDao, 'findById').mockResolvedValue(createMock<FaqDto>());
 
@@ -88,7 +88,7 @@ describe('EditFaq - Unit tests', () => {
 
   it('should not call edit when faq does not exist', async() => {
     // Arrange
-    const id = 'non-existing-id';
+    const id = 0;
     const data: EditFaqInputDto = { question: 'Nova pergunta' };
     jest.spyOn(faqDao, 'findById').mockResolvedValue(null);
     const editSpy = jest.spyOn(faqDao, 'edit');

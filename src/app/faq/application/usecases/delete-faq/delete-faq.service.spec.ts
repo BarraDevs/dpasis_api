@@ -32,7 +32,7 @@ describe('DeleteFaq - Unit tests', () => {
 
   it('should throw FaqNotFoundError when faq does not exist', async() => {
     // Arrange
-    const id = 'non-existing-id';
+    const id = 0;
     jest.spyOn(faqDao, 'findById').mockResolvedValue(null);
 
     // Act & Assert
@@ -42,7 +42,7 @@ describe('DeleteFaq - Unit tests', () => {
 
   it('should call faqDao.findById to validate existence', async() => {
     // Arrange
-    const id = 'faq-id';
+    const id = 1;
     jest.spyOn(faqDao, 'findById').mockResolvedValue(createMock<FaqDto>());
     const findByIdSpy = jest.spyOn(faqDao, 'findById');
 
@@ -56,7 +56,7 @@ describe('DeleteFaq - Unit tests', () => {
 
   it('should call faqDao.delete with correct id', async() => {
     // Arrange
-    const id = 'faq-id';
+    const id = 1;
     jest.spyOn(faqDao, 'findById').mockResolvedValue(createMock<FaqDto>());
     const deleteSpy = jest.spyOn(faqDao, 'delete');
 
@@ -70,7 +70,7 @@ describe('DeleteFaq - Unit tests', () => {
 
   it('should return success message', async() => {
     // Arrange
-    const id = 'faq-id';
+    const id = 1;
     jest.spyOn(faqDao, 'findById').mockResolvedValue(createMock<FaqDto>());
 
     // Act
@@ -84,7 +84,7 @@ describe('DeleteFaq - Unit tests', () => {
 
   it('should not call delete when faq does not exist', async() => {
     // Arrange
-    const id = 'non-existing-id';
+    const id = 0;
     jest.spyOn(faqDao, 'findById').mockResolvedValue(null);
     const deleteSpy = jest.spyOn(faqDao, 'delete');
 

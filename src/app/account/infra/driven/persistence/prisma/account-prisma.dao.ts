@@ -57,7 +57,7 @@ export class AccountDaoAdapterPrisma implements IAccountDao {
     };
   }
 
-  public async findById(id: string): Promise<AccountDto | null> {
+  public async findById(id: number): Promise<AccountDto | null> {
     const account = await this.prisma.account.findUnique({
       where: { id },
       select: AccountSelect,
@@ -73,14 +73,14 @@ export class AccountDaoAdapterPrisma implements IAccountDao {
     };
   }
 
-  public async forgotPassword(id: string, passwordResetToken: string): Promise<void> {
+  public async forgotPassword(id: number, passwordResetToken: string): Promise<void> {
     await this.prisma.account.update({
       where: { id },
       data: { passwordResetToken },
     });
   }
 
-  public async resetPassword(id: string, password: string): Promise<void> {
+  public async resetPassword(id: number, password: string): Promise<void> {
     await this.prisma.account.update({
       where: { id },
       data: {

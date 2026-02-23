@@ -74,7 +74,7 @@ describe('AuthenticationGuard', () => {
 
     it('should return false when account is not found', async() => {
       // Arrange
-      const user = createMock<Payload>({ sub: '123' });
+      const user = createMock<Payload>({ sub: 123 });
       const context = contextMockFactory(user, type);
       const getAccountMock = jest.spyOn(AuthenticationGuard.prototype as any, 'getAccount').mockResolvedValue(null);
 
@@ -88,7 +88,7 @@ describe('AuthenticationGuard', () => {
 
     it('should throw an error when account is inactive', async() => {
       // Arrange
-      const user = createMock<Payload>({ sub: '123' });
+      const user = createMock<Payload>({ sub: 123 });
       const context = contextMockFactory(user, type);
 
       const account = createMock<AccountDto>({ role: AccountRole.ADMIN, status: AccountStatus.INACTIVE });
@@ -103,7 +103,7 @@ describe('AuthenticationGuard', () => {
 
     it('should return true when account is active', async() => {
       // Arrange
-      const user = createMock<Payload>({ sub: '123' });
+      const user = createMock<Payload>({ sub: 123 });
       const context = contextMockFactory(user, type);
 
       const account = createMock<AccountDto>({ role: AccountRole.ADMIN, status: AccountStatus.ACTIVE });
@@ -118,7 +118,7 @@ describe('AuthenticationGuard', () => {
 
     it('should get account from cache if available', async() => {
       // Arrange
-      const user = createMock<Payload>({ sub: '123' });
+      const user = createMock<Payload>({ sub: 123 });
       const context = contextMockFactory(user, type);
 
       const account = createMock<AccountDto>({ role: AccountRole.ADMIN, status: AccountStatus.ACTIVE });
@@ -137,7 +137,7 @@ describe('AuthenticationGuard', () => {
 
     it('should get account from database if not in cache', async() => {
       // Arrange
-      const user = createMock<Payload>({ sub: '123' });
+      const user = createMock<Payload>({ sub: 123 });
       const context = contextMockFactory(user, type);
       const cacheKey = `cache:global:account:detail:${user.sub}`;
 

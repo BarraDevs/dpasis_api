@@ -37,10 +37,10 @@ export class AuthenticationGuard implements CanActivate {
     return true;
   }
 
-  private async getAccount(accountId: string): Promise<AccountDto | null> {
+  private async getAccount(accountId: number): Promise<AccountDto | null> {
     const key = new CacheKeyBuilder()
       .setResource('account')
-      .setCommand('detail', accountId)
+      .setCommand('detail', accountId.toString())
       .build();
 
     const cachedAccount = await this.cacheGateway.get<AccountDto>(key);

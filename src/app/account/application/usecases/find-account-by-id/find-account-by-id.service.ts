@@ -9,7 +9,7 @@ export class FindAccountById {
     @Inject(TOKENS.AccountDao) private readonly accountDao: IAccountDao,
   ) {}
 
-  public async execute(id: string): Promise<AccountDto | null> {
+  public async execute(id: number): Promise<AccountDto | null> {
     return this.accountDao.findById(id);
   }
 }

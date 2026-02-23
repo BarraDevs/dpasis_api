@@ -10,7 +10,7 @@ export class FindFaqById {
     @Inject(TOKENS.FaqDao) private readonly faqDao: IFaqDao,
   ) {}
 
-  public async execute(id: string): Promise<FaqDto> {
+  public async execute(id: number): Promise<FaqDto> {
     const faq = await this.faqDao.findById(id);
     if (!faq) {
       throw new FaqNotFoundError();

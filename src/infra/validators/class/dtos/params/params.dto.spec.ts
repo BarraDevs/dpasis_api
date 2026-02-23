@@ -3,75 +3,59 @@ import { pipeOptions } from 'src/infra/validators/class/config';
 import { Params } from './params.dto';
 
 const metadata: ArgumentMetadata = {
-  type: 'body',
+  type: 'param',
   metatype: Params,
 };
 
-describe('Params', () => {
+describe('Params DTO', () => {
   let target: ValidationPipe;
 
   beforeEach(() => {
     target = new ValidationPipe(pipeOptions);
   });
 
-  describe.each(
-    [
-      'id',
-    ]
-  )('%s field', (field: string) => {
-    it.each(
-      [
-        undefined,
-        null,
-        '',
-        '  ',
-      ]
-    )(`should throw an error if ${field} is empty (%s)`, async(value: any) => {
-      const data = { [field]: value };
+  describe('id field', () => {
+    it.each([
+      undefined,
+      null,
+      '',
+      '  ',
+    ])('should throw an error if id is empty (%s)', async(value: any) => {
+      const data = { id: value };
 
       expect.assertions(1);
       return target.transform(data, metadata).catch((error) => {
-        expect(error.getResponse().message).toContain(`${field} é obrigatório`);
+        expect(error.getResponse().message).toContain('id é obrigatório');
       });
     });
 
-    it.each(
-      [
-        123,
-        true,
-        false,
-        {},
-        [],
-        () => {},
-        Symbol('test'),
-        BigInt(123),
-        new Date(),
-        [1, 2, 3],
-        { key: 'value' },
-        new Map(),
-        new Set(),
-        Buffer.from('test'),
-        new ArrayBuffer(8),
-        new Int32Array(8),
-      ]
-    )(`should throw an error if ${field} is not a string (%s)`, async(value: any) => {
-      const data = { [field]: value };
+    it.each([
+      '1',
+      '10',
+      '100',
+    ])('should convert valid string numbers to integers (%s)', async(value: string) => {
+      const data = { id: value };
 
-      expect.assertions(1);
-      return target.transform(data, metadata).catch((error) => {
-        expect(error.getResponse().message).toContain(`${field} deve ser um texto`);
-      });
+      const result = await target.transform(data, metadata);
+      expect(result).toBeInstanceOf(Params);
+      expect(result.id).toBe(parseInt(value));
     });
-  });
 
-  it('should pass if all fields are valid', async() => {
-    const data = {
-      id: '  random - - id  ',
-    };
+    it('should trim whitespace from id before converting', async() => {
+      const data = { id: '  123  ' };
 
-    const result = await target.transform(data, metadata);
+      const result = await target.transform(data, metadata);
+      expect(result).toBeInstanceOf(Params);
+      expect(result.id).toBe(123);
+    });
 
-    expect(result).toBeInstanceOf(Params);
-    expect(result).toEqual({ id: 'random - - id' });
+    it('should pass if all fields are valid', async() => {
+      const data = { id: '42' };
+
+      const result = await target.transform(data, metadata);
+
+      expect(result).toBeInstanceOf(Params);
+      expect(result).toEqual({ id: 42 });
+    });
   });
 });

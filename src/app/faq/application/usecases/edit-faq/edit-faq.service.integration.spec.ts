@@ -33,7 +33,7 @@ describe('EditFaq - Integration tests', () => {
 
   it('should throw FaqNotFoundError when faq does not exist', async() => {
     // Arrange
-    const id = 'non-existing-id';
+    const id = 0;
     const data: EditFaqInputDto = { question: 'Nova pergunta' };
 
     // Act & Assert

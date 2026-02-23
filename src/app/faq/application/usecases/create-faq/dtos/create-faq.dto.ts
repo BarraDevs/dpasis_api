@@ -19,5 +19,5 @@ export class CreateFaqInputDto {
 }
 
 export class CreateFaqOutputDto {
-  id: string;
+  id: number;
 }

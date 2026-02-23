@@ -42,7 +42,7 @@ describe('CreateFaq - Integration tests', () => {
 
     // Assert
     expect(result.id).toBeDefined();
-    expect(typeof result.id).toBe('string');
+    expect(typeof result.id).toBe('number');
 
     const saved = await prisma.faq.findUnique({ where: { id: result.id } });
     expect(saved).not.toBeNull();

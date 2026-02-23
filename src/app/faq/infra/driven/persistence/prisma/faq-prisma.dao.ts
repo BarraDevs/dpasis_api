@@ -45,14 +45,14 @@ export class FaqDaoAdapterPrisma implements IFaqDao {
     return [faqs, total];
   }
 
-  public async findById(id: string): Promise<FaqDto | null> {
+  public async findById(id: number): Promise<FaqDto | null> {
     return this.prisma.faq.findUnique({
       where: { id },
       select: FaqSelect,
     });
   }
 
-  public async save(data: CreateFaqInputDto): Promise<string> {
+  public async save(data: CreateFaqInputDto): Promise<number> {
     const result = await this.prisma.faq.create({
       data,
     });
@@ -60,14 +60,14 @@ export class FaqDaoAdapterPrisma implements IFaqDao {
     return result.id;
   }
 
-  public async edit(id: string, data: EditFaqInputDto): Promise<void> {
+  public async edit(id: number, data: EditFaqInputDto): Promise<void> {
     await this.prisma.faq.update({
       where: { id },
       data,
     });
   }
 
-  public async delete(id: string): Promise<void> {
+  public async delete(id: number): Promise<void> {
     await this.prisma.faq.delete({
       where: { id },
     });

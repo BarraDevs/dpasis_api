@@ -11,7 +11,7 @@ export class EditFaq {
     @Inject(TOKENS.FaqDao) private readonly faqDao: IFaqDao,
   ) {}
 
-  public async execute(id: string, data: EditFaqInputDto): Promise<SuccessMessage> {
+  public async execute(id: number, data: EditFaqInputDto): Promise<SuccessMessage> {
     const faq = await this.faqDao.findById(id);
     if (!faq) {
       throw new FaqNotFoundError();

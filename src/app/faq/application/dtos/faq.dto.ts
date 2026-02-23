@@ -1,5 +1,5 @@
 export class FaqDto {
-  id: string;
+  id: number;
   question: string;
   answer: string;
   createdAt: Date;

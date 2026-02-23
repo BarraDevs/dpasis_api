@@ -101,7 +101,7 @@ describe('AccountDaoAdapterPrisma - Integration tests', () => {
 
   describe('findById', () => {
     it('should return null when account does not exist', async() => {
-      const id = 'non-existing-id';
+      const id = 0;
 
       const result = await sut.findById(id);
 

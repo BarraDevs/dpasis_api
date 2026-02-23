@@ -1,9 +1,10 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty } from 'class-validator';
 import { Trim } from '../../decorators/trim/trim';
+import { StringToNumber } from '../../decorators/string-number/string-number';
 
 export class Params {
-  @IsString({ message: '$property deve ser um texto' })
   @IsNotEmpty({ message: '$property é obrigatório' })
+  @StringToNumber()
   @Trim()
-  id: string;
+  id: number;
 }

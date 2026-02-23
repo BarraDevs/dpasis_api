@@ -30,7 +30,7 @@ describe('FindAccountById - Unit tests', () => {
 
   it('should call accountDao.findById with correct values', async() => {
     // Arrange
-    const id = 'any-id';
+    const id = 1;
     const findByIdSpy = jest.spyOn(accountDao, 'findById');
 
     // Act
@@ -42,7 +42,7 @@ describe('FindAccountById - Unit tests', () => {
 
   it('should return null if account is not found', async() => {
     // Arrange
-    const id = 'non-existing-id';
+    const id = 0;
     jest.spyOn(accountDao, 'findById').mockResolvedValue(null);
 
     // Act
@@ -54,7 +54,7 @@ describe('FindAccountById - Unit tests', () => {
 
   it('should return account if found by id', async() => {
     // Arrange
-    const id = 'any-id';
+    const id = 1;
     const account = createMock<AccountDto>();
     jest.spyOn(accountDao, 'findById').mockResolvedValue(account);
 

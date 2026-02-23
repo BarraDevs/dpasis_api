@@ -31,7 +31,7 @@ describe('FindFaqById - Unit tests', () => {
 
   it('should call faqDao.findById with correct id', async() => {
     // Arrange
-    const id = 'any-id';
+    const id = 1;
     const mockFaq = createMock<FaqDto>();
     jest.spyOn(faqDao, 'findById').mockResolvedValue(mockFaq);
     const findByIdSpy = jest.spyOn(faqDao, 'findById');
@@ -46,7 +46,7 @@ describe('FindFaqById - Unit tests', () => {
 
   it('should throw FaqNotFoundError when faq does not exist', async() => {
     // Arrange
-    const id = 'non-existing-id';
+    const id = 0;
     jest.spyOn(faqDao, 'findById').mockResolvedValue(null);
 
     // Act & Assert
@@ -56,7 +56,7 @@ describe('FindFaqById - Unit tests', () => {
 
   it('should return faq when found', async() => {
     // Arrange
-    const id = 'existing-id';
+    const id = 1;
     const mockFaq = createMock<FaqDto>({
       id,
       question: 'Pergunta?',

@@ -45,12 +45,20 @@ describe('StringToNumber', () => {
       expect(typeof instance.value).toBe('number');
     });
 
-    it('should transform empty string to number zero', () => {
+    it('should not transform empty string', () => {
       const plain = { value: '' };
       const instance = plainToInstance(TestClass, plain);
 
-      expect(instance.value).toBe(0);
-      expect(typeof instance.value).toBe('number');
+      expect(instance.value).toBe('');
+      expect(typeof instance.value).toBe('string');
+    });
+
+    it('should not transform whitespace string', () => {
+      const plain = { value: '   ' };
+      const instance = plainToInstance(TestClass, plain);
+
+      expect(instance.value).toBe('   ');
+      expect(typeof instance.value).toBe('string');
     });
 
     it('should transform invalid string to NaN', () => {

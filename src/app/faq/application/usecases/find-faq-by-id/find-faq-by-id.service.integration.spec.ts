@@ -33,7 +33,7 @@ describe('FindFaqById - Integration tests', () => {
 
   it('should throw FaqNotFoundError when faq does not exist', async() => {
     // Arrange
-    const id = 'non-existing-id';
+    const id = 0;
 
     // Act & Assert
     await expect(sut.execute(id)).rejects.toThrow(FaqNotFoundError);

@@ -38,7 +38,7 @@ describe('FindAccountById - Integration tests', () => {
 
   it('should return null if account is not found', async() => {
     // Arrange
-    const id = 'non-existing-id';
+    const id = 0;
 
     // Act
     const result = await sut.execute(id);

@@ -1,6 +1,6 @@
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
 
 export type Payload = {
-  sub: string;
+  sub: number;
   role: AccountRole;
 }
