@@ -1,0 +1,27 @@
+import { {{moduleNamePascal}}Status } from '../enums/{{moduleName}}-status.enum';
+import { {{moduleNamePascal}} } from './{{moduleName}}.entity';
+
+describe('{{moduleNamePascal}}', () => {
+  it('should create entity with create()', () => {
+    const entity = {{moduleNamePascal}}.create({ field: 'value' });
+    expect(entity).toBeDefined();
+    expect(entity.props.id).toBeDefined();
+    expect(entity.props.field).toBe('value');
+    expect(entity.props.createdAt).toBeDefined();
+    expect(entity.props.updatedAt).toBeDefined();
+  });
+
+  it('should load entity with load()', () => {
+    const props = {
+      id: 'test-id',
+      field: 'value',
+      status: {{moduleNamePascal}}Status.ACTIVE,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    const entity = {{moduleNamePascal}}.load(props);
+    expect(entity).toBeDefined();
+    expect(entity.props.id).toBe('test-id');
+    expect(entity.props.field).toBe('value');
+  });
+});

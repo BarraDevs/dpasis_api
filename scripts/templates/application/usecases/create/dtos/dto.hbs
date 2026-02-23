@@ -1,0 +1,13 @@
+import { IsNotEmpty, IsString } from 'class-validator';
+import { Trim } from 'src/infra/validators/{{validatorsPath}}/decorators/trim/trim';
+
+export class Create{{moduleNamePascal}}InputDto {
+  @IsString({ message: '$property deve ser uma string' })
+  @IsNotEmpty({ message: '$property é obrigatório' })
+  @Trim()
+  field: string;
+}
+
+export class Create{{moduleNamePascal}}OutputDto {
+  id: string;
+}

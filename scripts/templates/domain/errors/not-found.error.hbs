@@ -1,0 +1,8 @@
+import { AppException } from 'src/core/filters/app.exception';
+
+export class {{moduleNamePascal}}NotFoundError extends AppException {
+  constructor() {
+    super('{{moduleNamePascal}} não encontrado.', 404);
+    this.name = '{{moduleNamePascal}}NotFoundError';
+  }
+}

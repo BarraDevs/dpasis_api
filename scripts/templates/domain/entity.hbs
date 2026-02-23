@@ -1,0 +1,55 @@
+import { AppException } from 'src/core/filters/app.exception';
+import { UTCDate } from 'src/shared/value-objects/utc-date/utc-date.vo';
+import { UUID } from 'src/shared/value-objects/uuid/uuid.vo';
+import { {{moduleNamePascal}}Status } from '../enums/{{moduleName}}-status.enum';
+
+type {{moduleNamePascal}}Props = {{moduleNamePascal}}CreateProps & {
+  id: string;
+  status: {{moduleNamePascal}}Status;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+type {{moduleNamePascal}}CreateProps = {
+  field: string;
+};
+
+export class {{moduleNamePascal}} {
+  private readonly _props: {{moduleNamePascal}}Props;
+
+  private validateRequiredFields(props: {{moduleNamePascal}}Props): void {
+    if (typeof props.field !== 'string' || !props.field || !props.field.trim()) {
+      throw new AppException('O campo field não pode ser vazio');
+    }
+  }
+
+  static create(props: {{moduleNamePascal}}CreateProps): {{moduleNamePascal}} {
+    const now = UTCDate.create().value;
+    return new {{moduleNamePascal}}({
+      id: new UUID().value,
+      field: props.field,
+      status: {{moduleNamePascal}}Status.ACTIVE,
+      createdAt: now,
+      updatedAt: now,
+    });
+  }
+
+  static load(props: {{moduleNamePascal}}Props): {{moduleNamePascal}} {
+    return new {{moduleNamePascal}}(props);
+  }
+
+  public get props(): Readonly<{{moduleNamePascal}}Props> {
+    return { ...this._props };
+  }
+
+  private constructor(props: {{moduleNamePascal}}Props) {
+    this.validateRequiredFields(props);
+    this._props = {
+      id: props.id,
+      field: props.field,
+      status: props.status,
+      createdAt: UTCDate.from(props.createdAt).value,
+      updatedAt: UTCDate.from(props.updatedAt).value,
+    };
+  }
+}

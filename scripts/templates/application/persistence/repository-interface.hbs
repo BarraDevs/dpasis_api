@@ -1,0 +1,8 @@
+import { {{moduleNamePascal}} } from 'src/app/{{moduleName}}/domain/entities/{{moduleName}}.entity';
+
+export interface I{{moduleNamePascal}}Repository {
+  save(entity: {{moduleNamePascal}}): Promise<void>;
+  edit(entity: {{moduleNamePascal}}): Promise<void>;
+  findById(id: string): Promise<{{moduleNamePascal}} | null>;
+  delete(id: string): Promise<void>;
+}
