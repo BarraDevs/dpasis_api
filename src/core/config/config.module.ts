@@ -37,6 +37,7 @@ import { Environment } from './environment.enum';
         REDIS_URL: Joi.string().required(),
 
         CNPJA_API_URL: Joi.string().required(),
+        VIACEP_API_URL: Joi.string().required(),
       }),
     }),
   ],

@@ -315,6 +315,18 @@ describe('ConfigService', () => {
         expect(result).toBe(mockUrl);
       });
     });
+
+    describe('viacepApiUrl', () => {
+      it('should return the VIACEP_API_URL value', () => {
+        const mockUrl = 'https://viacep.com.br/ws/01001000/json/';
+        nestConfigService.get.mockReturnValue(mockUrl);
+
+        const result = sut.viacepApiUrl;
+
+        expect(nestConfigService.get).toHaveBeenCalledWith('VIACEP_API_URL');
+        expect(result).toBe(mockUrl);
+      });
+    });
   });
 
   describe('integration scenarios', () => {

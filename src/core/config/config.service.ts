@@ -98,4 +98,9 @@ export class ConfigService {
   get cnpjaApiUrl(): string {
     return this.nestConfigService.get<string>('CNPJA_API_URL')!;
   }
+
+  // viacep
+  get viacepApiUrl(): string {
+    return this.nestConfigService.get<string>('VIACEP_API_URL')!;
+  }
 }

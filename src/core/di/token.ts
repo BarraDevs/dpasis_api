@@ -1,5 +1,6 @@
 const TOKENS = {
   CacheGateway: Symbol.for('CacheGateway'),
+  CepLookupGateway: Symbol.for('CepLookupGateway'),
   CnpjLookupGateway: Symbol.for('CnpjLookupGateway'),
   LoggerGateway: Symbol.for('LoggerGateway'),
   UploadFileGateway: Symbol.for('UploadFileGateway'),
