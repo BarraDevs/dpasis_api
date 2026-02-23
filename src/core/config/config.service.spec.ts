@@ -303,6 +303,18 @@ describe('ConfigService', () => {
         expect(result).toBe(mockDatabase);
       });
     });
+
+    describe('cnpjaApiUrl', () => {
+      it('should return the CNPJA_API_URL value', () => {
+        const mockUrl = 'https://open.cnpja.com/office';
+        nestConfigService.get.mockReturnValue(mockUrl);
+
+        const result = sut.cnpjaApiUrl;
+
+        expect(nestConfigService.get).toHaveBeenCalledWith('CNPJA_API_URL');
+        expect(result).toBe(mockUrl);
+      });
+    });
   });
 
   describe('integration scenarios', () => {

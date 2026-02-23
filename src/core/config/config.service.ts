@@ -93,4 +93,9 @@ export class ConfigService {
   get redisQueueDatabase(): number {
     return 1;
   }
+
+  // cnpja
+  get cnpjaApiUrl(): string {
+    return this.nestConfigService.get<string>('CNPJA_API_URL')!;
+  }
 }

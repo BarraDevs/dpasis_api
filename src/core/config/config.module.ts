@@ -35,6 +35,8 @@ import { Environment } from './environment.enum';
         SMTP_PASSWORD: Joi.string().required(),
 
         REDIS_URL: Joi.string().required(),
+
+        CNPJA_API_URL: Joi.string().required(),
       }),
     }),
   ],
