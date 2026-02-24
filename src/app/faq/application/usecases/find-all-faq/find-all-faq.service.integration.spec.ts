@@ -92,9 +92,11 @@ describe('FindAllFaq - Integration tests', () => {
     const first = await prisma.faq.create({
       data: { question: 'Primeira?', answer: 'Primeira.' },
     });
+    await new Promise(resolve => setTimeout(resolve, 10));
     const second = await prisma.faq.create({
       data: { question: 'Segunda?', answer: 'Segunda.' },
     });
+    await new Promise(resolve => setTimeout(resolve, 10));
     const third = await prisma.faq.create({
       data: { question: 'Terceira?', answer: 'Terceira.' },
     });
