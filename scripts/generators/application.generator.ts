@@ -71,7 +71,7 @@ export async function generateApplication(props: Props): Promise<void> {
     renderTemplate(create.dtos.dto, ctx)
   );
   await writeGeneratedFile(
-    path.join(createPath, 'dtos', `create-${props.moduleName}-dto.spec.ts`),
+    path.join(createPath, 'dtos', `create-${props.moduleName}.dto.spec.ts`),
     renderTemplate(create.dtos.dtoSpec, ctx)
   );
 
@@ -91,7 +91,7 @@ export async function generateApplication(props: Props): Promise<void> {
     renderTemplate(edit.dtos.dto, ctx)
   );
   await writeGeneratedFile(
-    path.join(editPath, 'dtos', `edit-${props.moduleName}-dto.spec.ts`),
+    path.join(editPath, 'dtos', `edit-${props.moduleName}.dto.spec.ts`),
     renderTemplate(edit.dtos.dtoSpec, ctx)
   );
 
@@ -123,7 +123,7 @@ export async function generateApplication(props: Props): Promise<void> {
     renderTemplate(findAll.dtos.dto, ctx)
   );
   await writeGeneratedFile(
-    path.join(findAllPath, 'dtos', `find-all-${props.moduleName}-dto.spec.ts`),
+    path.join(findAllPath, 'dtos', `find-all-${props.moduleName}.dto.spec.ts`),
     renderTemplate(findAll.dtos.dtoSpec, ctx)
   );
 
