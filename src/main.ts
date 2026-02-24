@@ -1,5 +1,4 @@
 import compression from 'compression';
-import fs from 'fs';
 import helmet from 'helmet';
 
 import { ValidationPipe } from '@nestjs/common';
@@ -13,13 +12,13 @@ async function bootstrap() {
   const app = process.env.NODE_ENV !== Environment.Production
     ? await NestFactory.create(AppModule)
     : await NestFactory.create(AppModule,
-      {
-        httpsOptions: {
-          key: fs.readFileSync(process.env.SSL_KEY!),
-          cert: fs.readFileSync(process.env.SSL_CERT!),
-          ca: fs.readFileSync(process.env.SSL_CA!),
-        },
-      }
+      // {
+      //   httpsOptions: {
+      //     key: fs.readFileSync(process.env.SSL_KEY!),
+      //     cert: fs.readFileSync(process.env.SSL_CERT!),
+      //     ca: fs.readFileSync(process.env.SSL_CA!),
+      //   },
+      // }
     );
 
   const config = new DocumentBuilder()
