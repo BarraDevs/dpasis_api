@@ -5,6 +5,7 @@
 // import type { I{{moduleNamePascal}}Dao } from '../../persistence/dao/{{moduleName}}-dao.interface';
 // import type { I{{moduleNamePascal}}Repository } from '../../persistence/repository/{{moduleName}}-repository.interface';
 // import { Edit{{moduleNamePascal}}InputDto } from './dtos/edit-{{moduleName}}.dto';
+// import { {{moduleNamePascal}}Factory } from '../../../domain/factories/{{moduleName}}.factory';
 //
 // @Injectable()
 // export class Edit{{moduleNamePascal}} {
@@ -14,14 +15,17 @@
 //   ) {}
 //
 //   public async execute(id: string, data: Edit{{moduleNamePascal}}InputDto): Promise<SuccessMessage> {
-//     const entity = await this.{{moduleNameCamel}}Repository.findById(id);
-//     if (!entity) {
+//     const {{moduleNameCamel}} = await this.{{moduleNameCamel}}Dao.findById(id);
+//     if (!{{moduleNameCamel}}) {
 //       throw new {{moduleNamePascal}}NotFoundError();
 //     }
 //
-//     entity.update({ field: data.field });
+//     const {{moduleNameCamel}}Entity = {{moduleNamePascal}}Factory.load({
+//       ...{{moduleNameCamel}},
+//       ...data,
+//     });
 //
-//     await this.{{moduleNameCamel}}Repository.edit(entity);
+//     await this.{{moduleNameCamel}}Repository.edit({{moduleNameCamel}}Entity);
 //
 //     return { message: 'Edição realizada com sucesso' };
 //   }

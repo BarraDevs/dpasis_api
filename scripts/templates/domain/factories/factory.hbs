@@ -1,5 +1,4 @@
 import { AppException } from 'src/core/filters/app.exception';
-import { UTCDate } from 'src/shared/value-objects/utc-date/utc-date.vo';
 import { UUID } from 'src/shared/value-objects/uuid/uuid.vo';
 import { {{moduleNamePascal}}, {{moduleNamePascal}}CreateProps, {{moduleNamePascal}}Props } from '../entities/{{moduleName}}.entity';
 import { {{moduleNamePascal}}Status } from '../enums/{{moduleName}}-status.enum';
@@ -14,14 +13,10 @@ export class {{moduleNamePascal}}Factory {
   static create(props: {{moduleNamePascal}}CreateProps): {{moduleNamePascal}} {
     this.validateCreateProps(props);
 
-    const now = UTCDate.create().value;
-
     return {{moduleNamePascal}}._instantiate({
       ...props,
       id: new UUID().value,
       status: {{moduleNamePascal}}Status.ACTIVE,
-      createdAt: now,
-      updatedAt: now,
     });
   }
 

@@ -15,8 +15,6 @@ export class {{moduleNamePascal}}RepositoryAdapterPrisma implements I{{moduleNam
         id: entity.props.id,
         field: entity.props.field,
         status: entity.props.status,
-        createdAt: entity.props.createdAt,
-        updatedAt: entity.props.updatedAt,
       },
     });
   }
@@ -27,7 +25,6 @@ export class {{moduleNamePascal}}RepositoryAdapterPrisma implements I{{moduleNam
       data: {
         field: entity.props.field,
         status: entity.props.status,
-        updatedAt: entity.props.updatedAt,
       },
     });
   }
@@ -42,8 +39,6 @@ export class {{moduleNamePascal}}RepositoryAdapterPrisma implements I{{moduleNam
       id: data.id,
       field: data.field,
       status: data.status as {{moduleNamePascal}}Status,
-      createdAt: data.createdAt,
-      updatedAt: data.updatedAt,
     });
   }
 

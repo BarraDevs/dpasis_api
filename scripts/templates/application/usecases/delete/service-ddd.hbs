@@ -13,8 +13,8 @@
 //   ) {}
 //
 //   public async execute(id: string): Promise<SuccessMessage> {
-//     const entity = await this.{{moduleNameCamel}}Dao.findById(id);
-//     if (!entity) {
+//     const {{moduleNameCamel}} = await this.{{moduleNameCamel}}Dao.findById(id);
+//     if (!{{moduleNameCamel}}) {
 //       throw new {{moduleNamePascal}}NotFoundError();
 //     }
 //

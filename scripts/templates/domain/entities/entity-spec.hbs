@@ -14,14 +14,12 @@ function make{{moduleNamePascal}}LoadProps(overrides?: Partial<{{moduleNamePasca
     id: '{{moduleNameCamel}}-id',
     status: {{moduleNamePascal}}Status.ACTIVE,
     field: 'value',
-    createdAt: new Date(),
-    updatedAt: new Date(),
     ...overrides,
   };
 }
 
 describe('{{moduleNamePascal}} Entity', () => {
-  describe('getters', () => {
+  describe('isActive', () => {
     it('should return true for isActive when status is ACTIVE', () => {
       // Arrange
       const {{moduleNameCamel}} = {{moduleNamePascal}}Factory.create(make{{moduleNamePascal}}CreateProps());
@@ -29,30 +27,13 @@ describe('{{moduleNamePascal}} Entity', () => {
       // Act & Assert
       expect({{moduleNameCamel}}.isActive()).toBe(true);
     });
-  });
 
-  describe('update', () => {
-    it('should update field', () => {
+    it('should return false for isActive when status is not ACTIVE', () => {
       // Arrange
-      const {{moduleNameCamel}} = {{moduleNamePascal}}Factory.create(make{{moduleNamePascal}}CreateProps({ field: 'original' }));
+      const {{moduleNameCamel}} = {{moduleNamePascal}}Factory.load(make{{moduleNamePascal}}LoadProps({ status: {{moduleNamePascal}}Status.INACTIVE }));
 
-      // Act
-      {{moduleNameCamel}}.update({ field: 'updated' });
-
-      // Assert
-      expect({{moduleNameCamel}}.props.field).toBe('updated');
-    });
-
-    it('should update updatedAt when updating', () => {
-      // Arrange
-      const {{moduleNameCamel}} = {{moduleNamePascal}}Factory.load(make{{moduleNamePascal}}LoadProps({ updatedAt: new Date('2020-01-01') }));
-      const before = {{moduleNameCamel}}.props.updatedAt;
-
-      // Act
-      {{moduleNameCamel}}.update({ field: 'new-value' });
-
-      // Assert
-      expect({{moduleNameCamel}}.props.updatedAt.getTime()).toBeGreaterThan(before.getTime());
+      // Act & Assert
+      expect({{moduleNameCamel}}.isActive()).toBe(false);
     });
   });
 });
