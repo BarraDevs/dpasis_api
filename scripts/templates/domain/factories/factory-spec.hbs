@@ -1,0 +1,139 @@
+import { AppException } from 'src/core/filters/app.exception';
+import { {{moduleNamePascal}}CreateProps, {{moduleNamePascal}}Props } from '../entities/{{moduleName}}.entity';
+import { {{moduleNamePascal}}Status } from '../enums/{{moduleName}}-status.enum';
+import { {{moduleNamePascal}}Factory } from './{{moduleName}}.factory';
+
+function make{{moduleNamePascal}}CreateProps(overrides?: Partial<{{moduleNamePascal}}CreateProps>): {{moduleNamePascal}}CreateProps {
+  return {
+    field: 'value',
+    ...overrides,
+  };
+}
+
+function make{{moduleNamePascal}}LoadProps(overrides?: Partial<{{moduleNamePascal}}Props>): {{moduleNamePascal}}Props {
+  return {
+    id: '{{moduleNameCamel}}-id',
+    status: {{moduleNamePascal}}Status.ACTIVE,
+    field: 'value',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    ...overrides,
+  };
+}
+
+describe('{{moduleNamePascal}}Factory', () => {
+  describe('create', () => {
+    it('should create a {{moduleNameCamel}} with status ACTIVE', () => {
+      // Arrange
+      const props = make{{moduleNamePascal}}CreateProps();
+
+      // Act
+      const {{moduleNameCamel}} = {{moduleNamePascal}}Factory.create(props);
+
+      // Assert
+      expect({{moduleNameCamel}}.props.status).toBe({{moduleNamePascal}}Status.ACTIVE);
+      expect({{moduleNameCamel}}.isActive()).toBe(true);
+    });
+
+    it('should create a {{moduleNameCamel}} with a generated UUID as id', () => {
+      // Arrange
+      const props = make{{moduleNamePascal}}CreateProps();
+
+      // Act
+      const {{moduleNameCamel}} = {{moduleNamePascal}}Factory.create(props);
+
+      // Assert
+      expect({{moduleNameCamel}}.props.id).toBeDefined();
+      expect(typeof {{moduleNameCamel}}.props.id).toBe('string');
+      expect({{moduleNameCamel}}.props.id.length).toBeGreaterThan(0);
+    });
+
+    it('should create two {{moduleNameCamel}}s with different ids', () => {
+      // Arrange
+      const props = make{{moduleNamePascal}}CreateProps();
+
+      // Act
+      const {{moduleNameCamel}}1 = {{moduleNamePascal}}Factory.create(props);
+      const {{moduleNameCamel}}2 = {{moduleNamePascal}}Factory.create(props);
+
+      // Assert
+      expect({{moduleNameCamel}}1.props.id).not.toBe({{moduleNameCamel}}2.props.id);
+    });
+
+    it('should set createdAt and updatedAt to the current time', async() => {
+      // Arrange
+      const props = make{{moduleNamePascal}}CreateProps();
+      const beforeCreate = new Date();
+
+      // Act
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      const {{moduleNameCamel}} = {{moduleNamePascal}}Factory.create(props);
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      // Assert
+      const afterCreate = new Date();
+
+      expect({{moduleNameCamel}}.props.createdAt.getTime()).toBeGreaterThanOrEqual(beforeCreate.getTime());
+      expect({{moduleNameCamel}}.props.createdAt.getTime()).toBeLessThanOrEqual(afterCreate.getTime());
+
+      expect({{moduleNameCamel}}.props.updatedAt.getTime()).toBeGreaterThanOrEqual(beforeCreate.getTime());
+      expect({{moduleNameCamel}}.props.updatedAt.getTime()).toBeLessThanOrEqual(afterCreate.getTime());
+    });
+
+    it('should preserve input props', () => {
+      // Arrange
+      const props = make{{moduleNamePascal}}CreateProps({ field: 'custom-value' });
+
+      // Act
+      const {{moduleNameCamel}} = {{moduleNamePascal}}Factory.create(props);
+
+      // Assert
+      expect({{moduleNameCamel}}.props.field).toBe('custom-value');
+    });
+
+    describe('validation — field', () => {
+      it('should throw AppException when field is an empty string', () => {
+        // Arrange
+        const props = make{{moduleNamePascal}}CreateProps({ field: '' });
+
+        // Act & Assert
+        expect(() => {{moduleNamePascal}}Factory.create(props)).toThrow(AppException);
+      });
+
+      it('should throw AppException when field is a whitespace-only string', () => {
+        // Arrange
+        const props = make{{moduleNamePascal}}CreateProps({ field: '   ' });
+
+        // Act & Assert
+        expect(() => {{moduleNamePascal}}Factory.create(props)).toThrow(AppException);
+      });
+    });
+  });
+
+  describe('load', () => {
+    it('should load a {{moduleNameCamel}} with the provided props', () => {
+      // Arrange
+      const props = make{{moduleNamePascal}}LoadProps({ id: 'specific-id', field: 'loaded-value' });
+
+      // Act
+      const {{moduleNameCamel}} = {{moduleNamePascal}}Factory.load(props);
+
+      // Assert
+      expect({{moduleNameCamel}}.props.id).toBe('specific-id');
+      expect({{moduleNameCamel}}.props.field).toBe('loaded-value');
+    });
+
+    it('should load a {{moduleNameCamel}} preserving all props exactly', () => {
+      // Arrange
+      const date = new Date('2024-01-01T00:00:00.000Z');
+      const props = make{{moduleNamePascal}}LoadProps({ createdAt: date, updatedAt: date });
+
+      // Act
+      const {{moduleNameCamel}} = {{moduleNamePascal}}Factory.load(props);
+
+      // Assert
+      expect({{moduleNameCamel}}.props.createdAt).toEqual(date);
+      expect({{moduleNameCamel}}.props.updatedAt).toEqual(date);
+    });
+  });
+});

@@ -1,30 +1,28 @@
 // import { Inject, Injectable } from '@nestjs/common';
 // import { SuccessMessage } from 'src/core/dtos/success-message.dto';
 // import { TOKENS } from 'src/core/di/token';
-// import { {{moduleNamePascal}} } from '../../../domain/entities/{{moduleName}}.entity';
 // import { {{moduleNamePascal}}NotFoundError } from '../../../domain/errors/{{moduleName}}-not-found.error';
 // import type { I{{moduleNamePascal}}Dao } from '../../persistence/dao/{{moduleName}}-dao.interface';
 // import type { I{{moduleNamePascal}}Repository } from '../../persistence/repository/{{moduleName}}-repository.interface';
 // import { Edit{{moduleNamePascal}}InputDto } from './dtos/edit-{{moduleName}}.dto';
-// 
+//
 // @Injectable()
 // export class Edit{{moduleNamePascal}} {
 //   constructor(
 //     @Inject(TOKENS.{{moduleNamePascal}}Dao) private readonly {{moduleNameCamel}}Dao: I{{moduleNamePascal}}Dao,
 //     @Inject(TOKENS.{{moduleNamePascal}}Repository) private readonly {{moduleNameCamel}}Repository: I{{moduleNamePascal}}Repository,
 //   ) {}
-// 
+//
 //   public async execute(id: string, data: Edit{{moduleNamePascal}}InputDto): Promise<SuccessMessage> {
 //     const entity = await this.{{moduleNameCamel}}Repository.findById(id);
 //     if (!entity) {
 //       throw new {{moduleNamePascal}}NotFoundError();
 //     }
-//     const updated = {{moduleNamePascal}}.load({
-//       ...entity.props,
-//       field: data.field,
-//       updatedAt: new Date(),
-//     });
-//     await this.{{moduleNameCamel}}Repository.edit(updated);
+//
+//     entity.update({ field: data.field });
+//
+//     await this.{{moduleNameCamel}}Repository.edit(entity);
+//
 //     return { message: 'Edição realizada com sucesso' };
 //   }
 // }

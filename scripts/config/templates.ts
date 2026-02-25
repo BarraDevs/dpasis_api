@@ -12,8 +12,10 @@ const DAO = `${INFRA}/dao`;
 const REPOSITORY = `${INFRA}/repository`;
 
 const DOMAIN = 'domain';
+const ENTITIES = `${DOMAIN}/entities`;
 const ENUMS = `${DOMAIN}/enums`;
 const ERRORS = `${DOMAIN}/errors`;
+const FACTORIES = `${DOMAIN}/factories`;
 
 const MODULE = 'module';
 
@@ -82,11 +84,13 @@ export const TEMPLATES = {
 
   // Domain
   domain: {
-    entity: `${DOMAIN}/entity.hbs`,
-    entitySpec: `${DOMAIN}/entity-spec.hbs`,
+    entity: `${ENTITIES}/entity.hbs`,
+    entitySpec: `${ENTITIES}/entity-spec.hbs`,
     enumStatus: `${ENUMS}/status.enum.hbs`,
     errorNotFound: `${ERRORS}/not-found.error.hbs`,
     errorAlreadyExists: `${ERRORS}/already-exists.error.hbs`,
+    factory: `${FACTORIES}/factory.hbs`,
+    factorySpec: `${FACTORIES}/factory-spec.hbs`,
   },
 
   // Module

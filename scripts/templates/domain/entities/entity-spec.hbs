@@ -1,0 +1,58 @@
+import { {{moduleNamePascal}}Status } from '../enums/{{moduleName}}-status.enum';
+import { {{moduleNamePascal}}Factory } from '../factories/{{moduleName}}.factory';
+import { {{moduleNamePascal}}CreateProps, {{moduleNamePascal}}Props } from './{{moduleName}}.entity';
+
+function make{{moduleNamePascal}}CreateProps(overrides?: Partial<{{moduleNamePascal}}CreateProps>): {{moduleNamePascal}}CreateProps {
+  return {
+    field: 'value',
+    ...overrides,
+  };
+}
+
+function make{{moduleNamePascal}}LoadProps(overrides?: Partial<{{moduleNamePascal}}Props>): {{moduleNamePascal}}Props {
+  return {
+    id: '{{moduleNameCamel}}-id',
+    status: {{moduleNamePascal}}Status.ACTIVE,
+    field: 'value',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    ...overrides,
+  };
+}
+
+describe('{{moduleNamePascal}} Entity', () => {
+  describe('getters', () => {
+    it('should return true for isActive when status is ACTIVE', () => {
+      // Arrange
+      const {{moduleNameCamel}} = {{moduleNamePascal}}Factory.create(make{{moduleNamePascal}}CreateProps());
+
+      // Act & Assert
+      expect({{moduleNameCamel}}.isActive()).toBe(true);
+    });
+  });
+
+  describe('update', () => {
+    it('should update field', () => {
+      // Arrange
+      const {{moduleNameCamel}} = {{moduleNamePascal}}Factory.create(make{{moduleNamePascal}}CreateProps({ field: 'original' }));
+
+      // Act
+      {{moduleNameCamel}}.update({ field: 'updated' });
+
+      // Assert
+      expect({{moduleNameCamel}}.props.field).toBe('updated');
+    });
+
+    it('should update updatedAt when updating', () => {
+      // Arrange
+      const {{moduleNameCamel}} = {{moduleNamePascal}}Factory.load(make{{moduleNamePascal}}LoadProps({ updatedAt: new Date('2020-01-01') }));
+      const before = {{moduleNameCamel}}.props.updatedAt;
+
+      // Act
+      {{moduleNameCamel}}.update({ field: 'new-value' });
+
+      // Assert
+      expect({{moduleNameCamel}}.props.updatedAt.getTime()).toBeGreaterThan(before.getTime());
+    });
+  });
+});

@@ -4,20 +4,22 @@
 // import { {{moduleNamePascal}}NotFoundError } from '../../../domain/errors/{{moduleName}}-not-found.error';
 // import type { I{{moduleNamePascal}}Dao } from '../../persistence/dao/{{moduleName}}-dao.interface';
 // import type { I{{moduleNamePascal}}Repository } from '../../persistence/repository/{{moduleName}}-repository.interface';
-// 
+//
 // @Injectable()
 // export class Delete{{moduleNamePascal}} {
 //   constructor(
 //     @Inject(TOKENS.{{moduleNamePascal}}Dao) private readonly {{moduleNameCamel}}Dao: I{{moduleNamePascal}}Dao,
 //     @Inject(TOKENS.{{moduleNamePascal}}Repository) private readonly {{moduleNameCamel}}Repository: I{{moduleNamePascal}}Repository,
 //   ) {}
-// 
+//
 //   public async execute(id: string): Promise<SuccessMessage> {
-//     const entity = await this.{{moduleNameCamel}}Repository.findById(id);
+//     const entity = await this.{{moduleNameCamel}}Dao.findById(id);
 //     if (!entity) {
 //       throw new {{moduleNamePascal}}NotFoundError();
 //     }
+//
 //     await this.{{moduleNameCamel}}Repository.delete(id);
+//
 //     return { message: 'Exclusão realizada com sucesso' };
 //   }
 // }

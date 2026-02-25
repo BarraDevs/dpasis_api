@@ -19,7 +19,8 @@
     "db:migration": "dotenv -e .env.development -- prisma db push",
     "db:seed": "dotenv -e .env.development -- prisma db seed",
     "db:reset": "dotenv -e .env.development -- prisma db push --force-reset && prisma db seed",
-    "db:studio": "dotenv -e .env.development -- prisma studio"
+    "db:studio": "dotenv -e .env.development -- prisma studio",
+    "generate:module": "ts-node -r tsconfig-paths/register scripts/cli.ts"
   },
   "prisma": {
     "seed": "dotenv -e .env.development -- ts-node prisma/seeds/index.ts"

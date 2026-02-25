@@ -3,18 +3,17 @@
 // import { IPagination, Pagination } from 'src/shared/value-objects/pagination/pagination.vo';
 // import { {{moduleNamePascal}}Dto } from '../../dtos/{{moduleName}}.dto';
 // import type { I{{moduleNamePascal}}Dao } from '../../persistence/dao/{{moduleName}}-dao.interface';
-// import type { I{{moduleNamePascal}}Repository } from '../../persistence/repository/{{moduleName}}-repository.interface';
 // import { FindAll{{moduleNamePascal}}QueryDto } from './dtos/find-all-{{moduleName}}.dto';
-// 
+//
 // @Injectable()
 // export class FindAll{{moduleNamePascal}} {
 //   constructor(
 //     @Inject(TOKENS.{{moduleNamePascal}}Dao) private readonly {{moduleNameCamel}}Dao: I{{moduleNamePascal}}Dao,
-//     @Inject(TOKENS.{{moduleNamePascal}}Repository) private readonly {{moduleNameCamel}}Repository: I{{moduleNamePascal}}Repository,
 //   ) {}
-// 
+//
 //   public async execute(queries: FindAll{{moduleNamePascal}}QueryDto): Promise<IPagination<{{moduleNamePascal}}Dto>> {
 //     const [result, total] = await this.{{moduleNameCamel}}Dao.findAll(queries);
+//
 //     return new Pagination(result, total, queries.page, queries.size).getDto();
 //   }
 // }

@@ -3,6 +3,7 @@ import { {{moduleNamePascal}} } from 'src/app/{{moduleName}}/domain/entities/{{m
 import { {{moduleNamePascal}}Status } from 'src/app/{{moduleName}}/domain/enums/{{moduleName}}-status.enum';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { I{{moduleNamePascal}}Repository } from 'src/app/{{moduleName}}/application/persistence/repository/{{moduleName}}-repository.interface';
+import { {{moduleNamePascal}}Factory } from 'src/app/{{moduleName}}/domain/factories/{{moduleName}}.factory';
 
 @Injectable()
 export class {{moduleNamePascal}}RepositoryAdapterPrisma implements I{{moduleNamePascal}}Repository {
@@ -36,8 +37,8 @@ export class {{moduleNamePascal}}RepositoryAdapterPrisma implements I{{moduleNam
       where: { id },
     });
     if (!data) return null;
-    
-    return {{moduleNamePascal}}.load({
+
+    return {{moduleNamePascal}}Factory.load({
       id: data.id,
       field: data.field,
       status: data.status as {{moduleNamePascal}}Status,

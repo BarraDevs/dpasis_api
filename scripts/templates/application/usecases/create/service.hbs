@@ -1,14 +1,12 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { TOKENS } from 'src/core/di/token';
 import type { I{{moduleNamePascal}}Dao } from '../../persistence/dao/{{moduleName}}-dao.interface';
-import type { I{{moduleNamePascal}}Repository } from '../../persistence/repository/{{moduleName}}-repository.interface';
 import { Create{{moduleNamePascal}}InputDto, Create{{moduleNamePascal}}OutputDto } from './dtos/create-{{moduleName}}.dto';
 
 @Injectable()
 export class Create{{moduleNamePascal}} {
   constructor(
     @Inject(TOKENS.{{moduleNamePascal}}Dao) private readonly {{moduleNameCamel}}Dao: I{{moduleNamePascal}}Dao,
-    @Inject(TOKENS.{{moduleNamePascal}}Repository) private readonly {{moduleNameCamel}}Repository: I{{moduleNamePascal}}Repository,
   ) {}
 
   public async execute(data: Create{{moduleNamePascal}}InputDto): Promise<Create{{moduleNamePascal}}OutputDto> {

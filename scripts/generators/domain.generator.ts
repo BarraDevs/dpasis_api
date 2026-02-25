@@ -48,4 +48,14 @@ export async function generateDomain(props: Props): Promise<void> {
     path.join(domainPath, 'enums', `${props.moduleName}-status.enum.ts`),
     renderTemplate(T.enumStatus, ctx)
   );
+
+  // Factories
+  await writeGeneratedFile(
+    path.join(domainPath, 'factories', `${props.moduleName}.factory.ts`),
+    renderTemplate(T.factory, ctx)
+  );
+  await writeGeneratedFile(
+    path.join(domainPath, 'factories', `${props.moduleName}.factory.spec.ts`),
+    renderTemplate(T.factorySpec, ctx)
+  );
 }
