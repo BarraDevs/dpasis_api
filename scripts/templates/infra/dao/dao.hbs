@@ -26,7 +26,7 @@ export class {{moduleNamePascal}}DaoAdapterPrisma implements I{{moduleNamePascal
       AND: [
         {
           OR: [
-            { field: { contains: queries.search } },
+            { field: { contains: queries.search, mode: 'insensitive' } },
           ],
         },
       ],
