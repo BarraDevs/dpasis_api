@@ -25,5 +25,8 @@ import { ClientGroupAdminController } from './infra/drivers/http/admin/client-gr
     FindClientGroupById,
     UpdateClientGroupStatus,
   ],
+  exports: [
+    FindClientGroupById,
+  ],
 })
 export class ClientGroupModule {}

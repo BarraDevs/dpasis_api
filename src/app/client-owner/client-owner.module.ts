@@ -25,5 +25,8 @@ import { ClientOwnerAdminController } from './infra/drivers/http/admin/client-ow
     FindClientOwnerById,
     UpdateClientOwnerStatus,
   ],
+  exports: [
+    FindClientOwnerById,
+  ],
 })
 export class ClientOwnerModule {}
