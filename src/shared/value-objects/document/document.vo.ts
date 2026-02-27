@@ -13,6 +13,9 @@ export class Document {
 
   constructor(raw: string) {
     const document = this.sanitize(raw);
+    if (!document) {
+      throw new InvalidDocumentError(raw);
+    }
 
     if (document.length === this.CPF_LENGTH) {
       this._value = new CPF(document).value;
