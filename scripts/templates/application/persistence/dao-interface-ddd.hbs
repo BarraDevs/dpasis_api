@@ -3,5 +3,5 @@ import { FindAll{{moduleNamePascal}}QueryDto } from '../../usecases/find-all-{{m
 
 export interface I{{moduleNamePascal}}Dao {
   findAll(queries: FindAll{{moduleNamePascal}}QueryDto): Promise<[{{moduleNamePascal}}Dto[], number]>;
-  findById(id: string): Promise<{{moduleNamePascal}}Dto | null>;
+  findById(id: number): Promise<{{moduleNamePascal}}Dto | null>;
 }

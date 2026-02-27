@@ -3,6 +3,6 @@ import { {{moduleNamePascal}} } from 'src/app/{{moduleName}}/domain/entities/{{m
 export interface I{{moduleNamePascal}}Repository {
   save(entity: {{moduleNamePascal}}): Promise<void>;
   edit(entity: {{moduleNamePascal}}): Promise<void>;
-  findById(id: string): Promise<{{moduleNamePascal}} | null>;
-  delete(id: string): Promise<void>;
+  findById(id: number): Promise<{{moduleNamePascal}} | null>;
+  delete(id: number): Promise<void>;
 }

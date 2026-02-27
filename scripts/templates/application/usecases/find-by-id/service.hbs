@@ -10,7 +10,7 @@
 //     @Inject(TOKENS.{{moduleNamePascal}}Dao) private readonly {{moduleNameCamel}}Dao: I{{moduleNamePascal}}Dao,
 //   ) {}
 //
-//   public async execute(id: string): Promise<{{moduleNamePascal}}Dto> {
+//   public async execute(id: number): Promise<{{moduleNamePascal}}Dto> {
 //     const result = await this.{{moduleNameCamel}}Dao.findById(id);
 //     if (!result) {
 //       throw new {{moduleNamePascal}}NotFoundError();

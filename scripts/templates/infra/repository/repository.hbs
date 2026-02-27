@@ -29,7 +29,7 @@ export class {{moduleNamePascal}}RepositoryAdapterPrisma implements I{{moduleNam
     });
   }
 
-  public async findById(id: string): Promise<{{moduleNamePascal}} | null> {
+  public async findById(id: number): Promise<{{moduleNamePascal}} | null> {
     const data = await this.prisma.{{moduleNameCamel}}.findUnique({
       where: { id },
     });
@@ -42,7 +42,7 @@ export class {{moduleNamePascal}}RepositoryAdapterPrisma implements I{{moduleNam
     });
   }
 
-  public async delete(id: string): Promise<void> {
+  public async delete(id: number): Promise<void> {
     await this.prisma.{{moduleNameCamel}}.delete({
       where: { id },
     });

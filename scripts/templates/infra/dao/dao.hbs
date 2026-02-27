@@ -11,7 +11,7 @@ import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 export class {{moduleNamePascal}}DaoAdapterPrisma implements I{{moduleNamePascal}}Dao {
   constructor(private readonly prisma: PrismaService) {}
 
-  public async save(data: Create{{moduleNamePascal}}InputDto): Promise<string> {
+  public async save(data: Create{{moduleNamePascal}}InputDto): Promise<number> {
     const result = await this.prisma.{{moduleNameCamel}}.create({
       data,
     });
@@ -37,26 +37,26 @@ export class {{moduleNamePascal}}DaoAdapterPrisma implements I{{moduleNamePascal
         where,
         take: pagination.take,
         skip: pagination.skip,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { id: 'asc' },
       }),
       this.prisma.{{moduleNameCamel}}.count({ where }),
     ]);
   }
 
-  public async findById(id: string): Promise<{{moduleNamePascal}}Dto | null> {
+  public async findById(id: number): Promise<{{moduleNamePascal}}Dto | null> {
     return this.prisma.{{moduleNameCamel}}.findUnique({
       where: { id },
     });
   }
 
-  public async edit(id: string, data: Edit{{moduleNamePascal}}InputDto): Promise<void> {
+  public async edit(id: number, data: Edit{{moduleNamePascal}}InputDto): Promise<void> {
     await this.prisma.{{moduleNameCamel}}.update({
       where: { id },
       data,
     });
   }
 
-  public async delete(id: string): Promise<void> {
+  public async delete(id: number): Promise<void> {
     await this.prisma.{{moduleNameCamel}}.delete({
       where: { id },
     });

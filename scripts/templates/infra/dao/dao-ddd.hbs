@@ -27,13 +27,13 @@ export class {{moduleNamePascal}}DaoAdapterPrisma implements I{{moduleNamePascal
         where,
         take: pagination.take,
         skip: pagination.skip,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { id: 'asc' },
       }),
       this.prisma.{{moduleNameCamel}}.count({ where }),
     ]);
   }
 
-  public async findById(id: string): Promise<{{moduleNamePascal}}Dto | null> {
+  public async findById(id: number): Promise<{{moduleNamePascal}}Dto | null> {
     return this.prisma.{{moduleNameCamel}}.findUnique({
       where: { id },
     });

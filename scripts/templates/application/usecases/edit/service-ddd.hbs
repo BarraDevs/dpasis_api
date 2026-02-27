@@ -14,7 +14,7 @@
 //     @Inject(TOKENS.{{moduleNamePascal}}Repository) private readonly {{moduleNameCamel}}Repository: I{{moduleNamePascal}}Repository,
 //   ) {}
 //
-//   public async execute(id: string, data: Edit{{moduleNamePascal}}InputDto): Promise<SuccessMessage> {
+//   public async execute(id: number, data: Edit{{moduleNamePascal}}InputDto): Promise<SuccessMessage> {
 //     const {{moduleNameCamel}} = await this.{{moduleNameCamel}}Dao.findById(id);
 //     if (!{{moduleNameCamel}}) {
 //       throw new {{moduleNamePascal}}NotFoundError();
