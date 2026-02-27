@@ -2,8 +2,10 @@ import { createMock } from '@golevelup/ts-jest';
 import { Test } from '@nestjs/testing';
 import { AuthenticationGuardsModule } from 'src/app/authentication/application/guards/guards.module';
 import { ClientDto } from 'src/app/client/application/dtos/client.dto';
+import { ActivateClient } from 'src/app/client/application/usecases/activate-client/activate-client.service';
 import { CreateClient } from 'src/app/client/application/usecases/create-client/create-client.service';
 import { CreateClientInputDto, CreateClientOutputDto } from 'src/app/client/application/usecases/create-client/dtos/create-client.dto';
+import { DeactivateClient } from 'src/app/client/application/usecases/deactivate-client/deactivate-client.service';
 import { DeleteClient } from 'src/app/client/application/usecases/delete-client/delete-client.service';
 import { EditClientInputDto } from 'src/app/client/application/usecases/edit-client/dtos/edit-client.dto';
 import { EditClient } from 'src/app/client/application/usecases/edit-client/edit-client.service';
@@ -17,7 +19,9 @@ import { ClientAdminController } from './client-admin.controller';
 
 describe('ClientAdminController - Unit tests', () => {
   let sut: ClientAdminController;
+  let activateClientService: ActivateClient;
   let createClientService: CreateClient;
+  let deactivateClientService: DeactivateClient;
   let findAllClientService: FindAllClient;
   let findClientByIdService: FindClientById;
   let editClientService: EditClient;
@@ -28,7 +32,9 @@ describe('ClientAdminController - Unit tests', () => {
       imports: [AuthenticationGuardsModule],
       controllers: [ClientAdminController],
       providers: [
+        { provide: ActivateClient, useValue: createMock<ActivateClient>() },
         { provide: CreateClient, useValue: createMock<CreateClient>() },
+        { provide: DeactivateClient, useValue: createMock<DeactivateClient>() },
         { provide: FindAllClient, useValue: createMock<FindAllClient>() },
         { provide: FindClientById, useValue: createMock<FindClientById>() },
         { provide: EditClient, useValue: createMock<EditClient>() },
@@ -37,7 +43,9 @@ describe('ClientAdminController - Unit tests', () => {
     }).compile();
 
     sut = module.get(ClientAdminController);
+    activateClientService = module.get(ActivateClient);
     createClientService = module.get(CreateClient);
+    deactivateClientService = module.get(DeactivateClient);
     findAllClientService = module.get(FindAllClient);
     findClientByIdService = module.get(FindClientById);
     editClientService = module.get(EditClient);
@@ -93,6 +101,38 @@ describe('ClientAdminController - Unit tests', () => {
       // Assert
       expect(result).toEqual(output);
       expect(findOneSpy).toHaveBeenCalledWith(params.id);
+    });
+  });
+
+  describe('activate', () => {
+    it('should call activateClient.execute with params.id', async() => {
+      // Arrange
+      const params = createMock<Params>();
+      const output = createMock<SuccessMessage>();
+      const activateSpy = jest.spyOn(activateClientService, 'execute').mockResolvedValue(output);
+
+      // Act
+      const result = await sut.activate(params);
+
+      // Assert
+      expect(result).toEqual(output);
+      expect(activateSpy).toHaveBeenCalledWith(params.id);
+    });
+  });
+
+  describe('deactivate', () => {
+    it('should call deactivateClient.execute with params.id', async() => {
+      // Arrange
+      const params = createMock<Params>();
+      const output = createMock<SuccessMessage>();
+      const deactivateSpy = jest.spyOn(deactivateClientService, 'execute').mockResolvedValue(output);
+
+      // Act
+      const result = await sut.deactivate(params);
+
+      // Assert
+      expect(result).toEqual(output);
+      expect(deactivateSpy).toHaveBeenCalledWith(params.id);
     });
   });
 

@@ -2,8 +2,10 @@ import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestj
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
 import { RequiredRoles } from 'src/app/authentication/infra/decorators/required-role.decorator';
 import { ClientDto } from 'src/app/client/application/dtos/client.dto';
+import { ActivateClient } from 'src/app/client/application/usecases/activate-client/activate-client.service';
 import { CreateClient } from 'src/app/client/application/usecases/create-client/create-client.service';
 import { CreateClientInputDto, CreateClientOutputDto } from 'src/app/client/application/usecases/create-client/dtos/create-client.dto';
+import { DeactivateClient } from 'src/app/client/application/usecases/deactivate-client/deactivate-client.service';
 import { DeleteClient } from 'src/app/client/application/usecases/delete-client/delete-client.service';
 import { EditClientInputDto } from 'src/app/client/application/usecases/edit-client/dtos/edit-client.dto';
 import { EditClient } from 'src/app/client/application/usecases/edit-client/edit-client.service';
@@ -19,7 +21,9 @@ import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
 @RequiredRoles(AccountRole.ADMIN)
 export class ClientAdminController {
   constructor(
+    private readonly activateClient: ActivateClient,
     private readonly createClient: CreateClient,
+    private readonly deactivateClient: DeactivateClient,
     private readonly findAllClient: FindAllClient,
     private readonly findClientById: FindClientById,
     private readonly editClient: EditClient,
@@ -58,6 +62,30 @@ export class ClientAdminController {
   })
   public findOne(@Param() params: Params): Promise<ClientDto> {
     return this.findClientById.execute(params.id);
+  }
+
+  @Patch(':id/activate')
+  @Swagger({
+    tags: ['Clientes'],
+    summary: 'Ativar cliente',
+    applyBadRequest: true,
+    applyNotFound: true,
+    okResponse: SuccessMessage,
+  })
+  public activate(@Param() params: Params): Promise<SuccessMessage> {
+    return this.activateClient.execute(params.id);
+  }
+
+  @Patch(':id/deactivate')
+  @Swagger({
+    tags: ['Clientes'],
+    summary: 'Desativar cliente',
+    applyBadRequest: true,
+    applyNotFound: true,
+    okResponse: SuccessMessage,
+  })
+  public deactivate(@Param() params: Params): Promise<SuccessMessage> {
+    return this.deactivateClient.execute(params.id);
   }
 
   @Patch(':id')

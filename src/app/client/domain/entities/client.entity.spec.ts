@@ -110,4 +110,52 @@ describe('Client', () => {
       ]);
     });
   });
+
+  describe('isActive', () => {
+    it('should return true for isActive when status is ACTIVE', () => {
+      const client = Client._instantiate({ ...makeClientProps(), active: true });
+
+      expect(client.isActive()).toBe(true);
+    });
+
+    it('should return false for isActive when status is not ACTIVE', () => {
+      const client = Client._instantiate({ ...makeClientProps(), active: false });
+
+      expect(client.isActive()).toBe(false);
+    });
+  });
+
+  describe('activate and deactivate', () => {
+    it('should activate the client', () => {
+      const client = Client._instantiate({ ...makeClientProps(), active: false });
+
+      client.activate();
+
+      expect(client.isActive()).toBe(true);
+    });
+
+    it('should deactivate the client', () => {
+      const client = Client._instantiate({ ...makeClientProps(), active: true });
+
+      client.deactivate();
+
+      expect(client.isActive()).toBe(false);
+    });
+
+    it('should toggle between active and inactive', () => {
+      const client = Client._instantiate({ ...makeClientProps(), active: false });
+
+      client.activate();
+      expect(client.isActive()).toBe(true);
+
+      client.deactivate();
+      expect(client.isActive()).toBe(false);
+
+      client.activate();
+      expect(client.isActive()).toBe(true);
+
+      client.deactivate();
+      expect(client.isActive()).toBe(false);
+    });
+  });
 });

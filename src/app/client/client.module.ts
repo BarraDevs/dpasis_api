@@ -3,7 +3,9 @@ import { AuthenticationGuardsModule } from '../authentication/application/guards
 import { ClientGroupModule } from '../client-group/client-group.module';
 import { ClientOwnerModule } from '../client-owner/client-owner.module';
 import { ClientPersistenceModule } from './application/persistence/client-persistence.module';
+import { ActivateClient } from './application/usecases/activate-client/activate-client.service';
 import { CreateClient } from './application/usecases/create-client/create-client.service';
+import { DeactivateClient } from './application/usecases/deactivate-client/deactivate-client.service';
 import { DeleteClient } from './application/usecases/delete-client/delete-client.service';
 import { EditClient } from './application/usecases/edit-client/edit-client.service';
 import { FindAllClient } from './application/usecases/find-all-client/find-all-client.service';
@@ -21,7 +23,9 @@ import { ClientAdminController } from './infra/drivers/http/admin/client-admin.c
     ClientAdminController,
   ],
   providers: [
+    ActivateClient,
     CreateClient,
+    DeactivateClient,
     DeleteClient,
     EditClient,
     FindAllClient,

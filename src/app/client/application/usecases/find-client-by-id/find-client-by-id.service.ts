@@ -10,9 +10,12 @@ export class FindClientById {
     @Inject(TOKENS.ClientDao) private readonly clientDao: IClientDao,
   ) {}
 
-  public async execute(id: number): Promise<ClientDto> {
+  public async execute(id: number, onlyActive: boolean = false): Promise<ClientDto> {
     const result = await this.clientDao.findById(id);
     if (!result) {
+      throw new ClientNotFoundError();
+    }
+    if (onlyActive && !result.active) {
       throw new ClientNotFoundError();
     }
 

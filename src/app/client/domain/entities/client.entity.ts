@@ -33,4 +33,16 @@ export class Client {
   public get props(): Readonly<ClientProps> {
     return { ...this._props };
   }
+
+  public isActive(): boolean {
+    return this._props.active;
+  }
+
+  public activate(): void {
+    this._props.active = true;
+  }
+
+  public deactivate(): void {
+    this._props.active = false;
+  }
 }

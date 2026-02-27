@@ -1,10 +1,10 @@
 import { Test } from '@nestjs/testing';
+import { ClientModule } from 'src/app/client/client.module';
 import { ClientInvoiceType } from 'src/app/client/domain/enums/client-invoice-type.enum';
 import { ClientType } from 'src/app/client/domain/enums/client-type.enum';
 import { ClientNotFoundError } from 'src/app/client/domain/errors/client-not-found.error';
 import { ConfigModule } from 'src/core/config/config.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
-import { ClientModule } from 'src/app/client/client.module';
 import { FindClientById } from './find-client-by-id.service';
 
 describe('FindClientById - Integration tests', () => {
@@ -38,6 +38,57 @@ describe('FindClientById - Integration tests', () => {
   it('should throw ClientNotFoundError when client does not exist', async() => {
     await expect(sut.execute(99999)).rejects.toThrow(ClientNotFoundError);
     await expect(sut.execute(99999)).rejects.toThrow('Client não encontrado.');
+  });
+
+  it('should throw ClientNotFoundError when onlyActive is true and client is inactive', async() => {
+    const [group, owner] = await Promise.all([
+      prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
+      prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+    ]);
+
+    const client = await prisma.client.create({
+      data: {
+        type: ClientType.PJ,
+        document: '09748165000110',
+        groupId: group.id,
+        ownerId: owner.id,
+        companyName: 'Empresa',
+        headquarters: 'SP',
+        invoiceType: ClientInvoiceType.CONTRACT,
+        generateInvoice: true,
+        active: false,
+      },
+    });
+
+    await expect(sut.execute(client.id, true)).rejects.toThrow(ClientNotFoundError);
+    await expect(sut.execute(client.id, true)).rejects.toThrow('Client não encontrado.');
+  });
+
+  it('should return client when onlyActive is true and client is active', async() => {
+    const [group, owner] = await Promise.all([
+      prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
+      prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+    ]);
+
+    const client = await prisma.client.create({
+      data: {
+        type: ClientType.PJ,
+        document: '09748165000110',
+        groupId: group.id,
+        ownerId: owner.id,
+        companyName: 'Empresa Ativa',
+        headquarters: 'SP',
+        invoiceType: ClientInvoiceType.CONTRACT,
+        generateInvoice: true,
+        active: true,
+      },
+    });
+
+    const result = await sut.execute(client.id, true);
+
+    expect(result).not.toBeNull();
+    expect(result.id).toBe(client.id);
+    expect(result.active).toBe(true);
   });
 
   it('should return client by id', async() => {
