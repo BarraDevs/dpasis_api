@@ -1,3 +1,4 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsEnum, IsInt, IsNotEmpty, IsNumber, IsOptional, IsPositive, IsString } from 'class-validator';
 import { ClientInvoiceType } from 'src/app/client/domain/enums/client-invoice-type.enum';
 import { ClientType } from 'src/app/client/domain/enums/client-type.enum';
@@ -5,53 +6,63 @@ import { StringToBoolean } from 'src/infra/validators/class/decorators/string-bo
 import { Trim } from 'src/infra/validators/class/decorators/trim/trim';
 
 export class CreateClientInputDto {
+  @ApiProperty({ example: Object.values(ClientType).join(', ') })
   @IsEnum(ClientType, { message: '$property deve ser um tipo de cliente válido' })
   @IsString({ message: '$property deve ser uma string' })
   @Trim()
   type: ClientType;
 
+  @ApiProperty({ example: '09.748.165/0001-10' })
   @IsString({ message: '$property deve ser uma string' })
   @IsNotEmpty({ message: '$property é obrigatório' })
   @Trim()
   document: string;
 
+  @ApiPropertyOptional({ example: '123456789' })
   @IsOptional()
   @IsString({ message: '$property deve ser uma string' })
   @Trim()
   ie: string | null;
 
+  @ApiProperty({ example: 1 })
   @IsNumber({}, { message: '$property deve ser um número' })
   @IsNotEmpty({ message: '$property é obrigatório' })
   @IsPositive({ message: '$property deve ser um número positivo' })
   @IsInt({ message: '$property deve ser um número inteiro' })
   groupId: number;
 
+  @ApiProperty({ example: 1 })
   @IsNumber({}, { message: '$property deve ser um número' })
   @IsNotEmpty({ message: '$property é obrigatório' })
   @IsPositive({ message: '$property deve ser um número positivo' })
   @IsInt({ message: '$property deve ser um número inteiro' })
   ownerId: number;
 
+  @ApiProperty({ example: 'Empresa LTDA' })
   @IsString({ message: '$property deve ser uma string' })
   @IsNotEmpty({ message: '$property é obrigatório' })
   @Trim()
   companyName: string;
 
+  @ApiPropertyOptional({ example: 'Empresa' })
   @IsOptional()
   @IsString({ message: '$property deve ser uma string' })
   @Trim()
   fantasyName: string | null;
 
+  @ApiProperty({ example: 'São Paulo' })
   @IsString({ message: '$property deve ser uma string' })
   @IsNotEmpty({ message: '$property é obrigatório' })
   @Trim()
   headquarters: string;
 
+  @ApiProperty({ example: Object.values(ClientInvoiceType).join(', ') })
   @IsEnum(ClientInvoiceType, { message: '$property deve ser um tipo de fatura válido' })
   @IsString({ message: '$property deve ser uma string' })
   @Trim()
   invoiceType: ClientInvoiceType;
 
+  @ApiProperty({ example: true })
   @IsBoolean({ message: '$property deve ser um booleano' })
   @StringToBoolean()
   generateInvoice: boolean;
