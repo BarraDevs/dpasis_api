@@ -1,4 +1,4 @@
 export enum ClientInvoiceType {
-  INDIVIDUAL = 'INDIVIDUAL',
-  CONTRACT = 'CONTRACT',
+  INDIVIDUAL = 'Avulso',
+  CONTRACT = 'Contrato',
 }

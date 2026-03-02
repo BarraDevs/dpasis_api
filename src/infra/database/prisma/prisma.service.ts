@@ -20,6 +20,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
 
   public async truncate() {
     await this.$transaction(async(tx) => {
+      await tx.clientAddress.deleteMany();
       await tx.client.deleteMany();
       await tx.account.deleteMany();
       await tx.admin.deleteMany();

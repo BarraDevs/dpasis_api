@@ -23,6 +23,7 @@
     "generate:module": "ts-node -r tsconfig-paths/register scripts/cli.ts"
   },
   "prisma": {
+    "schema": "./prisma/schema",
     "seed": "dotenv -e .env.development -- ts-node prisma/seeds/index.ts"
   },
   "dependencies": {

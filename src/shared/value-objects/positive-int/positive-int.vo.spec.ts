@@ -11,7 +11,7 @@ describe('PositiveInt Value Object', () => {
     -9.94,
     -3.1416,
   ])('should throw an error when providing negative number (%s)', (value: number) => {
-    expect(() => new PositiveInt(value, resource)).toThrow('Quantidade deve ser um número inteiro positivo');
+    expect(() => new PositiveInt(value, resource)).toThrow('O campo Quantidade deve ser um número inteiro positivo');
     expect(() => new PositiveInt(value, resource)).toThrow(NumberMustBePositiveAndInt);
   });
 
@@ -21,7 +21,7 @@ describe('PositiveInt Value Object', () => {
     10.7,
     0.1,
   ])('should throw an error when providing decimal number (%s)', (value: number) => {
-    expect(() => new PositiveInt(value, resource)).toThrow('Quantidade deve ser um número inteiro positivo');
+    expect(() => new PositiveInt(value, resource)).toThrow('O campo Quantidade deve ser um número inteiro positivo');
     expect(() => new PositiveInt(value, resource)).toThrow(NumberMustBePositiveAndInt);
   });
 
@@ -30,7 +30,7 @@ describe('PositiveInt Value Object', () => {
     Infinity,
     -Infinity,
   ])('should throw an error when providing invalid number (%s)', (value: number) => {
-    expect(() => new PositiveInt(value, resource)).toThrow('Quantidade deve ser um número inteiro positivo');
+    expect(() => new PositiveInt(value, resource)).toThrow('O campo Quantidade deve ser um número inteiro positivo');
     expect(() => new PositiveInt(value, resource)).toThrow(NumberMustBePositiveAndInt);
   });
 
@@ -57,19 +57,19 @@ describe('PositiveInt Value Object', () => {
 
   it('should throw an error when providing zero and includeZero is false', () => {
     const value = 0;
-    expect(() => new PositiveInt(value, resource, false)).toThrow('Quantidade deve ser um número inteiro positivo');
+    expect(() => new PositiveInt(value, resource, false)).toThrow('O campo Quantidade deve ser um número inteiro positivo');
     expect(() => new PositiveInt(value, resource, false)).toThrow(NumberMustBePositiveAndInt);
   });
 
   it('should throw an error when providing zero and includeZero is not provided (default false)', () => {
     const value = 0;
-    expect(() => new PositiveInt(value, resource)).toThrow('Quantidade deve ser um número inteiro positivo');
+    expect(() => new PositiveInt(value, resource)).toThrow('O campo Quantidade deve ser um número inteiro positivo');
     expect(() => new PositiveInt(value, resource)).toThrow(NumberMustBePositiveAndInt);
   });
 
   it('should accept different resource names in error message', () => {
     const customResource = 'Idade';
-    expect(() => new PositiveInt(-1, customResource)).toThrow('Idade deve ser um número inteiro positivo');
+    expect(() => new PositiveInt(-1, customResource)).toThrow('O campo Idade deve ser um número inteiro positivo');
     expect(() => new PositiveInt(-1, customResource)).toThrow(NumberMustBePositiveAndInt);
   });
 
@@ -91,7 +91,7 @@ describe('PositiveInt Value Object', () => {
 
   it('should throw an error for floating point precision edge cases', () => {
     const value = 1.0000000001;
-    expect(() => new PositiveInt(value, resource)).toThrow('Quantidade deve ser um número inteiro positivo');
+    expect(() => new PositiveInt(value, resource)).toThrow('O campo Quantidade deve ser um número inteiro positivo');
     expect(() => new PositiveInt(value, resource)).toThrow(NumberMustBePositiveAndInt);
   });
 

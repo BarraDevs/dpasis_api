@@ -6,12 +6,14 @@ const TOKENS = {
   UploadFileGateway: Symbol.for('UploadFileGateway'),
 
   AccountDao: Symbol.for('AccountDao'),
-  ClientGroupDao: Symbol.for('ClientGroupDao'),
-  ClientOwnerDao: Symbol.for('ClientOwnerDao'),
   FaqDao: Symbol.for('FaqDao'),
 
   ClientDao: Symbol.for('ClientDao'),
   ClientRepository: Symbol.for('ClientRepository'),
+  ClientGroupDao: Symbol.for('ClientGroupDao'),
+  ClientOwnerDao: Symbol.for('ClientOwnerDao'),
+  ClientAddressDao: Symbol.for('ClientAddressDao'),
+  ClientAddressRepository: Symbol.for('ClientAddressRepository'),
 };
 
 export { TOKENS };
