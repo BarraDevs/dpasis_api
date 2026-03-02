@@ -14,6 +14,9 @@ function makeValidInputDto(overrides: Partial<CreateClientContactInputDto> = {})
     departmentId: 1,
     email: 'joao@example.com',
     receiveNF: false,
+    phone: null,
+    whatsapp: null,
+    observations: null,
     ...overrides,
   };
 }

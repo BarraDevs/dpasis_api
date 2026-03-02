@@ -1,6 +1,4 @@
 import { Test } from '@nestjs/testing';
-import { CreateClientContactInputDto } from 'src/app/client/client-contact/application/usecases/create-client-contact/dtos/create-client-contact.dto';
-import { EditClientContactInputDto } from 'src/app/client/client-contact/application/usecases/edit-client-contact/dtos/edit-client-contact.dto';
 import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
 import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum';
 import { ConfigModule } from 'src/core/config/config.module';
@@ -199,6 +197,32 @@ describe('ClientContactDaoAdapterPrisma - Integration tests', () => {
         updatedAt: created.updatedAt,
       });
     });
+
+    it('should return client contact with all fields', async() => {
+      const created = await prisma.clientContact.create({
+        data: {
+          clientId,
+          departmentId,
+          name: 'João',
+          email: 'joao@example.com',
+          phone: '11999999999',
+          whatsapp: '11988887777',
+          observations: 'Observação',
+          receiveNF: true,
+        },
+      });
+
+      const result = await sut.findById(created.id);
+
+      expect(result).not.toBeNull();
+      expect(result?.id).toBe(created.id);
+      expect(result?.name).toBe('João');
+      expect(result?.email).toBe('joao@example.com');
+      expect(result?.phone).toBe('11999999999');
+      expect(result?.whatsapp).toBe('11988887777');
+      expect(result?.observations).toBe('Observação');
+      expect(result?.receiveNF).toBe(true);
+    });
   });
 
   describe('findByClientIdAndEmail', () => {
@@ -241,93 +265,6 @@ describe('ClientContactDaoAdapterPrisma - Integration tests', () => {
 
       expect(result).not.toBeNull();
       expect(result?.id).toBe(created.id);
-    });
-  });
-
-  describe('save', () => {
-    it('should create client contact and return id', async() => {
-      const data: CreateClientContactInputDto = {
-        clientId,
-        departmentId,
-        name: 'João',
-        email: 'joao@example.com',
-        receiveNF: false,
-      };
-
-      const id = await sut.save(data);
-
-      expect(id).toBeDefined();
-      expect(typeof id).toBe('number');
-
-      const saved = await prisma.clientContact.findUnique({ where: { id } });
-      expect(saved).not.toBeNull();
-      expect(saved?.name).toBe(data.name);
-      expect(saved?.email).toBe('joao@example.com');
-    });
-
-    it('should store email in lowercase', async() => {
-      const data: CreateClientContactInputDto = {
-        clientId,
-        departmentId,
-        name: 'João',
-        email: 'Joao@Example.COM',
-        receiveNF: false,
-      };
-
-      const id = await sut.save(data);
-
-      const saved = await prisma.clientContact.findUnique({ where: { id } });
-      expect(saved?.email).toBe('joao@example.com');
-    });
-  });
-
-  describe('edit', () => {
-    it('should update client contact', async() => {
-      const clientContact = await prisma.clientContact.create({
-        data: {
-          clientId,
-          departmentId,
-          name: 'João',
-          email: 'joao@example.com',
-          receiveNF: false,
-        },
-      });
-      const data: EditClientContactInputDto = {
-        name: 'João Silva',
-        departmentId,
-        email: 'joao.silva@example.com',
-        receiveNF: true,
-      };
-
-      await sut.edit(clientContact.id, data);
-
-      const updated = await prisma.clientContact.findUnique({
-        where: { id: clientContact.id },
-      });
-      expect(updated?.name).toBe('João Silva');
-      expect(updated?.email).toBe('joao.silva@example.com');
-      expect(updated?.receiveNF).toBe(true);
-    });
-  });
-
-  describe('delete', () => {
-    it('should delete client contact from database', async() => {
-      const clientContact = await prisma.clientContact.create({
-        data: {
-          clientId,
-          departmentId,
-          name: 'João',
-          email: 'joao@example.com',
-          receiveNF: false,
-        },
-      });
-
-      await sut.delete(clientContact.id);
-
-      const deleted = await prisma.clientContact.findUnique({
-        where: { id: clientContact.id },
-      });
-      expect(deleted).toBeNull();
     });
   });
 });

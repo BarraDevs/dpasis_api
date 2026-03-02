@@ -2,8 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { ClientContactDto } from 'src/app/client/client-contact/application/dtos/client-contact.dto';
 import { IClientContactDao } from 'src/app/client/client-contact/application/persistence/dao/client-contact-dao.interface';
-import { CreateClientContactInputDto } from 'src/app/client/client-contact/application/usecases/create-client-contact/dtos/create-client-contact.dto';
-import { EditClientContactInputDto } from 'src/app/client/client-contact/application/usecases/edit-client-contact/dtos/edit-client-contact.dto';
 import { FindAllClientContactQueryDto } from 'src/app/client/client-contact/application/usecases/find-all-client-contact/dtos/find-all-client-contact.dto';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 
@@ -24,6 +22,7 @@ const ClientContactSelect = {
 @Injectable()
 export class ClientContactDaoAdapterPrisma implements IClientContactDao {
   constructor(private readonly prisma: PrismaService) {}
+
 
   public async findAll(queries: FindAllClientContactQueryDto): Promise<[ClientContactDto[], number]> {
     const pagination = this.prisma.paginationFactory(queries.page, queries.size);
@@ -84,44 +83,6 @@ export class ClientContactDaoAdapterPrisma implements IClientContactDao {
         },
       },
       select: ClientContactSelect,
-    });
-  }
-
-  public async save(data: CreateClientContactInputDto): Promise<number> {
-    const result = await this.prisma.clientContact.create({
-      data: {
-        clientId: data.clientId,
-        name: data.name,
-        departmentId: data.departmentId,
-        email: data.email.toLowerCase(),
-        phone: data.phone ?? null,
-        whatsapp: data.whatsapp ?? null,
-        observations: data.observations ?? null,
-        receiveNF: data.receiveNF,
-      },
-    });
-
-    return result.id;
-  }
-
-  public async edit(id: number, data: EditClientContactInputDto): Promise<void> {
-    await this.prisma.clientContact.update({
-      where: { id },
-      data: {
-        name: data.name,
-        departmentId: data.departmentId,
-        email: data.email?.toLowerCase(),
-        phone: data.phone ?? null,
-        whatsapp: data.whatsapp ?? null,
-        observations: data.observations ?? null,
-        receiveNF: data.receiveNF,
-      },
-    });
-  }
-
-  public async delete(id: number): Promise<void> {
-    await this.prisma.clientContact.delete({
-      where: { id },
     });
   }
 }

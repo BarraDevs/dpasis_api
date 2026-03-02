@@ -70,6 +70,9 @@ describe('CreateClientContact - Integration tests', () => {
       departmentId,
       name: 'João Silva',
       email: 'joao@example.com',
+      phone: null,
+      whatsapp: null,
+      observations: null,
       receiveNF: false,
     };
     await sut.execute(input);
@@ -103,6 +106,9 @@ describe('CreateClientContact - Integration tests', () => {
       departmentId,
       name: 'João',
       email: 'joao@example.com',
+      phone: null,
+      whatsapp: null,
+      observations: null,
       receiveNF: false,
     };
     const input2: CreateClientContactInputDto = {
@@ -110,6 +116,9 @@ describe('CreateClientContact - Integration tests', () => {
       departmentId,
       name: 'João',
       email: 'joao@example.com',
+      phone: null,
+      whatsapp: null,
+      observations: null,
       receiveNF: false,
     };
 
@@ -127,6 +136,9 @@ describe('CreateClientContact - Integration tests', () => {
       departmentId,
       name: 'João',
       email: 'invalid-email',
+      phone: null,
+      whatsapp: null,
+      observations: null,
       receiveNF: false,
     };
 
@@ -140,6 +152,8 @@ describe('CreateClientContact - Integration tests', () => {
       name: 'João',
       email: 'joao@example.com',
       phone: '123',
+      whatsapp: null,
+      observations: null,
       receiveNF: false,
     };
 
@@ -152,7 +166,9 @@ describe('CreateClientContact - Integration tests', () => {
       departmentId,
       name: 'João',
       email: 'joao@example.com',
+      phone: null,
       whatsapp: '123',
+      observations: null,
       receiveNF: false,
     };
 
@@ -165,6 +181,9 @@ describe('CreateClientContact - Integration tests', () => {
       departmentId,
       name: 'João',
       email: 'joao@example.com',
+      phone: null,
+      whatsapp: null,
+      observations: null,
       receiveNF: false,
     };
 
@@ -177,6 +196,9 @@ describe('CreateClientContact - Integration tests', () => {
       departmentId: 99999,
       name: 'João',
       email: 'joao@example.com',
+      phone: null,
+      whatsapp: null,
+      observations: null,
       receiveNF: false,
     };
 
@@ -192,6 +214,9 @@ describe('CreateClientContact - Integration tests', () => {
       departmentId: inactiveDept.id,
       name: 'João',
       email: 'joao@example.com',
+      phone: null,
+      whatsapp: null,
+      observations: null,
       receiveNF: false,
     };
 
@@ -204,6 +229,9 @@ describe('CreateClientContact - Integration tests', () => {
       departmentId,
       name: 'João Silva',
       email: 'joao@example.com',
+      phone: null,
+      whatsapp: null,
+      observations: null,
       receiveNF: false,
     };
 
@@ -225,6 +253,9 @@ describe('CreateClientContact - Integration tests', () => {
       departmentId,
       name: 'João',
       email: 'Joao@Example.COM',
+      phone: null,
+      whatsapp: null,
+      observations: null,
       receiveNF: false,
     };
 
@@ -240,6 +271,9 @@ describe('CreateClientContact - Integration tests', () => {
       departmentId,
       name: 'João',
       email: 'invalid',
+      phone: null,
+      whatsapp: null,
+      observations: null,
       receiveNF: false,
     };
 

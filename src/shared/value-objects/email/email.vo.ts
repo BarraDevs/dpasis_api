@@ -8,10 +8,11 @@ export class Email {
   }
 
   constructor(email: string) {
-    if (!this.validate(email)) {
+    const normalized = email?.trim().toLowerCase() ?? '';
+    if (!this.validate(normalized)) {
       throw new InvalidEmailError(email);
     }
-    this._value = email;
+    this._value = normalized;
   }
 
   private validate(email: string): boolean {

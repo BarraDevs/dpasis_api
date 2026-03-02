@@ -43,20 +43,20 @@ export class CreateClientContactInputDto {
   @IsString({ message: '$property deve ser uma string' })
   @MaxLength(20, { message: '$property deve ter no máximo 20 caracteres' })
   @Trim()
-  phone?: string | null;
+  phone: string | null;
 
   @ApiPropertyOptional({ example: '11988887777' })
   @IsOptional()
   @IsString({ message: '$property deve ser uma string' })
   @MaxLength(20, { message: '$property deve ter no máximo 20 caracteres' })
   @Trim()
-  whatsapp?: string | null;
+  whatsapp: string | null;
 
   @ApiPropertyOptional({ example: 'Observações sobre o contato' })
   @IsOptional()
   @IsString({ message: '$property deve ser uma string' })
   @Trim()
-  observations?: string | null;
+  observations: string | null;
 
   @ApiProperty({ example: false })
   @IsBoolean({ message: '$property deve ser um booleano' })
