@@ -4,7 +4,6 @@ import { ClientOwnerNotFoundError } from 'src/app/client/client-owner/domain/err
 import { ClientModule } from 'src/app/client/client/client.module';
 import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
 import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum';
-import { ConfigModule } from 'src/core/config/config.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { DocumentAlreadyTakenError } from 'src/shared/errors/document-already-taken';
 import { InvalidDocumentError } from 'src/shared/value-objects/document/document.error';
@@ -17,7 +16,7 @@ describe('CreateClient - Integration tests', () => {
 
   beforeAll(async() => {
     const module = await Test.createTestingModule({
-      imports: [ClientModule, ConfigModule],
+      imports: [ClientModule],
     }).compile();
 
     sut = module.get(CreateClient);
@@ -29,10 +28,8 @@ describe('CreateClient - Integration tests', () => {
   });
 
   afterAll(async() => {
-    if (prisma) {
-      await prisma.truncate();
-      await prisma.$disconnect();
-    }
+    await prisma.truncate();
+    await prisma.$disconnect();
   });
 
   function makeValidInput(overrides: Partial<CreateClientInputDto> = {}): CreateClientInputDto {

@@ -1,50 +1,31 @@
-import { createMock } from '@golevelup/ts-jest';
 import { Test } from '@nestjs/testing';
-import { TOKENS } from 'src/core/di/token';
-import { SuccessMessage } from 'src/core/dtos/success-message.dto';
+import { PrismaService } from 'src/infra/database/prisma/prisma.service';
+import { ClientOwnerModule } from '../../../client-owner.module';
 import { ClientOwnerAlreadyExistsError } from '../../../domain/errors/client-owner-already-exists.error';
 import { ClientOwnerNotFoundError } from '../../../domain/errors/client-owner-not-found.error';
-import { ClientOwnerDto } from '../../dtos/client-owner.dto';
-import type { IClientOwnerDao } from '../../persistence/dao/client-owner-dao.interface';
 import { EditClientOwnerInputDto } from './dtos/edit-client-owner.dto';
 import { EditClientOwner } from './edit-client-owner.service';
 
-function makeValidEditClientOwnerInput(overrides: Partial<EditClientOwnerInputDto> = {}): EditClientOwnerInputDto {
-  return {
-    name: 'Novo nome',
-    ...overrides,
-  };
-}
-
-function makeClientOwnerDto(overrides: Partial<ClientOwnerDto> = {}): ClientOwnerDto {
-  const now = new Date();
-  return {
-    id: 1,
-    name: 'Nome antigo',
-    active: true,
-    createdAt: now,
-    updatedAt: now,
-    ...overrides,
-  };
-}
-
-describe('EditClientOwner - Unit tests', () => {
+describe('EditClientOwner - Integration tests', () => {
   let sut: EditClientOwner;
-  let clientOwnerDao: IClientOwnerDao;
+  let prisma: PrismaService;
 
-  beforeEach(async() => {
+  beforeAll(async() => {
     const module = await Test.createTestingModule({
-      providers: [
-        EditClientOwner,
-        {
-          provide: TOKENS.ClientOwnerDao,
-          useValue: createMock<IClientOwnerDao>(),
-        },
-      ],
+      imports: [ClientOwnerModule],
     }).compile();
 
     sut = module.get(EditClientOwner);
-    clientOwnerDao = module.get(TOKENS.ClientOwnerDao);
+    prisma = module.get(PrismaService);
+  });
+
+  beforeEach(async() => {
+    await prisma.truncate();
+  });
+
+  afterAll(async() => {
+    await prisma.truncate();
+    await prisma.$disconnect();
   });
 
   it('should be defined', () => {
@@ -54,114 +35,69 @@ describe('EditClientOwner - Unit tests', () => {
   it('should throw ClientOwnerNotFoundError when client owner does not exist', async() => {
     // Arrange
     const id = 0;
-    const data = makeValidEditClientOwnerInput();
-    jest.spyOn(clientOwnerDao, 'findById').mockResolvedValue(null);
+    const data: EditClientOwnerInputDto = { name: 'Novo nome' };
 
     // Act & Assert
     await expect(sut.execute(id, data)).rejects.toThrow(ClientOwnerNotFoundError);
   });
 
-  it('should call clientOwnerDao.findById to validate existence', async() => {
+  it('should update client owner name', async() => {
     // Arrange
-    const id = 1;
-    const data = makeValidEditClientOwnerInput();
-    jest.spyOn(clientOwnerDao, 'findById').mockResolvedValue(makeClientOwnerDto({ id }));
-    jest.spyOn(clientOwnerDao, 'findByName').mockResolvedValue(null);
-    const findByIdSpy = jest.spyOn(clientOwnerDao, 'findById');
+    const clientOwner = await prisma.clientOwner.create({
+      data: { name: 'Nome original', active: true },
+    });
+    const data: EditClientOwnerInputDto = { name: 'Nome atualizado' };
 
     // Act
-    await sut.execute(id, data);
+    await sut.execute(clientOwner.id, data);
 
     // Assert
-    expect(findByIdSpy).toHaveBeenCalledWith(id);
-    expect(findByIdSpy).toHaveBeenCalledTimes(1);
-  });
-
-  it('should call clientOwnerDao.findByName before edit', async() => {
-    // Arrange
-    const id = 1;
-    const data = makeValidEditClientOwnerInput();
-    jest.spyOn(clientOwnerDao, 'findById').mockResolvedValue(makeClientOwnerDto({ id }));
-    jest.spyOn(clientOwnerDao, 'findByName').mockResolvedValue(null);
-    const findByNameSpy = jest.spyOn(clientOwnerDao, 'findByName');
-
-    // Act
-    await sut.execute(id, data);
-
-    // Assert
-    expect(findByNameSpy).toHaveBeenCalledTimes(1);
-    expect(findByNameSpy).toHaveBeenCalledWith(data.name.trim());
-  });
-
-  it('should call clientOwnerDao.edit with id and data', async() => {
-    // Arrange
-    const id = 1;
-    const data = makeValidEditClientOwnerInput();
-    jest.spyOn(clientOwnerDao, 'findById').mockResolvedValue(makeClientOwnerDto({ id }));
-    jest.spyOn(clientOwnerDao, 'findByName').mockResolvedValue(null);
-    const editSpy = jest.spyOn(clientOwnerDao, 'edit');
-
-    // Act
-    await sut.execute(id, data);
-
-    // Assert
-    expect(editSpy).toHaveBeenCalledWith(id, data);
-    expect(editSpy).toHaveBeenCalledTimes(1);
+    const updated = await prisma.clientOwner.findUnique({ where: { id: clientOwner.id } });
+    expect(updated?.name).toBe('Nome atualizado');
+    expect(updated?.active).toBe(true);
   });
 
   it('should return success message', async() => {
     // Arrange
-    const id = 1;
-    const data = makeValidEditClientOwnerInput();
-    jest.spyOn(clientOwnerDao, 'findById').mockResolvedValue(makeClientOwnerDto({ id }));
-    jest.spyOn(clientOwnerDao, 'findByName').mockResolvedValue(null);
+    const clientOwner = await prisma.clientOwner.create({
+      data: { name: 'Proprietário', active: true },
+    });
+    const data: EditClientOwnerInputDto = { name: 'Novo nome' };
 
     // Act
-    const result = await sut.execute(id, data);
+    const result = await sut.execute(clientOwner.id, data);
 
     // Assert
-    expect(result).toEqual<SuccessMessage>({
-      message: 'Proprietário de clientes atualizado com sucesso',
+    expect(result).toEqual({ message: 'Proprietário de clientes atualizado com sucesso' });
+  });
+
+  it('should throw ClientOwnerAlreadyExistsError when editing to duplicate name', async() => {
+    // Arrange
+    await prisma.clientOwner.create({
+      data: { name: 'Proprietário A', active: true },
     });
-  });
-
-  it('should not call edit when client owner does not exist', async() => {
-    // Arrange
-    const id = 0;
-    const data = makeValidEditClientOwnerInput();
-    jest.spyOn(clientOwnerDao, 'findById').mockResolvedValue(null);
-    const editSpy = jest.spyOn(clientOwnerDao, 'edit');
+    const clientOwnerB = await prisma.clientOwner.create({
+      data: { name: 'Proprietário B', active: true },
+    });
+    const data: EditClientOwnerInputDto = { name: 'Proprietário A' };
 
     // Act & Assert
-    await expect(sut.execute(id, data)).rejects.toThrow(ClientOwnerNotFoundError);
-    expect(editSpy).not.toHaveBeenCalled();
-  });
-
-  it('should throw ClientOwnerAlreadyExistsError when name already exists for another owner', async() => {
-    // Arrange
-    const id = 1;
-    const data = makeValidEditClientOwnerInput({ name: 'Nome Existente' });
-    jest.spyOn(clientOwnerDao, 'findById').mockResolvedValue(makeClientOwnerDto({ id }));
-    jest.spyOn(clientOwnerDao, 'findByName').mockResolvedValue(makeClientOwnerDto({ id: 2, name: data.name }));
-    const editSpy = jest.spyOn(clientOwnerDao, 'edit');
-
-    // Act & Assert
-    await expect(sut.execute(id, data)).rejects.toThrow(ClientOwnerAlreadyExistsError);
-    expect(editSpy).not.toHaveBeenCalled();
+    await expect(sut.execute(clientOwnerB.id, data)).rejects.toThrow(ClientOwnerAlreadyExistsError);
   });
 
   it('should allow edit when name belongs to the same owner being edited', async() => {
     // Arrange
-    const id = 1;
-    const data = makeValidEditClientOwnerInput({ name: 'Mesmo Nome' });
-    jest.spyOn(clientOwnerDao, 'findById').mockResolvedValue(makeClientOwnerDto({ id, name: data.name }));
-    jest.spyOn(clientOwnerDao, 'findByName').mockResolvedValue(makeClientOwnerDto({ id, name: data.name }));
-    const editSpy = jest.spyOn(clientOwnerDao, 'edit');
+    const clientOwner = await prisma.clientOwner.create({
+      data: { name: 'Proprietário', active: true },
+    });
+    const data: EditClientOwnerInputDto = { name: 'Proprietário' };
 
     // Act
-    await sut.execute(id, data);
+    await sut.execute(clientOwner.id, data);
 
     // Assert
-    expect(editSpy).toHaveBeenCalledWith(id, data);
+    const updated = await prisma.clientOwner.findUnique({ where: { id: clientOwner.id } });
+    expect(updated?.name).toBe('Proprietário');
+    expect(updated?.active).toBe(true);
   });
 });

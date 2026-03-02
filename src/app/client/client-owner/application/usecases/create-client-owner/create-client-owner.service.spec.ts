@@ -1,95 +1,85 @@
-import { createMock } from '@golevelup/ts-jest';
 import { Test } from '@nestjs/testing';
-import { TOKENS } from 'src/core/di/token';
+import { PrismaService } from 'src/infra/database/prisma/prisma.service';
+import { ClientOwnerModule } from '../../../client-owner.module';
 import { ClientOwnerAlreadyExistsError } from '../../../domain/errors/client-owner-already-exists.error';
-import { ClientOwnerDto } from '../../dtos/client-owner.dto';
-import type { IClientOwnerDao } from '../../persistence/dao/client-owner-dao.interface';
 import { CreateClientOwner } from './create-client-owner.service';
-import { CreateClientOwnerInputDto, CreateClientOwnerOutputDto } from './dtos/create-client-owner.dto';
+import { CreateClientOwnerInputDto } from './dtos/create-client-owner.dto';
 
-function makeValidCreateClientOwnerInput(overrides: Partial<CreateClientOwnerInputDto> = {}): CreateClientOwnerInputDto {
-  return {
-    name: 'Proprietário Premium',
-    ...overrides,
-  };
-}
-
-describe('CreateClientOwner - Unit tests', () => {
+describe('CreateClientOwner - Integration tests', () => {
   let sut: CreateClientOwner;
-  let clientOwnerDao: IClientOwnerDao;
+  let prisma: PrismaService;
 
-  beforeEach(async() => {
+  beforeAll(async() => {
     const module = await Test.createTestingModule({
-      providers: [
-        CreateClientOwner,
-        {
-          provide: TOKENS.ClientOwnerDao,
-          useValue: createMock<IClientOwnerDao>(),
-        },
-      ],
+      imports: [ClientOwnerModule],
     }).compile();
 
     sut = module.get(CreateClientOwner);
-    clientOwnerDao = module.get(TOKENS.ClientOwnerDao);
+    prisma = module.get(PrismaService);
+  });
+
+  beforeEach(async() => {
+    await prisma.truncate();
+  });
+
+  afterAll(async() => {
+    await prisma.truncate();
+    await prisma.$disconnect();
   });
 
   it('should be defined', () => {
     expect(sut).toBeDefined();
   });
 
-  it('should call clientOwnerDao.save with correct data', async() => {
+  it('should throw ClientOwnerAlreadyExistsError when creating with duplicate name', async() => {
     // Arrange
-    const input = makeValidCreateClientOwnerInput();
-    const saveSpy = jest.spyOn(clientOwnerDao, 'save').mockResolvedValue(1);
-    const findByNameSpy = jest.spyOn(clientOwnerDao, 'findByName').mockResolvedValue(null);
-
-    // Act
+    const input: CreateClientOwnerInputDto = {
+      name: 'Proprietário Duplicado',
+    };
     await sut.execute(input);
 
-    // Assert
-    expect(saveSpy).toHaveBeenCalledTimes(1);
-    expect(saveSpy).toHaveBeenCalledWith(input);
-    expect(findByNameSpy).toHaveBeenCalledTimes(1);
-    expect(findByNameSpy).toHaveBeenCalledWith(input.name.trim());
+    // Act & Assert
+    await expect(sut.execute(input)).rejects.toThrow(ClientOwnerAlreadyExistsError);
   });
 
-  it('should return id from clientOwnerDao.save', async() => {
+  it('should create client owner and return id', async() => {
     // Arrange
-    const input = makeValidCreateClientOwnerInput();
-    const id = 1;
-    jest.spyOn(clientOwnerDao, 'save').mockResolvedValue(id);
-    jest.spyOn(clientOwnerDao, 'findByName').mockResolvedValue(null);
+    const input: CreateClientOwnerInputDto = {
+      name: 'Proprietário Premium',
+    };
 
     // Act
     const result = await sut.execute(input);
 
     // Assert
-    expect(result).toEqual<CreateClientOwnerOutputDto>({ id });
+    expect(result.id).toBeDefined();
+    expect(typeof result.id).toBe('number');
+
+    const saved = await prisma.clientOwner.findUnique({ where: { id: result.id } });
+    expect(saved).not.toBeNull();
+    expect(saved?.name).toBe(input.name);
+    expect(saved?.active).toBe(true);
   });
 
-  it('should call clientOwnerDao.findByName before save', async() => {
+  it('should persist client owner in database', async() => {
     // Arrange
-    const input = makeValidCreateClientOwnerInput();
-    const findByNameSpy = jest.spyOn(clientOwnerDao, 'findByName').mockResolvedValue(null);
-    jest.spyOn(clientOwnerDao, 'save').mockResolvedValue(1);
+    const input: CreateClientOwnerInputDto = {
+      name: 'Proprietário VIP',
+    };
 
     // Act
-    await sut.execute(input);
+    const { id } = await sut.execute(input);
 
     // Assert
-    expect(findByNameSpy).toHaveBeenCalledTimes(1);
-    expect(findByNameSpy).toHaveBeenCalledWith(input.name.trim());
-  });
-
-  it('should throw ClientOwnerAlreadyExistsError when name already exists', async() => {
-    // Arrange
-    const input = makeValidCreateClientOwnerInput({ name: 'Proprietário Premium' });
-    const clientOwner = createMock<ClientOwnerDto>();
-    jest.spyOn(clientOwnerDao, 'findByName').mockResolvedValue(clientOwner);
-    const saveSpy = jest.spyOn(clientOwnerDao, 'save').mockResolvedValue(1);
-
-    // Act & Assert
-    await expect(sut.execute(input)).rejects.toThrow(ClientOwnerAlreadyExistsError);
-    expect(saveSpy).not.toHaveBeenCalled();
+    const clientOwner = await prisma.clientOwner.findUnique({ where: { id } });
+    expect(clientOwner).toEqual(
+      expect.objectContaining({
+        id,
+        name: input.name,
+        active: true,
+      }),
+    );
+    expect(clientOwner?.createdAt).toBeInstanceOf(Date);
+    expect(clientOwner?.updatedAt).toBeInstanceOf(Date);
   });
 });

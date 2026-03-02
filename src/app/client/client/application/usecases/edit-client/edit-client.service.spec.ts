@@ -5,7 +5,6 @@ import { ClientModule } from 'src/app/client/client/client.module';
 import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
 import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum';
 import { ClientNotFoundError } from 'src/app/client/client/domain/errors/client-not-found.error';
-import { ConfigModule } from 'src/core/config/config.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { DocumentAlreadyTakenError } from 'src/shared/errors/document-already-taken';
 import { EditClient } from './edit-client.service';
@@ -16,7 +15,7 @@ describe('EditClient - Integration tests', () => {
 
   beforeAll(async() => {
     const module = await Test.createTestingModule({
-      imports: [ClientModule, ConfigModule],
+      imports: [ClientModule],
     }).compile();
 
     sut = module.get(EditClient);
@@ -28,10 +27,8 @@ describe('EditClient - Integration tests', () => {
   });
 
   afterAll(async() => {
-    if (prisma) {
-      await prisma.truncate();
-      await prisma.$disconnect();
-    }
+    await prisma.truncate();
+    await prisma.$disconnect();
   });
 
   it('should be defined', () => {

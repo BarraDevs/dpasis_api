@@ -1,29 +1,29 @@
-import { createMock } from '@golevelup/ts-jest';
 import { Test } from '@nestjs/testing';
-import { TOKENS } from 'src/core/di/token';
-import { SuccessMessage } from 'src/core/dtos/success-message.dto';
+import { PrismaService } from 'src/infra/database/prisma/prisma.service';
+import { ClientGroupModule } from '../../../client-group.module';
 import { ClientGroupNotFoundError } from '../../../domain/errors/client-group-not-found.error';
-import { ClientGroupDto } from '../../dtos/client-group.dto';
-import type { IClientGroupDao } from '../../persistence/dao/client-group-dao.interface';
 import { UpdateClientGroupStatus } from './update-client-group-status.service';
 
-describe('UpdateClientGroupStatus - Unit tests', () => {
+describe('UpdateClientGroupStatus - Integration tests', () => {
   let sut: UpdateClientGroupStatus;
-  let clientGroupDao: IClientGroupDao;
+  let prisma: PrismaService;
 
-  beforeEach(async() => {
+  beforeAll(async() => {
     const module = await Test.createTestingModule({
-      providers: [
-        UpdateClientGroupStatus,
-        {
-          provide: TOKENS.ClientGroupDao,
-          useValue: createMock<IClientGroupDao>(),
-        },
-      ],
+      imports: [ClientGroupModule],
     }).compile();
 
     sut = module.get(UpdateClientGroupStatus);
-    clientGroupDao = module.get(TOKENS.ClientGroupDao);
+    prisma = module.get(PrismaService);
+  });
+
+  beforeEach(async() => {
+    await prisma.truncate();
+  });
+
+  afterAll(async() => {
+    await prisma.truncate();
+    await prisma.$disconnect();
   });
 
   it('should be defined', () => {
@@ -33,79 +33,64 @@ describe('UpdateClientGroupStatus - Unit tests', () => {
   it('should throw ClientGroupNotFoundError when client group does not exist', async() => {
     // Arrange
     const id = 0;
-    jest.spyOn(clientGroupDao, 'findById').mockResolvedValue(null);
 
     // Act & Assert
     await expect(sut.execute(id)).rejects.toThrow(ClientGroupNotFoundError);
   });
 
-  it('should call clientGroupDao.findById to get current status', async() => {
+  it('should invert active from true to false', async() => {
     // Arrange
-    const id = 1;
-    const clientGroup = createMock<ClientGroupDto>({ id, active: true });
-    jest.spyOn(clientGroupDao, 'findById').mockResolvedValue(clientGroup);
-    const findByIdSpy = jest.spyOn(clientGroupDao, 'findById');
+    const clientGroup = await prisma.clientGroup.create({
+      data: { name: 'Grupo', active: true },
+    });
 
     // Act
-    await sut.execute(id);
+    await sut.execute(clientGroup.id);
 
     // Assert
-    expect(findByIdSpy).toHaveBeenCalledWith(id);
-    expect(findByIdSpy).toHaveBeenCalledTimes(1);
+    const updated = await prisma.clientGroup.findUnique({ where: { id: clientGroup.id } });
+    expect(updated?.active).toBe(false);
   });
 
-  it('should call clientGroupDao.edit with inverted active when current is true', async() => {
+  it('should invert active from false to true', async() => {
     // Arrange
-    const id = 1;
-    const clientGroup = createMock<ClientGroupDto>({ id, active: true });
-    jest.spyOn(clientGroupDao, 'findById').mockResolvedValue(clientGroup);
-    const updateStatusSpy = jest.spyOn(clientGroupDao, 'updateStatus');
+    const clientGroup = await prisma.clientGroup.create({
+      data: { name: 'Grupo', active: false },
+    });
 
     // Act
-    await sut.execute(id);
+    await sut.execute(clientGroup.id);
 
     // Assert
-    expect(updateStatusSpy).toHaveBeenCalledWith(id, false);
-    expect(updateStatusSpy).toHaveBeenCalledTimes(1);
-  });
-
-  it('should call clientGroupDao.edit with inverted active when current is false', async() => {
-    // Arrange
-    const id = 1;
-    const clientGroup = createMock<ClientGroupDto>({ id, active: false });
-    jest.spyOn(clientGroupDao, 'findById').mockResolvedValue(clientGroup);
-    const updateStatusSpy = jest.spyOn(clientGroupDao, 'updateStatus');
-
-    // Act
-    await sut.execute(id);
-
-    // Assert
-    expect(updateStatusSpy).toHaveBeenCalledWith(id, true);
-    expect(updateStatusSpy).toHaveBeenCalledTimes(1);
+    const updated = await prisma.clientGroup.findUnique({ where: { id: clientGroup.id } });
+    expect(updated?.active).toBe(true);
   });
 
   it('should return success message', async() => {
     // Arrange
-    const id = 1;
-    jest.spyOn(clientGroupDao, 'findById').mockResolvedValue(createMock<ClientGroupDto>({ active: true }));
+    const clientGroup = await prisma.clientGroup.create({
+      data: { name: 'Grupo', active: true },
+    });
 
     // Act
-    const result = await sut.execute(id);
+    const result = await sut.execute(clientGroup.id);
 
     // Assert
-    expect(result).toEqual<SuccessMessage>({
-      message: 'Status do grupo de clientes atualizado com sucesso',
-    });
+    expect(result).toEqual({ message: 'Status do grupo de clientes atualizado com sucesso' });
   });
 
-  it('should not call updateStatus when client group does not exist', async() => {
+  it('should preserve other fields when inverting status', async() => {
     // Arrange
-    const id = 0;
-    jest.spyOn(clientGroupDao, 'findById').mockResolvedValue(null);
-    const updateStatusSpy = jest.spyOn(clientGroupDao, 'updateStatus');
+    const clientGroup = await prisma.clientGroup.create({
+      data: { name: 'Grupo Premium', active: true },
+    });
 
-    // Act & Assert
-    await expect(sut.execute(id)).rejects.toThrow(ClientGroupNotFoundError);
-    expect(updateStatusSpy).not.toHaveBeenCalled();
+    // Act
+    await sut.execute(clientGroup.id);
+
+    // Assert
+    const updated = await prisma.clientGroup.findUnique({ where: { id: clientGroup.id } });
+    expect(updated?.name).toBe('Grupo Premium');
+    expect(updated?.active).toBe(false);
   });
 });

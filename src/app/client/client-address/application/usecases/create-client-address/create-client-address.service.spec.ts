@@ -1,10 +1,9 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { ClientAddressPersistenceModule } from 'src/app/client/client-address/application/persistence/client-address-persistence.module';
+import { Test } from '@nestjs/testing';
+import { ClientAddressModule } from 'src/app/client/client-address/client-address.module';
 import { ClientAddressType } from 'src/app/client/client-address/domain/enums/client-address-type.enum';
 import { ClientAddressAlreadyExistsError } from 'src/app/client/client-address/domain/errors/client-address-already-exists.error';
 import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
 import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum';
-import { ConfigModule } from 'src/core/config/config.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { CreateClientAddress } from './create-client-address.service';
 
@@ -29,9 +28,8 @@ describe('CreateClientAddress', () => {
   let clientId: number;
 
   beforeAll(async() => {
-    const module: TestingModule = await Test.createTestingModule({
-      imports: [ConfigModule, ClientAddressPersistenceModule],
-      providers: [CreateClientAddress],
+    const module = await Test.createTestingModule({
+      imports: [ClientAddressModule],
     }).compile();
 
     sut = module.get(CreateClientAddress);

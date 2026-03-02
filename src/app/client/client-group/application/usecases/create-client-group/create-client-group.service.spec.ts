@@ -1,95 +1,85 @@
-import { createMock } from '@golevelup/ts-jest';
 import { Test } from '@nestjs/testing';
-import { TOKENS } from 'src/core/di/token';
+import { PrismaService } from 'src/infra/database/prisma/prisma.service';
+import { ClientGroupModule } from '../../../client-group.module';
 import { ClientGroupAlreadyExistsError } from '../../../domain/errors/client-group-already-exists.error';
-import { ClientGroupDto } from '../../dtos/client-group.dto';
-import type { IClientGroupDao } from '../../persistence/dao/client-group-dao.interface';
 import { CreateClientGroup } from './create-client-group.service';
-import { CreateClientGroupInputDto, CreateClientGroupOutputDto } from './dtos/create-client-group.dto';
+import { CreateClientGroupInputDto } from './dtos/create-client-group.dto';
 
-function makeValidCreateClientGroupInput(overrides: Partial<CreateClientGroupInputDto> = {}): CreateClientGroupInputDto {
-  return {
-    name: 'Grupo Premium',
-    ...overrides,
-  };
-}
-
-describe('CreateClientGroup - Unit tests', () => {
+describe('CreateClientGroup - Integration tests', () => {
   let sut: CreateClientGroup;
-  let clientGroupDao: IClientGroupDao;
+  let prisma: PrismaService;
 
-  beforeEach(async() => {
+  beforeAll(async() => {
     const module = await Test.createTestingModule({
-      providers: [
-        CreateClientGroup,
-        {
-          provide: TOKENS.ClientGroupDao,
-          useValue: createMock<IClientGroupDao>(),
-        },
-      ],
+      imports: [ClientGroupModule],
     }).compile();
 
     sut = module.get(CreateClientGroup);
-    clientGroupDao = module.get(TOKENS.ClientGroupDao);
+    prisma = module.get(PrismaService);
+  });
+
+  beforeEach(async() => {
+    await prisma.truncate();
+  });
+
+  afterAll(async() => {
+    await prisma.truncate();
+    await prisma.$disconnect();
   });
 
   it('should be defined', () => {
     expect(sut).toBeDefined();
   });
 
-  it('should call clientGroupDao.save with correct data', async() => {
+  it('should throw ClientGroupAlreadyExistsError when creating with duplicate name', async() => {
     // Arrange
-    const input = makeValidCreateClientGroupInput();
-    const saveSpy = jest.spyOn(clientGroupDao, 'save').mockResolvedValue(1);
-    const findByNameSpy = jest.spyOn(clientGroupDao, 'findByName').mockResolvedValue(null);
-
-    // Act
+    const input: CreateClientGroupInputDto = {
+      name: 'Grupo Duplicado',
+    };
     await sut.execute(input);
 
-    // Assert
-    expect(saveSpy).toHaveBeenCalledTimes(1);
-    expect(saveSpy).toHaveBeenCalledWith(input);
-    expect(findByNameSpy).toHaveBeenCalledTimes(1);
-    expect(findByNameSpy).toHaveBeenCalledWith(input.name.trim());
+    // Act & Assert
+    await expect(sut.execute(input)).rejects.toThrow(ClientGroupAlreadyExistsError);
   });
 
-  it('should return id from clientGroupDao.save', async() => {
+  it('should create client group and return id', async() => {
     // Arrange
-    const input = makeValidCreateClientGroupInput();
-    const id = 1;
-    jest.spyOn(clientGroupDao, 'save').mockResolvedValue(id);
-    jest.spyOn(clientGroupDao, 'findByName').mockResolvedValue(null);
+    const input: CreateClientGroupInputDto = {
+      name: 'Grupo Premium',
+    };
 
     // Act
     const result = await sut.execute(input);
 
     // Assert
-    expect(result).toEqual<CreateClientGroupOutputDto>({ id });
+    expect(result.id).toBeDefined();
+    expect(typeof result.id).toBe('number');
+
+    const saved = await prisma.clientGroup.findUnique({ where: { id: result.id } });
+    expect(saved).not.toBeNull();
+    expect(saved?.name).toBe(input.name);
+    expect(saved?.active).toBe(true);
   });
 
-  it('should call clientGroupDao.findByName before save', async() => {
+  it('should persist client group in database', async() => {
     // Arrange
-    const input = makeValidCreateClientGroupInput();
-    const findByNameSpy = jest.spyOn(clientGroupDao, 'findByName').mockResolvedValue(null);
-    jest.spyOn(clientGroupDao, 'save').mockResolvedValue(1);
+    const input: CreateClientGroupInputDto = {
+      name: 'Grupo VIP',
+    };
 
     // Act
-    await sut.execute(input);
+    const { id } = await sut.execute(input);
 
     // Assert
-    expect(findByNameSpy).toHaveBeenCalledTimes(1);
-    expect(findByNameSpy).toHaveBeenCalledWith(input.name.trim());
-  });
-
-  it('should throw ClientGroupAlreadyExistsError when name already exists', async() => {
-    // Arrange
-    const input = makeValidCreateClientGroupInput({ name: 'Grupo Premium' });
-    const clientGroup = createMock<ClientGroupDto>();
-    jest.spyOn(clientGroupDao, 'findByName').mockResolvedValue(clientGroup);
-    const saveSpy = jest.spyOn(clientGroupDao, 'save').mockResolvedValue(1);
-
-    // Act & Assert
-    await expect(sut.execute(input)).rejects.toThrow(ClientGroupAlreadyExistsError);
-    expect(saveSpy).not.toHaveBeenCalled();
+    const clientGroup = await prisma.clientGroup.findUnique({ where: { id } });
+    expect(clientGroup).toEqual(
+      expect.objectContaining({
+        id,
+        name: input.name,
+        active: true,
+      }),
+    );
+    expect(clientGroup?.createdAt).toBeInstanceOf(Date);
+    expect(clientGroup?.updatedAt).toBeInstanceOf(Date);
   });
 });

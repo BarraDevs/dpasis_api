@@ -1,50 +1,31 @@
-import { createMock } from '@golevelup/ts-jest';
 import { Test } from '@nestjs/testing';
-import { TOKENS } from 'src/core/di/token';
-import { SuccessMessage } from 'src/core/dtos/success-message.dto';
+import { PrismaService } from 'src/infra/database/prisma/prisma.service';
+import { ClientGroupModule } from '../../../client-group.module';
 import { ClientGroupAlreadyExistsError } from '../../../domain/errors/client-group-already-exists.error';
 import { ClientGroupNotFoundError } from '../../../domain/errors/client-group-not-found.error';
-import { ClientGroupDto } from '../../dtos/client-group.dto';
-import type { IClientGroupDao } from '../../persistence/dao/client-group-dao.interface';
 import { EditClientGroupInputDto } from './dtos/edit-client-group.dto';
 import { EditClientGroup } from './edit-client-group.service';
 
-function makeValidEditClientGroupInput(overrides: Partial<EditClientGroupInputDto> = {}): EditClientGroupInputDto {
-  return {
-    name: 'Novo nome',
-    ...overrides,
-  };
-}
-
-function makeClientGroupDto(overrides: Partial<ClientGroupDto> = {}): ClientGroupDto {
-  const now = new Date();
-  return {
-    id: 1,
-    name: 'Nome antigo',
-    active: true,
-    createdAt: now,
-    updatedAt: now,
-    ...overrides,
-  };
-}
-
-describe('EditClientGroup - Unit tests', () => {
+describe('EditClientGroup - Integration tests', () => {
   let sut: EditClientGroup;
-  let clientGroupDao: IClientGroupDao;
+  let prisma: PrismaService;
 
-  beforeEach(async() => {
+  beforeAll(async() => {
     const module = await Test.createTestingModule({
-      providers: [
-        EditClientGroup,
-        {
-          provide: TOKENS.ClientGroupDao,
-          useValue: createMock<IClientGroupDao>(),
-        },
-      ],
+      imports: [ClientGroupModule],
     }).compile();
 
     sut = module.get(EditClientGroup);
-    clientGroupDao = module.get(TOKENS.ClientGroupDao);
+    prisma = module.get(PrismaService);
+  });
+
+  beforeEach(async() => {
+    await prisma.truncate();
+  });
+
+  afterAll(async() => {
+    await prisma.truncate();
+    await prisma.$disconnect();
   });
 
   it('should be defined', () => {
@@ -54,114 +35,69 @@ describe('EditClientGroup - Unit tests', () => {
   it('should throw ClientGroupNotFoundError when client group does not exist', async() => {
     // Arrange
     const id = 0;
-    const data = makeValidEditClientGroupInput();
-    jest.spyOn(clientGroupDao, 'findById').mockResolvedValue(null);
+    const data: EditClientGroupInputDto = { name: 'Novo nome' };
 
     // Act & Assert
     await expect(sut.execute(id, data)).rejects.toThrow(ClientGroupNotFoundError);
   });
 
-  it('should call clientGroupDao.findById to validate existence', async() => {
+  it('should update client group name', async() => {
     // Arrange
-    const id = 1;
-    const data = makeValidEditClientGroupInput();
-    jest.spyOn(clientGroupDao, 'findById').mockResolvedValue(makeClientGroupDto({ id }));
-    jest.spyOn(clientGroupDao, 'findByName').mockResolvedValue(null);
-    const findByIdSpy = jest.spyOn(clientGroupDao, 'findById');
+    const clientGroup = await prisma.clientGroup.create({
+      data: { name: 'Nome original', active: true },
+    });
+    const data: EditClientGroupInputDto = { name: 'Nome atualizado' };
 
     // Act
-    await sut.execute(id, data);
+    await sut.execute(clientGroup.id, data);
 
     // Assert
-    expect(findByIdSpy).toHaveBeenCalledWith(id);
-    expect(findByIdSpy).toHaveBeenCalledTimes(1);
-  });
-
-  it('should call clientGroupDao.findByName before edit', async() => {
-    // Arrange
-    const id = 1;
-    const data = makeValidEditClientGroupInput();
-    jest.spyOn(clientGroupDao, 'findById').mockResolvedValue(makeClientGroupDto({ id }));
-    jest.spyOn(clientGroupDao, 'findByName').mockResolvedValue(null);
-    const findByNameSpy = jest.spyOn(clientGroupDao, 'findByName');
-
-    // Act
-    await sut.execute(id, data);
-
-    // Assert
-    expect(findByNameSpy).toHaveBeenCalledTimes(1);
-    expect(findByNameSpy).toHaveBeenCalledWith(data.name.trim());
-  });
-
-  it('should call clientGroupDao.edit with id and data', async() => {
-    // Arrange
-    const id = 1;
-    const data = makeValidEditClientGroupInput();
-    jest.spyOn(clientGroupDao, 'findById').mockResolvedValue(makeClientGroupDto({ id }));
-    jest.spyOn(clientGroupDao, 'findByName').mockResolvedValue(null);
-    const editSpy = jest.spyOn(clientGroupDao, 'edit');
-
-    // Act
-    await sut.execute(id, data);
-
-    // Assert
-    expect(editSpy).toHaveBeenCalledWith(id, data);
-    expect(editSpy).toHaveBeenCalledTimes(1);
+    const updated = await prisma.clientGroup.findUnique({ where: { id: clientGroup.id } });
+    expect(updated?.name).toBe('Nome atualizado');
+    expect(updated?.active).toBe(true);
   });
 
   it('should return success message', async() => {
     // Arrange
-    const id = 1;
-    const data = makeValidEditClientGroupInput();
-    jest.spyOn(clientGroupDao, 'findById').mockResolvedValue(makeClientGroupDto({ id }));
-    jest.spyOn(clientGroupDao, 'findByName').mockResolvedValue(null);
+    const clientGroup = await prisma.clientGroup.create({
+      data: { name: 'Grupo', active: true },
+    });
+    const data: EditClientGroupInputDto = { name: 'Novo nome' };
 
     // Act
-    const result = await sut.execute(id, data);
+    const result = await sut.execute(clientGroup.id, data);
 
     // Assert
-    expect(result).toEqual<SuccessMessage>({
-      message: 'Grupo de clientes atualizado com sucesso',
+    expect(result).toEqual({ message: 'Grupo de clientes atualizado com sucesso' });
+  });
+
+  it('should throw ClientGroupAlreadyExistsError when editing to duplicate name', async() => {
+    // Arrange
+    await prisma.clientGroup.create({
+      data: { name: 'Grupo A', active: true },
     });
-  });
-
-  it('should not call edit when client group does not exist', async() => {
-    // Arrange
-    const id = 0;
-    const data = makeValidEditClientGroupInput();
-    jest.spyOn(clientGroupDao, 'findById').mockResolvedValue(null);
-    const editSpy = jest.spyOn(clientGroupDao, 'edit');
+    const clientGroupB = await prisma.clientGroup.create({
+      data: { name: 'Grupo B', active: true },
+    });
+    const data: EditClientGroupInputDto = { name: 'Grupo A' };
 
     // Act & Assert
-    await expect(sut.execute(id, data)).rejects.toThrow(ClientGroupNotFoundError);
-    expect(editSpy).not.toHaveBeenCalled();
-  });
-
-  it('should throw ClientGroupAlreadyExistsError when name already exists for another group', async() => {
-    // Arrange
-    const id = 1;
-    const data = makeValidEditClientGroupInput({ name: 'Nome Existente' });
-    jest.spyOn(clientGroupDao, 'findById').mockResolvedValue(makeClientGroupDto({ id }));
-    jest.spyOn(clientGroupDao, 'findByName').mockResolvedValue(makeClientGroupDto({ id: 2, name: data.name }));
-    const editSpy = jest.spyOn(clientGroupDao, 'edit');
-
-    // Act & Assert
-    await expect(sut.execute(id, data)).rejects.toThrow(ClientGroupAlreadyExistsError);
-    expect(editSpy).not.toHaveBeenCalled();
+    await expect(sut.execute(clientGroupB.id, data)).rejects.toThrow(ClientGroupAlreadyExistsError);
   });
 
   it('should allow edit when name belongs to the same group being edited', async() => {
     // Arrange
-    const id = 1;
-    const data = makeValidEditClientGroupInput({ name: 'Mesmo Nome' });
-    jest.spyOn(clientGroupDao, 'findById').mockResolvedValue(makeClientGroupDto({ id, name: data.name }));
-    jest.spyOn(clientGroupDao, 'findByName').mockResolvedValue(makeClientGroupDto({ id, name: data.name }));
-    const editSpy = jest.spyOn(clientGroupDao, 'edit');
+    const clientGroup = await prisma.clientGroup.create({
+      data: { name: 'Grupo', active: true },
+    });
+    const data: EditClientGroupInputDto = { name: 'Grupo' };
 
     // Act
-    await sut.execute(id, data);
+    await sut.execute(clientGroup.id, data);
 
     // Assert
-    expect(editSpy).toHaveBeenCalledWith(id, data);
+    const updated = await prisma.clientGroup.findUnique({ where: { id: clientGroup.id } });
+    expect(updated?.name).toBe('Grupo');
+    expect(updated?.active).toBe(true);
   });
 });

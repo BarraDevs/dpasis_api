@@ -1,29 +1,29 @@
-import { createMock } from '@golevelup/ts-jest';
 import { Test } from '@nestjs/testing';
-import { TOKENS } from 'src/core/di/token';
-import { SuccessMessage } from 'src/core/dtos/success-message.dto';
+import { PrismaService } from 'src/infra/database/prisma/prisma.service';
+import { ClientGroupModule } from '../../../client-group.module';
 import { ClientGroupNotFoundError } from '../../../domain/errors/client-group-not-found.error';
-import { ClientGroupDto } from '../../dtos/client-group.dto';
-import type { IClientGroupDao } from '../../persistence/dao/client-group-dao.interface';
 import { DeleteClientGroup } from './delete-client-group.service';
 
-describe('DeleteClientGroup - Unit tests', () => {
+describe('DeleteClientGroup - Integration tests', () => {
   let sut: DeleteClientGroup;
-  let clientGroupDao: IClientGroupDao;
+  let prisma: PrismaService;
 
-  beforeEach(async() => {
+  beforeAll(async() => {
     const module = await Test.createTestingModule({
-      providers: [
-        DeleteClientGroup,
-        {
-          provide: TOKENS.ClientGroupDao,
-          useValue: createMock<IClientGroupDao>(),
-        },
-      ],
+      imports: [ClientGroupModule],
     }).compile();
 
     sut = module.get(DeleteClientGroup);
-    clientGroupDao = module.get(TOKENS.ClientGroupDao);
+    prisma = module.get(PrismaService);
+  });
+
+  beforeEach(async() => {
+    await prisma.truncate();
+  });
+
+  afterAll(async() => {
+    await prisma.truncate();
+    await prisma.$disconnect();
   });
 
   it('should be defined', () => {
@@ -33,63 +33,35 @@ describe('DeleteClientGroup - Unit tests', () => {
   it('should throw ClientGroupNotFoundError when client group does not exist', async() => {
     // Arrange
     const id = 0;
-    jest.spyOn(clientGroupDao, 'findById').mockResolvedValue(null);
 
     // Act & Assert
     await expect(sut.execute(id)).rejects.toThrow(ClientGroupNotFoundError);
-    await expect(sut.execute(id)).rejects.toThrow('Grupo de clientes não encontrado na base de dados.');
   });
 
-  it('should call clientGroupDao.findById to validate existence', async() => {
+  it('should delete client group from database', async() => {
     // Arrange
-    const id = 1;
-    jest.spyOn(clientGroupDao, 'findById').mockResolvedValue(createMock<ClientGroupDto>());
-    const findByIdSpy = jest.spyOn(clientGroupDao, 'findById');
+    const clientGroup = await prisma.clientGroup.create({
+      data: { name: 'Grupo', active: true },
+    });
 
     // Act
-    await sut.execute(id);
+    await sut.execute(clientGroup.id);
 
     // Assert
-    expect(findByIdSpy).toHaveBeenCalledWith(id);
-    expect(findByIdSpy).toHaveBeenCalledTimes(1);
-  });
-
-  it('should call clientGroupDao.delete with correct id', async() => {
-    // Arrange
-    const id = 1;
-    jest.spyOn(clientGroupDao, 'findById').mockResolvedValue(createMock<ClientGroupDto>());
-    const deleteSpy = jest.spyOn(clientGroupDao, 'delete');
-
-    // Act
-    await sut.execute(id);
-
-    // Assert
-    expect(deleteSpy).toHaveBeenCalledWith(id);
-    expect(deleteSpy).toHaveBeenCalledTimes(1);
+    const deleted = await prisma.clientGroup.findUnique({ where: { id: clientGroup.id } });
+    expect(deleted).toBeNull();
   });
 
   it('should return success message', async() => {
     // Arrange
-    const id = 1;
-    jest.spyOn(clientGroupDao, 'findById').mockResolvedValue(createMock<ClientGroupDto>());
+    const clientGroup = await prisma.clientGroup.create({
+      data: { name: 'Grupo', active: true },
+    });
 
     // Act
-    const result = await sut.execute(id);
+    const result = await sut.execute(clientGroup.id);
 
     // Assert
-    expect(result).toEqual<SuccessMessage>({
-      message: 'Grupo de clientes excluído com sucesso',
-    });
-  });
-
-  it('should not call delete when client group does not exist', async() => {
-    // Arrange
-    const id = 0;
-    jest.spyOn(clientGroupDao, 'findById').mockResolvedValue(null);
-    const deleteSpy = jest.spyOn(clientGroupDao, 'delete');
-
-    // Act & Assert
-    await expect(sut.execute(id)).rejects.toThrow(ClientGroupNotFoundError);
-    expect(deleteSpy).not.toHaveBeenCalled();
+    expect(result).toEqual({ message: 'Grupo de clientes excluído com sucesso' });
   });
 });

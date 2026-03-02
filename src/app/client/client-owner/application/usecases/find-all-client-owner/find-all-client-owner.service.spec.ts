@@ -1,70 +1,39 @@
-import { createMock } from '@golevelup/ts-jest';
 import { Test } from '@nestjs/testing';
-import { TOKENS } from 'src/core/di/token';
+import { PrismaService } from 'src/infra/database/prisma/prisma.service';
+import { ClientOwnerModule } from '../../../client-owner.module';
 import { ClientOwnerDto } from '../../dtos/client-owner.dto';
-import type { IClientOwnerDao } from '../../persistence/dao/client-owner-dao.interface';
 import { FindAllClientOwnerQueryDto } from './dtos/find-all-client-owner.dto';
 import { FindAllClientOwner } from './find-all-client-owner.service';
 
-describe('FindAllClientOwner - Unit tests', () => {
+describe('FindAllClientOwner - Integration tests', () => {
   let sut: FindAllClientOwner;
-  let clientOwnerDao: IClientOwnerDao;
+  let prisma: PrismaService;
 
-  beforeEach(async() => {
+  beforeAll(async() => {
     const module = await Test.createTestingModule({
-      providers: [
-        FindAllClientOwner,
-        {
-          provide: TOKENS.ClientOwnerDao,
-          useValue: createMock<IClientOwnerDao>(),
-        },
-      ],
+      imports: [ClientOwnerModule],
     }).compile();
 
     sut = module.get(FindAllClientOwner);
-    clientOwnerDao = module.get(TOKENS.ClientOwnerDao);
+    prisma = module.get(PrismaService);
+  });
+
+  beforeEach(async() => {
+    await prisma.truncate();
+  });
+
+  afterAll(async() => {
+    await prisma.truncate();
+    await prisma.$disconnect();
   });
 
   it('should be defined', () => {
     expect(sut).toBeDefined();
   });
 
-  it('should call clientOwnerDao.findAll with correct query', async() => {
+  it('should return empty results when no client owners exist', async() => {
     // Arrange
-    const query: FindAllClientOwnerQueryDto = { page: 1, size: 10 };
-    jest.spyOn(clientOwnerDao, 'findAll').mockResolvedValue([[], 0]);
-    const findAllSpy = jest.spyOn(clientOwnerDao, 'findAll');
-
-    // Act
-    await sut.execute(query);
-
-    // Assert
-    expect(findAllSpy).toHaveBeenCalledWith(query);
-    expect(findAllSpy).toHaveBeenCalledTimes(1);
-  });
-
-  it('should return paginated result', async() => {
-    // Arrange
-    const query: FindAllClientOwnerQueryDto = { page: 1, size: 10 };
-    const mockClientOwner = createMock<ClientOwnerDto>();
-    jest.spyOn(clientOwnerDao, 'findAll').mockResolvedValue([[mockClientOwner], 1]);
-
-    // Act
-    const result = await sut.execute(query);
-
-    // Assert
-    expect(result).toBeDefined();
-    expect(result.data).toEqual([mockClientOwner]);
-    expect(result.totalItems).toBe(1);
-    expect(result.itemsPerPage).toBe(10);
-    expect(result.totalPages).toBe(1);
-    expect(result.currentPage).toBe(1);
-  });
-
-  it('should handle empty result', async() => {
-    // Arrange
-    const query: FindAllClientOwnerQueryDto = { page: 1, size: 10 };
-    jest.spyOn(clientOwnerDao, 'findAll').mockResolvedValue([[], 0]);
+    const query: FindAllClientOwnerQueryDto = {};
 
     // Act
     const result = await sut.execute(query);
@@ -72,36 +41,108 @@ describe('FindAllClientOwner - Unit tests', () => {
     // Assert
     expect(result.data).toEqual([]);
     expect(result.totalItems).toBe(0);
-    expect(result.totalPages).toBe(0);
   });
 
-  it('should pass search to clientOwnerDao', async() => {
+  it('should return all client owners with pagination', async() => {
     // Arrange
-    const query: FindAllClientOwnerQueryDto = { page: 1, size: 20, search: 'Premium' };
-    jest.spyOn(clientOwnerDao, 'findAll').mockResolvedValue([[], 0]);
-    const findAllSpy = jest.spyOn(clientOwnerDao, 'findAll');
+    await prisma.clientOwner.createMany({
+      data: [
+        { name: 'Proprietário 1', active: true },
+        { name: 'Proprietário 2', active: false },
+        { name: 'Proprietário 3', active: true },
+      ],
+    });
 
     // Act
-    await sut.execute(query);
+    const result = await sut.execute({ page: 1, size: 10 });
 
     // Assert
-    expect(findAllSpy).toHaveBeenCalledWith(query);
+    expect(result.data).toHaveLength(3);
+    expect(result.totalItems).toBe(3);
+    expect(result.currentPage).toBe(1);
+    expect(result.itemsPerPage).toBe(10);
+    expect(result.totalPages).toBe(1);
   });
 
-  it('should use Pagination for multiple pages', async() => {
+  it('should paginate results correctly', async() => {
     // Arrange
-    const query: FindAllClientOwnerQueryDto = { page: 3, size: 15 };
-    const mockClientOwners = Array(15).fill(createMock<ClientOwnerDto>());
-    jest.spyOn(clientOwnerDao, 'findAll').mockResolvedValue([mockClientOwners, 100]);
+    await prisma.clientOwner.createMany({
+      data: Array.from({ length: 25 }, (_, i) => ({
+        name: `Proprietário ${i + 1}`,
+        active: true,
+      })),
+    });
 
     // Act
-    const result = await sut.execute(query);
+    const page1 = await sut.execute({ page: 1, size: 10 });
+    const page3 = await sut.execute({ page: 3, size: 10 });
 
     // Assert
-    expect(result.currentPage).toBe(3);
-    expect(result.itemsPerPage).toBe(15);
-    expect(result.totalPages).toBe(7);
-    expect(result.totalItems).toBe(100);
-    expect(result.data).toHaveLength(15);
+    expect(page1.data).toHaveLength(10);
+    expect(page1.totalItems).toBe(25);
+    expect(page1.currentPage).toBe(1);
+    expect(page1.totalPages).toBe(3);
+
+    expect(page3.data).toHaveLength(5);
+    expect(page3.currentPage).toBe(3);
+  });
+
+  it('should order by name asc', async() => {
+    // Arrange
+    const first = await prisma.clientOwner.create({
+      data: { name: 'B', active: true },
+    });
+    const second = await prisma.clientOwner.create({
+      data: { name: 'A', active: true },
+    });
+    const third = await prisma.clientOwner.create({
+      data: { name: 'C', active: true },
+    });
+
+    // Act
+    const result = await sut.execute({ page: 1, size: 10 });
+
+    // Assert
+    expect(result.data[0].id).toBe(second.id);
+    expect(result.data[1].id).toBe(first.id);
+    expect(result.data[2].id).toBe(third.id);
+  });
+
+  it('should filter by search in name', async() => {
+    // Arrange
+    await prisma.clientOwner.createMany({
+      data: [
+        { name: 'Proprietário Premium', active: true },
+        { name: 'Proprietário Básico', active: true },
+        { name: 'Proprietário Premium VIP', active: true },
+      ],
+    });
+
+    // Act
+    const result = await sut.execute({ page: 1, size: 10, search: 'Premium' });
+
+    // Assert
+    expect(result.data).toHaveLength(2);
+    expect(result.totalItems).toBe(2);
+    expect(result.data.every((g: ClientOwnerDto) => g.name.toLowerCase().includes('premium'))).toBe(true);
+  });
+
+  it('should return correct ClientOwnerDto structure', async() => {
+    // Arrange
+    const clientOwner = await prisma.clientOwner.create({
+      data: { name: 'Proprietário Test', active: true },
+    });
+
+    // Act
+    const result = await sut.execute({ page: 1, size: 10 });
+
+    // Assert
+    expect(result.data[0]).toEqual<ClientOwnerDto>({
+      id: clientOwner.id,
+      name: clientOwner.name,
+      active: clientOwner.active,
+      createdAt: clientOwner.createdAt,
+      updatedAt: clientOwner.updatedAt,
+    });
   });
 });
