@@ -1,10 +1,10 @@
 import { Test } from '@nestjs/testing';
+import { ClientModule } from 'src/app/client/client.module';
 import { ClientInvoiceType } from 'src/app/client/domain/enums/client-invoice-type.enum';
 import { ClientType } from 'src/app/client/domain/enums/client-type.enum';
 import { ClientNotFoundError } from 'src/app/client/domain/errors/client-not-found.error';
 import { ConfigModule } from 'src/core/config/config.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
-import { ClientModule } from 'src/app/client/client.module';
 import { ActivateClient } from './activate-client.service';
 
 describe('ActivateClient - Integration tests', () => {
@@ -37,7 +37,7 @@ describe('ActivateClient - Integration tests', () => {
 
   it('should throw ClientNotFoundError when client does not exist', async() => {
     await expect(sut.execute(99999)).rejects.toThrow(ClientNotFoundError);
-    await expect(sut.execute(99999)).rejects.toThrow('Client não encontrado.');
+    await expect(sut.execute(99999)).rejects.toThrow('Cliente não encontrado na base de dados.');
   });
 
   it('should activate client in database', async() => {

@@ -40,7 +40,7 @@ describe('EditClient - Integration tests', () => {
 
   it('should throw ClientNotFoundError when client does not exist', async() => {
     await expect(sut.execute(99999, { companyName: 'Novo Nome' })).rejects.toThrow(ClientNotFoundError);
-    await expect(sut.execute(99999, { companyName: 'Novo Nome' })).rejects.toThrow('Client não encontrado.');
+    await expect(sut.execute(99999, { companyName: 'Novo Nome' })).rejects.toThrow('Cliente não encontrado na base de dados.');
   });
 
   it('should update client and persist in database', async() => {

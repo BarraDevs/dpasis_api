@@ -37,7 +37,7 @@ describe('FindClientById - Integration tests', () => {
 
   it('should throw ClientNotFoundError when client does not exist', async() => {
     await expect(sut.execute(99999)).rejects.toThrow(ClientNotFoundError);
-    await expect(sut.execute(99999)).rejects.toThrow('Client não encontrado.');
+    await expect(sut.execute(99999)).rejects.toThrow('Cliente não encontrado na base de dados.');
   });
 
   it('should throw ClientNotFoundError when onlyActive is true and client is inactive', async() => {
@@ -61,7 +61,7 @@ describe('FindClientById - Integration tests', () => {
     });
 
     await expect(sut.execute(client.id, true)).rejects.toThrow(ClientNotFoundError);
-    await expect(sut.execute(client.id, true)).rejects.toThrow('Client não encontrado.');
+    await expect(sut.execute(client.id, true)).rejects.toThrow('Cliente não encontrado na base de dados.');
   });
 
   it('should return client when onlyActive is true and client is active', async() => {
