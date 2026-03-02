@@ -40,6 +40,17 @@ describe('FindClientGroupById - Integration tests', () => {
     await expect(sut.execute(id)).rejects.toThrow('Grupo de clientes não encontrado na base de dados.');
   });
 
+  it('should throw ClientGroupNotFoundError when client group is inactive and onlyActive is true', async() => {
+    // Arrange
+    const clientGroup = await prisma.clientGroup.create({
+      data: { name: 'Grupo Premium', active: false },
+    });
+
+    // Act & Assert
+    await expect(sut.execute(clientGroup.id, true)).rejects.toThrow(ClientGroupNotFoundError);
+    await expect(sut.execute(clientGroup.id, true)).rejects.toThrow('Grupo de clientes não encontrado na base de dados.');
+  });
+
   it('should return client group by id', async() => {
     // Arrange
     const clientGroup = await prisma.clientGroup.create({

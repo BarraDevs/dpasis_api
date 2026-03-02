@@ -10,9 +10,12 @@ export class FindClientOwnerById {
     @Inject(TOKENS.ClientOwnerDao) private readonly clientOwnerDao: IClientOwnerDao,
   ) {}
 
-  public async execute(id: number): Promise<ClientOwnerDto> {
+  public async execute(id: number, onlyActive: boolean = false): Promise<ClientOwnerDto> {
     const clientOwner = await this.clientOwnerDao.findById(id);
     if (!clientOwner) {
+      throw new ClientOwnerNotFoundError();
+    }
+    if (onlyActive && !clientOwner.active) {
       throw new ClientOwnerNotFoundError();
     }
 

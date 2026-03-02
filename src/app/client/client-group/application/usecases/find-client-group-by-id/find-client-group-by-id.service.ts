@@ -10,9 +10,12 @@ export class FindClientGroupById {
     @Inject(TOKENS.ClientGroupDao) private readonly clientGroupDao: IClientGroupDao,
   ) {}
 
-  public async execute(id: number): Promise<ClientGroupDto> {
+  public async execute(id: number, onlyActive: boolean = false): Promise<ClientGroupDto> {
     const clientGroup = await this.clientGroupDao.findById(id);
     if (!clientGroup) {
+      throw new ClientGroupNotFoundError();
+    }
+    if (onlyActive && !clientGroup.active) {
       throw new ClientGroupNotFoundError();
     }
 

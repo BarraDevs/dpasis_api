@@ -25,10 +25,10 @@ export class CreateClient {
       throw new DocumentAlreadyTakenError(entity.props.document);
     }
 
-    // Verifica se o grupo e o proprietário existem
-    // Se não existirem, lança um erro
-    await this.findClientGroupById.execute(data.groupId);
-    await this.findClientOwnerById.execute(data.ownerId);
+    // Verifica se o grupo e o proprietário existem E estão ativos
+    // Lança um erro se não existirem ou estão inativos
+    await this.findClientGroupById.execute(data.groupId, true);
+    await this.findClientOwnerById.execute(data.ownerId, true);
 
     await this.clientRepository.save(entity);
 

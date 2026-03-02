@@ -171,6 +171,20 @@ describe('CreateClient - Integration tests', () => {
       await expect(sut.execute(input)).rejects.toThrow('Grupo de clientes não encontrado na base de dados.');
     });
 
+    it('should throw ClientGroupNotFoundError when group is inactive', async() => {
+      const group = await prisma.clientGroup.create({
+        data: { name: `Grupo ${Date.now()}`, active: false },
+      });
+      const owner = await prisma.clientOwner.create({
+        data: { name: `Owner ${Date.now()}`, active: true },
+      });
+
+      const input = makeValidInput({ groupId: group.id, ownerId: owner.id });
+
+      await expect(sut.execute(input)).rejects.toThrow(ClientGroupNotFoundError);
+      await expect(sut.execute(input)).rejects.toThrow('Grupo de clientes não encontrado na base de dados.');
+    });
+
     it('should not persist client when group does not exist', async() => {
       const owner = await prisma.clientOwner.create({
         data: { name: `Owner ${Date.now()}`, active: true },
@@ -194,6 +208,20 @@ describe('CreateClient - Integration tests', () => {
       });
 
       const input = makeValidInput({ groupId: group.id, ownerId: 99999 });
+
+      await expect(sut.execute(input)).rejects.toThrow(ClientOwnerNotFoundError);
+      await expect(sut.execute(input)).rejects.toThrow('Proprietário de clientes não encontrado na base de dados.');
+    });
+
+    it('should throw ClientOwnerNotFoundError when owner is inactive', async() => {
+      const group = await prisma.clientGroup.create({
+        data: { name: `Grupo ${Date.now()}`, active: true },
+      });
+      const owner = await prisma.clientOwner.create({
+        data: { name: `Owner ${Date.now()}`, active: false },
+      });
+
+      const input = makeValidInput({ groupId: group.id, ownerId: owner.id });
 
       await expect(sut.execute(input)).rejects.toThrow(ClientOwnerNotFoundError);
       await expect(sut.execute(input)).rejects.toThrow('Proprietário de clientes não encontrado na base de dados.');

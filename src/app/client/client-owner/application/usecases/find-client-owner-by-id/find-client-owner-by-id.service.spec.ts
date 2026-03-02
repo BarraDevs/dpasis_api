@@ -40,6 +40,17 @@ describe('FindClientOwnerById - Integration tests', () => {
     await expect(sut.execute(id)).rejects.toThrow('Proprietário de clientes não encontrado na base de dados.');
   });
 
+  it('should throw ClientOwnerNotFoundError when client owner is inactive and onlyActive is true', async() => {
+    // Arrange
+    const clientOwner = await prisma.clientOwner.create({
+      data: { name: 'Proprietário Premium', active: false },
+    });
+
+    // Act & Assert
+    await expect(sut.execute(clientOwner.id, true)).rejects.toThrow(ClientOwnerNotFoundError);
+    await expect(sut.execute(clientOwner.id, true)).rejects.toThrow('Proprietário de clientes não encontrado na base de dados.');
+  });
+
   it('should return client owner by id', async() => {
     // Arrange
     const clientOwner = await prisma.clientOwner.create({
