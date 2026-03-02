@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AuthenticationModule } from './app/authentication/authentication.module';
+import { ClientAddressModule } from './app/client-address/client-address.module';
 import { ClientGroupModule } from './app/client-group/client-group.module';
 import { ClientOwnerModule } from './app/client-owner/client-owner.module';
 import { ClientModule } from './app/client/client.module';
@@ -14,6 +15,7 @@ import { InfraModule } from './infra/infra.module';
     CoreModule,
     InfraModule,
     AuthenticationModule,
+    ClientAddressModule,
     ClientGroupModule,
     ClientOwnerModule,
     ClientModule,
