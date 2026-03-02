@@ -17,6 +17,7 @@ model Client {
   group     ClientGroup     @relation(fields: [groupId], references: [id])
   owner     ClientOwner     @relation(fields: [ownerId], references: [id])
   addresses ClientAddress[]
+  contacts  ClientContact[]
 
   @@map("clients")
 }
@@ -52,7 +53,29 @@ model ClientDepartment {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  contacts ClientContact[]
+
   @@map("client_departments")
+}
+
+model ClientContact {
+  id           Int      @id @default(autoincrement())
+  clientId     Int
+  departmentId Int
+  name         String
+  email        String
+  phone        String?
+  whatsapp     String?
+  observations String?  @db.Text
+  receiveNF    Boolean
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  client     Client           @relation(fields: [clientId], references: [id])
+  department ClientDepartment @relation(fields: [departmentId], references: [id])
+
+  @@unique([clientId, email])
+  @@map("client_contacts")
 }
 
 model ClientAddress {
