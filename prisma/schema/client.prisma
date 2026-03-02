@@ -45,6 +45,16 @@ model ClientOwner {
   @@map("client_owners")
 }
 
+model ClientDepartment {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("client_departments")
+}
+
 model ClientAddress {
   id           Int      @id @default(autoincrement())
   clientId     Int

@@ -24,6 +24,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
       await tx.client.deleteMany();
       await tx.account.deleteMany();
       await tx.admin.deleteMany();
+      await tx.clientDepartment.deleteMany();
       await tx.clientGroup.deleteMany();
       await tx.clientOwner.deleteMany();
       await tx.faq.deleteMany();

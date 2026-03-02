@@ -11,6 +11,7 @@ const TOKENS = {
   ClientDao: Symbol.for('ClientDao'),
   ClientRepository: Symbol.for('ClientRepository'),
   ClientGroupDao: Symbol.for('ClientGroupDao'),
+  ClientDepartmentDao: Symbol.for('ClientDepartmentDao'),
   ClientOwnerDao: Symbol.for('ClientOwnerDao'),
   ClientAddressDao: Symbol.for('ClientAddressDao'),
   ClientAddressRepository: Symbol.for('ClientAddressRepository'),
