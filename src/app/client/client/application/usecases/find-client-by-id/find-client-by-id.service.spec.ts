@@ -4,6 +4,7 @@ import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-inv
 import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum';
 import { ClientNotFoundError } from 'src/app/client/client/domain/errors/client-not-found.error';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
+import { ClientDto } from '../../dtos/client.dto';
 import { FindClientById } from './find-client-by-id.service';
 
 describe('FindClientById - Integration tests', () => {
@@ -143,13 +144,19 @@ describe('FindClientById - Integration tests', () => {
 
     const result = await sut.execute(client.id);
 
-    expect(result).toEqual({
+    expect(result).toEqual<ClientDto>({
       id: client.id,
       type: ClientType.PF,
       document: '97456321558',
       ie: null,
-      groupId: group.id,
-      ownerId: owner.id,
+      group: {
+        id: group.id,
+        name: group.name,
+      },
+      owner: {
+        id: owner.id,
+        name: owner.name,
+      },
       companyName: 'Pessoa Física',
       fantasyName: null,
       headquarters: 'Rio de Janeiro',

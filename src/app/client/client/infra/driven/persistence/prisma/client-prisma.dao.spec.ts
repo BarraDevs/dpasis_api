@@ -73,8 +73,14 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
         type: ClientType.PJ,
         document: '09748165000110',
         ie: '123456789',
-        groupId: group.id,
-        ownerId: owner.id,
+        group: {
+          id: group.id,
+          name: group.name,
+        },
+        owner: {
+          id: owner.id,
+          name: owner.name,
+        },
         companyName: 'Empresa LTDA',
         companies: [],
         fantasyName: 'Empresa',
@@ -191,13 +197,19 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
       const result = await sut.findById(created.id);
 
       expect(result).not.toBeNull();
-      expect(result).toEqual({
+      expect(result).toEqual<ClientDto>({
         id: created.id,
         type: ClientType.PJ,
         document: '09748165000110',
         ie: '123456789',
-        groupId: group.id,
-        ownerId: owner.id,
+        group: {
+          id: group.id,
+          name: group.name,
+        },
+        owner: {
+          id: owner.id,
+          name: owner.name,
+        },
         companyName: 'Empresa Test',
         fantasyName: 'Fantasia',
         headquarters: 'São Paulo',
@@ -266,14 +278,20 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
       const result = await sut.findByDocument('09748165000110');
 
       expect(result).not.toBeNull();
-      expect(result).toEqual({
+      expect(result).toEqual<ClientDto>({
         id: created.id,
         type: ClientType.PJ,
         document: '09748165000110',
         ie: '123456789',
-        groupId: group.id,
-        ownerId: owner.id,
         companyName: 'Empresa Test',
+        group: {
+          id: group.id,
+          name: group.name,
+        },
+        owner: {
+          id: owner.id,
+          name: owner.name,
+        },
         companies: [],
         fantasyName: 'Fantasia',
         headquarters: 'São Paulo',

@@ -3,6 +3,7 @@ import { ClientModule } from 'src/app/client/client/client.module';
 import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
 import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
+import { ClientDto } from '../../dtos/client.dto';
 import { FindAllClient } from './find-all-client.service';
 
 describe('FindAllClient - Integration tests', () => {
@@ -191,21 +192,28 @@ describe('FindAllClient - Integration tests', () => {
     const result = await sut.execute({});
 
     expect(result.data).toHaveLength(1);
-    expect(result.data[0]).toMatchObject({
+    expect(result.data[0]).toEqual<ClientDto>({
       id: client.id,
       type: ClientType.PJ,
       document: '09748165000110',
       ie: '123456789',
-      groupId: group.id,
-      ownerId: owner.id,
+      group: {
+        id: group.id,
+        name: group.name,
+      },
+      owner: {
+        id: owner.id,
+        name: owner.name,
+      },
       companyName: 'Empresa LTDA',
       fantasyName: 'Empresa',
       headquarters: 'São Paulo',
       invoiceType: ClientInvoiceType.CONTRACT,
       generateInvoice: true,
       active: true,
+      companies: [],
+      createdAt: client.createdAt,
+      updatedAt: client.updatedAt,
     });
-    expect(result.data[0]).toHaveProperty('createdAt');
-    expect(result.data[0]).toHaveProperty('updatedAt');
   });
 });

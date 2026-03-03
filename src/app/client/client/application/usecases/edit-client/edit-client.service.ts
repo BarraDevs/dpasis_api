@@ -1,9 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { FindCompanyById } from 'src/app/company/company/application/usecases/find-company-by-id/find-company-by-id.service';
 import { FindClientGroupById } from 'src/app/client/client-group/application/usecases/find-client-group-by-id/find-client-group-by-id.service';
 import { FindClientOwnerById } from 'src/app/client/client-owner/application/usecases/find-client-owner-by-id/find-client-owner-by-id.service';
 import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
 import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum';
+import { FindCompanyById } from 'src/app/company/company/application/usecases/find-company-by-id/find-company-by-id.service';
 import { TOKENS } from 'src/core/di/token';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
 import { DocumentAlreadyTakenError } from 'src/shared/errors/document-already-taken';
@@ -36,6 +36,8 @@ export class EditClient {
       ...client,
       ...data,
       id,
+      groupId: data.groupId ?? client.group.id,
+      ownerId: data.ownerId ?? client.owner.id,
       companyIds,
       type: client.type as ClientType,
       invoiceType: client.invoiceType as ClientInvoiceType,

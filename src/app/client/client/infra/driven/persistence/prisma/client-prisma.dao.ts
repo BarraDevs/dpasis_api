@@ -10,20 +10,30 @@ const ClientSelect = {
   type: true,
   document: true,
   ie: true,
-  groupId: true,
-  ownerId: true,
   companyName: true,
+  fantasyName: true,
+  headquarters: true,
+  invoiceType: true,
+  generateInvoice: true,
+  active: true,
+  group: {
+    select: {
+      id: true,
+      name: true,
+    },
+  },
+  owner: {
+    select: {
+      id: true,
+      name: true,
+    },
+  },
   companies: {
     select: {
       id: true,
       name: true,
     },
   },
-  fantasyName: true,
-  headquarters: true,
-  invoiceType: true,
-  generateInvoice: true,
-  active: true,
   createdAt: true,
   updatedAt: true,
 } satisfies Prisma.ClientSelect;
