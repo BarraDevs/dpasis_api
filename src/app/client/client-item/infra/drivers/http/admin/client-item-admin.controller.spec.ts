@@ -1,19 +1,23 @@
 import { createMock } from '@golevelup/ts-jest';
 import { Test } from '@nestjs/testing';
 import { AuthenticationGuardsModule } from 'src/app/authentication/application/guards/guards.module';
-import { ClientItemNotFoundError } from 'src/app/client/client-item/domain/errors/client-item-not-found.error';
 import { ClientItemDto } from 'src/app/client/client-item/application/dtos/client-item.dto';
+import { CreateBulkClientItem } from 'src/app/client/client-item/application/usecases/create-bulk-client-item/create-bulk-client-item.service';
+import { CreateBulkClientItemInputDto, CreateBulkClientItemOutputDto } from 'src/app/client/client-item/application/usecases/create-bulk-client-item/dtos/create-bulk-client-item.dto';
 import { CreateClientItem } from 'src/app/client/client-item/application/usecases/create-client-item/create-client-item.service';
 import {
   CreateClientItemInputDto,
   CreateClientItemOutputDto,
 } from 'src/app/client/client-item/application/usecases/create-client-item/dtos/create-client-item.dto';
+import { DeleteBulkClientItem } from 'src/app/client/client-item/application/usecases/delete-bulk-client-item/delete-bulk-client-item.service';
+import { DeleteBulkClientItemInputDto, DeleteBulkClientItemOutputDto } from 'src/app/client/client-item/application/usecases/delete-bulk-client-item/dtos/delete-bulk-client-item.dto';
 import { DeleteClientItem } from 'src/app/client/client-item/application/usecases/delete-client-item/delete-client-item.service';
 import { EditClientItemInputDto } from 'src/app/client/client-item/application/usecases/edit-client-item/dtos/edit-client-item.dto';
 import { EditClientItem } from 'src/app/client/client-item/application/usecases/edit-client-item/edit-client-item.service';
 import { FindAllClientItemQueryDto } from 'src/app/client/client-item/application/usecases/find-all-client-item/dtos/find-all-client-item.dto';
 import { FindAllClientItem } from 'src/app/client/client-item/application/usecases/find-all-client-item/find-all-client-item.service';
 import { FindClientItemById } from 'src/app/client/client-item/application/usecases/find-client-item-by-id/find-client-item-by-id.service';
+import { ClientItemNotFoundError } from 'src/app/client/client-item/domain/errors/client-item-not-found.error';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
 import { Params } from 'src/infra/validators/class/dtos/params/params.dto';
 import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
@@ -22,10 +26,12 @@ import { ClientItemAdminController } from './client-item-admin.controller';
 describe('ClientItemAdminController - Unit tests', () => {
   let sut: ClientItemAdminController;
   let createClientItemService: CreateClientItem;
+  let createBulkClientItemService: CreateBulkClientItem;
   let findAllClientItemService: FindAllClientItem;
   let findClientItemByIdService: FindClientItemById;
   let editClientItemService: EditClientItem;
   let deleteClientItemService: DeleteClientItem;
+  let deleteBulkClientItemService: DeleteBulkClientItem;
 
   beforeEach(async() => {
     const module = await Test.createTestingModule({
@@ -33,19 +39,23 @@ describe('ClientItemAdminController - Unit tests', () => {
       controllers: [ClientItemAdminController],
       providers: [
         { provide: CreateClientItem, useValue: createMock<CreateClientItem>() },
+        { provide: CreateBulkClientItem, useValue: createMock<CreateBulkClientItem>() },
         { provide: FindAllClientItem, useValue: createMock<FindAllClientItem>() },
         { provide: FindClientItemById, useValue: createMock<FindClientItemById>() },
         { provide: EditClientItem, useValue: createMock<EditClientItem>() },
         { provide: DeleteClientItem, useValue: createMock<DeleteClientItem>() },
+        { provide: DeleteBulkClientItem, useValue: createMock<DeleteBulkClientItem>() },
       ],
     }).compile();
 
     sut = module.get(ClientItemAdminController);
     createClientItemService = module.get(CreateClientItem);
+    createBulkClientItemService = module.get(CreateBulkClientItem);
     findAllClientItemService = module.get(FindAllClientItem);
     findClientItemByIdService = module.get(FindClientItemById);
     editClientItemService = module.get(EditClientItem);
     deleteClientItemService = module.get(DeleteClientItem);
+    deleteBulkClientItemService = module.get(DeleteBulkClientItem);
   });
 
   it('should be defined', () => {
@@ -62,6 +72,19 @@ describe('ClientItemAdminController - Unit tests', () => {
 
       expect(result).toEqual(output);
       expect(createSpy).toHaveBeenCalledWith(body);
+    });
+  });
+
+  describe('createBulk', () => {
+    it('should call createBulkClientItem.execute with body', async() => {
+      const body = createMock<CreateBulkClientItemInputDto>({ items: [] });
+      const output = createMock<CreateBulkClientItemOutputDto>({ succeeded: [], failed: [] });
+      const createBulkSpy = jest.spyOn(createBulkClientItemService, 'execute').mockResolvedValue(output);
+
+      const result = await sut.createBulk(body);
+
+      expect(result).toEqual(output);
+      expect(createBulkSpy).toHaveBeenCalledWith(body);
     });
   });
 
@@ -115,6 +138,19 @@ describe('ClientItemAdminController - Unit tests', () => {
 
       expect(result).toEqual(output);
       expect(removeSpy).toHaveBeenCalledWith(params.id);
+    });
+  });
+
+  describe('removeBulk', () => {
+    it('should call deleteBulkClientItem.execute with body', async() => {
+      const body = createMock<DeleteBulkClientItemInputDto>({ ids: [] });
+      const output = createMock<DeleteBulkClientItemOutputDto>({ succeeded: [], failed: [] });
+      const removeBulkSpy = jest.spyOn(deleteBulkClientItemService, 'execute').mockResolvedValue(output);
+
+      const result = await sut.removeBulk(body);
+
+      expect(result).toEqual(output);
+      expect(removeBulkSpy).toHaveBeenCalledWith(body);
     });
   });
 
