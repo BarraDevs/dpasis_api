@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { CompanyModule } from 'src/app/company/company/company.module';
 import { AuthenticationGuardsModule } from '../../authentication/application/guards/guards.module';
 import { ClientGroupModule } from '../client-group/client-group.module';
 import { ClientOwnerModule } from '../client-owner/client-owner.module';
@@ -16,6 +17,7 @@ import { ClientAdminController } from './infra/drivers/http/admin/client-admin.c
     ClientPersistenceModule,
     ClientGroupModule,
     ClientOwnerModule,
+    CompanyModule,
     AuthenticationGuardsModule,
   ],
   controllers: [

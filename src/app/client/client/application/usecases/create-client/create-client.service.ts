@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { FindCompanyById } from 'src/app/company/company/application/usecases/find-company-by-id/find-company-by-id.service';
 import { FindClientGroupById } from 'src/app/client/client-group/application/usecases/find-client-group-by-id/find-client-group-by-id.service';
 import { FindClientOwnerById } from 'src/app/client/client-owner/application/usecases/find-client-owner-by-id/find-client-owner-by-id.service';
 import { ClientFactory } from 'src/app/client/client/domain/factories/client.factory';
@@ -15,6 +16,7 @@ export class CreateClient {
     @Inject(TOKENS.ClientRepository) private readonly clientRepository: IClientRepository,
     private readonly findClientGroupById: FindClientGroupById,
     private readonly findClientOwnerById: FindClientOwnerById,
+    private readonly findCompanyById: FindCompanyById,
   ) {}
 
   public async execute(data: CreateClientInputDto): Promise<CreateClientOutputDto> {
@@ -30,8 +32,13 @@ export class CreateClient {
     await this.findClientGroupById.execute(data.groupId, true);
     await this.findClientOwnerById.execute(data.ownerId, true);
 
-    await this.clientRepository.save(entity);
+    // Verifica se todas as empresas existem e estão ativas
+    for (const companyId of data.companyIds) {
+      await this.findCompanyById.execute(companyId, true);
+    }
 
-    return { id: entity.props.id };
+    const id = await this.clientRepository.save(entity);
+
+    return { id };
   }
 }

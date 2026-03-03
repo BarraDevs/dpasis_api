@@ -13,6 +13,12 @@ const ClientSelect = {
   groupId: true,
   ownerId: true,
   companyName: true,
+  companies: {
+    select: {
+      id: true,
+      name: true,
+    },
+  },
   fantasyName: true,
   headquarters: true,
   invoiceType: true,

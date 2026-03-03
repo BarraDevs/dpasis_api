@@ -9,6 +9,13 @@ import { ClientInvoiceType } from '../enums/client-invoice-type.enum';
 import { ClientType } from '../enums/client-type.enum';
 
 export class ClientFactory {
+  private static validateCompanyIds(companyIds: number[], fieldName: string): number[] {
+    if (!Array.isArray(companyIds)) {
+      throw new Error(`${fieldName} deve ser um array`);
+    }
+    return companyIds.map((id, index) => new PositiveInt(id, `${fieldName}[${index}]`).value);
+  }
+
   private static validateCreateProps(props: ClientCreateProps): ClientCreateProps {
     return {
       type: new Enum(props.type, ClientType, 'type').value,
@@ -16,6 +23,7 @@ export class ClientFactory {
       document: new Document(props.document).value,
       groupId: new PositiveInt(props.groupId, 'groupId').value,
       ownerId: new PositiveInt(props.ownerId, 'ownerId').value,
+      companyIds: this.validateCompanyIds(props.companyIds ?? [], 'companyIds'),
       companyName: new NonEmptyString(props.companyName, 'companyName').value,
       headquarters: new NonEmptyString(props.headquarters, 'headquarters').value,
       ie: new OptionalString(props.ie, 'ie').value,
@@ -52,6 +60,7 @@ export class ClientFactory {
       ie: props.ie,
       groupId: props.groupId,
       ownerId: props.ownerId,
+      companyIds: props.companyIds ?? [],
       invoiceType: props.invoiceType,
       generateInvoice: props.generateInvoice,
       companyName: props.companyName,

@@ -11,6 +11,12 @@ export class ClientDto {
   invoiceType: string;
   generateInvoice: boolean;
   active: boolean;
+  companies: ClientCompanyDto[];
   createdAt: Date;
   updatedAt: Date;
+}
+
+export class ClientCompanyDto {
+  id: number;
+  name: string;
 }

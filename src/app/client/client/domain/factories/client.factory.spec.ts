@@ -13,6 +13,7 @@ function makeClientCreateProps(overrides?: Partial<ClientCreateProps>): ClientCr
     ie: null,
     groupId: 1,
     ownerId: 1,
+    companyIds: [1],
     invoiceType: ClientInvoiceType.CONTRACT,
     generateInvoice: true,
     companyName: 'Empresa LTDA',
@@ -31,6 +32,7 @@ function makeClientProps(overrides?: Partial<ClientProps>): ClientProps {
     ie: null,
     groupId: 1,
     ownerId: 1,
+    companyIds: [1],
     invoiceType: ClientInvoiceType.CONTRACT,
     generateInvoice: true,
     companyName: 'Empresa LTDA',
@@ -48,6 +50,7 @@ describe('ClientFactory', () => {
         ie: null,
         groupId: 1,
         ownerId: 1,
+        companyIds: [1],
         invoiceType: ClientInvoiceType.CONTRACT,
         generateInvoice: true,
         companyName: 'Empresa LTDA',
@@ -66,6 +69,7 @@ describe('ClientFactory', () => {
         ie: null,
         groupId: 1,
         ownerId: 1,
+        companyIds: [1],
         invoiceType: ClientInvoiceType.CONTRACT,
         generateInvoice: true,
         companyName: 'Empresa LTDA',
@@ -270,6 +274,28 @@ describe('ClientFactory', () => {
         const client = ClientFactory.create(props);
 
         expect(client.props.fantasyName).toBe('Nome Fantasia');
+      });
+    });
+
+    describe('validation - companyIds', () => {
+      it('should throw when companyIds contains invalid id (0)', () => {
+        const props = makeClientCreateProps({ companyIds: [0] });
+
+        expect(() => ClientFactory.create(props)).toThrow(NumberMustBePositiveAndInt);
+      });
+
+      it('should throw when companyIds contains invalid id (-1)', () => {
+        const props = makeClientCreateProps({ companyIds: [-1] });
+
+        expect(() => ClientFactory.create(props)).toThrow(NumberMustBePositiveAndInt);
+      });
+
+      it('should accept valid companyIds', () => {
+        const props = makeClientCreateProps({ companyIds: [1, 2, 3] });
+
+        const client = ClientFactory.create(props);
+
+        expect(client.props.companyIds).toEqual([1, 2, 3]);
       });
     });
 

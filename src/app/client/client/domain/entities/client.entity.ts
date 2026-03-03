@@ -12,6 +12,7 @@ export type ClientCreateProps = {
   ie: string | null;
   groupId: number;
   ownerId: number;
+  companyIds: number[];
   invoiceType: ClientInvoiceType;
   generateInvoice: boolean;
   companyName: string;

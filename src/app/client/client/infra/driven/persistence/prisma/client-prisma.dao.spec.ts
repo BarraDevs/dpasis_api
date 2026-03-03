@@ -76,6 +76,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
         groupId: group.id,
         ownerId: owner.id,
         companyName: 'Empresa LTDA',
+        companies: [],
         fantasyName: 'Empresa',
         headquarters: 'São Paulo',
         invoiceType: ClientInvoiceType.CONTRACT,
@@ -203,6 +204,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
         invoiceType: ClientInvoiceType.CONTRACT,
         generateInvoice: true,
         active: true,
+        companies: [],
         createdAt: created.createdAt,
         updatedAt: created.updatedAt,
       });
@@ -272,6 +274,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
         groupId: group.id,
         ownerId: owner.id,
         companyName: 'Empresa Test',
+        companies: [],
         fantasyName: 'Fantasia',
         headquarters: 'São Paulo',
         invoiceType: ClientInvoiceType.CONTRACT,

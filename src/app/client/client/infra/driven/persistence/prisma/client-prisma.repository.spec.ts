@@ -29,17 +29,34 @@ describe('ClientRepositoryAdapterPrisma - Integration tests', () => {
     await prisma.$disconnect();
   });
 
-  async function createClientGroupAndOwner() {
-    const [group, owner] = await Promise.all([
+  async function createClientGroupOwnerAndCompany() {
+    const suffix = String(Date.now()).slice(-4);
+    const [group, owner, company] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
       prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+      prisma.company.create({
+        data: {
+          name: `Empresa ${Date.now()}`,
+          fantasyName: 'Fantasia',
+          document: `09.748.165/0001-${suffix}`,
+          zipCode: '01310100',
+          street: 'Av Paulista',
+          number: '1000',
+          neighborhood: 'Bela Vista',
+          city: 'São Paulo',
+          state: 'SP',
+          phone01: '11999999999',
+          email01: `test${suffix}@test.com`,
+          active: true,
+        },
+      }),
     ]);
-    return { group, owner };
+    return { group, owner, company };
   }
 
   describe('save', () => {
     it('should persist client in clients table with correct data', async() => {
-      const { group, owner } = await createClientGroupAndOwner();
+      const { group, owner, company } = await createClientGroupOwnerAndCompany();
 
       const entity = ClientFactory.create({
         type: ClientType.PJ,
@@ -47,6 +64,7 @@ describe('ClientRepositoryAdapterPrisma - Integration tests', () => {
         ie: '123456789',
         groupId: group.id,
         ownerId: owner.id,
+        companyIds: [company.id],
         invoiceType: ClientInvoiceType.CONTRACT,
         generateInvoice: true,
         companyName: 'Empresa LTDA',
@@ -77,7 +95,7 @@ describe('ClientRepositoryAdapterPrisma - Integration tests', () => {
     });
 
     it('should persist client with optional fields as null', async() => {
-      const { group, owner } = await createClientGroupAndOwner();
+      const { group, owner, company } = await createClientGroupOwnerAndCompany();
 
       const entity = ClientFactory.create({
         type: ClientType.PF,
@@ -85,6 +103,7 @@ describe('ClientRepositoryAdapterPrisma - Integration tests', () => {
         ie: null,
         groupId: group.id,
         ownerId: owner.id,
+        companyIds: [company.id],
         invoiceType: ClientInvoiceType.INDIVIDUAL,
         generateInvoice: false,
         companyName: 'Pessoa Física',
@@ -109,7 +128,7 @@ describe('ClientRepositoryAdapterPrisma - Integration tests', () => {
 
   describe('edit', () => {
     it('should update client in database', async() => {
-      const { group, owner } = await createClientGroupAndOwner();
+      const { group, owner, company } = await createClientGroupOwnerAndCompany();
 
       const entity = ClientFactory.create({
         type: ClientType.PJ,
@@ -117,6 +136,7 @@ describe('ClientRepositoryAdapterPrisma - Integration tests', () => {
         ie: null,
         groupId: group.id,
         ownerId: owner.id,
+        companyIds: [company.id],
         invoiceType: ClientInvoiceType.CONTRACT,
         generateInvoice: true,
         companyName: 'Nome Original',
@@ -134,6 +154,7 @@ describe('ClientRepositoryAdapterPrisma - Integration tests', () => {
       const entityToEdit = ClientFactory.edit({
         ...entity.props,
         id: saved!.id,
+        companyIds: [company.id],
         companyName: 'Nome Atualizado',
         fantasyName: 'Nova Fantasia',
       });
@@ -158,7 +179,7 @@ describe('ClientRepositoryAdapterPrisma - Integration tests', () => {
     });
 
     it('should return client entity when found', async() => {
-      const { group, owner } = await createClientGroupAndOwner();
+      const { group, owner, company } = await createClientGroupOwnerAndCompany();
 
       const entity = ClientFactory.create({
         type: ClientType.PJ,
@@ -166,6 +187,7 @@ describe('ClientRepositoryAdapterPrisma - Integration tests', () => {
         ie: null,
         groupId: group.id,
         ownerId: owner.id,
+        companyIds: [company.id],
         invoiceType: ClientInvoiceType.CONTRACT,
         generateInvoice: true,
         companyName: 'Empresa',

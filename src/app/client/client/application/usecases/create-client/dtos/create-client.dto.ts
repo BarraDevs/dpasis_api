@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsEnum, IsInt, IsNotEmpty, IsNumber, IsOptional, IsPositive, IsString } from 'class-validator';
+import { ArrayMinSize, IsArray, IsBoolean, IsEnum, IsInt, IsNotEmpty, IsNumber, IsOptional, IsPositive, IsString } from 'class-validator';
 import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
 import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum';
 import { StringToBoolean } from 'src/infra/validators/class/decorators/string-boolean/string-boolean';
@@ -37,6 +37,13 @@ export class CreateClientInputDto {
   @IsPositive({ message: '$property deve ser um número positivo' })
   @IsInt({ message: '$property deve ser um número inteiro' })
   ownerId: number;
+
+  @ApiProperty({ example: [1], description: 'IDs das empresas associadas ao cliente (obrigatório pelo menos 1)' })
+  @IsArray({ message: '$property deve ser um array' })
+  @ArrayMinSize(1, { message: '$property deve ter pelo menos 1 empresa' })
+  @IsInt({ each: true, message: 'Cada ID deve ser um número inteiro' })
+  @IsPositive({ each: true, message: 'Cada ID deve ser um número positivo' })
+  companyIds: number[];
 
   @ApiProperty({ example: 'Empresa LTDA' })
   @IsString({ message: '$property deve ser uma string' })

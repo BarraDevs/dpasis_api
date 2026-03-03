@@ -156,6 +156,7 @@ describe('FindClientById - Integration tests', () => {
       invoiceType: ClientInvoiceType.INDIVIDUAL,
       generateInvoice: false,
       active: false,
+      companies: [],
       createdAt: client.createdAt,
       updatedAt: client.updatedAt,
     });

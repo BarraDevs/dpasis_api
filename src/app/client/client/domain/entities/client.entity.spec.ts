@@ -11,6 +11,7 @@ function makeClientProps(overrides?: Partial<ClientProps>): ClientProps {
     ie: '123456789',
     groupId: 10,
     ownerId: 20,
+    companyIds: [1],
     invoiceType: ClientInvoiceType.CONTRACT,
     generateInvoice: true,
     companyName: 'Empresa LTDA',
@@ -72,6 +73,7 @@ describe('Client', () => {
       expect(client.props.ie).toBe('123456789');
       expect(client.props.groupId).toBe(10);
       expect(client.props.ownerId).toBe(20);
+      expect(client.props.companyIds).toEqual([1]);
       expect(client.props.invoiceType).toBe(ClientInvoiceType.CONTRACT);
       expect(client.props.generateInvoice).toBe(true);
       expect(client.props.companyName).toBe('Custom Company');
@@ -102,6 +104,7 @@ describe('Client', () => {
         'ie',
         'groupId',
         'ownerId',
+        'companyIds',
         'invoiceType',
         'generateInvoice',
         'companyName',
