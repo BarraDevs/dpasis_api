@@ -22,6 +22,8 @@ const TOKENS = {
 
   CompanyDao: Symbol.for('CompanyDao'),
   CompanyRepository: Symbol.for('CompanyRepository'),
+
+  CnaeDao: Symbol.for('CnaeDao'),
 };
 
 export { TOKENS };
