@@ -103,15 +103,15 @@ model ClientItem {
   id                      Int      @id @default(autoincrement())
   clientId                Int
   description             String
-  quantity                Int      // >= 0
-  unitValueInCents        Int      // >= 0
+  quantity                Int
+  unitValueInCents        Int
   cnae                    String
   nbs                     String
   indop                   String
   createdAt               DateTime @default(now())
   updatedAt               DateTime @updatedAt
 
-  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  client Client @relation(fields: [clientId], references: [id])
 
   @@map("client_items")
 }

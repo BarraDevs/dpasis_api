@@ -11,4 +11,5 @@ export interface IClientDepartmentDao {
   edit(id: number, data: EditClientDepartmentInputDto): Promise<void>;
   delete(id: number): Promise<void>;
   updateStatus(id: number, active: boolean): Promise<void>;
+  countContactsByDepartmentId(departmentId: number): Promise<number>;
 }

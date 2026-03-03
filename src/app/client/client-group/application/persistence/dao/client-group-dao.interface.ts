@@ -11,4 +11,5 @@ export interface IClientGroupDao {
   edit(id: number, data: EditClientGroupInputDto): Promise<void>;
   delete(id: number): Promise<void>;
   updateStatus(id: number, active: boolean): Promise<void>;
+  countClientsByGroupId(groupId: number): Promise<number>;
 }

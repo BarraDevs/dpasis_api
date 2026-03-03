@@ -330,4 +330,117 @@ describe('ClientDepartmentDaoAdapterPrisma - Integration tests', () => {
       expect(updated2?.active).toBe(true);
     });
   });
+
+  describe('countContactsByDepartmentId', () => {
+    it('should return 0 when no contacts exist for the department', async() => {
+      // Arrange
+      const [group, owner] = await Promise.all([
+        prisma.clientGroup.create({ data: { name: 'Grupo', active: true } }),
+        prisma.clientOwner.create({ data: { name: 'Owner', active: true } }),
+      ]);
+      const client = await prisma.client.create({
+        data: {
+          type: 'PJ',
+          document: '09748165000110',
+          ie: null,
+          groupId: group.id,
+          ownerId: owner.id,
+          companyName: 'Empresa',
+          fantasyName: null,
+          headquarters: 'SP',
+          invoiceType: 'CONTRACT',
+          generateInvoice: true,
+          active: true,
+        },
+      });
+      const departmentWithContacts = await prisma.clientDepartment.create({
+        data: { name: 'Departamento Com Contatos', active: true },
+      });
+      const departmentWithoutContacts = await prisma.clientDepartment.create({
+        data: { name: 'Departamento Sem Contatos', active: true },
+      });
+      await prisma.clientContact.create({
+        data: {
+          clientId: client.id,
+          departmentId: departmentWithContacts.id,
+          name: 'Contato',
+          email: 'contato@test.com',
+          receiveNF: true,
+        },
+      });
+
+      // Act
+      const count = await sut.countContactsByDepartmentId(departmentWithoutContacts.id);
+
+      // Assert
+      expect(count).toBe(0);
+    });
+
+    it('should return correct count of contacts for the department', async() => {
+      // Arrange
+      const [group, owner] = await Promise.all([
+        prisma.clientGroup.create({ data: { name: 'Grupo', active: true } }),
+        prisma.clientOwner.create({ data: { name: 'Owner', active: true } }),
+      ]);
+      const [client1, client2] = await Promise.all([
+        prisma.client.create({
+          data: {
+            type: 'PJ',
+            document: '09748165000110',
+            ie: null,
+            groupId: group.id,
+            ownerId: owner.id,
+            companyName: 'Empresa 1',
+            fantasyName: null,
+            headquarters: 'SP',
+            invoiceType: 'CONTRACT',
+            generateInvoice: true,
+            active: true,
+          },
+        }),
+        prisma.client.create({
+          data: {
+            type: 'PJ',
+            document: '11111111000111',
+            ie: null,
+            groupId: group.id,
+            ownerId: owner.id,
+            companyName: 'Empresa 2',
+            fantasyName: null,
+            headquarters: 'RJ',
+            invoiceType: 'CONTRACT',
+            generateInvoice: true,
+            active: true,
+          },
+        }),
+      ]);
+      const department = await prisma.clientDepartment.create({
+        data: { name: 'Departamento Com Contatos', active: true },
+      });
+      await prisma.clientContact.createMany({
+        data: [
+          {
+            clientId: client1.id,
+            departmentId: department.id,
+            name: 'Contato 1',
+            email: 'contato1@test.com',
+            receiveNF: true,
+          },
+          {
+            clientId: client2.id,
+            departmentId: department.id,
+            name: 'Contato 2',
+            email: 'contato2@test.com',
+            receiveNF: true,
+          },
+        ],
+      });
+
+      // Act
+      const count = await sut.countContactsByDepartmentId(department.id);
+
+      // Assert
+      expect(count).toBe(2);
+    });
+  });
 });

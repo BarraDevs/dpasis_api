@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { TOKENS } from 'src/core/di/token';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
+import { ClientGroupInUseError } from '../../../domain/errors/client-group-in-use.error';
 import { ClientGroupNotFoundError } from '../../../domain/errors/client-group-not-found.error';
 import type { IClientGroupDao } from '../../persistence/dao/client-group-dao.interface';
 
@@ -14,6 +15,11 @@ export class DeleteClientGroup {
     const clientGroup = await this.clientGroupDao.findById(id);
     if (!clientGroup) {
       throw new ClientGroupNotFoundError();
+    }
+
+    const clientsCount = await this.clientGroupDao.countClientsByGroupId(id);
+    if (clientsCount > 0) {
+      throw new ClientGroupInUseError();
     }
 
     await this.clientGroupDao.delete(id);

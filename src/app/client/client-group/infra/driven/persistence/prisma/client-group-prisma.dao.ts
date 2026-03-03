@@ -81,4 +81,10 @@ export class ClientGroupDaoAdapterPrisma implements IClientGroupDao {
       data: { active },
     });
   }
+
+  public async countClientsByGroupId(groupId: number): Promise<number> {
+    return this.prisma.client.count({
+      where: { groupId },
+    });
+  }
 }

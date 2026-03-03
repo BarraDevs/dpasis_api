@@ -11,4 +11,5 @@ export interface IClientOwnerDao {
   edit(id: number, data: EditClientOwnerInputDto): Promise<void>;
   delete(id: number): Promise<void>;
   updateStatus(id: number, active: boolean): Promise<void>;
+  countClientsByOwnerId(ownerId: number): Promise<number>;
 }

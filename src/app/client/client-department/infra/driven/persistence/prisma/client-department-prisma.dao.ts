@@ -81,4 +81,10 @@ export class ClientDepartmentDaoAdapterPrisma implements IClientDepartmentDao {
       data: { active },
     });
   }
+
+  public async countContactsByDepartmentId(departmentId: number): Promise<number> {
+    return this.prisma.clientContact.count({
+      where: { departmentId },
+    });
+  }
 }

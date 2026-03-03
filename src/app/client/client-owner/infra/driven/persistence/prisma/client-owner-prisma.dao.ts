@@ -81,4 +81,10 @@ export class ClientOwnerDaoAdapterPrisma implements IClientOwnerDao {
       data: { active },
     });
   }
+
+  public async countClientsByOwnerId(ownerId: number): Promise<number> {
+    return this.prisma.client.count({
+      where: { ownerId },
+    });
+  }
 }

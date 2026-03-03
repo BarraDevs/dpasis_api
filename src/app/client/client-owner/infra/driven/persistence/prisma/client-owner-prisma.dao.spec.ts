@@ -330,4 +330,86 @@ describe('ClientOwnerDaoAdapterPrisma - Integration tests', () => {
       expect(updated2?.active).toBe(true);
     });
   });
+
+  describe('countClientsByOwnerId', () => {
+    it('should return 0 when no clients exist for the owner', async() => {
+      // Arrange
+      const group = await prisma.clientGroup.create({
+        data: { name: 'Grupo', active: true },
+      });
+      const ownerWithClients = await prisma.clientOwner.create({
+        data: { name: 'Owner Com Clientes', active: true },
+      });
+      const ownerWithoutClients = await prisma.clientOwner.create({
+        data: { name: 'Owner Sem Clientes', active: true },
+      });
+      await prisma.client.create({
+        data: {
+          type: 'PJ',
+          document: '09748165000110',
+          ie: null,
+          groupId: group.id,
+          ownerId: ownerWithClients.id,
+          companyName: 'Empresa',
+          fantasyName: null,
+          headquarters: 'SP',
+          invoiceType: 'CONTRACT',
+          generateInvoice: true,
+          active: true,
+        },
+      });
+
+      // Act
+      const count = await sut.countClientsByOwnerId(ownerWithoutClients.id);
+
+      // Assert
+      expect(count).toBe(0);
+    });
+
+    it('should return correct count of clients for the owner', async() => {
+      // Arrange
+      const group = await prisma.clientGroup.create({
+        data: { name: 'Grupo', active: true },
+      });
+      const owner = await prisma.clientOwner.create({
+        data: { name: 'Owner Com Clientes', active: true },
+      });
+      await prisma.client.createMany({
+        data: [
+          {
+            type: 'PJ',
+            document: '09748165000110',
+            ie: null,
+            groupId: group.id,
+            ownerId: owner.id,
+            companyName: 'Empresa 1',
+            fantasyName: null,
+            headquarters: 'SP',
+            invoiceType: 'CONTRACT',
+            generateInvoice: true,
+            active: true,
+          },
+          {
+            type: 'PJ',
+            document: '11111111000111',
+            ie: null,
+            groupId: group.id,
+            ownerId: owner.id,
+            companyName: 'Empresa 2',
+            fantasyName: null,
+            headquarters: 'RJ',
+            invoiceType: 'CONTRACT',
+            generateInvoice: true,
+            active: true,
+          },
+        ],
+      });
+
+      // Act
+      const count = await sut.countClientsByOwnerId(owner.id);
+
+      // Assert
+      expect(count).toBe(2);
+    });
+  });
 });

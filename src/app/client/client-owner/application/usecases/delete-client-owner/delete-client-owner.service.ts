@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { TOKENS } from 'src/core/di/token';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
+import { ClientOwnerInUseError } from '../../../domain/errors/client-owner-in-use.error';
 import { ClientOwnerNotFoundError } from '../../../domain/errors/client-owner-not-found.error';
 import type { IClientOwnerDao } from '../../persistence/dao/client-owner-dao.interface';
 
@@ -14,6 +15,11 @@ export class DeleteClientOwner {
     const clientOwner = await this.clientOwnerDao.findById(id);
     if (!clientOwner) {
       throw new ClientOwnerNotFoundError();
+    }
+
+    const clientsCount = await this.clientOwnerDao.countClientsByOwnerId(id);
+    if (clientsCount > 0) {
+      throw new ClientOwnerInUseError();
     }
 
     await this.clientOwnerDao.delete(id);
