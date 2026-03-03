@@ -9,7 +9,12 @@ const ClientContactSelect = {
   id: true,
   clientId: true,
   name: true,
-  departmentId: true,
+  department: {
+    select: {
+      id: true,
+      name: true,
+    },
+  },
   email: true,
   phone: true,
   whatsapp: true,

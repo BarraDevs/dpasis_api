@@ -1,4 +1,5 @@
 import { Test } from '@nestjs/testing';
+import { ClientContactDto } from 'src/app/client/client-contact/application/dtos/client-contact.dto';
 import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
 import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum';
 import { ConfigModule } from 'src/core/config/config.module';
@@ -129,7 +130,7 @@ describe('ClientContactDaoAdapterPrisma - Integration tests', () => {
       expect(contacts).toHaveLength(1);
       expect(total).toBe(1);
       expect(contacts[0].name).toBe('João');
-      expect(contacts[0].departmentId).toBe(departmentId);
+      expect(contacts[0].department.id).toBe(departmentId);
     });
 
     it('should filter by receiveNF', async() => {
@@ -183,11 +184,14 @@ describe('ClientContactDaoAdapterPrisma - Integration tests', () => {
       const result = await sut.findById(created.id);
 
       expect(result).not.toBeNull();
-      expect(result).toEqual({
+      expect(result).toEqual<ClientContactDto>({
         id: created.id,
         clientId: created.clientId,
         name: created.name,
-        departmentId: created.departmentId,
+        department: {
+          id: created.departmentId,
+          name: expect.any(String),
+        },
         email: created.email,
         phone: created.phone,
         whatsapp: created.whatsapp,

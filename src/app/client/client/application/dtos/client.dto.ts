@@ -9,21 +9,17 @@ export class ClientDto {
   invoiceType: string;
   generateInvoice: boolean;
   active: boolean;
-  group: GroupDto;
-  owner: OwnerDto;
+  group: {
+    id: number;
+    name: string;
+  };
+  owner: {
+    id: number;
+    name: string;
+  };
   companies: ClientCompanyDto[];
   createdAt: Date;
   updatedAt: Date;
-}
-
-class GroupDto {
-  id: number;
-  name: string;
-}
-
-class OwnerDto {
-  id: number;
-  name: string;
 }
 
 class ClientCompanyDto {

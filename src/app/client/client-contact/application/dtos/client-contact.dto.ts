@@ -1,7 +1,10 @@
 export class ClientContactDto {
   id: number;
   clientId: number;
-  departmentId: number;
+  department: {
+    id: number;
+    name: string;
+  };
   name: string;
   email: string;
   phone: string | null;

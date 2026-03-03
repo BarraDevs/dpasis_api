@@ -106,7 +106,10 @@ describe('FindClientContactById - Integration tests', () => {
       id: clientContact.id,
       clientId: clientContact.clientId,
       name: clientContact.name,
-      departmentId: clientContact.departmentId,
+      department: {
+        id: clientContact.departmentId,
+        name: expect.any(String),
+      },
       email: clientContact.email,
       phone: clientContact.phone,
       whatsapp: clientContact.whatsapp,
