@@ -20,15 +20,21 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
 
   public async truncate() {
     await this.$transaction(async(tx) => {
+      // 1. Tabelas que referenciam Client
       await tx.clientAddress.deleteMany();
       await tx.clientContact.deleteMany();
+      await tx.clientItem.deleteMany();
+      // 2. Client (referencia ClientGroup e ClientOwner)
       await tx.client.deleteMany();
-      await tx.account.deleteMany();
-      await tx.admin.deleteMany();
+      // 3. ClientDepartment (referenciado por ClientContact, já deletado)
       await tx.clientDepartment.deleteMany();
+      // 4. ClientGroup e ClientOwner (agora sem referências de Client)
       await tx.clientGroup.deleteMany();
       await tx.clientOwner.deleteMany();
-      await tx.clientItem.deleteMany();
+      // 5. Demais tabelas
+      await tx.company.deleteMany();
+      await tx.admin.deleteMany(); // Admin referencia Account
+      await tx.account.deleteMany();
       await tx.faq.deleteMany();
     });
   }

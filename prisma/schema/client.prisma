@@ -16,6 +16,7 @@ model Client {
 
   group     ClientGroup     @relation(fields: [groupId], references: [id])
   owner     ClientOwner     @relation(fields: [ownerId], references: [id])
+  companies Company[]
   addresses ClientAddress[]
   contacts  ClientContact[]
   items     ClientItem[]

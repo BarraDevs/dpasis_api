@@ -1,8 +1,4 @@
-import {
-  ClientContact,
-  ClientContactCreateProps,
-  ClientContactProps,
-} from './client-contact.entity';
+import { ClientContact, ClientContactProps } from './client-contact.entity';
 
 function makeClientContactProps(overrides?: Partial<ClientContactProps>): ClientContactProps {
   return {

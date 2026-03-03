@@ -19,6 +19,9 @@ const TOKENS = {
   ClientAddressRepository: Symbol.for('ClientAddressRepository'),
   ClientItemDao: Symbol.for('ClientItemDao'),
   ClientItemRepository: Symbol.for('ClientItemRepository'),
+
+  CompanyDao: Symbol.for('CompanyDao'),
+  CompanyRepository: Symbol.for('CompanyRepository'),
 };
 
 export { TOKENS };

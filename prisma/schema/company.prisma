@@ -1,0 +1,29 @@
+model Company {
+  id           Int      @id @default(autoincrement())
+  name         String
+  fantasyName  String
+  document     String   @unique
+  ie           String?
+  active       Boolean
+  
+  zipCode      String
+  street       String
+  number       String
+  complement   String?
+  neighborhood String
+  city         String
+  state        String
+  
+  phone01      String
+  phone02      String?
+  cellphone    String?
+  email01      String
+  email02      String?
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  clients Client[]
+
+  @@map("companies")
+}
