@@ -150,85 +150,110 @@ describe('ClientContactFactory', () => {
   describe('edit', () => {
     it('should edit ClientContact preserving unchanged fields', () => {
       const existing = ClientContact._instantiate(makeClientContactProps());
-      const data = { name: 'Nome Atualizado' };
+      const data = makeClientContactCreateProps({
+        name: 'Nome Atualizado',
+        observations: 'Nova observação',
+        receiveNF: false,
+      });
 
       const clientContact = ClientContactFactory.edit(existing, data);
 
-      expect(clientContact.props.id).toBe(1);
-      expect(clientContact.props.clientId).toBe(10);
-      expect(clientContact.props.departmentId).toBe(5);
-      expect(clientContact.props.name).toBe('Nome Atualizado');
-      expect(clientContact.props.email).toBe('joao@example.com');
-      expect(clientContact.props.phone).toBe('11999999999');
-      expect(clientContact.props.whatsapp).toBe('11988888888');
-      expect(clientContact.props.observations).toBe('Contato principal');
-      expect(clientContact.props.receiveNF).toBe(true);
+      expect(clientContact.props).toEqual({
+        ...existing.props,
+        name: 'Nome Atualizado',
+        observations: 'Nova observação',
+        receiveNF: false,
+      });
     });
 
     it('should edit ClientContact with departmentId', () => {
       const existing = ClientContact._instantiate(makeClientContactProps());
-      const data = { departmentId: 99 };
+      const data = makeClientContactCreateProps({ departmentId: 99 });
 
       const clientContact = ClientContactFactory.edit(existing, data);
 
-      expect(clientContact.props.departmentId).toBe(99);
+      expect(clientContact.props).toEqual({
+        ...existing.props,
+        ...data,
+        departmentId: 99,
+      });
     });
 
     it('should edit ClientContact with new email', () => {
       const existing = ClientContact._instantiate(makeClientContactProps());
-      const data = { email: 'novo@example.com' };
+      const data = makeClientContactCreateProps({ email: 'novo@example.com' });
 
       const clientContact = ClientContactFactory.edit(existing, data);
 
-      expect(clientContact.props.email).toBe('novo@example.com');
+      expect(clientContact.props).toEqual({
+        ...existing.props,
+        ...data,
+        email: 'novo@example.com',
+      });
     });
 
     it('should edit ClientContact with null phone', () => {
       const existing = ClientContact._instantiate(makeClientContactProps());
-      const data = { phone: '' };
+      const data = makeClientContactCreateProps({ phone: '' });
 
       const clientContact = ClientContactFactory.edit(existing, data);
 
-      expect(clientContact.props.phone).toBeNull();
+      expect(clientContact.props).toEqual({
+        ...existing.props,
+        ...data,
+        phone: null,
+      });
     });
 
     it('should edit ClientContact with new phone', () => {
       const existing = ClientContact._instantiate(makeClientContactProps({ phone: null }));
-      const data = { phone: '11955555555' };
+      const data = makeClientContactCreateProps({ phone: '11955555555' });
 
       const clientContact = ClientContactFactory.edit(existing, data);
 
-      expect(clientContact.props.phone).toBe('11955555555');
+      expect(clientContact.props).toEqual({
+        ...existing.props,
+        ...data,
+        phone: '11955555555',
+      });
     });
 
     it('should edit ClientContact with receiveNF', () => {
       const existing = ClientContact._instantiate(makeClientContactProps({ receiveNF: true }));
-      const data = { receiveNF: false };
+      const data = makeClientContactCreateProps({ receiveNF: false });
 
       const clientContact = ClientContactFactory.edit(existing, data);
 
-      expect(clientContact.props.receiveNF).toBe(false);
+      expect(clientContact.props).toEqual({
+        ...existing.props,
+        ...data,
+        receiveNF: false,
+      });
     });
 
     it('should edit ClientContact with observations', () => {
       const existing = ClientContact._instantiate(makeClientContactProps());
-      const data = { observations: 'Nova observação' };
+      const data = makeClientContactCreateProps({ observations: 'Nova observação' });
 
       const clientContact = ClientContactFactory.edit(existing, data);
 
-      expect(clientContact.props.observations).toBe('Nova observação');
+      expect(clientContact.props).toEqual({
+        ...existing.props,
+        ...data,
+        observations: 'Nova observação',
+      });
     });
 
     it('should throw InvalidEmailError when editing with invalid email', () => {
       const existing = ClientContact._instantiate(makeClientContactProps());
-      const data = { email: 'invalid' };
+      const data = makeClientContactCreateProps({ email: 'invalid' });
 
       expect(() => ClientContactFactory.edit(existing, data)).toThrow(InvalidEmailError);
     });
 
     it('should throw InvalidPhoneError when editing with invalid phone', () => {
       const existing = ClientContact._instantiate(makeClientContactProps());
-      const data = { phone: '123' };
+      const data = makeClientContactCreateProps({ phone: '123' });
 
       expect(() => ClientContactFactory.edit(existing, data)).toThrow(InvalidPhoneError);
     });

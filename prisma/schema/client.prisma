@@ -18,6 +18,7 @@ model Client {
   owner     ClientOwner     @relation(fields: [ownerId], references: [id])
   addresses ClientAddress[]
   contacts  ClientContact[]
+  items     ClientItem[]
 
   @@map("clients")
 }
@@ -96,4 +97,21 @@ model ClientAddress {
 
   @@unique([clientId, type])
   @@map("client_addresses")
+}
+
+model ClientItem {
+  id                      Int      @id @default(autoincrement())
+  clientId                Int
+  description             String
+  quantity                Int      // >= 0
+  unitValueInCents        Int      // >= 0
+  cnae                    String
+  nbs                     String
+  indop                   String
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@map("client_items")
 }
