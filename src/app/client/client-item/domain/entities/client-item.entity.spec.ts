@@ -87,4 +87,70 @@ describe('ClientItem', () => {
       ]);
     });
   });
+
+  describe('edge cases', () => {
+    it('should accept quantity zero', () => {
+      const props = makeClientItemProps({ quantity: 0 });
+      const clientItem = ClientItem._instantiate(props);
+
+      expect(clientItem.props.quantity).toBe(0);
+    });
+
+    it('should accept unitValueInCents zero', () => {
+      const props = makeClientItemProps({ unitValueInCents: 0 });
+      const clientItem = ClientItem._instantiate(props);
+
+      expect(clientItem.props.unitValueInCents).toBe(0);
+    });
+
+    it('should accept empty string for description, cnae, nbs, indop', () => {
+      const props = makeClientItemProps({
+        description: '',
+        cnae: '',
+        nbs: '',
+        indop: '',
+      });
+      const clientItem = ClientItem._instantiate(props);
+
+      expect(clientItem.props.description).toBe('');
+      expect(clientItem.props.cnae).toBe('');
+      expect(clientItem.props.nbs).toBe('');
+      expect(clientItem.props.indop).toBe('');
+    });
+
+    it('should accept boundary string lengths (255, 50)', () => {
+      const longDesc = 'a'.repeat(255);
+      const maxStr = 'x'.repeat(50);
+      const props = makeClientItemProps({
+        description: longDesc,
+        cnae: maxStr,
+        nbs: maxStr,
+        indop: maxStr,
+      });
+      const clientItem = ClientItem._instantiate(props);
+
+      expect(clientItem.props.description).toHaveLength(255);
+      expect(clientItem.props.cnae).toHaveLength(50);
+      expect(clientItem.props.nbs).toHaveLength(50);
+      expect(clientItem.props.indop).toHaveLength(50);
+    });
+
+    it('should accept clientId zero', () => {
+      const props = makeClientItemProps({ clientId: 0 });
+      const clientItem = ClientItem._instantiate(props);
+
+      expect(clientItem.props.clientId).toBe(0);
+    });
+
+    it('should accept large numeric values', () => {
+      const props = makeClientItemProps({
+        quantity: 999999,
+        unitValueInCents: 999999999,
+      });
+      const clientItem = ClientItem._instantiate(props);
+
+      expect(clientItem.props.quantity).toBe(999999);
+      expect(clientItem.props.unitValueInCents).toBe(999999999);
+    });
+  });
 });

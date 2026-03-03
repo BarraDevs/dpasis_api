@@ -67,6 +67,22 @@ describe('ClientItemFactory', () => {
         indop: '2',
       });
     });
+
+    it('should create ClientItem with quantity zero', () => {
+      const props = makeClientItemCreateProps({ quantity: 0 });
+
+      const clientItem = ClientItemFactory.create(props);
+
+      expect(clientItem.props.quantity).toBe(0);
+    });
+
+    it('should create ClientItem with unitValueInCents zero', () => {
+      const props = makeClientItemCreateProps({ unitValueInCents: 0 });
+
+      const clientItem = ClientItemFactory.create(props);
+
+      expect(clientItem.props.unitValueInCents).toBe(0);
+    });
   });
 
   describe('edit', () => {
@@ -108,6 +124,69 @@ describe('ClientItemFactory', () => {
         indop: '3',
       });
     });
+
+    it('should preserve clientId and never allow it to change', () => {
+      const existing = ClientItem._instantiate(makeClientItemProps({ clientId: 42 }));
+      const data = {
+        description: 'Nova desc',
+        quantity: 99,
+        unitValueInCents: 999,
+        cnae: 'x',
+        nbs: 'y',
+        indop: 'z',
+      };
+
+      const clientItem = ClientItemFactory.edit(existing, data);
+
+      expect(clientItem.props.clientId).toBe(42);
+    });
+
+    it('should preserve unchanged fields when edit receives empty object', () => {
+      const existing = ClientItem._instantiate(makeClientItemProps());
+
+      const clientItem = ClientItemFactory.edit(existing, {});
+
+      expect(clientItem.props).toEqual(existing.props);
+    });
+
+    it('should use nullish coalescing - undefined keeps existing value', () => {
+      const existing = ClientItem._instantiate(makeClientItemProps({
+        description: 'Original',
+        quantity: 5,
+        cnae: '1111111',
+      }));
+      const data = {
+        description: undefined,
+        quantity: undefined,
+        unitValueInCents: 9999,
+        cnae: undefined,
+        nbs: undefined,
+        indop: undefined,
+      };
+
+      const clientItem = ClientItemFactory.edit(existing, data);
+
+      expect(clientItem.props.description).toBe('Original');
+      expect(clientItem.props.quantity).toBe(5);
+      expect(clientItem.props.cnae).toBe('1111111');
+      expect(clientItem.props.unitValueInCents).toBe(9999);
+    });
+
+    it('should update quantity to zero when explicitly provided', () => {
+      const existing = ClientItem._instantiate(makeClientItemProps({ quantity: 10 }));
+
+      const clientItem = ClientItemFactory.edit(existing, { quantity: 0 });
+
+      expect(clientItem.props.quantity).toBe(0);
+    });
+
+    it('should update unitValueInCents to zero when explicitly provided', () => {
+      const existing = ClientItem._instantiate(makeClientItemProps({ unitValueInCents: 10000 }));
+
+      const clientItem = ClientItemFactory.edit(existing, { unitValueInCents: 0 });
+
+      expect(clientItem.props.unitValueInCents).toBe(0);
+    });
   });
 
   describe('load', () => {
@@ -144,6 +223,15 @@ describe('ClientItemFactory', () => {
       const clientItem = ClientItemFactory.load(props);
 
       expect(clientItem.props).toEqual(props);
+    });
+
+    it('should load ClientItem with quantity and unitValueInCents zero', () => {
+      const props = makeClientItemProps({ quantity: 0, unitValueInCents: 0 });
+
+      const clientItem = ClientItemFactory.load(props);
+
+      expect(clientItem.props.quantity).toBe(0);
+      expect(clientItem.props.unitValueInCents).toBe(0);
     });
   });
 });

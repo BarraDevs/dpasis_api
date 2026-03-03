@@ -130,4 +130,105 @@ describe('CreateClientItem - Integration tests', () => {
       updatedAt: expect.any(Date),
     });
   });
+
+  it('should create client item with quantity zero', async() => {
+    const input: CreateClientItemInputDto = {
+      clientId,
+      description: 'Item com quantidade zero',
+      quantity: 0,
+      unitValueInCents: 10000,
+      cnae: '1234567',
+      nbs: '12345678',
+      indop: '1',
+    };
+
+    const result = await sut.execute(input);
+
+    expect(result.id).toBeDefined();
+    const saved = await prisma.clientItem.findUnique({ where: { id: result.id } });
+    expect(saved?.quantity).toBe(0);
+  });
+
+  it('should create client item with unitValueInCents zero', async() => {
+    const input: CreateClientItemInputDto = {
+      clientId,
+      description: 'Item com valor unitário zero',
+      quantity: 5,
+      unitValueInCents: 0,
+      cnae: '1234567',
+      nbs: '12345678',
+      indop: '1',
+    };
+
+    const result = await sut.execute(input);
+
+    expect(result.id).toBeDefined();
+    const saved = await prisma.clientItem.findUnique({ where: { id: result.id } });
+    expect(saved?.unitValueInCents).toBe(0);
+  });
+
+  it('should create multiple items for the same client', async() => {
+    const baseInput = {
+      clientId,
+      cnae: '1234567',
+      nbs: '12345678',
+      indop: '1',
+    };
+
+    const result1 = await sut.execute({
+      ...baseInput,
+      description: 'Item 1',
+      quantity: 1,
+      unitValueInCents: 10000,
+    });
+    const result2 = await sut.execute({
+      ...baseInput,
+      description: 'Item 2',
+      quantity: 2,
+      unitValueInCents: 5000,
+    });
+
+    expect(result1.id).not.toBe(result2.id);
+
+    const items = await prisma.clientItem.findMany({ where: { clientId } });
+    expect(items).toHaveLength(2);
+  });
+
+  it('should persist description with maximum length (255 chars)', async() => {
+    const longDescription = 'a'.repeat(255);
+    const input: CreateClientItemInputDto = {
+      clientId,
+      description: longDescription,
+      quantity: 1,
+      unitValueInCents: 10000,
+      cnae: '1234567',
+      nbs: '12345678',
+      indop: '1',
+    };
+
+    const result = await sut.execute(input);
+
+    const saved = await prisma.clientItem.findUnique({ where: { id: result.id } });
+    expect(saved?.description).toBe(longDescription);
+  });
+
+  it('should persist cnae, nbs, indop at maximum length (50 chars)', async() => {
+    const maxStr = 'x'.repeat(50);
+    const input: CreateClientItemInputDto = {
+      clientId,
+      description: 'Item teste',
+      quantity: 1,
+      unitValueInCents: 10000,
+      cnae: maxStr,
+      nbs: maxStr,
+      indop: maxStr,
+    };
+
+    const result = await sut.execute(input);
+
+    const saved = await prisma.clientItem.findUnique({ where: { id: result.id } });
+    expect(saved?.cnae).toBe(maxStr);
+    expect(saved?.nbs).toBe(maxStr);
+    expect(saved?.indop).toBe(maxStr);
+  });
 });

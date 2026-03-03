@@ -98,4 +98,30 @@ describe('DeleteClientItem - Integration tests', () => {
 
     expect(result).toEqual({ message: 'Item do cliente excluído com sucesso' });
   });
+
+  it('should throw ClientItemNotFoundError when id is 0', async() => {
+    await expect(sut.execute(0)).rejects.toThrow(ClientItemNotFoundError);
+  });
+
+  it('should throw ClientItemNotFoundError when id is negative', async() => {
+    await expect(sut.execute(-1)).rejects.toThrow(ClientItemNotFoundError);
+  });
+
+  it('should throw ClientItemNotFoundError on second delete (item already deleted)', async() => {
+    const item = await prisma.clientItem.create({
+      data: {
+        clientId,
+        description: 'Item para deletar',
+        quantity: 1,
+        unitValueInCents: 10000,
+        cnae: '1234567',
+        nbs: '12345678',
+        indop: '1',
+      },
+    });
+
+    await sut.execute(item.id);
+
+    await expect(sut.execute(item.id)).rejects.toThrow(ClientItemNotFoundError);
+  });
 });

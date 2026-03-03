@@ -1,6 +1,7 @@
 import { createMock } from '@golevelup/ts-jest';
 import { Test } from '@nestjs/testing';
 import { AuthenticationGuardsModule } from 'src/app/authentication/application/guards/guards.module';
+import { ClientItemNotFoundError } from 'src/app/client/client-item/domain/errors/client-item-not-found.error';
 import { ClientItemDto } from 'src/app/client/client-item/application/dtos/client-item.dto';
 import { CreateClientItem } from 'src/app/client/client-item/application/usecases/create-client-item/create-client-item.service';
 import {
@@ -114,6 +115,30 @@ describe('ClientItemAdminController - Unit tests', () => {
 
       expect(result).toEqual(output);
       expect(removeSpy).toHaveBeenCalledWith(params.id);
+    });
+  });
+
+  describe('error propagation', () => {
+    it('should propagate ClientItemNotFoundError from findOne', async() => {
+      const params = createMock<Params>();
+      jest.spyOn(findClientItemByIdService, 'execute').mockRejectedValue(new ClientItemNotFoundError());
+
+      await expect(sut.findOne(params)).rejects.toThrow(ClientItemNotFoundError);
+    });
+
+    it('should propagate ClientItemNotFoundError from update', async() => {
+      const params = createMock<Params>();
+      const body = createMock<EditClientItemInputDto>();
+      jest.spyOn(editClientItemService, 'execute').mockRejectedValue(new ClientItemNotFoundError());
+
+      await expect(sut.update(params, body)).rejects.toThrow(ClientItemNotFoundError);
+    });
+
+    it('should propagate ClientItemNotFoundError from remove', async() => {
+      const params = createMock<Params>();
+      jest.spyOn(deleteClientItemService, 'execute').mockRejectedValue(new ClientItemNotFoundError());
+
+      await expect(sut.remove(params)).rejects.toThrow(ClientItemNotFoundError);
     });
   });
 });

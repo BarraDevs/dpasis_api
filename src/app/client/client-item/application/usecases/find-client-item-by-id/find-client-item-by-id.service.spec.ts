@@ -116,4 +116,48 @@ describe('FindClientItemById - Integration tests', () => {
       updatedAt: item.updatedAt,
     });
   });
+
+  it('should throw ClientItemNotFoundError when id is 0', async() => {
+    await expect(sut.execute(0)).rejects.toThrow(ClientItemNotFoundError);
+  });
+
+  it('should throw ClientItemNotFoundError when id is negative', async() => {
+    await expect(sut.execute(-1)).rejects.toThrow(ClientItemNotFoundError);
+  });
+
+  it('should calculate totalValueInCents correctly for quantity zero', async() => {
+    const item = await prisma.clientItem.create({
+      data: {
+        clientId,
+        description: 'Item quantidade zero',
+        quantity: 0,
+        unitValueInCents: 10000,
+        cnae: '1234567',
+        nbs: '12345678',
+        indop: '1',
+      },
+    });
+
+    const result = await sut.execute(item.id);
+
+    expect(result.totalValueInCents).toBe(0);
+  });
+
+  it('should calculate totalValueInCents correctly for large values', async() => {
+    const item = await prisma.clientItem.create({
+      data: {
+        clientId,
+        description: 'Item valores altos',
+        quantity: 1000,
+        unitValueInCents: 999999,
+        cnae: '1234567',
+        nbs: '12345678',
+        indop: '1',
+      },
+    });
+
+    const result = await sut.execute(item.id);
+
+    expect(result.totalValueInCents).toBe(999999000);
+  });
 });
