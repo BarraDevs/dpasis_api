@@ -6,7 +6,6 @@ import { ActivateClient } from 'src/app/client/client/application/usecases/activ
 import { CreateClient } from 'src/app/client/client/application/usecases/create-client/create-client.service';
 import { CreateClientInputDto, CreateClientOutputDto } from 'src/app/client/client/application/usecases/create-client/dtos/create-client.dto';
 import { DeactivateClient } from 'src/app/client/client/application/usecases/deactivate-client/deactivate-client.service';
-import { DeleteClient } from 'src/app/client/client/application/usecases/delete-client/delete-client.service';
 import { EditClientInputDto } from 'src/app/client/client/application/usecases/edit-client/dtos/edit-client.dto';
 import { EditClient } from 'src/app/client/client/application/usecases/edit-client/edit-client.service';
 import { FindAllClientQueryDto } from 'src/app/client/client/application/usecases/find-all-client/dtos/find-all-client.dto';
@@ -25,7 +24,6 @@ describe('ClientAdminController - Unit tests', () => {
   let findAllClientService: FindAllClient;
   let findClientByIdService: FindClientById;
   let editClientService: EditClient;
-  let deleteClientService: DeleteClient;
 
   beforeEach(async() => {
     const module = await Test.createTestingModule({
@@ -38,7 +36,6 @@ describe('ClientAdminController - Unit tests', () => {
         { provide: FindAllClient, useValue: createMock<FindAllClient>() },
         { provide: FindClientById, useValue: createMock<FindClientById>() },
         { provide: EditClient, useValue: createMock<EditClient>() },
-        { provide: DeleteClient, useValue: createMock<DeleteClient>() },
       ],
     }).compile();
 
@@ -49,7 +46,6 @@ describe('ClientAdminController - Unit tests', () => {
     findAllClientService = module.get(FindAllClient);
     findClientByIdService = module.get(FindClientById);
     editClientService = module.get(EditClient);
-    deleteClientService = module.get(DeleteClient);
   });
 
   it('should be defined', () => {
@@ -150,22 +146,6 @@ describe('ClientAdminController - Unit tests', () => {
       // Assert
       expect(result).toEqual(output);
       expect(updateSpy).toHaveBeenCalledWith(params.id, body);
-    });
-  });
-
-  describe('remove', () => {
-    it('should call deleteClient.execute with params.id', async() => {
-      // Arrange
-      const params = createMock<Params>();
-      const output = createMock<SuccessMessage>();
-      const removeSpy = jest.spyOn(deleteClientService, 'execute').mockResolvedValue(output);
-
-      // Act
-      const result = await sut.remove(params);
-
-      // Assert
-      expect(result).toEqual(output);
-      expect(removeSpy).toHaveBeenCalledWith(params.id);
     });
   });
 });

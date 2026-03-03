@@ -188,38 +188,4 @@ describe('ClientRepositoryAdapterPrisma - Integration tests', () => {
       expect(found?.props.document).toBe('09748165000110');
     });
   });
-
-  describe('delete', () => {
-    it('should remove client from database', async() => {
-      const { group, owner } = await createClientGroupAndOwner();
-
-      const entity = ClientFactory.create({
-        type: ClientType.PJ,
-        document: '09.748.165/0001-10',
-        ie: null,
-        groupId: group.id,
-        ownerId: owner.id,
-        invoiceType: ClientInvoiceType.CONTRACT,
-        generateInvoice: true,
-        companyName: 'Empresa',
-        fantasyName: null,
-        headquarters: 'SP',
-      });
-
-      await sut.save(entity);
-
-      const saved = await prisma.client.findFirst({
-        where: { document: '09748165000110' },
-      });
-      expect(saved).not.toBeNull();
-
-      await sut.delete(saved!.id);
-
-      const deleted = await prisma.client.findUnique({
-        where: { id: saved!.id },
-      });
-
-      expect(deleted).toBeNull();
-    });
-  });
 });

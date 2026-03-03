@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
 import { RequiredRoles } from 'src/app/authentication/infra/decorators/required-role.decorator';
 import { ClientDto } from 'src/app/client/client/application/dtos/client.dto';
@@ -6,7 +6,6 @@ import { ActivateClient } from 'src/app/client/client/application/usecases/activ
 import { CreateClient } from 'src/app/client/client/application/usecases/create-client/create-client.service';
 import { CreateClientInputDto, CreateClientOutputDto } from 'src/app/client/client/application/usecases/create-client/dtos/create-client.dto';
 import { DeactivateClient } from 'src/app/client/client/application/usecases/deactivate-client/deactivate-client.service';
-import { DeleteClient } from 'src/app/client/client/application/usecases/delete-client/delete-client.service';
 import { EditClientInputDto } from 'src/app/client/client/application/usecases/edit-client/dtos/edit-client.dto';
 import { EditClient } from 'src/app/client/client/application/usecases/edit-client/edit-client.service';
 import { FindAllClientQueryDto } from 'src/app/client/client/application/usecases/find-all-client/dtos/find-all-client.dto';
@@ -27,7 +26,6 @@ export class ClientAdminController {
     private readonly findAllClient: FindAllClient,
     private readonly findClientById: FindClientById,
     private readonly editClient: EditClient,
-    private readonly deleteClient: DeleteClient,
   ) {}
 
   @Post()
@@ -98,17 +96,5 @@ export class ClientAdminController {
   })
   public update(@Param() params: Params, @Body() body: EditClientInputDto): Promise<SuccessMessage> {
     return this.editClient.execute(params.id, body);
-  }
-
-  @Delete(':id')
-  @Swagger({
-    tags: ['Clientes'],
-    summary: 'Deletar cliente',
-    applyBadRequest: true,
-    applyNotFound: true,
-    okResponse: SuccessMessage,
-  })
-  public remove(@Param() params: Params): Promise<SuccessMessage> {
-    return this.deleteClient.execute(params.id);
   }
 }
