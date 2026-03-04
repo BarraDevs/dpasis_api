@@ -27,6 +27,8 @@ const TOKENS = {
   NbsDao: Symbol.for('NbsDao'),
   IndopDao: Symbol.for('IndopDao'),
   CnaeNbsIndopDao: Symbol.for('CnaeNbsIndopDao'),
+
+  BankDao: Symbol.for('BankDao'),
 };
 
 export { TOKENS };
