@@ -38,26 +38,12 @@ export class CreateClientItemInputDto {
   @StringToNumber()
   unitValueInCents: number;
 
-  @ApiProperty({ example: '1234567' })
-  @IsString({ message: '$property deve ser uma string' })
+  @ApiProperty({ example: 1, description: 'ID da combinação CNAE/NBS/INDOP' })
   @IsNotEmpty({ message: '$property é obrigatório' })
-  @MaxLength(50, { message: '$property deve ter no máximo 50 caracteres' })
+  @IsInt({ message: '$property deve ser um número inteiro' })
+  @StringToNumber()
   @Trim()
-  cnae: string;
-
-  @ApiProperty({ example: '12345678' })
-  @IsString({ message: '$property deve ser uma string' })
-  @IsNotEmpty({ message: '$property é obrigatório' })
-  @MaxLength(50, { message: '$property deve ter no máximo 50 caracteres' })
-  @Trim()
-  nbs: string;
-
-  @ApiProperty({ example: '1' })
-  @IsString({ message: '$property deve ser uma string' })
-  @IsNotEmpty({ message: '$property é obrigatório' })
-  @MaxLength(50, { message: '$property deve ter no máximo 50 caracteres' })
-  @Trim()
-  indop: string;
+  cnaeNbsIndopId: number;
 }
 
 export class CreateClientItemOutputDto {

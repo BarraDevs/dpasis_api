@@ -7,9 +7,7 @@ export type ClientItemCreateProps = {
   description: string;
   quantity: number;
   unitValueInCents: number;
-  cnae: string;
-  nbs: string;
-  indop: string;
+  cnaeNbsIndopId: number;
 };
 
 export class ClientItem {

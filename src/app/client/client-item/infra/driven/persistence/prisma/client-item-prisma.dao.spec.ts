@@ -5,10 +5,18 @@ import { ConfigModule } from 'src/core/config/config.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { ClientItemDaoAdapterPrisma } from './client-item-prisma.dao';
 
+const makeCnaeNbsIndop = (id: number, code: string) => ({
+  id,
+  cnae: { id: 1, code, description: 'Desc' },
+  nbs: { id: 1, code: '12345678', description: 'Desc' },
+  indop: { id: 1, code: '1', description: 'Desc' },
+});
+
 describe('ClientItemDaoAdapterPrisma - Integration tests', () => {
   let sut: ClientItemDaoAdapterPrisma;
   let prisma: PrismaService;
   let clientId: number;
+  let cnaeNbsIndopId: number;
 
   beforeAll(async() => {
     const module = await Test.createTestingModule({
@@ -23,10 +31,18 @@ describe('ClientItemDaoAdapterPrisma - Integration tests', () => {
   beforeEach(async() => {
     await prisma.truncate();
 
-    const [group, owner] = await Promise.all([
+    const [group, owner, cnae, nbs, indop] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
       prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+      prisma.cnae.create({ data: { code: '1234567', description: 'CNAE Test', active: true } }),
+      prisma.nbs.create({ data: { code: '12345678', description: 'NBS Test', active: true } }),
+      prisma.indop.create({ data: { code: '1', description: 'INDOP Test', active: true } }),
     ]);
+
+    const cni = await prisma.cnaeNbsIndop.create({
+      data: { cnaeId: cnae.id, nbsId: nbs.id, indopId: indop.id },
+    });
+    cnaeNbsIndopId = cni.id;
 
     const client = await prisma.client.create({
       data: {
@@ -68,18 +84,14 @@ describe('ClientItemDaoAdapterPrisma - Integration tests', () => {
             description: 'Item 1',
             quantity: 11,
             unitValueInCents: 10000,
-            cnae: '1234567',
-            nbs: '12345678',
-            indop: '1',
+            cnaeNbsIndopId,
           },
           {
             clientId,
             description: 'Item 2',
             quantity: 2,
             unitValueInCents: 5000,
-            cnae: '1234567',
-            nbs: '12345678',
-            indop: '1',
+            cnaeNbsIndopId,
           },
         ],
       });
@@ -100,27 +112,21 @@ describe('ClientItemDaoAdapterPrisma - Integration tests', () => {
             description: 'Item 1',
             quantity: 1,
             unitValueInCents: 10000,
-            cnae: '1234567',
-            nbs: '12345678',
-            indop: '1',
+            cnaeNbsIndopId,
           },
           {
             clientId,
             description: 'Item 2',
             quantity: 1,
             unitValueInCents: 5000,
-            cnae: '1234567',
-            nbs: '12345678',
-            indop: '1',
+            cnaeNbsIndopId,
           },
           {
             clientId,
             description: 'Item 3',
             quantity: 1,
             unitValueInCents: 7500,
-            cnae: '1234567',
-            nbs: '12345678',
-            indop: '1',
+            cnaeNbsIndopId,
           },
         ],
       });
@@ -145,9 +151,7 @@ describe('ClientItemDaoAdapterPrisma - Integration tests', () => {
           description: 'Serviço de consultoria',
           quantity: 1,
           unitValueInCents: 10000,
-          cnae: '1234567',
-          nbs: '12345678',
-          indop: '1',
+          cnaeNbsIndopId,
         },
       });
       await prisma.clientItem.create({
@@ -156,9 +160,7 @@ describe('ClientItemDaoAdapterPrisma - Integration tests', () => {
           description: 'Produto XYZ',
           quantity: 1,
           unitValueInCents: 5000,
-          cnae: '1234567',
-          nbs: '12345678',
-          indop: '1',
+          cnaeNbsIndopId,
         },
       });
 
@@ -170,93 +172,193 @@ describe('ClientItemDaoAdapterPrisma - Integration tests', () => {
     });
 
     it('should search in cnae (case-insensitive)', async() => {
-      await prisma.clientItem.create({
-        data: {
-          clientId,
-          description: 'Item A',
-          quantity: 1,
-          unitValueInCents: 10000,
-          cnae: '6201501',
-          nbs: '12345678',
-          indop: '1',
-        },
-      });
-      await prisma.clientItem.create({
-        data: {
-          clientId,
-          description: 'Item B',
-          quantity: 1,
-          unitValueInCents: 5000,
-          cnae: '4712100',
-          nbs: '12345678',
-          indop: '1',
-        },
+      const [cnae1, cnae2, nbs, indop] = await Promise.all([
+        prisma.cnae.create({ data: { code: '6201501', description: 'CNAE A', active: true } }),
+        prisma.cnae.create({ data: { code: '4712100', description: 'CNAE B', active: true } }),
+        prisma.nbs.create({ data: { code: 'NBS-DAO-1', description: 'NBS', active: true } }),
+        prisma.indop.create({ data: { code: 'INDOP-DAO-1', description: 'INDOP', active: true } }),
+      ]);
+      const [cni1, cni2] = await Promise.all([
+        prisma.cnaeNbsIndop.create({ data: { cnaeId: cnae1.id, nbsId: nbs.id, indopId: indop.id } }),
+        prisma.cnaeNbsIndop.create({ data: { cnaeId: cnae2.id, nbsId: nbs.id, indopId: indop.id } }),
+      ]);
+
+      await prisma.clientItem.createMany({
+        data: [
+          { clientId, description: 'Item A', quantity: 1, unitValueInCents: 10000, cnaeNbsIndopId: cni1.id },
+          { clientId, description: 'Item B', quantity: 1, unitValueInCents: 5000, cnaeNbsIndopId: cni2.id },
+        ],
       });
 
       const [items] = await sut.findAll({ clientId, search: '6201501' });
 
       expect(items).toHaveLength(1);
-      expect(items[0].cnae).toBe('6201501');
+      expect(items[0].cnaeNbsIndop.cnae.code).toBe('6201501');
     });
 
     it('should search in nbs (case-insensitive)', async() => {
-      await prisma.clientItem.create({
-        data: {
-          clientId,
-          description: 'Item A',
-          quantity: 1,
-          unitValueInCents: 10000,
-          cnae: '1234567',
-          nbs: '01010101',
-          indop: '1',
-        },
-      });
-      await prisma.clientItem.create({
-        data: {
-          clientId,
-          description: 'Item B',
-          quantity: 1,
-          unitValueInCents: 5000,
-          cnae: '1234567',
-          nbs: '99999999',
-          indop: '1',
-        },
+      const [cnae, nbs1, nbs2, indop] = await Promise.all([
+        prisma.cnae.create({ data: { code: 'CNAE-DAO-1', description: 'CNAE', active: true } }),
+        prisma.nbs.create({ data: { code: '01010101', description: 'NBS A', active: true } }),
+        prisma.nbs.create({ data: { code: '99999999', description: 'NBS B', active: true } }),
+        prisma.indop.create({ data: { code: 'INDOP-DAO-2', description: 'INDOP', active: true } }),
+      ]);
+      const [cni1, cni2] = await Promise.all([
+        prisma.cnaeNbsIndop.create({ data: { cnaeId: cnae.id, nbsId: nbs1.id, indopId: indop.id } }),
+        prisma.cnaeNbsIndop.create({ data: { cnaeId: cnae.id, nbsId: nbs2.id, indopId: indop.id } }),
+      ]);
+
+      await prisma.clientItem.createMany({
+        data: [
+          { clientId, description: 'Item A', quantity: 1, unitValueInCents: 10000, cnaeNbsIndopId: cni1.id },
+          { clientId, description: 'Item B', quantity: 1, unitValueInCents: 5000, cnaeNbsIndopId: cni2.id },
+        ],
       });
 
       const [items] = await sut.findAll({ clientId, search: '01010101' });
 
       expect(items).toHaveLength(1);
-      expect(items[0].nbs).toBe('01010101');
+      expect(items[0].cnaeNbsIndop.nbs.code).toBe('01010101');
     });
 
     it('should search in indop (case-insensitive)', async() => {
-      await prisma.clientItem.create({
-        data: {
-          clientId,
-          description: 'Item A',
-          quantity: 1,
-          unitValueInCents: 10000,
-          cnae: '1234567',
-          nbs: '12345678',
-          indop: 'INDOP-X',
-        },
-      });
-      await prisma.clientItem.create({
-        data: {
-          clientId,
-          description: 'Item B',
-          quantity: 1,
-          unitValueInCents: 5000,
-          cnae: '1234567',
-          nbs: '12345678',
-          indop: 'INDOP-Y',
-        },
+      const [cnae, nbs, indop1, indop2] = await Promise.all([
+        prisma.cnae.create({ data: { code: 'CNAE-DAO-2', description: 'CNAE', active: true } }),
+        prisma.nbs.create({ data: { code: 'NBS-DAO-2', description: 'NBS', active: true } }),
+        prisma.indop.create({ data: { code: 'INDOP-X', description: 'INDOP A', active: true } }),
+        prisma.indop.create({ data: { code: 'INDOP-Y', description: 'INDOP B', active: true } }),
+      ]);
+      const [cni1, cni2] = await Promise.all([
+        prisma.cnaeNbsIndop.create({ data: { cnaeId: cnae.id, nbsId: nbs.id, indopId: indop1.id } }),
+        prisma.cnaeNbsIndop.create({ data: { cnaeId: cnae.id, nbsId: nbs.id, indopId: indop2.id } }),
+      ]);
+
+      await prisma.clientItem.createMany({
+        data: [
+          { clientId, description: 'Item A', quantity: 1, unitValueInCents: 10000, cnaeNbsIndopId: cni1.id },
+          { clientId, description: 'Item B', quantity: 1, unitValueInCents: 5000, cnaeNbsIndopId: cni2.id },
+        ],
       });
 
       const [items] = await sut.findAll({ clientId, search: 'indop-x' });
 
       expect(items).toHaveLength(1);
-      expect(items[0].indop).toBe('INDOP-X');
+      expect(items[0].cnaeNbsIndop.indop.code).toBe('INDOP-X');
+    });
+
+    it('should filter by cnaeId', async() => {
+      const [cnae1, cnae2, nbs, indop] = await Promise.all([
+        prisma.cnae.create({ data: { code: 'FILTRO-CNAE-1', description: 'CNAE Filtro 1', active: true } }),
+        prisma.cnae.create({ data: { code: 'FILTRO-CNAE-2', description: 'CNAE Filtro 2', active: true } }),
+        prisma.nbs.create({ data: { code: 'NBS-FILTRO-1', description: 'NBS', active: true } }),
+        prisma.indop.create({ data: { code: 'INDOP-FILTRO-1', description: 'INDOP', active: true } }),
+      ]);
+      const [cni1, cni2] = await Promise.all([
+        prisma.cnaeNbsIndop.create({ data: { cnaeId: cnae1.id, nbsId: nbs.id, indopId: indop.id } }),
+        prisma.cnaeNbsIndop.create({ data: { cnaeId: cnae2.id, nbsId: nbs.id, indopId: indop.id } }),
+      ]);
+
+      await prisma.clientItem.createMany({
+        data: [
+          { clientId, description: 'Item CNAE 1', quantity: 1, unitValueInCents: 10000, cnaeNbsIndopId: cni1.id },
+          { clientId, description: 'Item CNAE 2', quantity: 1, unitValueInCents: 5000, cnaeNbsIndopId: cni2.id },
+        ],
+      });
+
+      const [items] = await sut.findAll({ clientId, cnaeId: cnae1.id });
+
+      expect(items).toHaveLength(1);
+      expect(items[0].description).toBe('Item CNAE 1');
+      expect(items[0].cnaeNbsIndop.cnae.id).toBe(cnae1.id);
+    });
+
+    it('should filter by nbsId', async() => {
+      const [cnae, nbs1, nbs2, indop] = await Promise.all([
+        prisma.cnae.create({ data: { code: 'CNAE-FILTRO-NBS', description: 'CNAE', active: true } }),
+        prisma.nbs.create({ data: { code: 'NBS-FILTRO-1', description: 'NBS Filtro 1', active: true } }),
+        prisma.nbs.create({ data: { code: 'NBS-FILTRO-2', description: 'NBS Filtro 2', active: true } }),
+        prisma.indop.create({ data: { code: 'INDOP-FILTRO-NBS', description: 'INDOP', active: true } }),
+      ]);
+      const [cni1, cni2] = await Promise.all([
+        prisma.cnaeNbsIndop.create({ data: { cnaeId: cnae.id, nbsId: nbs1.id, indopId: indop.id } }),
+        prisma.cnaeNbsIndop.create({ data: { cnaeId: cnae.id, nbsId: nbs2.id, indopId: indop.id } }),
+      ]);
+
+      await prisma.clientItem.createMany({
+        data: [
+          { clientId, description: 'Item NBS 1', quantity: 1, unitValueInCents: 10000, cnaeNbsIndopId: cni1.id },
+          { clientId, description: 'Item NBS 2', quantity: 1, unitValueInCents: 5000, cnaeNbsIndopId: cni2.id },
+        ],
+      });
+
+      const [items] = await sut.findAll({ clientId, nbsId: nbs1.id });
+
+      expect(items).toHaveLength(1);
+      expect(items[0].description).toBe('Item NBS 1');
+      expect(items[0].cnaeNbsIndop.nbs.id).toBe(nbs1.id);
+    });
+
+    it('should filter by indopId', async() => {
+      const [cnae, nbs, indop1, indop2] = await Promise.all([
+        prisma.cnae.create({ data: { code: 'CNAE-FILTRO-INDOP', description: 'CNAE', active: true } }),
+        prisma.nbs.create({ data: { code: 'NBS-FILTRO-INDOP', description: 'NBS', active: true } }),
+        prisma.indop.create({ data: { code: 'INDOP-FILTRO-1', description: 'INDOP Filtro 1', active: true } }),
+        prisma.indop.create({ data: { code: 'INDOP-FILTRO-2', description: 'INDOP Filtro 2', active: true } }),
+      ]);
+      const [cni1, cni2] = await Promise.all([
+        prisma.cnaeNbsIndop.create({ data: { cnaeId: cnae.id, nbsId: nbs.id, indopId: indop1.id } }),
+        prisma.cnaeNbsIndop.create({ data: { cnaeId: cnae.id, nbsId: nbs.id, indopId: indop2.id } }),
+      ]);
+
+      await prisma.clientItem.createMany({
+        data: [
+          { clientId, description: 'Item INDOP 1', quantity: 1, unitValueInCents: 10000, cnaeNbsIndopId: cni1.id },
+          { clientId, description: 'Item INDOP 2', quantity: 1, unitValueInCents: 5000, cnaeNbsIndopId: cni2.id },
+        ],
+      });
+
+      const [items] = await sut.findAll({ clientId, indopId: indop1.id });
+
+      expect(items).toHaveLength(1);
+      expect(items[0].description).toBe('Item INDOP 1');
+      expect(items[0].cnaeNbsIndop.indop.id).toBe(indop1.id);
+    });
+
+    it('should filter by cnaeId, nbsId and indopId combined', async() => {
+      const [cnae1, cnae2, nbs1, nbs2, indop1, indop2] = await Promise.all([
+        prisma.cnae.create({ data: { code: 'CNAE-COMBO-1', description: 'CNAE', active: true } }),
+        prisma.cnae.create({ data: { code: 'CNAE-COMBO-2', description: 'CNAE', active: true } }),
+        prisma.nbs.create({ data: { code: 'NBS-COMBO-1', description: 'NBS', active: true } }),
+        prisma.nbs.create({ data: { code: 'NBS-COMBO-2', description: 'NBS', active: true } }),
+        prisma.indop.create({ data: { code: 'INDOP-COMBO-1', description: 'INDOP', active: true } }),
+        prisma.indop.create({ data: { code: 'INDOP-COMBO-2', description: 'INDOP', active: true } }),
+      ]);
+      const cni1 = await prisma.cnaeNbsIndop.create({
+        data: { cnaeId: cnae1.id, nbsId: nbs1.id, indopId: indop1.id },
+      });
+      const cni2 = await prisma.cnaeNbsIndop.create({
+        data: { cnaeId: cnae2.id, nbsId: nbs2.id, indopId: indop2.id },
+      });
+
+      await prisma.clientItem.createMany({
+        data: [
+          { clientId, description: 'Item Combo 1', quantity: 1, unitValueInCents: 10000, cnaeNbsIndopId: cni1.id },
+          { clientId, description: 'Item Combo 2', quantity: 1, unitValueInCents: 5000, cnaeNbsIndopId: cni2.id },
+        ],
+      });
+
+      const [items] = await sut.findAll({
+        clientId,
+        cnaeId: cnae1.id,
+        nbsId: nbs1.id,
+        indopId: indop1.id,
+      });
+
+      expect(items).toHaveLength(1);
+      expect(items[0].description).toBe('Item Combo 1');
+      expect(items[0].cnaeNbsIndop.cnae.id).toBe(cnae1.id);
+      expect(items[0].cnaeNbsIndop.nbs.id).toBe(nbs1.id);
+      expect(items[0].cnaeNbsIndop.indop.id).toBe(indop1.id);
     });
   });
 
@@ -286,9 +388,7 @@ describe('ClientItemDaoAdapterPrisma - Integration tests', () => {
           description: 'Item de teste',
           quantity: 3,
           unitValueInCents: 5000,
-          cnae: '1234567',
-          nbs: '12345678',
-          indop: '1',
+          cnaeNbsIndopId,
         },
       });
 
@@ -309,9 +409,7 @@ describe('ClientItemDaoAdapterPrisma - Integration tests', () => {
           description: 'Item qty zero',
           quantity: 0,
           unitValueInCents: 10000,
-          cnae: '1234567',
-          nbs: '12345678',
-          indop: '1',
+          cnaeNbsIndopId,
         },
       });
 
@@ -327,9 +425,7 @@ describe('ClientItemDaoAdapterPrisma - Integration tests', () => {
           description: 'Item completo',
           quantity: 2,
           unitValueInCents: 5000,
-          cnae: '6201501',
-          nbs: '01010101',
-          indop: '1',
+          cnaeNbsIndopId,
         },
       });
 
@@ -342,10 +438,8 @@ describe('ClientItemDaoAdapterPrisma - Integration tests', () => {
         quantity: created.quantity,
         unitValueInCents: created.unitValueInCents,
         totalValueInCents: 10000,
-        cnae: created.cnae,
-        nbs: created.nbs,
-        indop: created.indop,
       });
+      expect(result?.cnaeNbsIndop).toBeDefined();
       expect(result?.createdAt).toBeDefined();
       expect(result?.updatedAt).toBeDefined();
     });
@@ -360,9 +454,7 @@ describe('ClientItemDaoAdapterPrisma - Integration tests', () => {
       description: 'Item teste',
       quantity: 1,
       unitValueInCents: 100,
-      cnae: '1234567',
-      nbs: '12345678',
-      indop: '1',
+      cnaeNbsIndop: makeCnaeNbsIndop(1, '1234567'),
       createdAt: new Date(),
       updatedAt: new Date(),
       ...overrides,

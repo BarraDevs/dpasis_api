@@ -11,9 +11,7 @@ function makeClientItemCreateProps(overrides?: Partial<ClientItemCreateProps>): 
     description: 'Item de teste',
     quantity: 2,
     unitValueInCents: 10000,
-    cnae: '1234567',
-    nbs: '12345678',
-    indop: '1',
+    cnaeNbsIndopId: 1,
     ...overrides,
   };
 }
@@ -25,9 +23,7 @@ function makeClientItemProps(overrides?: Partial<ClientItemProps>): ClientItemPr
     description: 'Item de teste',
     quantity: 2,
     unitValueInCents: 10000,
-    cnae: '1234567',
-    nbs: '12345678',
-    indop: '1',
+    cnaeNbsIndopId: 1,
     ...overrides,
   };
 }
@@ -49,9 +45,7 @@ describe('ClientItemFactory', () => {
         description: 'Descrição completa',
         quantity: 5,
         unitValueInCents: 5000,
-        cnae: '1111111',
-        nbs: '22222222',
-        indop: '2',
+        cnaeNbsIndopId: 2,
       });
 
       const clientItem = ClientItemFactory.create(props);
@@ -62,9 +56,7 @@ describe('ClientItemFactory', () => {
         description: 'Descrição completa',
         quantity: 5,
         unitValueInCents: 5000,
-        cnae: '1111111',
-        nbs: '22222222',
-        indop: '2',
+        cnaeNbsIndopId: 2,
       });
     });
 
@@ -111,17 +103,15 @@ describe('ClientItemFactory', () => {
       });
     });
 
-    it('should edit ClientItem with cnae, nbs, indop', () => {
+    it('should edit ClientItem with cnaeNbsIndopId', () => {
       const existing = ClientItem._instantiate(makeClientItemProps());
-      const data = { cnae: '9999999', nbs: '88888888', indop: '3' };
+      const data = { cnaeNbsIndopId: 3 };
 
       const clientItem = ClientItemFactory.edit(existing, data);
 
       expect(clientItem.props).toEqual({
         ...existing.props,
-        cnae: '9999999',
-        nbs: '88888888',
-        indop: '3',
+        cnaeNbsIndopId: 3,
       });
     });
 
@@ -131,9 +121,7 @@ describe('ClientItemFactory', () => {
         description: 'Nova desc',
         quantity: 99,
         unitValueInCents: 999,
-        cnae: 'x',
-        nbs: 'y',
-        indop: 'z',
+        cnaeNbsIndopId: 5,
       };
 
       const clientItem = ClientItemFactory.edit(existing, data);
@@ -153,22 +141,20 @@ describe('ClientItemFactory', () => {
       const existing = ClientItem._instantiate(makeClientItemProps({
         description: 'Original',
         quantity: 5,
-        cnae: '1111111',
+        cnaeNbsIndopId: 111,
       }));
       const data = {
         description: undefined,
         quantity: undefined,
         unitValueInCents: 9999,
-        cnae: undefined,
-        nbs: undefined,
-        indop: undefined,
+        cnaeNbsIndopId: undefined,
       };
 
       const clientItem = ClientItemFactory.edit(existing, data);
 
       expect(clientItem.props.description).toBe('Original');
       expect(clientItem.props.quantity).toBe(5);
-      expect(clientItem.props.cnae).toBe('1111111');
+      expect(clientItem.props.cnaeNbsIndopId).toBe(111);
       expect(clientItem.props.unitValueInCents).toBe(9999);
     });
 
@@ -197,9 +183,7 @@ describe('ClientItemFactory', () => {
         description: 'Item Carregado',
         quantity: 3,
         unitValueInCents: 15000,
-        cnae: '4444444',
-        nbs: '55555555',
-        indop: '4',
+        cnaeNbsIndopId: 4,
       });
 
       const clientItem = ClientItemFactory.load(props);
@@ -211,9 +195,7 @@ describe('ClientItemFactory', () => {
         description: 'Item Carregado',
         quantity: 3,
         unitValueInCents: 15000,
-        cnae: '4444444',
-        nbs: '55555555',
-        indop: '4',
+        cnaeNbsIndopId: 4,
       });
     });
 

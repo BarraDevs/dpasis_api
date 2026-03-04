@@ -11,6 +11,7 @@ describe('FindClientItemById - Integration tests', () => {
   let sut: FindClientItemById;
   let prisma: PrismaService;
   let clientId: number;
+  let cnaeNbsIndopId: number;
 
   beforeAll(async() => {
     const module = await Test.createTestingModule({
@@ -24,10 +25,18 @@ describe('FindClientItemById - Integration tests', () => {
   beforeEach(async() => {
     await prisma.truncate();
 
-    const [group, owner] = await Promise.all([
+    const [group, owner, cnae, nbs, indop] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
       prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+      prisma.cnae.create({ data: { code: '1234567', description: 'CNAE Test', active: true } }),
+      prisma.nbs.create({ data: { code: '12345678', description: 'NBS Test', active: true } }),
+      prisma.indop.create({ data: { code: '1', description: 'INDOP Test', active: true } }),
     ]);
+
+    const cni = await prisma.cnaeNbsIndop.create({
+      data: { cnaeId: cnae.id, nbsId: nbs.id, indopId: indop.id },
+    });
+    cnaeNbsIndopId = cni.id;
 
     const client = await prisma.client.create({
       data: {
@@ -71,9 +80,7 @@ describe('FindClientItemById - Integration tests', () => {
         description: 'Item de teste',
         quantity: 2,
         unitValueInCents: 10000,
-        cnae: '1234567',
-        nbs: '12345678',
-        indop: '1',
+        cnaeNbsIndopId,
       },
     });
 
@@ -85,18 +92,21 @@ describe('FindClientItemById - Integration tests', () => {
     expect(result.quantity).toBe(item.quantity);
     expect(result.unitValueInCents).toBe(item.unitValueInCents);
     expect(result.totalValueInCents).toBe(2 * 10000);
+    expect(result.cnaeNbsIndop).toBeDefined();
   });
 
   it('should return all client item fields correctly', async() => {
+    const cnae = await prisma.cnae.create({ data: { code: 'cnae-code', description: 'CNAE Test', active: true } });
+    const nbs = await prisma.nbs.create({ data: { code: 'nbs-code', description: 'NBS Test', active: true } });
+    const indop = await prisma.indop.create({ data: { code: 'indop-code', description: 'INDOP Test', active: true } });
+    const cnaeNbsIndop = await prisma.cnaeNbsIndop.create({ data: { cnaeId: cnae.id, nbsId: nbs.id, indopId: indop.id } });
     const item = await prisma.clientItem.create({
       data: {
         clientId,
         description: 'Descrição completa',
         quantity: 3,
         unitValueInCents: 5000,
-        cnae: '1111111',
-        nbs: '22222222',
-        indop: '2',
+        cnaeNbsIndopId: cnaeNbsIndop.id,
       },
     });
 
@@ -104,14 +114,29 @@ describe('FindClientItemById - Integration tests', () => {
 
     expect(result).toEqual<ClientItemDto>({
       id: item.id,
-      clientId: item.clientId,
+      clientId,
       description: item.description,
       quantity: item.quantity,
       unitValueInCents: item.unitValueInCents,
       totalValueInCents: 3 * 5000,
-      cnae: item.cnae,
-      nbs: item.nbs,
-      indop: item.indop,
+      cnaeNbsIndop: {
+        id: cnaeNbsIndop.id,
+        cnae: {
+          id: cnae.id,
+          code: cnae.code,
+          description: cnae.description,
+        },
+        nbs: {
+          id: nbs.id,
+          code: nbs.code,
+          description: nbs.description,
+        },
+        indop: {
+          id: indop.id,
+          code: indop.code,
+          description: indop.description,
+        },
+      },
       createdAt: item.createdAt,
       updatedAt: item.updatedAt,
     });
@@ -132,9 +157,7 @@ describe('FindClientItemById - Integration tests', () => {
         description: 'Item quantidade zero',
         quantity: 0,
         unitValueInCents: 10000,
-        cnae: '1234567',
-        nbs: '12345678',
-        indop: '1',
+        cnaeNbsIndopId,
       },
     });
 
@@ -150,9 +173,7 @@ describe('FindClientItemById - Integration tests', () => {
         description: 'Item valores altos',
         quantity: 1000,
         unitValueInCents: 999999,
-        cnae: '1234567',
-        nbs: '12345678',
-        indop: '1',
+        cnaeNbsIndopId,
       },
     });
 

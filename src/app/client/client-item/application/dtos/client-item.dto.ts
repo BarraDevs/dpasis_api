@@ -1,3 +1,5 @@
+import { CnaeNbsIndopDto } from 'src/app/cnae-nbs-indop/cnae-nbs-indop/application/dtos/cnae-nbs-indop.dto';
+
 export class ClientItemDto {
   id: number;
   clientId: number;
@@ -5,9 +7,7 @@ export class ClientItemDto {
   quantity: number;
   unitValueInCents: number;
   totalValueInCents: number;
-  cnae: string;
-  nbs: string;
-  indop: string;
+  cnaeNbsIndop: CnaeNbsIndopDto;
   createdAt: Date;
   updatedAt: Date;
 }

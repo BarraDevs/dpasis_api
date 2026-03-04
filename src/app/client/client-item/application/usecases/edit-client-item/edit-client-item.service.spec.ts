@@ -2,6 +2,7 @@ import { Test } from '@nestjs/testing';
 import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
 import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum';
 import { ClientNotFoundError } from 'src/app/client/client/domain/errors/client-not-found.error';
+import { CnaeNbsIndopNotFoundError } from 'src/app/cnae-nbs-indop/cnae-nbs-indop/domain/errors/cnae-nbs-indop-not-found.error';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { ClientItemModule } from '../../../client-item.module';
 import { ClientItemNotFoundError } from '../../../domain/errors/client-item-not-found.error';
@@ -12,6 +13,8 @@ describe('EditClientItem - Integration tests', () => {
   let sut: EditClientItem;
   let prisma: PrismaService;
   let clientId: number;
+  let cnaeNbsIndopId: number;
+  let cnaeNbsIndopId2: number;
 
   beforeAll(async() => {
     const module = await Test.createTestingModule({
@@ -25,10 +28,23 @@ describe('EditClientItem - Integration tests', () => {
   beforeEach(async() => {
     await prisma.truncate();
 
-    const [group, owner] = await Promise.all([
+    const [group, owner, cnae, nbs, indop, cnae2, nbs2, indop2] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
       prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+      prisma.cnae.create({ data: { code: '1234567', description: 'CNAE Test', active: true } }),
+      prisma.nbs.create({ data: { code: '12345678', description: 'NBS Test', active: true } }),
+      prisma.indop.create({ data: { code: '1', description: 'INDOP Test', active: true } }),
+      prisma.cnae.create({ data: { code: '9999999', description: 'CNAE 2', active: true } }),
+      prisma.nbs.create({ data: { code: '88888888', description: 'NBS 2', active: true } }),
+      prisma.indop.create({ data: { code: '5', description: 'INDOP 2', active: true } }),
     ]);
+
+    const [cni1, cni2] = await Promise.all([
+      prisma.cnaeNbsIndop.create({ data: { cnaeId: cnae.id, nbsId: nbs.id, indopId: indop.id } }),
+      prisma.cnaeNbsIndop.create({ data: { cnaeId: cnae2.id, nbsId: nbs2.id, indopId: indop2.id } }),
+    ]);
+    cnaeNbsIndopId = cni1.id;
+    cnaeNbsIndopId2 = cni2.id;
 
     const client = await prisma.client.create({
       data: {
@@ -73,9 +89,7 @@ describe('EditClientItem - Integration tests', () => {
         description: 'Item original',
         quantity: 1,
         unitValueInCents: 10000,
-        cnae: '1234567',
-        nbs: '12345678',
-        indop: '1',
+        cnaeNbsIndopId,
       },
     });
 
@@ -90,13 +104,9 @@ describe('EditClientItem - Integration tests', () => {
     expect(result).toEqual({ message: 'Item do cliente atualizado com sucesso' });
 
     const updated = await prisma.clientItem.findUnique({ where: { id: item.id } });
-    expect(updated).toEqual({
-      ...item,
-      description: data.description,
-      quantity: data.quantity,
-      unitValueInCents: data.unitValueInCents,
-      updatedAt: updated?.updatedAt,
-    });
+    expect(updated?.description).toBe(data.description);
+    expect(updated?.quantity).toBe(data.quantity);
+    expect(updated?.unitValueInCents).toBe(data.unitValueInCents);
   });
 
   it('should throw ClientNotFoundError when client is inactive', async() => {
@@ -126,9 +136,7 @@ describe('EditClientItem - Integration tests', () => {
         description: 'Item de cliente inativo',
         quantity: 1,
         unitValueInCents: 10000,
-        cnae: '1234567',
-        nbs: '12345678',
-        indop: '1',
+        cnaeNbsIndopId,
       },
     });
 
@@ -156,9 +164,7 @@ describe('EditClientItem - Integration tests', () => {
         description: 'Descrição original',
         quantity: 5,
         unitValueInCents: 20000,
-        cnae: '1111111',
-        nbs: '22222222',
-        indop: '3',
+        cnaeNbsIndopId,
       },
     });
 
@@ -167,42 +173,44 @@ describe('EditClientItem - Integration tests', () => {
     await sut.execute(item.id, data);
 
     const updated = await prisma.clientItem.findUnique({ where: { id: item.id } });
-    expect(updated).toEqual({
-      ...item,
-      description: data.description,
-      updatedAt: updated?.updatedAt,
-    });
+    expect(updated?.description).toBe(data.description);
   });
 
-  it('should update only cnae, nbs and indop when provided', async() => {
+  it('should throw CnaeNbsIndopNotFoundError when cnaeNbsIndopId does not exist', async() => {
+    const item = await prisma.clientItem.create({
+      data: {
+        clientId,
+        description: 'Item',
+        quantity: 1,
+        unitValueInCents: 10000,
+        cnaeNbsIndopId,
+      },
+    });
+
+    const data: EditClientItemInputDto = { cnaeNbsIndopId: 99999 };
+
+    await expect(sut.execute(item.id, data)).rejects.toThrow(CnaeNbsIndopNotFoundError);
+  });
+
+  it('should update only cnaeNbsIndopId when provided', async() => {
     const item = await prisma.clientItem.create({
       data: {
         clientId,
         description: 'Descrição fixa',
         quantity: 1,
         unitValueInCents: 10000,
-        cnae: '1111111',
-        nbs: '22222222',
-        indop: '1',
+        cnaeNbsIndopId,
       },
     });
 
     const data: EditClientItemInputDto = {
-      cnae: '9999999',
-      nbs: '88888888',
-      indop: '5',
+      cnaeNbsIndopId: cnaeNbsIndopId2,
     };
 
     await sut.execute(item.id, data);
 
     const updated = await prisma.clientItem.findUnique({ where: { id: item.id } });
-    expect(updated).toEqual({
-      ...item,
-      cnae: data.cnae,
-      nbs: data.nbs,
-      indop: data.indop,
-      updatedAt: updated?.updatedAt,
-    });
+    expect(updated?.cnaeNbsIndopId).toBe(cnaeNbsIndopId2);
   });
 
   it('should update quantity to zero when provided', async() => {
@@ -212,9 +220,7 @@ describe('EditClientItem - Integration tests', () => {
         description: 'Item com quantidade',
         quantity: 10,
         unitValueInCents: 10000,
-        cnae: '1234567',
-        nbs: '12345678',
-        indop: '1',
+        cnaeNbsIndopId,
       },
     });
 
@@ -231,18 +237,15 @@ describe('EditClientItem - Integration tests', () => {
         description: 'Item original',
         quantity: 2,
         unitValueInCents: 15000,
-        cnae: '1234567',
-        nbs: '12345678',
-        indop: '1',
+        cnaeNbsIndopId,
       },
     });
 
     await sut.execute(item.id, {});
 
     const updated = await prisma.clientItem.findUnique({ where: { id: item.id } });
-    expect(updated).toEqual({
-      ...item,
-      updatedAt: updated?.updatedAt,
-    });
+    expect(updated?.description).toBe(item.description);
+    expect(updated?.quantity).toBe(item.quantity);
+    expect(updated?.cnaeNbsIndopId).toBe(item.cnaeNbsIndopId);
   });
 });

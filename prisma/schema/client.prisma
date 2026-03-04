@@ -101,18 +101,17 @@ model ClientAddress {
 }
 
 model ClientItem {
-  id                      Int      @id @default(autoincrement())
-  clientId                Int
-  description             String
-  quantity                Int
-  unitValueInCents        Int
-  cnae                    String
-  nbs                     String
-  indop                   String
-  createdAt               DateTime @default(now())
-  updatedAt               DateTime @updatedAt
+  id               Int      @id @default(autoincrement())
+  clientId         Int
+  description      String
+  quantity         Int
+  unitValueInCents Int
+  cnaeNbsIndopId   Int
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
-  client Client @relation(fields: [clientId], references: [id])
+  client        Client        @relation(fields: [clientId], references: [id])
+  cnaeNbsIndop  CnaeNbsIndop  @relation(fields: [cnaeNbsIndopId], references: [id])
 
   @@map("client_items")
 }

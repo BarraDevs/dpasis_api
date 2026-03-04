@@ -11,11 +11,34 @@ const ClientItemSelect = {
   description: true,
   quantity: true,
   unitValueInCents: true,
-  cnae: true,
-  nbs: true,
-  indop: true,
   createdAt: true,
   updatedAt: true,
+  cnaeNbsIndop: {
+    select: {
+      id: true,
+      cnae: {
+        select: {
+          id: true,
+          code: true,
+          description: true,
+        },
+      },
+      nbs: {
+        select: {
+          id: true,
+          code: true,
+          description: true,
+        },
+      },
+      indop: {
+        select: {
+          id: true,
+          code: true,
+          description: true,
+        },
+      },
+    },
+  },
 } satisfies Prisma.ClientItemSelect;
 
 type ClientItemRow = Prisma.ClientItemGetPayload<{ select: typeof ClientItemSelect }>;
@@ -26,8 +49,20 @@ export class ClientItemDaoAdapterPrisma implements IClientItemDao {
 
   private toDto(row: ClientItemRow): ClientItemDto {
     return {
-      ...row,
+      id: row.id,
+      clientId: row.clientId,
+      description: row.description,
+      quantity: row.quantity,
+      unitValueInCents: row.unitValueInCents,
       totalValueInCents: Math.ceil(row.quantity * row.unitValueInCents),
+      cnaeNbsIndop: {
+        id: row.cnaeNbsIndop.id,
+        cnae: row.cnaeNbsIndop.cnae,
+        nbs: row.cnaeNbsIndop.nbs,
+        indop: row.cnaeNbsIndop.indop,
+      },
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
     };
   }
 
@@ -38,13 +73,41 @@ export class ClientItemDaoAdapterPrisma implements IClientItemDao {
       { clientId: { equals: queries.clientId } },
     ];
 
+    if (queries.cnaeId != null) {
+      andConditions.push({
+        cnaeNbsIndop: { cnaeId: { equals: queries.cnaeId } },
+      });
+    }
+    if (queries.nbsId != null) {
+      andConditions.push({
+        cnaeNbsIndop: { nbsId: { equals: queries.nbsId } },
+      });
+    }
+    if (queries.indopId != null) {
+      andConditions.push({
+        cnaeNbsIndop: { indopId: { equals: queries.indopId } },
+      });
+    }
+
     if (queries.search?.trim()) {
       andConditions.push({
         OR: [
           { description: { contains: queries.search, mode: 'insensitive' } },
-          { cnae: { contains: queries.search, mode: 'insensitive' } },
-          { nbs: { contains: queries.search, mode: 'insensitive' } },
-          { indop: { contains: queries.search, mode: 'insensitive' } },
+          {
+            cnaeNbsIndop: {
+              cnae: { code: { contains: queries.search, mode: 'insensitive' } },
+            },
+          },
+          {
+            cnaeNbsIndop: {
+              nbs: { code: { contains: queries.search, mode: 'insensitive' } },
+            },
+          },
+          {
+            cnaeNbsIndop: {
+              indop: { code: { contains: queries.search, mode: 'insensitive' } },
+            },
+          },
         ],
       });
     }

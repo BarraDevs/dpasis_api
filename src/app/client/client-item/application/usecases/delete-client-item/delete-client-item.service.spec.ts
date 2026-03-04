@@ -10,6 +10,7 @@ describe('DeleteClientItem - Integration tests', () => {
   let sut: DeleteClientItem;
   let prisma: PrismaService;
   let clientId: number;
+  let cnaeNbsIndopId: number;
 
   beforeAll(async() => {
     const module = await Test.createTestingModule({
@@ -23,10 +24,18 @@ describe('DeleteClientItem - Integration tests', () => {
   beforeEach(async() => {
     await prisma.truncate();
 
-    const [group, owner] = await Promise.all([
+    const [group, owner, cnae, nbs, indop] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
       prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+      prisma.cnae.create({ data: { code: '1234567', description: 'CNAE Test', active: true } }),
+      prisma.nbs.create({ data: { code: '12345678', description: 'NBS Test', active: true } }),
+      prisma.indop.create({ data: { code: '1', description: 'INDOP Test', active: true } }),
     ]);
+
+    const cni = await prisma.cnaeNbsIndop.create({
+      data: { cnaeId: cnae.id, nbsId: nbs.id, indopId: indop.id },
+    });
+    cnaeNbsIndopId = cni.id;
 
     const client = await prisma.client.create({
       data: {
@@ -67,9 +76,7 @@ describe('DeleteClientItem - Integration tests', () => {
         description: 'Item para deletar',
         quantity: 1,
         unitValueInCents: 10000,
-        cnae: '1234567',
-        nbs: '12345678',
-        indop: '1',
+        cnaeNbsIndopId,
       },
     });
 
@@ -88,9 +95,7 @@ describe('DeleteClientItem - Integration tests', () => {
         description: 'Item para deletar',
         quantity: 1,
         unitValueInCents: 10000,
-        cnae: '1234567',
-        nbs: '12345678',
-        indop: '1',
+        cnaeNbsIndopId,
       },
     });
 
@@ -114,9 +119,7 @@ describe('DeleteClientItem - Integration tests', () => {
         description: 'Item para deletar',
         quantity: 1,
         unitValueInCents: 10000,
-        cnae: '1234567',
-        nbs: '12345678',
-        indop: '1',
+        cnaeNbsIndopId,
       },
     });
 

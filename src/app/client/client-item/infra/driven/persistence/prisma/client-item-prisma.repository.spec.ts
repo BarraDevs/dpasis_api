@@ -10,6 +10,7 @@ describe('ClientItemRepositoryAdapterPrisma - Integration tests', () => {
   let sut: ClientItemRepositoryAdapterPrisma;
   let prisma: PrismaService;
   let clientId: number;
+  let cnaeNbsIndopId: number;
 
   beforeAll(async() => {
     const module = await Test.createTestingModule({
@@ -24,10 +25,18 @@ describe('ClientItemRepositoryAdapterPrisma - Integration tests', () => {
   beforeEach(async() => {
     await prisma.truncate();
 
-    const [group, owner] = await Promise.all([
+    const [group, owner, cnae, nbs, indop] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
       prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+      prisma.cnae.create({ data: { code: 'cnae-code', description: 'CNAE Test', active: true } }),
+      prisma.nbs.create({ data: { code: 'nbs-code', description: 'NBS Test', active: true } }),
+      prisma.indop.create({ data: { code: 'indop-code', description: 'INDOP Test', active: true } }),
     ]);
+
+    const cni = await prisma.cnaeNbsIndop.create({
+      data: { cnaeId: cnae.id, nbsId: nbs.id, indopId: indop.id },
+    });
+    cnaeNbsIndopId = cni.id;
 
     const client = await prisma.client.create({
       data: {
@@ -60,9 +69,7 @@ describe('ClientItemRepositoryAdapterPrisma - Integration tests', () => {
         description: 'Item de teste',
         quantity: 2,
         unitValueInCents: 10000,
-        cnae: '1234567',
-        nbs: '12345678',
-        indop: '1',
+        cnaeNbsIndopId,
       });
 
       const id = await sut.save(entity);
@@ -70,11 +77,27 @@ describe('ClientItemRepositoryAdapterPrisma - Integration tests', () => {
       expect(id).toBeDefined();
       expect(typeof id).toBe('number');
 
-      const saved = await prisma.clientItem.findUnique({ where: { id } });
+      const saved = await prisma.clientItem.findUnique({
+        where: { id },
+        include: {
+          cnaeNbsIndop: {
+            include: {
+              cnae: true,
+              nbs: true,
+              indop: true,
+            },
+          },
+        },
+      });
       expect(saved).not.toBeNull();
       expect(saved?.description).toBe('Item de teste');
       expect(saved?.quantity).toBe(2);
       expect(saved?.unitValueInCents).toBe(10000);
+      expect(saved?.cnaeNbsIndopId).toBe(cnaeNbsIndopId);
+      expect(saved?.clientId).toBe(clientId);
+      expect(saved?.cnaeNbsIndop?.cnae?.code).toBe('cnae-code');
+      expect(saved?.cnaeNbsIndop?.nbs?.code).toBe('nbs-code');
+      expect(saved?.cnaeNbsIndop?.indop?.code).toBe('indop-code');
     });
 
     it('should persist entity with quantity zero', async() => {
@@ -83,9 +106,7 @@ describe('ClientItemRepositoryAdapterPrisma - Integration tests', () => {
         description: 'Item qty zero',
         quantity: 0,
         unitValueInCents: 10000,
-        cnae: '1234567',
-        nbs: '12345678',
-        indop: '1',
+        cnaeNbsIndopId,
       });
 
       const id = await sut.save(entity);
@@ -100,9 +121,7 @@ describe('ClientItemRepositoryAdapterPrisma - Integration tests', () => {
         description: 'Item valor zero',
         quantity: 5,
         unitValueInCents: 0,
-        cnae: '1234567',
-        nbs: '12345678',
-        indop: '1',
+        cnaeNbsIndopId,
       });
 
       const id = await sut.save(entity);
@@ -111,26 +130,20 @@ describe('ClientItemRepositoryAdapterPrisma - Integration tests', () => {
       expect(saved?.unitValueInCents).toBe(0);
     });
 
-    it('should persist all string fields at boundary lengths', async() => {
+    it('should persist description at boundary length', async() => {
       const longDesc = 'a'.repeat(255);
-      const maxStr = 'x'.repeat(50);
       const entity = ClientItemFactory.create({
         clientId,
         description: longDesc,
         quantity: 1,
         unitValueInCents: 10000,
-        cnae: maxStr,
-        nbs: maxStr,
-        indop: maxStr,
+        cnaeNbsIndopId,
       });
 
       const id = await sut.save(entity);
 
       const saved = await prisma.clientItem.findUnique({ where: { id } });
       expect(saved?.description).toBe(longDesc);
-      expect(saved?.cnae).toBe(maxStr);
-      expect(saved?.nbs).toBe(maxStr);
-      expect(saved?.indop).toBe(maxStr);
     });
   });
 
@@ -160,9 +173,7 @@ describe('ClientItemRepositoryAdapterPrisma - Integration tests', () => {
           description: 'Item de teste',
           quantity: 1,
           unitValueInCents: 10000,
-          cnae: '1234567',
-          nbs: '12345678',
-          indop: '1',
+          cnaeNbsIndopId,
         },
       });
 
@@ -180,9 +191,7 @@ describe('ClientItemRepositoryAdapterPrisma - Integration tests', () => {
           description: 'Item completo',
           quantity: 7,
           unitValueInCents: 3333,
-          cnae: '6201501',
-          nbs: '01010101',
-          indop: 'INDOP-1',
+          cnaeNbsIndopId,
         },
       });
 
@@ -194,9 +203,7 @@ describe('ClientItemRepositoryAdapterPrisma - Integration tests', () => {
         description: created.description,
         quantity: created.quantity,
         unitValueInCents: created.unitValueInCents,
-        cnae: created.cnae,
-        nbs: created.nbs,
-        indop: created.indop,
+        cnaeNbsIndopId: created.cnaeNbsIndopId,
       });
     });
   });
@@ -209,9 +216,7 @@ describe('ClientItemRepositoryAdapterPrisma - Integration tests', () => {
           description: 'Item original',
           quantity: 1,
           unitValueInCents: 10000,
-          cnae: '1234567',
-          nbs: '12345678',
-          indop: '1',
+          cnaeNbsIndopId,
         },
       });
 
@@ -230,24 +235,29 @@ describe('ClientItemRepositoryAdapterPrisma - Integration tests', () => {
       expect(saved?.unitValueInCents).toBe(20000);
     });
 
-    it('should update only cnae, nbs, indop', async() => {
+    it('should update only cnaeNbsIndopId', async() => {
+      const [cnae2, nbs2, indop2] = await Promise.all([
+        prisma.cnae.create({ data: { code: '9999999', description: 'CNAE 2', active: true } }),
+        prisma.nbs.create({ data: { code: '88888888', description: 'NBS 2', active: true } }),
+        prisma.indop.create({ data: { code: '5', description: 'INDOP 2', active: true } }),
+      ]);
+      const cni2 = await prisma.cnaeNbsIndop.create({
+        data: { cnaeId: cnae2.id, nbsId: nbs2.id, indopId: indop2.id },
+      });
+
       const created = await prisma.clientItem.create({
         data: {
           clientId,
           description: 'Descrição fixa',
           quantity: 1,
           unitValueInCents: 10000,
-          cnae: '1111111',
-          nbs: '22222222',
-          indop: '1',
+          cnaeNbsIndopId,
         },
       });
 
       const existing = await sut.findById(created.id);
       const updated = ClientItemFactory.edit(existing!, {
-        cnae: '9999999',
-        nbs: '88888888',
-        indop: '5',
+        cnaeNbsIndopId: cni2.id,
       });
 
       await sut.edit(updated);
@@ -255,9 +265,7 @@ describe('ClientItemRepositoryAdapterPrisma - Integration tests', () => {
       const saved = await prisma.clientItem.findUnique({ where: { id: created.id } });
       expect(saved?.description).toBe('Descrição fixa');
       expect(saved?.quantity).toBe(1);
-      expect(saved?.cnae).toBe('9999999');
-      expect(saved?.nbs).toBe('88888888');
-      expect(saved?.indop).toBe('5');
+      expect(saved?.cnaeNbsIndopId).toBe(cni2.id);
     });
 
     it('should update quantity to zero', async() => {
@@ -267,9 +275,7 @@ describe('ClientItemRepositoryAdapterPrisma - Integration tests', () => {
           description: 'Item',
           quantity: 10,
           unitValueInCents: 10000,
-          cnae: '1234567',
-          nbs: '12345678',
-          indop: '1',
+          cnaeNbsIndopId,
         },
       });
 
@@ -291,9 +297,7 @@ describe('ClientItemRepositoryAdapterPrisma - Integration tests', () => {
           description: 'Item para deletar',
           quantity: 1,
           unitValueInCents: 10000,
-          cnae: '1234567',
-          nbs: '12345678',
-          indop: '1',
+          cnaeNbsIndopId,
         },
       });
 

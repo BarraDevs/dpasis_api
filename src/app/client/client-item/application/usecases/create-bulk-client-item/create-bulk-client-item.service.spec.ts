@@ -6,13 +6,10 @@ import { ClientItemModule } from '../../../client-item.module';
 import { CreateClientItemInputDto } from '../create-client-item/dtos/create-client-item.dto';
 import { CreateBulkClientItem } from './create-bulk-client-item.service';
 
-const makeValidItem = (overrides: Partial<CreateClientItemInputDto> & { clientId: number }): CreateClientItemInputDto => ({
+const makeValidItem = (overrides: Partial<CreateClientItemInputDto> & { clientId: number; cnaeNbsIndopId: number }): CreateClientItemInputDto => ({
   description: 'Item teste',
   quantity: 1,
   unitValueInCents: 10000,
-  cnae: '1234567',
-  nbs: '12345678',
-  indop: '1',
   ...overrides,
 });
 
@@ -20,6 +17,7 @@ describe('CreateBulkClientItem - Integration tests', () => {
   let sut: CreateBulkClientItem;
   let prisma: PrismaService;
   let clientId: number;
+  let cnaeNbsIndopId: number;
 
   beforeAll(async() => {
     const module = await Test.createTestingModule({
@@ -33,10 +31,18 @@ describe('CreateBulkClientItem - Integration tests', () => {
   beforeEach(async() => {
     await prisma.truncate();
 
-    const [group, owner] = await Promise.all([
+    const [group, owner, cnae, nbs, indop] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
       prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+      prisma.cnae.create({ data: { code: '1234567', description: 'CNAE Test', active: true } }),
+      prisma.nbs.create({ data: { code: '12345678', description: 'NBS Test', active: true } }),
+      prisma.indop.create({ data: { code: '1', description: 'INDOP Test', active: true } }),
     ]);
+
+    const cni = await prisma.cnaeNbsIndop.create({
+      data: { cnaeId: cnae.id, nbsId: nbs.id, indopId: indop.id },
+    });
+    cnaeNbsIndopId = cni.id;
 
     const client = await prisma.client.create({
       data: {
@@ -74,9 +80,9 @@ describe('CreateBulkClientItem - Integration tests', () => {
 
   it('should create all items successfully', async() => {
     const items = [
-      makeValidItem({ clientId, description: 'Item 1' }),
-      makeValidItem({ clientId, description: 'Item 2' }),
-      makeValidItem({ clientId, description: 'Item 3' }),
+      makeValidItem({ clientId, cnaeNbsIndopId, description: 'Item 1' }),
+      makeValidItem({ clientId, cnaeNbsIndopId, description: 'Item 2' }),
+      makeValidItem({ clientId, cnaeNbsIndopId, description: 'Item 3' }),
     ];
 
     const result = await sut.execute({ items });
@@ -92,8 +98,8 @@ describe('CreateBulkClientItem - Integration tests', () => {
 
   it('should report all as failed when all have invalid clientId', async() => {
     const items = [
-      makeValidItem({ clientId: 99999, description: 'Item 1' }),
-      makeValidItem({ clientId: 99998, description: 'Item 2' }),
+      makeValidItem({ clientId: 99999, cnaeNbsIndopId, description: 'Item 1' }),
+      makeValidItem({ clientId: 99998, cnaeNbsIndopId, description: 'Item 2' }),
     ];
 
     const result = await sut.execute({ items });
@@ -109,9 +115,9 @@ describe('CreateBulkClientItem - Integration tests', () => {
 
   it('should report partial success when some items succeed and some fail', async() => {
     const items = [
-      makeValidItem({ clientId, description: 'Item válido' }),
-      makeValidItem({ clientId: 99999, description: 'Item inválido' }),
-      makeValidItem({ clientId, description: 'Outro item válido' }),
+      makeValidItem({ clientId, cnaeNbsIndopId, description: 'Item válido' }),
+      makeValidItem({ clientId: 99999, cnaeNbsIndopId, description: 'Item inválido' }),
+      makeValidItem({ clientId, cnaeNbsIndopId, description: 'Outro item válido' }),
     ];
 
     const result = await sut.execute({ items });

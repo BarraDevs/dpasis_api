@@ -42,9 +42,10 @@ model CnaeNbsIndop {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  cnae  Cnae  @relation(fields: [cnaeId], references: [id])
-  nbs   Nbs   @relation(fields: [nbsId], references: [id])
-  indop Indop @relation(fields: [indopId], references: [id])
+  cnae        Cnae         @relation(fields: [cnaeId], references: [id])
+  nbs         Nbs           @relation(fields: [nbsId], references: [id])
+  indop       Indop          @relation(fields: [indopId], references: [id])
+  clientItems ClientItem[]
 
   @@unique([cnaeId, nbsId, indopId])
   @@map("cnae_nbs_indops")

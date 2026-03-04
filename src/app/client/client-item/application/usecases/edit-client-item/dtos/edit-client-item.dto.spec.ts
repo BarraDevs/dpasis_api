@@ -150,83 +150,29 @@ describe('EditClientItemInputDto', () => {
     });
   });
 
-  describe('cnae', () => {
-    it('should accept valid cnae', async() => {
-      const data = { cnae: '7654321' };
+  describe('cnaeNbsIndopId', () => {
+    it('should accept valid cnaeNbsIndopId', async() => {
+      const data = { cnaeNbsIndopId: 7 };
 
       const result = await target.transform(data, metadata);
 
-      expect(result.cnae).toBe('7654321');
+      expect(result.cnaeNbsIndopId).toBe(7);
     });
 
-    it('should trim cnae', async() => {
-      const data = { cnae: '  1234567  ' };
+    it('should trim cnaeNbsIndopId string to number', async() => {
+      const data = { cnaeNbsIndopId: '  42  ' };
 
       const result = await target.transform(data, metadata);
 
-      expect(result.cnae).toBe('1234567');
+      expect(result.cnaeNbsIndopId).toBe(42);
     });
 
-    it('should throw an error if cnae exceeds 50 characters', async() => {
-      const data = { cnae: 'a'.repeat(51) };
+    it('should throw an error if cnaeNbsIndopId is not an integer', async() => {
+      const data = { cnaeNbsIndopId: 1.5 };
 
       expect.assertions(1);
       return target.transform(data, metadata).catch((error) => {
-        expect(error.getResponse().message).toContain('cnae deve ter no máximo 50 caracteres');
-      });
-    });
-  });
-
-  describe('nbs', () => {
-    it('should accept valid nbs', async() => {
-      const data = { nbs: '87654321' };
-
-      const result = await target.transform(data, metadata);
-
-      expect(result.nbs).toBe('87654321');
-    });
-
-    it('should trim nbs', async() => {
-      const data = { nbs: '  12345678  ' };
-
-      const result = await target.transform(data, metadata);
-
-      expect(result.nbs).toBe('12345678');
-    });
-
-    it('should throw an error if nbs exceeds 50 characters', async() => {
-      const data = { nbs: 'a'.repeat(51) };
-
-      expect.assertions(1);
-      return target.transform(data, metadata).catch((error) => {
-        expect(error.getResponse().message).toContain('nbs deve ter no máximo 50 caracteres');
-      });
-    });
-  });
-
-  describe('indop', () => {
-    it('should accept valid indop', async() => {
-      const data = { indop: '2' };
-
-      const result = await target.transform(data, metadata);
-
-      expect(result.indop).toBe('2');
-    });
-
-    it('should trim indop', async() => {
-      const data = { indop: '  1  ' };
-
-      const result = await target.transform(data, metadata);
-
-      expect(result.indop).toBe('1');
-    });
-
-    it('should throw an error if indop exceeds 50 characters', async() => {
-      const data = { indop: 'a'.repeat(51) };
-
-      expect.assertions(1);
-      return target.transform(data, metadata).catch((error) => {
-        expect(error.getResponse().message).toContain('indop deve ter no máximo 50 caracteres');
+        expect(error.getResponse().message).toContain('cnaeNbsIndopId deve ser um número inteiro');
       });
     });
   });
@@ -236,9 +182,7 @@ describe('EditClientItemInputDto', () => {
       description: 'Descrição editada',
       quantity: 3,
       unitValueInCents: 20000,
-      cnae: '1234567',
-      nbs: '12345678',
-      indop: '1',
+      cnaeNbsIndopId: 1,
     };
 
     const result = await target.transform(data, metadata);
@@ -259,9 +203,7 @@ describe('EditClientItemInputDto', () => {
     expect(result.description).toBe('Nova descrição');
     expect(result.quantity).toBe(2);
     expect(result.unitValueInCents).toBeUndefined();
-    expect(result.cnae).toBeUndefined();
-    expect(result.nbs).toBeUndefined();
-    expect(result.indop).toBeUndefined();
+    expect(result.cnaeNbsIndopId).toBeUndefined();
   });
 
   it('should not include clientId (omitted from DTO)', async() => {

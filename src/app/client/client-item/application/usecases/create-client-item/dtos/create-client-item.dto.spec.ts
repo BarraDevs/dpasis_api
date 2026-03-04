@@ -13,9 +13,7 @@ function makeValidData(overrides?: Partial<CreateClientItemInputDto>) {
     description: 'Descrição do item',
     quantity: 1,
     unitValueInCents: 10000,
-    cnae: '1234567',
-    nbs: '12345678',
-    indop: '1',
+    cnaeNbsIndopId: 1,
     ...overrides,
   };
 }
@@ -197,96 +195,34 @@ describe('CreateClientItemInputDto', () => {
     });
   });
 
-  describe('cnae', () => {
+  describe('cnaeNbsIndopId', () => {
     it.each([undefined, null, '', '   '])(
-      'should throw an error if cnae is empty (%s)',
+      'should throw an error if cnaeNbsIndopId is empty (%s)',
       async(value: unknown) => {
-        const data = makeValidData({ cnae: value as string });
+        const data = makeValidData({ cnaeNbsIndopId: value as number });
 
         expect.assertions(1);
         return target.transform(data, metadata).catch((error) => {
-          expect(error.getResponse().message).toContain('cnae é obrigatório');
+          expect(error.getResponse().message).toContain('cnaeNbsIndopId é obrigatório');
         });
       },
     );
 
-    it('should throw an error if cnae exceeds 50 characters', async() => {
-      const data = makeValidData({ cnae: 'a'.repeat(51) });
+    it('should throw an error if cnaeNbsIndopId is not an integer', async() => {
+      const data = makeValidData({ cnaeNbsIndopId: 1.5 });
 
       expect.assertions(1);
       return target.transform(data, metadata).catch((error) => {
-        expect(error.getResponse().message).toContain('cnae deve ter no máximo 50 caracteres');
+        expect(error.getResponse().message).toContain('cnaeNbsIndopId deve ser um número inteiro');
       });
     });
 
-    it('should trim cnae', async() => {
-      const data = makeValidData({ cnae: '  1234567  ' });
+    it('should transform string cnaeNbsIndopId to number', async() => {
+      const data = { ...makeValidData(), cnaeNbsIndopId: '42' };
 
       const result = await target.transform(data, metadata);
 
-      expect(result.cnae).toBe('1234567');
-    });
-  });
-
-  describe('nbs', () => {
-    it.each([undefined, null, '', '   '])(
-      'should throw an error if nbs is empty (%s)',
-      async(value: unknown) => {
-        const data = makeValidData({ nbs: value as string });
-
-        expect.assertions(1);
-        return target.transform(data, metadata).catch((error) => {
-          expect(error.getResponse().message).toContain('nbs é obrigatório');
-        });
-      },
-    );
-
-    it('should throw an error if nbs exceeds 50 characters', async() => {
-      const data = makeValidData({ nbs: 'a'.repeat(51) });
-
-      expect.assertions(1);
-      return target.transform(data, metadata).catch((error) => {
-        expect(error.getResponse().message).toContain('nbs deve ter no máximo 50 caracteres');
-      });
-    });
-
-    it('should trim nbs', async() => {
-      const data = makeValidData({ nbs: '  12345678  ' });
-
-      const result = await target.transform(data, metadata);
-
-      expect(result.nbs).toBe('12345678');
-    });
-  });
-
-  describe('indop', () => {
-    it.each([undefined, null, '', '   '])(
-      'should throw an error if indop is empty (%s)',
-      async(value: unknown) => {
-        const data = makeValidData({ indop: value as string });
-
-        expect.assertions(1);
-        return target.transform(data, metadata).catch((error) => {
-          expect(error.getResponse().message).toContain('indop é obrigatório');
-        });
-      },
-    );
-
-    it('should throw an error if indop exceeds 50 characters', async() => {
-      const data = makeValidData({ indop: 'a'.repeat(51) });
-
-      expect.assertions(1);
-      return target.transform(data, metadata).catch((error) => {
-        expect(error.getResponse().message).toContain('indop deve ter no máximo 50 caracteres');
-      });
-    });
-
-    it('should trim indop', async() => {
-      const data = makeValidData({ indop: '  1  ' });
-
-      const result = await target.transform(data, metadata);
-
-      expect(result.indop).toBe('1');
+      expect(result.cnaeNbsIndopId).toBe(42);
     });
   });
 
@@ -300,24 +236,16 @@ describe('CreateClientItemInputDto', () => {
     expect(result.description).toBe('Descrição do item');
     expect(result.quantity).toBe(1);
     expect(result.unitValueInCents).toBe(10000);
-    expect(result.cnae).toBe('1234567');
-    expect(result.nbs).toBe('12345678');
-    expect(result.indop).toBe('1');
+    expect(result.cnaeNbsIndopId).toBe(1);
   });
 
-  it('should accept boundary values for string fields', async() => {
+  it('should accept boundary value for description', async() => {
     const data = makeValidData({
       description: 'a'.repeat(255),
-      cnae: 'a'.repeat(50),
-      nbs: 'a'.repeat(50),
-      indop: 'a'.repeat(50),
     });
 
     const result = await target.transform(data, metadata);
 
     expect(result.description).toBe('a'.repeat(255));
-    expect(result.cnae).toBe('a'.repeat(50));
-    expect(result.nbs).toBe('a'.repeat(50));
-    expect(result.indop).toBe('a'.repeat(50));
   });
 });
