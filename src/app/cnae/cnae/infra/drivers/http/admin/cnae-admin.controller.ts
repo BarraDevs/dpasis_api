@@ -1,15 +1,14 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
 import { RequiredRoles } from 'src/app/authentication/infra/decorators/required-role.decorator';
 import { CnaeDto } from 'src/app/cnae/cnae/application/dtos/cnae.dto';
 import { CreateCnae } from 'src/app/cnae/cnae/application/usecases/create-cnae/create-cnae.service';
 import { CreateCnaeInputDto, CreateCnaeOutputDto } from 'src/app/cnae/cnae/application/usecases/create-cnae/dtos/create-cnae.dto';
-import { DeleteCnae } from 'src/app/cnae/cnae/application/usecases/delete-cnae/delete-cnae.service';
 import { EditCnaeInputDto } from 'src/app/cnae/cnae/application/usecases/edit-cnae/dtos/edit-cnae.dto';
+import { EditCnae } from 'src/app/cnae/cnae/application/usecases/edit-cnae/edit-cnae.service';
 import { FindAllCnaeQueryDto } from 'src/app/cnae/cnae/application/usecases/find-all-cnae/dtos/find-all-cnae.dto';
 import { FindAllCnae } from 'src/app/cnae/cnae/application/usecases/find-all-cnae/find-all-cnae.service';
 import { FindCnaeById } from 'src/app/cnae/cnae/application/usecases/find-cnae-by-id/find-cnae-by-id.service';
-import { EditCnae } from 'src/app/cnae/cnae/application/usecases/edit-cnae/edit-cnae.service';
 import { UpdateCnaeStatus } from 'src/app/cnae/cnae/application/usecases/update-cnae-status/update-cnae-status.service';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
 import { Swagger } from 'src/infra/openapi/swagger';
@@ -25,7 +24,6 @@ export class CnaeAdminController {
     private readonly findCnaeById: FindCnaeById,
     private readonly editCnae: EditCnae,
     private readonly updateCnaeStatus: UpdateCnaeStatus,
-    private readonly deleteCnae: DeleteCnae,
   ) {}
 
   @Post()
@@ -86,17 +84,5 @@ export class CnaeAdminController {
   })
   public update(@Param() params: Params, @Body() body: EditCnaeInputDto): Promise<SuccessMessage> {
     return this.editCnae.execute(params.id, body);
-  }
-
-  @Delete(':id')
-  @Swagger({
-    tags: ['CNAE'],
-    summary: 'Deletar CNAE',
-    applyBadRequest: true,
-    applyNotFound: true,
-    okResponse: SuccessMessage,
-  })
-  public remove(@Param() params: Params): Promise<SuccessMessage> {
-    return this.deleteCnae.execute(params.id);
   }
 }

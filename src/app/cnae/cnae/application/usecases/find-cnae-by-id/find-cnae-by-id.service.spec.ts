@@ -1,9 +1,9 @@
 import { Test } from '@nestjs/testing';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
+import { CnaeModule } from '../../../cnae.module';
 import { CnaeNotFoundError } from '../../../domain/errors/cnae-not-found.error';
 import { CnaeDto } from '../../dtos/cnae.dto';
 import { FindCnaeById } from './find-cnae-by-id.service';
-import { CnaeModule } from '../../../cnae.module';
 
 describe('FindCnaeById - Integration tests', () => {
   let sut: FindCnaeById;

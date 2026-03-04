@@ -1,9 +1,9 @@
 import { Test } from '@nestjs/testing';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
+import { CnaeModule } from '../../../cnae.module';
 import { CnaeAlreadyExistsError } from '../../../domain/errors/cnae-already-exists.error';
 import { CreateCnae } from './create-cnae.service';
 import { CreateCnaeInputDto } from './dtos/create-cnae.dto';
-import { CnaeModule } from '../../../cnae.module';
 
 describe('CreateCnae - Integration tests', () => {
   let sut: CreateCnae;

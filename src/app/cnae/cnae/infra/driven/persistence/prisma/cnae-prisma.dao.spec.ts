@@ -264,22 +264,6 @@ describe('CnaeDaoAdapterPrisma - Integration tests', () => {
     });
   });
 
-  describe('delete', () => {
-    it('should delete cnae from database', async() => {
-      // Arrange
-      const cnae = await prisma.cnae.create({
-        data: { code: '1012-1/01', description: 'Test', active: true },
-      });
-
-      // Act
-      await sut.delete(cnae.id);
-
-      // Assert
-      const deleted = await prisma.cnae.findUnique({ where: { id: cnae.id } });
-      expect(deleted).toBeNull();
-    });
-  });
-
   describe('updateStatus', () => {
     it('should update cnae status', async() => {
       // Arrange

@@ -75,12 +75,6 @@ export class CnaeDaoAdapterPrisma implements ICnaeDao {
     });
   }
 
-  public async delete(id: number): Promise<void> {
-    await this.prisma.cnae.delete({
-      where: { id },
-    });
-  }
-
   public async updateStatus(id: number, active: boolean): Promise<void> {
     await this.prisma.cnae.update({
       where: { id },

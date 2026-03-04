@@ -1,9 +1,9 @@
 import { Test } from '@nestjs/testing';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
+import { CnaeModule } from '../../../cnae.module';
 import { CnaeDto } from '../../dtos/cnae.dto';
 import { FindAllCnaeQueryDto } from './dtos/find-all-cnae.dto';
 import { FindAllCnae } from './find-all-cnae.service';
-import { CnaeModule } from '../../../cnae.module';
 
 describe('FindAllCnae - Integration tests', () => {
   let sut: FindAllCnae;

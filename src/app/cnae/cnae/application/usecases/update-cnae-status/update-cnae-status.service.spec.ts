@@ -1,8 +1,8 @@
 import { Test } from '@nestjs/testing';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
+import { CnaeModule } from '../../../cnae.module';
 import { CnaeNotFoundError } from '../../../domain/errors/cnae-not-found.error';
 import { UpdateCnaeStatus } from './update-cnae-status.service';
-import { CnaeModule } from '../../../cnae.module';
 
 describe('UpdateCnaeStatus - Integration tests', () => {
   let sut: UpdateCnaeStatus;

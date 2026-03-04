@@ -4,12 +4,11 @@ import { AuthenticationGuardsModule } from 'src/app/authentication/application/g
 import { CnaeDto } from 'src/app/cnae/cnae/application/dtos/cnae.dto';
 import { CreateCnae } from 'src/app/cnae/cnae/application/usecases/create-cnae/create-cnae.service';
 import { CreateCnaeInputDto, CreateCnaeOutputDto } from 'src/app/cnae/cnae/application/usecases/create-cnae/dtos/create-cnae.dto';
-import { DeleteCnae } from 'src/app/cnae/cnae/application/usecases/delete-cnae/delete-cnae.service';
 import { EditCnaeInputDto } from 'src/app/cnae/cnae/application/usecases/edit-cnae/dtos/edit-cnae.dto';
+import { EditCnae } from 'src/app/cnae/cnae/application/usecases/edit-cnae/edit-cnae.service';
 import { FindAllCnaeQueryDto } from 'src/app/cnae/cnae/application/usecases/find-all-cnae/dtos/find-all-cnae.dto';
 import { FindAllCnae } from 'src/app/cnae/cnae/application/usecases/find-all-cnae/find-all-cnae.service';
 import { FindCnaeById } from 'src/app/cnae/cnae/application/usecases/find-cnae-by-id/find-cnae-by-id.service';
-import { EditCnae } from 'src/app/cnae/cnae/application/usecases/edit-cnae/edit-cnae.service';
 import { UpdateCnaeStatus } from 'src/app/cnae/cnae/application/usecases/update-cnae-status/update-cnae-status.service';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
 import { Params } from 'src/infra/validators/class/dtos/params/params.dto';
@@ -23,7 +22,6 @@ describe('CnaeAdminController - Unit tests', () => {
   let findCnaeByIdService: FindCnaeById;
   let editCnaeService: EditCnae;
   let updateCnaeStatusService: UpdateCnaeStatus;
-  let deleteCnaeService: DeleteCnae;
 
   beforeEach(async() => {
     const module = await Test.createTestingModule({
@@ -35,7 +33,6 @@ describe('CnaeAdminController - Unit tests', () => {
         { provide: FindCnaeById, useValue: createMock<FindCnaeById>() },
         { provide: EditCnae, useValue: createMock<EditCnae>() },
         { provide: UpdateCnaeStatus, useValue: createMock<UpdateCnaeStatus>() },
-        { provide: DeleteCnae, useValue: createMock<DeleteCnae>() },
       ],
     }).compile();
 
@@ -45,7 +42,6 @@ describe('CnaeAdminController - Unit tests', () => {
     findCnaeByIdService = module.get(FindCnaeById);
     editCnaeService = module.get(EditCnae);
     updateCnaeStatusService = module.get(UpdateCnaeStatus);
-    deleteCnaeService = module.get(DeleteCnae);
   });
 
   it('should be defined', () => {
@@ -130,22 +126,6 @@ describe('CnaeAdminController - Unit tests', () => {
       // Assert
       expect(result).toEqual(output);
       expect(updateSpy).toHaveBeenCalledWith(params.id, body);
-    });
-  });
-
-  describe('remove', () => {
-    it('should call deleteCnae.execute with params.id', async() => {
-      // Arrange
-      const params = createMock<Params>();
-      const output = createMock<SuccessMessage>();
-      const removeSpy = jest.spyOn(deleteCnaeService, 'execute').mockResolvedValue(output);
-
-      // Act
-      const result = await sut.remove(params);
-
-      // Assert
-      expect(result).toEqual(output);
-      expect(removeSpy).toHaveBeenCalledWith(params.id);
     });
   });
 });

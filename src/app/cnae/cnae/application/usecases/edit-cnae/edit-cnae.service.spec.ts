@@ -1,10 +1,10 @@
 import { Test } from '@nestjs/testing';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
+import { CnaeModule } from '../../../cnae.module';
 import { CnaeAlreadyExistsError } from '../../../domain/errors/cnae-already-exists.error';
 import { CnaeNotFoundError } from '../../../domain/errors/cnae-not-found.error';
 import { EditCnaeInputDto } from './dtos/edit-cnae.dto';
 import { EditCnae } from './edit-cnae.service';
-import { CnaeModule } from '../../../cnae.module';
 
 describe('EditCnae - Integration tests', () => {
   let sut: EditCnae;

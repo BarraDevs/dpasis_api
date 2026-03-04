@@ -9,6 +9,5 @@ export interface ICnaeDao {
   findByCode(code: string): Promise<CnaeDto | null>;
   save(data: CreateCnaeInputDto): Promise<number>;
   edit(id: number, data: EditCnaeInputDto): Promise<void>;
-  delete(id: number): Promise<void>;
   updateStatus(id: number, active: boolean): Promise<void>;
 }
