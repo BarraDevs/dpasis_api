@@ -24,6 +24,7 @@ import { NbsAdminController } from './infra/drivers/http/admin/nbs-admin.control
     UpdateNbsStatus,
   ],
   exports: [
+    NbsPersistenceModule,
     FindNbsById,
   ],
 })
