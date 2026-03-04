@@ -25,6 +25,7 @@ const TOKENS = {
 
   CnaeDao: Symbol.for('CnaeDao'),
   NbsDao: Symbol.for('NbsDao'),
+  IndopDao: Symbol.for('IndopDao'),
 };
 
 export { TOKENS };

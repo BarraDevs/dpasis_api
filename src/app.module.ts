@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { AuthenticationModule } from './app/authentication/authentication.module';
 import { ClientModuleModule } from './app/client/client-module.module';
 import { CnaeModule } from './app/cnae/cnae/cnae.module';
+import { IndopModule } from './app/indop/indop/indop.module';
 import { NbsModule } from './app/nbs/nbs/nbs.module';
 import { CompanyModule } from './app/company/company/company.module';
 import { ExternalApisModule } from './app/external-apis/external-apis.module';
@@ -18,6 +19,7 @@ import { InfraModule } from './infra/infra.module';
     ClientModuleModule,
     CompanyModule,
     CnaeModule,
+    IndopModule,
     NbsModule,
     ExternalApisModule,
     FaqModule,
