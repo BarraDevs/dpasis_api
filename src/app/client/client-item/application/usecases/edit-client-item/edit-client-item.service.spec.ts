@@ -2,7 +2,7 @@ import { Test } from '@nestjs/testing';
 import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
 import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum';
 import { ClientNotFoundError } from 'src/app/client/client/domain/errors/client-not-found.error';
-import { CnaeNbsIndopNotFoundError } from 'src/app/cnae-nbs-indop/cnae-nbs-indop/domain/errors/cnae-nbs-indop-not-found.error';
+import { CnaeNbsIndopNotFoundError } from 'src/app/taxation/cnae-nbs-indop/cnae-nbs-indop/domain/errors/cnae-nbs-indop-not-found.error';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { ClientItemModule } from '../../../client-item.module';
 import { ClientItemNotFoundError } from '../../../domain/errors/client-item-not-found.error';

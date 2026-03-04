@@ -1,4 +1,4 @@
-import { CnaeNbsIndopDto } from 'src/app/cnae-nbs-indop/cnae-nbs-indop/application/dtos/cnae-nbs-indop.dto';
+import { CnaeNbsIndopDto } from 'src/app/taxation/cnae-nbs-indop/cnae-nbs-indop/application/dtos/cnae-nbs-indop.dto';
 
 export class ClientItemDto {
   id: number;
