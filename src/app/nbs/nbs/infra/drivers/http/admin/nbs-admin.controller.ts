@@ -28,7 +28,7 @@ export class NbsAdminController {
 
   @Post()
   @Swagger({
-    tags: ['NBS'],
+    tags: ['Configurações - NBS'],
     summary: 'Criar novo NBS',
     applyBadRequest: true,
     applyConflict: true,
@@ -40,7 +40,7 @@ export class NbsAdminController {
 
   @Get()
   @Swagger({
-    tags: ['NBS'],
+    tags: ['Configurações - NBS'],
     summary: 'Listar NBS com paginação e busca',
     applyBadRequest: true,
     okPaginatedResponse: NbsDto,
@@ -51,7 +51,7 @@ export class NbsAdminController {
 
   @Get(':id')
   @Swagger({
-    tags: ['NBS'],
+    tags: ['Configurações - NBS'],
     summary: 'Buscar NBS por ID',
     applyBadRequest: true,
     applyNotFound: true,
@@ -63,7 +63,7 @@ export class NbsAdminController {
 
   @Patch(':id/status')
   @Swagger({
-    tags: ['NBS'],
+    tags: ['Configurações - NBS'],
     summary: 'Inverter status ativo do NBS',
     applyBadRequest: true,
     applyNotFound: true,
@@ -75,7 +75,7 @@ export class NbsAdminController {
 
   @Patch(':id')
   @Swagger({
-    tags: ['NBS'],
+    tags: ['Configurações - NBS'],
     summary: 'Editar NBS',
     applyBadRequest: true,
     applyNotFound: true,
