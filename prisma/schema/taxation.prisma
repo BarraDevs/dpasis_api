@@ -1,0 +1,32 @@
+model Cnae {
+  id          Int      @id @default(autoincrement())
+  code        String   @unique @db.VarChar(20)
+  description String   @db.VarChar(500)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("cnaes")
+}
+
+model Nbs {
+  id          Int      @id @default(autoincrement())
+  code        String   @unique @db.VarChar(20)
+  description String   @db.VarChar(500)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("nbss")
+}
+
+model Indop {
+  id          Int      @id @default(autoincrement())
+  code        String   @unique @db.VarChar(20)
+  description String   @db.VarChar(500)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("indops")
+}
