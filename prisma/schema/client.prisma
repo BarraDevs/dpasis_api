@@ -21,6 +21,7 @@ model Client {
   contacts      ClientContact[]
   items         ClientItem[]
   invoiceConfig ClientInvoiceConfig?
+  discounts     ClientDiscount[]
 
   @@map("clients")
 }
@@ -140,4 +141,22 @@ model ClientInvoiceConfig {
   bank            Bank         @relation(fields: [bankId], references: [id])
 
   @@map("client_invoice_configs")
+}
+
+model ClientDiscount {
+  id                  Int      @id @default(autoincrement())
+  clientId            Int
+  description         String   @db.Text
+  type                String
+  discountValue       Int
+  month               Int
+  year                Int
+  doNotGenerateCharge Boolean
+  terminateContract   Boolean
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  client Client @relation(fields: [clientId], references: [id])
+
+  @@map("client_discounts")
 }

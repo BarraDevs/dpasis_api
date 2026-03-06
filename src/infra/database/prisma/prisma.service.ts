@@ -22,6 +22,8 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
     await this.$transaction(async(tx) => {
       // 0. ClientInvoiceConfig (referencia Client, ClientAddress, Bank)
       await tx.clientInvoiceConfig.deleteMany();
+      // 0.1 ClientDiscount (referencia Client)
+      await tx.clientDiscount.deleteMany();
       // 1. Tabelas que referenciam Client
       await tx.clientAddress.deleteMany();
       await tx.clientContact.deleteMany();
