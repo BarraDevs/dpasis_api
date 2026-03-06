@@ -24,7 +24,6 @@ import { BankAdminController } from './infra/drivers/http/admin/bank-admin.contr
     UpdateBankStatus,
   ],
   exports: [
-    BankPersistenceModule,
     FindBankById,
   ],
 })

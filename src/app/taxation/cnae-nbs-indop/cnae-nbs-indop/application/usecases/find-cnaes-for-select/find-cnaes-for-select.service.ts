@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { CnaeDto } from 'src/app/taxation/cnae/cnae/application/dtos/cnae.dto';
-import type { ICnaeDao } from 'src/app/taxation/cnae/cnae/application/persistence/dao/cnae-dao.interface';
+import { FindCnaeById } from 'src/app/taxation/cnae/cnae/application/usecases/find-cnae-by-id/find-cnae-by-id.service';
 import { TOKENS } from 'src/core/di/token';
 import type { ICnaeNbsIndopDao } from '../../persistence/dao/cnae-nbs-indop-dao.interface';
 
@@ -8,7 +8,7 @@ import type { ICnaeNbsIndopDao } from '../../persistence/dao/cnae-nbs-indop-dao.
 export class FindCnaesForSelect {
   constructor(
     @Inject(TOKENS.CnaeNbsIndopDao) private readonly cnaeNbsIndopDao: ICnaeNbsIndopDao,
-    @Inject(TOKENS.CnaeDao) private readonly cnaeDao: ICnaeDao,
+    private readonly findCnaeById: FindCnaeById,
   ) {}
 
   public async execute(): Promise<CnaeDto[]> {
@@ -16,9 +16,11 @@ export class FindCnaesForSelect {
     const cnaes: CnaeDto[] = [];
 
     for (const id of cnaeIds) {
-      const cnae = await this.cnaeDao.findById(id);
-      if (cnae && cnae.active) {
+      try {
+        const cnae = await this.findCnaeById.execute(id, true);
         cnaes.push(cnae);
+      } catch {
+        // Skip CNAE not found or inactive
       }
     }
 

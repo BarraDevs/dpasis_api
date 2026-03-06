@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AuthenticationGuardsModule } from 'src/app/authentication/application/guards/guards.module';
 import { ClientModule } from 'src/app/client/client/client.module';
-import { CnaeNbsIndopPersistenceModule } from 'src/app/taxation/cnae-nbs-indop/cnae-nbs-indop/application/persistence/cnae-nbs-indop-persistence.module';
+import { CnaeNbsIndopModule } from 'src/app/taxation/cnae-nbs-indop/cnae-nbs-indop/cnae-nbs-indop.module';
 import { ClientItemPersistenceModule } from './application/persistence/client-item-persistence.module';
 import { CreateBulkClientItem } from './application/usecases/create-bulk-client-item/create-bulk-client-item.service';
 import { CreateClientItem } from './application/usecases/create-client-item/create-client-item.service';
@@ -15,7 +15,7 @@ import { ClientItemAdminController } from './infra/drivers/http/admin/client-ite
 @Module({
   imports: [
     ClientItemPersistenceModule,
-    CnaeNbsIndopPersistenceModule,
+    CnaeNbsIndopModule,
     ClientModule,
     AuthenticationGuardsModule,
   ],

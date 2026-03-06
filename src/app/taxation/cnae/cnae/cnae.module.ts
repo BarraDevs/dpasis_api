@@ -24,7 +24,6 @@ import { CnaeAdminController } from './infra/drivers/http/admin/cnae-admin.contr
     UpdateCnaeStatus,
   ],
   exports: [
-    CnaePersistenceModule,
     FindCnaeById,
   ],
 })

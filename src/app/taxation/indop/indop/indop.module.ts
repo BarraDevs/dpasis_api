@@ -24,7 +24,6 @@ import { IndopAdminController } from './infra/drivers/http/admin/indop-admin.con
     UpdateIndopStatus,
   ],
   exports: [
-    IndopPersistenceModule,
     FindIndopById,
   ],
 })

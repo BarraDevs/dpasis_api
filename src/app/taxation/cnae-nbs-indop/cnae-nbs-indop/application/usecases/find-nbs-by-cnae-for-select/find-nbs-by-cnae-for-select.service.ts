@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { NbsDto } from 'src/app/taxation/nbs/nbs/application/dtos/nbs.dto';
-import type { INbsDao } from 'src/app/taxation/nbs/nbs/application/persistence/dao/nbs-dao.interface';
+import { FindNbsById } from 'src/app/taxation/nbs/nbs/application/usecases/find-nbs-by-id/find-nbs-by-id.service';
 import { TOKENS } from 'src/core/di/token';
 import type { ICnaeNbsIndopDao } from '../../persistence/dao/cnae-nbs-indop-dao.interface';
 import { FindNbsByCnaeForSelectQueryDto } from './dtos/find-nbs-by-cnae-for-select.dto';
@@ -9,7 +9,7 @@ import { FindNbsByCnaeForSelectQueryDto } from './dtos/find-nbs-by-cnae-for-sele
 export class FindNbsByCnaeForSelect {
   constructor(
     @Inject(TOKENS.CnaeNbsIndopDao) private readonly cnaeNbsIndopDao: ICnaeNbsIndopDao,
-    @Inject(TOKENS.NbsDao) private readonly nbsDao: INbsDao,
+    private readonly findNbsById: FindNbsById,
   ) {}
 
   public async execute(queries: FindNbsByCnaeForSelectQueryDto): Promise<NbsDto[]> {
@@ -17,9 +17,11 @@ export class FindNbsByCnaeForSelect {
     const nbss: NbsDto[] = [];
 
     for (const id of nbsIds) {
-      const nbs = await this.nbsDao.findById(id);
-      if (nbs && nbs.active) {
+      try {
+        const nbs = await this.findNbsById.execute(id, true);
         nbss.push(nbs);
+      } catch {
+        // Skip NBS not found or inactive
       }
     }
 

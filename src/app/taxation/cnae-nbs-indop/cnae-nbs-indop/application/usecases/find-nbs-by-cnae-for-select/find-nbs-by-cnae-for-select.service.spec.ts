@@ -1,7 +1,7 @@
 import { createMock } from '@golevelup/ts-jest';
 import { Test } from '@nestjs/testing';
 import { NbsDto } from 'src/app/taxation/nbs/nbs/application/dtos/nbs.dto';
-import type { INbsDao } from 'src/app/taxation/nbs/nbs/application/persistence/dao/nbs-dao.interface';
+import { FindNbsById } from 'src/app/taxation/nbs/nbs/application/usecases/find-nbs-by-id/find-nbs-by-id.service';
 import { TOKENS } from 'src/core/di/token';
 import type { ICnaeNbsIndopDao } from '../../persistence/dao/cnae-nbs-indop-dao.interface';
 import { FindNbsByCnaeForSelectQueryDto } from './dtos/find-nbs-by-cnae-for-select.dto';
@@ -10,20 +10,20 @@ import { FindNbsByCnaeForSelect } from './find-nbs-by-cnae-for-select.service';
 describe('FindNbsByCnaeForSelect - Unit tests', () => {
   let sut: FindNbsByCnaeForSelect;
   let cnaeNbsIndopDao: ICnaeNbsIndopDao;
-  let nbsDao: INbsDao;
+  let findNbsById: FindNbsById;
 
   beforeEach(async() => {
     const module = await Test.createTestingModule({
       providers: [
         FindNbsByCnaeForSelect,
         { provide: TOKENS.CnaeNbsIndopDao, useValue: createMock<ICnaeNbsIndopDao>() },
-        { provide: TOKENS.NbsDao, useValue: createMock<INbsDao>() },
+        { provide: FindNbsById, useValue: createMock<FindNbsById>() },
       ],
     }).compile();
 
     sut = module.get(FindNbsByCnaeForSelect);
     cnaeNbsIndopDao = module.get(TOKENS.CnaeNbsIndopDao);
-    nbsDao = module.get(TOKENS.NbsDao);
+    findNbsById = module.get(FindNbsById);
   });
 
   it('should be defined', () => {
@@ -36,10 +36,10 @@ describe('FindNbsByCnaeForSelect - Unit tests', () => {
     const nbs1 = createMock<NbsDto>({ id: 1, code: 'A', active: true });
     const nbs2 = createMock<NbsDto>({ id: 2, code: 'B', active: true });
     jest.spyOn(cnaeNbsIndopDao, 'findDistinctNbsIdsByCnaeId').mockResolvedValue(nbsIds);
-    jest.spyOn(nbsDao, 'findById').mockImplementation((id) => {
+    jest.spyOn(findNbsById, 'execute').mockImplementation((id) => {
       if (id === 1) return Promise.resolve(nbs1);
       if (id === 2) return Promise.resolve(nbs2);
-      return Promise.resolve(null);
+      return Promise.reject(new Error('Not found'));
     });
 
     const result = await sut.execute(queries);
@@ -55,5 +55,21 @@ describe('FindNbsByCnaeForSelect - Unit tests', () => {
     const result = await sut.execute(queries);
 
     expect(result).toEqual([]);
+  });
+
+  it('should skip NBS that throw (not found or inactive)', async() => {
+    const queries: FindNbsByCnaeForSelectQueryDto = { cnaeId: 1 };
+    const nbsIds = [1, 2, 3];
+    const nbs1 = createMock<NbsDto>({ id: 1, code: 'A', active: true });
+    jest.spyOn(cnaeNbsIndopDao, 'findDistinctNbsIdsByCnaeId').mockResolvedValue(nbsIds);
+    jest.spyOn(findNbsById, 'execute').mockImplementation((id) => {
+      if (id === 1) return Promise.resolve(nbs1);
+      return Promise.reject(new Error('Not found or inactive'));
+    });
+
+    const result = await sut.execute(queries);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe(1);
   });
 });
