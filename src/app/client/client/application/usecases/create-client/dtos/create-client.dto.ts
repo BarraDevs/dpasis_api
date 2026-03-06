@@ -7,7 +7,7 @@ import { Trim } from 'src/infra/validators/class/decorators/trim/trim';
 
 export class CreateClientInputDto {
   @ApiProperty({ example: Object.values(ClientType).join(', ') })
-  @IsEnum(ClientType, { message: '$property deve ser um tipo de cliente válido' })
+  @IsEnum(ClientType, { message: '$property inválido.' })
   @IsString({ message: '$property deve ser uma string' })
   @Trim()
   type: ClientType;
@@ -64,7 +64,7 @@ export class CreateClientInputDto {
   headquarters: string;
 
   @ApiProperty({ example: Object.values(ClientInvoiceType).join(', ') })
-  @IsEnum(ClientInvoiceType, { message: '$property deve ser um tipo de fatura válido' })
+  @IsEnum(ClientInvoiceType, { message: '$property inválido.' })
   @IsString({ message: '$property deve ser uma string' })
   @Trim()
   invoiceType: ClientInvoiceType;
