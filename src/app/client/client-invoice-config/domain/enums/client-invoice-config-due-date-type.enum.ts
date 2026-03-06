@@ -1,4 +1,4 @@
 export enum ClientInvoiceConfigDueDateType {
-  DUE_DATE = 'DUE_DATE',
-  DEADLINE = 'DEADLINE',
+  DUE_DATE = 'Dia de vencimento',
+  DEADLINE = 'Prazo faturamento',
 }

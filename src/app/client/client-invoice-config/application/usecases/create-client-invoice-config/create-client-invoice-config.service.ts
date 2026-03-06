@@ -1,11 +1,11 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { FindBankById } from 'src/app/bank/application/usecases/find-bank-by-id/find-bank-by-id.service';
-import { FindClientById } from 'src/app/client/client/application/usecases/find-client-by-id/find-client-by-id.service';
-import { BillingAddressNotFromClientError } from 'src/app/client/client-invoice-config/domain/errors/billing-address-not-from-client.error';
+import type { IClientAddressRepository } from 'src/app/client/client-address/application/persistence/repository/client-address-repository.interface';
+import { BillingAddressNotFromClientError } from 'src/app/client/client-address/domain/errors/billing-address-not-from-client.error';
 import { ClientInvoiceConfigAlreadyExistsError } from 'src/app/client/client-invoice-config/domain/errors/client-invoice-config-already-exists.error';
 import { ClientInvoiceConfigFactory } from 'src/app/client/client-invoice-config/domain/factories/client-invoice-config.factory';
+import { FindClientById } from 'src/app/client/client/application/usecases/find-client-by-id/find-client-by-id.service';
 import { TOKENS } from 'src/core/di/token';
-import type { IClientAddressRepository } from 'src/app/client/client-address/application/persistence/repository/client-address-repository.interface';
 import type { IClientInvoiceConfigRepository } from '../../persistence/repository/client-invoice-config-repository.interface';
 import { CreateClientInvoiceConfigInputDto, CreateClientInvoiceConfigOutputDto } from './dtos/create-client-invoice-config.dto';
 

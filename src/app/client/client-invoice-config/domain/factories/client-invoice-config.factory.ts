@@ -1,4 +1,5 @@
 import { BooleanVo } from 'src/shared/value-objects/boolean/boolean.vo';
+import { EmissionDay } from 'src/shared/value-objects/emission-day/emission-day.vo';
 import { Enum } from 'src/shared/value-objects/enum/enum.vo';
 import { OptionalString } from 'src/shared/value-objects/optional-string/optional-string.vo';
 import { PositiveInt } from 'src/shared/value-objects/positive-int/positive-int.vo';
@@ -10,29 +11,16 @@ import {
 import { ClientInvoiceConfigDueDateType } from '../enums/client-invoice-config-due-date-type.enum';
 import { ClientInvoiceConfigType } from '../enums/client-invoice-config-type.enum';
 import { InvalidDueDateDayError } from '../errors/invalid-due-date-day.error';
-import { InvalidEmissionDayError } from '../errors/invalid-emission-day.error';
 import { InvalidMonthsAnnualError } from '../errors/invalid-months-annual.error';
 
 export class ClientInvoiceConfigFactory {
-  private static readonly VALID_DAY_RANGE = { min: 1, max: 31 };
   private static readonly VALID_MONTH_RANGE = { min: 1, max: 12 };
-
-  private static validateEmissionDay(day: number): number {
-    if (
-      !Number.isInteger(day) ||
-      day < this.VALID_DAY_RANGE.min ||
-      day > this.VALID_DAY_RANGE.max
-    ) {
-      throw new InvalidEmissionDayError();
-    }
-    return day;
-  }
 
   private static validateDueDateDay(day: number, emissionDay: number): number {
     if (
       !Number.isInteger(day) ||
-      day < this.VALID_DAY_RANGE.min ||
-      day > this.VALID_DAY_RANGE.max ||
+      day < EmissionDay.MIN_DAY ||
+      day > EmissionDay.MAX_DAY ||
       day <= emissionDay
     ) {
       throw new InvalidDueDateDayError();
@@ -66,7 +54,7 @@ export class ClientInvoiceConfigFactory {
       ClientInvoiceConfigDueDateType,
       'dueDateType',
     ).value;
-    const emissionDay = this.validateEmissionDay(props.emissionDay);
+    const emissionDay = new EmissionDay(props.emissionDay).value;
 
     let dueDateDay: number | null = null;
     let deadlineDays: number | null = null;

@@ -28,7 +28,21 @@ export class ClientInvoiceConfig {
   }
 
   private constructor(props: ClientInvoiceConfigProps) {
-    this._props = props;
+    this._props = {
+      id: props.id,
+      clientId: props.clientId,
+      generateNf: props.generateNf,
+      type: props.type,
+      emissionDay: props.emissionDay,
+      dueDateType: props.dueDateType,
+      dueDateDay: props.dueDateDay,
+      deadlineDays: props.deadlineDays,
+      months: props.months,
+      billingAddressId: props.billingAddressId,
+      bankId: props.bankId,
+      autoProtestBoleto: props.autoProtestBoleto,
+      message: props.message,
+    };
   }
 
   public get props(): Readonly<ClientInvoiceConfigProps> {

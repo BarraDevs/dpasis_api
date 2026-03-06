@@ -1,4 +1,4 @@
 export enum ClientInvoiceConfigType {
-  MONTHLY = 'MONTHLY',
-  ANNUAL = 'ANNUAL',
+  MONTHLY = 'Mensal',
+  ANNUAL = 'Anual',
 }

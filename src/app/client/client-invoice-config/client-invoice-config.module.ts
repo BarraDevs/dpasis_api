@@ -12,13 +12,15 @@ import { ClientInvoiceConfigAdminController } from './infra/drivers/http/client-
 
 @Module({
   imports: [
+    AuthenticationGuardsModule,
     ClientInvoiceConfigPersistenceModule,
     ClientAddressPersistenceModule,
     ClientModule,
     BankModule,
-    AuthenticationGuardsModule,
   ],
-  controllers: [ClientInvoiceConfigAdminController],
+  controllers: [
+    ClientInvoiceConfigAdminController,
+  ],
   providers: [
     CreateClientInvoiceConfig,
     EditClientInvoiceConfig,
