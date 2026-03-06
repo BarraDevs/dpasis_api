@@ -55,7 +55,7 @@ describe('EditClientInputDto', () => {
   it('should throw when type is invalid', async() => {
     expect.assertions(1);
     return target.transform({ type: 'INVALID' }, metadata).catch((error) => {
-      expectMessageToContain(error.getResponse().message, 'tipo de cliente válido');
+      expect(error.getResponse().message).toContain('type inválido.');
     });
   });
 

@@ -6,9 +6,9 @@ import { ClientInvoiceConfigModule } from 'src/app/client/client-invoice-config/
 import { ClientInvoiceConfigDueDateType } from 'src/app/client/client-invoice-config/domain/enums/client-invoice-config-due-date-type.enum';
 import { ClientInvoiceConfigType } from 'src/app/client/client-invoice-config/domain/enums/client-invoice-config-type.enum';
 import { ClientInvoiceConfigAlreadyExistsError } from 'src/app/client/client-invoice-config/domain/errors/client-invoice-config-already-exists.error';
-import { ClientNotFoundError } from 'src/app/client/client/domain/errors/client-not-found.error';
 import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
 import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum';
+import { ClientNotFoundError } from 'src/app/client/client/domain/errors/client-not-found.error';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { CreateClientInvoiceConfig } from './create-client-invoice-config.service';
 
@@ -20,11 +20,12 @@ function makeValidInput(overrides?: Record<string, unknown>) {
     emissionDay: 5,
     dueDateType: ClientInvoiceConfigDueDateType.DUE_DATE,
     dueDateDay: 15,
+    deadlineDays: null,
     months: [] as number[],
     billingAddressId: 0,
     bankId: 0,
     autoProtestBoleto: false,
-    message: null as string | null,
+    message: null,
     ...overrides,
   };
 }

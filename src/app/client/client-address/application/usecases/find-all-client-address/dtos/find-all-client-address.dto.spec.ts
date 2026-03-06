@@ -68,7 +68,7 @@ describe('FindAllClientAddressQueryDto', () => {
 
       expect.assertions(1);
       return target.transform(data, metadata).catch((error) => {
-        expect(error.getResponse().message).toContain('type deve ser um tipo de endereço válido');
+        expect(error.getResponse().message).toContain('type inválido.');
       });
     });
   });

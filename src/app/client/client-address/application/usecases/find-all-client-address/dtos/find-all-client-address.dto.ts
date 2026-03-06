@@ -11,6 +11,6 @@ export class FindAllClientAddressQueryDto extends Queries {
   clientId: number;
 
   @IsOptional()
-  @IsEnum(ClientAddressType, { message: '$property deve ser um tipo de endereço válido' })
+  @IsEnum(ClientAddressType, { message: '$property inválido.' })
   type?: ClientAddressType;
 }

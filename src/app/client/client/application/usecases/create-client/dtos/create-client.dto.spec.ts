@@ -53,7 +53,7 @@ describe('CreateClientInputDto', () => {
 
       expect.assertions(1);
       return target.transform(data, metadata).catch((error) => {
-        expectMessageToContain(error.getResponse().message, 'tipo de cliente válido');
+        expect(error.getResponse().message).toContain('type inválido.');
       });
     });
 
@@ -266,7 +266,7 @@ describe('CreateClientInputDto', () => {
 
       expect.assertions(1);
       return target.transform(data, metadata).catch((error) => {
-        expectMessageToContain(error.getResponse().message, 'tipo de fatura válido');
+        expect(error.getResponse().message).toContain('invoiceType inválido.');
       });
     });
 

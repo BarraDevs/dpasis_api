@@ -98,7 +98,7 @@ describe('CreateClientInvoiceConfigInputDto', () => {
 
         expect.assertions(1);
         return target.transform(data, metadata).catch((error) => {
-          expect(error.getResponse().message).toContain('type deve ser MONTHLY ou ANNUAL');
+          expect(error.getResponse().message).toContain('type inválido.');
         });
       },
     );
@@ -168,7 +168,7 @@ describe('CreateClientInvoiceConfigInputDto', () => {
 
         expect.assertions(1);
         return target.transform(data, metadata).catch((error) => {
-          expect(error.getResponse().message).toContain('dueDateType deve ser DUE_DATE ou DEADLINE');
+          expect(error.getResponse().message).toContain('dueDateType inválido.');
         });
       },
     );

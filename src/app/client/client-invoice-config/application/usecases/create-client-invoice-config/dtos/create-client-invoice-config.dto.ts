@@ -54,14 +54,14 @@ export class CreateClientInvoiceConfigInputDto {
   @IsInt()
   @Min(DueDateDay.MIN_DAY, { message: '$property deve ser entre 1 e 31' })
   @Max(DueDateDay.MAX_DAY, { message: '$property deve ser entre 1 e 31' })
-  dueDateDay?: number;
+  dueDateDay: number | null;
 
   @ApiPropertyOptional({ example: 1 })
   @IsOptional()
   @StringToNumber()
   @IsInt()
   @Min(1, { message: '$property deve ser positivo' })
-  deadlineDays?: number;
+  deadlineDays: number | null;
 
   @ApiPropertyOptional({ example: [1, 2, 3] })
   @IsOptional()
@@ -92,7 +92,7 @@ export class CreateClientInvoiceConfigInputDto {
   @IsOptional()
   @IsString()
   @Trim()
-  message?: string | null;
+  message: string | null;
 }
 
 export class CreateClientInvoiceConfigOutputDto {
