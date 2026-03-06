@@ -33,13 +33,13 @@ export class CreateClientInvoiceConfig {
       type: data.type,
       emissionDay: data.emissionDay,
       dueDateType: data.dueDateType,
-      dueDateDay: data.dueDateDay ?? null,
-      deadlineDays: data.deadlineDays ?? null,
+      dueDateDay: data.dueDateDay,
+      deadlineDays: data.deadlineDays,
       months: data.months ?? [],
       billingAddressId: data.billingAddressId,
       bankId: data.bankId,
       autoProtestBoleto: data.autoProtestBoleto,
-      message: data.message ?? null,
+      message: data.message,
     });
 
     const id = await this.clientInvoiceConfigRepository.save(entity);
