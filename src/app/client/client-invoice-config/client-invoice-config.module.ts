@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { BankModule } from 'src/app/bank/bank.module';
 import { ClientModule } from 'src/app/client/client/client.module';
 import { AuthenticationGuardsModule } from '../../authentication/application/guards/guards.module';
-import { ClientAddressPersistenceModule } from '../client-address/application/persistence/client-address-persistence.module';
+import { ClientAddressModule } from '../client-address/client-address.module';
 import { ClientInvoiceConfigPersistenceModule } from './application/persistence/client-invoice-config-persistence.module';
 import { CreateClientInvoiceConfig } from './application/usecases/create-client-invoice-config/create-client-invoice-config.service';
 import { DeleteClientInvoiceConfig } from './application/usecases/delete-client-invoice-config/delete-client-invoice-config.service';
@@ -14,7 +14,7 @@ import { ClientInvoiceConfigAdminController } from './infra/drivers/http/client-
   imports: [
     AuthenticationGuardsModule,
     ClientInvoiceConfigPersistenceModule,
-    ClientAddressPersistenceModule,
+    ClientAddressModule,
     ClientModule,
     BankModule,
   ],

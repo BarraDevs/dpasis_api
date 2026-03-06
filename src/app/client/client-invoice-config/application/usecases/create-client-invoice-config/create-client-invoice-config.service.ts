@@ -1,7 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { FindBankById } from 'src/app/bank/application/usecases/find-bank-by-id/find-bank-by-id.service';
-import type { IClientAddressRepository } from 'src/app/client/client-address/application/persistence/repository/client-address-repository.interface';
-import { BillingAddressNotFromClientError } from 'src/app/client/client-address/domain/errors/billing-address-not-from-client.error';
+import { FindClientAddressByIdAndClientId } from 'src/app/client/client-address/application/usecases/find-client-address-by-id-and-client-id/find-client-address-by-id-and-client-id.service';
 import { ClientInvoiceConfigAlreadyExistsError } from 'src/app/client/client-invoice-config/domain/errors/client-invoice-config-already-exists.error';
 import { ClientInvoiceConfigFactory } from 'src/app/client/client-invoice-config/domain/factories/client-invoice-config.factory';
 import { FindClientById } from 'src/app/client/client/application/usecases/find-client-by-id/find-client-by-id.service';
@@ -12,10 +11,8 @@ import { CreateClientInvoiceConfigInputDto, CreateClientInvoiceConfigOutputDto }
 @Injectable()
 export class CreateClientInvoiceConfig {
   constructor(
-    @Inject(TOKENS.ClientInvoiceConfigRepository)
-    private readonly clientInvoiceConfigRepository: IClientInvoiceConfigRepository,
-    @Inject(TOKENS.ClientAddressRepository)
-    private readonly clientAddressRepository: IClientAddressRepository,
+    @Inject(TOKENS.ClientInvoiceConfigRepository) private readonly clientInvoiceConfigRepository: IClientInvoiceConfigRepository,
+    private readonly findClientAddressByIdAndClientId: FindClientAddressByIdAndClientId,
     private readonly findClientById: FindClientById,
     private readonly findBankById: FindBankById,
   ) {}
@@ -23,15 +20,11 @@ export class CreateClientInvoiceConfig {
   public async execute(data: CreateClientInvoiceConfigInputDto): Promise<CreateClientInvoiceConfigOutputDto> {
     await this.findBankById.execute(data.bankId, true);
     await this.findClientById.execute(data.clientId, true);
+    await this.findClientAddressByIdAndClientId.execute(data.billingAddressId, data.clientId);
 
     const existingConfig = await this.clientInvoiceConfigRepository.findByClientId(data.clientId);
     if (existingConfig) {
       throw new ClientInvoiceConfigAlreadyExistsError();
-    }
-
-    const billingAddress = await this.clientAddressRepository.findById(data.billingAddressId);
-    if (!billingAddress || billingAddress.props.clientId !== data.clientId) {
-      throw new BillingAddressNotFromClientError();
     }
 
     const entity = ClientInvoiceConfigFactory.create({

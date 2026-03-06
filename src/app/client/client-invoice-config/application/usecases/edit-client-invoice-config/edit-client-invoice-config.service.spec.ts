@@ -1,6 +1,6 @@
 import { Test } from '@nestjs/testing';
 import { ClientAddressType } from 'src/app/client/client-address/domain/enums/client-address-type.enum';
-import { BillingAddressNotFromClientError } from 'src/app/client/client-address/domain/errors/billing-address-not-from-client.error';
+import { ClientAddressNotFoundError } from 'src/app/client/client-address/domain/errors/client-address-not-found.error';
 import { ClientInvoiceConfigModule } from 'src/app/client/client-invoice-config/client-invoice-config.module';
 import { ClientInvoiceConfigDueDateType } from 'src/app/client/client-invoice-config/domain/enums/client-invoice-config-due-date-type.enum';
 import { ClientInvoiceConfigType } from 'src/app/client/client-invoice-config/domain/enums/client-invoice-config-type.enum';
@@ -209,7 +209,7 @@ describe('EditClientInvoiceConfig - Integration tests', () => {
       billingAddressId: otherAddress.id,
     };
 
-    await expect(sut.execute(configId, data)).rejects.toThrow(BillingAddressNotFromClientError);
+    await expect(sut.execute(configId, data)).rejects.toThrow(ClientAddressNotFoundError);
   });
 
   it('should accept billingAddressId from same client', async() => {
