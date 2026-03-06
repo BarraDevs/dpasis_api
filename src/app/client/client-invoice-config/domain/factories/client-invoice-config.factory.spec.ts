@@ -1,4 +1,6 @@
 import { AppException } from 'src/core/filters/app.exception';
+import { InvalidDueDateDayError } from 'src/shared/value-objects/due-date-day/due-date-day.error';
+import { InvalidEmissionDayError } from 'src/shared/value-objects/emission-day/emission-day.error';
 import { NumberMustBePositiveAndInt } from 'src/shared/value-objects/positive-int/positive-int.error';
 import {
   ClientInvoiceConfigCreateProps,
@@ -6,8 +8,6 @@ import {
 } from '../entities/client-invoice-config.entity';
 import { ClientInvoiceConfigDueDateType } from '../enums/client-invoice-config-due-date-type.enum';
 import { ClientInvoiceConfigType } from '../enums/client-invoice-config-type.enum';
-import { InvalidDueDateDayError } from '../errors/invalid-due-date-day.error';
-import { InvalidEmissionDayError } from '../errors/invalid-emission-day.error';
 import { InvalidMonthsAnnualError } from '../errors/invalid-months-annual.error';
 import { ClientInvoiceConfigFactory } from './client-invoice-config.factory';
 

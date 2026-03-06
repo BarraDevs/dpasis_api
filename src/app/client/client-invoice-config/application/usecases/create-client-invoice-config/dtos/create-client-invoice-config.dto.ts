@@ -11,6 +11,7 @@ import {
 } from 'class-validator';
 import { ClientInvoiceConfigDueDateType } from 'src/app/client/client-invoice-config/domain/enums/client-invoice-config-due-date-type.enum';
 import { ClientInvoiceConfigType } from 'src/app/client/client-invoice-config/domain/enums/client-invoice-config-type.enum';
+import { DueDateDay } from 'src/shared/value-objects/due-date-day/due-date-day.vo';
 import { EmissionDay } from 'src/shared/value-objects/emission-day/emission-day.vo';
 import { StringToNumber } from 'src/infra/validators/class/decorators/string-number/string-number';
 import { Trim } from 'src/infra/validators/class/decorators/trim/trim';
@@ -45,8 +46,8 @@ export class CreateClientInvoiceConfigInputDto {
   @IsOptional()
   @StringToNumber()
   @IsInt()
-  @Min(EmissionDay.MIN_DAY, { message: '$property deve ser entre 1 e 31' })
-  @Max(EmissionDay.MAX_DAY, { message: '$property deve ser entre 1 e 31' })
+  @Min(DueDateDay.MIN_DAY, { message: '$property deve ser entre 1 e 31' })
+  @Max(DueDateDay.MAX_DAY, { message: '$property deve ser entre 1 e 31' })
   dueDateDay?: number;
 
   @IsOptional()

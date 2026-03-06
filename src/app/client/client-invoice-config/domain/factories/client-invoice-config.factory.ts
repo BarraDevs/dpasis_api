@@ -1,4 +1,6 @@
 import { BooleanVo } from 'src/shared/value-objects/boolean/boolean.vo';
+import { InvalidDueDateDayError } from 'src/shared/value-objects/due-date-day/due-date-day.error';
+import { DueDateDay } from 'src/shared/value-objects/due-date-day/due-date-day.vo';
 import { EmissionDay } from 'src/shared/value-objects/emission-day/emission-day.vo';
 import { Enum } from 'src/shared/value-objects/enum/enum.vo';
 import { OptionalString } from 'src/shared/value-objects/optional-string/optional-string.vo';
@@ -10,23 +12,10 @@ import {
 } from '../entities/client-invoice-config.entity';
 import { ClientInvoiceConfigDueDateType } from '../enums/client-invoice-config-due-date-type.enum';
 import { ClientInvoiceConfigType } from '../enums/client-invoice-config-type.enum';
-import { InvalidDueDateDayError } from '../errors/invalid-due-date-day.error';
 import { InvalidMonthsAnnualError } from '../errors/invalid-months-annual.error';
 
 export class ClientInvoiceConfigFactory {
   private static readonly VALID_MONTH_RANGE = { min: 1, max: 12 };
-
-  private static validateDueDateDay(day: number, emissionDay: number): number {
-    if (
-      !Number.isInteger(day) ||
-      day < EmissionDay.MIN_DAY ||
-      day > EmissionDay.MAX_DAY ||
-      day <= emissionDay
-    ) {
-      throw new InvalidDueDateDayError();
-    }
-    return day;
-  }
 
   private static validateMonths(months: number[], type: ClientInvoiceConfigType): number[] {
     if (type === ClientInvoiceConfigType.ANNUAL) {
@@ -63,7 +52,7 @@ export class ClientInvoiceConfigFactory {
       if (props.dueDateDay == null) {
         throw new InvalidDueDateDayError();
       }
-      dueDateDay = this.validateDueDateDay(props.dueDateDay, emissionDay);
+      dueDateDay = new DueDateDay(props.dueDateDay, emissionDay).value;
     } else {
       if (props.deadlineDays == null) {
         throw new Error('Para tipo prazo, informe a quantidade de dias.');
