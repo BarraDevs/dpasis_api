@@ -5,7 +5,7 @@ import { ClientModule } from 'src/app/client/client/client.module';
 import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
 import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum';
 import { ClientNotFoundError } from 'src/app/client/client/domain/errors/client-not-found.error';
-import { CompanyNotFoundError } from 'src/app/company/company/domain/errors/company-not-found.error';
+import { CompanyNotFoundError } from 'src/app/company/domain/errors/company-not-found.error';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { DocumentAlreadyTakenError } from 'src/shared/errors/document-already-taken';
 import { EditClient } from './edit-client.service';

@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { AuthenticationModule } from './app/authentication/authentication.module';
 import { BankModule } from './app/bank/bank.module';
 import { ClientModuleModule } from './app/client/client-module.module';
-import { CompanyModule } from './app/company/company/company.module';
+import { CompanyModule } from './app/company/company.module';
 import { ExternalApisModule } from './app/external-apis/external-apis.module';
 import { FaqModule } from './app/faq/faq.module';
 import { TaxationModuleModule } from './app/taxation/taxation-module.module';

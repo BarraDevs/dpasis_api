@@ -1,8 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { FindCompanyById } from 'src/app/company/company/application/usecases/find-company-by-id/find-company-by-id.service';
 import { FindClientGroupById } from 'src/app/client/client-group/application/usecases/find-client-group-by-id/find-client-group-by-id.service';
 import { FindClientOwnerById } from 'src/app/client/client-owner/application/usecases/find-client-owner-by-id/find-client-owner-by-id.service';
 import { ClientFactory } from 'src/app/client/client/domain/factories/client.factory';
+import { FindCompanyById } from 'src/app/company/application/usecases/find-company-by-id/find-company-by-id.service';
 import { TOKENS } from 'src/core/di/token';
 import { DocumentAlreadyTakenError } from 'src/shared/errors/document-already-taken';
 import type { IClientDao } from '../../persistence/dao/client-dao.interface';
