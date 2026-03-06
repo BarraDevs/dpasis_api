@@ -57,7 +57,7 @@ describe('EditClientAddress', () => {
     const data = { street: 'Rua Nova' };
 
     await expect(sut.execute(99999, data)).rejects.toThrow(ClientAddressNotFoundError);
-    await expect(sut.execute(99999, data)).rejects.toThrow('ClientAddress não encontrado.');
+    await expect(sut.execute(99999, data)).rejects.toThrow('Endereço do cliente não encontrado.');
   });
 
   it('should edit address and return success message', async() => {

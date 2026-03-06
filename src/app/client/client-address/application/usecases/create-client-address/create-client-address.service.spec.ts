@@ -4,6 +4,7 @@ import { ClientAddressType } from 'src/app/client/client-address/domain/enums/cl
 import { ClientAddressAlreadyExistsError } from 'src/app/client/client-address/domain/errors/client-address-already-exists.error';
 import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
 import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum';
+import { ClientNotFoundError } from 'src/app/client/client/domain/errors/client-not-found.error';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { CreateClientAddress } from './create-client-address.service';
 
@@ -109,6 +110,22 @@ describe('CreateClientAddress', () => {
       where: { id: result.id },
     });
     expect(saved?.complement).toBeNull();
+  });
+
+  it('should throw ClientNotFoundError when client does not exist', async() => {
+    const input = makeValidInput({ clientId: 99999 });
+
+    await expect(sut.execute(input)).rejects.toThrow(ClientNotFoundError);
+    await expect(sut.execute(input)).rejects.toThrow('Cliente não encontrado.');
+  });
+
+  it('should throw ClientNotFoundError when client is inactive', async() => {
+    const input = makeValidInput({ clientId: 99999 });
+
+    await prisma.client.update({ where: { id: clientId }, data: { active: false } });
+
+    await expect(sut.execute(input)).rejects.toThrow(ClientNotFoundError);
+    await expect(sut.execute(input)).rejects.toThrow('Cliente não encontrado.');
   });
 
   it('should throw ClientAddressAlreadyExistsError when address already exists for client and type', async() => {

@@ -56,7 +56,7 @@ describe('DeleteClientAddress', () => {
 
   it('should throw ClientAddressNotFoundError when address does not exist', async() => {
     await expect(sut.execute(99999)).rejects.toThrow(ClientAddressNotFoundError);
-    await expect(sut.execute(99999)).rejects.toThrow('ClientAddress não encontrado.');
+    await expect(sut.execute(99999)).rejects.toThrow('Endereço do cliente não encontrado.');
   });
 
   it('should throw ClientMainAddressCannotBeDeletedError when address is MAIN type', async() => {

@@ -18,12 +18,12 @@ export class CreateClientContact {
   ) {}
 
   public async execute(data: CreateClientContactInputDto): Promise<CreateClientContactOutputDto> {
-    await this.findClientById.execute(data.clientId, { onlyActive: true });
-    await this.findClientDepartmentById.execute(data.departmentId, { onlyActive: true });
+    const client = await this.findClientById.execute(data.clientId, { onlyActive: true });
+    const department = await this.findClientDepartmentById.execute(data.departmentId, { onlyActive: true });
 
     const entity = ClientContactFactory.create({
-      clientId: data.clientId,
-      departmentId: data.departmentId,
+      clientId: client.id,
+      departmentId: department.id,
       name: data.name,
       email: data.email,
       phone: data.phone,
@@ -32,7 +32,7 @@ export class CreateClientContact {
       receiveNF: data.receiveNF,
     });
 
-    const existing = await this.clientContactDao.findByClientIdAndEmail(data.clientId, entity.props.email);
+    const existing = await this.clientContactDao.findByClientIdAndEmail(client.id, entity.props.email);
     if (existing) {
       throw new ClientContactAlreadyExistsError(data.email);
     }

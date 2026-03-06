@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ClientAddressAlreadyExistsError } from 'src/app/client/client-address/domain/errors/client-address-already-exists.error';
 import { ClientAddressFactory } from 'src/app/client/client-address/domain/factories/client-address.factory';
+import { FindClientById } from 'src/app/client/client/application/usecases/find-client-by-id/find-client-by-id.service';
 import { TOKENS } from 'src/core/di/token';
 import type { IClientAddressDao } from '../../persistence/dao/client-address-dao.interface';
 import type { IClientAddressRepository } from '../../persistence/repository/client-address-repository.interface';
@@ -11,11 +12,14 @@ export class CreateClientAddress {
   constructor(
     @Inject(TOKENS.ClientAddressDao) private readonly clientAddressDao: IClientAddressDao,
     @Inject(TOKENS.ClientAddressRepository) private readonly clientAddressRepository: IClientAddressRepository,
+    private readonly findClientById: FindClientById,
   ) {}
 
   public async execute(data: CreateClientAddressInputDto): Promise<CreateClientAddressOutputDto> {
+    const client = await this.findClientById.execute(data.clientId, { onlyActive: true });
+
     const entity = ClientAddressFactory.create({
-      clientId: data.clientId,
+      clientId: client.id,
       type: data.type,
       zipCode: data.zipCode,
       street: data.street,
@@ -26,9 +30,9 @@ export class CreateClientAddress {
       state: data.state,
     });
 
-    const existing = await this.clientAddressDao.findByClientIdAndType(data.clientId, data.type);
+    const existing = await this.clientAddressDao.findByClientIdAndType(client.id, data.type);
     if (existing) {
-      throw new ClientAddressAlreadyExistsError(data.clientId, data.type);
+      throw new ClientAddressAlreadyExistsError(client.id, data.type);
     }
 
     const id = await this.clientAddressRepository.save(entity);

@@ -59,7 +59,7 @@ describe('FindClientAddressByIdAndClientId', () => {
 
   it('should throw ClientAddressNotFoundError when address does not exist', async() => {
     await expect(sut.execute(99999, clientId)).rejects.toThrow(ClientAddressNotFoundError);
-    await expect(sut.execute(99999, clientId)).rejects.toThrow('ClientAddress não encontrado.');
+    await expect(sut.execute(99999, clientId)).rejects.toThrow('Endereço do cliente não encontrado.');
   });
 
   it('should throw ClientAddressNotFoundError when address exists but belongs to different client', async() => {

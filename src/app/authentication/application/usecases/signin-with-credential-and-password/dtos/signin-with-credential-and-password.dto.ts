@@ -3,13 +3,13 @@ import { IsNotEmpty, IsString } from 'class-validator';
 import { Trim } from 'src/infra/validators/class/decorators/trim/trim';
 
 export class SignInWithCredentialAndPasswordInputDto {
-  @ApiProperty({ example: 'email@example.com' })
+  @ApiProperty({ example: 'admin@email.com' })
   @IsString({ message: '$property deve ser uma string' })
   @IsNotEmpty({ message: '$property é obrigatório' })
   @Trim()
   credential: string;
 
-  @ApiProperty({ example: 'password' })
+  @ApiProperty({ example: '123456' })
   @IsString({ message: '$property deve ser uma string' })
   @IsNotEmpty({ message: '$property é obrigatório' })
   @Trim()
