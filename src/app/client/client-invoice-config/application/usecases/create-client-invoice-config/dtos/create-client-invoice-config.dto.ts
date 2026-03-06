@@ -13,6 +13,7 @@ import { ClientInvoiceConfigDueDateType } from 'src/app/client/client-invoice-co
 import { ClientInvoiceConfigType } from 'src/app/client/client-invoice-config/domain/enums/client-invoice-config-type.enum';
 import { DueDateDay } from 'src/shared/value-objects/due-date-day/due-date-day.vo';
 import { EmissionDay } from 'src/shared/value-objects/emission-day/emission-day.vo';
+import { BillingMonths } from 'src/shared/value-objects/billing-months/billing-months.vo';
 import { StringToNumber } from 'src/infra/validators/class/decorators/string-number/string-number';
 import { Trim } from 'src/infra/validators/class/decorators/trim/trim';
 
@@ -59,8 +60,8 @@ export class CreateClientInvoiceConfigInputDto {
   @IsOptional()
   @IsArray()
   @IsInt({ each: true })
-  @Min(1, { each: true, message: 'Cada mês deve ser entre 1 e 12' })
-  @Max(12, { each: true, message: 'Cada mês deve ser entre 1 e 12' })
+  @Min(BillingMonths.MIN_MONTH, { each: true, message: 'Cada mês deve ser entre 1 e 12' })
+  @Max(BillingMonths.MAX_MONTH, { each: true, message: 'Cada mês deve ser entre 1 e 12' })
   months?: number[];
 
   @IsNotEmpty({ message: '$property é obrigatório' })

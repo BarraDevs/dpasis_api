@@ -1,4 +1,5 @@
 import { AppException } from 'src/core/filters/app.exception';
+import { InvalidBillingMonthsError } from 'src/shared/value-objects/billing-months/billing-months.error';
 import { InvalidDueDateDayError } from 'src/shared/value-objects/due-date-day/due-date-day.error';
 import { InvalidEmissionDayError } from 'src/shared/value-objects/emission-day/emission-day.error';
 import { NumberMustBePositiveAndInt } from 'src/shared/value-objects/positive-int/positive-int.error';
@@ -8,7 +9,6 @@ import {
 } from '../entities/client-invoice-config.entity';
 import { ClientInvoiceConfigDueDateType } from '../enums/client-invoice-config-due-date-type.enum';
 import { ClientInvoiceConfigType } from '../enums/client-invoice-config-type.enum';
-import { InvalidMonthsAnnualError } from '../errors/invalid-months-annual.error';
 import { ClientInvoiceConfigFactory } from './client-invoice-config.factory';
 
 function makeCreateProps(overrides?: Partial<ClientInvoiceConfigCreateProps>): ClientInvoiceConfigCreateProps {
@@ -122,13 +122,13 @@ describe('ClientInvoiceConfigFactory', () => {
       expect(() => ClientInvoiceConfigFactory.create(props)).toThrow(InvalidDueDateDayError);
     });
 
-    it('should throw InvalidMonthsAnnualError when type is ANNUAL and months is empty', () => {
+    it('should throw InvalidBillingMonthsError when type is ANNUAL and months is empty', () => {
       const props = makeCreateProps({
         type: ClientInvoiceConfigType.ANNUAL,
         months: [],
       });
 
-      expect(() => ClientInvoiceConfigFactory.create(props)).toThrow(InvalidMonthsAnnualError);
+      expect(() => ClientInvoiceConfigFactory.create(props)).toThrow(InvalidBillingMonthsError);
     });
 
     it('should throw when type is DEADLINE and deadlineDays is not provided', () => {
@@ -228,7 +228,7 @@ describe('ClientInvoiceConfigFactory', () => {
       expect(() => ClientInvoiceConfigFactory.create(props)).toThrow(InvalidDueDateDayError);
     });
 
-    it('should throw InvalidMonthsAnnualError when type is ANNUAL and months contains 0', () => {
+    it('should throw InvalidBillingMonthsError when type is ANNUAL and months contains 0', () => {
       const props = makeCreateProps({
         type: ClientInvoiceConfigType.ANNUAL,
         months: [1, 0, 5],
@@ -236,10 +236,10 @@ describe('ClientInvoiceConfigFactory', () => {
         deadlineDays: 10,
       });
 
-      expect(() => ClientInvoiceConfigFactory.create(props)).toThrow(InvalidMonthsAnnualError);
+      expect(() => ClientInvoiceConfigFactory.create(props)).toThrow(InvalidBillingMonthsError);
     });
 
-    it('should throw InvalidMonthsAnnualError when type is ANNUAL and months contains 13', () => {
+    it('should throw InvalidBillingMonthsError when type is ANNUAL and months contains 13', () => {
       const props = makeCreateProps({
         type: ClientInvoiceConfigType.ANNUAL,
         months: [1, 13, 5],
@@ -247,10 +247,10 @@ describe('ClientInvoiceConfigFactory', () => {
         deadlineDays: 10,
       });
 
-      expect(() => ClientInvoiceConfigFactory.create(props)).toThrow(InvalidMonthsAnnualError);
+      expect(() => ClientInvoiceConfigFactory.create(props)).toThrow(InvalidBillingMonthsError);
     });
 
-    it('should throw InvalidMonthsAnnualError when type is ANNUAL and months contains negative', () => {
+    it('should throw InvalidBillingMonthsError when type is ANNUAL and months contains negative', () => {
       const props = makeCreateProps({
         type: ClientInvoiceConfigType.ANNUAL,
         months: [1, -1, 5],
@@ -258,10 +258,10 @@ describe('ClientInvoiceConfigFactory', () => {
         deadlineDays: 10,
       });
 
-      expect(() => ClientInvoiceConfigFactory.create(props)).toThrow(InvalidMonthsAnnualError);
+      expect(() => ClientInvoiceConfigFactory.create(props)).toThrow(InvalidBillingMonthsError);
     });
 
-    it('should throw InvalidMonthsAnnualError when type is ANNUAL and months contains decimal', () => {
+    it('should throw InvalidBillingMonthsError when type is ANNUAL and months contains decimal', () => {
       const props = makeCreateProps({
         type: ClientInvoiceConfigType.ANNUAL,
         months: [1, 5.5, 9],
@@ -269,7 +269,7 @@ describe('ClientInvoiceConfigFactory', () => {
         deadlineDays: 10,
       });
 
-      expect(() => ClientInvoiceConfigFactory.create(props)).toThrow(InvalidMonthsAnnualError);
+      expect(() => ClientInvoiceConfigFactory.create(props)).toThrow(InvalidBillingMonthsError);
     });
 
     it('should deduplicate and sort months when type is ANNUAL', () => {
@@ -463,7 +463,7 @@ describe('ClientInvoiceConfigFactory', () => {
       expect(() => ClientInvoiceConfigFactory.edit(props)).toThrow(InvalidDueDateDayError);
     });
 
-    it('should throw InvalidMonthsAnnualError when edit has ANNUAL type with invalid months', () => {
+    it('should throw InvalidBillingMonthsError when edit has ANNUAL type with invalid months', () => {
       const props = makeLoadProps({
         id: 1,
         type: ClientInvoiceConfigType.ANNUAL,
@@ -473,7 +473,7 @@ describe('ClientInvoiceConfigFactory', () => {
         deadlineDays: 10,
       });
 
-      expect(() => ClientInvoiceConfigFactory.edit(props)).toThrow(InvalidMonthsAnnualError);
+      expect(() => ClientInvoiceConfigFactory.edit(props)).toThrow(InvalidBillingMonthsError);
     });
 
     it('should throw when edit has DEADLINE type without deadlineDays', () => {

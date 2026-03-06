@@ -3,6 +3,7 @@ import { InvalidDueDateDayError } from 'src/shared/value-objects/due-date-day/du
 import { DueDateDay } from 'src/shared/value-objects/due-date-day/due-date-day.vo';
 import { EmissionDay } from 'src/shared/value-objects/emission-day/emission-day.vo';
 import { Enum } from 'src/shared/value-objects/enum/enum.vo';
+import { BillingMonths } from 'src/shared/value-objects/billing-months/billing-months.vo';
 import { OptionalString } from 'src/shared/value-objects/optional-string/optional-string.vo';
 import { PositiveInt } from 'src/shared/value-objects/positive-int/positive-int.vo';
 import {
@@ -12,30 +13,8 @@ import {
 } from '../entities/client-invoice-config.entity';
 import { ClientInvoiceConfigDueDateType } from '../enums/client-invoice-config-due-date-type.enum';
 import { ClientInvoiceConfigType } from '../enums/client-invoice-config-type.enum';
-import { InvalidMonthsAnnualError } from '../errors/invalid-months-annual.error';
 
 export class ClientInvoiceConfigFactory {
-  private static readonly VALID_MONTH_RANGE = { min: 1, max: 12 };
-
-  private static validateMonths(months: number[], type: ClientInvoiceConfigType): number[] {
-    if (type === ClientInvoiceConfigType.ANNUAL) {
-      if (!Array.isArray(months) || months.length === 0) {
-        throw new InvalidMonthsAnnualError();
-      }
-      const validMonths = months.filter(
-        m =>
-          Number.isInteger(m) &&
-          m >= this.VALID_MONTH_RANGE.min &&
-          m <= this.VALID_MONTH_RANGE.max,
-      );
-      if (validMonths.length !== months.length) {
-        throw new InvalidMonthsAnnualError();
-      }
-      return [...new Set(validMonths)].sort((a, b) => a - b);
-    }
-    return [];
-  }
-
   private static validateCreateProps(props: ClientInvoiceConfigCreateProps): ClientInvoiceConfigCreateProps {
     const type = new Enum(props.type, ClientInvoiceConfigType, 'type').value;
     const dueDateType = new Enum(
@@ -60,7 +39,11 @@ export class ClientInvoiceConfigFactory {
       deadlineDays = new PositiveInt(props.deadlineDays, 'deadlineDays').value;
     }
 
-    const months = this.validateMonths(props.months ?? [], type);
+    const billingMonths = new BillingMonths(
+      props.months ?? [],
+      type === ClientInvoiceConfigType.ANNUAL,
+    );
+    const months = billingMonths.value;
 
     return {
       clientId: new PositiveInt(props.clientId, 'clientId').value,
