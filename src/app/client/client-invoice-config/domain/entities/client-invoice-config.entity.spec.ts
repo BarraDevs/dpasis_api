@@ -106,6 +106,48 @@ describe('ClientInvoiceConfig Entity', () => {
       expect(config.props.dueDateDay).toBeNull();
       expect(config.props.deadlineDays).toBe(7);
     });
+
+    it('should create with emissionDay at boundary 31', () => {
+      const props = makeClientInvoiceConfigProps({ emissionDay: 31 });
+
+      const config = ClientInvoiceConfig._instantiate(props);
+
+      expect(config.props.emissionDay).toBe(31);
+    });
+
+    it('should create with single month', () => {
+      const props = makeClientInvoiceConfigProps({ months: [6] });
+
+      const config = ClientInvoiceConfig._instantiate(props);
+
+      expect(config.props.months).toEqual([6]);
+    });
+
+    it('should create with all 12 months', () => {
+      const props = makeClientInvoiceConfigProps({
+        months: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+      });
+
+      const config = ClientInvoiceConfig._instantiate(props);
+
+      expect(config.props.months).toHaveLength(12);
+    });
+
+    it('should create with message null', () => {
+      const props = makeClientInvoiceConfigProps({ message: null });
+
+      const config = ClientInvoiceConfig._instantiate(props);
+
+      expect(config.props.message).toBeNull();
+    });
+
+    it('should create with id 0', () => {
+      const props = makeClientInvoiceConfigProps({ id: 0 });
+
+      const config = ClientInvoiceConfig._instantiate(props);
+
+      expect(config.props.id).toBe(0);
+    });
   });
 
   describe('props', () => {
@@ -122,8 +164,12 @@ describe('ClientInvoiceConfig Entity', () => {
       expect(config.props.emissionDay).toBe(5);
       expect(config.props.dueDateType).toBe(ClientInvoiceConfigDueDateType.DUE_DATE);
       expect(config.props.dueDateDay).toBe(15);
+      expect(config.props.deadlineDays).toBeNull();
+      expect(config.props.months).toEqual([]);
       expect(config.props.billingAddressId).toBe(1);
       expect(config.props.bankId).toBe(1);
+      expect(config.props.autoProtestBoleto).toBe(false);
+      expect(config.props.message).toBeNull();
     });
 
     it('should return a copy of props (immutability)', () => {
@@ -212,6 +258,117 @@ describe('ClientInvoiceConfig Entity', () => {
 
       expect(firstAccess).not.toBe(secondAccess);
       expect(firstAccess).toEqual(secondAccess);
+    });
+
+    it('should preserve immutability when mutating type', () => {
+      const props = makeClientInvoiceConfigProps({ type: ClientInvoiceConfigType.ANNUAL });
+      const config = ClientInvoiceConfig._instantiate(props);
+
+      const returnedProps = config.props as unknown as Record<string, unknown>;
+      returnedProps.type = ClientInvoiceConfigType.MONTHLY;
+
+      expect(config.props.type).toBe(ClientInvoiceConfigType.ANNUAL);
+    });
+
+    it('should preserve immutability when mutating dueDateType', () => {
+      const props = makeClientInvoiceConfigProps({
+        dueDateType: ClientInvoiceConfigDueDateType.DEADLINE,
+        deadlineDays: 5,
+      });
+      const config = ClientInvoiceConfig._instantiate(props);
+
+      const returnedProps = config.props as unknown as Record<string, unknown>;
+      returnedProps.dueDateType = ClientInvoiceConfigDueDateType.DUE_DATE;
+
+      expect(config.props.dueDateType).toBe(ClientInvoiceConfigDueDateType.DEADLINE);
+    });
+
+    it('should preserve immutability when mutating billingAddressId', () => {
+      const props = makeClientInvoiceConfigProps({ billingAddressId: 99 });
+      const config = ClientInvoiceConfig._instantiate(props);
+
+      const returnedProps = config.props as unknown as Record<string, unknown>;
+      returnedProps.billingAddressId = 999;
+
+      expect(config.props.billingAddressId).toBe(99);
+    });
+
+    it('should preserve immutability when mutating bankId', () => {
+      const props = makeClientInvoiceConfigProps({ bankId: 42 });
+      const config = ClientInvoiceConfig._instantiate(props);
+
+      const returnedProps = config.props as unknown as Record<string, unknown>;
+      returnedProps.bankId = 999;
+
+      expect(config.props.bankId).toBe(42);
+    });
+
+    it('should preserve immutability when mutating deadlineDays', () => {
+      const props = makeClientInvoiceConfigProps({
+        dueDateType: ClientInvoiceConfigDueDateType.DEADLINE,
+        dueDateDay: null,
+        deadlineDays: 15,
+      });
+      const config = ClientInvoiceConfig._instantiate(props);
+
+      const returnedProps = config.props as unknown as Record<string, unknown>;
+      returnedProps.deadlineDays = 999;
+
+      expect(config.props.deadlineDays).toBe(15);
+    });
+
+    it('should return props with deadlineDays when DEADLINE type', () => {
+      const props = makeClientInvoiceConfigProps({
+        dueDateType: ClientInvoiceConfigDueDateType.DEADLINE,
+        dueDateDay: null,
+        deadlineDays: 30,
+      });
+      const config = ClientInvoiceConfig._instantiate(props);
+
+      expect(config.props.deadlineDays).toBe(30);
+      expect(config.props.dueDateDay).toBeNull();
+    });
+
+    it('should return props with months array', () => {
+      const props = makeClientInvoiceConfigProps({ months: [3, 6, 9, 12] });
+      const config = ClientInvoiceConfig._instantiate(props);
+
+      expect(config.props.months).toEqual([3, 6, 9, 12]);
+    });
+
+    it('should return props matching input structure', () => {
+      const props = makeClientInvoiceConfigProps({
+        id: 100,
+        clientId: 200,
+        generateNf: false,
+        type: ClientInvoiceConfigType.ANNUAL,
+        emissionDay: 15,
+        dueDateType: ClientInvoiceConfigDueDateType.DEADLINE,
+        dueDateDay: null,
+        deadlineDays: 20,
+        months: [1, 7],
+        billingAddressId: 8,
+        bankId: 9,
+        autoProtestBoleto: true,
+        message: 'Test',
+      });
+      const config = ClientInvoiceConfig._instantiate(props);
+
+      expect(config.props).toMatchObject({
+        id: 100,
+        clientId: 200,
+        generateNf: false,
+        type: ClientInvoiceConfigType.ANNUAL,
+        emissionDay: 15,
+        dueDateType: ClientInvoiceConfigDueDateType.DEADLINE,
+        dueDateDay: null,
+        deadlineDays: 20,
+        months: [1, 7],
+        billingAddressId: 8,
+        bankId: 9,
+        autoProtestBoleto: true,
+        message: 'Test',
+      });
     });
   });
 });

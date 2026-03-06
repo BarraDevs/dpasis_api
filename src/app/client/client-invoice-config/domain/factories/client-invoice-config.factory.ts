@@ -1,9 +1,6 @@
-import { BooleanVo } from 'src/shared/value-objects/boolean/boolean.vo';
-import { InvalidDueDateDayError } from 'src/shared/value-objects/due-date-day/due-date-day.error';
-import { DueDateDay } from 'src/shared/value-objects/due-date-day/due-date-day.vo';
-import { EmissionDay } from 'src/shared/value-objects/emission-day/emission-day.vo';
-import { Enum } from 'src/shared/value-objects/enum/enum.vo';
 import { BillingMonths } from 'src/shared/value-objects/billing-months/billing-months.vo';
+import { BooleanVo } from 'src/shared/value-objects/boolean/boolean.vo';
+import { Enum } from 'src/shared/value-objects/enum/enum.vo';
 import { OptionalString } from 'src/shared/value-objects/optional-string/optional-string.vo';
 import { PositiveInt } from 'src/shared/value-objects/positive-int/positive-int.vo';
 import {
@@ -11,49 +8,27 @@ import {
   ClientInvoiceConfigCreateProps,
   ClientInvoiceConfigProps,
 } from '../entities/client-invoice-config.entity';
-import { ClientInvoiceConfigDueDateType } from '../enums/client-invoice-config-due-date-type.enum';
 import { ClientInvoiceConfigType } from '../enums/client-invoice-config-type.enum';
+import { InvoiceDueDateConfig } from '../value-objects/invoice-due-date-config/invoice-due-date-config.vo';
 
 export class ClientInvoiceConfigFactory {
   private static validateCreateProps(props: ClientInvoiceConfigCreateProps): ClientInvoiceConfigCreateProps {
-    const type = new Enum(props.type, ClientInvoiceConfigType, 'type').value;
-    const dueDateType = new Enum(
-      props.dueDateType,
-      ClientInvoiceConfigDueDateType,
-      'dueDateType',
-    ).value;
-    const emissionDay = new EmissionDay(props.emissionDay).value;
-
-    let dueDateDay: number | null = null;
-    let deadlineDays: number | null = null;
-
-    if (dueDateType === ClientInvoiceConfigDueDateType.DUE_DATE) {
-      if (props.dueDateDay == null) {
-        throw new InvalidDueDateDayError();
-      }
-      dueDateDay = new DueDateDay(props.dueDateDay, emissionDay).value;
-    } else {
-      if (props.deadlineDays == null) {
-        throw new Error('Para tipo prazo, informe a quantidade de dias.');
-      }
-      deadlineDays = new PositiveInt(props.deadlineDays, 'deadlineDays').value;
-    }
-
-    const billingMonths = new BillingMonths(
-      props.months ?? [],
-      type === ClientInvoiceConfigType.ANNUAL,
-    );
-    const months = billingMonths.value;
+    const invoiceDueDateConfig = new InvoiceDueDateConfig({
+      dueDateType: props.dueDateType,
+      dueDateDay: props.dueDateDay ?? null,
+      deadlineDays: props.deadlineDays ?? null,
+      emissionDay: props.emissionDay,
+    });
 
     return {
+      emissionDay: invoiceDueDateConfig.value.emissionDay,
+      dueDateType: invoiceDueDateConfig.value.dueDateType,
+      dueDateDay: invoiceDueDateConfig.value.dueDateDay,
+      deadlineDays: invoiceDueDateConfig.value.deadlineDays,
       clientId: new PositiveInt(props.clientId, 'clientId').value,
       generateNf: new BooleanVo(props.generateNf, 'generateNf').value,
-      type,
-      emissionDay,
-      dueDateType,
-      dueDateDay,
-      deadlineDays,
-      months,
+      type: new Enum(props.type, ClientInvoiceConfigType, 'type').value,
+      months: new BillingMonths(props.months ?? [], props.type === ClientInvoiceConfigType.ANNUAL).value,
       billingAddressId: new PositiveInt(props.billingAddressId, 'billingAddressId').value,
       bankId: new PositiveInt(props.bankId, 'bankId').value,
       autoProtestBoleto: new BooleanVo(props.autoProtestBoleto, 'autoProtestBoleto').value,
@@ -81,19 +56,9 @@ export class ClientInvoiceConfigFactory {
 
   static load(props: ClientInvoiceConfigProps): ClientInvoiceConfig {
     return ClientInvoiceConfig._instantiate({
+      ...props,
       id: props.id,
-      clientId: props.clientId,
-      generateNf: props.generateNf,
-      type: props.type,
-      emissionDay: props.emissionDay,
-      dueDateType: props.dueDateType,
-      dueDateDay: props.dueDateDay,
-      deadlineDays: props.deadlineDays,
       months: props.months ?? [],
-      billingAddressId: props.billingAddressId,
-      bankId: props.bankId,
-      autoProtestBoleto: props.autoProtestBoleto,
-      message: props.message,
     });
   }
 }

@@ -9,6 +9,7 @@ import {
 } from '../entities/client-invoice-config.entity';
 import { ClientInvoiceConfigDueDateType } from '../enums/client-invoice-config-due-date-type.enum';
 import { ClientInvoiceConfigType } from '../enums/client-invoice-config-type.enum';
+import { DeadlineDaysRequiredError } from '../value-objects/invoice-due-date-config/invoice-due-date-config.error';
 import { ClientInvoiceConfigFactory } from './client-invoice-config.factory';
 
 function makeCreateProps(overrides?: Partial<ClientInvoiceConfigCreateProps>): ClientInvoiceConfigCreateProps {
@@ -131,14 +132,24 @@ describe('ClientInvoiceConfigFactory', () => {
       expect(() => ClientInvoiceConfigFactory.create(props)).toThrow(InvalidBillingMonthsError);
     });
 
-    it('should throw when type is DEADLINE and deadlineDays is not provided', () => {
+    it('should throw DeadlineDaysRequiredError when type is DEADLINE and deadlineDays is not provided', () => {
       const props = makeCreateProps({
         dueDateType: ClientInvoiceConfigDueDateType.DEADLINE,
         dueDateDay: null,
         deadlineDays: null,
       });
 
-      expect(() => ClientInvoiceConfigFactory.create(props)).toThrow();
+      expect(() => ClientInvoiceConfigFactory.create(props)).toThrow(DeadlineDaysRequiredError);
+    });
+
+    it('should throw DeadlineDaysRequiredError when type is DEADLINE and deadlineDays is undefined', () => {
+      const props = makeCreateProps({
+        dueDateType: ClientInvoiceConfigDueDateType.DEADLINE,
+        dueDateDay: null,
+        deadlineDays: undefined,
+      });
+
+      expect(() => ClientInvoiceConfigFactory.create(props)).toThrow(DeadlineDaysRequiredError);
     });
 
     it('should throw AppException when type is invalid', () => {
@@ -381,6 +392,117 @@ describe('ClientInvoiceConfigFactory', () => {
 
       expect(config.props.months).toEqual([]);
     });
+
+    it('should create with dueDateDay undefined and treat as null for DUE_DATE', () => {
+      const props = makeCreateProps({
+        dueDateDay: undefined,
+      });
+
+      expect(() => ClientInvoiceConfigFactory.create(props)).toThrow(InvalidDueDateDayError);
+    });
+
+    it('should create with months undefined and default to empty array for MONTHLY', () => {
+      const props = makeCreateProps({
+        type: ClientInvoiceConfigType.MONTHLY,
+        months: undefined as unknown as number[],
+      });
+
+      const config = ClientInvoiceConfigFactory.create(props);
+
+      expect(config.props.months).toEqual([]);
+    });
+
+    it('should create with months undefined and throw for ANNUAL', () => {
+      const props = makeCreateProps({
+        type: ClientInvoiceConfigType.ANNUAL,
+        months: undefined as unknown as number[],
+        dueDateType: ClientInvoiceConfigDueDateType.DEADLINE,
+        deadlineDays: 10,
+      });
+
+      expect(() => ClientInvoiceConfigFactory.create(props)).toThrow(InvalidBillingMonthsError);
+    });
+
+    it('should throw NumberMustBePositiveAndInt when clientId is decimal', () => {
+      const props = makeCreateProps({ clientId: 10.5 });
+
+      expect(() => ClientInvoiceConfigFactory.create(props)).toThrow(NumberMustBePositiveAndInt);
+    });
+
+    it('should throw NumberMustBePositiveAndInt when billingAddressId is negative', () => {
+      const props = makeCreateProps({ billingAddressId: -1 });
+
+      expect(() => ClientInvoiceConfigFactory.create(props)).toThrow(NumberMustBePositiveAndInt);
+    });
+
+    it('should throw NumberMustBePositiveAndInt when bankId is negative', () => {
+      const props = makeCreateProps({ bankId: -1 });
+
+      expect(() => ClientInvoiceConfigFactory.create(props)).toThrow(NumberMustBePositiveAndInt);
+    });
+
+    it('should throw NumberMustBePositiveAndInt when bankId is decimal', () => {
+      const props = makeCreateProps({ bankId: 1.5 });
+
+      expect(() => ClientInvoiceConfigFactory.create(props)).toThrow(NumberMustBePositiveAndInt);
+    });
+
+    it('should create and propagate all props correctly', () => {
+      const props = makeCreateProps({
+        clientId: 100,
+        generateNf: false,
+        type: ClientInvoiceConfigType.ANNUAL,
+        emissionDay: 10,
+        dueDateType: ClientInvoiceConfigDueDateType.DEADLINE,
+        dueDateDay: null,
+        deadlineDays: 7,
+        months: [3, 9],
+        billingAddressId: 5,
+        bankId: 3,
+        autoProtestBoleto: true,
+        message: 'Custom message',
+      });
+
+      const config = ClientInvoiceConfigFactory.create(props);
+
+      expect(config.props.clientId).toBe(100);
+      expect(config.props.generateNf).toBe(false);
+      expect(config.props.type).toBe(ClientInvoiceConfigType.ANNUAL);
+      expect(config.props.emissionDay).toBe(10);
+      expect(config.props.dueDateType).toBe(ClientInvoiceConfigDueDateType.DEADLINE);
+      expect(config.props.dueDateDay).toBeNull();
+      expect(config.props.deadlineDays).toBe(7);
+      expect(config.props.months).toEqual([3, 9]);
+      expect(config.props.billingAddressId).toBe(5);
+      expect(config.props.bankId).toBe(3);
+      expect(config.props.autoProtestBoleto).toBe(true);
+      expect(config.props.message).toBe('Custom message');
+    });
+
+    it('should create ANNUAL with single month', () => {
+      const props = makeCreateProps({
+        type: ClientInvoiceConfigType.ANNUAL,
+        months: [6],
+        dueDateType: ClientInvoiceConfigDueDateType.DEADLINE,
+        deadlineDays: 5,
+      });
+
+      const config = ClientInvoiceConfigFactory.create(props);
+
+      expect(config.props.months).toEqual([6]);
+    });
+
+    it('should create with MONTHLY and DUE_DATE propagating emissionDay from InvoiceDueDateConfig', () => {
+      const props = makeCreateProps({
+        emissionDay: 25,
+        dueDateDay: 28,
+      });
+
+      const config = ClientInvoiceConfigFactory.create(props);
+
+      expect(config.props.emissionDay).toBe(25);
+      expect(config.props.dueDateDay).toBe(28);
+    });
   });
 
   describe('load', () => {
@@ -430,6 +552,22 @@ describe('ClientInvoiceConfigFactory', () => {
 
       expect(config.props.months).toEqual([]);
     });
+
+    it('should load without validating props', () => {
+      const props = makeLoadProps({
+        id: 999,
+        emissionDay: 99,
+        dueDateDay: 99,
+        clientId: 0,
+      });
+
+      const config = ClientInvoiceConfigFactory.load(props);
+
+      expect(config.props.id).toBe(999);
+      expect(config.props.emissionDay).toBe(99);
+      expect(config.props.dueDateDay).toBe(99);
+      expect(config.props.clientId).toBe(0);
+    });
   });
 
   describe('edit', () => {
@@ -476,7 +614,7 @@ describe('ClientInvoiceConfigFactory', () => {
       expect(() => ClientInvoiceConfigFactory.edit(props)).toThrow(InvalidBillingMonthsError);
     });
 
-    it('should throw when edit has DEADLINE type without deadlineDays', () => {
+    it('should throw DeadlineDaysRequiredError when edit has DEADLINE type without deadlineDays', () => {
       const props = makeLoadProps({
         id: 1,
         dueDateType: ClientInvoiceConfigDueDateType.DEADLINE,
@@ -484,7 +622,7 @@ describe('ClientInvoiceConfigFactory', () => {
         deadlineDays: null,
       });
 
-      expect(() => ClientInvoiceConfigFactory.edit(props)).toThrow();
+      expect(() => ClientInvoiceConfigFactory.edit(props)).toThrow(DeadlineDaysRequiredError);
     });
 
     it('should throw InvalidDueDateDayError when edit has DUE_DATE type without dueDateDay', () => {
@@ -512,6 +650,61 @@ describe('ClientInvoiceConfigFactory', () => {
       expect(config.props.id).toBe(1);
       expect(config.props.months).toEqual([3, 6, 12]);
       expect(config.props.deadlineDays).toBe(15);
+    });
+
+    it('should throw InvalidEmissionDayError when edit has emissionDay 32', () => {
+      const props = makeLoadProps({ id: 1, emissionDay: 32 });
+
+      expect(() => ClientInvoiceConfigFactory.edit(props)).toThrow(InvalidEmissionDayError);
+    });
+
+    it('should throw NumberMustBePositiveAndInt when edit has clientId 0', () => {
+      const props = makeLoadProps({ id: 1, clientId: 0 });
+
+      expect(() => ClientInvoiceConfigFactory.edit(props)).toThrow(NumberMustBePositiveAndInt);
+    });
+
+    it('should throw AppException when edit has invalid type', () => {
+      const props = makeLoadProps({
+        id: 1,
+        type: 'INVALID' as ClientInvoiceConfigType,
+      });
+
+      expect(() => ClientInvoiceConfigFactory.edit(props)).toThrow(AppException);
+    });
+
+    it('should throw NumberMustBePositiveAndInt when edit has deadlineDays 0', () => {
+      const props = makeLoadProps({
+        id: 1,
+        dueDateType: ClientInvoiceConfigDueDateType.DEADLINE,
+        dueDateDay: null,
+        deadlineDays: 0,
+      });
+
+      expect(() => ClientInvoiceConfigFactory.edit(props)).toThrow(NumberMustBePositiveAndInt);
+    });
+
+    it('should edit with DUE_DATE and preserve dueDateDay', () => {
+      const props = makeLoadProps({
+        id: 42,
+        dueDateType: ClientInvoiceConfigDueDateType.DUE_DATE,
+        dueDateDay: 25,
+        emissionDay: 10,
+      });
+
+      const config = ClientInvoiceConfigFactory.edit(props);
+
+      expect(config.props.id).toBe(42);
+      expect(config.props.dueDateDay).toBe(25);
+      expect(config.props.deadlineDays).toBeNull();
+    });
+
+    it('should edit and preserve id from input', () => {
+      const props = makeLoadProps({ id: 12345 });
+
+      const config = ClientInvoiceConfigFactory.edit(props);
+
+      expect(config.props.id).toBe(12345);
     });
   });
 });
