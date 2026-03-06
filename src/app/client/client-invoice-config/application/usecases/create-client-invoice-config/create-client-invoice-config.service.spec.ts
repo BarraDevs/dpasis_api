@@ -1,10 +1,12 @@
 import { Test } from '@nestjs/testing';
+import { BankNotFoundError } from 'src/app/bank/domain/errors/bank-not-found.error';
 import { ClientAddressType } from 'src/app/client/client-address/domain/enums/client-address-type.enum';
 import { ClientAddressNotFoundError } from 'src/app/client/client-address/domain/errors/client-address-not-found.error';
 import { ClientInvoiceConfigModule } from 'src/app/client/client-invoice-config/client-invoice-config.module';
 import { ClientInvoiceConfigDueDateType } from 'src/app/client/client-invoice-config/domain/enums/client-invoice-config-due-date-type.enum';
 import { ClientInvoiceConfigType } from 'src/app/client/client-invoice-config/domain/enums/client-invoice-config-type.enum';
 import { ClientInvoiceConfigAlreadyExistsError } from 'src/app/client/client-invoice-config/domain/errors/client-invoice-config-already-exists.error';
+import { ClientNotFoundError } from 'src/app/client/client/domain/errors/client-not-found.error';
 import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
 import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
@@ -154,6 +156,78 @@ describe('CreateClientInvoiceConfig', () => {
     await sut.execute(input);
 
     await expect(sut.execute(input)).rejects.toThrow(ClientInvoiceConfigAlreadyExistsError);
+  });
+
+  it('should throw BankNotFoundError when bank does not exist', async() => {
+    const input = makeValidInput({ clientId, billingAddressId, bankId: 99999 });
+
+    await expect(sut.execute(input)).rejects.toThrow(BankNotFoundError);
+  });
+
+  it('should throw BankNotFoundError when bank is inactive', async() => {
+    const inactiveBank = await prisma.bank.create({
+      data: {
+        drawer: 'Inactive Drawer',
+        wallet: '456',
+        account: '67890',
+        agency: '0002',
+        bankCode: '002',
+        bankName: 'Inactive Bank',
+        paymentLocation: null,
+        active: false,
+      },
+    });
+    const input = makeValidInput({ clientId, billingAddressId, bankId: inactiveBank.id });
+
+    await expect(sut.execute(input)).rejects.toThrow(BankNotFoundError);
+  });
+
+  it('should throw ClientNotFoundError when client does not exist', async() => {
+    const input = makeValidInput({ clientId: 99999, billingAddressId, bankId });
+
+    await expect(sut.execute(input)).rejects.toThrow(ClientNotFoundError);
+  });
+
+  it('should throw ClientNotFoundError when client is inactive', async() => {
+    const [group2, owner2] = await Promise.all([
+      prisma.clientGroup.create({ data: { name: `Grupo2 ${Date.now()}`, active: true } }),
+      prisma.clientOwner.create({ data: { name: `Owner2 ${Date.now()}`, active: true } }),
+    ]);
+    const inactiveClient = await prisma.client.create({
+      data: {
+        type: ClientType.PJ,
+        document: '11111111000111',
+        ie: null,
+        groupId: group2.id,
+        ownerId: owner2.id,
+        companyName: 'Cliente Inativo',
+        fantasyName: null,
+        headquarters: 'Rio',
+        invoiceType: ClientInvoiceType.CONTRACT,
+        generateInvoice: true,
+        active: false,
+      },
+    });
+    const inactiveClientAddress = await prisma.clientAddress.create({
+      data: {
+        clientId: inactiveClient.id,
+        type: ClientAddressType.BILLING,
+        zipCode: '11111-111',
+        street: 'Rua Inativo',
+        number: '1',
+        complement: null,
+        neighborhood: 'Centro',
+        city: 'Rio',
+        state: 'RJ',
+      },
+    });
+    const input = makeValidInput({
+      clientId: inactiveClient.id,
+      billingAddressId: inactiveClientAddress.id,
+      bankId,
+    });
+
+    await expect(sut.execute(input)).rejects.toThrow(ClientNotFoundError);
   });
 
   it('should throw BillingAddressNotFromClientError when address does not belong to client', async() => {

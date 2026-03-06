@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { TOKENS } from 'src/core/di/token';
+import type { FindByIdOptions } from 'src/core/types/find-by-id-options.type';
 import { ClientOwnerNotFoundError } from '../../../domain/errors/client-owner-not-found.error';
 import { ClientOwnerDto } from '../../dtos/client-owner.dto';
 import type { IClientOwnerDao } from '../../persistence/dao/client-owner-dao.interface';
@@ -10,12 +11,12 @@ export class FindClientOwnerById {
     @Inject(TOKENS.ClientOwnerDao) private readonly clientOwnerDao: IClientOwnerDao,
   ) {}
 
-  public async execute(id: number, onlyActive: boolean = false): Promise<ClientOwnerDto> {
+  public async execute(id: number, options: FindByIdOptions = {}): Promise<ClientOwnerDto> {
     const clientOwner = await this.clientOwnerDao.findById(id);
     if (!clientOwner) {
       throw new ClientOwnerNotFoundError();
     }
-    if (onlyActive && !clientOwner.active) {
+    if (options.onlyActive && !clientOwner.active) {
       throw new ClientOwnerNotFoundError();
     }
 

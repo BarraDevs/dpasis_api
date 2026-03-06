@@ -58,8 +58,8 @@ describe('FindBankById - Integration tests', () => {
     });
 
     // Act & Assert
-    await expect(sut.execute(bank.id, true)).rejects.toThrow(BankNotFoundError);
-    await expect(sut.execute(bank.id, true)).rejects.toThrow('Banco não encontrado na base de dados.');
+    await expect(sut.execute(bank.id, { onlyActive: true })).rejects.toThrow(BankNotFoundError);
+    await expect(sut.execute(bank.id, { onlyActive: true })).rejects.toThrow('Banco não encontrado na base de dados.');
   });
 
   it('should return bank by id', async() => {
@@ -111,7 +111,7 @@ describe('FindBankById - Integration tests', () => {
     });
 
     // Act
-    const result = await sut.execute(bank.id, false);
+    const result = await sut.execute(bank.id, { onlyActive: false });
 
     // Assert
     expect(result).not.toBeNull();

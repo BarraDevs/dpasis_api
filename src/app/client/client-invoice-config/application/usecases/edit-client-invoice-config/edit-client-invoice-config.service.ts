@@ -30,7 +30,7 @@ export class EditClientInvoiceConfig {
     });
 
     if (data.bankId != null) {
-      await this.findBankById.execute(data.bankId, true);
+      await this.findBankById.execute(data.bankId, { onlyActive: true });
     }
     if (data.billingAddressId != null) {
       await this.findClientAddressByIdAndClientId.execute(data.billingAddressId, existing.clientId);

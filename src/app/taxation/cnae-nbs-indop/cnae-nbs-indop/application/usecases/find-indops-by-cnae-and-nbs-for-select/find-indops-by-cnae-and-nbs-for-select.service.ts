@@ -21,7 +21,7 @@ export class FindIndopsByCnaeAndNbsForSelect {
 
     for (const id of indopIds) {
       try {
-        const indop = await this.findIndopById.execute(id, true);
+        const indop = await this.findIndopById.execute(id, { onlyActive: true });
         indops.push(indop);
       } catch {
         // Skip INDOP not found or inactive

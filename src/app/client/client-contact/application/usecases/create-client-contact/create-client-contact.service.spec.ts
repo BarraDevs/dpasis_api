@@ -223,6 +223,41 @@ describe('CreateClientContact - Integration tests', () => {
     await expect(sut.execute(input)).rejects.toThrow(ClientDepartmentNotFoundError);
   });
 
+  it('should throw ClientNotFoundError when client is inactive', async() => {
+    const [group2, owner2] = await Promise.all([
+      prisma.clientGroup.create({ data: { name: `Grupo2 ${Date.now()}`, active: true } }),
+      prisma.clientOwner.create({ data: { name: `Owner2 ${Date.now()}`, active: true } }),
+    ]);
+    const inactiveClient = await prisma.client.create({
+      data: {
+        type: ClientType.PJ,
+        document: '11111111000111',
+        ie: null,
+        groupId: group2.id,
+        ownerId: owner2.id,
+        companyName: 'Cliente Inativo',
+        fantasyName: null,
+        headquarters: 'Rio',
+        invoiceType: ClientInvoiceType.CONTRACT,
+        generateInvoice: true,
+        active: false,
+      },
+    });
+
+    const input: CreateClientContactInputDto = {
+      clientId: inactiveClient.id,
+      departmentId,
+      name: 'João',
+      email: 'joao@example.com',
+      phone: null,
+      whatsapp: null,
+      observations: null,
+      receiveNF: false,
+    };
+
+    await expect(sut.execute(input)).rejects.toThrow(ClientNotFoundError);
+  });
+
   it('should create client contact and return id', async() => {
     const input: CreateClientContactInputDto = {
       clientId,

@@ -219,7 +219,7 @@ describe('EditClientContact - Integration tests', () => {
     await expect(sut.execute(clientContact.id, data)).rejects.toThrow(InvalidPhoneError);
   });
 
-  it('should throw ClientDepartmentNotFoundOrInactiveError when department does not exist', async() => {
+  it('should throw ClientDepartmentNotFoundError when department does not exist', async() => {
     const clientContact = await prisma.clientContact.create({
       data: {
         clientId,
@@ -232,6 +232,31 @@ describe('EditClientContact - Integration tests', () => {
     const data: EditClientContactInputDto = {
       name: 'João',
       departmentId: 99999,
+      email: 'joao@example.com',
+      receiveNF: false,
+    };
+
+    await expect(sut.execute(clientContact.id, data)).rejects.toThrow(
+      ClientDepartmentNotFoundError,
+    );
+  });
+
+  it('should throw ClientDepartmentNotFoundError when department is inactive', async() => {
+    const inactiveDept = await prisma.clientDepartment.create({
+      data: { name: `Inactive ${Date.now()}`, active: false },
+    });
+    const clientContact = await prisma.clientContact.create({
+      data: {
+        clientId,
+        departmentId,
+        name: 'João',
+        email: 'joao@example.com',
+        receiveNF: false,
+      },
+    });
+    const data: EditClientContactInputDto = {
+      name: 'João',
+      departmentId: inactiveDept.id,
       email: 'joao@example.com',
       receiveNF: false,
     };

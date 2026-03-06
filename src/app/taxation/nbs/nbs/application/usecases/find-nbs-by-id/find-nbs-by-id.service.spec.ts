@@ -47,8 +47,8 @@ describe('FindNbsById - Integration tests', () => {
     });
 
     // Act & Assert
-    await expect(sut.execute(nbs.id, true)).rejects.toThrow(NbsNotFoundError);
-    await expect(sut.execute(nbs.id, true)).rejects.toThrow('NBS não encontrado na base de dados.');
+    await expect(sut.execute(nbs.id, { onlyActive: true })).rejects.toThrow(NbsNotFoundError);
+    await expect(sut.execute(nbs.id, { onlyActive: true })).rejects.toThrow('NBS não encontrado na base de dados.');
   });
 
   it('should return nbs by id', async() => {

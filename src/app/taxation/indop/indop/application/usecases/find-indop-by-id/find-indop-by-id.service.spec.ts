@@ -47,8 +47,8 @@ describe('FindIndopById - Integration tests', () => {
     });
 
     // Act & Assert
-    await expect(sut.execute(indop.id, true)).rejects.toThrow(IndopNotFoundError);
-    await expect(sut.execute(indop.id, true)).rejects.toThrow('INDOP não encontrado na base de dados.');
+    await expect(sut.execute(indop.id, { onlyActive: true })).rejects.toThrow(IndopNotFoundError);
+    await expect(sut.execute(indop.id, { onlyActive: true })).rejects.toThrow('INDOP não encontrado na base de dados.');
   });
 
   it('should return indop by id', async() => {

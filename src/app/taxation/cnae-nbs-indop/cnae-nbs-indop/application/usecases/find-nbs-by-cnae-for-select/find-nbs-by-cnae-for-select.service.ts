@@ -18,7 +18,7 @@ export class FindNbsByCnaeForSelect {
 
     for (const id of nbsIds) {
       try {
-        const nbs = await this.findNbsById.execute(id, true);
+        const nbs = await this.findNbsById.execute(id, { onlyActive: true });
         nbss.push(nbs);
       } catch {
         // Skip NBS not found or inactive

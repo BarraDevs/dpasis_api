@@ -1,4 +1,5 @@
 import { Test } from '@nestjs/testing';
+import { BankNotFoundError } from 'src/app/bank/domain/errors/bank-not-found.error';
 import { ClientAddressType } from 'src/app/client/client-address/domain/enums/client-address-type.enum';
 import { ClientAddressNotFoundError } from 'src/app/client/client-address/domain/errors/client-address-not-found.error';
 import { ClientInvoiceConfigModule } from 'src/app/client/client-invoice-config/client-invoice-config.module';
@@ -167,6 +168,34 @@ describe('EditClientInvoiceConfig - Integration tests', () => {
     expect(updated?.generateNf).toBe(false);
     expect(updated?.type).toBe(ClientInvoiceConfigType.MONTHLY);
     expect(updated?.emissionDay).toBe(5);
+  });
+
+  it('should throw BankNotFoundError when bankId does not exist', async() => {
+    const data: EditClientInvoiceConfigInputDto = {
+      bankId: 99999,
+    };
+
+    await expect(sut.execute(configId, data)).rejects.toThrow(BankNotFoundError);
+  });
+
+  it('should throw BankNotFoundError when bankId is inactive', async() => {
+    const inactiveBank = await prisma.bank.create({
+      data: {
+        drawer: 'Inactive Drawer',
+        wallet: '456',
+        account: '67890',
+        agency: '0002',
+        bankCode: '002',
+        bankName: 'Inactive Bank',
+        paymentLocation: null,
+        active: false,
+      },
+    });
+    const data: EditClientInvoiceConfigInputDto = {
+      bankId: inactiveBank.id,
+    };
+
+    await expect(sut.execute(configId, data)).rejects.toThrow(BankNotFoundError);
   });
 
   it('should throw BillingAddressNotFromClientError when billingAddressId does not belong to client', async() => {

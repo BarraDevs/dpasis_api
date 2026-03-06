@@ -18,8 +18,8 @@ export class CreateClientContact {
   ) {}
 
   public async execute(data: CreateClientContactInputDto): Promise<CreateClientContactOutputDto> {
-    await this.findClientById.execute(data.clientId, true);
-    await this.findClientDepartmentById.execute(data.departmentId, true);
+    await this.findClientById.execute(data.clientId, { onlyActive: true });
+    await this.findClientDepartmentById.execute(data.departmentId, { onlyActive: true });
 
     const entity = ClientContactFactory.create({
       clientId: data.clientId,

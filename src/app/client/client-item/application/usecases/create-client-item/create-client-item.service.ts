@@ -15,7 +15,7 @@ export class CreateClientItem {
   ) {}
 
   public async execute(data: CreateClientItemInputDto): Promise<CreateClientItemOutputDto> {
-    const client = await this.findClientById.execute(data.clientId, true);
+    const client = await this.findClientById.execute(data.clientId, { onlyActive: true });
     const cnaeNbsIndop = await this.findCnaeNbsIndopById.execute(data.cnaeNbsIndopId);
 
     const entity = ClientItemFactory.create({

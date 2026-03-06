@@ -47,8 +47,8 @@ describe('FindClientDepartmentById - Integration tests', () => {
     });
 
     // Act & Assert
-    await expect(sut.execute(clientDepartment.id, true)).rejects.toThrow(ClientDepartmentNotFoundError);
-    await expect(sut.execute(clientDepartment.id, true)).rejects.toThrow('Departamento de clientes não encontrado na base de dados.');
+    await expect(sut.execute(clientDepartment.id, { onlyActive: true })).rejects.toThrow(ClientDepartmentNotFoundError);
+    await expect(sut.execute(clientDepartment.id, { onlyActive: true })).rejects.toThrow('Departamento de clientes não encontrado na base de dados.');
   });
 
   it('should return client department by id', async() => {

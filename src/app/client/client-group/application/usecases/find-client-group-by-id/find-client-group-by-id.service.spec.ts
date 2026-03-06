@@ -47,8 +47,8 @@ describe('FindClientGroupById - Integration tests', () => {
     });
 
     // Act & Assert
-    await expect(sut.execute(clientGroup.id, true)).rejects.toThrow(ClientGroupNotFoundError);
-    await expect(sut.execute(clientGroup.id, true)).rejects.toThrow('Grupo de clientes não encontrado na base de dados.');
+    await expect(sut.execute(clientGroup.id, { onlyActive: true })).rejects.toThrow(ClientGroupNotFoundError);
+    await expect(sut.execute(clientGroup.id, { onlyActive: true })).rejects.toThrow('Grupo de clientes não encontrado na base de dados.');
   });
 
   it('should return client group by id', async() => {

@@ -1,10 +1,10 @@
 import { Test } from '@nestjs/testing';
-import { CompanyNotFoundError } from 'src/app/company/company/domain/errors/company-not-found.error';
 import { ClientGroupNotFoundError } from 'src/app/client/client-group/domain/errors/client-group-not-found.error';
 import { ClientOwnerNotFoundError } from 'src/app/client/client-owner/domain/errors/client-owner-not-found.error';
 import { ClientModule } from 'src/app/client/client/client.module';
 import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
 import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum';
+import { CompanyNotFoundError } from 'src/app/company/company/domain/errors/company-not-found.error';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { DocumentAlreadyTakenError } from 'src/shared/errors/document-already-taken';
 import { InvalidDocumentError } from 'src/shared/value-objects/document/document.error';

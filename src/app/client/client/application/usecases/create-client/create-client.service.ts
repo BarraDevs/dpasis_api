@@ -29,12 +29,12 @@ export class CreateClient {
 
     // Verifica se o grupo e o proprietário existem E estão ativos
     // Lança um erro se não existirem ou estão inativos
-    await this.findClientGroupById.execute(data.groupId, true);
-    await this.findClientOwnerById.execute(data.ownerId, true);
+    await this.findClientGroupById.execute(data.groupId, { onlyActive: true });
+    await this.findClientOwnerById.execute(data.ownerId, { onlyActive: true });
 
     // Verifica se todas as empresas existem e estão ativas
     for (const companyId of data.companyIds) {
-      await this.findCompanyById.execute(companyId, true);
+      await this.findCompanyById.execute(companyId, { onlyActive: true });
     }
 
     const id = await this.clientRepository.save(entity);

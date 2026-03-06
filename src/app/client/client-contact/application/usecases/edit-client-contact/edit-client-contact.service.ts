@@ -24,7 +24,7 @@ export class EditClientContact {
     }
 
     if (data.departmentId) {
-      await this.findClientDepartmentById.execute(data.departmentId, true);
+      await this.findClientDepartmentById.execute(data.departmentId, { onlyActive: true });
     }
 
     const updated = ClientContactFactory.edit(clientContact, {

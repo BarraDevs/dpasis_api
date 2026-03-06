@@ -50,14 +50,14 @@ export class EditClient {
       }
     }
     if (data.groupId) {
-      await this.findClientGroupById.execute(data.groupId);
+      await this.findClientGroupById.execute(data.groupId, { onlyActive: true });
     }
     if (data.ownerId) {
-      await this.findClientOwnerById.execute(data.ownerId!);
+      await this.findClientOwnerById.execute(data.ownerId!, { onlyActive: true });
     }
     if (data.companyIds) {
       for (const companyId of data.companyIds) {
-        await this.findCompanyById.execute(companyId, true);
+        await this.findCompanyById.execute(companyId, { onlyActive: true });
       }
     }
 

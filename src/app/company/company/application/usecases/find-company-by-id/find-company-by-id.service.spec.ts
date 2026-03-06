@@ -74,8 +74,8 @@ describe('FindCompanyById - Integration tests', () => {
       data: makeCompanyData({ active: false, email01: 'inativa@empresa.com' }),
     });
 
-    await expect(sut.execute(company.id, true)).rejects.toThrow(CompanyNotFoundError);
-    await expect(sut.execute(company.id, true)).rejects.toThrow('Empresa não encontrada na base de dados.');
+    await expect(sut.execute(company.id, { onlyActive: true })).rejects.toThrow(CompanyNotFoundError);
+    await expect(sut.execute(company.id, { onlyActive: true })).rejects.toThrow('Empresa não encontrada na base de dados.');
   });
 
   it('should return company when onlyActive is true and company is active', async() => {
@@ -83,7 +83,7 @@ describe('FindCompanyById - Integration tests', () => {
       data: makeCompanyData({ name: 'Empresa Ativa', active: true, email01: 'ativa@empresa.com' }),
     });
 
-    const result = await sut.execute(company.id, true);
+    const result = await sut.execute(company.id, { onlyActive: true });
 
     expect(result).not.toBeNull();
     expect(result.id).toBe(company.id);
@@ -109,7 +109,7 @@ describe('FindCompanyById - Integration tests', () => {
       data: makeCompanyData({ active: false, email01: 'inativa@empresa.com' }),
     });
 
-    const result = await sut.execute(company.id, false);
+    const result = await sut.execute(company.id, { onlyActive: false });
 
     expect(result).not.toBeNull();
     expect(result.id).toBe(company.id);
@@ -163,7 +163,7 @@ describe('FindCompanyById - Integration tests', () => {
       data: makeCompanyData({ active: true, email01: 'ativa@empresa.com' }),
     });
 
-    const result = await sut.execute(company.id, false);
+    const result = await sut.execute(company.id, { onlyActive: false });
 
     expect(result.active).toBe(true);
     expect(result.id).toBe(company.id);
@@ -174,7 +174,7 @@ describe('FindCompanyById - Integration tests', () => {
       data: makeCompanyData({ active: false, document: '33000167000101', email01: 'inativa@empresa.com' }),
     });
 
-    await expect(sut.execute(company.id, true)).rejects.toThrow(CompanyNotFoundError);
+    await expect(sut.execute(company.id, { onlyActive: true })).rejects.toThrow(CompanyNotFoundError);
 
     const resultWithoutFilter = await sut.execute(company.id);
     expect(resultWithoutFilter.active).toBe(false);

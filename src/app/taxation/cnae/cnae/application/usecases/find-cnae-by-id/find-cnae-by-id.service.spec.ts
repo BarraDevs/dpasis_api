@@ -47,8 +47,8 @@ describe('FindCnaeById - Integration tests', () => {
     });
 
     // Act & Assert
-    await expect(sut.execute(cnae.id, true)).rejects.toThrow(CnaeNotFoundError);
-    await expect(sut.execute(cnae.id, true)).rejects.toThrow('CNAE não encontrado na base de dados.');
+    await expect(sut.execute(cnae.id, { onlyActive: true })).rejects.toThrow(CnaeNotFoundError);
+    await expect(sut.execute(cnae.id, { onlyActive: true })).rejects.toThrow('CNAE não encontrado na base de dados.');
   });
 
   it('should return cnae by id', async() => {

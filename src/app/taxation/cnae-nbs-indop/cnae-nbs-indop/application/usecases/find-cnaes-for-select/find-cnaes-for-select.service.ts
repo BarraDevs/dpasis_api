@@ -17,7 +17,7 @@ export class FindCnaesForSelect {
 
     for (const id of cnaeIds) {
       try {
-        const cnae = await this.findCnaeById.execute(id, true);
+        const cnae = await this.findCnaeById.execute(id, { onlyActive: true });
         cnaes.push(cnae);
       } catch {
         // Skip CNAE not found or inactive

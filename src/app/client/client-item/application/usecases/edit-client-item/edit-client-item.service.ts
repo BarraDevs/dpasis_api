@@ -22,7 +22,7 @@ export class EditClientItem {
       throw new ClientItemNotFoundError();
     }
 
-    await this.findClientById.execute(existing.props.clientId, true);
+    await this.findClientById.execute(existing.props.clientId, { onlyActive: true });
 
     if (data.cnaeNbsIndopId != null) {
       await this.findCnaeNbsIndopById.execute(data.cnaeNbsIndopId);

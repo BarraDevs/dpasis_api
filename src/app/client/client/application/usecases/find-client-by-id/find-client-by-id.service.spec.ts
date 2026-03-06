@@ -58,8 +58,8 @@ describe('FindClientById - Integration tests', () => {
       },
     });
 
-    await expect(sut.execute(client.id, true)).rejects.toThrow(ClientNotFoundError);
-    await expect(sut.execute(client.id, true)).rejects.toThrow('Cliente não encontrado na base de dados.');
+    await expect(sut.execute(client.id, { onlyActive: true })).rejects.toThrow(ClientNotFoundError);
+    await expect(sut.execute(client.id, { onlyActive: true })).rejects.toThrow('Cliente não encontrado na base de dados.');
   });
 
   it('should return client when onlyActive is true and client is active', async() => {
@@ -82,7 +82,7 @@ describe('FindClientById - Integration tests', () => {
       },
     });
 
-    const result = await sut.execute(client.id, true);
+    const result = await sut.execute(client.id, { onlyActive: true });
 
     expect(result).not.toBeNull();
     expect(result.id).toBe(client.id);

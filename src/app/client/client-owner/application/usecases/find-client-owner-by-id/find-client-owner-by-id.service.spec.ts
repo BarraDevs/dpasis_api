@@ -47,8 +47,8 @@ describe('FindClientOwnerById - Integration tests', () => {
     });
 
     // Act & Assert
-    await expect(sut.execute(clientOwner.id, true)).rejects.toThrow(ClientOwnerNotFoundError);
-    await expect(sut.execute(clientOwner.id, true)).rejects.toThrow('Proprietário de clientes não encontrado na base de dados.');
+    await expect(sut.execute(clientOwner.id, { onlyActive: true })).rejects.toThrow(ClientOwnerNotFoundError);
+    await expect(sut.execute(clientOwner.id, { onlyActive: true })).rejects.toThrow('Proprietário de clientes não encontrado na base de dados.');
   });
 
   it('should return client owner by id', async() => {

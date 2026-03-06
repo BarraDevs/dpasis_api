@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { TOKENS } from 'src/core/di/token';
+import type { FindByIdOptions } from 'src/core/types/find-by-id-options.type';
 import { BankNotFoundError } from '../../../domain/errors/bank-not-found.error';
 import { BankDto } from '../../dtos/bank.dto';
 import type { IBankDao } from '../../persistence/dao/bank-dao.interface';
@@ -10,12 +11,12 @@ export class FindBankById {
     @Inject(TOKENS.BankDao) private readonly bankDao: IBankDao,
   ) {}
 
-  public async execute(id: number, onlyActive: boolean = false): Promise<BankDto> {
+  public async execute(id: number, options: FindByIdOptions = {}): Promise<BankDto> {
     const bank = await this.bankDao.findById(id);
     if (!bank) {
       throw new BankNotFoundError();
     }
-    if (onlyActive && !bank.active) {
+    if (options.onlyActive && !bank.active) {
       throw new BankNotFoundError();
     }
 

@@ -17,9 +17,9 @@ export class CreateCnaeNbsIndop {
   ) {}
 
   public async execute(data: CreateCnaeNbsIndopInputDto): Promise<CreateCnaeNbsIndopOutputDto> {
-    await this.findCnaeById.execute(data.cnaeId, true);
-    await this.findNbsById.execute(data.nbsId, true);
-    await this.findIndopById.execute(data.indopId, true);
+    await this.findCnaeById.execute(data.cnaeId, { onlyActive: true });
+    await this.findNbsById.execute(data.nbsId, { onlyActive: true });
+    await this.findIndopById.execute(data.indopId, { onlyActive: true });
 
     const existing = await this.cnaeNbsIndopDao.findByComposite(
       data.cnaeId,

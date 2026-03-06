@@ -160,6 +160,33 @@ describe('EditClient - Integration tests', () => {
     expect(updated?.companyName).toBe('Empresa Atualizada');
   });
 
+  it('should throw ClientGroupNotFoundError when groupId is inactive', async() => {
+    const [group, owner] = await Promise.all([
+      prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
+      prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+    ]);
+    const inactiveGroup = await prisma.clientGroup.create({
+      data: { name: `Grupo Inativo ${Date.now()}`, active: false },
+    });
+    const client = await prisma.client.create({
+      data: {
+        type: ClientType.PJ,
+        document: '09748165000110',
+        groupId: group.id,
+        ownerId: owner.id,
+        companyName: 'Empresa',
+        headquarters: 'SP',
+        invoiceType: ClientInvoiceType.CONTRACT,
+        generateInvoice: true,
+        active: true,
+      },
+    });
+
+    await expect(sut.execute(client.id, { groupId: inactiveGroup.id })).rejects.toThrow(
+      ClientGroupNotFoundError,
+    );
+  });
+
   it('should throw ClientGroupNotFoundError when groupId does not exist', async() => {
     const [group, owner] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
@@ -183,6 +210,33 @@ describe('EditClient - Integration tests', () => {
     await expect(sut.execute(client.id, { groupId: 99999 })).rejects.toThrow(ClientGroupNotFoundError);
   });
 
+  it('should throw ClientOwnerNotFoundError when ownerId is inactive', async() => {
+    const [group, owner] = await Promise.all([
+      prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
+      prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+    ]);
+    const inactiveOwner = await prisma.clientOwner.create({
+      data: { name: `Owner Inativo ${Date.now()}`, active: false },
+    });
+    const client = await prisma.client.create({
+      data: {
+        type: ClientType.PJ,
+        document: '09748165000110',
+        groupId: group.id,
+        ownerId: owner.id,
+        companyName: 'Empresa',
+        headquarters: 'SP',
+        invoiceType: ClientInvoiceType.CONTRACT,
+        generateInvoice: true,
+        active: true,
+      },
+    });
+
+    await expect(sut.execute(client.id, { ownerId: inactiveOwner.id })).rejects.toThrow(
+      ClientOwnerNotFoundError,
+    );
+  });
+
   it('should throw ClientOwnerNotFoundError when ownerId does not exist', async() => {
     const [group, owner] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
@@ -204,6 +258,47 @@ describe('EditClient - Integration tests', () => {
     });
 
     await expect(sut.execute(client.id, { ownerId: 99999 })).rejects.toThrow(ClientOwnerNotFoundError);
+  });
+
+  it('should throw CompanyNotFoundError when companyId is inactive', async() => {
+    const [group, owner] = await Promise.all([
+      prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
+      prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+    ]);
+    const inactiveCompany = await prisma.company.create({
+      data: {
+        name: `Empresa Inativa ${Date.now()}`,
+        fantasyName: 'Fantasia',
+        document: `09.748.165/0001-${String(Date.now() % 100).padStart(2, '0')}`,
+        zipCode: '01310100',
+        street: 'Av Paulista',
+        number: '1000',
+        neighborhood: 'Bela Vista',
+        city: 'São Paulo',
+        state: 'SP',
+        phone01: '11999999999',
+        email01: 'inactive@test.com',
+        active: false,
+      },
+    });
+    const client = await prisma.client.create({
+      data: {
+        type: ClientType.PJ,
+        document: '09748165000110',
+        groupId: group.id,
+        ownerId: owner.id,
+        companyName: 'Empresa',
+        headquarters: 'SP',
+        invoiceType: ClientInvoiceType.CONTRACT,
+        generateInvoice: true,
+        active: true,
+        companies: { connect: [] },
+      },
+    });
+
+    await expect(sut.execute(client.id, { companyIds: [inactiveCompany.id] })).rejects.toThrow(
+      CompanyNotFoundError,
+    );
   });
 
   it('should throw CompanyNotFoundError when companyId does not exist', async() => {
