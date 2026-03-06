@@ -16,15 +16,14 @@ export class CreateClientItem {
 
   public async execute(data: CreateClientItemInputDto): Promise<CreateClientItemOutputDto> {
     const client = await this.findClientById.execute(data.clientId, true);
-
-    await this.findCnaeNbsIndopById.execute(data.cnaeNbsIndopId);
+    const cnaeNbsIndop = await this.findCnaeNbsIndopById.execute(data.cnaeNbsIndopId);
 
     const entity = ClientItemFactory.create({
       clientId: client.id,
+      cnaeNbsIndopId: cnaeNbsIndop.id,
       description: data.description,
       quantity: data.quantity,
       unitValueInCents: data.unitValueInCents,
-      cnaeNbsIndopId: data.cnaeNbsIndopId,
     });
 
     const id = await this.clientItemRepository.save(entity);
