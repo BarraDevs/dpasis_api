@@ -11,6 +11,8 @@ model Bank {
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
+  invoiceConfigs ClientInvoiceConfig[]
+
   @@unique([bankCode, agency, account])
   @@map("banks")
 }

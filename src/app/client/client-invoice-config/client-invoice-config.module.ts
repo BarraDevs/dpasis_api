@@ -1,0 +1,30 @@
+import { Module } from '@nestjs/common';
+import { BankModule } from 'src/app/bank/bank.module';
+import { ClientModule } from 'src/app/client/client/client.module';
+import { AuthenticationGuardsModule } from '../../authentication/application/guards/guards.module';
+import { ClientAddressPersistenceModule } from '../client-address/application/persistence/client-address-persistence.module';
+import { ClientInvoiceConfigPersistenceModule } from './application/persistence/client-invoice-config-persistence.module';
+import { CreateClientInvoiceConfig } from './application/usecases/create-client-invoice-config/create-client-invoice-config.service';
+import { DeleteClientInvoiceConfig } from './application/usecases/delete-client-invoice-config/delete-client-invoice-config.service';
+import { EditClientInvoiceConfig } from './application/usecases/edit-client-invoice-config/edit-client-invoice-config.service';
+import { FindClientInvoiceConfigByClientId } from './application/usecases/find-client-invoice-config-by-client-id/find-client-invoice-config-by-client-id.service';
+import { ClientInvoiceConfigAdminController } from './infra/drivers/http/client-invoice-config-admin.controller';
+
+@Module({
+  imports: [
+    ClientInvoiceConfigPersistenceModule,
+    ClientAddressPersistenceModule,
+    ClientModule,
+    BankModule,
+    AuthenticationGuardsModule,
+  ],
+  controllers: [ClientInvoiceConfigAdminController],
+  providers: [
+    CreateClientInvoiceConfig,
+    EditClientInvoiceConfig,
+    FindClientInvoiceConfigByClientId,
+    DeleteClientInvoiceConfig,
+  ],
+  exports: [],
+})
+export class ClientInvoiceConfigModule {}

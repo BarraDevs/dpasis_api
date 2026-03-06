@@ -14,12 +14,13 @@ model Client {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  group     ClientGroup     @relation(fields: [groupId], references: [id])
-  owner     ClientOwner     @relation(fields: [ownerId], references: [id])
-  companies Company[]
-  addresses ClientAddress[]
-  contacts  ClientContact[]
-  items     ClientItem[]
+  group         ClientGroup         @relation(fields: [groupId], references: [id])
+  owner         ClientOwner         @relation(fields: [ownerId], references: [id])
+  companies     Company[]
+  addresses     ClientAddress[]
+  contacts      ClientContact[]
+  items         ClientItem[]
+  invoiceConfig ClientInvoiceConfig?
 
   @@map("clients")
 }
@@ -94,7 +95,8 @@ model ClientAddress {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  client Client @relation(fields: [clientId], references: [id])
+  client                Client                @relation(fields: [clientId], references: [id])
+  invoiceConfigsAsBilling ClientInvoiceConfig[]
 
   @@unique([clientId, type])
   @@map("client_addresses")
@@ -114,4 +116,28 @@ model ClientItem {
   cnaeNbsIndop  CnaeNbsIndop  @relation(fields: [cnaeNbsIndopId], references: [id])
 
   @@map("client_items")
+}
+
+model ClientInvoiceConfig {
+  id               Int      @id @default(autoincrement())
+  clientId         Int      @unique
+  generateNf       Boolean
+  type             String
+  emissionDay      Int
+  dueDateType      String
+  dueDateDay       Int?
+  deadlineDays     Int?
+  months           Int[]    @default([])
+  billingAddressId Int
+  bankId           Int
+  autoProtestBoleto Boolean
+  message          String?  @db.Text
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  client          Client        @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  billingAddress ClientAddress @relation(fields: [billingAddressId], references: [id])
+  bank            Bank         @relation(fields: [bankId], references: [id])
+
+  @@map("client_invoice_configs")
 }
