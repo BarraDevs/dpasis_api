@@ -1,14 +1,14 @@
 import { Module } from '@nestjs/common';
-import { CnaeNbsIndopModule } from './cnae-nbs-indop/cnae-nbs-indop/cnae-nbs-indop.module';
-import { CnaeModule } from './cnae/cnae/cnae.module';
-import { IndopModule } from './indop/indop/indop.module';
-import { NbsModule } from './nbs/nbs/nbs.module';
+import { CnaeNbsIndopModule } from './cnae-nbs-indop/cnae-nbs-indop.module';
+import { CnaeModule } from './cnae/cnae.module';
+import { IndopModule } from './indop/indop.module';
+import { NbsModule } from './nbs/nbs.module';
 
 const modules = [
+  CnaeNbsIndopModule,
   CnaeModule,
   IndopModule,
   NbsModule,
-  CnaeNbsIndopModule,
 ];
 
 @Module({

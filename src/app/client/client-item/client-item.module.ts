@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AuthenticationGuardsModule } from 'src/app/authentication/application/guards/guards.module';
 import { ClientModule } from 'src/app/client/client/client.module';
-import { CnaeNbsIndopModule } from 'src/app/taxation/cnae-nbs-indop/cnae-nbs-indop/cnae-nbs-indop.module';
+import { CnaeNbsIndopModule } from 'src/app/taxation/cnae-nbs-indop/cnae-nbs-indop.module';
 import { ClientItemPersistenceModule } from './application/persistence/client-item-persistence.module';
 import { CreateBulkClientItem } from './application/usecases/create-bulk-client-item/create-bulk-client-item.service';
 import { CreateClientItem } from './application/usecases/create-client-item/create-client-item.service';
