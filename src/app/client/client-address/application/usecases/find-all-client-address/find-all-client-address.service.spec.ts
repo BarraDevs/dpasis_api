@@ -84,6 +84,7 @@ describe('FindAllClientAddress', () => {
     expect(result.data).toHaveLength(1);
     expect(result.data[0]).toEqual({
       id: created.id,
+      clientId,
       type: ClientAddressType.MAIN,
       zipCode: '12345-678',
       street: 'Rua Teste',

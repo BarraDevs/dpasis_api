@@ -5,13 +5,13 @@ import { ClientInvoiceConfigDto } from 'src/app/client/client-invoice-config/app
 import { CreateClientInvoiceConfig } from 'src/app/client/client-invoice-config/application/usecases/create-client-invoice-config/create-client-invoice-config.service';
 import { CreateClientInvoiceConfigInputDto, CreateClientInvoiceConfigOutputDto } from 'src/app/client/client-invoice-config/application/usecases/create-client-invoice-config/dtos/create-client-invoice-config.dto';
 import { DeleteClientInvoiceConfig } from 'src/app/client/client-invoice-config/application/usecases/delete-client-invoice-config/delete-client-invoice-config.service';
-import { EditClientInvoiceConfig } from 'src/app/client/client-invoice-config/application/usecases/edit-client-invoice-config/edit-client-invoice-config.service';
 import { EditClientInvoiceConfigInputDto } from 'src/app/client/client-invoice-config/application/usecases/edit-client-invoice-config/dtos/edit-client-invoice-config.dto';
+import { EditClientInvoiceConfig } from 'src/app/client/client-invoice-config/application/usecases/edit-client-invoice-config/edit-client-invoice-config.service';
 import { FindClientInvoiceConfigByClientId } from 'src/app/client/client-invoice-config/application/usecases/find-client-invoice-config-by-client-id/find-client-invoice-config-by-client-id.service';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
 import { Swagger } from 'src/infra/openapi/swagger';
-import { Params } from 'src/infra/validators/class/dtos/params/params.dto';
 import { ParamsClientId } from 'src/infra/validators/class/dtos/params/params-client-id.dto';
+import { Params } from 'src/infra/validators/class/dtos/params/params.dto';
 
 @Controller('admin/client-invoice-config')
 @RequiredRoles(AccountRole.ADMIN)

@@ -8,6 +8,7 @@ import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 
 const ClientAddressSelect = {
   id: true,
+  clientId: true,
   type: true,
   zipCode: true,
   street: true,

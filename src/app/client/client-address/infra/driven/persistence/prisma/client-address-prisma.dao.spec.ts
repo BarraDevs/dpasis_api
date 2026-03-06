@@ -82,6 +82,7 @@ describe('ClientAddressDaoAdapterPrisma - Integration tests', () => {
       expect(total).toBe(1);
       expect(addresses[0]).toEqual({
         id: created.id,
+        clientId,
         type: ClientAddressType.MAIN,
         zipCode: '12345-678',
         street: 'Rua Teste',
@@ -274,6 +275,7 @@ describe('ClientAddressDaoAdapterPrisma - Integration tests', () => {
       expect(result).not.toBeNull();
       expect(result).toEqual({
         id: created.id,
+        clientId,
         type: ClientAddressType.MAIN,
         zipCode: '12345-678',
         street: 'Rua Teste',
@@ -357,6 +359,7 @@ describe('ClientAddressDaoAdapterPrisma - Integration tests', () => {
       expect(result).not.toBeNull();
       expect(result).toEqual({
         id: created.id,
+        clientId,
         type: ClientAddressType.MAIN,
         zipCode: '12345-678',
         street: 'Rua Teste',

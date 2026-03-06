@@ -21,6 +21,7 @@ export class CreateClientInvoiceConfig {
   ) {}
 
   public async execute(data: CreateClientInvoiceConfigInputDto): Promise<CreateClientInvoiceConfigOutputDto> {
+    await this.findBankById.execute(data.bankId, true);
     await this.findClientById.execute(data.clientId, true);
 
     const existingConfig = await this.clientInvoiceConfigRepository.findByClientId(data.clientId);
@@ -32,8 +33,6 @@ export class CreateClientInvoiceConfig {
     if (!billingAddress || billingAddress.props.clientId !== data.clientId) {
       throw new BillingAddressNotFromClientError();
     }
-
-    await this.findBankById.execute(data.bankId, true);
 
     const entity = ClientInvoiceConfigFactory.create({
       clientId: data.clientId,

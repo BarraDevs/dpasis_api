@@ -1,5 +1,6 @@
 export class ClientAddressDto {
   id: number;
+  clientId: number;
   type: string;
   zipCode: string;
   street: string;
