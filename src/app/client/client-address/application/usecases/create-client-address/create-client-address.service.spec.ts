@@ -116,7 +116,7 @@ describe('CreateClientAddress', () => {
     const input = makeValidInput({ clientId: 99999 });
 
     await expect(sut.execute(input)).rejects.toThrow(ClientNotFoundError);
-    await expect(sut.execute(input)).rejects.toThrow('Cliente não encontrado.');
+    await expect(sut.execute(input)).rejects.toThrow('Cliente não encontrado na base de dados.');
   });
 
   it('should throw ClientNotFoundError when client is inactive', async() => {
@@ -125,7 +125,7 @@ describe('CreateClientAddress', () => {
     await prisma.client.update({ where: { id: clientId }, data: { active: false } });
 
     await expect(sut.execute(input)).rejects.toThrow(ClientNotFoundError);
-    await expect(sut.execute(input)).rejects.toThrow('Cliente não encontrado.');
+    await expect(sut.execute(input)).rejects.toThrow('Cliente não encontrado na base de dados.');
   });
 
   it('should throw ClientAddressAlreadyExistsError when address already exists for client and type', async() => {
