@@ -1,35 +1,35 @@
 model Cnae {
-  id             Int             @id @default(autoincrement())
-  code           String          @unique @db.VarChar(20)
-  description    String          @db.VarChar(500)
-  active         Boolean         @default(true)
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
-  cnaeNbsIndops  CnaeNbsIndop[]
+  id            Int            @id @default(autoincrement())
+  code          String         @unique @db.VarChar(20)
+  description   String         @db.VarChar(500)
+  active        Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  cnaeNbsIndops CnaeNbsIndop[]
 
   @@map("cnaes")
 }
 
 model Nbs {
-  id             Int             @id @default(autoincrement())
-  code           String          @unique @db.VarChar(20)
-  description    String          @db.VarChar(500)
-  active         Boolean         @default(true)
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
-  cnaeNbsIndops  CnaeNbsIndop[]
+  id            Int            @id @default(autoincrement())
+  code          String         @unique @db.VarChar(20)
+  description   String         @db.VarChar(500)
+  active        Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  cnaeNbsIndops CnaeNbsIndop[]
 
   @@map("nbss")
 }
 
 model Indop {
-  id             Int             @id @default(autoincrement())
-  code           String          @unique @db.VarChar(20)
-  description    String          @db.VarChar(500)
-  active         Boolean         @default(true)
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
-  cnaeNbsIndops  CnaeNbsIndop[]
+  id            Int            @id @default(autoincrement())
+  code          String         @unique @db.VarChar(20)
+  description   String         @db.VarChar(500)
+  active        Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  cnaeNbsIndops CnaeNbsIndop[]
 
   @@map("indops")
 }
@@ -43,8 +43,8 @@ model CnaeNbsIndop {
   updatedAt DateTime @updatedAt
 
   cnae        Cnae         @relation(fields: [cnaeId], references: [id])
-  nbs         Nbs           @relation(fields: [nbsId], references: [id])
-  indop       Indop          @relation(fields: [indopId], references: [id])
+  nbs         Nbs          @relation(fields: [nbsId], references: [id])
+  indop       Indop        @relation(fields: [indopId], references: [id])
   clientItems ClientItem[]
 
   @@unique([cnaeId, nbsId, indopId])

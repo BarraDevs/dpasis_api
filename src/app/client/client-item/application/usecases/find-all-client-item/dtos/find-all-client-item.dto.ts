@@ -5,6 +5,7 @@ import { Queries } from 'src/infra/validators/class/dtos/queries/queries.dto';
 
 export class FindAllClientItemQueryDto extends Queries {
   @IsNotEmpty({ message: '$property é obrigatório' })
+  @IsInt({ message: '$property deve ser um número inteiro' })
   @StringToNumber()
   @Trim()
   clientId: number;
