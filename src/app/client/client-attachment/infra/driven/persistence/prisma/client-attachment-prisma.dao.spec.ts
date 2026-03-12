@@ -296,7 +296,6 @@ describe('ClientAttachmentDaoAdapterPrisma - Integration tests', () => {
         clientId: client.id,
         description: 'Novo anexo',
         link: 'https://new.com',
-        active: true,
       };
 
       // Act
@@ -311,7 +310,7 @@ describe('ClientAttachmentDaoAdapterPrisma - Integration tests', () => {
       expect(saved?.clientId).toBe(data.clientId);
       expect(saved?.description).toBe(data.description);
       expect(saved?.link).toBe(data.link);
-      expect(saved?.active).toBe(data.active);
+      expect(saved?.active).toBe(true);
     });
 
     it('should persist attachment in client_attachments table', async() => {
@@ -321,7 +320,6 @@ describe('ClientAttachmentDaoAdapterPrisma - Integration tests', () => {
         clientId: client.id,
         description: 'Documento importante',
         link: 'https://doc.com/file.pdf',
-        active: false,
       };
 
       // Act
@@ -335,7 +333,7 @@ describe('ClientAttachmentDaoAdapterPrisma - Integration tests', () => {
       expect(row?.clientId).toBe(client.id);
       expect(row?.description).toBe('Documento importante');
       expect(row?.link).toBe('https://doc.com/file.pdf');
-      expect(row?.active).toBe(false);
+      expect(row?.active).toBe(true);
       expect(row?.createdAt).toBeDefined();
       expect(row?.updatedAt).toBeDefined();
     });
@@ -388,27 +386,6 @@ describe('ClientAttachmentDaoAdapterPrisma - Integration tests', () => {
       expect(updated?.active).toBe(true);
     });
 
-    it('should update attachment active status', async() => {
-      // Arrange
-      const client = await createClient();
-      const attachment = await prisma.clientAttachment.create({
-        data: {
-          clientId: client.id,
-          description: 'Desc',
-          link: 'https://link.com',
-          active: true,
-        },
-      });
-      const data: EditClientAttachmentInputDto = { active: false };
-
-      // Act
-      await sut.edit(attachment.id, data);
-
-      // Assert
-      const updated = await prisma.clientAttachment.findUnique({ where: { id: attachment.id } });
-      expect(updated?.active).toBe(false);
-    });
-
     it('should update multiple fields at once', async() => {
       // Arrange
       const client = await createClient();
@@ -423,7 +400,6 @@ describe('ClientAttachmentDaoAdapterPrisma - Integration tests', () => {
       const data: EditClientAttachmentInputDto = {
         description: 'Nova descrição',
         link: 'https://new.com',
-        active: false,
       };
 
       // Act
@@ -433,7 +409,6 @@ describe('ClientAttachmentDaoAdapterPrisma - Integration tests', () => {
       const updated = await prisma.clientAttachment.findUnique({ where: { id: attachment.id } });
       expect(updated?.description).toBe('Nova descrição');
       expect(updated?.link).toBe('https://new.com');
-      expect(updated?.active).toBe(false);
     });
   });
 
