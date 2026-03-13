@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ClientAddressModule } from './client-address/client-address.module';
 import { ClientAttachmentModule } from './client-attachment/client-attachment.module';
+import { ClientAttendanceTypeModule } from './client-attendance-type/client-attendance-type.module';
 import { ClientContactModule } from './client-contact/client-contact.module';
 import { ClientDepartmentModule } from './client-department/client-department.module';
 import { ClientDiscountModule } from './client-discount/client-discount.module';
@@ -13,6 +14,7 @@ import { ClientModule } from './client/client.module';
 const modules = [
   ClientAddressModule,
   ClientAttachmentModule,
+  ClientAttendanceTypeModule,
   ClientContactModule,
   ClientDiscountModule,
   ClientInvoiceConfigModule,
