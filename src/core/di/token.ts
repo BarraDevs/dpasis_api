@@ -10,22 +10,29 @@ const TOKENS = {
 
   ClientDao: Symbol.for('ClientDao'),
   ClientRepository: Symbol.for('ClientRepository'),
-  ClientGroupDao: Symbol.for('ClientGroupDao'),
-  ClientDepartmentDao: Symbol.for('ClientDepartmentDao'),
-  ClientAttendanceTypeDao: Symbol.for('ClientAttendanceTypeDao'),
-  ClientMaintenanceTicketTypeDao: Symbol.for('ClientMaintenanceTicketTypeDao'),
+
   ClientContactDao: Symbol.for('ClientContactDao'),
   ClientContactRepository: Symbol.for('ClientContactRepository'),
+  ClientDepartmentDao: Symbol.for('ClientDepartmentDao'),
+
+  ClientAttendanceTypeDao: Symbol.for('ClientAttendanceTypeDao'),
+  ClientAttachmentDao: Symbol.for('ClientAttachmentDao'),
+  ClientMaintenanceTicketTypeDao: Symbol.for('ClientMaintenanceTicketTypeDao'),
+  ClientSystemTypeDao: Symbol.for('ClientSystemTypeDao'),
+
+  ClientGroupDao: Symbol.for('ClientGroupDao'),
   ClientOwnerDao: Symbol.for('ClientOwnerDao'),
+
   ClientAddressDao: Symbol.for('ClientAddressDao'),
   ClientAddressRepository: Symbol.for('ClientAddressRepository'),
+
   ClientItemDao: Symbol.for('ClientItemDao'),
   ClientItemRepository: Symbol.for('ClientItemRepository'),
-  ClientAttachmentDao: Symbol.for('ClientAttachmentDao'),
-  ClientInvoiceConfigDao: Symbol.for('ClientInvoiceConfigDao'),
-  ClientInvoiceConfigRepository: Symbol.for('ClientInvoiceConfigRepository'),
+
   ClientDiscountDao: Symbol.for('ClientDiscountDao'),
   ClientDiscountRepository: Symbol.for('ClientDiscountRepository'),
+  ClientInvoiceConfigDao: Symbol.for('ClientInvoiceConfigDao'),
+  ClientInvoiceConfigRepository: Symbol.for('ClientInvoiceConfigRepository'),
 
   CompanyDao: Symbol.for('CompanyDao'),
   CompanyRepository: Symbol.for('CompanyRepository'),

@@ -5,6 +5,7 @@ import { ClientAttendanceTypeModule } from './client-attendance-type/client-atte
 import { ClientContactModule } from './client-contact/client-contact.module';
 import { ClientMaintenanceTicketTypeModule } from './client-maintenance-ticket-type/client-maintenance-ticket-type.module';
 import { ClientDepartmentModule } from './client-department/client-department.module';
+import { ClientSystemTypeModule } from './client-system-type/client-system-type.module';
 import { ClientDiscountModule } from './client-discount/client-discount.module';
 import { ClientGroupModule } from './client-group/client-group.module';
 import { ClientInvoiceConfigModule } from './client-invoice-config/client-invoice-config.module';
@@ -18,6 +19,7 @@ const modules = [
   ClientAttendanceTypeModule,
   ClientContactModule,
   ClientMaintenanceTicketTypeModule,
+  ClientSystemTypeModule,
   ClientDiscountModule,
   ClientInvoiceConfigModule,
   ClientItemModule,
