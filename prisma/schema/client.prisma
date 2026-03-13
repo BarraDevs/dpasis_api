@@ -93,6 +93,16 @@ model ClientSystemType {
   @@map("client_system_types")
 }
 
+model ClientDescriptionType {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("client_description_types")
+}
+
 model ClientContact {
   id           Int      @id @default(autoincrement())
   clientId     Int
