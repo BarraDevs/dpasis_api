@@ -53,7 +53,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"credential\": \"email@example.com\",\n  \"password\": \"password\"\n}"
+              "raw": "{\n  \"credential\": \"admin@email.com\",\n  \"password\": \"123456\"\n}"
             },
             "description": "Login com email e senha",
             "event": [
@@ -79,10 +79,10 @@
       ]
     },
     {
-      "name": "Endereços de Clientes",
+      "name": "Configurações - Bank",
       "item": [
         {
-          "name": "Listar endereços de clientes com paginação e busca",
+          "name": "Listar bancos com paginação e busca",
           "request": {
             "method": "GET",
             "header": [
@@ -93,13 +93,13 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/admin/client-address",
+              "raw": "{{baseUrl}}/admin/bank",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "admin",
-                "client-address"
+                "bank"
               ],
               "query": [
                 {
@@ -116,20 +116,10 @@
                   "key": "search",
                   "value": "{{search}}",
                   "description": "Opcional"
-                },
-                {
-                  "key": "clientId",
-                  "value": "{{clientId}}",
-                  "description": "Obrigatório"
-                },
-                {
-                  "key": "type",
-                  "value": "{{type}}",
-                  "description": "Opcional"
                 }
               ]
             },
-            "description": "Listar endereços de clientes com paginação e busca",
+            "description": "Listar bancos com paginação e busca",
             "auth": {
               "type": "bearer",
               "bearer": [
@@ -143,7 +133,7 @@
           }
         },
         {
-          "name": "Criar novo endereço de cliente",
+          "name": "Criar novo banco",
           "request": {
             "method": "POST",
             "header": [
@@ -154,20 +144,20 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/admin/client-address",
+              "raw": "{{baseUrl}}/admin/bank",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "admin",
-                "client-address"
+                "bank"
               ]
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"clientId\": 0,\n  \"type\": \"\",\n  \"zipCode\": \"\",\n  \"street\": \"\",\n  \"number\": \"\",\n  \"complement\": \"\",\n  \"neighborhood\": \"\",\n  \"city\": \"\",\n  \"state\": \"\"\n}"
+              "raw": "{\n  \"drawer\": \"Empresa XYZ Ltda\",\n  \"wallet\": \"123\",\n  \"account\": \"12345-6\",\n  \"agency\": \"0001\",\n  \"bankCode\": \"001\",\n  \"bankName\": \"Banco do Brasil\",\n  \"paymentLocation\": \"Local de pagamento\"\n}"
             },
-            "description": "Criar novo endereço de cliente",
+            "description": "Criar novo banco",
             "auth": {
               "type": "bearer",
               "bearer": [
@@ -181,7 +171,7 @@
           }
         },
         {
-          "name": "Buscar endereço de cliente por ID",
+          "name": "Buscar banco por ID",
           "request": {
             "method": "GET",
             "header": [
@@ -192,17 +182,17 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/admin/client-address/{{id}}",
+              "raw": "{{baseUrl}}/admin/bank/{{id}}",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "admin",
-                "client-address",
+                "bank",
                 "{{id}}"
               ]
             },
-            "description": "Buscar endereço de cliente por ID",
+            "description": "Buscar banco por ID",
             "auth": {
               "type": "bearer",
               "bearer": [
@@ -216,7 +206,7 @@
           }
         },
         {
-          "name": "Editar endereço de cliente",
+          "name": "Editar banco",
           "request": {
             "method": "PATCH",
             "header": [
@@ -227,21 +217,21 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/admin/client-address/{{id}}",
+              "raw": "{{baseUrl}}/admin/bank/{{id}}",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "admin",
-                "client-address",
+                "bank",
                 "{{id}}"
               ]
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"type\": \"\",\n  \"zipCode\": \"\",\n  \"street\": \"\",\n  \"number\": \"\",\n  \"complement\": \"\",\n  \"neighborhood\": \"\",\n  \"city\": \"\",\n  \"state\": \"\"\n}"
+              "raw": "{\n  \"drawer\": \"Empresa XYZ Ltda\",\n  \"wallet\": \"123\",\n  \"account\": \"12345-6\",\n  \"agency\": \"0001\",\n  \"bankCode\": \"001\",\n  \"bankName\": \"Banco do Brasil\",\n  \"paymentLocation\": \"Local de pagamento\"\n}"
             },
-            "description": "Editar endereço de cliente",
+            "description": "Editar banco",
             "auth": {
               "type": "bearer",
               "bearer": [
@@ -255,186 +245,7 @@
           }
         },
         {
-          "name": "Deletar endereço de cliente",
-          "request": {
-            "method": "DELETE",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/admin/client-address/{{id}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "admin",
-                "client-address",
-                "{{id}}"
-              ]
-            },
-            "description": "Deletar endereço de cliente",
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{accessToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Contatos de Clientes",
-      "item": [
-        {
-          "name": "Listar contatos de cliente com paginação e filtros",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/admin/client-contact",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "admin",
-                "client-contact"
-              ],
-              "query": [
-                {
-                  "key": "page",
-                  "value": "{{page}}",
-                  "description": "Opcional"
-                },
-                {
-                  "key": "size",
-                  "value": "{{size}}",
-                  "description": "Opcional"
-                },
-                {
-                  "key": "search",
-                  "value": "{{search}}",
-                  "description": "Opcional"
-                },
-                {
-                  "key": "clientId",
-                  "value": "{{clientId}}",
-                  "description": "Obrigatório"
-                },
-                {
-                  "key": "departmentId",
-                  "value": "{{departmentId}}",
-                  "description": "Opcional"
-                },
-                {
-                  "key": "receiveNF",
-                  "value": "{{receiveNF}}",
-                  "description": "Opcional"
-                }
-              ]
-            },
-            "description": "Listar contatos de cliente com paginação e filtros",
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{accessToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Criar novo contato de cliente",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/admin/client-contact",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "admin",
-                "client-contact"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"clientId\": 1,\n  \"departmentId\": 1,\n  \"name\": \"João Silva\",\n  \"email\": \"joao@example.com\",\n  \"phone\": \"11999999999\",\n  \"whatsapp\": \"11988887777\",\n  \"observations\": \"Observações sobre o contato\",\n  \"receiveNF\": false\n}"
-            },
-            "description": "Criar novo contato de cliente",
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{accessToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Buscar contato de cliente por ID",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/admin/client-contact/{{id}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "admin",
-                "client-contact",
-                "{{id}}"
-              ]
-            },
-            "description": "Buscar contato de cliente por ID",
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{accessToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Editar contato de cliente",
+          "name": "Inverter status ativo do banco",
           "request": {
             "method": "PATCH",
             "header": [
@@ -445,56 +256,18 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/admin/client-contact/{{id}}",
+              "raw": "{{baseUrl}}/admin/bank/{{id}}/status",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "admin",
-                "client-contact",
-                "{{id}}"
+                "bank",
+                "{{id}}",
+                "status"
               ]
             },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"departmentId\": 1,\n  \"name\": \"João Silva\",\n  \"email\": \"joao@example.com\",\n  \"phone\": \"11999999999\",\n  \"whatsapp\": \"11988887777\",\n  \"observations\": \"Observações sobre o contato\",\n  \"receiveNF\": false\n}"
-            },
-            "description": "Editar contato de cliente",
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{accessToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Deletar contato de cliente",
-          "request": {
-            "method": "DELETE",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/admin/client-contact/{{id}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "admin",
-                "client-contact",
-                "{{id}}"
-              ]
-            },
-            "description": "Deletar contato de cliente",
+            "description": "Inverter status ativo do banco",
             "auth": {
               "type": "bearer",
               "bearer": [
@@ -1468,6 +1241,681 @@
       ]
     },
     {
+      "name": "Endereços de Clientes",
+      "item": [
+        {
+          "name": "Listar endereços de clientes com paginação e busca",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-address",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-address"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "{{page}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "size",
+                  "value": "{{size}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "search",
+                  "value": "{{search}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "clientId",
+                  "value": "{{clientId}}",
+                  "description": "Obrigatório"
+                },
+                {
+                  "key": "type",
+                  "value": "{{type}}",
+                  "description": "Opcional"
+                }
+              ]
+            },
+            "description": "Listar endereços de clientes com paginação e busca",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Criar novo endereço de cliente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-address",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-address"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clientId\": 1,\n  \"type\": \"Principal, Cobrança, Chamado, Correspondência\",\n  \"zipCode\": \"12345-678\",\n  \"street\": \"Rua das Laranjeiras\",\n  \"number\": \"100A\",\n  \"complement\": \"Apto 202\",\n  \"neighborhood\": \"Centro\",\n  \"city\": \"São Paulo\",\n  \"state\": \"SP\"\n}"
+            },
+            "description": "Criar novo endereço de cliente",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar endereço de cliente por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-address/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-address",
+                "{{id}}"
+              ]
+            },
+            "description": "Buscar endereço de cliente por ID",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Editar endereço de cliente",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-address/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-address",
+                "{{id}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"Principal, Cobrança, Chamado, Correspondência\",\n  \"zipCode\": \"12345-678\",\n  \"street\": \"Rua das Laranjeiras\",\n  \"number\": \"100A\",\n  \"complement\": \"Apto 202\",\n  \"neighborhood\": \"Centro\",\n  \"city\": \"São Paulo\",\n  \"state\": \"SP\"\n}"
+            },
+            "description": "Editar endereço de cliente",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Deletar endereço de cliente",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-address/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-address",
+                "{{id}}"
+              ]
+            },
+            "description": "Deletar endereço de cliente",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Anexos de Clientes",
+      "item": [
+        {
+          "name": "Listar anexos de cliente com paginação e filtros",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-attachment",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-attachment"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "{{page}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "size",
+                  "value": "{{size}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "search",
+                  "value": "{{search}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "clientId",
+                  "value": "{{clientId}}",
+                  "description": "Obrigatório"
+                }
+              ]
+            },
+            "description": "Listar anexos de cliente com paginação e filtros",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Criar novo anexo de cliente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-attachment",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-attachment"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clientId\": 1,\n  \"description\": \"Descrição do anexo\",\n  \"link\": \"https://example.com/document.pdf\"\n}"
+            },
+            "description": "Criar novo anexo de cliente",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar anexo de cliente por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-attachment/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-attachment",
+                "{{id}}"
+              ]
+            },
+            "description": "Buscar anexo de cliente por ID",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Editar anexo de cliente",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-attachment/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-attachment",
+                "{{id}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clientId\": 1,\n  \"description\": \"Descrição do anexo\",\n  \"link\": \"https://example.com/document.pdf\"\n}"
+            },
+            "description": "Editar anexo de cliente",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Deletar anexo de cliente",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-attachment/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-attachment",
+                "{{id}}"
+              ]
+            },
+            "description": "Deletar anexo de cliente",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Inverter status ativo do anexo de cliente",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-attachment/{{id}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-attachment",
+                "{{id}}",
+                "status"
+              ]
+            },
+            "description": "Inverter status ativo do anexo de cliente",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Contatos de Clientes",
+      "item": [
+        {
+          "name": "Listar contatos de cliente com paginação e filtros",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-contact",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-contact"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "{{page}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "size",
+                  "value": "{{size}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "search",
+                  "value": "{{search}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "clientId",
+                  "value": "{{clientId}}",
+                  "description": "Obrigatório"
+                },
+                {
+                  "key": "departmentId",
+                  "value": "{{departmentId}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "receiveNF",
+                  "value": "{{receiveNF}}",
+                  "description": "Opcional"
+                }
+              ]
+            },
+            "description": "Listar contatos de cliente com paginação e filtros",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Criar novo contato de cliente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-contact",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-contact"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clientId\": 1,\n  \"departmentId\": 1,\n  \"name\": \"João Silva\",\n  \"email\": \"joao@example.com\",\n  \"phone\": \"11999999999\",\n  \"whatsapp\": \"11988887777\",\n  \"observations\": \"Observações sobre o contato\",\n  \"receiveNF\": false\n}"
+            },
+            "description": "Criar novo contato de cliente",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar contato de cliente por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-contact/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-contact",
+                "{{id}}"
+              ]
+            },
+            "description": "Buscar contato de cliente por ID",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Editar contato de cliente",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-contact/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-contact",
+                "{{id}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"departmentId\": 1,\n  \"name\": \"João Silva\",\n  \"email\": \"joao@example.com\",\n  \"phone\": \"11999999999\",\n  \"whatsapp\": \"11988887777\",\n  \"observations\": \"Observações sobre o contato\",\n  \"receiveNF\": false\n}"
+            },
+            "description": "Editar contato de cliente",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Deletar contato de cliente",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-contact/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-contact",
+                "{{id}}"
+              ]
+            },
+            "description": "Deletar contato de cliente",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
       "name": "Departamentos de Clientes",
       "item": [
         {
@@ -1707,6 +2155,377 @@
       ]
     },
     {
+      "name": "Descontos de Clientes",
+      "item": [
+        {
+          "name": "Listar descontos com paginação e filtros",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-discount",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-discount"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "{{page}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "size",
+                  "value": "{{size}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "search",
+                  "value": "{{search}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "clientId",
+                  "value": "{{clientId}}",
+                  "description": "Obrigatório"
+                },
+                {
+                  "key": "month",
+                  "value": "{{month}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "year",
+                  "value": "{{year}}",
+                  "description": "Opcional"
+                }
+              ]
+            },
+            "description": "Listar descontos com paginação e filtros",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Criar novo desconto",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-discount",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-discount"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clientId\": 1,\n  \"description\": \"Desconto de teste\",\n  \"type\": \"Percentual, Monetário\",\n  \"discountValue\": \"Percentage: 0-10000 (10.50% = 1050). Monetary: cents.\",\n  \"month\": 1,\n  \"year\": 2026,\n  \"doNotGenerateCharge\": true,\n  \"terminateContract\": true\n}"
+            },
+            "description": "Criar novo desconto",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar desconto por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-discount/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-discount",
+                "{{id}}"
+              ]
+            },
+            "description": "Buscar desconto por ID",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Editar desconto",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-discount/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-discount",
+                "{{id}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Desconto de teste\",\n  \"type\": \"Percentual, Monetário\",\n  \"discountValue\": \"Percentage: 0-10000 (10.50% = 1050). Monetary: cents.\",\n  \"month\": 1,\n  \"year\": 2026,\n  \"doNotGenerateCharge\": true,\n  \"terminateContract\": true\n}"
+            },
+            "description": "Editar desconto",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Excluir desconto",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-discount/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-discount",
+                "{{id}}"
+              ]
+            },
+            "description": "Excluir desconto",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Configuração NF e Boleto",
+      "item": [
+        {
+          "name": "Criar configuração de NF e boleto para cliente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-invoice-config",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-invoice-config"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clientId\": 1,\n  \"generateNf\": true,\n  \"type\": \"Mensal, Anual\",\n  \"emissionDay\": 1,\n  \"dueDateType\": \"Dia de vencimento, Prazo faturamento\",\n  \"dueDateDay\": 1,\n  \"deadlineDays\": 1,\n  \"months\": [\n    1,\n    2,\n    3\n  ],\n  \"billingAddressId\": 1,\n  \"bankId\": 1,\n  \"autoProtestBoleto\": true,\n  \"message\": \"Mensagem de cobrança\"\n}"
+            },
+            "description": "Criar configuração de NF e boleto para cliente",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar configuração por ID do cliente",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-invoice-config/client/{{clientId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-invoice-config",
+                "client",
+                "{{clientId}}"
+              ]
+            },
+            "description": "Buscar configuração por ID do cliente",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Editar configuração de NF e boleto",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-invoice-config/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-invoice-config",
+                "{{id}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"generateNf\": true,\n  \"type\": \"Mensal, Anual\",\n  \"emissionDay\": 1,\n  \"dueDateType\": \"Dia de vencimento, Prazo faturamento\",\n  \"dueDateDay\": 1,\n  \"deadlineDays\": 1,\n  \"months\": [\n    1,\n    2,\n    3\n  ],\n  \"billingAddressId\": 1,\n  \"bankId\": 1,\n  \"autoProtestBoleto\": true,\n  \"message\": \"Mensagem de cobrança\"\n}"
+            },
+            "description": "Editar configuração de NF e boleto",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Excluir configuração de NF e boleto",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-invoice-config/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-invoice-config",
+                "{{id}}"
+              ]
+            },
+            "description": "Excluir configuração de NF e boleto",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
       "name": "Itens do Cliente",
       "item": [
         {
@@ -1749,6 +2568,21 @@
                   "key": "clientId",
                   "value": "{{clientId}}",
                   "description": "Obrigatório"
+                },
+                {
+                  "key": "cnaeId",
+                  "value": "{{cnaeId}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "nbsId",
+                  "value": "{{nbsId}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "indopId",
+                  "value": "{{indopId}}",
+                  "description": "Opcional"
                 }
               ]
             },
@@ -1788,7 +2622,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"clientId\": 1,\n  \"description\": \"Descrição do item\",\n  \"quantity\": 1,\n  \"unitValueInCents\": 10000,\n  \"cnae\": \"1234567\",\n  \"nbs\": \"12345678\",\n  \"indop\": \"1\"\n}"
+              "raw": "{\n  \"clientId\": 1,\n  \"description\": \"Descrição do item\",\n  \"quantity\": 1,\n  \"unitValueInCents\": 10000,\n  \"cnaeNbsIndopId\": 1\n}"
             },
             "description": "Criar novo item do cliente",
             "auth": {
@@ -1936,7 +2770,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"description\": \"Descrição do item\",\n  \"quantity\": 1,\n  \"unitValueInCents\": 10000,\n  \"cnae\": \"1234567\",\n  \"nbs\": \"12345678\",\n  \"indop\": \"1\"\n}"
+              "raw": "{\n  \"description\": \"Descrição do item\",\n  \"quantity\": 1,\n  \"unitValueInCents\": 10000,\n  \"cnaeNbsIndopId\": 1\n}"
             },
             "description": "Editar item do cliente",
             "auth": {
@@ -1989,7 +2823,270 @@
       ]
     },
     {
-      "name": "CNAE",
+      "name": "Configurações - CNAE/NBS/INDOP",
+      "item": [
+        {
+          "name": "Listar combinações com paginação e filtros",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/cnae-nbs-indop",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "cnae-nbs-indop"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "{{page}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "size",
+                  "value": "{{size}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "search",
+                  "value": "{{search}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "cnaeId",
+                  "value": "{{cnaeId}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "nbsId",
+                  "value": "{{nbsId}}",
+                  "description": "Opcional"
+                }
+              ]
+            },
+            "description": "Listar combinações com paginação e filtros",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Criar nova combinação CNAE + NBS + INDOP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/cnae-nbs-indop",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "cnae-nbs-indop"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cnaeId\": 1,\n  \"nbsId\": 1,\n  \"indopId\": 1\n}"
+            },
+            "description": "Criar nova combinação CNAE + NBS + INDOP",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Listar CNAEs para select (combinações existentes)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/cnae-nbs-indop/cnaes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "cnae-nbs-indop",
+                "cnaes"
+              ]
+            },
+            "description": "Listar CNAEs para select (combinações existentes)",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Listar NBSs para select (filtrado por CNAE)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/cnae-nbs-indop/nbs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "cnae-nbs-indop",
+                "nbs"
+              ],
+              "query": [
+                {
+                  "key": "cnaeId",
+                  "value": "{{cnaeId}}",
+                  "description": "Obrigatório"
+                }
+              ]
+            },
+            "description": "Listar NBSs para select (filtrado por CNAE)",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Listar INDOPs para select (filtrado por CNAE e NBS)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/cnae-nbs-indop/indops",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "cnae-nbs-indop",
+                "indops"
+              ],
+              "query": [
+                {
+                  "key": "cnaeId",
+                  "value": "{{cnaeId}}",
+                  "description": "Obrigatório"
+                },
+                {
+                  "key": "nbsId",
+                  "value": "{{nbsId}}",
+                  "description": "Obrigatório"
+                }
+              ]
+            },
+            "description": "Listar INDOPs para select (filtrado por CNAE e NBS)",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Excluir combinação",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/cnae-nbs-indop/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "cnae-nbs-indop",
+                "{{id}}"
+              ]
+            },
+            "description": "Excluir combinação",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Configurações - CNAE",
       "item": [
         {
           "name": "Listar CNAEs com paginação e busca",
@@ -2065,7 +3162,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"code\": \"1012-1/01\",\n  \"description\": \"Fabricação de produtos alimentícios\"\n}"
+              "raw": "{\n  \"code\": \"6201-5/01\",\n  \"description\": \"Desenvolvimento de programas de computador sob encomenda\"\n}"
             },
             "description": "Criar novo CNAE",
             "auth": {
@@ -2139,7 +3236,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"code\": \"1012-1/01\",\n  \"description\": \"Fabricação de produtos alimentícios\"\n}"
+              "raw": "{\n  \"code\": \"6201-5/01\",\n  \"description\": \"Desenvolvimento de programas de computador sob encomenda\"\n}"
             },
             "description": "Editar CNAE",
             "auth": {
@@ -2178,6 +3275,1853 @@
               ]
             },
             "description": "Inverter status ativo do CNAE",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Configurações - NBS",
+      "item": [
+        {
+          "name": "Listar NBS com paginação e busca",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/nbs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "nbs"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "{{page}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "size",
+                  "value": "{{size}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "search",
+                  "value": "{{search}}",
+                  "description": "Opcional"
+                }
+              ]
+            },
+            "description": "Listar NBS com paginação e busca",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Criar novo NBS",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/nbs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "nbs"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"1.01.13\",\n  \"description\": \"Licenciamento ou cessão de direito de uso de programas de computador\"\n}"
+            },
+            "description": "Criar novo NBS",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar NBS por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/nbs/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "nbs",
+                "{{id}}"
+              ]
+            },
+            "description": "Buscar NBS por ID",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Editar NBS",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/nbs/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "nbs",
+                "{{id}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"1.01.13\",\n  \"description\": \"Licenciamento ou cessão de direito de uso de programas de computador\"\n}"
+            },
+            "description": "Editar NBS",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Inverter status ativo do NBS",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/nbs/{{id}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "nbs",
+                "{{id}}",
+                "status"
+              ]
+            },
+            "description": "Inverter status ativo do NBS",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Configurações - INDOP",
+      "item": [
+        {
+          "name": "Listar INDOP com paginação e busca",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/indop",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "indop"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "{{page}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "size",
+                  "value": "{{size}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "search",
+                  "value": "{{search}}",
+                  "description": "Opcional"
+                }
+              ]
+            },
+            "description": "Listar INDOP com paginação e busca",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Criar novo INDOP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/indop",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "indop"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"100101\",\n  \"description\": \"Prestação de serviço no estabelecimento do fornecedor\"\n}"
+            },
+            "description": "Criar novo INDOP",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar INDOP por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/indop/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "indop",
+                "{{id}}"
+              ]
+            },
+            "description": "Buscar INDOP por ID",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Editar INDOP",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/indop/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "indop",
+                "{{id}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"100101\",\n  \"description\": \"Prestação de serviço no estabelecimento do fornecedor\"\n}"
+            },
+            "description": "Editar INDOP",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Inverter status ativo do INDOP",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/indop/{{id}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "indop",
+                "{{id}}",
+                "status"
+              ]
+            },
+            "description": "Inverter status ativo do INDOP",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tipos de Atendimento de Clientes",
+      "item": [
+        {
+          "name": "Listar tipos de atendimento de cliente com paginação e busca",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-attendance-type",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-attendance-type"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "{{page}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "size",
+                  "value": "{{size}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "search",
+                  "value": "{{search}}",
+                  "description": "Opcional"
+                }
+              ]
+            },
+            "description": "Listar tipos de atendimento de cliente com paginação e busca",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Criar novo tipo de atendimento de cliente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-attendance-type",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-attendance-type"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Suporte Técnico\"\n}"
+            },
+            "description": "Criar novo tipo de atendimento de cliente",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar tipo de atendimento de cliente por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-attendance-type/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-attendance-type",
+                "{{id}}"
+              ]
+            },
+            "description": "Buscar tipo de atendimento de cliente por ID",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Editar tipo de atendimento de cliente",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-attendance-type/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-attendance-type",
+                "{{id}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Suporte Técnico\"\n}"
+            },
+            "description": "Editar tipo de atendimento de cliente",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Deletar tipo de atendimento de cliente",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-attendance-type/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-attendance-type",
+                "{{id}}"
+              ]
+            },
+            "description": "Deletar tipo de atendimento de cliente",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Inverter status ativo do tipo de atendimento de cliente",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-attendance-type/{{id}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-attendance-type",
+                "{{id}}",
+                "status"
+              ]
+            },
+            "description": "Inverter status ativo do tipo de atendimento de cliente",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tipos de Descrição de Clientes",
+      "item": [
+        {
+          "name": "Listar tipos de descrição de cliente com paginação e busca",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-description-type",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-description-type"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "{{page}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "size",
+                  "value": "{{size}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "search",
+                  "value": "{{search}}",
+                  "description": "Opcional"
+                }
+              ]
+            },
+            "description": "Listar tipos de descrição de cliente com paginação e busca",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Criar novo tipo de descrição de cliente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-description-type",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-description-type"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Descrição padrão\"\n}"
+            },
+            "description": "Criar novo tipo de descrição de cliente",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar tipo de descrição de cliente por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-description-type/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-description-type",
+                "{{id}}"
+              ]
+            },
+            "description": "Buscar tipo de descrição de cliente por ID",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Editar tipo de descrição de cliente",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-description-type/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-description-type",
+                "{{id}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Descrição padrão\"\n}"
+            },
+            "description": "Editar tipo de descrição de cliente",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Deletar tipo de descrição de cliente",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-description-type/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-description-type",
+                "{{id}}"
+              ]
+            },
+            "description": "Deletar tipo de descrição de cliente",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Inverter status ativo do tipo de descrição de cliente",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-description-type/{{id}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-description-type",
+                "{{id}}",
+                "status"
+              ]
+            },
+            "description": "Inverter status ativo do tipo de descrição de cliente",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tipos de Drive de Clientes",
+      "item": [
+        {
+          "name": "Listar tipos de drive de cliente com paginação e busca",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-drive-type",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-drive-type"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "{{page}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "size",
+                  "value": "{{size}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "search",
+                  "value": "{{search}}",
+                  "description": "Opcional"
+                }
+              ]
+            },
+            "description": "Listar tipos de drive de cliente com paginação e busca",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Criar novo tipo de drive de cliente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-drive-type",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-drive-type"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Google Drive\"\n}"
+            },
+            "description": "Criar novo tipo de drive de cliente",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar tipo de drive de cliente por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-drive-type/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-drive-type",
+                "{{id}}"
+              ]
+            },
+            "description": "Buscar tipo de drive de cliente por ID",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Editar tipo de drive de cliente",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-drive-type/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-drive-type",
+                "{{id}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Google Drive\"\n}"
+            },
+            "description": "Editar tipo de drive de cliente",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Deletar tipo de drive de cliente",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-drive-type/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-drive-type",
+                "{{id}}"
+              ]
+            },
+            "description": "Deletar tipo de drive de cliente",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Inverter status ativo do tipo de drive de cliente",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-drive-type/{{id}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-drive-type",
+                "{{id}}",
+                "status"
+              ]
+            },
+            "description": "Inverter status ativo do tipo de drive de cliente",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tipos de Chamados de Manutenção de Clientes",
+      "item": [
+        {
+          "name": "Listar tipos de chamados de manutenção de cliente com paginação e busca",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-maintenance-ticket-type",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-maintenance-ticket-type"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "{{page}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "size",
+                  "value": "{{size}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "search",
+                  "value": "{{search}}",
+                  "description": "Opcional"
+                }
+              ]
+            },
+            "description": "Listar tipos de chamados de manutenção de cliente com paginação e busca",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Criar novo tipo de chamado de manutenção de cliente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-maintenance-ticket-type",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-maintenance-ticket-type"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Manutenção Preventiva\"\n}"
+            },
+            "description": "Criar novo tipo de chamado de manutenção de cliente",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar tipo de chamado de manutenção de cliente por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-maintenance-ticket-type/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-maintenance-ticket-type",
+                "{{id}}"
+              ]
+            },
+            "description": "Buscar tipo de chamado de manutenção de cliente por ID",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Editar tipo de chamado de manutenção de cliente",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-maintenance-ticket-type/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-maintenance-ticket-type",
+                "{{id}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Manutenção Preventiva\"\n}"
+            },
+            "description": "Editar tipo de chamado de manutenção de cliente",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Deletar tipo de chamado de manutenção de cliente",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-maintenance-ticket-type/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-maintenance-ticket-type",
+                "{{id}}"
+              ]
+            },
+            "description": "Deletar tipo de chamado de manutenção de cliente",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Inverter status ativo do tipo de chamado de manutenção de cliente",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-maintenance-ticket-type/{{id}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-maintenance-ticket-type",
+                "{{id}}",
+                "status"
+              ]
+            },
+            "description": "Inverter status ativo do tipo de chamado de manutenção de cliente",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tipos de Sistema de Clientes",
+      "item": [
+        {
+          "name": "Listar tipos de sistema de cliente com paginação e busca",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-system-type",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-system-type"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "{{page}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "size",
+                  "value": "{{size}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "search",
+                  "value": "{{search}}",
+                  "description": "Opcional"
+                }
+              ]
+            },
+            "description": "Listar tipos de sistema de cliente com paginação e busca",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Criar novo tipo de sistema de cliente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-system-type",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-system-type"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Sistema ERP\"\n}"
+            },
+            "description": "Criar novo tipo de sistema de cliente",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar tipo de sistema de cliente por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-system-type/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-system-type",
+                "{{id}}"
+              ]
+            },
+            "description": "Buscar tipo de sistema de cliente por ID",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Editar tipo de sistema de cliente",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-system-type/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-system-type",
+                "{{id}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Sistema ERP\"\n}"
+            },
+            "description": "Editar tipo de sistema de cliente",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Deletar tipo de sistema de cliente",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-system-type/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-system-type",
+                "{{id}}"
+              ]
+            },
+            "description": "Deletar tipo de sistema de cliente",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Inverter status ativo do tipo de sistema de cliente",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-system-type/{{id}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-system-type",
+                "{{id}}",
+                "status"
+              ]
+            },
+            "description": "Inverter status ativo do tipo de sistema de cliente",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tipos de Cliente",
+      "item": [
+        {
+          "name": "Listar tipos de cliente com paginação e busca",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-type",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-type"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "{{page}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "size",
+                  "value": "{{size}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "search",
+                  "value": "{{search}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "clientId",
+                  "value": "{{clientId}}",
+                  "description": "Obrigatório"
+                }
+              ]
+            },
+            "description": "Listar tipos de cliente com paginação e busca",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Criar novo tipo de cliente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-type",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-type"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clientId\": 1,\n  \"clientAttendanceTypeId\": 1,\n  \"clientMaintenanceTicketTypeId\": 1,\n  \"clientSystemTypeId\": 1,\n  \"clientDescriptionTypeId\": 1,\n  \"clientDriveTypeId\": 1,\n  \"quantity\": 1\n}"
+            },
+            "description": "Criar novo tipo de cliente",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar tipo de cliente por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-type/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-type",
+                "{{id}}"
+              ]
+            },
+            "description": "Buscar tipo de cliente por ID",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Editar tipo de cliente",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-type/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-type",
+                "{{id}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clientAttendanceTypeId\": 1,\n  \"clientMaintenanceTicketTypeId\": 1,\n  \"clientSystemTypeId\": 1,\n  \"clientDescriptionTypeId\": 1,\n  \"clientDriveTypeId\": 1,\n  \"quantity\": 1\n}"
+            },
+            "description": "Editar tipo de cliente",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Deletar tipo de cliente",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-type/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-type",
+                "{{id}}"
+              ]
+            },
+            "description": "Deletar tipo de cliente",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Inverter status ativo do tipo de cliente",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-type/{{id}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-type",
+                "{{id}}",
+                "status"
+              ]
+            },
+            "description": "Inverter status ativo do tipo de cliente",
             "auth": {
               "type": "bearer",
               "bearer": [

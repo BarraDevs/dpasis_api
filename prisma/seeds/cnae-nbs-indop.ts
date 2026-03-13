@@ -7,6 +7,11 @@ import { PrismaClient } from '@prisma/client';
  */
 export class CnaeNbsIndopSeed {
   static async seed(prisma: PrismaClient): Promise<void> {
+    const cnaeNbsIndop = await prisma.cnaeNbsIndop.findFirst();
+    if (cnaeNbsIndop) {
+      return;
+    }
+
     const cnaes = await prisma.cnae.findMany({ select: { id: true, code: true } });
     const nbss = await prisma.nbs.findMany({ select: { id: true, code: true } });
     const indops = await prisma.indop.findMany({ select: { id: true, code: true } });

@@ -4,6 +4,11 @@ import { ClientType } from '../../src/app/client/client/domain/enums/client-type
 
 export class ClientSeed {
   static async seed(prisma: PrismaClient): Promise<void> {
+    const client = await prisma.client.findFirst();
+    if (client) {
+      return;
+    }
+
     const [firstGroup, firstOwner] = await Promise.all([
       prisma.clientGroup.findFirst({ select: { id: true } }),
       prisma.clientOwner.findFirst({ select: { id: true } }),

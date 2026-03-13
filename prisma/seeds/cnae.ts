@@ -25,6 +25,11 @@ export class CnaeSeed {
   ];
 
   static async seed(prisma: PrismaClient): Promise<void> {
+    const cnae = await prisma.cnae.findFirst();
+    if (cnae) {
+      return;
+    }
+
     for (const data of this.data) {
       await prisma.cnae.create({
         data,

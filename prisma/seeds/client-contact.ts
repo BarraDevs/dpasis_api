@@ -2,6 +2,11 @@ import { PrismaClient } from '@prisma/client';
 
 export class ClientContactSeed {
   static async seed(prisma: PrismaClient): Promise<void> {
+    const clientContact = await prisma.clientContact.findFirst();
+    if (clientContact) {
+      return;
+    }
+
     const [clients, departments] = await Promise.all([
       prisma.client.findMany({ select: { id: true } }),
       prisma.clientDepartment.findMany({ select: { id: true, name: true } }),

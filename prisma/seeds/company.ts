@@ -54,6 +54,11 @@ export class CompanySeed {
   ];
 
   static async seed(prisma: PrismaClient): Promise<void> {
+    const company = await prisma.company.findFirst();
+    if (company) {
+      return;
+    }
+
     for (const data of this.data) {
       await prisma.company.create({
         data,

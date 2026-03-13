@@ -7,6 +7,11 @@ export class ClientOwnerSeed {
   }));
 
   static async seed(prisma: PrismaClient): Promise<void> {
+    const clientOwner = await prisma.clientOwner.findFirst();
+    if (clientOwner) {
+      return;
+    }
+
     for (const data of this.data) {
       await prisma.clientOwner.create({
         data,

@@ -3,10 +3,16 @@ import { AdminSeed } from './admin';
 import { BankSeed } from './bank';
 import { ClientSeed } from './client';
 import { ClientAddressSeed } from './client-address';
+import { ClientAttachmentSeed } from './client-attachment';
+import { ClientAttendanceTypeSeed } from './client-attendance-type';
 import { ClientContactSeed } from './client-contact';
 import { ClientDepartmentSeed } from './client-department';
+import { ClientDescriptionTypeSeed } from './client-description-type';
+import { ClientDriveTypeSeed } from './client-drive-type';
 import { ClientGroupSeed } from './client-group';
+import { ClientMaintenanceTicketTypeSeed } from './client-maintenance-ticket-type';
 import { ClientOwnerSeed } from './client-owner';
+import { ClientSystemTypeSeed } from './client-system-type';
 import { CnaeSeed } from './cnae';
 import { CnaeNbsIndopSeed } from './cnae-nbs-indop';
 import { CompanySeed } from './company';
@@ -26,9 +32,15 @@ async function main() {
   await ClientGroupSeed.seed(prisma);
   await ClientOwnerSeed.seed(prisma);
   await ClientDepartmentSeed.seed(prisma);
+  await ClientAttendanceTypeSeed.seed(prisma);
+  await ClientMaintenanceTicketTypeSeed.seed(prisma);
+  await ClientSystemTypeSeed.seed(prisma);
+  await ClientDescriptionTypeSeed.seed(prisma);
+  await ClientDriveTypeSeed.seed(prisma);
   await ClientSeed.seed(prisma);
   await ClientAddressSeed.seed(prisma);
   await ClientContactSeed.seed(prisma);
+  await ClientAttachmentSeed.seed(prisma);
 }
 
 main()

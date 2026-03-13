@@ -44,6 +44,11 @@ export class BankSeed {
   ];
 
   static async seed(prisma: PrismaClient): Promise<void> {
+    const bank = await prisma.bank.findFirst();
+    if (bank) {
+      return;
+    }
+
     for (const data of this.data) {
       await prisma.bank.create({
         data,

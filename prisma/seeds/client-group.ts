@@ -7,6 +7,11 @@ export class ClientGroupSeed {
   }));
 
   static async seed(prisma: PrismaClient): Promise<void> {
+    const clientGroup = await prisma.clientGroup.findFirst();
+    if (clientGroup) {
+      return;
+    }
+
     for (const data of this.data) {
       await prisma.clientGroup.create({
         data,

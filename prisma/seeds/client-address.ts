@@ -3,6 +3,11 @@ import { ClientAddressType } from '../../src/app/client/client-address/domain/en
 
 export class ClientAddressSeed {
   static async seed(prisma: PrismaClient): Promise<void> {
+    const clientAddress = await prisma.clientAddress.findFirst();
+    if (clientAddress) {
+      return;
+    }
+
     const clients = await prisma.client.findMany({ select: { id: true, document: true } });
 
     if (clients.length === 0) {

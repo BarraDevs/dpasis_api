@@ -6,7 +6,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-const SWAGGER_PATH = process.env.SWAGGER_PATH || path.join(process.env.HOME || '', 'Downloads/swagger.json');
+const SWAGGER_PATH = process.env.SWAGGER_PATH || path.join(__dirname, '../swagger.json');
 const OUTPUT_PATH = path.join(__dirname, '../postman/DPASIS-API.postman_collection.json');
 
 interface OpenAPISpec {

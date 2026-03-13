@@ -29,6 +29,11 @@ export class IndopSeed {
   ];
 
   static async seed(prisma: PrismaClient): Promise<void> {
+    const indop = await prisma.indop.findFirst();
+    if (indop) {
+      return;
+    }
+
     for (const data of this.data) {
       await prisma.indop.create({
         data,

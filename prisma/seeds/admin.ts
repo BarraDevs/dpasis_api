@@ -20,6 +20,11 @@ export class AdminSeed {
   ];
 
   static async seed(prisma: PrismaClient): Promise<void> {
+    const admin = await prisma.admin.findFirst();
+    if (admin) {
+      return;
+    }
+
     for (const data of this.data) {
       await prisma.admin.create({
         data,

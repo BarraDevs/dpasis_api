@@ -15,6 +15,11 @@ export class ClientDepartmentSeed {
   ];
 
   static async seed(prisma: PrismaClient): Promise<void> {
+    const clientDepartment = await prisma.clientDepartment.findFirst();
+    if (clientDepartment) {
+      return;
+    }
+
     for (const data of this.data) {
       await prisma.clientDepartment.create({
         data,

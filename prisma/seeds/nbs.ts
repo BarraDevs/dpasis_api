@@ -25,6 +25,11 @@ export class NbsSeed {
   ];
 
   static async seed(prisma: PrismaClient): Promise<void> {
+    const nbs = await prisma.nbs.findFirst();
+    if (nbs) {
+      return;
+    }
+
     for (const data of this.data) {
       await prisma.nbs.create({
         data,
