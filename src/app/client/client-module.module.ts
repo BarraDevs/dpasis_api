@@ -13,6 +13,7 @@ import { ClientGroupModule } from './client-group/client-group.module';
 import { ClientInvoiceConfigModule } from './client-invoice-config/client-invoice-config.module';
 import { ClientItemModule } from './client-item/client-item.module';
 import { ClientOwnerModule } from './client-owner/client-owner.module';
+import { ClientTypeModule } from './client-type/client-type.module';
 import { ClientModule } from './client/client.module';
 
 const modules = [
@@ -27,6 +28,7 @@ const modules = [
   ClientDiscountModule,
   ClientInvoiceConfigModule,
   ClientItemModule,
+  ClientTypeModule,
   ClientDepartmentModule,
   ClientGroupModule,
   ClientOwnerModule,

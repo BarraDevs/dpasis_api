@@ -1,0 +1,82 @@
+model ClientType {
+  id                            Int      @id @default(autoincrement())
+  clientId                      Int
+  clientAttendanceTypeId        Int
+  clientMaintenanceTicketTypeId Int
+  clientSystemTypeId            Int
+  clientDescriptionTypeId       Int
+  clientDriveTypeId             Int
+  quantity                      Int
+  active                        Boolean  @default(true)
+  createdAt                     DateTime @default(now())
+  updatedAt                     DateTime @updatedAt
+
+  clientAttendanceType        ClientAttendanceType        @relation(fields: [clientAttendanceTypeId], references: [id])
+  clientMaintenanceTicketType ClientMaintenanceTicketType @relation(fields: [clientMaintenanceTicketTypeId], references: [id])
+  clientSystemType            ClientSystemType            @relation(fields: [clientSystemTypeId], references: [id])
+  clientDescriptionType       ClientDescriptionType       @relation(fields: [clientDescriptionTypeId], references: [id])
+  clientDriveType             ClientDriveType             @relation(fields: [clientDriveTypeId], references: [id])
+  client                      Client                      @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@map("client_types")
+}
+
+model ClientAttendanceType {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  clientTypes ClientType[]
+
+  @@map("client_attendance_types")
+}
+
+model ClientMaintenanceTicketType {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  clientTypes ClientType[]
+
+  @@map("client_maintenance_ticket_types")
+}
+
+model ClientSystemType {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  clientTypes ClientType[]
+
+  @@map("client_system_types")
+}
+
+model ClientDescriptionType {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  clientTypes ClientType[]
+
+  @@map("client_description_types")
+}
+
+model ClientDriveType {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  clientTypes ClientType[]
+
+  @@map("client_drive_types")
+}

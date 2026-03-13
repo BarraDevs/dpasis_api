@@ -23,6 +23,7 @@ model Client {
   invoiceConfig ClientInvoiceConfig?
   discounts     ClientDiscount[]
   attachments   ClientAttachment[]
+  types         ClientType[]
 
   @@map("clients")
 }
@@ -61,56 +62,6 @@ model ClientDepartment {
   contacts ClientContact[]
 
   @@map("client_departments")
-}
-
-model ClientAttendanceType {
-  id        Int      @id @default(autoincrement())
-  name      String   @unique
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("client_attendance_types")
-}
-
-model ClientMaintenanceTicketType {
-  id        Int      @id @default(autoincrement())
-  name      String   @unique
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("client_maintenance_ticket_types")
-}
-
-model ClientSystemType {
-  id        Int      @id @default(autoincrement())
-  name      String   @unique
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("client_system_types")
-}
-
-model ClientDescriptionType {
-  id        Int      @id @default(autoincrement())
-  name      String   @unique
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("client_description_types")
-}
-
-model ClientDriveType {
-  id        Int      @id @default(autoincrement())
-  name      String   @unique
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("client_drive_types")
 }
 
 model ClientContact {
