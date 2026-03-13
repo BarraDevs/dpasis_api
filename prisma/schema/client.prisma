@@ -73,6 +73,16 @@ model ClientAttendanceType {
   @@map("client_attendance_types")
 }
 
+model ClientMaintenanceTicketType {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("client_maintenance_ticket_types")
+}
+
 model ClientContact {
   id           Int      @id @default(autoincrement())
   clientId     Int
