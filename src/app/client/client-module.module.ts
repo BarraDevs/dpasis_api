@@ -6,6 +6,7 @@ import { ClientContactModule } from './client-contact/client-contact.module';
 import { ClientMaintenanceTicketTypeModule } from './client-maintenance-ticket-type/client-maintenance-ticket-type.module';
 import { ClientDepartmentModule } from './client-department/client-department.module';
 import { ClientDescriptionTypeModule } from './client-description-type/client-description-type.module';
+import { ClientDriveTypeModule } from './client-drive-type/client-drive-type.module';
 import { ClientSystemTypeModule } from './client-system-type/client-system-type.module';
 import { ClientDiscountModule } from './client-discount/client-discount.module';
 import { ClientGroupModule } from './client-group/client-group.module';
@@ -21,6 +22,7 @@ const modules = [
   ClientContactModule,
   ClientMaintenanceTicketTypeModule,
   ClientDescriptionTypeModule,
+  ClientDriveTypeModule,
   ClientSystemTypeModule,
   ClientDiscountModule,
   ClientInvoiceConfigModule,

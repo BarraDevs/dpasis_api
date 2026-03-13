@@ -18,6 +18,7 @@ const TOKENS = {
   ClientAttendanceTypeDao: Symbol.for('ClientAttendanceTypeDao'),
   ClientAttachmentDao: Symbol.for('ClientAttachmentDao'),
   ClientDescriptionTypeDao: Symbol.for('ClientDescriptionTypeDao'),
+  ClientDriveTypeDao: Symbol.for('ClientDriveTypeDao'),
   ClientMaintenanceTicketTypeDao: Symbol.for('ClientMaintenanceTicketTypeDao'),
   ClientSystemTypeDao: Symbol.for('ClientSystemTypeDao'),
 
