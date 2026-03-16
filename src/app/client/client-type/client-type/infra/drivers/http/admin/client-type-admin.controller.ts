@@ -4,6 +4,11 @@ import { RequiredRoles } from 'src/app/authentication/infra/decorators/required-
 import { ClientTypeDto } from 'src/app/client/client-type/client-type/application/dtos/client-type.dto';
 import { CreateClientType } from 'src/app/client/client-type/client-type/application/usecases/create-client-type/create-client-type.service';
 import { CreateClientTypeInputDto, CreateClientTypeOutputDto } from 'src/app/client/client-type/client-type/application/usecases/create-client-type/dtos/create-client-type.dto';
+import { DeleteBulkClientType } from 'src/app/client/client-type/client-type/application/usecases/delete-bulk-client-type/delete-bulk-client-type.service';
+import {
+  DeleteBulkClientTypeInputDto,
+  DeleteBulkClientTypeOutputDto,
+} from 'src/app/client/client-type/client-type/application/usecases/delete-bulk-client-type/dtos/delete-bulk-client-type.dto';
 import { DeleteClientType } from 'src/app/client/client-type/client-type/application/usecases/delete-client-type/delete-client-type.service';
 import { EditClientTypeInputDto } from 'src/app/client/client-type/client-type/application/usecases/edit-client-type/dtos/edit-client-type.dto';
 import { EditClientType } from 'src/app/client/client-type/client-type/application/usecases/edit-client-type/edit-client-type.service';
@@ -26,6 +31,7 @@ export class ClientTypeAdminController {
     private readonly editClientType: EditClientType,
     private readonly updateClientTypeStatus: UpdateClientTypeStatus,
     private readonly deleteClientType: DeleteClientType,
+    private readonly deleteBulkClientType: DeleteBulkClientType,
   ) {}
 
   @Post()
@@ -84,6 +90,17 @@ export class ClientTypeAdminController {
   })
   public update(@Param() params: Params, @Body() body: EditClientTypeInputDto): Promise<SuccessMessage> {
     return this.editClientType.execute(params.id, body);
+  }
+
+  @Delete('bulk')
+  @Swagger({
+    tags: ['Tipos de Cliente'],
+    summary: 'Deletar múltiplos tipos de cliente',
+    applyBadRequest: true,
+    okResponse: DeleteBulkClientTypeOutputDto,
+  })
+  public removeBulk(@Body() body: DeleteBulkClientTypeInputDto): Promise<DeleteBulkClientTypeOutputDto> {
+    return this.deleteBulkClientType.execute(body);
   }
 
   @Delete(':id')

@@ -4,6 +4,8 @@ import { AuthenticationGuardsModule } from 'src/app/authentication/application/g
 import { ClientTypeDto } from 'src/app/client/client-type/client-type/application/dtos/client-type.dto';
 import { CreateClientType } from 'src/app/client/client-type/client-type/application/usecases/create-client-type/create-client-type.service';
 import { CreateClientTypeInputDto, CreateClientTypeOutputDto } from 'src/app/client/client-type/client-type/application/usecases/create-client-type/dtos/create-client-type.dto';
+import { DeleteBulkClientType } from 'src/app/client/client-type/client-type/application/usecases/delete-bulk-client-type/delete-bulk-client-type.service';
+import { DeleteBulkClientTypeInputDto, DeleteBulkClientTypeOutputDto } from 'src/app/client/client-type/client-type/application/usecases/delete-bulk-client-type/dtos/delete-bulk-client-type.dto';
 import { DeleteClientType } from 'src/app/client/client-type/client-type/application/usecases/delete-client-type/delete-client-type.service';
 import { EditClientTypeInputDto } from 'src/app/client/client-type/client-type/application/usecases/edit-client-type/dtos/edit-client-type.dto';
 import { EditClientType } from 'src/app/client/client-type/client-type/application/usecases/edit-client-type/edit-client-type.service';
@@ -24,6 +26,7 @@ describe('ClientTypeAdminController', () => {
   let editClientTypeService: EditClientType;
   let updateClientTypeStatusService: UpdateClientTypeStatus;
   let deleteClientTypeService: DeleteClientType;
+  let deleteBulkClientTypeService: DeleteBulkClientType;
 
   beforeEach(async() => {
     const module = await Test.createTestingModule({
@@ -36,6 +39,7 @@ describe('ClientTypeAdminController', () => {
         { provide: EditClientType, useValue: createMock<EditClientType>() },
         { provide: UpdateClientTypeStatus, useValue: createMock<UpdateClientTypeStatus>() },
         { provide: DeleteClientType, useValue: createMock<DeleteClientType>() },
+        { provide: DeleteBulkClientType, useValue: createMock<DeleteBulkClientType>() },
       ],
     }).compile();
 
@@ -46,6 +50,7 @@ describe('ClientTypeAdminController', () => {
     editClientTypeService = module.get(EditClientType);
     updateClientTypeStatusService = module.get(UpdateClientTypeStatus);
     deleteClientTypeService = module.get(DeleteClientType);
+    deleteBulkClientTypeService = module.get(DeleteBulkClientType);
   });
 
   it('should be defined', () => {
@@ -115,6 +120,19 @@ describe('ClientTypeAdminController', () => {
 
       expect(result).toEqual(output);
       expect(updateSpy).toHaveBeenCalledWith(params.id, body);
+    });
+  });
+
+  describe('removeBulk', () => {
+    it('should call deleteBulkClientType.execute with body', async() => {
+      const body = createMock<DeleteBulkClientTypeInputDto>({ ids: [] });
+      const output = createMock<DeleteBulkClientTypeOutputDto>({ succeeded: [], failed: [] });
+      const removeBulkSpy = jest.spyOn(deleteBulkClientTypeService, 'execute').mockResolvedValue(output);
+
+      const result = await sut.removeBulk(body);
+
+      expect(result).toEqual(output);
+      expect(removeBulkSpy).toHaveBeenCalledWith(body);
     });
   });
 

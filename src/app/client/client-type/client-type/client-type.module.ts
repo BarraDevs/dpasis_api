@@ -8,6 +8,7 @@ import { ClientMaintenanceTicketTypeModule } from '../client-maintenance-ticket-
 import { ClientSystemTypeModule } from '../client-system-type/client-system-type.module';
 import { ClientTypePersistenceModule } from './application/persistence/client-type-persistence.module';
 import { CreateClientType } from './application/usecases/create-client-type/create-client-type.service';
+import { DeleteBulkClientType } from './application/usecases/delete-bulk-client-type/delete-bulk-client-type.service';
 import { DeleteClientType } from './application/usecases/delete-client-type/delete-client-type.service';
 import { EditClientType } from './application/usecases/edit-client-type/edit-client-type.service';
 import { FindAllClientType } from './application/usecases/find-all-client-type/find-all-client-type.service';
@@ -31,6 +32,7 @@ import { ClientTypeAdminController } from './infra/drivers/http/admin/client-typ
   ],
   providers: [
     CreateClientType,
+    DeleteBulkClientType,
     DeleteClientType,
     EditClientType,
     FindAllClientType,
