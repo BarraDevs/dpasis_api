@@ -18,6 +18,7 @@ import { CnaeNbsIndopSeed } from './cnae-nbs-indop';
 import { CompanySeed } from './company';
 import { IndopSeed } from './indop';
 import { NbsSeed } from './nbs';
+import { ServiceCategorySeed } from './service-category';
 
 const prisma = new PrismaClient();
 
@@ -37,6 +38,7 @@ async function main() {
   await ClientSystemTypeSeed.seed(prisma);
   await ClientDescriptionTypeSeed.seed(prisma);
   await ClientDriveTypeSeed.seed(prisma);
+  await ServiceCategorySeed.seed(prisma);
   await ClientSeed.seed(prisma);
   await ClientAddressSeed.seed(prisma);
   await ClientContactSeed.seed(prisma);
