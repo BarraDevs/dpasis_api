@@ -33,6 +33,7 @@ function makeClientAddressProps(overrides?: Partial<ClientAddressProps>): Client
     neighborhood: 'Bairro Teste',
     city: 'Cidade Teste',
     state: 'SP',
+    active: true,
     ...overrides,
   };
 }
@@ -46,6 +47,15 @@ describe('ClientAddressFactory', () => {
 
       expect(clientAddress).toBeInstanceOf(ClientAddress);
       expect(clientAddress.props.id).toBeNull();
+    });
+
+    it('should create a ClientAddress with active true', () => {
+      const props = makeClientAddressCreateProps();
+
+      const clientAddress = ClientAddressFactory.create(props);
+
+      expect(clientAddress).toBeInstanceOf(ClientAddress);
+      expect(clientAddress.props.active).toBe(true);
     });
 
     it('should create a ClientAddress with all CreateProps', () => {
@@ -74,6 +84,7 @@ describe('ClientAddressFactory', () => {
         neighborhood: 'Centro',
         city: 'Rio de Janeiro',
         state: 'RJ',
+        active: true,
       });
     });
 
@@ -85,16 +96,13 @@ describe('ClientAddressFactory', () => {
       expect(clientAddress.props.complement).toBeNull();
     });
 
-    it.each(Object.values(ClientAddressType))(
-      'should create a ClientAddress with type %s',
-      (type: ClientAddressType) => {
-        const props = makeClientAddressCreateProps({ type });
+    it.each(Object.values(ClientAddressType))('should create a ClientAddress with type %s', (type: ClientAddressType) => {
+      const props = makeClientAddressCreateProps({ type });
 
-        const clientAddress = ClientAddressFactory.create(props);
+      const clientAddress = ClientAddressFactory.create(props);
 
-        expect(clientAddress.props.type).toBe(type);
-      },
-    );
+      expect(clientAddress.props.type).toBe(type);
+    });
   });
 
   describe('edit', () => {
@@ -125,6 +133,7 @@ describe('ClientAddressFactory', () => {
         neighborhood: 'Novo Bairro',
         city: 'Nova Cidade',
         state: 'MG',
+        active: false,
       });
 
       const clientAddress = ClientAddressFactory.edit(props);
@@ -146,6 +155,7 @@ describe('ClientAddressFactory', () => {
         neighborhood: 'Bairro Teste',
         city: 'Cidade Teste',
         state: 'SP',
+        active: true,
       });
 
       const clientAddress = ClientAddressFactory.load(props);
@@ -161,6 +171,7 @@ describe('ClientAddressFactory', () => {
       expect(clientAddress.props.neighborhood).toBe('Bairro Teste');
       expect(clientAddress.props.city).toBe('Cidade Teste');
       expect(clientAddress.props.state).toBe('SP');
+      expect(clientAddress.props.active).toBe(true);
     });
 
     it('should load only the expected fields from props', () => {
@@ -175,6 +186,7 @@ describe('ClientAddressFactory', () => {
         neighborhood: 'Bairro Load',
         city: 'Cidade Load',
         state: 'BA',
+        active: false,
       });
 
       const clientAddress = ClientAddressFactory.load(props);
@@ -190,6 +202,7 @@ describe('ClientAddressFactory', () => {
         neighborhood: 'Bairro Load',
         city: 'Cidade Load',
         state: 'BA',
+        active: false,
       });
     });
 

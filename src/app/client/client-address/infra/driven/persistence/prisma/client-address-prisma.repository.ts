@@ -21,6 +21,7 @@ export class ClientAddressRepositoryAdapterPrisma implements IClientAddressRepos
         neighborhood: entity.props.neighborhood,
         city: entity.props.city,
         state: entity.props.state,
+        active: entity.props.active,
       },
     });
 
@@ -33,7 +34,6 @@ export class ClientAddressRepositoryAdapterPrisma implements IClientAddressRepos
         id: entity.props.id!,
       },
       data: {
-        clientId: entity.props.clientId,
         type: entity.props.type,
         zipCode: entity.props.zipCode,
         street: entity.props.street,
@@ -42,6 +42,7 @@ export class ClientAddressRepositoryAdapterPrisma implements IClientAddressRepos
         neighborhood: entity.props.neighborhood,
         city: entity.props.city,
         state: entity.props.state,
+        active: entity.props.active,
       },
     });
   }
@@ -63,6 +64,7 @@ export class ClientAddressRepositoryAdapterPrisma implements IClientAddressRepos
       neighborhood: data.neighborhood,
       city: data.city,
       state: data.state,
+      active: data.active,
     });
   }
 

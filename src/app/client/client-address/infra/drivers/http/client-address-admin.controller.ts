@@ -2,8 +2,10 @@ import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestj
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
 import { RequiredRoles } from 'src/app/authentication/infra/decorators/required-role.decorator';
 import { ClientAddressDto } from 'src/app/client/client-address/application/dtos/client-address.dto';
+import { ActivateClientAddress } from 'src/app/client/client-address/application/usecases/activate-client-address/activate-client-address.service';
 import { CreateClientAddress } from 'src/app/client/client-address/application/usecases/create-client-address/create-client-address.service';
 import { CreateClientAddressInputDto, CreateClientAddressOutputDto } from 'src/app/client/client-address/application/usecases/create-client-address/dtos/create-client-address.dto';
+import { DeactivateClientAddress } from 'src/app/client/client-address/application/usecases/deactivate-client-address/deactivate-client-address.service';
 import { DeleteClientAddress } from 'src/app/client/client-address/application/usecases/delete-client-address/delete-client-address.service';
 import { EditClientAddressInputDto } from 'src/app/client/client-address/application/usecases/edit-client-address/dtos/edit-client-address.dto';
 import { EditClientAddress } from 'src/app/client/client-address/application/usecases/edit-client-address/edit-client-address.service';
@@ -23,6 +25,8 @@ export class ClientAddressAdminController {
     private readonly findAllClientAddress: FindAllClientAddress,
     private readonly findClientAddressById: FindClientAddressById,
     private readonly editClientAddress: EditClientAddress,
+    private readonly activateClientAddress: ActivateClientAddress,
+    private readonly deactivateClientAddress: DeactivateClientAddress,
     private readonly deleteClientAddress: DeleteClientAddress,
   ) {}
 
@@ -58,6 +62,30 @@ export class ClientAddressAdminController {
   })
   public findOne(@Param() params: Params): Promise<ClientAddressDto> {
     return this.findClientAddressById.execute(params.id);
+  }
+
+  @Patch(':id/activate')
+  @Swagger({
+    tags: ['Endereços de Clientes'],
+    summary: 'Ativar endereço de cliente',
+    applyBadRequest: true,
+    applyNotFound: true,
+    okResponse: SuccessMessage,
+  })
+  public activate(@Param() params: Params): Promise<SuccessMessage> {
+    return this.activateClientAddress.execute(params.id);
+  }
+
+  @Patch(':id/deactivate')
+  @Swagger({
+    tags: ['Endereços de Clientes'],
+    summary: 'Desativar endereço de cliente',
+    applyBadRequest: true,
+    applyNotFound: true,
+    okResponse: SuccessMessage,
+  })
+  public deactivate(@Param() params: Params): Promise<SuccessMessage> {
+    return this.deactivateClientAddress.execute(params.id);
   }
 
   @Patch(':id')

@@ -91,6 +91,7 @@ describe('ClientAddressDaoAdapterPrisma - Integration tests', () => {
         neighborhood: 'Centro',
         city: 'São Paulo',
         state: 'SP',
+        active: true,
         createdAt: created.createdAt,
         updatedAt: created.updatedAt,
       });
@@ -284,6 +285,7 @@ describe('ClientAddressDaoAdapterPrisma - Integration tests', () => {
         neighborhood: 'Centro',
         city: 'São Paulo',
         state: 'SP',
+        active: true,
         createdAt: created.createdAt,
         updatedAt: created.updatedAt,
       });
@@ -368,6 +370,7 @@ describe('ClientAddressDaoAdapterPrisma - Integration tests', () => {
         neighborhood: 'Centro',
         city: 'São Paulo',
         state: 'SP',
+        active: true,
         createdAt: created.createdAt,
         updatedAt: created.updatedAt,
       });

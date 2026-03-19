@@ -9,6 +9,7 @@ export class ClientAddressDto {
   neighborhood: string;
   city: string;
   state: string;
+  active: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

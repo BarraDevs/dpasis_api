@@ -17,6 +17,7 @@ const ClientAddressSelect = {
   neighborhood: true,
   city: true,
   state: true,
+  active: true,
   createdAt: true,
   updatedAt: true,
 } satisfies Prisma.ClientAddressSelect;

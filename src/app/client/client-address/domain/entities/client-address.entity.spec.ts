@@ -13,6 +13,7 @@ function makeClientAddressProps(overrides?: Partial<ClientAddressProps>): Client
     neighborhood: 'Bairro Teste',
     city: 'Cidade Teste',
     state: 'SP',
+    active: true,
     ...overrides,
   };
 }
@@ -65,6 +66,7 @@ describe('ClientAddress Entity', () => {
         neighborhood: 'Centro',
         city: 'Rio de Janeiro',
         state: 'RJ',
+        active: true,
       });
 
       const clientAddress = ClientAddress._instantiate(props);
@@ -80,6 +82,7 @@ describe('ClientAddress Entity', () => {
         neighborhood: 'Centro',
         city: 'Rio de Janeiro',
         state: 'RJ',
+        active: true,
       });
     });
 
@@ -109,6 +112,7 @@ describe('ClientAddress Entity', () => {
         'neighborhood',
         'city',
         'state',
+        'active',
       ]);
     });
   });
@@ -128,6 +132,76 @@ describe('ClientAddress Entity', () => {
       const clientAddress = ClientAddress._instantiate(makeClientAddressProps({ type }));
 
       expect(clientAddress.isMain()).toBe(false);
+    });
+  });
+
+  describe('isActive', () => {
+    it('should return true when active is true', () => {
+      const clientAddress = ClientAddress._instantiate(
+        makeClientAddressProps({ active: true }),
+      );
+
+      expect(clientAddress.isActive()).toBe(true);
+    });
+
+    it('should return false when active is false', () => {
+      const clientAddress = ClientAddress._instantiate(
+        makeClientAddressProps({ active: false }),
+      );
+
+      expect(clientAddress.isActive()).toBe(false);
+    });
+
+    it('should return true when active is undefined (default)', () => {
+      const clientAddress = ClientAddress._instantiate(makeClientAddressProps());
+
+      expect(clientAddress.isActive()).toBe(true);
+    });
+  });
+
+  describe('activate', () => {
+    it('should set active to true', () => {
+      const clientAddress = ClientAddress._instantiate(
+        makeClientAddressProps({ active: false }),
+      );
+
+      clientAddress.activate();
+
+      expect(clientAddress.isActive()).toBe(true);
+      expect(clientAddress.props.active).toBe(true);
+    });
+
+    it('should keep active true when already active', () => {
+      const clientAddress = ClientAddress._instantiate(
+        makeClientAddressProps({ active: true }),
+      );
+
+      clientAddress.activate();
+
+      expect(clientAddress.isActive()).toBe(true);
+    });
+  });
+
+  describe('deactivate', () => {
+    it('should set active to false', () => {
+      const clientAddress = ClientAddress._instantiate(
+        makeClientAddressProps({ active: true }),
+      );
+
+      clientAddress.deactivate();
+
+      expect(clientAddress.isActive()).toBe(false);
+      expect(clientAddress.props.active).toBe(false);
+    });
+
+    it('should keep active false when already inactive', () => {
+      const clientAddress = ClientAddress._instantiate(
+        makeClientAddressProps({ active: false }),
+      );
+
+      clientAddress.deactivate();
+
+      expect(clientAddress.isActive()).toBe(false);
     });
   });
 });

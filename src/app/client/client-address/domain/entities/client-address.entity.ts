@@ -2,6 +2,7 @@ import { ClientAddressType } from '../enums/client-address-type.enum';
 
 export type ClientAddressProps = ClientAddressCreateProps & {
   id: number | null;
+  active: boolean;
 };
 
 export type ClientAddressCreateProps = {
@@ -33,5 +34,17 @@ export class ClientAddress {
 
   public isMain(): boolean {
     return this._props.type === ClientAddressType.MAIN;
+  }
+
+  public isActive(): boolean {
+    return this._props.active ?? true;
+  }
+
+  public activate(): void {
+    this._props.active = true;
+  }
+
+  public deactivate(): void {
+    this._props.active = false;
   }
 }

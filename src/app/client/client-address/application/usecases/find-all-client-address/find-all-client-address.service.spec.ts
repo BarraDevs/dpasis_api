@@ -4,6 +4,7 @@ import { ClientAddressType } from 'src/app/client/client-address/domain/enums/cl
 import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
 import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
+import { ClientAddressDto } from '../../dtos/client-address.dto';
 import { FindAllClientAddress } from './find-all-client-address.service';
 
 describe('FindAllClientAddress', () => {
@@ -82,7 +83,7 @@ describe('FindAllClientAddress', () => {
     expect(result.currentPage).toBe(1);
     expect(result.totalItems).toBe(1);
     expect(result.data).toHaveLength(1);
-    expect(result.data[0]).toEqual({
+    expect(result.data[0]).toEqual<ClientAddressDto>({
       id: created.id,
       clientId,
       type: ClientAddressType.MAIN,
@@ -93,6 +94,7 @@ describe('FindAllClientAddress', () => {
       neighborhood: 'Centro',
       city: 'São Paulo',
       state: 'SP',
+      active: true,
       createdAt: created.createdAt,
       updatedAt: created.updatedAt,
     });

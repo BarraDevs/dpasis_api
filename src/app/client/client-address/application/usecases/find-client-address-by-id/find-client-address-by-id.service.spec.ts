@@ -5,6 +5,7 @@ import { ClientAddressNotFoundError } from 'src/app/client/client-address/domain
 import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
 import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
+import { ClientAddressDto } from '../../dtos/client-address.dto';
 import { FindClientAddressById } from './find-client-address-by-id.service';
 
 describe('FindClientAddressById', () => {
@@ -75,7 +76,7 @@ describe('FindClientAddressById', () => {
 
     const result = await sut.execute(created.id);
 
-    expect(result).toEqual({
+    expect(result).toEqual<ClientAddressDto>({
       id: created.id,
       clientId,
       type: ClientAddressType.MAIN,
@@ -86,6 +87,7 @@ describe('FindClientAddressById', () => {
       neighborhood: 'Centro',
       city: 'São Paulo',
       state: 'SP',
+      active: true,
       createdAt: created.createdAt,
       updatedAt: created.updatedAt,
     });

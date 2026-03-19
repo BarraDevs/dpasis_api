@@ -9,6 +9,8 @@ import { EditClientAddressInputDto } from 'src/app/client/client-address/applica
 import { EditClientAddress } from 'src/app/client/client-address/application/usecases/edit-client-address/edit-client-address.service';
 import { FindAllClientAddressQueryDto } from 'src/app/client/client-address/application/usecases/find-all-client-address/dtos/find-all-client-address.dto';
 import { FindAllClientAddress } from 'src/app/client/client-address/application/usecases/find-all-client-address/find-all-client-address.service';
+import { ActivateClientAddress } from 'src/app/client/client-address/application/usecases/activate-client-address/activate-client-address.service';
+import { DeactivateClientAddress } from 'src/app/client/client-address/application/usecases/deactivate-client-address/deactivate-client-address.service';
 import { FindClientAddressById } from 'src/app/client/client-address/application/usecases/find-client-address-by-id/find-client-address-by-id.service';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
 import { Params } from 'src/infra/validators/class/dtos/params/params.dto';
@@ -21,6 +23,8 @@ describe('ClientAddressAdminController - Unit tests', () => {
   let findAllClientAddressService: FindAllClientAddress;
   let findClientAddressByIdService: FindClientAddressById;
   let editClientAddressService: EditClientAddress;
+  let activateClientAddressService: ActivateClientAddress;
+  let deactivateClientAddressService: DeactivateClientAddress;
   let deleteClientAddressService: DeleteClientAddress;
 
   beforeEach(async() => {
@@ -32,6 +36,8 @@ describe('ClientAddressAdminController - Unit tests', () => {
         { provide: FindAllClientAddress, useValue: createMock<FindAllClientAddress>() },
         { provide: FindClientAddressById, useValue: createMock<FindClientAddressById>() },
         { provide: EditClientAddress, useValue: createMock<EditClientAddress>() },
+        { provide: ActivateClientAddress, useValue: createMock<ActivateClientAddress>() },
+        { provide: DeactivateClientAddress, useValue: createMock<DeactivateClientAddress>() },
         { provide: DeleteClientAddress, useValue: createMock<DeleteClientAddress>() },
       ],
     }).compile();
@@ -41,6 +47,8 @@ describe('ClientAddressAdminController - Unit tests', () => {
     findAllClientAddressService = module.get(FindAllClientAddress);
     findClientAddressByIdService = module.get(FindClientAddressById);
     editClientAddressService = module.get(EditClientAddress);
+    activateClientAddressService = module.get(ActivateClientAddress);
+    deactivateClientAddressService = module.get(DeactivateClientAddress);
     deleteClientAddressService = module.get(DeleteClientAddress);
   });
 
@@ -93,6 +101,32 @@ describe('ClientAddressAdminController - Unit tests', () => {
       // Assert
       expect(result).toEqual(output);
       expect(findOneSpy).toHaveBeenCalledWith(params.id);
+    });
+  });
+
+  describe('activate', () => {
+    it('should call activateClientAddress.execute with params.id', async() => {
+      const params = createMock<Params>();
+      const output = createMock<SuccessMessage>();
+      const activateSpy = jest.spyOn(activateClientAddressService, 'execute').mockResolvedValue(output);
+
+      const result = await sut.activate(params);
+
+      expect(result).toEqual(output);
+      expect(activateSpy).toHaveBeenCalledWith(params.id);
+    });
+  });
+
+  describe('deactivate', () => {
+    it('should call deactivateClientAddress.execute with params.id', async() => {
+      const params = createMock<Params>();
+      const output = createMock<SuccessMessage>();
+      const deactivateSpy = jest.spyOn(deactivateClientAddressService, 'execute').mockResolvedValue(output);
+
+      const result = await sut.deactivate(params);
+
+      expect(result).toEqual(output);
+      expect(deactivateSpy).toHaveBeenCalledWith(params.id);
     });
   });
 

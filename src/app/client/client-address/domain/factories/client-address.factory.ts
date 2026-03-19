@@ -2,7 +2,7 @@ import { ClientAddress, ClientAddressCreateProps, ClientAddressProps } from '../
 
 export class ClientAddressFactory {
   static create(props: ClientAddressCreateProps): ClientAddress {
-    return ClientAddress._instantiate({ ...props, id: null });
+    return ClientAddress._instantiate({ ...props, id: null, active: true });
   }
 
   static edit(props: ClientAddressProps): ClientAddress {
@@ -21,6 +21,7 @@ export class ClientAddressFactory {
       neighborhood: props.neighborhood,
       city: props.city,
       state: props.state,
+      active: props.active,
     });
   }
 }
