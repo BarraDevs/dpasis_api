@@ -53,32 +53,8 @@ describe('StringToBoolean', () => {
       expect(typeof instance.value).toBe('boolean');
     });
 
-    it('should transform empty string to boolean false', () => {
-      const plain = { value: '' };
-      const instance = plainToInstance(TestClass, plain);
-
-      expect(instance.value).toBe(false);
-      expect(typeof instance.value).toBe('boolean');
-    });
-
-    it('should transform any other string to boolean false', () => {
-      const plain = { value: 'invalid' };
-      const instance = plainToInstance(TestClass, plain);
-
-      expect(instance.value).toBe(false);
-      expect(typeof instance.value).toBe('boolean');
-    });
-
-    it('should transform "1" string to boolean false (not "true")', () => {
-      const plain = { value: '1' };
-      const instance = plainToInstance(TestClass, plain);
-
-      expect(instance.value).toBe(false);
-      expect(typeof instance.value).toBe('boolean');
-    });
-
-    it('should transform "0" string to boolean false', () => {
-      const plain = { value: '0' };
+    it('should transform "False" string to boolean false (mixed case)', () => {
+      const plain = { value: 'False' };
       const instance = plainToInstance(TestClass, plain);
 
       expect(instance.value).toBe(false);
@@ -169,45 +145,81 @@ describe('StringToBoolean', () => {
   });
 
   describe('edge cases', () => {
-    it('should handle strings with leading/trailing whitespace as false', () => {
+    it('should leave strings with leading/trailing whitespace unchanged', () => {
       const plain = { value: '  true  ' };
       const instance = plainToInstance(TestClass, plain);
 
       // Whitespace will be included, so "  true  ".toLowerCase() !== "true"
-      expect(instance.value).toBe(false);
-      expect(typeof instance.value).toBe('boolean');
+      expect(instance.value).toBe('  true  ');
+      expect(typeof instance.value).toBe('string');
     });
 
-    it('should handle "yes" string as false', () => {
-      const plain = { value: 'yes' };
+    it('should leave empty string unchanged', () => {
+      const plain = { value: '' };
       const instance = plainToInstance(TestClass, plain);
 
-      expect(instance.value).toBe(false);
-      expect(typeof instance.value).toBe('boolean');
+      expect(instance.value).toBe('');
+      expect(typeof instance.value).toBe('string');
     });
 
-    it('should handle "no" string as false', () => {
-      const plain = { value: 'no' };
+    it('should leave whitespace-only string unchanged', () => {
+      const plain = { value: '   ' };
       const instance = plainToInstance(TestClass, plain);
 
-      expect(instance.value).toBe(false);
-      expect(typeof instance.value).toBe('boolean');
+      expect(instance.value).toBe('   ');
+      expect(typeof instance.value).toBe('string');
     });
 
-    it('should handle "on" string as false', () => {
-      const plain = { value: 'on' };
-      const instance = plainToInstance(TestClass, plain);
+    it('should leave "1" and "0" unchanged (common in query params)', () => {
+      const plain1 = { value: '1' };
+      const plain0 = { value: '0' };
+      const instance1 = plainToInstance(TestClass, plain1);
+      const instance0 = plainToInstance(TestClass, plain0);
 
-      expect(instance.value).toBe(false);
-      expect(typeof instance.value).toBe('boolean');
+      expect(instance1.value).toBe('1');
+      expect(instance0.value).toBe('0');
+      expect(typeof instance1.value).toBe('string');
+      expect(typeof instance0.value).toBe('string');
     });
 
-    it('should handle "off" string as false', () => {
-      const plain = { value: 'off' };
+    it('should leave "yes" and "no" unchanged', () => {
+      const plainYes = { value: 'yes' };
+      const plainNo = { value: 'no' };
+      const instanceYes = plainToInstance(TestClass, plainYes);
+      const instanceNo = plainToInstance(TestClass, plainNo);
+
+      expect(instanceYes.value).toBe('yes');
+      expect(instanceNo.value).toBe('no');
+    });
+
+    it('should leave strings containing "true" or "false" as substring unchanged', () => {
+      const plainTruex = { value: 'truex' };
+      const plainXtrue = { value: 'xtrue' };
+      const plainFalsepositive = { value: 'falsepositive' };
+
+      expect(plainToInstance(TestClass, plainTruex).value).toBe('truex');
+      expect(plainToInstance(TestClass, plainXtrue).value).toBe('xtrue');
+      expect(plainToInstance(TestClass, plainFalsepositive).value).toBe('falsepositive');
+    });
+
+    it('should leave single character strings unchanged', () => {
+      expect(plainToInstance(TestClass, { value: 't' }).value).toBe('t');
+      expect(plainToInstance(TestClass, { value: 'f' }).value).toBe('f');
+    });
+
+    it('should handle string "false" with leading/trailing whitespace as unchanged', () => {
+      const plain = { value: '  false  ' };
       const instance = plainToInstance(TestClass, plain);
 
-      expect(instance.value).toBe(false);
-      expect(typeof instance.value).toBe('boolean');
+      expect(instance.value).toBe('  false  ');
+      expect(typeof instance.value).toBe('string');
+    });
+
+    it('should leave numeric string "1.0" unchanged', () => {
+      const plain = { value: '1.0' };
+      const instance = plainToInstance(TestClass, plain);
+
+      expect(instance.value).toBe('1.0');
     });
   });
 

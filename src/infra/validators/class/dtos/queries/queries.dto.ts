@@ -1,5 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsInt, IsOptional, IsPositive, IsString } from 'class-validator';
+import { IsBoolean, IsInt, IsOptional, IsPositive, IsString } from 'class-validator';
+import { StringToBoolean } from '../../decorators/string-boolean/string-boolean';
 import { StringToNumber } from '../../decorators/string-number/string-number';
 import { Trim } from '../../decorators/trim/trim';
 
@@ -23,4 +24,10 @@ export class Queries {
   @IsOptional()
   @IsString({ message: '$property deve ser um texto' })
   search?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsBoolean({ message: '$property deve ser um booleano' })
+  @StringToBoolean()
+  active?: boolean;
 }
