@@ -2,6 +2,7 @@ model Faq {
   id        Int      @id @default(autoincrement())
   question  String   @db.Text
   answer    String   @db.Text
+  active    Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

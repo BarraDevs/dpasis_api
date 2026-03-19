@@ -175,6 +175,7 @@ describe('FaqDaoAdapterPrisma - Integration tests', () => {
         id: created.id,
         question: created.question,
         answer: created.answer,
+        active: created.active,
         createdAt: created.createdAt,
         updatedAt: created.updatedAt,
       });
@@ -224,6 +225,7 @@ describe('FaqDaoAdapterPrisma - Integration tests', () => {
         id: created.id,
         question: created.question,
         answer: created.answer,
+        active: created.active,
         createdAt: created.createdAt,
         updatedAt: created.updatedAt,
       });
@@ -318,6 +320,66 @@ describe('FaqDaoAdapterPrisma - Integration tests', () => {
       // Assert
       const deleted = await prisma.faq.findUnique({ where: { id: faq.id } });
       expect(deleted).toBeNull();
+    });
+  });
+
+  describe('updateStatus', () => {
+    it('should update active from true to false', async() => {
+      // Arrange
+      const faq = await prisma.faq.create({
+        data: { question: 'P?', answer: 'R.', active: true },
+      });
+
+      // Act
+      await sut.updateStatus(faq.id, false);
+
+      // Assert
+      const updated = await prisma.faq.findUnique({ where: { id: faq.id } });
+      expect(updated?.active).toBe(false);
+    });
+
+    it('should update active from false to true', async() => {
+      // Arrange
+      const faq = await prisma.faq.create({
+        data: { question: 'P?', answer: 'R.', active: false },
+      });
+
+      // Act
+      await sut.updateStatus(faq.id, true);
+
+      // Assert
+      const updated = await prisma.faq.findUnique({ where: { id: faq.id } });
+      expect(updated?.active).toBe(true);
+    });
+
+    it.each([true, false])('should not change active when it is already the same value (%s)', async(active) => {
+      // Arrange
+      const faq = await prisma.faq.create({
+        data: { question: 'P?', answer: 'R.', active },
+      });
+
+      // Act
+      await sut.updateStatus(faq.id, active);
+
+      // Assert
+      const updated = await prisma.faq.findUnique({ where: { id: faq.id } });
+      expect(updated?.active).toBe(active);
+    });
+
+    it('should not change other faq fields', async() => {
+      // Arrange
+      const faq = await prisma.faq.create({
+        data: { question: 'P?', answer: 'R.', active: true },
+      });
+
+      // Act
+      await sut.updateStatus(faq.id, false);
+
+      // Assert
+      const updated = await prisma.faq.findUnique({ where: { id: faq.id } });
+      expect(updated?.question).toBe('P?');
+      expect(updated?.answer).toBe('R.');
+      expect(updated?.active).toBe(false);
     });
   });
 });

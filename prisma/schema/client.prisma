@@ -74,6 +74,7 @@ model ClientContact {
   whatsapp     String?
   observations String?  @db.Text
   receiveNF    Boolean
+  active       Boolean  @default(true)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -95,6 +96,7 @@ model ClientAddress {
   neighborhood String
   city         String
   state        String
+  active       Boolean  @default(true)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -126,6 +128,7 @@ model ClientItem {
   quantity         Int
   unitValueInCents Int
   cnaeNbsIndopId   Int
+  active           Boolean  @default(true)
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
@@ -169,6 +172,7 @@ model ClientDiscount {
   year                Int
   doNotGenerateCharge Boolean
   terminateContract   Boolean
+  active              Boolean  @default(true)
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 

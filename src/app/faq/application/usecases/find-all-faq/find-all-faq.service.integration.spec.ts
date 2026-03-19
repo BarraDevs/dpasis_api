@@ -162,6 +162,7 @@ describe('FindAllFaq - Integration tests', () => {
       id: faq.id,
       question: faq.question,
       answer: faq.answer,
+      active: faq.active,
       createdAt: faq.createdAt,
       updatedAt: faq.updatedAt,
     });

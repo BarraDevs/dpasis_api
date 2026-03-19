@@ -9,4 +9,5 @@ export interface IFaqDao {
   save(data: CreateFaqInputDto): Promise<number>;
   edit(id: number, data: EditFaqInputDto): Promise<void>;
   delete(id: number): Promise<void>;
+  updateStatus(id: number, active: boolean): Promise<void>;
 }

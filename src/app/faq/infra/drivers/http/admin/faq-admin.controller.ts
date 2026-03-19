@@ -10,6 +10,7 @@ import { EditFaq } from 'src/app/faq/application/usecases/edit-faq/edit-faq.serv
 import { FindAllFaqQueryDto } from 'src/app/faq/application/usecases/find-all-faq/dtos/find-all-faq.dto';
 import { FindAllFaq } from 'src/app/faq/application/usecases/find-all-faq/find-all-faq.service';
 import { FindFaqById } from 'src/app/faq/application/usecases/find-faq-by-id/find-faq-by-id.service';
+import { UpdateFaqStatus } from 'src/app/faq/application/usecases/update-faq-status/update-faq-status.service';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
 import { Swagger } from 'src/infra/openapi/swagger';
 import { Params } from 'src/infra/validators/class/dtos/params/params.dto';
@@ -23,6 +24,7 @@ export class FaqAdminController {
     private readonly findAllFaq: FindAllFaq,
     private readonly findFaqById: FindFaqById,
     private readonly editFaq: EditFaq,
+    private readonly updateFaqStatus: UpdateFaqStatus,
     private readonly deleteFaq: DeleteFaq,
   ) {}
 
@@ -58,6 +60,18 @@ export class FaqAdminController {
   })
   public findOne(@Param() params: Params): Promise<FaqDto> {
     return this.findFaqById.execute(params.id);
+  }
+
+  @Patch(':id/status')
+  @Swagger({
+    tags: ['FAQs'],
+    summary: 'Inverter status ativo da FAQ',
+    applyBadRequest: true,
+    applyNotFound: true,
+    okResponse: SuccessMessage,
+  })
+  public updateStatus(@Param() params: Params): Promise<SuccessMessage> {
+    return this.updateFaqStatus.execute(params.id);
   }
 
   @Patch(':id')

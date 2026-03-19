@@ -11,6 +11,7 @@ const FaqSelect = {
   id: true,
   question: true,
   answer: true,
+  active: true,
   createdAt: true,
   updatedAt: true,
 } satisfies Prisma.FaqSelect;
@@ -70,6 +71,13 @@ export class FaqDaoAdapterPrisma implements IFaqDao {
   public async delete(id: number): Promise<void> {
     await this.prisma.faq.delete({
       where: { id },
+    });
+  }
+
+  public async updateStatus(id: number, active: boolean): Promise<void> {
+    await this.prisma.faq.update({
+      where: { id },
+      data: { active },
     });
   }
 }
