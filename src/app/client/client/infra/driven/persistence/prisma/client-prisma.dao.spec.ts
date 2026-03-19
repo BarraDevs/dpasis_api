@@ -142,6 +142,70 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
       expect(inactiveClients[0].active).toBe(false);
     });
 
+    it('should filter by search in companyName, fantasyName and document (case-insensitive)', async() => {
+      const { group, owner } = await createClientGroupAndOwner();
+
+      await prisma.client.create({
+        data: {
+          type: ClientType.PJ,
+          document: '09748165000110',
+          groupId: group.id,
+          ownerId: owner.id,
+          companyName: 'Empresa Premium LTDA',
+          fantasyName: null,
+          headquarters: 'SP',
+          invoiceType: ClientInvoiceType.CONTRACT,
+          generateInvoice: true,
+          active: true,
+        },
+      });
+      await prisma.client.create({
+        data: {
+          type: ClientType.PJ,
+          document: '33000167000101',
+          groupId: group.id,
+          ownerId: owner.id,
+          companyName: 'Outra Empresa',
+          fantasyName: null,
+          headquarters: 'SP',
+          invoiceType: ClientInvoiceType.CONTRACT,
+          generateInvoice: true,
+          active: true,
+        },
+      });
+
+      const [byCompanyName] = await sut.findAll({ search: 'premium' });
+      const [byDocument] = await sut.findAll({ search: '33000167' });
+
+      expect(byCompanyName).toHaveLength(1);
+      expect(byCompanyName[0].companyName).toBe('Empresa Premium LTDA');
+      expect(byDocument).toHaveLength(1);
+      expect(byDocument[0].document).toBe('33000167000101');
+    });
+
+    it('should return empty when search matches no client', async() => {
+      const { group, owner } = await createClientGroupAndOwner();
+
+      await prisma.client.create({
+        data: {
+          type: ClientType.PJ,
+          document: '09748165000110',
+          groupId: group.id,
+          ownerId: owner.id,
+          companyName: 'Empresa Test',
+          headquarters: 'SP',
+          invoiceType: ClientInvoiceType.CONTRACT,
+          generateInvoice: true,
+          active: true,
+        },
+      });
+
+      const [clients, total] = await sut.findAll({ search: 'Inexistente' });
+
+      expect(clients).toEqual([]);
+      expect(total).toBe(0);
+    });
+
     it('should paginate results correctly', async() => {
       const { group, owner } = await createClientGroupAndOwner();
 

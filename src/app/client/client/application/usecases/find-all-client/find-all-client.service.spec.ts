@@ -167,6 +167,195 @@ describe('FindAllClient - Integration tests', () => {
     expect(result.totalPages).toBe(3);
   });
 
+  it('should filter by search in companyName (case-insensitive)', async() => {
+    const [group, owner] = await Promise.all([
+      prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
+      prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+    ]);
+
+    await prisma.client.createMany({
+      data: [
+        {
+          type: ClientType.PJ,
+          document: '09748165000110',
+          groupId: group.id,
+          ownerId: owner.id,
+          companyName: 'Empresa Premium LTDA',
+          headquarters: 'SP',
+          invoiceType: ClientInvoiceType.CONTRACT,
+          generateInvoice: true,
+          active: true,
+        },
+        {
+          type: ClientType.PJ,
+          document: '09748165000121',
+          groupId: group.id,
+          ownerId: owner.id,
+          companyName: 'Empresa Básica',
+          headquarters: 'SP',
+          invoiceType: ClientInvoiceType.CONTRACT,
+          generateInvoice: true,
+          active: true,
+        },
+      ],
+    });
+
+    const result = await sut.execute({ search: 'premium' });
+
+    expect(result.data).toHaveLength(1);
+    expect(result.totalItems).toBe(1);
+    expect(result.data[0].companyName).toBe('Empresa Premium LTDA');
+  });
+
+  it('should filter by search in fantasyName (case-insensitive)', async() => {
+    const [group, owner] = await Promise.all([
+      prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
+      prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+    ]);
+
+    await prisma.client.createMany({
+      data: [
+        {
+          type: ClientType.PJ,
+          document: '09748165000110',
+          groupId: group.id,
+          ownerId: owner.id,
+          companyName: 'Empresa 1',
+          fantasyName: 'Premium Corp',
+          headquarters: 'SP',
+          invoiceType: ClientInvoiceType.CONTRACT,
+          generateInvoice: true,
+          active: true,
+        },
+        {
+          type: ClientType.PJ,
+          document: '09748165000121',
+          groupId: group.id,
+          ownerId: owner.id,
+          companyName: 'Empresa 2',
+          fantasyName: 'Básica',
+          headquarters: 'SP',
+          invoiceType: ClientInvoiceType.CONTRACT,
+          generateInvoice: true,
+          active: true,
+        },
+      ],
+    });
+
+    const result = await sut.execute({ search: 'PREMIUM' });
+
+    expect(result.data).toHaveLength(1);
+    expect(result.totalItems).toBe(1);
+    expect(result.data[0].fantasyName).toBe('Premium Corp');
+  });
+
+  it('should filter by search in document (case-insensitive)', async() => {
+    const [group, owner] = await Promise.all([
+      prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
+      prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+    ]);
+
+    await prisma.client.createMany({
+      data: [
+        {
+          type: ClientType.PJ,
+          document: '09748165000110',
+          groupId: group.id,
+          ownerId: owner.id,
+          companyName: 'Empresa 1',
+          headquarters: 'SP',
+          invoiceType: ClientInvoiceType.CONTRACT,
+          generateInvoice: true,
+          active: true,
+        },
+        {
+          type: ClientType.PJ,
+          document: '33000167000101',
+          groupId: group.id,
+          ownerId: owner.id,
+          companyName: 'Empresa 2',
+          headquarters: 'SP',
+          invoiceType: ClientInvoiceType.CONTRACT,
+          generateInvoice: true,
+          active: true,
+        },
+      ],
+    });
+
+    const result = await sut.execute({ search: '33000167' });
+
+    expect(result.data).toHaveLength(1);
+    expect(result.totalItems).toBe(1);
+    expect(result.data[0].document).toBe('33000167000101');
+  });
+
+  it('should return empty when search matches no client', async() => {
+    const [group, owner] = await Promise.all([
+      prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
+      prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+    ]);
+
+    await prisma.client.create({
+      data: {
+        type: ClientType.PJ,
+        document: '09748165000110',
+        groupId: group.id,
+        ownerId: owner.id,
+        companyName: 'Empresa Test',
+        headquarters: 'SP',
+        invoiceType: ClientInvoiceType.CONTRACT,
+        generateInvoice: true,
+        active: true,
+      },
+    });
+
+    const result = await sut.execute({ search: 'Inexistente' });
+
+    expect(result.data).toEqual([]);
+    expect(result.totalItems).toBe(0);
+  });
+
+  it('should combine search and active filters', async() => {
+    const [group, owner] = await Promise.all([
+      prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
+      prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+    ]);
+
+    await prisma.client.createMany({
+      data: [
+        {
+          type: ClientType.PJ,
+          document: '09748165000110',
+          groupId: group.id,
+          ownerId: owner.id,
+          companyName: 'Tech Solutions',
+          headquarters: 'SP',
+          invoiceType: ClientInvoiceType.CONTRACT,
+          generateInvoice: true,
+          active: true,
+        },
+        {
+          type: ClientType.PJ,
+          document: '09748165000121',
+          groupId: group.id,
+          ownerId: owner.id,
+          companyName: 'Tech Inativo',
+          headquarters: 'SP',
+          invoiceType: ClientInvoiceType.CONTRACT,
+          generateInvoice: true,
+          active: false,
+        },
+      ],
+    });
+
+    const result = await sut.execute({ search: 'Tech', active: true });
+
+    expect(result.data).toHaveLength(1);
+    expect(result.totalItems).toBe(1);
+    expect(result.data[0].companyName).toBe('Tech Solutions');
+    expect(result.data[0].active).toBe(true);
+  });
+
   it('should filter by active when active is true', async() => {
     const [group, owner] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),

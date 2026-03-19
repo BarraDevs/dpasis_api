@@ -47,6 +47,16 @@ export class ClientDaoAdapterPrisma implements IClientDao {
 
     const conditions: Prisma.ClientWhereInput[] = [];
 
+    if (queries.search?.trim()) {
+      conditions.push({
+        OR: [
+          { companyName: { contains: queries.search.trim(), mode: 'insensitive' } },
+          { fantasyName: { contains: queries.search.trim(), mode: 'insensitive' } },
+          { document: { contains: queries.search.trim(), mode: 'insensitive' } },
+        ],
+      });
+    }
+
     if (queries.active != null && queries.active !== undefined) {
       conditions.push({ active: queries.active });
     }
