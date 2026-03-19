@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
 import { RequiredRoles } from 'src/app/authentication/infra/decorators/required-role.decorator';
 import { CnaeNbsIndopDto } from 'src/app/taxation/cnae-nbs-indop/application/dtos/cnae-nbs-indop.dto';
@@ -15,6 +15,7 @@ import { FindIndopsByCnaeAndNbsForSelectQueryDto } from 'src/app/taxation/cnae-n
 import { FindIndopsByCnaeAndNbsForSelect } from 'src/app/taxation/cnae-nbs-indop/application/usecases/find-indops-by-cnae-and-nbs-for-select/find-indops-by-cnae-and-nbs-for-select.service';
 import { FindNbsByCnaeForSelectQueryDto } from 'src/app/taxation/cnae-nbs-indop/application/usecases/find-nbs-by-cnae-for-select/dtos/find-nbs-by-cnae-for-select.dto';
 import { FindNbsByCnaeForSelect } from 'src/app/taxation/cnae-nbs-indop/application/usecases/find-nbs-by-cnae-for-select/find-nbs-by-cnae-for-select.service';
+import { UpdateCnaeNbsIndopStatus } from 'src/app/taxation/cnae-nbs-indop/application/usecases/update-cnae-nbs-indop-status/update-cnae-nbs-indop-status.service';
 import { CnaeDto } from 'src/app/taxation/cnae/application/dtos/cnae.dto';
 import { IndopDto } from 'src/app/taxation/indop/application/dtos/indop.dto';
 import { NbsDto } from 'src/app/taxation/nbs/application/dtos/nbs.dto';
@@ -29,6 +30,7 @@ export class CnaeNbsIndopAdminController {
   constructor(
     private readonly createCnaeNbsIndop: CreateCnaeNbsIndop,
     private readonly findAllCnaeNbsIndop: FindAllCnaeNbsIndop,
+    private readonly updateCnaeNbsIndopStatus: UpdateCnaeNbsIndopStatus,
     private readonly deleteCnaeNbsIndop: DeleteCnaeNbsIndop,
     private readonly findCnaesForSelectUseCase: FindCnaesForSelect,
     private readonly findNbsByCnaeForSelectUseCase: FindNbsByCnaeForSelect,
@@ -55,9 +57,7 @@ export class CnaeNbsIndopAdminController {
     applyBadRequest: true,
     okPaginatedResponse: CnaeNbsIndopDto,
   })
-  public findAll(
-    @Query() queries: FindAllCnaeNbsIndopQueryDto,
-  ): Promise<IPagination<CnaeNbsIndopDto>> {
+  public findAll(@Query() queries: FindAllCnaeNbsIndopQueryDto): Promise<IPagination<CnaeNbsIndopDto>> {
     return this.findAllCnaeNbsIndop.execute(queries);
   }
 
@@ -79,9 +79,7 @@ export class CnaeNbsIndopAdminController {
     applyBadRequest: true,
     okResponse: NbsDto,
   })
-  public findNbsByCnaeForSelect(
-    @Query() queries: FindNbsByCnaeForSelectQueryDto,
-  ): Promise<NbsDto[]> {
+  public findNbsByCnaeForSelect(@Query() queries: FindNbsByCnaeForSelectQueryDto): Promise<NbsDto[]> {
     return this.findNbsByCnaeForSelectUseCase.execute(queries);
   }
 
@@ -92,10 +90,20 @@ export class CnaeNbsIndopAdminController {
     applyBadRequest: true,
     okResponse: IndopDto,
   })
-  public findIndopsByCnaeAndNbsForSelect(
-    @Query() queries: FindIndopsByCnaeAndNbsForSelectQueryDto,
-  ): Promise<IndopDto[]> {
+  public findIndopsByCnaeAndNbsForSelect(@Query() queries: FindIndopsByCnaeAndNbsForSelectQueryDto): Promise<IndopDto[]> {
     return this.findIndopsByCnaeAndNbsForSelectUseCase.execute(queries);
+  }
+
+  @Patch(':id/status')
+  @Swagger({
+    tags: ['Configurações - CNAE/NBS/INDOP'],
+    summary: 'Inverter status ativo da combinação CNAE/NBS/INDOP',
+    applyBadRequest: true,
+    applyNotFound: true,
+    okResponse: SuccessMessage,
+  })
+  public updateStatus(@Param() params: Params): Promise<SuccessMessage> {
+    return this.updateCnaeNbsIndopStatus.execute(params.id);
   }
 
   @Delete(':id')

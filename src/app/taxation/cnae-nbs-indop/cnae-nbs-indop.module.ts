@@ -11,6 +11,7 @@ import { FindCnaeNbsIndopById } from './application/usecases/find-cnae-nbs-indop
 import { FindCnaesForSelect } from './application/usecases/find-cnaes-for-select/find-cnaes-for-select.service';
 import { FindIndopsByCnaeAndNbsForSelect } from './application/usecases/find-indops-by-cnae-and-nbs-for-select/find-indops-by-cnae-and-nbs-for-select.service';
 import { FindNbsByCnaeForSelect } from './application/usecases/find-nbs-by-cnae-for-select/find-nbs-by-cnae-for-select.service';
+import { UpdateCnaeNbsIndopStatus } from './application/usecases/update-cnae-nbs-indop-status/update-cnae-nbs-indop-status.service';
 import { CnaeNbsIndopAdminController } from './infra/drivers/http/admin/cnae-nbs-indop-admin.controller';
 
 @Module({
@@ -32,6 +33,7 @@ import { CnaeNbsIndopAdminController } from './infra/drivers/http/admin/cnae-nbs
     FindCnaesForSelect,
     FindNbsByCnaeForSelect,
     FindIndopsByCnaeAndNbsForSelect,
+    UpdateCnaeNbsIndopStatus,
   ],
   exports: [
     FindCnaeNbsIndopById,

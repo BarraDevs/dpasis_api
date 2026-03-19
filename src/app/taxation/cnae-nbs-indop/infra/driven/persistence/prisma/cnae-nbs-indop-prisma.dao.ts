@@ -8,6 +8,7 @@ import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 
 const CnaeNbsIndopSelect = {
   id: true,
+  active: true,
   cnae: {
     select: {
       id: true,
@@ -103,6 +104,7 @@ export class CnaeNbsIndopDaoAdapterPrisma implements ICnaeNbsIndopDao {
   public async findDistinctCnaeIds(): Promise<number[]> {
     const rows = await this.prisma.cnaeNbsIndop.findMany({
       where: {
+        active: true,
         cnae: { active: true },
       },
       select: { cnaeId: true },
@@ -116,6 +118,7 @@ export class CnaeNbsIndopDaoAdapterPrisma implements ICnaeNbsIndopDao {
     const rows = await this.prisma.cnaeNbsIndop.findMany({
       where: {
         cnaeId,
+        active: true,
         nbs: { active: true },
       },
       select: { nbsId: true },
@@ -133,6 +136,7 @@ export class CnaeNbsIndopDaoAdapterPrisma implements ICnaeNbsIndopDao {
       where: {
         cnaeId,
         nbsId,
+        active: true,
         indop: { active: true },
       },
       select: { indopId: true },
@@ -140,5 +144,12 @@ export class CnaeNbsIndopDaoAdapterPrisma implements ICnaeNbsIndopDao {
       orderBy: { indopId: 'asc' },
     });
     return rows.map((r) => r.indopId);
+  }
+
+  public async updateStatus(id: number, active: boolean): Promise<void> {
+    await this.prisma.cnaeNbsIndop.update({
+      where: { id },
+      data: { active },
+    });
   }
 }

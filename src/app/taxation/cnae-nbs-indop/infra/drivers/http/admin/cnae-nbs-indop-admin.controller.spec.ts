@@ -4,8 +4,8 @@ import { AuthenticationGuardsModule } from 'src/app/authentication/application/g
 import { CnaeNbsIndopDto } from 'src/app/taxation/cnae-nbs-indop/application/dtos/cnae-nbs-indop.dto';
 import { CreateCnaeNbsIndop } from 'src/app/taxation/cnae-nbs-indop/application/usecases/create-cnae-nbs-indop/create-cnae-nbs-indop.service';
 import {
-    CreateCnaeNbsIndopInputDto,
-    CreateCnaeNbsIndopOutputDto,
+  CreateCnaeNbsIndopInputDto,
+  CreateCnaeNbsIndopOutputDto,
 } from 'src/app/taxation/cnae-nbs-indop/application/usecases/create-cnae-nbs-indop/dtos/create-cnae-nbs-indop.dto';
 import { DeleteCnaeNbsIndop } from 'src/app/taxation/cnae-nbs-indop/application/usecases/delete-cnae-nbs-indop/delete-cnae-nbs-indop.service';
 import { FindAllCnaeNbsIndopQueryDto } from 'src/app/taxation/cnae-nbs-indop/application/usecases/find-all-cnae-nbs-indop/dtos/find-all-cnae-nbs-indop.dto';
@@ -15,6 +15,7 @@ import { FindIndopsByCnaeAndNbsForSelectQueryDto } from 'src/app/taxation/cnae-n
 import { FindIndopsByCnaeAndNbsForSelect } from 'src/app/taxation/cnae-nbs-indop/application/usecases/find-indops-by-cnae-and-nbs-for-select/find-indops-by-cnae-and-nbs-for-select.service';
 import { FindNbsByCnaeForSelectQueryDto } from 'src/app/taxation/cnae-nbs-indop/application/usecases/find-nbs-by-cnae-for-select/dtos/find-nbs-by-cnae-for-select.dto';
 import { FindNbsByCnaeForSelect } from 'src/app/taxation/cnae-nbs-indop/application/usecases/find-nbs-by-cnae-for-select/find-nbs-by-cnae-for-select.service';
+import { UpdateCnaeNbsIndopStatus } from 'src/app/taxation/cnae-nbs-indop/application/usecases/update-cnae-nbs-indop-status/update-cnae-nbs-indop-status.service';
 import { CnaeDto } from 'src/app/taxation/cnae/application/dtos/cnae.dto';
 import { IndopDto } from 'src/app/taxation/indop/application/dtos/indop.dto';
 import { NbsDto } from 'src/app/taxation/nbs/application/dtos/nbs.dto';
@@ -27,6 +28,7 @@ describe('CnaeNbsIndopAdminController - Unit tests', () => {
   let sut: CnaeNbsIndopAdminController;
   let createCnaeNbsIndopService: CreateCnaeNbsIndop;
   let findAllCnaeNbsIndopService: FindAllCnaeNbsIndop;
+  let updateCnaeNbsIndopStatusService: UpdateCnaeNbsIndopStatus;
   let deleteCnaeNbsIndopService: DeleteCnaeNbsIndop;
   let findCnaesForSelectUseCase: FindCnaesForSelect;
   let findNbsByCnaeForSelectUseCase: FindNbsByCnaeForSelect;
@@ -39,6 +41,7 @@ describe('CnaeNbsIndopAdminController - Unit tests', () => {
       providers: [
         { provide: CreateCnaeNbsIndop, useValue: createMock<CreateCnaeNbsIndop>() },
         { provide: FindAllCnaeNbsIndop, useValue: createMock<FindAllCnaeNbsIndop>() },
+        { provide: UpdateCnaeNbsIndopStatus, useValue: createMock<UpdateCnaeNbsIndopStatus>() },
         { provide: DeleteCnaeNbsIndop, useValue: createMock<DeleteCnaeNbsIndop>() },
         { provide: FindCnaesForSelect, useValue: createMock<FindCnaesForSelect>() },
         { provide: FindNbsByCnaeForSelect, useValue: createMock<FindNbsByCnaeForSelect>() },
@@ -49,6 +52,7 @@ describe('CnaeNbsIndopAdminController - Unit tests', () => {
     sut = module.get(CnaeNbsIndopAdminController);
     createCnaeNbsIndopService = module.get(CreateCnaeNbsIndop);
     findAllCnaeNbsIndopService = module.get(FindAllCnaeNbsIndop);
+    updateCnaeNbsIndopStatusService = module.get(UpdateCnaeNbsIndopStatus);
     deleteCnaeNbsIndopService = module.get(DeleteCnaeNbsIndop);
     findCnaesForSelectUseCase = module.get(FindCnaesForSelect);
     findNbsByCnaeForSelectUseCase = module.get(FindNbsByCnaeForSelect);
@@ -122,6 +126,21 @@ describe('CnaeNbsIndopAdminController - Unit tests', () => {
 
       expect(result).toEqual(output);
       expect(executeSpy).toHaveBeenCalledWith(queries);
+    });
+  });
+
+  describe('updateStatus', () => {
+    it('should call updateCnaeNbsIndopStatus.execute with params.id', async() => {
+      const params = createMock<Params>();
+      const output = createMock<SuccessMessage>();
+      const updateStatusSpy = jest
+        .spyOn(updateCnaeNbsIndopStatusService, 'execute')
+        .mockResolvedValue(output);
+
+      const result = await sut.updateStatus(params);
+
+      expect(result).toEqual(output);
+      expect(updateStatusSpy).toHaveBeenCalledWith(params.id);
     });
   });
 

@@ -11,4 +11,5 @@ export interface ICnaeNbsIndopDao {
   findDistinctCnaeIds(): Promise<number[]>;
   findDistinctNbsIdsByCnaeId(cnaeId: number): Promise<number[]>;
   findDistinctIndopIdsByCnaeIdAndNbsId(cnaeId: number, nbsId: number): Promise<number[]>;
+  updateStatus(id: number, active: boolean): Promise<void>;
 }

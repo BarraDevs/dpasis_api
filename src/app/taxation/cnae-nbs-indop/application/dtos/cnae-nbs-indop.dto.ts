@@ -6,6 +6,7 @@ export class CnaeNbsIndopCodeDescriptionDto {
 
 export class CnaeNbsIndopDto {
   id: number;
+  active: boolean;
   cnae: CnaeNbsIndopCodeDescriptionDto;
   nbs: CnaeNbsIndopCodeDescriptionDto;
   indop: CnaeNbsIndopCodeDescriptionDto;
