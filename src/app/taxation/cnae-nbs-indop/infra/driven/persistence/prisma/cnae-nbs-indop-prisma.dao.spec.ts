@@ -204,14 +204,14 @@ describe('CnaeNbsIndopDaoAdapterPrisma - Integration tests', () => {
     });
   });
 
-  describe('findDistinctCnaeIds', () => {
+  describe('findCnaesForSelect', () => {
     it('should return empty array when no active records exist', async() => {
-      const result = await sut.findDistinctCnaeIds();
+      const result = await sut.findCnaesForSelect();
 
       expect(result).toEqual([]);
     });
 
-    it('should return distinct cnae ids for active cnaeNbsIndop with active cnae', async() => {
+    it('should return CNAEs that have active CnaeNbsIndop combinations', async() => {
       const [cnae2, indop2] = await Promise.all([
         prisma.cnae.create({ data: { code: `CNAE2${Date.now()}`, description: 'CNAE 2', active: true } }),
         prisma.indop.create({ data: { code: `IND2${Date.now()}`, description: 'INDOP 2', active: true } }),
@@ -223,46 +223,36 @@ describe('CnaeNbsIndopDaoAdapterPrisma - Integration tests', () => {
         ],
       });
 
-      const result = await sut.findDistinctCnaeIds();
+      const result = await sut.findCnaesForSelect();
 
       expect(result).toHaveLength(2);
-      expect(result).toContain(cnaeId);
-      expect(result).toContain(cnae2.id);
-      expect(result).toEqual([cnaeId, cnae2.id].sort((a, b) => a - b));
+      expect(result.map((c) => c.id).sort((a, b) => a - b)).toEqual([cnaeId, cnae2.id].sort((a, b) => a - b));
+      expect(result[0]).toHaveProperty('code');
+      expect(result[0]).toHaveProperty('description');
+      expect(result[0]).toHaveProperty('active');
+      expect(result[0]).toHaveProperty('createdAt');
+      expect(result[0]).toHaveProperty('updatedAt');
     });
 
-    it('should exclude inactive cnaeNbsIndop', async() => {
+    it('should exclude inactive CNAE and inactive CnaeNbsIndop', async() => {
       await prisma.cnaeNbsIndop.create({
         data: { cnaeId, nbsId, indopId, active: false },
       });
 
-      const result = await sut.findDistinctCnaeIds();
-
-      expect(result).toEqual([]);
-    });
-
-    it('should exclude inactive cnae', async() => {
-      const inactiveCnae = await prisma.cnae.create({
-        data: { code: `CNAE0${Date.now() % 100000}`, description: 'Inactive', active: false },
-      });
-      await prisma.cnaeNbsIndop.create({
-        data: { cnaeId: inactiveCnae.id, nbsId, indopId },
-      });
-
-      const result = await sut.findDistinctCnaeIds();
+      const result = await sut.findCnaesForSelect();
 
       expect(result).toEqual([]);
     });
   });
 
-  describe('findDistinctNbsIdsByCnaeId', () => {
+  describe('findNbssForSelectByCnaeId', () => {
     it('should return empty array when no records for cnaeId', async() => {
-      const result = await sut.findDistinctNbsIdsByCnaeId(cnaeId);
+      const result = await sut.findNbssForSelectByCnaeId(cnaeId);
 
       expect(result).toEqual([]);
     });
 
-    it('should return distinct nbs ids for given cnaeId', async() => {
+    it('should return NBSs that have active combinations with the given CNAE', async() => {
       const [nbs2, indop2] = await Promise.all([
         prisma.nbs.create({ data: { code: `NBS2${Date.now()}`, description: 'NBS 2', active: true } }),
         prisma.indop.create({ data: { code: `IND2${Date.now()}`, description: 'INDOP 2', active: true } }),
@@ -274,15 +264,13 @@ describe('CnaeNbsIndopDaoAdapterPrisma - Integration tests', () => {
         ],
       });
 
-      const result = await sut.findDistinctNbsIdsByCnaeId(cnaeId);
+      const result = await sut.findNbssForSelectByCnaeId(cnaeId);
 
       expect(result).toHaveLength(2);
-      expect(result).toContain(nbsId);
-      expect(result).toContain(nbs2.id);
-      expect(result).toEqual([nbsId, nbs2.id].sort((a, b) => a - b));
+      expect(result.map((n) => n.id).sort((a, b) => a - b)).toEqual([nbsId, nbs2.id].sort((a, b) => a - b));
     });
 
-    it('should exclude inactive nbs', async() => {
+    it('should exclude inactive NBS', async() => {
       const inactiveNbs = await prisma.nbs.create({
         data: { code: `NBS0${Date.now() % 100000}`, description: 'Inactive', active: false },
       });
@@ -290,20 +278,20 @@ describe('CnaeNbsIndopDaoAdapterPrisma - Integration tests', () => {
         data: { cnaeId, nbsId: inactiveNbs.id, indopId },
       });
 
-      const result = await sut.findDistinctNbsIdsByCnaeId(cnaeId);
+      const result = await sut.findNbssForSelectByCnaeId(cnaeId);
 
       expect(result).toEqual([]);
     });
   });
 
-  describe('findDistinctIndopIdsByCnaeIdAndNbsId', () => {
+  describe('findIndopsForSelectByCnaeAndNbs', () => {
     it('should return empty array when no records exist', async() => {
-      const result = await sut.findDistinctIndopIdsByCnaeIdAndNbsId(cnaeId, nbsId);
+      const result = await sut.findIndopsForSelectByCnaeAndNbs(cnaeId, nbsId);
 
       expect(result).toEqual([]);
     });
 
-    it('should return distinct indop ids for given cnaeId and nbsId', async() => {
+    it('should return INDOPs that have active combinations with the given CNAE and NBS', async() => {
       const indop2 = await prisma.indop.create({
         data: { code: `IND2${Date.now()}`, description: 'INDOP 2', active: true },
       });
@@ -314,15 +302,13 @@ describe('CnaeNbsIndopDaoAdapterPrisma - Integration tests', () => {
         ],
       });
 
-      const result = await sut.findDistinctIndopIdsByCnaeIdAndNbsId(cnaeId, nbsId);
+      const result = await sut.findIndopsForSelectByCnaeAndNbs(cnaeId, nbsId);
 
       expect(result).toHaveLength(2);
-      expect(result).toContain(indopId);
-      expect(result).toContain(indop2.id);
-      expect(result).toEqual([indopId, indop2.id].sort((a, b) => a - b));
+      expect(result.map((i) => i.id).sort((a, b) => a - b)).toEqual([indopId, indop2.id].sort((a, b) => a - b));
     });
 
-    it('should exclude inactive indop', async() => {
+    it('should exclude inactive INDOP', async() => {
       const inactiveIndop = await prisma.indop.create({
         data: { code: `IND0${Date.now() % 100000}`, description: 'Inactive', active: false },
       });
@@ -330,7 +316,7 @@ describe('CnaeNbsIndopDaoAdapterPrisma - Integration tests', () => {
         data: { cnaeId, nbsId, indopId: inactiveIndop.id },
       });
 
-      const result = await sut.findDistinctIndopIdsByCnaeIdAndNbsId(cnaeId, nbsId);
+      const result = await sut.findIndopsForSelectByCnaeAndNbs(cnaeId, nbsId);
 
       expect(result).toEqual([]);
     });

@@ -4,7 +4,7 @@ import { CnaeNbsIndopNotFoundError } from 'src/app/taxation/cnae-nbs-indop/domai
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { FindCnaeNbsIndopById } from './find-cnae-nbs-indop-by-id.service';
 
-describe('FindCnaeNbsIndopById', () => {
+describe('FindCnaeNbsIndopById - Integration tests', () => {
   let sut: FindCnaeNbsIndopById;
   let prisma: PrismaService;
 

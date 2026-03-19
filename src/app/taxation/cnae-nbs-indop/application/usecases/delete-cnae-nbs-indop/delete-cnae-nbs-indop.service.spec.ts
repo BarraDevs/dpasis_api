@@ -1,25 +1,29 @@
-import { createMock } from '@golevelup/ts-jest';
 import { Test } from '@nestjs/testing';
-import { TOKENS } from 'src/core/di/token';
-import { CnaeNbsIndopNotFoundError } from '../../../domain/errors/cnae-nbs-indop-not-found.error';
-import { CnaeNbsIndopDto } from '../../dtos/cnae-nbs-indop.dto';
-import type { ICnaeNbsIndopDao } from '../../persistence/dao/cnae-nbs-indop-dao.interface';
+import { CnaeNbsIndopModule } from 'src/app/taxation/cnae-nbs-indop/cnae-nbs-indop.module';
+import { CnaeNbsIndopNotFoundError } from 'src/app/taxation/cnae-nbs-indop/domain/errors/cnae-nbs-indop-not-found.error';
+import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { DeleteCnaeNbsIndop } from './delete-cnae-nbs-indop.service';
 
-describe('DeleteCnaeNbsIndop - Unit tests', () => {
+describe('DeleteCnaeNbsIndop - Integration tests', () => {
   let sut: DeleteCnaeNbsIndop;
-  let cnaeNbsIndopDao: ICnaeNbsIndopDao;
+  let prisma: PrismaService;
 
-  beforeEach(async() => {
+  beforeAll(async() => {
     const module = await Test.createTestingModule({
-      providers: [
-        DeleteCnaeNbsIndop,
-        { provide: TOKENS.CnaeNbsIndopDao, useValue: createMock<ICnaeNbsIndopDao>() },
-      ],
+      imports: [CnaeNbsIndopModule],
     }).compile();
 
     sut = module.get(DeleteCnaeNbsIndop);
-    cnaeNbsIndopDao = module.get(TOKENS.CnaeNbsIndopDao);
+    prisma = module.get(PrismaService);
+  });
+
+  beforeEach(async() => {
+    await prisma.truncate();
+  });
+
+  afterAll(async() => {
+    await prisma.truncate();
+    await prisma.$disconnect();
   });
 
   it('should be defined', () => {
@@ -27,29 +31,26 @@ describe('DeleteCnaeNbsIndop - Unit tests', () => {
   });
 
   it('should throw CnaeNbsIndopNotFoundError when combination does not exist', async() => {
-    const id = 999;
-    jest.spyOn(cnaeNbsIndopDao, 'findById').mockResolvedValue(null);
+    const id = 99999;
 
     await expect(sut.execute(id)).rejects.toThrow(CnaeNbsIndopNotFoundError);
   });
 
-  it('should call cnaeNbsIndopDao.delete when combination exists', async() => {
-    const id = 1;
-    jest.spyOn(cnaeNbsIndopDao, 'findById').mockResolvedValue(createMock<CnaeNbsIndopDto>());
-    const deleteSpy = jest.spyOn(cnaeNbsIndopDao, 'delete');
+  it('should delete record and return success message when combination exists', async() => {
+    const [cnae, nbs, indop] = await Promise.all([
+      prisma.cnae.create({ data: { code: `CNAE${Date.now()}`, description: 'CNAE Test', active: true } }),
+      prisma.nbs.create({ data: { code: `NBS${Date.now()}`, description: 'NBS Test', active: true } }),
+      prisma.indop.create({ data: { code: `IND${Date.now()}`, description: 'INDOP Test', active: true } }),
+    ]);
+    const created = await prisma.cnaeNbsIndop.create({
+      data: { cnaeId: cnae.id, nbsId: nbs.id, indopId: indop.id },
+    });
 
-    await sut.execute(id);
-
-    expect(deleteSpy).toHaveBeenCalledWith(id);
-  });
-
-  it('should return success message when deleted', async() => {
-    const id = 1;
-    jest.spyOn(cnaeNbsIndopDao, 'findById').mockResolvedValue(createMock<CnaeNbsIndopDto>());
-    jest.spyOn(cnaeNbsIndopDao, 'delete').mockResolvedValue();
-
-    const result = await sut.execute(id);
+    const result = await sut.execute(created.id);
 
     expect(result).toEqual({ message: 'Combinação excluída com sucesso.' });
+
+    const found = await prisma.cnaeNbsIndop.findUnique({ where: { id: created.id } });
+    expect(found).toBeNull();
   });
 });

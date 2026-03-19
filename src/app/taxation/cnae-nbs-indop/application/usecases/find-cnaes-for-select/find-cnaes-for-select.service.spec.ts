@@ -1,72 +1,103 @@
-import { createMock } from '@golevelup/ts-jest';
 import { Test } from '@nestjs/testing';
-import { CnaeDto } from 'src/app/taxation/cnae/application/dtos/cnae.dto';
-import { FindCnaeById } from 'src/app/taxation/cnae/application/usecases/find-cnae-by-id/find-cnae-by-id.service';
-import { TOKENS } from 'src/core/di/token';
-import type { ICnaeNbsIndopDao } from '../../persistence/dao/cnae-nbs-indop-dao.interface';
+import { CnaeNbsIndopModule } from 'src/app/taxation/cnae-nbs-indop/cnae-nbs-indop.module';
+import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { FindCnaesForSelect } from './find-cnaes-for-select.service';
 
-describe('FindCnaesForSelect - Unit tests', () => {
+describe('FindCnaesForSelect - Integration tests', () => {
   let sut: FindCnaesForSelect;
-  let cnaeNbsIndopDao: ICnaeNbsIndopDao;
-  let findCnaeById: FindCnaeById;
+  let prisma: PrismaService;
+  let cnaeId: number;
+  let nbsId: number;
+  let indopId: number;
 
-  beforeEach(async() => {
+  beforeAll(async() => {
     const module = await Test.createTestingModule({
-      providers: [
-        FindCnaesForSelect,
-        { provide: TOKENS.CnaeNbsIndopDao, useValue: createMock<ICnaeNbsIndopDao>() },
-        { provide: FindCnaeById, useValue: createMock<FindCnaeById>() },
-      ],
+      imports: [CnaeNbsIndopModule],
     }).compile();
 
     sut = module.get(FindCnaesForSelect);
-    cnaeNbsIndopDao = module.get(TOKENS.CnaeNbsIndopDao);
-    findCnaeById = module.get(FindCnaeById);
+    prisma = module.get(PrismaService);
+  });
+
+  beforeEach(async() => {
+    await prisma.truncate();
+
+    const [cnae, nbs, indop] = await Promise.all([
+      prisma.cnae.create({ data: { code: `CNAE${Date.now()}`, description: 'CNAE Test', active: true } }),
+      prisma.nbs.create({ data: { code: `NBS${Date.now()}`, description: 'NBS Test', active: true } }),
+      prisma.indop.create({ data: { code: `IND${Date.now()}`, description: 'INDOP Test', active: true } }),
+    ]);
+    cnaeId = cnae.id;
+    nbsId = nbs.id;
+    indopId = indop.id;
+  });
+
+  afterAll(async() => {
+    await prisma.truncate();
+    await prisma.$disconnect();
   });
 
   it('should be defined', () => {
     expect(sut).toBeDefined();
   });
 
-  it('should return CNAEs that have combinations and are active', async() => {
-    const cnaeIds = [1, 2];
-    const cnae1 = createMock<CnaeDto>({ id: 1, code: 'A', active: true });
-    const cnae2 = createMock<CnaeDto>({ id: 2, code: 'B', active: true });
-    jest.spyOn(cnaeNbsIndopDao, 'findDistinctCnaeIds').mockResolvedValue(cnaeIds);
-    jest.spyOn(findCnaeById, 'execute').mockImplementation((id) => {
-      if (id === 1) return Promise.resolve(cnae1);
-      if (id === 2) return Promise.resolve(cnae2);
-      return Promise.reject(new Error('Not found'));
+  it('should return empty array when no active combinations exist', async() => {
+    const result = await sut.execute();
+
+    expect(result).toEqual([]);
+  });
+
+  it('should return CNAEs that have active CnaeNbsIndop combinations', async() => {
+    const [cnae2, indop2] = await Promise.all([
+      prisma.cnae.create({ data: { code: `CNAE2${Date.now()}`, description: 'CNAE 2', active: true } }),
+      prisma.indop.create({ data: { code: `IND2${Date.now()}`, description: 'INDOP 2', active: true } }),
+    ]);
+    await prisma.cnaeNbsIndop.createMany({
+      data: [
+        { cnaeId, nbsId, indopId },
+        { cnaeId: cnae2.id, nbsId, indopId: indop2.id },
+      ],
     });
 
     const result = await sut.execute();
 
-    expect(cnaeNbsIndopDao.findDistinctCnaeIds).toHaveBeenCalled();
     expect(result).toHaveLength(2);
-    expect(result.map((c) => c.id)).toEqual([1, 2]);
+    expect(result.map((c) => c.id).sort((a, b) => a - b)).toEqual([cnaeId, cnae2.id].sort((a, b) => a - b));
+    expect(result[0]).toHaveProperty('code');
+    expect(result[0]).toHaveProperty('description');
+    expect(result[0]).toHaveProperty('active');
   });
 
-  it('should return empty array when no combinations exist', async() => {
-    jest.spyOn(cnaeNbsIndopDao, 'findDistinctCnaeIds').mockResolvedValue([]);
+  it('should exclude inactive CNAE and inactive CnaeNbsIndop', async() => {
+    await prisma.cnaeNbsIndop.create({
+      data: { cnaeId, nbsId, indopId, active: false },
+    });
 
     const result = await sut.execute();
 
     expect(result).toEqual([]);
   });
 
-  it('should skip CNAE that throw (not found or inactive)', async() => {
-    const cnaeIds = [1, 2, 3];
-    const cnae1 = createMock<CnaeDto>({ id: 1, code: 'A', active: true });
-    jest.spyOn(cnaeNbsIndopDao, 'findDistinctCnaeIds').mockResolvedValue(cnaeIds);
-    jest.spyOn(findCnaeById, 'execute').mockImplementation((id) => {
-      if (id === 1) return Promise.resolve(cnae1);
-      return Promise.reject(new Error('Not found or inactive'));
+  it('should return CNAEs ordered by code', async() => {
+    const [cnaeZ, cnaeA] = await Promise.all([
+      prisma.cnae.create({ data: { code: 'Z999', description: 'CNAE Z', active: true } }),
+      prisma.cnae.create({ data: { code: 'A001', description: 'CNAE A', active: true } }),
+    ]);
+    const [indop2, indop3] = await Promise.all([
+      prisma.indop.create({ data: { code: `IND2${Date.now()}`, description: 'INDOP 2', active: true } }),
+      prisma.indop.create({ data: { code: `IND3${Date.now()}`, description: 'INDOP 3', active: true } }),
+    ]);
+    await prisma.cnaeNbsIndop.createMany({
+      data: [
+        { cnaeId: cnaeZ.id, nbsId, indopId },
+        { cnaeId: cnaeA.id, nbsId, indopId: indop2.id },
+      ],
     });
 
     const result = await sut.execute();
 
-    expect(result).toHaveLength(1);
-    expect(result[0].id).toBe(1);
+    expect(result).toHaveLength(2);
+    expect(result[0].code).toBe('A001');
+    expect(result[1].code).toBe('Z999');
   });
 });

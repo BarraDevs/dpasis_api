@@ -4,7 +4,37 @@ import { CnaeNbsIndopDto } from 'src/app/taxation/cnae-nbs-indop/application/dto
 import { ICnaeNbsIndopDao } from 'src/app/taxation/cnae-nbs-indop/application/persistence/dao/cnae-nbs-indop-dao.interface';
 import { CreateCnaeNbsIndopInputDto } from 'src/app/taxation/cnae-nbs-indop/application/usecases/create-cnae-nbs-indop/dtos/create-cnae-nbs-indop.dto';
 import { FindAllCnaeNbsIndopQueryDto } from 'src/app/taxation/cnae-nbs-indop/application/usecases/find-all-cnae-nbs-indop/dtos/find-all-cnae-nbs-indop.dto';
+import { CnaeDto } from 'src/app/taxation/cnae/application/dtos/cnae.dto';
+import { IndopDto } from 'src/app/taxation/indop/application/dtos/indop.dto';
+import { NbsDto } from 'src/app/taxation/nbs/application/dtos/nbs.dto';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
+
+const CnaeSelectForSelect = {
+  id: true,
+  code: true,
+  description: true,
+  active: true,
+  createdAt: true,
+  updatedAt: true,
+} satisfies Prisma.CnaeSelect;
+
+const NbsSelectForSelect = {
+  id: true,
+  code: true,
+  description: true,
+  active: true,
+  createdAt: true,
+  updatedAt: true,
+} satisfies Prisma.NbsSelect;
+
+const IndopSelectForSelect = {
+  id: true,
+  code: true,
+  description: true,
+  active: true,
+  createdAt: true,
+  updatedAt: true,
+} satisfies Prisma.IndopSelect;
 
 const CnaeNbsIndopSelect = {
   id: true,
@@ -69,11 +99,7 @@ export class CnaeNbsIndopDaoAdapterPrisma implements ICnaeNbsIndopDao {
     return row ?? null;
   }
 
-  public async findByComposite(
-    cnaeId: number,
-    nbsId: number,
-    indopId: number,
-  ): Promise<CnaeNbsIndopDto | null> {
+  public async findByComposite(cnaeId: number, nbsId: number, indopId: number): Promise<CnaeNbsIndopDto | null> {
     const row = await this.prisma.cnaeNbsIndop.findUnique({
       where: {
         // eslint-disable-next-line camelcase
@@ -101,55 +127,43 @@ export class CnaeNbsIndopDaoAdapterPrisma implements ICnaeNbsIndopDao {
     });
   }
 
-  public async findDistinctCnaeIds(): Promise<number[]> {
-    const rows = await this.prisma.cnaeNbsIndop.findMany({
-      where: {
-        active: true,
-        cnae: { active: true },
-      },
-      select: { cnaeId: true },
-      distinct: ['cnaeId'],
-      orderBy: { cnaeId: 'asc' },
-    });
-    return rows.map((r) => r.cnaeId);
-  }
-
-  public async findDistinctNbsIdsByCnaeId(cnaeId: number): Promise<number[]> {
-    const rows = await this.prisma.cnaeNbsIndop.findMany({
-      where: {
-        cnaeId,
-        active: true,
-        nbs: { active: true },
-      },
-      select: { nbsId: true },
-      distinct: ['nbsId'],
-      orderBy: { nbsId: 'asc' },
-    });
-    return rows.map((r) => r.nbsId);
-  }
-
-  public async findDistinctIndopIdsByCnaeIdAndNbsId(
-    cnaeId: number,
-    nbsId: number,
-  ): Promise<number[]> {
-    const rows = await this.prisma.cnaeNbsIndop.findMany({
-      where: {
-        cnaeId,
-        nbsId,
-        active: true,
-        indop: { active: true },
-      },
-      select: { indopId: true },
-      distinct: ['indopId'],
-      orderBy: { indopId: 'asc' },
-    });
-    return rows.map((r) => r.indopId);
-  }
-
   public async updateStatus(id: number, active: boolean): Promise<void> {
     await this.prisma.cnaeNbsIndop.update({
       where: { id },
       data: { active },
+    });
+  }
+
+  public async findCnaesForSelect(): Promise<CnaeDto[]> {
+    return this.prisma.cnae.findMany({
+      where: {
+        active: true,
+        cnaeNbsIndops: { some: { active: true } },
+      },
+      select: CnaeSelectForSelect,
+      orderBy: { code: 'asc' },
+    });
+  }
+
+  public async findNbssForSelectByCnaeId(cnaeId: number): Promise<NbsDto[]> {
+    return this.prisma.nbs.findMany({
+      where: {
+        active: true,
+        cnaeNbsIndops: { some: { active: true, cnaeId } },
+      },
+      select: NbsSelectForSelect,
+      orderBy: { code: 'asc' },
+    });
+  }
+
+  public async findIndopsForSelectByCnaeAndNbs(cnaeId: number, nbsId: number): Promise<IndopDto[]> {
+    return this.prisma.indop.findMany({
+      where: {
+        active: true,
+        cnaeNbsIndops: { some: { active: true, cnaeId, nbsId } },
+      },
+      select: IndopSelectForSelect,
+      orderBy: { code: 'asc' },
     });
   }
 }
