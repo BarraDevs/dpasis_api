@@ -135,6 +135,30 @@ describe('BankDaoAdapterPrisma - Integration tests', () => {
       expect(banks[1].bankName).toBe(b2.bankName);
     });
 
+    it('should filter by active when provided', async() => {
+      // Arrange
+      await prisma.bank.createMany({
+        data: [
+          { ...baseBankData, bankName: 'Banco Ativo', agency: '0001', account: '11111-1', active: true },
+          { ...baseBankData, bankName: 'Banco Inativo', agency: '0002', account: '22222-2', active: false },
+        ],
+      });
+      const queryActive: FindAllBankQueryDto = { active: true };
+      const queryInactive: FindAllBankQueryDto = { active: false };
+
+      // Act
+      const [banksActive, totalActive] = await sut.findAll(queryActive);
+      const [banksInactive, totalInactive] = await sut.findAll(queryInactive);
+
+      // Assert
+      expect(banksActive).toHaveLength(1);
+      expect(totalActive).toBe(1);
+      expect(banksActive[0].active).toBe(true);
+      expect(banksInactive).toHaveLength(1);
+      expect(totalInactive).toBe(1);
+      expect(banksInactive[0].active).toBe(false);
+    });
+
     it('should return all bank fields correctly', async() => {
       // Arrange
       const created = await prisma.bank.create({

@@ -33,30 +33,32 @@ export class ClientContactDaoAdapterPrisma implements IClientContactDao {
   public async findAll(queries: FindAllClientContactQueryDto): Promise<[ClientContactDto[], number]> {
     const pagination = this.prisma.paginationFactory(queries.page, queries.size);
 
-    const andConditions: Prisma.ClientContactWhereInput[] = [
+    const conditions: Prisma.ClientContactWhereInput[] = [
       { clientId: { equals: queries.clientId } },
     ];
 
     if (queries.search?.trim()) {
-      andConditions.push({
+      conditions.push({
         OR: [
-          { name: { contains: queries.search, mode: 'insensitive' } },
-          { email: { contains: queries.search, mode: 'insensitive' } },
+          { name: { contains: queries.search.trim(), mode: 'insensitive' } },
+          { email: { contains: queries.search.trim(), mode: 'insensitive' } },
         ],
       });
     }
 
     if (queries.departmentId != null && queries.departmentId !== undefined) {
-      andConditions.push({ departmentId: { equals: queries.departmentId } });
+      conditions.push({ departmentId: { equals: queries.departmentId } });
     }
 
     if (queries.receiveNF != null && queries.receiveNF !== undefined) {
-      andConditions.push({ receiveNF: { equals: queries.receiveNF } });
+      conditions.push({ receiveNF: { equals: queries.receiveNF } });
     }
 
-    const where: Prisma.ClientContactWhereInput = {
-      AND: andConditions,
-    };
+    if (queries.active != null && queries.active !== undefined) {
+      conditions.push({ active: queries.active });
+    }
+
+    const where: Prisma.ClientContactWhereInput = conditions.length > 0 ? { AND: conditions } : {};
 
     const [clientContacts, total] = await this.prisma.$transaction([
       this.prisma.clientContact.findMany({

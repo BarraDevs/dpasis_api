@@ -22,9 +22,19 @@ export class ClientAttendanceTypeDaoAdapterPrisma implements IClientAttendanceTy
   public async findAll(queries: FindAllClientAttendanceTypeQueryDto): Promise<[ClientAttendanceTypeDto[], number]> {
     const pagination = this.prisma.paginationFactory(queries.page, queries.size);
 
-    const where: Prisma.ClientAttendanceTypeWhereInput = queries.search
-      ? { name: { contains: queries.search, mode: 'insensitive' } }
-      : {};
+    const conditions: Prisma.ClientAttendanceTypeWhereInput[] = [];
+
+    if (queries.search?.trim()) {
+      conditions.push({
+        name: { contains: queries.search.trim(), mode: 'insensitive' },
+      });
+    }
+
+    if (queries.active != null && queries.active !== undefined) {
+      conditions.push({ active: queries.active });
+    }
+
+    const where: Prisma.ClientAttendanceTypeWhereInput = conditions.length > 0 ? { AND: conditions } : {};
 
     const [clientAttendanceTypes, total] = await this.prisma.$transaction([
       this.prisma.clientAttendanceType.findMany({

@@ -82,6 +82,25 @@ describe('NbsDaoAdapterPrisma - Integration tests', () => {
       expect(total2).toBe(25);
     });
 
+    it('should filter by active when provided', async() => {
+      await prisma.nbs.createMany({
+        data: [
+          { code: '1012-1/01', description: 'Desc 1', active: true },
+          { code: '1012-1/02', description: 'Desc 2', active: false },
+        ],
+      });
+
+      const [activeNbss, activeTotal] = await sut.findAll({ active: true });
+      const [inactiveNbss, inactiveTotal] = await sut.findAll({ active: false });
+
+      expect(activeNbss).toHaveLength(1);
+      expect(activeTotal).toBe(1);
+      expect(activeNbss[0].active).toBe(true);
+      expect(inactiveNbss).toHaveLength(1);
+      expect(inactiveTotal).toBe(1);
+      expect(inactiveNbss[0].active).toBe(false);
+    });
+
     it('should search in code and description (case-insensitive)', async() => {
       // Arrange
       await prisma.nbs.createMany({

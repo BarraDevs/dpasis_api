@@ -106,6 +106,46 @@ describe('FindAllCnaeNbsIndop - Integration tests', () => {
     expect(result.data[0].cnae.id).toBe(cnaeId);
   });
 
+  it('should filter by active when active is true', async() => {
+    const [nbs2, indop2] = await Promise.all([
+      prisma.nbs.create({ data: { code: `NBS2${Date.now()}`, description: 'NBS 2', active: true } }),
+      prisma.indop.create({ data: { code: `IND2${Date.now()}`, description: 'INDOP 2', active: true } }),
+    ]);
+    await prisma.cnaeNbsIndop.createMany({
+      data: [
+        { cnaeId, nbsId, indopId, active: true },
+        { cnaeId, nbsId, indopId: indop2.id, active: false },
+        { cnaeId, nbsId: nbs2.id, indopId, active: true },
+      ],
+    });
+
+    const result = await sut.execute({ page: 1, size: 10, active: true });
+
+    expect(result.data).toHaveLength(2);
+    expect(result.totalItems).toBe(2);
+    expect(result.data.every((r) => r.active)).toBe(true);
+  });
+
+  it('should filter by active when active is false', async() => {
+    const [nbs2, indop2] = await Promise.all([
+      prisma.nbs.create({ data: { code: `NBS2${Date.now()}`, description: 'NBS 2', active: true } }),
+      prisma.indop.create({ data: { code: `IND2${Date.now()}`, description: 'INDOP 2', active: true } }),
+    ]);
+    await prisma.cnaeNbsIndop.createMany({
+      data: [
+        { cnaeId, nbsId, indopId, active: true },
+        { cnaeId, nbsId, indopId: indop2.id, active: false },
+        { cnaeId, nbsId: nbs2.id, indopId, active: false },
+      ],
+    });
+
+    const result = await sut.execute({ page: 1, size: 10, active: false });
+
+    expect(result.data).toHaveLength(2);
+    expect(result.totalItems).toBe(2);
+    expect(result.data.every((r) => !r.active)).toBe(true);
+  });
+
   it('should filter by nbsId when provided', async() => {
     const otherNbs = await prisma.nbs.create({
       data: { code: `NBS2${Date.now()}`, description: 'NBS 2', active: true },

@@ -96,6 +96,38 @@ describe('FindAllClientDriveType - Integration tests', () => {
     expect(result.data[2].id).toBe(third.id);
   });
 
+  it('should filter by active when active is true', async() => {
+    await prisma.clientDriveType.createMany({
+      data: [
+        { name: `Drive A ${Date.now()}`, active: true },
+        { name: `Drive B ${Date.now()}`, active: false },
+        { name: `Drive C ${Date.now()}`, active: true },
+      ],
+    });
+
+    const result = await sut.execute({ page: 1, size: 10, active: true });
+
+    expect(result.data).toHaveLength(2);
+    expect(result.totalItems).toBe(2);
+    expect(result.data.every((d: ClientDriveTypeDto) => d.active)).toBe(true);
+  });
+
+  it('should filter by active when active is false', async() => {
+    await prisma.clientDriveType.createMany({
+      data: [
+        { name: `Drive A ${Date.now()}`, active: true },
+        { name: `Drive B ${Date.now()}`, active: false },
+        { name: `Drive C ${Date.now()}`, active: false },
+      ],
+    });
+
+    const result = await sut.execute({ page: 1, size: 10, active: false });
+
+    expect(result.data).toHaveLength(2);
+    expect(result.totalItems).toBe(2);
+    expect(result.data.every((d: ClientDriveTypeDto) => !d.active)).toBe(true);
+  });
+
   it('should filter by search in name', async() => {
     await prisma.clientDriveType.createMany({
       data: [

@@ -87,6 +87,29 @@ describe('CnaeNbsIndopDaoAdapterPrisma - Integration tests', () => {
       expect(total).toBe(3);
     });
 
+    it('should filter by active when provided', async() => {
+      const createdActive = await prisma.cnaeNbsIndop.create({
+        data: { cnaeId, nbsId, indopId, active: true },
+      });
+      const indop2 = await prisma.indop.create({
+        data: { code: `IND2${Date.now()}`, description: 'INDOP 2', active: true },
+      });
+      await prisma.cnaeNbsIndop.create({
+        data: { cnaeId, nbsId, indopId: indop2.id, active: false },
+      });
+
+      const [rowsActive, totalActive] = await sut.findAll({ active: true });
+      const [rowsInactive, totalInactive] = await sut.findAll({ active: false });
+
+      expect(rowsActive).toHaveLength(1);
+      expect(totalActive).toBe(1);
+      expect(rowsActive[0].id).toBe(createdActive.id);
+      expect(rowsActive[0].active).toBe(true);
+      expect(rowsInactive).toHaveLength(1);
+      expect(totalInactive).toBe(1);
+      expect(rowsInactive[0].active).toBe(false);
+    });
+
     it('should filter by cnaeId when provided', async() => {
       const otherCnae = await prisma.cnae.create({
         data: { code: `CNAE2${Date.now()}`, description: 'CNAE 2', active: true },

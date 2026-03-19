@@ -159,6 +159,30 @@ describe('FaqDaoAdapterPrisma - Integration tests', () => {
       expect(faqs[1].id).toBe(faq1.id);
     });
 
+    it('should filter by active when provided', async() => {
+      // Arrange
+      await prisma.faq.createMany({
+        data: [
+          { question: 'P1?', answer: 'R1.', active: true },
+          { question: 'P2?', answer: 'R2.', active: false },
+        ],
+      });
+      const queryActive: FindAllFaqQueryDto = { active: true };
+      const queryInactive: FindAllFaqQueryDto = { active: false };
+
+      // Act
+      const [faqsActive, totalActive] = await sut.findAll(queryActive);
+      const [faqsInactive, totalInactive] = await sut.findAll(queryInactive);
+
+      // Assert
+      expect(faqsActive).toHaveLength(1);
+      expect(totalActive).toBe(1);
+      expect(faqsActive[0].active).toBe(true);
+      expect(faqsInactive).toHaveLength(1);
+      expect(totalInactive).toBe(1);
+      expect(faqsInactive[0].active).toBe(false);
+    });
+
     it('should return all faq fields correctly', async() => {
       // Arrange
       const created = await prisma.faq.create({

@@ -7,6 +7,7 @@ export class ClientItemDto {
   quantity: number;
   unitValueInCents: number;
   totalValueInCents: number;
+  active: boolean;
   cnaeNbsIndop: CnaeNbsIndopDto;
   createdAt: Date;
   updatedAt: Date;

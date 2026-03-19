@@ -96,6 +96,38 @@ describe('FindAllClientSystemType - Integration tests', () => {
     expect(result.data[2].id).toBe(third.id);
   });
 
+  it('should filter by active when active is true', async() => {
+    await prisma.clientSystemType.createMany({
+      data: [
+        { name: `Tipo A ${Date.now()}`, active: true },
+        { name: `Tipo B ${Date.now()}`, active: false },
+        { name: `Tipo C ${Date.now()}`, active: true },
+      ],
+    });
+
+    const result = await sut.execute({ page: 1, size: 10, active: true });
+
+    expect(result.data).toHaveLength(2);
+    expect(result.totalItems).toBe(2);
+    expect(result.data.every((d: ClientSystemTypeDto) => d.active)).toBe(true);
+  });
+
+  it('should filter by active when active is false', async() => {
+    await prisma.clientSystemType.createMany({
+      data: [
+        { name: `Tipo A ${Date.now()}`, active: true },
+        { name: `Tipo B ${Date.now()}`, active: false },
+        { name: `Tipo C ${Date.now()}`, active: false },
+      ],
+    });
+
+    const result = await sut.execute({ page: 1, size: 10, active: false });
+
+    expect(result.data).toHaveLength(2);
+    expect(result.totalItems).toBe(2);
+    expect(result.data.every((d: ClientSystemTypeDto) => !d.active)).toBe(true);
+  });
+
   it('should filter by search in name', async() => {
     await prisma.clientSystemType.createMany({
       data: [

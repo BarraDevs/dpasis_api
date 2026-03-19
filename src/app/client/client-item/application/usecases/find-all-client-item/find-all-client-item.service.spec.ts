@@ -103,8 +103,10 @@ describe('FindAllClientItem - Integration tests', () => {
       quantity: item.quantity,
       unitValueInCents: item.unitValueInCents,
       totalValueInCents: 3 * 5000,
+      active: item.active,
       cnaeNbsIndop: {
         id: cnaeNbsIndop.id,
+        active: cnaeNbsIndop.active,
         cnae: {
           id: cnae.id,
           code: cnae.code,

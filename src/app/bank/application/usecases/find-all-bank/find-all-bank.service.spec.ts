@@ -121,6 +121,44 @@ describe('FindAllBank - Integration tests', () => {
     expect(result.data[2].id).toBe(third.id);
   });
 
+  it('should filter by active when active is true', async() => {
+    // Arrange
+    await prisma.bank.createMany({
+      data: [
+        { ...baseBankData, bankCode: '001', bankName: 'Banco A', agency: '0001', account: '11111-1', active: true },
+        { ...baseBankData, bankCode: '033', bankName: 'Banco B', agency: '0002', account: '22222-2', active: false },
+        { ...baseBankData, bankCode: '341', bankName: 'Banco C', agency: '0003', account: '33333-3', active: true },
+      ],
+    });
+
+    // Act
+    const result = await sut.execute({ page: 1, size: 10, active: true });
+
+    // Assert
+    expect(result.data).toHaveLength(2);
+    expect(result.totalItems).toBe(2);
+    expect(result.data.every((b) => b.active)).toBe(true);
+  });
+
+  it('should filter by active when active is false', async() => {
+    // Arrange
+    await prisma.bank.createMany({
+      data: [
+        { ...baseBankData, bankCode: '001', bankName: 'Banco A', agency: '0001', account: '11111-1', active: true },
+        { ...baseBankData, bankCode: '033', bankName: 'Banco B', agency: '0002', account: '22222-2', active: false },
+        { ...baseBankData, bankCode: '341', bankName: 'Banco C', agency: '0003', account: '33333-3', active: false },
+      ],
+    });
+
+    // Act
+    const result = await sut.execute({ page: 1, size: 10, active: false });
+
+    // Assert
+    expect(result.data).toHaveLength(2);
+    expect(result.totalItems).toBe(2);
+    expect(result.data.every((b) => !b.active)).toBe(true);
+  });
+
   it('should filter by search in drawer, bankName and bankCode', async() => {
     // Arrange
     await prisma.bank.createMany({

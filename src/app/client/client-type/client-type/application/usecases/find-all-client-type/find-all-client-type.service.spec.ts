@@ -137,6 +137,32 @@ describe('FindAllClientType', () => {
   });
 
   describe('filters', () => {
+    it('should filter by active when active is true', async() => {
+      const { client, data } = await createClientTypeFixtures();
+      await prisma.clientType.create({ data });
+      await prisma.clientType.create({ data: { ...data, active: false } });
+      await prisma.clientType.create({ data });
+
+      const result = await sut.execute({ clientId: client.id, active: true });
+
+      expect(result.data).toHaveLength(2);
+      expect(result.totalItems).toBe(2);
+      expect(result.data.every(d => d.active)).toBe(true);
+    });
+
+    it('should filter by active when active is false', async() => {
+      const { client, data } = await createClientTypeFixtures();
+      await prisma.clientType.create({ data });
+      await prisma.clientType.create({ data: { ...data, active: false } });
+      await prisma.clientType.create({ data: { ...data, active: false } });
+
+      const result = await sut.execute({ clientId: client.id, active: false });
+
+      expect(result.data).toHaveLength(2);
+      expect(result.totalItems).toBe(2);
+      expect(result.data.every(d => !d.active)).toBe(true);
+    });
+
     it('should filter by clientId - return only client types for specified client', async() => {
       const { client, data } = await createClientTypeFixtures();
       const { data: data2 } = await createClientTypeFixtures();

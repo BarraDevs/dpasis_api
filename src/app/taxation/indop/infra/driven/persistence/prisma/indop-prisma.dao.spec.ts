@@ -82,6 +82,25 @@ describe('IndopDaoAdapterPrisma - Integration tests', () => {
       expect(total2).toBe(25);
     });
 
+    it('should filter by active when provided', async() => {
+      await prisma.indop.createMany({
+        data: [
+          { code: '1012-1/01', description: 'Desc 1', active: true },
+          { code: '1012-1/02', description: 'Desc 2', active: false },
+        ],
+      });
+
+      const [activeIndops, activeTotal] = await sut.findAll({ active: true });
+      const [inactiveIndops, inactiveTotal] = await sut.findAll({ active: false });
+
+      expect(activeIndops).toHaveLength(1);
+      expect(activeTotal).toBe(1);
+      expect(activeIndops[0].active).toBe(true);
+      expect(inactiveIndops).toHaveLength(1);
+      expect(inactiveTotal).toBe(1);
+      expect(inactiveIndops[0].active).toBe(false);
+    });
+
     it('should search in code and description (case-insensitive)', async() => {
       // Arrange
       await prisma.indop.createMany({

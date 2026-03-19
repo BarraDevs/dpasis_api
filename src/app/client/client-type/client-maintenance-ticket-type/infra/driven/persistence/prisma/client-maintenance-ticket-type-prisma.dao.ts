@@ -22,9 +22,19 @@ export class ClientMaintenanceTicketTypeDaoAdapterPrisma implements IClientMaint
   public async findAll(queries: FindAllClientMaintenanceTicketTypeQueryDto): Promise<[ClientMaintenanceTicketTypeDto[], number]> {
     const pagination = this.prisma.paginationFactory(queries.page, queries.size);
 
-    const where: Prisma.ClientMaintenanceTicketTypeWhereInput = queries.search
-      ? { name: { contains: queries.search, mode: 'insensitive' } }
-      : {};
+    const conditions: Prisma.ClientMaintenanceTicketTypeWhereInput[] = [];
+
+    if (queries.search?.trim()) {
+      conditions.push({
+        name: { contains: queries.search.trim(), mode: 'insensitive' },
+      });
+    }
+
+    if (queries.active != null && queries.active !== undefined) {
+      conditions.push({ active: queries.active });
+    }
+
+    const where: Prisma.ClientMaintenanceTicketTypeWhereInput = conditions.length > 0 ? { AND: conditions } : {};
 
     const [clientMaintenanceTicketTypes, total] = await this.prisma.$transaction([
       this.prisma.clientMaintenanceTicketType.findMany({

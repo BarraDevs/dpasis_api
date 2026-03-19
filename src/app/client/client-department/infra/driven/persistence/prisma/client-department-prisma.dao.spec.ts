@@ -61,6 +61,25 @@ describe('ClientDepartmentDaoAdapterPrisma - Integration tests', () => {
       expect(total).toBe(2);
     });
 
+    it('should filter by active when provided', async() => {
+      await prisma.clientDepartment.createMany({
+        data: [
+          { name: 'Dept Ativo', active: true },
+          { name: 'Dept Inativo', active: false },
+        ],
+      });
+
+      const [activeDepts, activeTotal] = await sut.findAll({ active: true });
+      const [inactiveDepts, inactiveTotal] = await sut.findAll({ active: false });
+
+      expect(activeDepts).toHaveLength(1);
+      expect(activeTotal).toBe(1);
+      expect(activeDepts[0].active).toBe(true);
+      expect(inactiveDepts).toHaveLength(1);
+      expect(inactiveTotal).toBe(1);
+      expect(inactiveDepts[0].active).toBe(false);
+    });
+
     it('should paginate results correctly', async() => {
       // Arrange
       await prisma.clientDepartment.createMany({

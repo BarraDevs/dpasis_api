@@ -106,6 +106,26 @@ describe('ClientAttachmentDaoAdapterPrisma - Integration tests', () => {
       expect(total).toBe(0);
     });
 
+    it('should filter by active when provided', async() => {
+      const client = await createClient();
+      await prisma.clientAttachment.createMany({
+        data: [
+          { clientId: client.id, description: 'Anexo Ativo', link: 'https://link1.com', active: true },
+          { clientId: client.id, description: 'Anexo Inativo', link: 'https://link2.com', active: false },
+        ],
+      });
+
+      const [activeAttachments, activeTotal] = await sut.findAll({ clientId: client.id, active: true });
+      const [inactiveAttachments, inactiveTotal] = await sut.findAll({ clientId: client.id, active: false });
+
+      expect(activeAttachments).toHaveLength(1);
+      expect(activeTotal).toBe(1);
+      expect(activeAttachments[0].active).toBe(true);
+      expect(inactiveAttachments).toHaveLength(1);
+      expect(inactiveTotal).toBe(1);
+      expect(inactiveAttachments[0].active).toBe(false);
+    });
+
     it('should return only attachments for the specified clientId', async() => {
       // Arrange
       const [client1, client2] = await createTwoClients();

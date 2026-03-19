@@ -10,6 +10,7 @@ import { EditFaq } from 'src/app/faq/application/usecases/edit-faq/edit-faq.serv
 import { FindAllFaqQueryDto } from 'src/app/faq/application/usecases/find-all-faq/dtos/find-all-faq.dto';
 import { FindAllFaq } from 'src/app/faq/application/usecases/find-all-faq/find-all-faq.service';
 import { FindFaqById } from 'src/app/faq/application/usecases/find-faq-by-id/find-faq-by-id.service';
+import { UpdateFaqStatus } from 'src/app/faq/application/usecases/update-faq-status/update-faq-status.service';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
 import { Params } from 'src/infra/validators/class/dtos/params/params.dto';
 import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
@@ -17,11 +18,12 @@ import { FaqAdminController } from './faq-admin.controller';
 
 describe('FaqAdminController - Unit tests', () => {
   let sut: FaqAdminController;
-  let createFaqService: CreateFaq;
-  let findAllFaqService: FindAllFaq;
-  let findFaqByIdService: FindFaqById;
-  let editFaqService: EditFaq;
-  let deleteFaqService: DeleteFaq;
+  let createFaq: CreateFaq;
+  let findAllFaq: FindAllFaq;
+  let findFaqById: FindFaqById;
+  let editFaq: EditFaq;
+  let deleteFaq: DeleteFaq;
+  let updateFaqStatus: UpdateFaqStatus;
 
   beforeEach(async() => {
     const module = await Test.createTestingModule({
@@ -33,15 +35,17 @@ describe('FaqAdminController - Unit tests', () => {
         { provide: FindFaqById, useValue: createMock<FindFaqById>() },
         { provide: EditFaq, useValue: createMock<EditFaq>() },
         { provide: DeleteFaq, useValue: createMock<DeleteFaq>() },
+        { provide: UpdateFaqStatus, useValue: createMock<UpdateFaqStatus>() },
       ],
     }).compile();
 
     sut = module.get(FaqAdminController);
-    createFaqService = module.get(CreateFaq);
-    findAllFaqService = module.get(FindAllFaq);
-    findFaqByIdService = module.get(FindFaqById);
-    editFaqService = module.get(EditFaq);
-    deleteFaqService = module.get(DeleteFaq);
+    createFaq = module.get(CreateFaq);
+    findAllFaq = module.get(FindAllFaq);
+    findFaqById = module.get(FindFaqById);
+    editFaq = module.get(EditFaq);
+    deleteFaq = module.get(DeleteFaq);
+    updateFaqStatus = module.get(UpdateFaqStatus);
   });
 
   it('should be defined', () => {
@@ -53,7 +57,7 @@ describe('FaqAdminController - Unit tests', () => {
       // Arrange
       const body = createMock<CreateFaqInputDto>();
       const output = createMock<CreateFaqOutputDto>();
-      const createSpy = jest.spyOn(createFaqService, 'execute').mockResolvedValue(output);
+      const createSpy = jest.spyOn(createFaq, 'execute').mockResolvedValue(output);
 
       // Act
       const result = await sut.create(body);
@@ -69,7 +73,7 @@ describe('FaqAdminController - Unit tests', () => {
       // Arrange
       const queries = createMock<FindAllFaqQueryDto>();
       const output = createMock<IPagination<FaqDto>>();
-      const findAllSpy = jest.spyOn(findAllFaqService, 'execute').mockResolvedValue(output);
+      const findAllSpy = jest.spyOn(findAllFaq, 'execute').mockResolvedValue(output);
 
       // Act
       const result = await sut.findAll(queries);
@@ -85,7 +89,7 @@ describe('FaqAdminController - Unit tests', () => {
       // Arrange
       const params = createMock<Params>();
       const output = createMock<FaqDto>();
-      const findOneSpy = jest.spyOn(findFaqByIdService, 'execute').mockResolvedValue(output);
+      const findOneSpy = jest.spyOn(findFaqById, 'execute').mockResolvedValue(output);
 
       // Act
       const result = await sut.findOne(params);
@@ -102,7 +106,7 @@ describe('FaqAdminController - Unit tests', () => {
       const params = createMock<Params>();
       const body = createMock<EditFaqInputDto>();
       const output = createMock<SuccessMessage>();
-      const updateSpy = jest.spyOn(editFaqService, 'execute').mockResolvedValue(output);
+      const updateSpy = jest.spyOn(editFaq, 'execute').mockResolvedValue(output);
 
       // Act
       const result = await sut.update(params, body);
@@ -118,7 +122,7 @@ describe('FaqAdminController - Unit tests', () => {
       // Arrange
       const params = createMock<Params>();
       const output = createMock<SuccessMessage>();
-      const removeSpy = jest.spyOn(deleteFaqService, 'execute').mockResolvedValue(output);
+      const removeSpy = jest.spyOn(deleteFaq, 'execute').mockResolvedValue(output);
 
       // Act
       const result = await sut.remove(params);
@@ -126,6 +130,22 @@ describe('FaqAdminController - Unit tests', () => {
       // Assert
       expect(result).toEqual(output);
       expect(removeSpy).toHaveBeenCalledWith(params.id);
+    });
+  });
+
+  describe('updateStatus', () => {
+    it('should call updateFaqStatus.execute with params.id', async() => {
+      // Arrange
+      const params = createMock<Params>();
+      const output = createMock<SuccessMessage>();
+      const updateStatusSpy = jest.spyOn(updateFaqStatus, 'execute').mockResolvedValue(output);
+
+      // Act
+      const result = await sut.updateStatus(params);
+
+      // Assert
+      expect(result).toEqual(output);
+      expect(updateStatusSpy).toHaveBeenCalledWith(params.id);
     });
   });
 });

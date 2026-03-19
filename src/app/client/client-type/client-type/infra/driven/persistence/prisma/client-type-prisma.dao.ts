@@ -53,23 +53,25 @@ export class ClientTypeDaoAdapterPrisma implements IClientTypeDao {
   public async findAll(queries: FindAllClientTypeQueryDto): Promise<[ClientTypeDto[], number]> {
     const pagination = this.prisma.paginationFactory(queries.page, queries.size);
 
-    const andConditions: Prisma.ClientTypeWhereInput[] = [
+    const conditions: Prisma.ClientTypeWhereInput[] = [
       { clientId: { equals: queries.clientId } },
     ];
 
     if (queries.search?.trim()) {
-      andConditions.push({
+      conditions.push({
         OR: [
-          { clientSystemType: { name: { contains: queries.search, mode: 'insensitive' } } },
-          { clientDescriptionType: { name: { contains: queries.search, mode: 'insensitive' } } },
-          { clientDriveType: { name: { contains: queries.search, mode: 'insensitive' } } },
+          { clientSystemType: { name: { contains: queries.search.trim(), mode: 'insensitive' } } },
+          { clientDescriptionType: { name: { contains: queries.search.trim(), mode: 'insensitive' } } },
+          { clientDriveType: { name: { contains: queries.search.trim(), mode: 'insensitive' } } },
         ],
       });
     }
 
-    const where: Prisma.ClientTypeWhereInput = {
-      AND: andConditions,
-    };
+    if (queries.active != null && queries.active !== undefined) {
+      conditions.push({ active: queries.active });
+    }
+
+    const where: Prisma.ClientTypeWhereInput = conditions.length > 0 ? { AND: conditions } : {};
 
     const [clientTypes, total] = await this.prisma.$transaction([
       this.prisma.clientType.findMany({

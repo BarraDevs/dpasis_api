@@ -353,6 +353,92 @@ describe('FindAllClientAddress', () => {
   });
 
   describe('filtering', () => {
+    it('should filter by active when active is true', async() => {
+      await prisma.clientAddress.create({
+        data: {
+          clientId,
+          type: ClientAddressType.MAIN,
+          zipCode: '11111-111',
+          street: 'Rua A',
+          number: '1',
+          complement: null,
+          neighborhood: 'Centro',
+          city: 'São Paulo',
+          state: 'SP',
+          active: true,
+        },
+      });
+      await prisma.clientAddress.create({
+        data: {
+          clientId,
+          type: ClientAddressType.BILLING,
+          zipCode: '22222-222',
+          street: 'Rua B',
+          number: '2',
+          complement: null,
+          neighborhood: 'Centro',
+          city: 'São Paulo',
+          state: 'SP',
+          active: false,
+        },
+      });
+      await prisma.clientAddress.create({
+        data: {
+          clientId,
+          type: ClientAddressType.SUPPORT,
+          zipCode: '33333-333',
+          street: 'Rua C',
+          number: '3',
+          complement: null,
+          neighborhood: 'Centro',
+          city: 'São Paulo',
+          state: 'SP',
+          active: true,
+        },
+      });
+
+      const result = await sut.execute({ clientId, active: true });
+
+      expect(result.totalItems).toBe(2);
+      expect(result.data.every((a) => a.active)).toBe(true);
+    });
+
+    it('should filter by active when active is false', async() => {
+      await prisma.clientAddress.create({
+        data: {
+          clientId,
+          type: ClientAddressType.MAIN,
+          zipCode: '11111-111',
+          street: 'Rua A',
+          number: '1',
+          complement: null,
+          neighborhood: 'Centro',
+          city: 'São Paulo',
+          state: 'SP',
+          active: true,
+        },
+      });
+      await prisma.clientAddress.create({
+        data: {
+          clientId,
+          type: ClientAddressType.BILLING,
+          zipCode: '22222-222',
+          street: 'Rua B',
+          number: '2',
+          complement: null,
+          neighborhood: 'Centro',
+          city: 'São Paulo',
+          state: 'SP',
+          active: false,
+        },
+      });
+
+      const result = await sut.execute({ clientId, active: false });
+
+      expect(result.totalItems).toBe(1);
+      expect(result.data[0].active).toBe(false);
+    });
+
     it.each([
       ClientAddressType.MAIN,
       ClientAddressType.BILLING,

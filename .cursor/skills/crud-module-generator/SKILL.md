@@ -109,6 +109,20 @@ src/app/{context}/{module-name}/
 - `updateStatus(id, active)` se o use case existir
 - FindAll: filtros do formulário, busca nos campos indicados, paginação
 
+### Padrão Where (obrigatório)
+
+Sempre usar o padrão **array de condições com AND** para construir o `where`:
+
+```typescript
+const conditions: Prisma.XWhereInput[] = [];
+if (queries.clientId != null) conditions.push({ clientId: { equals: queries.clientId } });
+if (queries.search?.trim()) conditions.push({ OR: [{ campo: { contains: queries.search.trim(), mode: 'insensitive' } }] });
+if (queries.active != null && queries.active !== undefined) conditions.push({ active: queries.active });
+const where = conditions.length > 0 ? { AND: conditions } : {};
+```
+
+Ver `.cursor/rules/dao-where-pattern.mdc` para detalhes.
+
 ### Rotas HTTP
 
 - **Admin:** POST, GET, GET/:id, PATCH/:id/status (antes de PATCH/:id, se houver UpdateStatus), PATCH/:id, DELETE/:id

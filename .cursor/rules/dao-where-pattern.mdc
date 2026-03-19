@@ -1,0 +1,99 @@
+---
+alwaysApply: true
+---
+# Padrão Where nos DAOs Prisma
+
+Todos os DAOs usam o mesmo padrão para construir o objeto `where` em `findAll`: **array de condições com AND**.
+
+## Estrutura padrão
+
+```typescript
+const conditions: Prisma.XWhereInput[] = [];
+
+// 1. Condições obrigatórias (quando existir)
+if (queries.clientId != null) {
+  conditions.push({ clientId: { equals: queries.clientId } });
+}
+
+// 2. Search (OR com contains + mode: 'insensitive')
+if (queries.search?.trim()) {
+  conditions.push({
+    OR: [
+      { campo1: { contains: queries.search.trim(), mode: 'insensitive' } },
+      { campo2: { contains: queries.search.trim(), mode: 'insensitive' } },
+    ],
+  });
+}
+
+// 3. Filtro active (quando != null && !== undefined)
+if (queries.active != null && queries.active !== undefined) {
+  conditions.push({ active: queries.active });
+}
+
+// 4. Outros filtros específicos do módulo
+if (queries.campo != null) {
+  conditions.push({ campo: { equals: queries.campo } });
+}
+
+const where: Prisma.XWhereInput = conditions.length > 0 ? { AND: conditions } : {};
+```
+
+## Regras de convenção
+
+| Cenário | Padrão |
+|---------|--------|
+| **Search em múltiplos campos** | `OR: [{ campo: { contains: search.trim(), mode: 'insensitive' } }, ...]` |
+| **Search em um único campo** | `{ campo: { contains: search.trim(), mode: 'insensitive' } }` |
+| **Search em relacionamentos** | `OR: [{ rel: { campo: { contains, mode } } }, ...]` |
+| **Filtro active** | `queries.active != null && queries.active !== undefined` antes de adicionar |
+| **Equals simples** | `{ campo: { equals: valor } }` |
+| **Equals case-insensitive** | `{ campo: { equals: valor.trim(), mode: 'insensitive' } }` |
+| **Where vazio** | `conditions.length > 0 ? { AND: conditions } : {}` |
+
+## Exemplos por cenário
+
+### Search em múltiplos campos (ex: Bank, Company, FAQ)
+```typescript
+if (queries.search?.trim()) {
+  conditions.push({
+    OR: [
+      { drawer: { contains: queries.search.trim(), mode: 'insensitive' } },
+      { bankName: { contains: queries.search.trim(), mode: 'insensitive' } },
+    ],
+  });
+}
+```
+
+### Search em um único campo (ex: ClientGroup, ClientOwner)
+```typescript
+if (queries.search?.trim()) {
+  conditions.push({
+    name: { contains: queries.search.trim(), mode: 'insensitive' },
+  });
+}
+```
+
+### Search em relacionamentos (ex: ClientType, ClientItem)
+```typescript
+if (queries.search?.trim()) {
+  conditions.push({
+    OR: [
+      { clientSystemType: { name: { contains: queries.search.trim(), mode: 'insensitive' } } },
+      { clientDescriptionType: { name: { contains: queries.search.trim(), mode: 'insensitive' } } },
+    ],
+  });
+}
+```
+
+### Condição obrigatória (ex: clientId em sub-recursos)
+```typescript
+const conditions: Prisma.XWhereInput[] = [
+  { clientId: { equals: queries.clientId } },
+];
+```
+
+## Nomenclatura
+
+- Use `conditions` (não `andConditions`) para o array de condições.
+- Sempre use `queries.search?.trim()` para ignorar string vazia.
+- Para active: `{ active: queries.active }` (não `{ active: { equals: queries.active } }`).

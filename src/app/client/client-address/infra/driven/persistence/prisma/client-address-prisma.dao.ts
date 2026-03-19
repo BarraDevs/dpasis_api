@@ -29,31 +29,33 @@ export class ClientAddressDaoAdapterPrisma implements IClientAddressDao {
   public async findAll(queries: FindAllClientAddressQueryDto): Promise<[ClientAddressDto[], number]> {
     const pagination = this.prisma.paginationFactory(queries.page, queries.size);
 
-    const andConditions: Prisma.ClientAddressWhereInput[] = [
+    const conditions: Prisma.ClientAddressWhereInput[] = [
       { clientId: { equals: queries.clientId } },
     ];
 
     if (queries.type) {
-      andConditions.push({ type: { equals: queries.type } });
+      conditions.push({ type: { equals: queries.type } });
     }
 
     if (queries.search?.trim()) {
-      andConditions.push({
+      conditions.push({
         OR: [
-          { zipCode: { contains: queries.search, mode: 'insensitive' } },
-          { street: { contains: queries.search, mode: 'insensitive' } },
-          { number: { contains: queries.search, mode: 'insensitive' } },
-          { complement: { contains: queries.search, mode: 'insensitive' } },
-          { neighborhood: { contains: queries.search, mode: 'insensitive' } },
-          { city: { contains: queries.search, mode: 'insensitive' } },
-          { state: { contains: queries.search, mode: 'insensitive' } },
+          { zipCode: { contains: queries.search.trim(), mode: 'insensitive' } },
+          { street: { contains: queries.search.trim(), mode: 'insensitive' } },
+          { number: { contains: queries.search.trim(), mode: 'insensitive' } },
+          { complement: { contains: queries.search.trim(), mode: 'insensitive' } },
+          { neighborhood: { contains: queries.search.trim(), mode: 'insensitive' } },
+          { city: { contains: queries.search.trim(), mode: 'insensitive' } },
+          { state: { contains: queries.search.trim(), mode: 'insensitive' } },
         ],
       });
     }
 
-    const where: Prisma.ClientAddressWhereInput = {
-      AND: andConditions,
-    };
+    if (queries.active != null && queries.active !== undefined) {
+      conditions.push({ active: queries.active });
+    }
+
+    const where: Prisma.ClientAddressWhereInput = conditions.length > 0 ? { AND: conditions } : {};
 
     return this.prisma.$transaction([
       this.prisma.clientAddress.findMany({

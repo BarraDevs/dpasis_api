@@ -22,9 +22,19 @@ export class ClientDepartmentDaoAdapterPrisma implements IClientDepartmentDao {
   public async findAll(queries: FindAllClientDepartmentQueryDto): Promise<[ClientDepartmentDto[], number]> {
     const pagination = this.prisma.paginationFactory(queries.page, queries.size);
 
-    const where: Prisma.ClientDepartmentWhereInput = queries.search
-      ? { name: { contains: queries.search, mode: 'insensitive' } }
-      : {};
+    const conditions: Prisma.ClientDepartmentWhereInput[] = [];
+
+    if (queries.search?.trim()) {
+      conditions.push({
+        name: { contains: queries.search.trim(), mode: 'insensitive' },
+      });
+    }
+
+    if (queries.active != null && queries.active !== undefined) {
+      conditions.push({ active: queries.active });
+    }
+
+    const where: Prisma.ClientDepartmentWhereInput = conditions.length > 0 ? { AND: conditions } : {};
 
     const [clientDepartments, total] = await this.prisma.$transaction([
       this.prisma.clientDepartment.findMany({

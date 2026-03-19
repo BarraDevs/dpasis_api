@@ -35,15 +35,23 @@ export class CompanyDaoAdapterPrisma implements ICompanyDao {
   public async findAll(queries: FindAllCompanyQueryDto): Promise<[CompanyDto[], number]> {
     const pagination = this.prisma.paginationFactory(queries.page, queries.size);
 
-    const where: Prisma.CompanyWhereInput = queries.search?.trim()
-      ? {
+    const conditions: Prisma.CompanyWhereInput[] = [];
+
+    if (queries.search?.trim()) {
+      conditions.push({
         OR: [
-          { name: { contains: queries.search, mode: 'insensitive' } },
-          { fantasyName: { contains: queries.search, mode: 'insensitive' } },
-          { document: { contains: queries.search, mode: 'insensitive' } },
+          { name: { contains: queries.search.trim(), mode: 'insensitive' } },
+          { fantasyName: { contains: queries.search.trim(), mode: 'insensitive' } },
+          { document: { contains: queries.search.trim(), mode: 'insensitive' } },
         ],
-      }
-      : {};
+      });
+    }
+
+    if (queries.active != null && queries.active !== undefined) {
+      conditions.push({ active: queries.active });
+    }
+
+    const where: Prisma.CompanyWhereInput = conditions.length > 0 ? { AND: conditions } : {};
 
     return this.prisma.$transaction([
       this.prisma.company.findMany({

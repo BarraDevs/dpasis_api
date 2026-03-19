@@ -110,6 +110,44 @@ describe('FindAllFaq - Integration tests', () => {
     expect(result.data[2].id).toBe(first.id);
   });
 
+  it('should filter by active when active is true', async() => {
+    // Arrange
+    await prisma.faq.createMany({
+      data: [
+        { question: 'P1?', answer: 'A1.', active: true },
+        { question: 'P2?', answer: 'A2.', active: false },
+        { question: 'P3?', answer: 'A3.', active: true },
+      ],
+    });
+
+    // Act
+    const result = await sut.execute({ page: 1, size: 10, active: true });
+
+    // Assert
+    expect(result.data).toHaveLength(2);
+    expect(result.totalItems).toBe(2);
+    expect(result.data.every((f: FaqDto) => f.active)).toBe(true);
+  });
+
+  it('should filter by active when active is false', async() => {
+    // Arrange
+    await prisma.faq.createMany({
+      data: [
+        { question: 'P1?', answer: 'A1.', active: true },
+        { question: 'P2?', answer: 'A2.', active: false },
+        { question: 'P3?', answer: 'A3.', active: false },
+      ],
+    });
+
+    // Act
+    const result = await sut.execute({ page: 1, size: 10, active: false });
+
+    // Assert
+    expect(result.data).toHaveLength(2);
+    expect(result.totalItems).toBe(2);
+    expect(result.data.every((f: FaqDto) => !f.active)).toBe(true);
+  });
+
   it('should filter by search in question', async() => {
     // Arrange
     await prisma.faq.createMany({

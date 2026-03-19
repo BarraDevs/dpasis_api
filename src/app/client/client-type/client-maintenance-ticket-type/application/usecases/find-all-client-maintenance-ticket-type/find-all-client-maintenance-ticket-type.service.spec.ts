@@ -108,6 +108,44 @@ describe('FindAllClientMaintenanceTicketType - Integration tests', () => {
     expect(result.data[2].id).toBe(third.id);
   });
 
+  it('should filter by active when active is true', async() => {
+    // Arrange
+    await prisma.clientMaintenanceTicketType.createMany({
+      data: [
+        { name: `Tipo A ${Date.now()}`, active: true },
+        { name: `Tipo B ${Date.now()}`, active: false },
+        { name: `Tipo C ${Date.now()}`, active: true },
+      ],
+    });
+
+    // Act
+    const result = await sut.execute({ page: 1, size: 10, active: true });
+
+    // Assert
+    expect(result.data).toHaveLength(2);
+    expect(result.totalItems).toBe(2);
+    expect(result.data.every((d: ClientMaintenanceTicketTypeDto) => d.active)).toBe(true);
+  });
+
+  it('should filter by active when active is false', async() => {
+    // Arrange
+    await prisma.clientMaintenanceTicketType.createMany({
+      data: [
+        { name: `Tipo A ${Date.now()}`, active: true },
+        { name: `Tipo B ${Date.now()}`, active: false },
+        { name: `Tipo C ${Date.now()}`, active: false },
+      ],
+    });
+
+    // Act
+    const result = await sut.execute({ page: 1, size: 10, active: false });
+
+    // Assert
+    expect(result.data).toHaveLength(2);
+    expect(result.totalItems).toBe(2);
+    expect(result.data.every((d: ClientMaintenanceTicketTypeDto) => !d.active)).toBe(true);
+  });
+
   it('should filter by search in name', async() => {
     // Arrange
     await prisma.clientMaintenanceTicketType.createMany({

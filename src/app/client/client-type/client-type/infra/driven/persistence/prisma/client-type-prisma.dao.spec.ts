@@ -135,6 +135,26 @@ describe('ClientTypeDaoAdapterPrisma', () => {
       expect(items.every(i => i.clientId === client.id)).toBe(true);
     });
 
+    it('should filter by active when provided', async() => {
+      const { client, data } = await createClientTypeData();
+      await prisma.clientType.create({
+        data: { ...data, clientId: client.id, active: true },
+      });
+      await prisma.clientType.create({
+        data: { ...data, clientId: client.id, active: false },
+      });
+
+      const [activeTypes, activeTotal] = await sut.findAll({ clientId: client.id, active: true });
+      const [inactiveTypes, inactiveTotal] = await sut.findAll({ clientId: client.id, active: false });
+
+      expect(activeTypes).toHaveLength(1);
+      expect(activeTotal).toBe(1);
+      expect(activeTypes[0].active).toBe(true);
+      expect(inactiveTypes).toHaveLength(1);
+      expect(inactiveTotal).toBe(1);
+      expect(inactiveTypes[0].active).toBe(false);
+    });
+
     it('should search by clientSystemType name (case-insensitive)', async() => {
       const { client, data } = await createClientTypeData();
       const systemTypeMatch = await prisma.clientSystemType.create({

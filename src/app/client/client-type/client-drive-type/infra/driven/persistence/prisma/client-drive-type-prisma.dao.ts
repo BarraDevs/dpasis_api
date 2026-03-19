@@ -22,9 +22,19 @@ export class ClientDriveTypeDaoAdapterPrisma implements IClientDriveTypeDao {
   public async findAll(queries: FindAllClientDriveTypeQueryDto): Promise<[ClientDriveTypeDto[], number]> {
     const pagination = this.prisma.paginationFactory(queries.page, queries.size);
 
-    const where: Prisma.ClientDriveTypeWhereInput = queries.search
-      ? { name: { contains: queries.search, mode: 'insensitive' } }
-      : {};
+    const conditions: Prisma.ClientDriveTypeWhereInput[] = [];
+
+    if (queries.search?.trim()) {
+      conditions.push({
+        name: { contains: queries.search.trim(), mode: 'insensitive' },
+      });
+    }
+
+    if (queries.active != null && queries.active !== undefined) {
+      conditions.push({ active: queries.active });
+    }
+
+    const where: Prisma.ClientDriveTypeWhereInput = conditions.length > 0 ? { AND: conditions } : {};
 
     const [clientDriveTypes, total] = await this.prisma.$transaction([
       this.prisma.clientDriveType.findMany({

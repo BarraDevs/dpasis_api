@@ -11,11 +11,13 @@ const ClientItemSelect = {
   description: true,
   quantity: true,
   unitValueInCents: true,
+  active: true,
   createdAt: true,
   updatedAt: true,
   cnaeNbsIndop: {
     select: {
       id: true,
+      active: true,
       cnae: {
         select: {
           id: true,
@@ -55,8 +57,10 @@ export class ClientItemDaoAdapterPrisma implements IClientItemDao {
       quantity: row.quantity,
       unitValueInCents: row.unitValueInCents,
       totalValueInCents: Math.ceil(row.quantity * row.unitValueInCents),
+      active: row.active,
       cnaeNbsIndop: {
         id: row.cnaeNbsIndop.id,
+        active: row.cnaeNbsIndop.active,
         cnae: row.cnaeNbsIndop.cnae,
         nbs: row.cnaeNbsIndop.nbs,
         indop: row.cnaeNbsIndop.indop,
@@ -69,52 +73,50 @@ export class ClientItemDaoAdapterPrisma implements IClientItemDao {
   public async findAll(queries: FindAllClientItemQueryDto): Promise<[ClientItemDto[], number]> {
     const pagination = this.prisma.paginationFactory(queries.page, queries.size);
 
-    const andConditions: Prisma.ClientItemWhereInput[] = [
+    const conditions: Prisma.ClientItemWhereInput[] = [
       { clientId: { equals: queries.clientId } },
     ];
 
     if (queries.cnaeId != null) {
-      andConditions.push({
+      conditions.push({
         cnaeNbsIndop: { cnaeId: { equals: queries.cnaeId } },
       });
     }
     if (queries.nbsId != null) {
-      andConditions.push({
+      conditions.push({
         cnaeNbsIndop: { nbsId: { equals: queries.nbsId } },
       });
     }
     if (queries.indopId != null) {
-      andConditions.push({
+      conditions.push({
         cnaeNbsIndop: { indopId: { equals: queries.indopId } },
       });
     }
 
     if (queries.search?.trim()) {
-      andConditions.push({
+      conditions.push({
         OR: [
-          { description: { contains: queries.search, mode: 'insensitive' } },
+          { description: { contains: queries.search.trim(), mode: 'insensitive' } },
           {
             cnaeNbsIndop: {
-              cnae: { code: { contains: queries.search, mode: 'insensitive' } },
+              cnae: { code: { contains: queries.search.trim(), mode: 'insensitive' } },
             },
           },
           {
             cnaeNbsIndop: {
-              nbs: { code: { contains: queries.search, mode: 'insensitive' } },
+              nbs: { code: { contains: queries.search.trim(), mode: 'insensitive' } },
             },
           },
           {
             cnaeNbsIndop: {
-              indop: { code: { contains: queries.search, mode: 'insensitive' } },
+              indop: { code: { contains: queries.search.trim(), mode: 'insensitive' } },
             },
           },
         ],
       });
     }
 
-    const where: Prisma.ClientItemWhereInput = {
-      AND: andConditions,
-    };
+    const where: Prisma.ClientItemWhereInput = conditions.length > 0 ? { AND: conditions } : {};
 
     const [clientItems, total] = await this.prisma.$transaction([
       this.prisma.clientItem.findMany({

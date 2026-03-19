@@ -47,27 +47,25 @@ export class ClientDiscountDaoAdapterPrisma implements IClientDiscountDao {
   public async findAll(queries: FindAllClientDiscountQueryDto): Promise<[ClientDiscountDto[], number]> {
     const pagination = this.prisma.paginationFactory(queries.page, queries.size);
 
-    const andConditions: Prisma.ClientDiscountWhereInput[] = [
+    const conditions: Prisma.ClientDiscountWhereInput[] = [
       { clientId: { equals: queries.clientId } },
     ];
 
     if (queries.month != null) {
-      andConditions.push({ month: { equals: queries.month } });
+      conditions.push({ month: { equals: queries.month } });
     }
 
     if (queries.year != null) {
-      andConditions.push({ year: { equals: queries.year } });
+      conditions.push({ year: { equals: queries.year } });
     }
 
     if (queries.search?.trim()) {
-      andConditions.push({
-        description: { contains: queries.search, mode: 'insensitive' },
+      conditions.push({
+        description: { contains: queries.search.trim(), mode: 'insensitive' },
       });
     }
 
-    const where: Prisma.ClientDiscountWhereInput = {
-      AND: andConditions,
-    };
+    const where: Prisma.ClientDiscountWhereInput = conditions.length > 0 ? { AND: conditions } : {};
 
     const [data, total] = await this.prisma.$transaction([
       this.prisma.clientDiscount.findMany({

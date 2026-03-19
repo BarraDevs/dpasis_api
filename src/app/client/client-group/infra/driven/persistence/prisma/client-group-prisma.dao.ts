@@ -22,9 +22,19 @@ export class ClientGroupDaoAdapterPrisma implements IClientGroupDao {
   public async findAll(queries: FindAllClientGroupQueryDto): Promise<[ClientGroupDto[], number]> {
     const pagination = this.prisma.paginationFactory(queries.page, queries.size);
 
-    const where: Prisma.ClientGroupWhereInput = queries.search
-      ? { name: { contains: queries.search, mode: 'insensitive' } }
-      : {};
+    const conditions: Prisma.ClientGroupWhereInput[] = [];
+
+    if (queries.search?.trim()) {
+      conditions.push({
+        name: { contains: queries.search.trim(), mode: 'insensitive' },
+      });
+    }
+
+    if (queries.active != null && queries.active !== undefined) {
+      conditions.push({ active: queries.active });
+    }
+
+    const where: Prisma.ClientGroupWhereInput = conditions.length > 0 ? { AND: conditions } : {};
 
     const [clientGroups, total] = await this.prisma.$transaction([
       this.prisma.clientGroup.findMany({

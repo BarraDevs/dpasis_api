@@ -128,6 +128,38 @@ describe('FindAllClientContact - Integration tests', () => {
     expect(result.data[2].id).toBe(third.id);
   });
 
+  it('should filter by active when active is true', async() => {
+    await prisma.clientContact.createMany({
+      data: [
+        { clientId, departmentId, name: 'João', email: 'joao@example.com', receiveNF: false, active: true },
+        { clientId, departmentId, name: 'Maria', email: 'maria@example.com', receiveNF: false, active: false },
+        { clientId, departmentId, name: 'Pedro', email: 'pedro@example.com', receiveNF: false, active: true },
+      ],
+    });
+
+    const result = await sut.execute({ clientId, page: 1, size: 10, active: true });
+
+    expect(result.data).toHaveLength(2);
+    expect(result.totalItems).toBe(2);
+    expect(result.data.every((c: ClientContactDto) => c.active)).toBe(true);
+  });
+
+  it('should filter by active when active is false', async() => {
+    await prisma.clientContact.createMany({
+      data: [
+        { clientId, departmentId, name: 'João', email: 'joao@example.com', receiveNF: false, active: true },
+        { clientId, departmentId, name: 'Maria', email: 'maria@example.com', receiveNF: false, active: false },
+        { clientId, departmentId, name: 'Pedro', email: 'pedro@example.com', receiveNF: false, active: false },
+      ],
+    });
+
+    const result = await sut.execute({ clientId, page: 1, size: 10, active: false });
+
+    expect(result.data).toHaveLength(2);
+    expect(result.totalItems).toBe(2);
+    expect(result.data.every((c: ClientContactDto) => !c.active)).toBe(true);
+  });
+
   it('should filter by search in name and email', async() => {
     await prisma.clientContact.createMany({
       data: [

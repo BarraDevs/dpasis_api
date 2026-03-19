@@ -23,14 +23,22 @@ export class IndopDaoAdapterPrisma implements IIndopDao {
   public async findAll(queries: FindAllIndopQueryDto): Promise<[IndopDto[], number]> {
     const pagination = this.prisma.paginationFactory(queries.page, queries.size);
 
-    const where: Prisma.IndopWhereInput = queries.search
-      ? {
+    const conditions: Prisma.IndopWhereInput[] = [];
+
+    if (queries.search?.trim()) {
+      conditions.push({
         OR: [
-          { code: { contains: queries.search, mode: 'insensitive' } },
-          { description: { contains: queries.search, mode: 'insensitive' } },
+          { code: { contains: queries.search.trim(), mode: 'insensitive' } },
+          { description: { contains: queries.search.trim(), mode: 'insensitive' } },
         ],
-      }
-      : {};
+      });
+    }
+
+    if (queries.active != null && queries.active !== undefined) {
+      conditions.push({ active: queries.active });
+    }
+
+    const where: Prisma.IndopWhereInput = conditions.length > 0 ? { AND: conditions } : {};
 
     const [indops, total] = await this.prisma.$transaction([
       this.prisma.indop.findMany({

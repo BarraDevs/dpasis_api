@@ -97,6 +97,51 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
       expect(clients[0].updatedAt).toBeInstanceOf(Date);
     });
 
+    it('should filter by active when provided', async() => {
+      const { group, owner } = await createClientGroupAndOwner();
+
+      await prisma.client.create({
+        data: {
+          type: ClientType.PJ,
+          document: '09748165000110',
+          ie: null,
+          groupId: group.id,
+          ownerId: owner.id,
+          companyName: 'Empresa Ativa',
+          fantasyName: null,
+          headquarters: 'SP',
+          invoiceType: ClientInvoiceType.CONTRACT,
+          generateInvoice: true,
+          active: true,
+        },
+      });
+      await prisma.client.create({
+        data: {
+          type: ClientType.PJ,
+          document: '09748165000111',
+          ie: null,
+          groupId: group.id,
+          ownerId: owner.id,
+          companyName: 'Empresa Inativa',
+          fantasyName: null,
+          headquarters: 'SP',
+          invoiceType: ClientInvoiceType.CONTRACT,
+          generateInvoice: true,
+          active: false,
+        },
+      });
+
+      const [activeClients, activeTotal] = await sut.findAll({ active: true });
+      const [inactiveClients, inactiveTotal] = await sut.findAll({ active: false });
+
+      expect(activeClients).toHaveLength(1);
+      expect(activeTotal).toBe(1);
+      expect(activeClients[0].active).toBe(true);
+      expect(inactiveClients).toHaveLength(1);
+      expect(inactiveTotal).toBe(1);
+      expect(inactiveClients[0].active).toBe(false);
+    });
+
     it('should paginate results correctly', async() => {
       const { group, owner } = await createClientGroupAndOwner();
 

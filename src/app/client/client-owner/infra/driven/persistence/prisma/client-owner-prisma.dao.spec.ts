@@ -61,6 +61,25 @@ describe('ClientOwnerDaoAdapterPrisma - Integration tests', () => {
       expect(total).toBe(2);
     });
 
+    it('should filter by active when provided', async() => {
+      await prisma.clientOwner.createMany({
+        data: [
+          { name: 'Owner Ativo', active: true },
+          { name: 'Owner Inativo', active: false },
+        ],
+      });
+
+      const [activeOwners, activeTotal] = await sut.findAll({ active: true });
+      const [inactiveOwners, inactiveTotal] = await sut.findAll({ active: false });
+
+      expect(activeOwners).toHaveLength(1);
+      expect(activeTotal).toBe(1);
+      expect(activeOwners[0].active).toBe(true);
+      expect(inactiveOwners).toHaveLength(1);
+      expect(inactiveTotal).toBe(1);
+      expect(inactiveOwners[0].active).toBe(false);
+    });
+
     it('should paginate results correctly', async() => {
       // Arrange
       await prisma.clientOwner.createMany({

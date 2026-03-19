@@ -167,6 +167,97 @@ describe('FindAllClient - Integration tests', () => {
     expect(result.totalPages).toBe(3);
   });
 
+  it('should filter by active when active is true', async() => {
+    const [group, owner] = await Promise.all([
+      prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
+      prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+    ]);
+
+    await prisma.client.createMany({
+      data: [
+        {
+          type: ClientType.PJ,
+          document: '09748165000110',
+          groupId: group.id,
+          ownerId: owner.id,
+          companyName: 'Empresa 1',
+          headquarters: 'SP',
+          invoiceType: ClientInvoiceType.CONTRACT,
+          generateInvoice: true,
+          active: true,
+        },
+        {
+          type: ClientType.PJ,
+          document: '09748165000121',
+          groupId: group.id,
+          ownerId: owner.id,
+          companyName: 'Empresa 2',
+          headquarters: 'SP',
+          invoiceType: ClientInvoiceType.CONTRACT,
+          generateInvoice: true,
+          active: false,
+        },
+        {
+          type: ClientType.PJ,
+          document: '09748165000132',
+          groupId: group.id,
+          ownerId: owner.id,
+          companyName: 'Empresa 3',
+          headquarters: 'SP',
+          invoiceType: ClientInvoiceType.CONTRACT,
+          generateInvoice: true,
+          active: true,
+        },
+      ],
+    });
+
+    const result = await sut.execute({ active: true });
+
+    expect(result.data).toHaveLength(2);
+    expect(result.totalItems).toBe(2);
+    expect(result.data.every((c) => c.active)).toBe(true);
+  });
+
+  it('should filter by active when active is false', async() => {
+    const [group, owner] = await Promise.all([
+      prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
+      prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+    ]);
+
+    await prisma.client.createMany({
+      data: [
+        {
+          type: ClientType.PJ,
+          document: '09748165000110',
+          groupId: group.id,
+          ownerId: owner.id,
+          companyName: 'Empresa 1',
+          headquarters: 'SP',
+          invoiceType: ClientInvoiceType.CONTRACT,
+          generateInvoice: true,
+          active: true,
+        },
+        {
+          type: ClientType.PJ,
+          document: '09748165000121',
+          groupId: group.id,
+          ownerId: owner.id,
+          companyName: 'Empresa 2',
+          headquarters: 'SP',
+          invoiceType: ClientInvoiceType.CONTRACT,
+          generateInvoice: true,
+          active: false,
+        },
+      ],
+    });
+
+    const result = await sut.execute({ active: false });
+
+    expect(result.data).toHaveLength(1);
+    expect(result.totalItems).toBe(1);
+    expect(result.data[0].active).toBe(false);
+  });
+
   it('should return client data with all fields', async() => {
     const [group, owner] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),

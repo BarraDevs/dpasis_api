@@ -45,7 +45,13 @@ export class ClientDaoAdapterPrisma implements IClientDao {
   public async findAll(queries: FindAllClientQueryDto): Promise<[ClientDto[], number]> {
     const pagination = this.prisma.paginationFactory(queries.page, queries.size);
 
-    const where: Prisma.ClientWhereInput = {};
+    const conditions: Prisma.ClientWhereInput[] = [];
+
+    if (queries.active != null && queries.active !== undefined) {
+      conditions.push({ active: queries.active });
+    }
+
+    const where: Prisma.ClientWhereInput = conditions.length > 0 ? { AND: conditions } : {};
 
     return this.prisma.$transaction([
       this.prisma.client.findMany({

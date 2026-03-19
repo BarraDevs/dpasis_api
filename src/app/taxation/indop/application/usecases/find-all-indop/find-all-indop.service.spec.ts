@@ -109,6 +109,44 @@ describe('FindAllIndop - Integration tests', () => {
     expect(result.data[2].id).toBe(third.id);
   });
 
+  it('should filter by active when active is true', async() => {
+    // Arrange
+    await prisma.indop.createMany({
+      data: [
+        { code: '1012-1/01', description: 'Desc 1', active: true },
+        { code: '1012-1/02', description: 'Desc 2', active: false },
+        { code: '1012-1/03', description: 'Desc 3', active: true },
+      ],
+    });
+
+    // Act
+    const result = await sut.execute({ page: 1, size: 10, active: true });
+
+    // Assert
+    expect(result.data).toHaveLength(2);
+    expect(result.totalItems).toBe(2);
+    expect(result.data.every((i: IndopDto) => i.active)).toBe(true);
+  });
+
+  it('should filter by active when active is false', async() => {
+    // Arrange
+    await prisma.indop.createMany({
+      data: [
+        { code: '1012-1/01', description: 'Desc 1', active: true },
+        { code: '1012-1/02', description: 'Desc 2', active: false },
+        { code: '1012-1/03', description: 'Desc 3', active: false },
+      ],
+    });
+
+    // Act
+    const result = await sut.execute({ page: 1, size: 10, active: false });
+
+    // Assert
+    expect(result.data).toHaveLength(2);
+    expect(result.totalItems).toBe(2);
+    expect(result.data.every((i: IndopDto) => !i.active)).toBe(true);
+  });
+
   it('should filter by search in code and description', async() => {
     // Arrange
     await prisma.indop.createMany({

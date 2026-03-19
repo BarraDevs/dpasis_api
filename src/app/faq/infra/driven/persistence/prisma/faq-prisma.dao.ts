@@ -23,14 +23,22 @@ export class FaqDaoAdapterPrisma implements IFaqDao {
   public async findAll(queries: FindAllFaqQueryDto): Promise<[FaqDto[], number]> {
     const pagination = this.prisma.paginationFactory(queries.page, queries.size);
 
-    const where: Prisma.FaqWhereInput = queries.search
-      ? {
+    const conditions: Prisma.FaqWhereInput[] = [];
+
+    if (queries.search?.trim()) {
+      conditions.push({
         OR: [
-          { question: { contains: queries.search, mode: 'insensitive' } },
-          { answer: { contains: queries.search, mode: 'insensitive' } },
+          { question: { contains: queries.search.trim(), mode: 'insensitive' } },
+          { answer: { contains: queries.search.trim(), mode: 'insensitive' } },
         ],
-      }
-      : {};
+      });
+    }
+
+    if (queries.active != null && queries.active !== undefined) {
+      conditions.push({ active: queries.active });
+    }
+
+    const where: Prisma.FaqWhereInput = conditions.length > 0 ? { AND: conditions } : {};
 
     const [faqs, total] = await this.prisma.$transaction([
       this.prisma.faq.findMany({

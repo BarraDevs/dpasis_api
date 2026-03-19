@@ -61,6 +61,25 @@ describe('ClientGroupDaoAdapterPrisma - Integration tests', () => {
       expect(total).toBe(2);
     });
 
+    it('should filter by active when provided', async() => {
+      await prisma.clientGroup.createMany({
+        data: [
+          { name: 'Grupo Ativo', active: true },
+          { name: 'Grupo Inativo', active: false },
+        ],
+      });
+
+      const [activeGroups, activeTotal] = await sut.findAll({ active: true });
+      const [inactiveGroups, inactiveTotal] = await sut.findAll({ active: false });
+
+      expect(activeGroups).toHaveLength(1);
+      expect(activeTotal).toBe(1);
+      expect(activeGroups[0].active).toBe(true);
+      expect(inactiveGroups).toHaveLength(1);
+      expect(inactiveTotal).toBe(1);
+      expect(inactiveGroups[0].active).toBe(false);
+    });
+
     it('should paginate results correctly', async() => {
       // Arrange
       await prisma.clientGroup.createMany({

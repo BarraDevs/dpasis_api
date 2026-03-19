@@ -24,21 +24,23 @@ export class ClientAttachmentDaoAdapterPrisma implements IClientAttachmentDao {
   public async findAll(queries: FindAllClientAttachmentQueryDto): Promise<[ClientAttachmentDto[], number]> {
     const pagination = this.prisma.paginationFactory(queries.page, queries.size);
 
-    const andConditions: Prisma.ClientAttachmentWhereInput[] = [
+    const conditions: Prisma.ClientAttachmentWhereInput[] = [
       { clientId: { equals: queries.clientId } },
     ];
 
     if (queries.search?.trim()) {
-      andConditions.push({
+      conditions.push({
         OR: [
-          { description: { contains: queries.search, mode: 'insensitive' } },
+          { description: { contains: queries.search.trim(), mode: 'insensitive' } },
         ],
       });
     }
 
-    const where: Prisma.ClientAttachmentWhereInput = {
-      AND: andConditions,
-    };
+    if (queries.active != null && queries.active !== undefined) {
+      conditions.push({ active: queries.active });
+    }
+
+    const where: Prisma.ClientAttachmentWhereInput = conditions.length > 0 ? { AND: conditions } : {};
 
     const [attachments, total] = await this.prisma.$transaction([
       this.prisma.clientAttachment.findMany({

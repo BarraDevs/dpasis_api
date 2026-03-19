@@ -72,6 +72,25 @@ describe('ClientDescriptionTypeDaoAdapterPrisma - Integration tests', () => {
       expect(total2).toBe(25);
     });
 
+    it('should filter by active when provided', async() => {
+      await prisma.clientDescriptionType.createMany({
+        data: [
+          { name: `Desc Ativo ${Date.now()}`, active: true },
+          { name: `Desc Inativo ${Date.now()}`, active: false },
+        ],
+      });
+
+      const [activeTypes, activeTotal] = await sut.findAll({ active: true });
+      const [inactiveTypes, inactiveTotal] = await sut.findAll({ active: false });
+
+      expect(activeTypes).toHaveLength(1);
+      expect(activeTotal).toBe(1);
+      expect(activeTypes[0].active).toBe(true);
+      expect(inactiveTypes).toHaveLength(1);
+      expect(inactiveTotal).toBe(1);
+      expect(inactiveTypes[0].active).toBe(false);
+    });
+
     it('should search in name field (case-insensitive)', async() => {
       await prisma.clientDescriptionType.createMany({
         data: [

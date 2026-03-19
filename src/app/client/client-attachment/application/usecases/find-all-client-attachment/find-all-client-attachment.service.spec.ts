@@ -105,6 +105,40 @@ describe('FindAllClientAttachment - Integration tests', () => {
     expect(page3.currentPage).toBe(3);
   });
 
+  it('should filter by active when active is true', async() => {
+    const client = await createClient();
+    await prisma.clientAttachment.createMany({
+      data: [
+        { clientId: client.id, description: 'A1', link: 'https://1.com', active: true },
+        { clientId: client.id, description: 'A2', link: 'https://2.com', active: false },
+        { clientId: client.id, description: 'A3', link: 'https://3.com', active: true },
+      ],
+    });
+
+    const result = await sut.execute({ clientId: client.id, page: 1, size: 10, active: true });
+
+    expect(result.data).toHaveLength(2);
+    expect(result.totalItems).toBe(2);
+    expect(result.data.every((a: ClientAttachmentDto) => a.active)).toBe(true);
+  });
+
+  it('should filter by active when active is false', async() => {
+    const client = await createClient();
+    await prisma.clientAttachment.createMany({
+      data: [
+        { clientId: client.id, description: 'A1', link: 'https://1.com', active: true },
+        { clientId: client.id, description: 'A2', link: 'https://2.com', active: false },
+        { clientId: client.id, description: 'A3', link: 'https://3.com', active: false },
+      ],
+    });
+
+    const result = await sut.execute({ clientId: client.id, page: 1, size: 10, active: false });
+
+    expect(result.data).toHaveLength(2);
+    expect(result.totalItems).toBe(2);
+    expect(result.data.every((a: ClientAttachmentDto) => !a.active)).toBe(true);
+  });
+
   it('should filter by clientId', async() => {
     const client1 = await createClient();
     const client2 = await createClient();

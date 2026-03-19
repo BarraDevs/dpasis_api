@@ -23,14 +23,22 @@ export class CnaeDaoAdapterPrisma implements ICnaeDao {
   public async findAll(queries: FindAllCnaeQueryDto): Promise<[CnaeDto[], number]> {
     const pagination = this.prisma.paginationFactory(queries.page, queries.size);
 
-    const where: Prisma.CnaeWhereInput = queries.search
-      ? {
+    const conditions: Prisma.CnaeWhereInput[] = [];
+
+    if (queries.search?.trim()) {
+      conditions.push({
         OR: [
-          { code: { contains: queries.search, mode: 'insensitive' } },
-          { description: { contains: queries.search, mode: 'insensitive' } },
+          { code: { contains: queries.search.trim(), mode: 'insensitive' } },
+          { description: { contains: queries.search.trim(), mode: 'insensitive' } },
         ],
-      }
-      : {};
+      });
+    }
+
+    if (queries.active != null && queries.active !== undefined) {
+      conditions.push({ active: queries.active });
+    }
+
+    const where: Prisma.CnaeWhereInput = conditions.length > 0 ? { AND: conditions } : {};
 
     const [cnaes, total] = await this.prisma.$transaction([
       this.prisma.cnae.findMany({

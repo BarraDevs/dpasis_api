@@ -23,14 +23,22 @@ export class NbsDaoAdapterPrisma implements INbsDao {
   public async findAll(queries: FindAllNbsQueryDto): Promise<[NbsDto[], number]> {
     const pagination = this.prisma.paginationFactory(queries.page, queries.size);
 
-    const where: Prisma.NbsWhereInput = queries.search
-      ? {
+    const conditions: Prisma.NbsWhereInput[] = [];
+
+    if (queries.search?.trim()) {
+      conditions.push({
         OR: [
-          { code: { contains: queries.search, mode: 'insensitive' } },
-          { description: { contains: queries.search, mode: 'insensitive' } },
+          { code: { contains: queries.search.trim(), mode: 'insensitive' } },
+          { description: { contains: queries.search.trim(), mode: 'insensitive' } },
         ],
-      }
-      : {};
+      });
+    }
+
+    if (queries.active != null && queries.active !== undefined) {
+      conditions.push({ active: queries.active });
+    }
+
+    const where: Prisma.NbsWhereInput = conditions.length > 0 ? { AND: conditions } : {};
 
     const [nbss, total] = await this.prisma.$transaction([
       this.prisma.nbs.findMany({

@@ -22,9 +22,19 @@ export class ClientOwnerDaoAdapterPrisma implements IClientOwnerDao {
   public async findAll(queries: FindAllClientOwnerQueryDto): Promise<[ClientOwnerDto[], number]> {
     const pagination = this.prisma.paginationFactory(queries.page, queries.size);
 
-    const where: Prisma.ClientOwnerWhereInput = queries.search
-      ? { name: { contains: queries.search, mode: 'insensitive' } }
-      : {};
+    const conditions: Prisma.ClientOwnerWhereInput[] = [];
+
+    if (queries.search?.trim()) {
+      conditions.push({
+        name: { contains: queries.search.trim(), mode: 'insensitive' },
+      });
+    }
+
+    if (queries.active != null && queries.active !== undefined) {
+      conditions.push({ active: queries.active });
+    }
+
+    const where: Prisma.ClientOwnerWhereInput = conditions.length > 0 ? { AND: conditions } : {};
 
     const [clientOwners, total] = await this.prisma.$transaction([
       this.prisma.clientOwner.findMany({

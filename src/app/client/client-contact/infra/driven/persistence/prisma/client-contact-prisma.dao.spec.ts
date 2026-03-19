@@ -99,6 +99,25 @@ describe('ClientContactDaoAdapterPrisma - Integration tests', () => {
       expect(page3).toHaveLength(5);
     });
 
+    it('should filter by active when provided', async() => {
+      await prisma.clientContact.create({
+        data: { clientId, departmentId, name: 'Ativo', email: 'ativo@example.com', receiveNF: false, active: true },
+      });
+      await prisma.clientContact.create({
+        data: { clientId, departmentId, name: 'Inativo', email: 'inativo@example.com', receiveNF: false, active: false },
+      });
+
+      const [activeContacts, activeTotal] = await sut.findAll({ clientId, active: true });
+      const [inactiveContacts, inactiveTotal] = await sut.findAll({ clientId, active: false });
+
+      expect(activeContacts).toHaveLength(1);
+      expect(activeTotal).toBe(1);
+      expect(activeContacts[0].active).toBe(true);
+      expect(inactiveContacts).toHaveLength(1);
+      expect(inactiveTotal).toBe(1);
+      expect(inactiveContacts[0].active).toBe(false);
+    });
+
     it('should search in name and email (case-insensitive)', async() => {
       await prisma.clientContact.create({
         data: { clientId, departmentId, name: 'João', email: 'joao@example.com', receiveNF: false },

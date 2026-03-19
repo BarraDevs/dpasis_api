@@ -99,6 +99,47 @@ describe('ClientAddressDaoAdapterPrisma - Integration tests', () => {
       expect(addresses[0].updatedAt).toBeInstanceOf(Date);
     });
 
+    it('should filter by active when provided', async() => {
+      await prisma.clientAddress.create({
+        data: {
+          clientId,
+          type: ClientAddressType.MAIN,
+          zipCode: '12345-001',
+          street: 'Rua Ativo',
+          number: '1',
+          complement: null,
+          neighborhood: 'Centro',
+          city: 'São Paulo',
+          state: 'SP',
+          active: true,
+        },
+      });
+      await prisma.clientAddress.create({
+        data: {
+          clientId,
+          type: ClientAddressType.BILLING,
+          zipCode: '12345-002',
+          street: 'Rua Inativo',
+          number: '2',
+          complement: null,
+          neighborhood: 'Centro',
+          city: 'São Paulo',
+          state: 'SP',
+          active: false,
+        },
+      });
+
+      const [activeAddresses, activeTotal] = await sut.findAll({ clientId, active: true });
+      const [inactiveAddresses, inactiveTotal] = await sut.findAll({ clientId, active: false });
+
+      expect(activeAddresses).toHaveLength(1);
+      expect(activeTotal).toBe(1);
+      expect(activeAddresses[0].active).toBe(true);
+      expect(inactiveAddresses).toHaveLength(1);
+      expect(inactiveTotal).toBe(1);
+      expect(inactiveAddresses[0].active).toBe(false);
+    });
+
     it('should paginate results correctly', async() => {
       const types = [
         ClientAddressType.MAIN,

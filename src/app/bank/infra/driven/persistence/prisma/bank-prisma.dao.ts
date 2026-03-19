@@ -28,15 +28,23 @@ export class BankDaoAdapterPrisma implements IBankDao {
   public async findAll(queries: FindAllBankQueryDto): Promise<[BankDto[], number]> {
     const pagination = this.prisma.paginationFactory(queries.page, queries.size);
 
-    const where: Prisma.BankWhereInput = queries.search
-      ? {
+    const conditions: Prisma.BankWhereInput[] = [];
+
+    if (queries.search?.trim()) {
+      conditions.push({
         OR: [
-          { drawer: { contains: queries.search, mode: 'insensitive' } },
-          { bankName: { contains: queries.search, mode: 'insensitive' } },
-          { bankCode: { contains: queries.search, mode: 'insensitive' } },
+          { drawer: { contains: queries.search.trim(), mode: 'insensitive' } },
+          { bankName: { contains: queries.search.trim(), mode: 'insensitive' } },
+          { bankCode: { contains: queries.search.trim(), mode: 'insensitive' } },
         ],
-      }
-      : {};
+      });
+    }
+
+    if (queries.active != null && queries.active !== undefined) {
+      conditions.push({ active: queries.active });
+    }
+
+    const where: Prisma.BankWhereInput = conditions.length > 0 ? { AND: conditions } : {};
 
     const [banks, total] = await this.prisma.$transaction([
       this.prisma.bank.findMany({

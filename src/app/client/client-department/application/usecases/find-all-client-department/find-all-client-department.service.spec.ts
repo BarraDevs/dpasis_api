@@ -87,6 +87,44 @@ describe('FindAllClientDepartment - Integration tests', () => {
     expect(page3.currentPage).toBe(3);
   });
 
+  it('should filter by active when active is true', async() => {
+    // Arrange
+    await prisma.clientDepartment.createMany({
+      data: [
+        { name: 'Departamento A', active: true },
+        { name: 'Departamento B', active: false },
+        { name: 'Departamento C', active: true },
+      ],
+    });
+
+    // Act
+    const result = await sut.execute({ page: 1, size: 10, active: true });
+
+    // Assert
+    expect(result.data).toHaveLength(2);
+    expect(result.totalItems).toBe(2);
+    expect(result.data.every((d: ClientDepartmentDto) => d.active)).toBe(true);
+  });
+
+  it('should filter by active when active is false', async() => {
+    // Arrange
+    await prisma.clientDepartment.createMany({
+      data: [
+        { name: 'Departamento A', active: true },
+        { name: 'Departamento B', active: false },
+        { name: 'Departamento C', active: false },
+      ],
+    });
+
+    // Act
+    const result = await sut.execute({ page: 1, size: 10, active: false });
+
+    // Assert
+    expect(result.data).toHaveLength(2);
+    expect(result.totalItems).toBe(2);
+    expect(result.data.every((d: ClientDepartmentDto) => !d.active)).toBe(true);
+  });
+
   it('should order by name asc', async() => {
     // Arrange
     const first = await prisma.clientDepartment.create({

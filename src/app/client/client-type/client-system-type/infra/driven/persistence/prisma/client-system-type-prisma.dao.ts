@@ -22,9 +22,19 @@ export class ClientSystemTypeDaoAdapterPrisma implements IClientSystemTypeDao {
   public async findAll(queries: FindAllClientSystemTypeQueryDto): Promise<[ClientSystemTypeDto[], number]> {
     const pagination = this.prisma.paginationFactory(queries.page, queries.size);
 
-    const where: Prisma.ClientSystemTypeWhereInput = queries.search
-      ? { name: { contains: queries.search, mode: 'insensitive' } }
-      : {};
+    const conditions: Prisma.ClientSystemTypeWhereInput[] = [];
+
+    if (queries.search?.trim()) {
+      conditions.push({
+        name: { contains: queries.search.trim(), mode: 'insensitive' },
+      });
+    }
+
+    if (queries.active != null && queries.active !== undefined) {
+      conditions.push({ active: queries.active });
+    }
+
+    const where: Prisma.ClientSystemTypeWhereInput = conditions.length > 0 ? { AND: conditions } : {};
 
     const [clientSystemTypes, total] = await this.prisma.$transaction([
       this.prisma.clientSystemType.findMany({

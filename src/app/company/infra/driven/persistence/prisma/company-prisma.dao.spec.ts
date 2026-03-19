@@ -84,6 +84,61 @@ describe('CompanyDaoAdapterPrisma - Integration tests', () => {
       expect(companies[0].updatedAt).toBeInstanceOf(Date);
     });
 
+    it('should filter by active when provided', async() => {
+      await prisma.company.create({
+        data: {
+          name: 'Empresa Ativa',
+          fantasyName: 'Ativa',
+          document: '09748165000110',
+          ie: null,
+          active: true,
+          zipCode: '01310100',
+          street: 'Av Paulista',
+          number: '1000',
+          complement: null,
+          neighborhood: 'Bela Vista',
+          city: 'São Paulo',
+          state: 'SP',
+          phone01: '1133334444',
+          phone02: null,
+          cellphone: null,
+          email01: 'contato@ativa.com',
+          email02: null,
+        },
+      });
+      await prisma.company.create({
+        data: {
+          name: 'Empresa Inativa',
+          fantasyName: 'Inativa',
+          document: '09748165000111',
+          ie: null,
+          active: false,
+          zipCode: '01310100',
+          street: 'Av Paulista',
+          number: '1000',
+          complement: null,
+          neighborhood: 'Bela Vista',
+          city: 'São Paulo',
+          state: 'SP',
+          phone01: '1133334444',
+          phone02: null,
+          cellphone: null,
+          email01: 'contato@inativa.com',
+          email02: null,
+        },
+      });
+
+      const [activeCompanies, activeTotal] = await sut.findAll({ active: true });
+      const [inactiveCompanies, inactiveTotal] = await sut.findAll({ active: false });
+
+      expect(activeCompanies).toHaveLength(1);
+      expect(activeTotal).toBe(1);
+      expect(activeCompanies[0].active).toBe(true);
+      expect(inactiveCompanies).toHaveLength(1);
+      expect(inactiveTotal).toBe(1);
+      expect(inactiveCompanies[0].active).toBe(false);
+    });
+
     it('should paginate results correctly', async() => {
       await prisma.company.createMany({
         data: Array.from({ length: 25 }, (_, i) => ({

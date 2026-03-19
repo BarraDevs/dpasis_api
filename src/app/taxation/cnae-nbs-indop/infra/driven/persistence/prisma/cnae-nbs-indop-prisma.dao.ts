@@ -69,13 +69,19 @@ export class CnaeNbsIndopDaoAdapterPrisma implements ICnaeNbsIndopDao {
   public async findAll(queries: FindAllCnaeNbsIndopQueryDto): Promise<[CnaeNbsIndopDto[], number]> {
     const pagination = this.prisma.paginationFactory(queries.page, queries.size);
 
-    const where: Prisma.CnaeNbsIndopWhereInput = {};
+    const conditions: Prisma.CnaeNbsIndopWhereInput[] = [];
+
     if (queries.cnaeId != null) {
-      where.cnaeId = queries.cnaeId;
+      conditions.push({ cnaeId: { equals: queries.cnaeId } });
     }
     if (queries.nbsId != null) {
-      where.nbsId = queries.nbsId;
+      conditions.push({ nbsId: { equals: queries.nbsId } });
     }
+    if (queries.active != null && queries.active !== undefined) {
+      conditions.push({ active: queries.active });
+    }
+
+    const where: Prisma.CnaeNbsIndopWhereInput = conditions.length > 0 ? { AND: conditions } : {};
 
     const [rows, total] = await this.prisma.$transaction([
       this.prisma.cnaeNbsIndop.findMany({

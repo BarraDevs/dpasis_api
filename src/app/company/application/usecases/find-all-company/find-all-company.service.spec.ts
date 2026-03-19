@@ -1,6 +1,6 @@
 import { Test } from '@nestjs/testing';
-import { CompanyModule } from '../../../company.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
+import { CompanyModule } from '../../../company.module';
 import { FindAllCompany } from './find-all-company.service';
 
 function makeCompanyData(overrides?: Partial<{
@@ -8,6 +8,7 @@ function makeCompanyData(overrides?: Partial<{
   fantasyName: string;
   document: string;
   email01: string;
+  active: boolean;
 }>) {
   return {
     name: 'Empresa LTDA',
@@ -165,6 +166,42 @@ describe('FindAllCompany - Integration tests', () => {
     });
     expect(result.data[0]).toHaveProperty('createdAt');
     expect(result.data[0]).toHaveProperty('updatedAt');
+  });
+
+  it('should filter by active when active is true', async() => {
+    await prisma.company.create({
+      data: makeCompanyData({ document: '09748165000110', email01: 'a@test.com', active: true }),
+    });
+    await prisma.company.create({
+      data: makeCompanyData({ document: '33000167000101', email01: 'b@test.com', active: false }),
+    });
+    await prisma.company.create({
+      data: makeCompanyData({ document: '07526557000162', email01: 'c@test.com', active: true }),
+    });
+
+    const result = await sut.execute({ active: true });
+
+    expect(result.data).toHaveLength(2);
+    expect(result.totalItems).toBe(2);
+    expect(result.data.every((c) => c.active)).toBe(true);
+  });
+
+  it('should filter by active when active is false', async() => {
+    await prisma.company.create({
+      data: makeCompanyData({ document: '09748165000110', email01: 'a@test.com', active: true }),
+    });
+    await prisma.company.create({
+      data: makeCompanyData({ document: '33000167000101', email01: 'b@test.com', active: false }),
+    });
+    await prisma.company.create({
+      data: makeCompanyData({ document: '07526557000162', email01: 'c@test.com', active: false }),
+    });
+
+    const result = await sut.execute({ active: false });
+
+    expect(result.data).toHaveLength(2);
+    expect(result.totalItems).toBe(2);
+    expect(result.data.every((c) => !c.active)).toBe(true);
   });
 
   it('should filter by search in name (case-insensitive)', async() => {
