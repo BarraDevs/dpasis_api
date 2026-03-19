@@ -11,6 +11,7 @@ export class ClientContactDto {
   whatsapp: string | null;
   observations: string | null;
   receiveNF: boolean;
+  active: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

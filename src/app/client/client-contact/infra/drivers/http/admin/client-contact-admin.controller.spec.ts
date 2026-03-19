@@ -2,11 +2,13 @@ import { createMock } from '@golevelup/ts-jest';
 import { Test } from '@nestjs/testing';
 import { AuthenticationGuardsModule } from 'src/app/authentication/application/guards/guards.module';
 import { ClientContactDto } from 'src/app/client/client-contact/application/dtos/client-contact.dto';
+import { ActivateClientContact } from 'src/app/client/client-contact/application/usecases/activate-client-contact/activate-client-contact.service';
 import { CreateClientContact } from 'src/app/client/client-contact/application/usecases/create-client-contact/create-client-contact.service';
 import {
   CreateClientContactInputDto,
   CreateClientContactOutputDto,
 } from 'src/app/client/client-contact/application/usecases/create-client-contact/dtos/create-client-contact.dto';
+import { DeactivateClientContact } from 'src/app/client/client-contact/application/usecases/deactivate-client-contact/deactivate-client-contact.service';
 import { DeleteClientContact } from 'src/app/client/client-contact/application/usecases/delete-client-contact/delete-client-contact.service';
 import { EditClientContactInputDto } from 'src/app/client/client-contact/application/usecases/edit-client-contact/dtos/edit-client-contact.dto';
 import { EditClientContact } from 'src/app/client/client-contact/application/usecases/edit-client-contact/edit-client-contact.service';
@@ -24,6 +26,8 @@ describe('ClientContactAdminController - Unit tests', () => {
   let findAllClientContactService: FindAllClientContact;
   let findClientContactByIdService: FindClientContactById;
   let editClientContactService: EditClientContact;
+  let activateClientContactService: ActivateClientContact;
+  let deactivateClientContactService: DeactivateClientContact;
   let deleteClientContactService: DeleteClientContact;
 
   beforeEach(async() => {
@@ -35,6 +39,8 @@ describe('ClientContactAdminController - Unit tests', () => {
         { provide: FindAllClientContact, useValue: createMock<FindAllClientContact>() },
         { provide: FindClientContactById, useValue: createMock<FindClientContactById>() },
         { provide: EditClientContact, useValue: createMock<EditClientContact>() },
+        { provide: ActivateClientContact, useValue: createMock<ActivateClientContact>() },
+        { provide: DeactivateClientContact, useValue: createMock<DeactivateClientContact>() },
         { provide: DeleteClientContact, useValue: createMock<DeleteClientContact>() },
       ],
     }).compile();
@@ -44,6 +50,8 @@ describe('ClientContactAdminController - Unit tests', () => {
     findAllClientContactService = module.get(FindAllClientContact);
     findClientContactByIdService = module.get(FindClientContactById);
     editClientContactService = module.get(EditClientContact);
+    activateClientContactService = module.get(ActivateClientContact);
+    deactivateClientContactService = module.get(DeactivateClientContact);
     deleteClientContactService = module.get(DeleteClientContact);
   });
 
@@ -87,6 +95,32 @@ describe('ClientContactAdminController - Unit tests', () => {
 
       expect(result).toEqual(output);
       expect(findOneSpy).toHaveBeenCalledWith(params.id);
+    });
+  });
+
+  describe('activate', () => {
+    it('should call activateClientContact.execute with params.id', async() => {
+      const params = createMock<Params>();
+      const output = createMock<SuccessMessage>();
+      const activateSpy = jest.spyOn(activateClientContactService, 'execute').mockResolvedValue(output);
+
+      const result = await sut.activate(params);
+
+      expect(result).toEqual(output);
+      expect(activateSpy).toHaveBeenCalledWith(params.id);
+    });
+  });
+
+  describe('deactivate', () => {
+    it('should call deactivateClientContact.execute with params.id', async() => {
+      const params = createMock<Params>();
+      const output = createMock<SuccessMessage>();
+      const deactivateSpy = jest.spyOn(deactivateClientContactService, 'execute').mockResolvedValue(output);
+
+      const result = await sut.deactivate(params);
+
+      expect(result).toEqual(output);
+      expect(deactivateSpy).toHaveBeenCalledWith(params.id);
     });
   });
 

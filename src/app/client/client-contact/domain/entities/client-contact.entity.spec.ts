@@ -11,6 +11,7 @@ function makeClientContactProps(overrides?: Partial<ClientContactProps>): Client
     whatsapp: '11988888888',
     observations: 'Contato principal',
     receiveNF: true,
+    active: true,
     ...overrides,
   };
 }
@@ -110,7 +111,72 @@ describe('ClientContact', () => {
         'whatsapp',
         'observations',
         'receiveNF',
+        'active',
       ]);
+    });
+  });
+
+  describe('isActive', () => {
+    it('should return true when active is true', () => {
+      const clientContact = ClientContact._instantiate(
+        makeClientContactProps({ active: true }),
+      );
+
+      expect(clientContact.isActive()).toBe(true);
+    });
+
+    it('should return false when active is false', () => {
+      const clientContact = ClientContact._instantiate(
+        makeClientContactProps({ active: false }),
+      );
+
+      expect(clientContact.isActive()).toBe(false);
+    });
+  });
+
+  describe('activate', () => {
+    it('should set active to true', () => {
+      const clientContact = ClientContact._instantiate(
+        makeClientContactProps({ active: false }),
+      );
+
+      clientContact.activate();
+
+      expect(clientContact.isActive()).toBe(true);
+      expect(clientContact.props.active).toBe(true);
+    });
+
+    it('should keep active true when already active', () => {
+      const clientContact = ClientContact._instantiate(
+        makeClientContactProps({ active: true }),
+      );
+
+      clientContact.activate();
+
+      expect(clientContact.isActive()).toBe(true);
+    });
+  });
+
+  describe('deactivate', () => {
+    it('should set active to false', () => {
+      const clientContact = ClientContact._instantiate(
+        makeClientContactProps({ active: true }),
+      );
+
+      clientContact.deactivate();
+
+      expect(clientContact.isActive()).toBe(false);
+      expect(clientContact.props.active).toBe(false);
+    });
+
+    it('should keep active false when already inactive', () => {
+      const clientContact = ClientContact._instantiate(
+        makeClientContactProps({ active: false }),
+      );
+
+      clientContact.deactivate();
+
+      expect(clientContact.isActive()).toBe(false);
     });
   });
 });

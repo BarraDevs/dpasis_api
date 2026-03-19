@@ -197,6 +197,7 @@ describe('ClientContactDaoAdapterPrisma - Integration tests', () => {
         whatsapp: created.whatsapp,
         observations: created.observations,
         receiveNF: created.receiveNF,
+        active: created.active,
         createdAt: created.createdAt,
         updatedAt: created.updatedAt,
       });

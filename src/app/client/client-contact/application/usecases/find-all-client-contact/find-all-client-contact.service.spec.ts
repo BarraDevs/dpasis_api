@@ -203,6 +203,7 @@ describe('FindAllClientContact - Integration tests', () => {
       whatsapp: clientContact.whatsapp,
       observations: clientContact.observations,
       receiveNF: clientContact.receiveNF,
+      active: clientContact.active,
       createdAt: clientContact.createdAt,
       updatedAt: clientContact.updatedAt,
     });

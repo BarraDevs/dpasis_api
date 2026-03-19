@@ -2,11 +2,13 @@ import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestj
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
 import { RequiredRoles } from 'src/app/authentication/infra/decorators/required-role.decorator';
 import { ClientContactDto } from 'src/app/client/client-contact/application/dtos/client-contact.dto';
+import { ActivateClientContact } from 'src/app/client/client-contact/application/usecases/activate-client-contact/activate-client-contact.service';
 import { CreateClientContact } from 'src/app/client/client-contact/application/usecases/create-client-contact/create-client-contact.service';
 import {
   CreateClientContactInputDto,
   CreateClientContactOutputDto,
 } from 'src/app/client/client-contact/application/usecases/create-client-contact/dtos/create-client-contact.dto';
+import { DeactivateClientContact } from 'src/app/client/client-contact/application/usecases/deactivate-client-contact/deactivate-client-contact.service';
 import { DeleteClientContact } from 'src/app/client/client-contact/application/usecases/delete-client-contact/delete-client-contact.service';
 import { EditClientContactInputDto } from 'src/app/client/client-contact/application/usecases/edit-client-contact/dtos/edit-client-contact.dto';
 import { EditClientContact } from 'src/app/client/client-contact/application/usecases/edit-client-contact/edit-client-contact.service';
@@ -26,6 +28,8 @@ export class ClientContactAdminController {
     private readonly findAllClientContact: FindAllClientContact,
     private readonly findClientContactById: FindClientContactById,
     private readonly editClientContact: EditClientContact,
+    private readonly activateClientContact: ActivateClientContact,
+    private readonly deactivateClientContact: DeactivateClientContact,
     private readonly deleteClientContact: DeleteClientContact,
   ) {}
 
@@ -63,6 +67,30 @@ export class ClientContactAdminController {
   })
   public findOne(@Param() params: Params): Promise<ClientContactDto> {
     return this.findClientContactById.execute(params.id);
+  }
+
+  @Patch(':id/activate')
+  @Swagger({
+    tags: ['Contatos de Clientes'],
+    summary: 'Ativar contato de cliente',
+    applyBadRequest: true,
+    applyNotFound: true,
+    okResponse: SuccessMessage,
+  })
+  public activate(@Param() params: Params): Promise<SuccessMessage> {
+    return this.activateClientContact.execute(params.id);
+  }
+
+  @Patch(':id/deactivate')
+  @Swagger({
+    tags: ['Contatos de Clientes'],
+    summary: 'Desativar contato de cliente',
+    applyBadRequest: true,
+    applyNotFound: true,
+    okResponse: SuccessMessage,
+  })
+  public deactivate(@Param() params: Params): Promise<SuccessMessage> {
+    return this.deactivateClientContact.execute(params.id);
   }
 
   @Patch(':id')

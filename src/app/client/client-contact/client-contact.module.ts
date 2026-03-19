@@ -3,7 +3,9 @@ import { AuthenticationGuardsModule } from 'src/app/authentication/application/g
 import { ClientDepartmentModule } from 'src/app/client/client-department/client-department.module';
 import { ClientModule } from 'src/app/client/client/client.module';
 import { ClientContactPersistenceModule } from './application/persistence/client-contact-persistence.module';
+import { ActivateClientContact } from './application/usecases/activate-client-contact/activate-client-contact.service';
 import { CreateClientContact } from './application/usecases/create-client-contact/create-client-contact.service';
+import { DeactivateClientContact } from './application/usecases/deactivate-client-contact/deactivate-client-contact.service';
 import { DeleteClientContact } from './application/usecases/delete-client-contact/delete-client-contact.service';
 import { EditClientContact } from './application/usecases/edit-client-contact/edit-client-contact.service';
 import { FindAllClientContact } from './application/usecases/find-all-client-contact/find-all-client-contact.service';
@@ -26,7 +28,11 @@ import { ClientContactAdminController } from './infra/drivers/http/admin/client-
     EditClientContact,
     FindAllClientContact,
     FindClientContactById,
+    ActivateClientContact,
+    DeactivateClientContact,
   ],
-  exports: [FindClientContactById],
+  exports: [
+    FindClientContactById,
+  ],
 })
 export class ClientContactModule {}

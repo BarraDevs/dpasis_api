@@ -21,6 +21,7 @@ export class ClientContactRepositoryAdapterPrisma implements IClientContactRepos
         whatsapp: props.whatsapp,
         observations: props.observations,
         receiveNF: props.receiveNF,
+        active: props.active,
       },
     });
 
@@ -33,7 +34,6 @@ export class ClientContactRepositoryAdapterPrisma implements IClientContactRepos
     await this.prisma.clientContact.update({
       where: { id: props.id! },
       data: {
-        clientId: props.clientId,
         departmentId: props.departmentId,
         name: props.name,
         email: props.email,
@@ -41,6 +41,7 @@ export class ClientContactRepositoryAdapterPrisma implements IClientContactRepos
         whatsapp: props.whatsapp,
         observations: props.observations,
         receiveNF: props.receiveNF,
+        active: props.active,
       },
     });
   }
@@ -62,6 +63,7 @@ export class ClientContactRepositoryAdapterPrisma implements IClientContactRepos
       whatsapp: data.whatsapp,
       observations: data.observations,
       receiveNF: data.receiveNF,
+      active: data.active,
     });
   }
 

@@ -18,6 +18,7 @@ export class ClientContactFactory {
       whatsapp,
       observations: props.observations ?? null,
       receiveNF: props.receiveNF,
+      active: true,
     });
   }
 
@@ -38,6 +39,7 @@ export class ClientContactFactory {
       whatsapp,
       observations: data.observations !== undefined ? data.observations : props.observations,
       receiveNF: data.receiveNF !== undefined ? data.receiveNF : props.receiveNF,
+      active: props.active,
     });
   }
 
@@ -52,6 +54,7 @@ export class ClientContactFactory {
       whatsapp: props.whatsapp,
       observations: props.observations,
       receiveNF: props.receiveNF,
+      active: props.active,
     });
   }
 }

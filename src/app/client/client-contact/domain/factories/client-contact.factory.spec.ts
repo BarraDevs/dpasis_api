@@ -34,6 +34,7 @@ function makeClientContactProps(overrides?: Partial<ClientContactProps>): Client
     whatsapp: '11988888888',
     observations: 'Contato principal',
     receiveNF: true,
+    active: true,
     ...overrides,
   };
 }
@@ -47,6 +48,14 @@ describe('ClientContactFactory', () => {
 
       expect(clientContact).toBeInstanceOf(ClientContact);
       expect(clientContact.props.id).toBeNull();
+    });
+
+    it('should create a ClientContact with active true', () => {
+      const props = makeClientContactCreateProps();
+
+      const clientContact = ClientContactFactory.create(props);
+
+      expect(clientContact.props.active).toBe(true);
     });
 
     it('should create a ClientContact with all CreateProps', () => {
@@ -73,6 +82,7 @@ describe('ClientContactFactory', () => {
         whatsapp: '11966666666',
         observations: 'Observação',
         receiveNF: false,
+        active: true,
       });
     });
 

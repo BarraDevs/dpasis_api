@@ -20,6 +20,7 @@ const ClientContactSelect = {
   whatsapp: true,
   observations: true,
   receiveNF: true,
+  active: true,
   createdAt: true,
   updatedAt: true,
 } satisfies Prisma.ClientContactSelect;
