@@ -42,6 +42,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
       // 3.1 Service (referencia ServiceCategory)
       await tx.service.deleteMany();
       await tx.serviceCategory.deleteMany();
+      await tx.serviceFreight.deleteMany();
       // 4. ClientGroup e ClientOwner (agora sem referências de Client)
       await tx.clientGroup.deleteMany();
       await tx.clientOwner.deleteMany();

@@ -19,6 +19,7 @@ import { CompanySeed } from './company';
 import { IndopSeed } from './indop';
 import { NbsSeed } from './nbs';
 import { ServiceCategorySeed } from './service-category';
+import { ServiceFreightSeed } from './service-freight';
 
 const prisma = new PrismaClient();
 
@@ -39,6 +40,7 @@ async function main() {
   await ClientDescriptionTypeSeed.seed(prisma);
   await ClientDriveTypeSeed.seed(prisma);
   await ServiceCategorySeed.seed(prisma);
+  await ServiceFreightSeed.seed(prisma);
   await ClientSeed.seed(prisma);
   await ClientAddressSeed.seed(prisma);
   await ClientContactSeed.seed(prisma);
