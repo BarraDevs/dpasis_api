@@ -50,6 +50,7 @@ const TOKENS = {
   ServiceCategoryDao: Symbol.for('ServiceCategoryDao'),
   ServiceFreightDao: Symbol.for('ServiceFreightDao'),
   ServiceDeliveryTermDao: Symbol.for('ServiceDeliveryTermDao'),
+  ServiceWarrantyDao: Symbol.for('ServiceWarrantyDao'),
 };
 
 export { TOKENS };

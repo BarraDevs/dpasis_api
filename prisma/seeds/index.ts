@@ -21,6 +21,7 @@ import { NbsSeed } from './nbs';
 import { ServiceCategorySeed } from './service-category';
 import { ServiceDeliveryTermSeed } from './service-delivery-term';
 import { ServiceFreightSeed } from './service-freight';
+import { ServiceWarrantySeed } from './service-warranty';
 
 const prisma = new PrismaClient();
 
@@ -43,6 +44,7 @@ async function main() {
   await ServiceCategorySeed.seed(prisma);
   await ServiceFreightSeed.seed(prisma);
   await ServiceDeliveryTermSeed.seed(prisma);
+  await ServiceWarrantySeed.seed(prisma);
   await ClientSeed.seed(prisma);
   await ClientAddressSeed.seed(prisma);
   await ClientContactSeed.seed(prisma);
