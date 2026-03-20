@@ -116,6 +116,11 @@
                   "key": "search",
                   "value": "{{search}}",
                   "description": "Opcional"
+                },
+                {
+                  "key": "active",
+                  "value": "{{active}}",
+                  "description": "Opcional"
                 }
               ]
             },
@@ -319,6 +324,11 @@
                 {
                   "key": "search",
                   "value": "{{search}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "active",
+                  "value": "{{active}}",
                   "description": "Opcional"
                 }
               ]
@@ -560,6 +570,11 @@
                   "key": "search",
                   "value": "{{search}}",
                   "description": "Opcional"
+                },
+                {
+                  "key": "active",
+                  "value": "{{active}}",
+                  "description": "Opcional"
                 }
               ]
             },
@@ -799,6 +814,11 @@
                   "key": "search",
                   "value": "{{search}}",
                   "description": "Opcional"
+                },
+                {
+                  "key": "active",
+                  "value": "{{active}}",
+                  "description": "Opcional"
                 }
               ]
             },
@@ -1037,6 +1057,11 @@
                 {
                   "key": "search",
                   "value": "{{search}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "active",
+                  "value": "{{active}}",
                   "description": "Opcional"
                 }
               ]
@@ -1280,6 +1305,11 @@
                   "description": "Opcional"
                 },
                 {
+                  "key": "active",
+                  "value": "{{active}}",
+                  "description": "Opcional"
+                },
+                {
                   "key": "clientId",
                   "value": "{{clientId}}",
                   "description": "Obrigatório"
@@ -1450,6 +1480,78 @@
               ]
             }
           }
+        },
+        {
+          "name": "Ativar endereço de cliente",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-address/{{id}}/activate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-address",
+                "{{id}}",
+                "activate"
+              ]
+            },
+            "description": "Ativar endereço de cliente",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Desativar endereço de cliente",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-address/{{id}}/deactivate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-address",
+                "{{id}}",
+                "deactivate"
+              ]
+            },
+            "description": "Desativar endereço de cliente",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
         }
       ]
     },
@@ -1490,6 +1592,11 @@
                 {
                   "key": "search",
                   "value": "{{search}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "active",
+                  "value": "{{active}}",
                   "description": "Opcional"
                 },
                 {
@@ -1737,6 +1844,11 @@
                   "description": "Opcional"
                 },
                 {
+                  "key": "active",
+                  "value": "{{active}}",
+                  "description": "Opcional"
+                },
+                {
                   "key": "clientId",
                   "value": "{{clientId}}",
                   "description": "Obrigatório"
@@ -1912,6 +2024,78 @@
               ]
             }
           }
+        },
+        {
+          "name": "Ativar contato de cliente",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-contact/{{id}}/activate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-contact",
+                "{{id}}",
+                "activate"
+              ]
+            },
+            "description": "Ativar contato de cliente",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Desativar contato de cliente",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-contact/{{id}}/deactivate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-contact",
+                "{{id}}",
+                "deactivate"
+              ]
+            },
+            "description": "Desativar contato de cliente",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
         }
       ]
     },
@@ -1952,6 +2136,11 @@
                 {
                   "key": "search",
                   "value": "{{search}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "active",
+                  "value": "{{active}}",
                   "description": "Opcional"
                 }
               ]
@@ -2565,6 +2754,11 @@
                   "description": "Opcional"
                 },
                 {
+                  "key": "active",
+                  "value": "{{active}}",
+                  "description": "Opcional"
+                },
+                {
                   "key": "clientId",
                   "value": "{{clientId}}",
                   "description": "Obrigatório"
@@ -2862,6 +3056,11 @@
                   "description": "Opcional"
                 },
                 {
+                  "key": "active",
+                  "value": "{{active}}",
+                  "description": "Opcional"
+                },
+                {
                   "key": "cnaeId",
                   "value": "{{cnaeId}}",
                   "description": "Opcional"
@@ -3049,6 +3248,42 @@
           }
         },
         {
+          "name": "Inverter status ativo da combinação CNAE/NBS/INDOP",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/cnae-nbs-indop/{{id}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "cnae-nbs-indop",
+                "{{id}}",
+                "status"
+              ]
+            },
+            "description": "Inverter status ativo da combinação CNAE/NBS/INDOP",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "Excluir combinação",
           "request": {
             "method": "DELETE",
@@ -3122,6 +3357,11 @@
                 {
                   "key": "search",
                   "value": "{{search}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "active",
+                  "value": "{{active}}",
                   "description": "Opcional"
                 }
               ]
@@ -3327,6 +3567,11 @@
                   "key": "search",
                   "value": "{{search}}",
                   "description": "Opcional"
+                },
+                {
+                  "key": "active",
+                  "value": "{{active}}",
+                  "description": "Opcional"
                 }
               ]
             },
@@ -3531,6 +3776,11 @@
                   "key": "search",
                   "value": "{{search}}",
                   "description": "Opcional"
+                },
+                {
+                  "key": "active",
+                  "value": "{{active}}",
+                  "description": "Opcional"
                 }
               ]
             },
@@ -3734,6 +3984,11 @@
                 {
                   "key": "search",
                   "value": "{{search}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "active",
+                  "value": "{{active}}",
                   "description": "Opcional"
                 }
               ]
@@ -3974,6 +4229,11 @@
                   "key": "search",
                   "value": "{{search}}",
                   "description": "Opcional"
+                },
+                {
+                  "key": "active",
+                  "value": "{{active}}",
+                  "description": "Opcional"
                 }
               ]
             },
@@ -4212,6 +4472,11 @@
                 {
                   "key": "search",
                   "value": "{{search}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "active",
+                  "value": "{{active}}",
                   "description": "Opcional"
                 }
               ]
@@ -4452,6 +4717,11 @@
                   "key": "search",
                   "value": "{{search}}",
                   "description": "Opcional"
+                },
+                {
+                  "key": "active",
+                  "value": "{{active}}",
+                  "description": "Opcional"
                 }
               ]
             },
@@ -4690,6 +4960,11 @@
                 {
                   "key": "search",
                   "value": "{{search}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "active",
+                  "value": "{{active}}",
                   "description": "Opcional"
                 }
               ]
@@ -4932,6 +5207,11 @@
                   "description": "Opcional"
                 },
                 {
+                  "key": "active",
+                  "value": "{{active}}",
+                  "description": "Opcional"
+                },
+                {
                   "key": "clientId",
                   "value": "{{clientId}}",
                   "description": "Obrigatório"
@@ -5133,6 +5413,41 @@
               ]
             }
           }
+        },
+        {
+          "name": "Deletar múltiplos tipos de cliente",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-type/bulk",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-type",
+                "bulk"
+              ]
+            },
+            "description": "Deletar múltiplos tipos de cliente",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
         }
       ]
     },
@@ -5234,6 +5549,11 @@
                 {
                   "key": "search",
                   "value": "{{search}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "active",
+                  "value": "{{active}}",
                   "description": "Opcional"
                 }
               ]
@@ -5397,6 +5717,42 @@
               ]
             }
           }
+        },
+        {
+          "name": "Inverter status ativo da FAQ",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/faq/{{id}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "faq",
+                "{{id}}",
+                "status"
+              ]
+            },
+            "description": "Inverter status ativo da FAQ",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
         }
       ]
     },
@@ -5438,10 +5794,1235 @@
                   "key": "search",
                   "value": "{{search}}",
                   "description": "Opcional"
+                },
+                {
+                  "key": "active",
+                  "value": "{{active}}",
+                  "description": "Opcional"
                 }
               ]
             },
             "description": "Listar FAQs com paginação e busca"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Categorias de Serviço",
+      "item": [
+        {
+          "name": "Listar categorias de serviço com paginação e busca",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/service-category",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "service-category"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "{{page}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "size",
+                  "value": "{{size}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "search",
+                  "value": "{{search}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "active",
+                  "value": "{{active}}",
+                  "description": "Opcional"
+                }
+              ]
+            },
+            "description": "Listar categorias de serviço com paginação e busca",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Criar nova categoria de serviço",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/service-category",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "service-category"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Manutenção\"\n}"
+            },
+            "description": "Criar nova categoria de serviço",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar categoria de serviço por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/service-category/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "service-category",
+                "{{id}}"
+              ]
+            },
+            "description": "Buscar categoria de serviço por ID",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Editar categoria de serviço",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/service-category/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "service-category",
+                "{{id}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Manutenção\"\n}"
+            },
+            "description": "Editar categoria de serviço",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Deletar categoria de serviço",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/service-category/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "service-category",
+                "{{id}}"
+              ]
+            },
+            "description": "Deletar categoria de serviço",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Inverter status ativo da categoria de serviço",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/service-category/{{id}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "service-category",
+                "{{id}}",
+                "status"
+              ]
+            },
+            "description": "Inverter status ativo da categoria de serviço",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Frete de Serviço",
+      "item": [
+        {
+          "name": "Listar fretes de serviço com paginação e busca",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/service-freight",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "service-freight"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "{{page}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "size",
+                  "value": "{{size}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "search",
+                  "value": "{{search}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "active",
+                  "value": "{{active}}",
+                  "description": "Opcional"
+                }
+              ]
+            },
+            "description": "Listar fretes de serviço com paginação e busca",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Criar novo frete de serviço",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/service-freight",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "service-freight"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"CIF\"\n}"
+            },
+            "description": "Criar novo frete de serviço",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar frete de serviço por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/service-freight/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "service-freight",
+                "{{id}}"
+              ]
+            },
+            "description": "Buscar frete de serviço por ID",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Editar frete de serviço",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/service-freight/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "service-freight",
+                "{{id}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"CIF\"\n}"
+            },
+            "description": "Editar frete de serviço",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Deletar frete de serviço",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/service-freight/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "service-freight",
+                "{{id}}"
+              ]
+            },
+            "description": "Deletar frete de serviço",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Inverter status ativo do frete de serviço",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/service-freight/{{id}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "service-freight",
+                "{{id}}",
+                "status"
+              ]
+            },
+            "description": "Inverter status ativo do frete de serviço",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Prazo de Entrega de Serviço",
+      "item": [
+        {
+          "name": "Listar prazos de entrega com paginação e busca",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/service-delivery-term",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "service-delivery-term"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "{{page}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "size",
+                  "value": "{{size}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "search",
+                  "value": "{{search}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "active",
+                  "value": "{{active}}",
+                  "description": "Opcional"
+                }
+              ]
+            },
+            "description": "Listar prazos de entrega com paginação e busca",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Criar novo prazo de entrega",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/service-delivery-term",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "service-delivery-term"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Imediato\"\n}"
+            },
+            "description": "Criar novo prazo de entrega",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar prazo de entrega por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/service-delivery-term/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "service-delivery-term",
+                "{{id}}"
+              ]
+            },
+            "description": "Buscar prazo de entrega por ID",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Editar prazo de entrega",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/service-delivery-term/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "service-delivery-term",
+                "{{id}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Imediato\"\n}"
+            },
+            "description": "Editar prazo de entrega",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Deletar prazo de entrega",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/service-delivery-term/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "service-delivery-term",
+                "{{id}}"
+              ]
+            },
+            "description": "Deletar prazo de entrega",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Inverter status ativo do prazo de entrega",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/service-delivery-term/{{id}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "service-delivery-term",
+                "{{id}}",
+                "status"
+              ]
+            },
+            "description": "Inverter status ativo do prazo de entrega",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Garantia de Serviço",
+      "item": [
+        {
+          "name": "Listar garantias de serviço com paginação e busca",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/service-warranty",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "service-warranty"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "{{page}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "size",
+                  "value": "{{size}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "search",
+                  "value": "{{search}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "active",
+                  "value": "{{active}}",
+                  "description": "Opcional"
+                }
+              ]
+            },
+            "description": "Listar garantias de serviço com paginação e busca",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Criar nova garantia de serviço",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/service-warranty",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "service-warranty"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"90 dias\"\n}"
+            },
+            "description": "Criar nova garantia de serviço",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar garantia de serviço por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/service-warranty/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "service-warranty",
+                "{{id}}"
+              ]
+            },
+            "description": "Buscar garantia de serviço por ID",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Editar garantia de serviço",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/service-warranty/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "service-warranty",
+                "{{id}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"90 dias\"\n}"
+            },
+            "description": "Editar garantia de serviço",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Deletar garantia de serviço",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/service-warranty/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "service-warranty",
+                "{{id}}"
+              ]
+            },
+            "description": "Deletar garantia de serviço",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Inverter status ativo da garantia de serviço",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/service-warranty/{{id}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "service-warranty",
+                "{{id}}",
+                "status"
+              ]
+            },
+            "description": "Inverter status ativo da garantia de serviço",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Validade de Proposta de Serviço",
+      "item": [
+        {
+          "name": "Listar validades de proposta com paginação e busca",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/service-proposal-validity",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "service-proposal-validity"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "{{page}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "size",
+                  "value": "{{size}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "search",
+                  "value": "{{search}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "active",
+                  "value": "{{active}}",
+                  "description": "Opcional"
+                }
+              ]
+            },
+            "description": "Listar validades de proposta com paginação e busca",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Criar nova validade de proposta",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/service-proposal-validity",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "service-proposal-validity"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"30 dias\"\n}"
+            },
+            "description": "Criar nova validade de proposta",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar validade de proposta por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/service-proposal-validity/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "service-proposal-validity",
+                "{{id}}"
+              ]
+            },
+            "description": "Buscar validade de proposta por ID",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Editar validade de proposta",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/service-proposal-validity/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "service-proposal-validity",
+                "{{id}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"30 dias\"\n}"
+            },
+            "description": "Editar validade de proposta",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Deletar validade de proposta",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/service-proposal-validity/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "service-proposal-validity",
+                "{{id}}"
+              ]
+            },
+            "description": "Deletar validade de proposta",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Inverter status ativo da validade de proposta",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/service-proposal-validity/{{id}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "service-proposal-validity",
+                "{{id}}",
+                "status"
+              ]
+            },
+            "description": "Inverter status ativo da validade de proposta",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
           }
         }
       ]
