@@ -86,6 +86,7 @@ describe('ServiceCategoryDaoAdapterPrisma - Integration tests', () => {
       expect(activeTypes).toHaveLength(1);
       expect(activeTotal).toBe(1);
       expect(activeTypes[0].active).toBe(true);
+
       expect(inactiveTypes).toHaveLength(1);
       expect(inactiveTotal).toBe(1);
       expect(inactiveTypes[0].active).toBe(false);
@@ -108,14 +109,14 @@ describe('ServiceCategoryDaoAdapterPrisma - Integration tests', () => {
     });
 
     it('should return results ordered by name asc', async() => {
-      const ct1 = await prisma.serviceCategory.create({ data: { name: `A-${Date.now()}`, active: true } });
-      const ct2 = await prisma.serviceCategory.create({ data: { name: `B-${Date.now()}`, active: true } });
+      const ct1 = await prisma.serviceCategory.create({ data: { name: `B-${Date.now()}`, active: true } });
+      const ct2 = await prisma.serviceCategory.create({ data: { name: `A-${Date.now()}`, active: true } });
 
       const [serviceCategories] = await sut.findAll({});
 
       expect(serviceCategories).toHaveLength(2);
-      expect(serviceCategories[0].name).toBe(ct1.name);
-      expect(serviceCategories[1].name).toBe(ct2.name);
+      expect(serviceCategories[0].name).toBe(ct2.name);
+      expect(serviceCategories[1].name).toBe(ct1.name);
     });
 
     it('should return all service category fields correctly', async() => {
