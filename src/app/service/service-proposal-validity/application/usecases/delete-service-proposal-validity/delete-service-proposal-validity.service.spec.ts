@@ -1,4 +1,5 @@
 import { Test } from '@nestjs/testing';
+import { ServiceProposalValidityInUseError } from 'src/app/service/service-proposal-validity/domain/errors/service-proposal-validity-in-use.error';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { ServiceProposalValidityNotFoundError } from '../../../domain/errors/service-proposal-validity-not-found.error';
 import { ServiceProposalValidityModule } from '../../../service-proposal-validity.module';
@@ -32,6 +33,40 @@ describe('DeleteServiceProposalValidity - Integration tests', () => {
 
   it('should throw ServiceProposalValidityNotFoundError when service proposal validity does not exist', async() => {
     await expect(sut.execute(0)).rejects.toThrow(ServiceProposalValidityNotFoundError);
+  });
+
+  it('should throw ServiceProposalValidityInUseError when services use the proposal validity', async() => {
+    const proposalValidity = await prisma.serviceProposalValidity.create({
+      data: { name: `Validity ${Date.now()}`, active: true },
+    });
+
+    const [billed, category, deliveryTerm, freight, warranty] = await Promise.all([
+      prisma.serviceBilled.create({
+        data: { description: 'Billed Test', isJunction: false, installmentDays: [10], active: true },
+      }),
+      prisma.serviceCategory.create({ data: { name: `Cat ${Date.now()}`, active: true } }),
+      prisma.serviceDeliveryTerm.create({ data: { name: `Term ${Date.now()}`, active: true } }),
+      prisma.serviceFreight.create({ data: { name: `Freight ${Date.now()}`, active: true } }),
+      prisma.serviceWarranty.create({ data: { name: `Warranty ${Date.now()}`, active: true } }),
+    ]);
+
+    await prisma.service.create({
+      data: {
+        serviceBilledId: billed.id,
+        serviceCategoryId: category.id,
+        serviceDeliveryTermId: deliveryTerm.id,
+        serviceFreightId: freight.id,
+        serviceProposalValidityId: proposalValidity.id,
+        serviceWarrantyId: warranty.id,
+        name: 'Service Test',
+      },
+    });
+
+    await expect(sut.execute(proposalValidity.id)).rejects.toThrow(ServiceProposalValidityInUseError);
+    await expect(sut.execute(proposalValidity.id)).rejects.toThrow('Não é possível excluir pois existem serviços vinculados.');
+
+    const stillExists = await prisma.serviceProposalValidity.findUnique({ where: { id: proposalValidity.id } });
+    expect(stillExists).not.toBeNull();
   });
 
   it('should delete service proposal validity from database', async() => {

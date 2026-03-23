@@ -85,6 +85,12 @@ export class ServiceWarrantyDaoAdapterPrisma implements IServiceWarrantyDao {
     });
   }
 
+  public async countServicesByWarrantyId(warrantyId: number): Promise<number> {
+    return this.prisma.service.count({
+      where: { serviceWarrantyId: warrantyId },
+    });
+  }
+
   public async updateStatus(id: number, active: boolean): Promise<void> {
     await this.prisma.serviceWarranty.update({
       where: { id },

@@ -85,6 +85,12 @@ export class ServiceFreightDaoAdapterPrisma implements IServiceFreightDao {
     });
   }
 
+  public async countServicesByFreightId(freightId: number): Promise<number> {
+    return this.prisma.service.count({
+      where: { serviceFreightId: freightId },
+    });
+  }
+
   public async updateStatus(id: number, active: boolean): Promise<void> {
     await this.prisma.serviceFreight.update({
       where: { id },

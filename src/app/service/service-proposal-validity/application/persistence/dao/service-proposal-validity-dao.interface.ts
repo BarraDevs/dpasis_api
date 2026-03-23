@@ -11,4 +11,5 @@ export interface IServiceProposalValidityDao {
   edit(id: number, data: EditServiceProposalValidityInputDto): Promise<void>;
   delete(id: number): Promise<void>;
   updateStatus(id: number, active: boolean): Promise<void>;
+  countServicesByProposalValidityId(proposalValidityId: number): Promise<number>;
 }

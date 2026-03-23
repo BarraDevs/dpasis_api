@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { ServiceBilledInUseError } from 'src/app/service/service-billed/domain/errors/service-billed-in-use.error';
 import { ServiceBilledNotFoundError } from 'src/app/service/service-billed/domain/errors/service-billed-not-found.error';
 import { TOKENS } from 'src/core/di/token';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
@@ -16,6 +17,11 @@ export class DeleteServiceBilled {
     const existing = await this.serviceBilledDao.findById(id);
     if (!existing) {
       throw new ServiceBilledNotFoundError();
+    }
+
+    const servicesCount = await this.serviceBilledDao.countServicesByServiceBilledId(id);
+    if (servicesCount > 0) {
+      throw new ServiceBilledInUseError();
     }
 
     await this.serviceBilledRepository.delete(id);

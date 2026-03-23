@@ -85,6 +85,12 @@ export class ServiceCategoryDaoAdapterPrisma implements IServiceCategoryDao {
     });
   }
 
+  public async countServicesByCategoryId(categoryId: number): Promise<number> {
+    return this.prisma.service.count({
+      where: { serviceCategoryId: categoryId },
+    });
+  }
+
   public async updateStatus(id: number, active: boolean): Promise<void> {
     await this.prisma.serviceCategory.update({
       where: { id },

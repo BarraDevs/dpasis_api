@@ -11,4 +11,5 @@ export interface IServiceWarrantyDao {
   edit(id: number, data: EditServiceWarrantyInputDto): Promise<void>;
   delete(id: number): Promise<void>;
   updateStatus(id: number, active: boolean): Promise<void>;
+  countServicesByWarrantyId(warrantyId: number): Promise<number>;
 }

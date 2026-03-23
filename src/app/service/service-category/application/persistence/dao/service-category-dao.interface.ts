@@ -11,4 +11,5 @@ export interface IServiceCategoryDao {
   edit(id: number, data: EditServiceCategoryInputDto): Promise<void>;
   delete(id: number): Promise<void>;
   updateStatus(id: number, active: boolean): Promise<void>;
+  countServicesByCategoryId(categoryId: number): Promise<number>;
 }

@@ -262,4 +262,56 @@ describe('ServiceBilledDaoAdapterPrisma - Integration tests', () => {
       expect(found?.installmentDays).toEqual([30]);
     });
   });
+
+  describe('countServicesByServiceBilledId', () => {
+    it('should return 0 when no services use the service billed', async() => {
+      const created = await prisma.serviceBilled.create({
+        data: {
+          description: `Para count ${Date.now()}`,
+          isJunction: false,
+          installmentDays: [10],
+          active: true,
+        },
+      });
+
+      const count = await sut.countServicesByServiceBilledId(created.id);
+
+      expect(count).toBe(0);
+    });
+
+    it('should return count when services use the service billed', async() => {
+      const serviceBilled = await prisma.serviceBilled.create({
+        data: {
+          description: `Billed ${Date.now()}`,
+          isJunction: false,
+          installmentDays: [5, 15],
+          active: true,
+        },
+      });
+
+      const [category, deliveryTerm, freight, proposalValidity, warranty] = await Promise.all([
+        prisma.serviceCategory.create({ data: { name: `Cat ${Date.now()}`, active: true } }),
+        prisma.serviceDeliveryTerm.create({ data: { name: `Term ${Date.now()}`, active: true } }),
+        prisma.serviceFreight.create({ data: { name: `Freight ${Date.now()}`, active: true } }),
+        prisma.serviceProposalValidity.create({ data: { name: `Validity ${Date.now()}`, active: true } }),
+        prisma.serviceWarranty.create({ data: { name: `Warranty ${Date.now()}`, active: true } }),
+      ]);
+
+      await prisma.service.create({
+        data: {
+          serviceBilledId: serviceBilled.id,
+          serviceCategoryId: category.id,
+          serviceDeliveryTermId: deliveryTerm.id,
+          serviceFreightId: freight.id,
+          serviceProposalValidityId: proposalValidity.id,
+          serviceWarrantyId: warranty.id,
+          name: 'Service Test',
+        },
+      });
+
+      const count = await sut.countServicesByServiceBilledId(serviceBilled.id);
+
+      expect(count).toBe(1);
+    });
+  });
 });

@@ -4,4 +4,5 @@ import { FindAllServiceBilledQueryDto } from '../../usecases/find-all-service-bi
 export interface IServiceBilledDao {
   findAll(queries: FindAllServiceBilledQueryDto): Promise<[ServiceBilledDto[], number]>;
   findById(id: number): Promise<ServiceBilledDto | null>;
+  countServicesByServiceBilledId(serviceBilledId: number): Promise<number>;
 }

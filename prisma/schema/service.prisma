@@ -1,3 +1,26 @@
+model Service {
+  id                        Int      @id @default(autoincrement())
+  serviceBilledId           Int
+  serviceCategoryId         Int
+  serviceDeliveryTermId     Int
+  serviceFreightId          Int
+  serviceProposalValidityId Int
+  serviceWarrantyId         Int
+  name                      String
+  active                    Boolean  @default(true)
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+
+  serviceBilled           ServiceBilled           @relation(fields: [serviceBilledId], references: [id])
+  serviceCategory         ServiceCategory         @relation(fields: [serviceCategoryId], references: [id])
+  serviceDeliveryTerm     ServiceDeliveryTerm     @relation(fields: [serviceDeliveryTermId], references: [id])
+  serviceFreight          ServiceFreight          @relation(fields: [serviceFreightId], references: [id])
+  serviceProposalValidity ServiceProposalValidity @relation(fields: [serviceProposalValidityId], references: [id])
+  serviceWarranty         ServiceWarranty         @relation(fields: [serviceWarrantyId], references: [id])
+
+  @@map("services")
+}
+
 model ServiceBilled {
   id              Int      @id @default(autoincrement())
   description     String   @db.Text
@@ -12,21 +35,6 @@ model ServiceBilled {
   @@map("service_billeds")
 }
 
-model Service {
-  id                 Int            @id @default(autoincrement())
-  serviceCategoryId  Int
-  serviceBilledId    Int?
-  name               String
-  active             Boolean        @default(true)
-  createdAt          DateTime       @default(now())
-  updatedAt          DateTime       @updatedAt
-
-  serviceCategory  ServiceCategory  @relation(fields: [serviceCategoryId], references: [id], onDelete: Cascade)
-  serviceBilled    ServiceBilled?   @relation(fields: [serviceBilledId], references: [id], onDelete: SetNull)
-
-  @@map("services")
-}
-
 model ServiceCategory {
   id        Int      @id @default(autoincrement())
   name      String   @unique
@@ -39,17 +47,6 @@ model ServiceCategory {
   @@map("service_categories")
 }
 
-model ServiceFreight {
-  id        Int      @id @default(autoincrement())
-  name      String   @unique
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("service_freights")
-}
-
-
 model ServiceDeliveryTerm {
   id        Int      @id @default(autoincrement())
   name      String   @unique
@@ -57,17 +54,21 @@ model ServiceDeliveryTerm {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  services Service[]
+
   @@map("service_delivery_terms")
 }
 
-model ServiceWarranty {
+model ServiceFreight {
   id        Int      @id @default(autoincrement())
   name      String   @unique
   active    Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@map("service_warranties")
+  services Service[]
+
+  @@map("service_freights")
 }
 
 model ServiceProposalValidity {
@@ -77,5 +78,19 @@ model ServiceProposalValidity {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  services Service[]
+
   @@map("service_proposal_validities")
+}
+
+model ServiceWarranty {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  services Service[]
+
+  @@map("service_warranties")
 }

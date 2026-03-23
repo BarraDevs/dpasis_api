@@ -11,4 +11,5 @@ export interface IServiceFreightDao {
   edit(id: number, data: EditServiceFreightInputDto): Promise<void>;
   delete(id: number): Promise<void>;
   updateStatus(id: number, active: boolean): Promise<void>;
+  countServicesByFreightId(freightId: number): Promise<number>;
 }

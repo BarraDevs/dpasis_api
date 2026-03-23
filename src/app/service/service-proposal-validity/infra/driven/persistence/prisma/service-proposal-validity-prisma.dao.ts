@@ -85,6 +85,12 @@ export class ServiceProposalValidityDaoAdapterPrisma implements IServiceProposal
     });
   }
 
+  public async countServicesByProposalValidityId(proposalValidityId: number): Promise<number> {
+    return this.prisma.service.count({
+      where: { serviceProposalValidityId: proposalValidityId },
+    });
+  }
+
   public async updateStatus(id: number, active: boolean): Promise<void> {
     await this.prisma.serviceProposalValidity.update({
       where: { id },

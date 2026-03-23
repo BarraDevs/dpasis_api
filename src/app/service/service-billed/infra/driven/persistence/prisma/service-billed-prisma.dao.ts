@@ -56,4 +56,10 @@ export class ServiceBilledDaoAdapterPrisma implements IServiceBilledDao {
       select: ServiceBilledSelect,
     });
   }
+
+  public async countServicesByServiceBilledId(serviceBilledId: number): Promise<number> {
+    return this.prisma.service.count({
+      where: { serviceBilledId },
+    });
+  }
 }

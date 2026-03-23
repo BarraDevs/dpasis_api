@@ -208,6 +208,18 @@ describe('ServiceProposalValidityDaoAdapterPrisma - Integration tests', () => {
     });
   });
 
+  describe('countServicesByProposalValidityId', () => {
+    it('should return 0 when no services use the proposal validity', async() => {
+      const serviceProposalValidity = await prisma.serviceProposalValidity.create({
+        data: { name: `Validity ${Date.now()}`, active: true },
+      });
+
+      const count = await sut.countServicesByProposalValidityId(serviceProposalValidity.id);
+
+      expect(count).toBe(0);
+    });
+  });
+
   describe('delete', () => {
     it('should delete service proposal validity from database', async() => {
       const serviceProposalValidity = await prisma.serviceProposalValidity.create({

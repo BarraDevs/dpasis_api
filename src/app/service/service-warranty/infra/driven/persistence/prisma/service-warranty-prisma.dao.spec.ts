@@ -208,6 +208,18 @@ describe('ServiceWarrantyDaoAdapterPrisma - Integration tests', () => {
     });
   });
 
+  describe('countServicesByWarrantyId', () => {
+    it('should return 0 when no services use the warranty', async() => {
+      const serviceWarranty = await prisma.serviceWarranty.create({
+        data: { name: `Warranty ${Date.now()}`, active: true },
+      });
+
+      const count = await sut.countServicesByWarrantyId(serviceWarranty.id);
+
+      expect(count).toBe(0);
+    });
+  });
+
   describe('delete', () => {
     it('should delete service warranty from database', async() => {
       const serviceWarranty = await prisma.serviceWarranty.create({

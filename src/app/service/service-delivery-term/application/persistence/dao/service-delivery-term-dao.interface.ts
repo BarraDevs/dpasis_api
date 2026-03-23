@@ -11,4 +11,5 @@ export interface IServiceDeliveryTermDao {
   edit(id: number, data: EditServiceDeliveryTermInputDto): Promise<void>;
   delete(id: number): Promise<void>;
   updateStatus(id: number, active: boolean): Promise<void>;
+  countServicesByDeliveryTermId(deliveryTermId: number): Promise<number>;
 }

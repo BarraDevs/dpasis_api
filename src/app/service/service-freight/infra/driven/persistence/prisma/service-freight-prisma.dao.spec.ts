@@ -208,6 +208,18 @@ describe('ServiceFreightDaoAdapterPrisma - Integration tests', () => {
     });
   });
 
+  describe('countServicesByFreightId', () => {
+    it('should return 0 when no services use the freight', async() => {
+      const serviceFreight = await prisma.serviceFreight.create({
+        data: { name: `Freight ${Date.now()}`, active: true },
+      });
+
+      const count = await sut.countServicesByFreightId(serviceFreight.id);
+
+      expect(count).toBe(0);
+    });
+  });
+
   describe('delete', () => {
     it('should delete service freight from database', async() => {
       const serviceFreight = await prisma.serviceFreight.create({

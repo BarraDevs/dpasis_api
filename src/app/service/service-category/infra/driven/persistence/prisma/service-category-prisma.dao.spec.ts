@@ -208,6 +208,50 @@ describe('ServiceCategoryDaoAdapterPrisma - Integration tests', () => {
     });
   });
 
+  describe('countServicesByCategoryId', () => {
+    it('should return 0 when no services use the category', async() => {
+      const serviceCategory = await prisma.serviceCategory.create({
+        data: { name: `Category ${Date.now()}`, active: true },
+      });
+
+      const count = await sut.countServicesByCategoryId(serviceCategory.id);
+
+      expect(count).toBe(0);
+    });
+
+    it('should return count when services use the category', async() => {
+      const category = await prisma.serviceCategory.create({
+        data: { name: `Cat ${Date.now()}`, active: true },
+      });
+
+      const [billed, deliveryTerm, freight, proposalValidity, warranty] = await Promise.all([
+        prisma.serviceBilled.create({
+          data: { description: `Billed ${Date.now()}`, isJunction: false, installmentDays: [10], active: true },
+        }),
+        prisma.serviceDeliveryTerm.create({ data: { name: `Term ${Date.now()}`, active: true } }),
+        prisma.serviceFreight.create({ data: { name: `Freight ${Date.now()}`, active: true } }),
+        prisma.serviceProposalValidity.create({ data: { name: `Validity ${Date.now()}`, active: true } }),
+        prisma.serviceWarranty.create({ data: { name: `Warranty ${Date.now()}`, active: true } }),
+      ]);
+
+      await prisma.service.create({
+        data: {
+          serviceBilledId: billed.id,
+          serviceCategoryId: category.id,
+          serviceDeliveryTermId: deliveryTerm.id,
+          serviceFreightId: freight.id,
+          serviceProposalValidityId: proposalValidity.id,
+          serviceWarrantyId: warranty.id,
+          name: 'Service Test',
+        },
+      });
+
+      const count = await sut.countServicesByCategoryId(category.id);
+
+      expect(count).toBe(1);
+    });
+  });
+
   describe('delete', () => {
     it('should delete service category from database', async() => {
       const serviceCategory = await prisma.serviceCategory.create({

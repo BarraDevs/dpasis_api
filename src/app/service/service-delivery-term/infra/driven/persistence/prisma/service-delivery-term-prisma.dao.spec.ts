@@ -208,6 +208,18 @@ describe('ServiceDeliveryTermDaoAdapterPrisma - Integration tests', () => {
     });
   });
 
+  describe('countServicesByDeliveryTermId', () => {
+    it('should return 0 when no services use the delivery term', async() => {
+      const serviceDeliveryTerm = await prisma.serviceDeliveryTerm.create({
+        data: { name: `Term ${Date.now()}`, active: true },
+      });
+
+      const count = await sut.countServicesByDeliveryTermId(serviceDeliveryTerm.id);
+
+      expect(count).toBe(0);
+    });
+  });
+
   describe('delete', () => {
     it('should delete service delivery term from database', async() => {
       const serviceDeliveryTerm = await prisma.serviceDeliveryTerm.create({

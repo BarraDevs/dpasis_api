@@ -85,6 +85,12 @@ export class ServiceDeliveryTermDaoAdapterPrisma implements IServiceDeliveryTerm
     });
   }
 
+  public async countServicesByDeliveryTermId(deliveryTermId: number): Promise<number> {
+    return this.prisma.service.count({
+      where: { serviceDeliveryTermId: deliveryTermId },
+    });
+  }
+
   public async updateStatus(id: number, active: boolean): Promise<void> {
     await this.prisma.serviceDeliveryTerm.update({
       where: { id },
