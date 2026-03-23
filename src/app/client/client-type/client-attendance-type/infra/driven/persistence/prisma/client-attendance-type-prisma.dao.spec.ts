@@ -3,6 +3,8 @@ import { ClientAttendanceTypeDto } from 'src/app/client/client-type/client-atten
 import { CreateClientAttendanceTypeInputDto } from 'src/app/client/client-type/client-attendance-type/application/usecases/create-client-attendance-type/dtos/create-client-attendance-type.dto';
 import { EditClientAttendanceTypeInputDto } from 'src/app/client/client-type/client-attendance-type/application/usecases/edit-client-attendance-type/dtos/edit-client-attendance-type.dto';
 import { FindAllClientAttendanceTypeQueryDto } from 'src/app/client/client-type/client-attendance-type/application/usecases/find-all-client-attendance-type/dtos/find-all-client-attendance-type.dto';
+import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
+import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum';
 import { ConfigModule } from 'src/core/config/config.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { ClientAttendanceTypeDaoAdapterPrisma } from './client-attendance-type-prisma.dao';
@@ -313,6 +315,65 @@ describe('ClientAttendanceTypeDaoAdapterPrisma - Integration tests', () => {
       const updated = await prisma.clientAttendanceType.findUnique({ where: { id: clientAttendanceType.id } });
       expect(updated?.name).toBe(data.name);
       expect(updated?.active).toBe(true);
+    });
+  });
+
+  describe('countClientTypesByAttendanceTypeId', () => {
+    it('should return 0 when no client types use the attendance type', async() => {
+      const clientAttendanceType = await prisma.clientAttendanceType.create({
+        data: { name: `Tipo ${Date.now()}`, active: true },
+      });
+
+      const count = await sut.countClientTypesByAttendanceTypeId(clientAttendanceType.id);
+
+      expect(count).toBe(0);
+    });
+
+    it('should return count when client types use the attendance type', async() => {
+      const [attendanceType, maintenanceType, systemType, descriptionType, driveType] = await Promise.all([
+        prisma.clientAttendanceType.create({ data: { name: `Atendimento ${Date.now()}`, active: true } }),
+        prisma.clientMaintenanceTicketType.create({ data: { name: `Manutenção ${Date.now()}`, active: true } }),
+        prisma.clientSystemType.create({ data: { name: `Sistema ${Date.now()}`, active: true } }),
+        prisma.clientDescriptionType.create({ data: { name: `Descrição ${Date.now()}`, active: true } }),
+        prisma.clientDriveType.create({ data: { name: `Drive ${Date.now()}`, active: true } }),
+      ]);
+
+      const [group, owner] = await Promise.all([
+        prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
+        prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+      ]);
+
+      const client = await prisma.client.create({
+        data: {
+          type: ClientType.PJ,
+          document: '09748165000110',
+          ie: null,
+          groupId: group.id,
+          ownerId: owner.id,
+          companyName: 'Empresa Test',
+          fantasyName: null,
+          headquarters: 'São Paulo',
+          invoiceType: ClientInvoiceType.CONTRACT,
+          generateInvoice: false,
+          active: true,
+        },
+      });
+
+      await prisma.clientType.create({
+        data: {
+          clientId: client.id,
+          clientAttendanceTypeId: attendanceType.id,
+          clientMaintenanceTicketTypeId: maintenanceType.id,
+          clientSystemTypeId: systemType.id,
+          clientDescriptionTypeId: descriptionType.id,
+          clientDriveTypeId: driveType.id,
+          quantity: 1,
+        },
+      });
+
+      const count = await sut.countClientTypesByAttendanceTypeId(attendanceType.id);
+
+      expect(count).toBe(1);
     });
   });
 

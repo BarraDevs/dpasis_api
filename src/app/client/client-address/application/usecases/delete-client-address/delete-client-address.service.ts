@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { ClientAddressInUseError } from 'src/app/client/client-address/domain/errors/client-address-in-use.error';
 import { ClientMainAddressCannotBeDeletedError } from 'src/app/client/client-address/domain/errors/client-main-address-cannot-be-deleted.error';
 import { TOKENS } from 'src/core/di/token';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
@@ -18,6 +19,11 @@ export class DeleteClientAddress {
     }
     if (clientAddress.isMain()) {
       throw new ClientMainAddressCannotBeDeletedError();
+    }
+
+    const invoiceConfigsCount = await this.clientAddressRepository.countInvoiceConfigsByBillingAddressId(id);
+    if (invoiceConfigsCount > 0) {
+      throw new ClientAddressInUseError();
     }
 
     await this.clientAddressRepository.delete(id);

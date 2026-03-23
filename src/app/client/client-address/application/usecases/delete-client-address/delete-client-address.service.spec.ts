@@ -1,8 +1,11 @@
 import { Test } from '@nestjs/testing';
 import { ClientAddressModule } from 'src/app/client/client-address/client-address.module';
 import { ClientAddressType } from 'src/app/client/client-address/domain/enums/client-address-type.enum';
+import { ClientAddressInUseError } from 'src/app/client/client-address/domain/errors/client-address-in-use.error';
 import { ClientAddressNotFoundError } from 'src/app/client/client-address/domain/errors/client-address-not-found.error';
 import { ClientMainAddressCannotBeDeletedError } from 'src/app/client/client-address/domain/errors/client-main-address-cannot-be-deleted.error';
+import { ClientInvoiceConfigDueDateType } from 'src/app/client/client-invoice-config/domain/enums/client-invoice-config-due-date-type.enum';
+import { ClientInvoiceConfigType } from 'src/app/client/client-invoice-config/domain/enums/client-invoice-config-type.enum';
 import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
 import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
@@ -78,6 +81,60 @@ describe('DeleteClientAddress', () => {
     await expect(sut.execute(created.id)).rejects.toThrow('Endereço principal não pode ser excluído.');
 
     const stillExists = await prisma.clientAddress.findUnique({ where: { id: created.id } });
+    expect(stillExists).not.toBeNull();
+  });
+
+  it('should throw ClientAddressInUseError when address is used as billing in invoice config', async() => {
+    const billingAddress = await prisma.clientAddress.create({
+      data: {
+        clientId,
+        type: ClientAddressType.BILLING,
+        zipCode: '12345-678',
+        street: 'Rua Cobrança',
+        number: '2',
+        complement: null,
+        neighborhood: 'Centro',
+        city: 'São Paulo',
+        state: 'SP',
+      },
+    });
+
+    const bank = await prisma.bank.create({
+      data: {
+        drawer: 'Test Drawer',
+        wallet: '123',
+        account: '12345',
+        agency: '0001',
+        bankCode: '001',
+        bankName: 'Test Bank',
+        paymentLocation: null,
+        active: true,
+      },
+    });
+
+    await prisma.clientInvoiceConfig.create({
+      data: {
+        clientId,
+        generateNf: true,
+        type: ClientInvoiceConfigType.MONTHLY,
+        emissionDay: 5,
+        dueDateType: ClientInvoiceConfigDueDateType.DUE_DATE,
+        dueDateDay: 15,
+        deadlineDays: null,
+        months: [],
+        billingAddressId: billingAddress.id,
+        bankId: bank.id,
+        autoProtestBoleto: false,
+        message: null,
+      },
+    });
+
+    await expect(sut.execute(billingAddress.id)).rejects.toThrow(ClientAddressInUseError);
+    await expect(sut.execute(billingAddress.id)).rejects.toThrow(
+      'Não é possível excluir o endereço pois está vinculado a configurações de faturamento.',
+    );
+
+    const stillExists = await prisma.clientAddress.findUnique({ where: { id: billingAddress.id } });
     expect(stillExists).not.toBeNull();
   });
 

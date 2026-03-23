@@ -85,6 +85,12 @@ export class ClientDescriptionTypeDaoAdapterPrisma implements IClientDescription
     });
   }
 
+  public async countClientTypesByDescriptionTypeId(descriptionTypeId: number): Promise<number> {
+    return this.prisma.clientType.count({
+      where: { clientDescriptionTypeId: descriptionTypeId },
+    });
+  }
+
   public async updateStatus(id: number, active: boolean): Promise<void> {
     await this.prisma.clientDescriptionType.update({
       where: { id },

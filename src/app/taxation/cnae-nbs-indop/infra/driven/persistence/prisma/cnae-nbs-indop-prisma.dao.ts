@@ -133,6 +133,12 @@ export class CnaeNbsIndopDaoAdapterPrisma implements ICnaeNbsIndopDao {
     });
   }
 
+  public async countClientItemsByCnaeNbsIndopId(cnaeNbsIndopId: number): Promise<number> {
+    return this.prisma.clientItem.count({
+      where: { cnaeNbsIndopId },
+    });
+  }
+
   public async updateStatus(id: number, active: boolean): Promise<void> {
     await this.prisma.cnaeNbsIndop.update({
       where: { id },

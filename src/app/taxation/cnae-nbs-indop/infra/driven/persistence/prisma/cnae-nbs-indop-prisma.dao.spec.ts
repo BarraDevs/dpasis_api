@@ -227,6 +227,59 @@ describe('CnaeNbsIndopDaoAdapterPrisma - Integration tests', () => {
     });
   });
 
+  describe('countClientItemsByCnaeNbsIndopId', () => {
+    it('should return 0 when no client items use the combination', async() => {
+      const created = await prisma.cnaeNbsIndop.create({
+        data: { cnaeId, nbsId, indopId },
+      });
+
+      const count = await sut.countClientItemsByCnaeNbsIndopId(created.id);
+
+      expect(count).toBe(0);
+    });
+
+    it('should return count when client items use the combination', async() => {
+      const created = await prisma.cnaeNbsIndop.create({
+        data: { cnaeId, nbsId, indopId },
+      });
+
+      const [group, owner] = await Promise.all([
+        prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
+        prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+      ]);
+
+      const client = await prisma.client.create({
+        data: {
+          type: 'PJ',
+          document: '09748165000110',
+          ie: null,
+          groupId: group.id,
+          ownerId: owner.id,
+          companyName: 'Empresa Test',
+          fantasyName: null,
+          headquarters: 'São Paulo',
+          invoiceType: 'CONTRACT',
+          generateInvoice: false,
+          active: true,
+        },
+      });
+
+      await prisma.clientItem.create({
+        data: {
+          clientId: client.id,
+          description: 'Item Test',
+          quantity: 1,
+          unitValueInCents: 1000,
+          cnaeNbsIndopId: created.id,
+        },
+      });
+
+      const count = await sut.countClientItemsByCnaeNbsIndopId(created.id);
+
+      expect(count).toBe(1);
+    });
+  });
+
   describe('findCnaesForSelect', () => {
     it('should return empty array when no active records exist', async() => {
       const result = await sut.findCnaesForSelect();

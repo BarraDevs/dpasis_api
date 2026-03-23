@@ -11,4 +11,5 @@ export interface IClientDriveTypeDao {
   edit(id: number, data: EditClientDriveTypeInputDto): Promise<void>;
   delete(id: number): Promise<void>;
   updateStatus(id: number, active: boolean): Promise<void>;
+  countClientTypesByDriveTypeId(driveTypeId: number): Promise<number>;
 }

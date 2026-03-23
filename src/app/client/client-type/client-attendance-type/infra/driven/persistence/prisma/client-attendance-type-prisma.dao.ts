@@ -85,6 +85,12 @@ export class ClientAttendanceTypeDaoAdapterPrisma implements IClientAttendanceTy
     });
   }
 
+  public async countClientTypesByAttendanceTypeId(attendanceTypeId: number): Promise<number> {
+    return this.prisma.clientType.count({
+      where: { clientAttendanceTypeId: attendanceTypeId },
+    });
+  }
+
   public async updateStatus(id: number, active: boolean): Promise<void> {
     await this.prisma.clientAttendanceType.update({
       where: { id },

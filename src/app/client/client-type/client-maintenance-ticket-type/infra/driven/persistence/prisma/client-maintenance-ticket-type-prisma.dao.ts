@@ -85,6 +85,12 @@ export class ClientMaintenanceTicketTypeDaoAdapterPrisma implements IClientMaint
     });
   }
 
+  public async countClientTypesByMaintenanceTicketTypeId(maintenanceTicketTypeId: number): Promise<number> {
+    return this.prisma.clientType.count({
+      where: { clientMaintenanceTicketTypeId: maintenanceTicketTypeId },
+    });
+  }
+
   public async updateStatus(id: number, active: boolean): Promise<void> {
     await this.prisma.clientMaintenanceTicketType.update({
       where: { id },

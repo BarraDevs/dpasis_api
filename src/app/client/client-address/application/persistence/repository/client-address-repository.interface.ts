@@ -5,4 +5,5 @@ export interface IClientAddressRepository {
   edit(entity: ClientAddress): Promise<void>;
   findById(id: number): Promise<ClientAddress | null>;
   delete(id: number): Promise<void>;
+  countInvoiceConfigsByBillingAddressId(billingAddressId: number): Promise<number>;
 }

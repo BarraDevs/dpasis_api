@@ -264,6 +264,65 @@ describe('ClientDescriptionTypeDaoAdapterPrisma - Integration tests', () => {
     });
   });
 
+  describe('countClientTypesByDescriptionTypeId', () => {
+    it('should return 0 when no client types use the description type', async() => {
+      const clientDescriptionType = await prisma.clientDescriptionType.create({
+        data: { name: `Tipo ${Date.now()}`, active: true },
+      });
+
+      const count = await sut.countClientTypesByDescriptionTypeId(clientDescriptionType.id);
+
+      expect(count).toBe(0);
+    });
+
+    it('should return count when client types use the description type', async() => {
+      const [attendanceType, maintenanceType, systemType, descriptionType, driveType] = await Promise.all([
+        prisma.clientAttendanceType.create({ data: { name: `Atendimento ${Date.now()}`, active: true } }),
+        prisma.clientMaintenanceTicketType.create({ data: { name: `Manutenção ${Date.now()}`, active: true } }),
+        prisma.clientSystemType.create({ data: { name: `Sistema ${Date.now()}`, active: true } }),
+        prisma.clientDescriptionType.create({ data: { name: `Descrição ${Date.now()}`, active: true } }),
+        prisma.clientDriveType.create({ data: { name: `Drive ${Date.now()}`, active: true } }),
+      ]);
+
+      const [group, owner] = await Promise.all([
+        prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
+        prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+      ]);
+
+      const client = await prisma.client.create({
+        data: {
+          type: 'PJ',
+          document: '09748165000110',
+          ie: null,
+          groupId: group.id,
+          ownerId: owner.id,
+          companyName: 'Empresa Test',
+          fantasyName: null,
+          headquarters: 'São Paulo',
+          invoiceType: 'CONTRACT',
+          generateInvoice: false,
+          active: true,
+        },
+      });
+
+      await prisma.clientType.create({
+        data: {
+          clientId: client.id,
+          clientAttendanceTypeId: attendanceType.id,
+          clientMaintenanceTicketTypeId: maintenanceType.id,
+          clientSystemTypeId: systemType.id,
+          clientDescriptionTypeId: descriptionType.id,
+          clientDriveTypeId: driveType.id,
+          quantity: 1,
+        },
+      });
+
+      const count = await sut.countClientTypesByDescriptionTypeId(descriptionType.id);
+
+      expect(count).toBe(1);
+    });
+  });
+
   describe('delete', () => {
     it('should delete client description type from database', async() => {
       const clientDescriptionType = await prisma.clientDescriptionType.create({

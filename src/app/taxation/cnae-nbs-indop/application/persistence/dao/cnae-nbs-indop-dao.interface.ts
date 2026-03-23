@@ -11,6 +11,7 @@ export interface ICnaeNbsIndopDao {
   findByComposite(cnaeId: number, nbsId: number, indopId: number): Promise<CnaeNbsIndopDto | null>;
   save(data: CreateCnaeNbsIndopInputDto): Promise<number>;
   delete(id: number): Promise<void>;
+  countClientItemsByCnaeNbsIndopId(cnaeNbsIndopId: number): Promise<number>;
   findCnaesForSelect(): Promise<CnaeDto[]>;
   findNbssForSelectByCnaeId(cnaeId: number): Promise<NbsDto[]>;
   findIndopsForSelectByCnaeAndNbs(cnaeId: number, nbsId: number): Promise<IndopDto[]>;

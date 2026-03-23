@@ -11,4 +11,5 @@ export interface IClientSystemTypeDao {
   edit(id: number, data: EditClientSystemTypeInputDto): Promise<void>;
   delete(id: number): Promise<void>;
   updateStatus(id: number, active: boolean): Promise<void>;
+  countClientTypesBySystemTypeId(systemTypeId: number): Promise<number>;
 }

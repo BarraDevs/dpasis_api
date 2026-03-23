@@ -85,6 +85,12 @@ export class ClientSystemTypeDaoAdapterPrisma implements IClientSystemTypeDao {
     });
   }
 
+  public async countClientTypesBySystemTypeId(systemTypeId: number): Promise<number> {
+    return this.prisma.clientType.count({
+      where: { clientSystemTypeId: systemTypeId },
+    });
+  }
+
   public async updateStatus(id: number, active: boolean): Promise<void> {
     await this.prisma.clientSystemType.update({
       where: { id },

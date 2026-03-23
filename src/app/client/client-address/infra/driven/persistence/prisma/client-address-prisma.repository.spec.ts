@@ -1,6 +1,8 @@
 import { Test } from '@nestjs/testing';
 import { ClientAddressType } from 'src/app/client/client-address/domain/enums/client-address-type.enum';
 import { ClientAddressFactory } from 'src/app/client/client-address/domain/factories/client-address.factory';
+import { ClientInvoiceConfigDueDateType } from 'src/app/client/client-invoice-config/domain/enums/client-invoice-config-due-date-type.enum';
+import { ClientInvoiceConfigType } from 'src/app/client/client-invoice-config/domain/enums/client-invoice-config-type.enum';
 import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
 import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum';
 import { ConfigModule } from 'src/core/config/config.module';
@@ -214,6 +216,83 @@ describe('ClientAddressRepositoryAdapterPrisma - Integration tests', () => {
       expect(found?.props.street).toBe('Rua Teste');
       expect(found?.props.zipCode).toBe('12345-678');
       expect(found?.isMain()).toBe(true);
+    });
+  });
+
+  describe('countInvoiceConfigsByBillingAddressId', () => {
+    it('should return 0 when no invoice config uses the address as billing', async() => {
+      const entity = ClientAddressFactory.create({
+        clientId,
+        type: ClientAddressType.BILLING,
+        zipCode: '12345-678',
+        street: 'Rua Cobrança',
+        number: '1',
+        complement: null,
+        neighborhood: 'Centro',
+        city: 'São Paulo',
+        state: 'SP',
+      });
+
+      await sut.save(entity);
+
+      const saved = await prisma.clientAddress.findFirst({
+        where: { clientId, type: ClientAddressType.BILLING },
+      });
+      expect(saved).not.toBeNull();
+
+      const count = await sut.countInvoiceConfigsByBillingAddressId(saved!.id);
+
+      expect(count).toBe(0);
+    });
+
+    it('should return count when invoice configs use the address as billing', async() => {
+      const billingAddress = await prisma.clientAddress.create({
+        data: {
+          clientId,
+          type: ClientAddressType.BILLING,
+          zipCode: '12345-678',
+          street: 'Rua Cobrança',
+          number: '1',
+          complement: null,
+          neighborhood: 'Centro',
+          city: 'São Paulo',
+          state: 'SP',
+        },
+      });
+
+      const bank = await prisma.bank.create({
+        data: {
+          drawer: 'Test Drawer',
+          wallet: '123',
+          account: '12345',
+          agency: '0001',
+          bankCode: '001',
+          bankName: 'Test Bank',
+          paymentLocation: null,
+          active: true,
+        },
+      });
+
+      await prisma.clientInvoiceConfig.create({
+        data: {
+          clientId,
+          generateNf: true,
+          type: ClientInvoiceConfigType.MONTHLY,
+          emissionDay: 5,
+          dueDateType: ClientInvoiceConfigDueDateType.DUE_DATE,
+          dueDateDay: 15,
+          deadlineDays: null,
+          months: [],
+          billingAddressId: billingAddress.id,
+          bankId: bank.id,
+          autoProtestBoleto: false,
+          message: null,
+        },
+      });
+
+      const count = await sut.countInvoiceConfigsByBillingAddressId(billingAddress.id);
+
+      expect(count).toBe(1);
     });
   });
 

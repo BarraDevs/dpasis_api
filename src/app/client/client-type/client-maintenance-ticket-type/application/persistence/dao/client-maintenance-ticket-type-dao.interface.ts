@@ -11,4 +11,5 @@ export interface IClientMaintenanceTicketTypeDao {
   edit(id: number, data: EditClientMaintenanceTicketTypeInputDto): Promise<void>;
   delete(id: number): Promise<void>;
   updateStatus(id: number, active: boolean): Promise<void>;
+  countClientTypesByMaintenanceTicketTypeId(maintenanceTicketTypeId: number): Promise<number>;
 }

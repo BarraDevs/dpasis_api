@@ -73,4 +73,10 @@ export class ClientAddressRepositoryAdapterPrisma implements IClientAddressRepos
       where: { id },
     });
   }
+
+  public async countInvoiceConfigsByBillingAddressId(billingAddressId: number): Promise<number> {
+    return this.prisma.clientInvoiceConfig.count({
+      where: { billingAddressId },
+    });
+  }
 }

@@ -85,6 +85,12 @@ export class ClientDriveTypeDaoAdapterPrisma implements IClientDriveTypeDao {
     });
   }
 
+  public async countClientTypesByDriveTypeId(driveTypeId: number): Promise<number> {
+    return this.prisma.clientType.count({
+      where: { clientDriveTypeId: driveTypeId },
+    });
+  }
+
   public async updateStatus(id: number, active: boolean): Promise<void> {
     await this.prisma.clientDriveType.update({
       where: { id },
