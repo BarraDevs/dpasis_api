@@ -281,6 +281,58 @@ describe('CnaeNbsIndopDaoAdapterPrisma - Integration tests', () => {
     });
   });
 
+  describe('countServicesByCnaeNbsIndopId', () => {
+    it('should return 0 when no services use the combination', async() => {
+      const created = await prisma.cnaeNbsIndop.create({
+        data: { cnaeId, nbsId, indopId },
+      });
+
+      const count = await sut.countServicesByCnaeNbsIndopId(created.id);
+
+      expect(count).toBe(0);
+    });
+
+    it('should return count when services use the combination', async() => {
+      const created = await prisma.cnaeNbsIndop.create({
+        data: { cnaeId, nbsId, indopId },
+      });
+
+      const category = await prisma.serviceCategory.create({
+        data: { name: `Cat ${Date.now()}`, active: true },
+      });
+      const [billed, deliveryTerm, freight, proposalValidity, warranty] = await Promise.all([
+        prisma.serviceBilled.create({
+          data: { description: `Billed ${Date.now()}`, isJunction: false, installmentDays: [10], active: true },
+        }),
+        prisma.serviceDeliveryTerm.create({ data: { name: `Term ${Date.now()}`, active: true } }),
+        prisma.serviceFreight.create({ data: { name: `Freight ${Date.now()}`, active: true } }),
+        prisma.serviceProposalValidity.create({ data: { name: `Validity ${Date.now()}`, active: true } }),
+        prisma.serviceWarranty.create({ data: { name: `Warranty ${Date.now()}`, active: true } }),
+      ]);
+
+      await prisma.service.create({
+        data: {
+          cnaeNbsIndopId: created.id,
+          serviceBilledId: billed.id,
+          serviceCategoryId: category.id,
+          serviceDeliveryTermId: deliveryTerm.id,
+          serviceFreightId: freight.id,
+          serviceProposalValidityId: proposalValidity.id,
+          serviceWarrantyId: warranty.id,
+          name: 'Service Test',
+          unitPriceInCents: 10000,
+          description: 'Service Test',
+          isCommercial: true,
+          active: true,
+        },
+      });
+
+      const count = await sut.countServicesByCnaeNbsIndopId(created.id);
+
+      expect(count).toBe(1);
+    });
+  });
+
   describe('findCnaesForSelect', () => {
     it('should return empty array when no active records exist', async() => {
       const result = await sut.findCnaesForSelect();

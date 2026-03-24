@@ -83,7 +83,56 @@ describe('DeleteCnaeNbsIndop - Integration tests', () => {
 
     await expect(sut.execute(created.id)).rejects.toThrow(CnaeNbsIndopInUseError);
     await expect(sut.execute(created.id)).rejects.toThrow(
-      'Não é possível excluir a combinação pois existem itens de cliente vinculados.',
+      'Não é possível excluir a combinação pois existem registros vinculados.',
+    );
+
+    const stillExists = await prisma.cnaeNbsIndop.findUnique({ where: { id: created.id } });
+    expect(stillExists).not.toBeNull();
+  });
+
+  it('should throw CnaeNbsIndopInUseError when combination has linked catalog services', async() => {
+    const [cnae, nbs, indop] = await Promise.all([
+      prisma.cnae.create({ data: { code: `CNAE${Date.now()}`, description: 'CNAE Test', active: true } }),
+      prisma.nbs.create({ data: { code: `NBS${Date.now()}`, description: 'NBS Test', active: true } }),
+      prisma.indop.create({ data: { code: `IND${Date.now()}`, description: 'INDOP Test', active: true } }),
+    ]);
+    const created = await prisma.cnaeNbsIndop.create({
+      data: { cnaeId: cnae.id, nbsId: nbs.id, indopId: indop.id },
+    });
+
+    const category = await prisma.serviceCategory.create({
+      data: { name: `Cat ${Date.now()}`, active: true },
+    });
+    const [billed, deliveryTerm, freight, proposalValidity, warranty] = await Promise.all([
+      prisma.serviceBilled.create({
+        data: { description: `Billed ${Date.now()}`, isJunction: false, installmentDays: [10], active: true },
+      }),
+      prisma.serviceDeliveryTerm.create({ data: { name: `Term ${Date.now()}`, active: true } }),
+      prisma.serviceFreight.create({ data: { name: `Freight ${Date.now()}`, active: true } }),
+      prisma.serviceProposalValidity.create({ data: { name: `Validity ${Date.now()}`, active: true } }),
+      prisma.serviceWarranty.create({ data: { name: `Warranty ${Date.now()}`, active: true } }),
+    ]);
+
+    await prisma.service.create({
+      data: {
+        cnaeNbsIndopId: created.id,
+        serviceBilledId: billed.id,
+        serviceCategoryId: category.id,
+        serviceDeliveryTermId: deliveryTerm.id,
+        serviceFreightId: freight.id,
+        serviceProposalValidityId: proposalValidity.id,
+        serviceWarrantyId: warranty.id,
+        name: 'Service Test',
+        unitPriceInCents: 10000,
+        description: 'Service Test',
+        isCommercial: true,
+        active: true,
+      },
+    });
+
+    await expect(sut.execute(created.id)).rejects.toThrow(CnaeNbsIndopInUseError);
+    await expect(sut.execute(created.id)).rejects.toThrow(
+      'Não é possível excluir a combinação pois existem registros vinculados.',
     );
 
     const stillExists = await prisma.cnaeNbsIndop.findUnique({ where: { id: created.id } });
