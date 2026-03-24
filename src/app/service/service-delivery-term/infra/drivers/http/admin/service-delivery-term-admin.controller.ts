@@ -30,7 +30,7 @@ export class ServiceDeliveryTermAdminController {
 
   @Post()
   @Swagger({
-    tags: ['Prazo de Entrega de Serviço'],
+    tags: ['Serviços - Prazo de entrega'],
     summary: 'Criar novo prazo de entrega',
     applyBadRequest: true,
     createdResponse: CreateServiceDeliveryTermOutputDto,
@@ -41,7 +41,7 @@ export class ServiceDeliveryTermAdminController {
 
   @Get()
   @Swagger({
-    tags: ['Prazo de Entrega de Serviço'],
+    tags: ['Serviços - Prazo de entrega'],
     summary: 'Listar prazos de entrega com paginação e busca',
     applyBadRequest: true,
     okPaginatedResponse: ServiceDeliveryTermDto,
@@ -52,7 +52,7 @@ export class ServiceDeliveryTermAdminController {
 
   @Get(':id')
   @Swagger({
-    tags: ['Prazo de Entrega de Serviço'],
+    tags: ['Serviços - Prazo de entrega'],
     summary: 'Buscar prazo de entrega por ID',
     applyBadRequest: true,
     applyNotFound: true,
@@ -64,7 +64,7 @@ export class ServiceDeliveryTermAdminController {
 
   @Patch(':id/status')
   @Swagger({
-    tags: ['Prazo de Entrega de Serviço'],
+    tags: ['Serviços - Prazo de entrega'],
     summary: 'Inverter status ativo do prazo de entrega',
     applyBadRequest: true,
     applyNotFound: true,
@@ -76,7 +76,7 @@ export class ServiceDeliveryTermAdminController {
 
   @Patch(':id')
   @Swagger({
-    tags: ['Prazo de Entrega de Serviço'],
+    tags: ['Serviços - Prazo de entrega'],
     summary: 'Editar prazo de entrega',
     applyBadRequest: true,
     applyNotFound: true,
@@ -88,7 +88,7 @@ export class ServiceDeliveryTermAdminController {
 
   @Delete(':id')
   @Swagger({
-    tags: ['Prazo de Entrega de Serviço'],
+    tags: ['Serviços - Prazo de entrega'],
     summary: 'Deletar prazo de entrega',
     applyBadRequest: true,
     applyNotFound: true,

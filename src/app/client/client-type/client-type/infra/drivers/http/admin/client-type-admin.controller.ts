@@ -36,7 +36,7 @@ export class ClientTypeAdminController {
 
   @Post()
   @Swagger({
-    tags: ['Tipos de Cliente'],
+    tags: ['Clientes - Tipos de cliente'],
     summary: 'Criar novo tipo de cliente',
     applyBadRequest: true,
     createdResponse: CreateClientTypeOutputDto,
@@ -47,7 +47,7 @@ export class ClientTypeAdminController {
 
   @Get()
   @Swagger({
-    tags: ['Tipos de Cliente'],
+    tags: ['Clientes - Tipos de cliente'],
     summary: 'Listar tipos de cliente com paginação e busca',
     applyBadRequest: true,
     okPaginatedResponse: ClientTypeDto,
@@ -58,7 +58,7 @@ export class ClientTypeAdminController {
 
   @Get(':id')
   @Swagger({
-    tags: ['Tipos de Cliente'],
+    tags: ['Clientes - Tipos de cliente'],
     summary: 'Buscar tipo de cliente por ID',
     applyBadRequest: true,
     applyNotFound: true,
@@ -70,7 +70,7 @@ export class ClientTypeAdminController {
 
   @Patch(':id/status')
   @Swagger({
-    tags: ['Tipos de Cliente'],
+    tags: ['Clientes - Tipos de cliente'],
     summary: 'Inverter status ativo do tipo de cliente',
     applyBadRequest: true,
     applyNotFound: true,
@@ -82,7 +82,7 @@ export class ClientTypeAdminController {
 
   @Patch(':id')
   @Swagger({
-    tags: ['Tipos de Cliente'],
+    tags: ['Clientes - Tipos de cliente'],
     summary: 'Editar tipo de cliente',
     applyBadRequest: true,
     applyNotFound: true,
@@ -94,7 +94,7 @@ export class ClientTypeAdminController {
 
   @Delete('bulk')
   @Swagger({
-    tags: ['Tipos de Cliente'],
+    tags: ['Clientes - Tipos de cliente'],
     summary: 'Deletar múltiplos tipos de cliente',
     applyBadRequest: true,
     okResponse: DeleteBulkClientTypeOutputDto,
@@ -105,7 +105,7 @@ export class ClientTypeAdminController {
 
   @Delete(':id')
   @Swagger({
-    tags: ['Tipos de Cliente'],
+    tags: ['Clientes - Tipos de cliente'],
     summary: 'Deletar tipo de cliente',
     applyBadRequest: true,
     applyNotFound: true,

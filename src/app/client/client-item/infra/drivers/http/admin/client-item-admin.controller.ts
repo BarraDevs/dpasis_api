@@ -43,7 +43,7 @@ export class ClientItemAdminController {
 
   @Post()
   @Swagger({
-    tags: ['Itens do Cliente'],
+    tags: ['Clientes - Itens'],
     summary: 'Criar novo item do cliente',
     applyBadRequest: true,
     createdResponse: CreateClientItemOutputDto,
@@ -56,7 +56,7 @@ export class ClientItemAdminController {
 
   @Post('bulk')
   @Swagger({
-    tags: ['Itens do Cliente'],
+    tags: ['Clientes - Itens'],
     summary: 'Criar múltiplos itens do cliente',
     applyBadRequest: true,
     createdResponse: CreateBulkClientItemOutputDto,
@@ -67,7 +67,7 @@ export class ClientItemAdminController {
 
   @Get()
   @Swagger({
-    tags: ['Itens do Cliente'],
+    tags: ['Clientes - Itens'],
     summary: 'Listar itens do cliente com paginação e filtros',
     applyBadRequest: true,
     okPaginatedResponse: ClientItemDto,
@@ -78,7 +78,7 @@ export class ClientItemAdminController {
 
   @Get(':id')
   @Swagger({
-    tags: ['Itens do Cliente'],
+    tags: ['Clientes - Itens'],
     summary: 'Buscar item do cliente por ID',
     applyBadRequest: true,
     applyNotFound: true,
@@ -90,7 +90,7 @@ export class ClientItemAdminController {
 
   @Patch(':id')
   @Swagger({
-    tags: ['Itens do Cliente'],
+    tags: ['Clientes - Itens'],
     summary: 'Editar item do cliente',
     applyBadRequest: true,
     applyNotFound: true,
@@ -102,7 +102,7 @@ export class ClientItemAdminController {
 
   @Delete('bulk')
   @Swagger({
-    tags: ['Itens do Cliente'],
+    tags: ['Clientes - Itens'],
     summary: 'Deletar múltiplos itens do cliente',
     applyBadRequest: true,
     okResponse: DeleteBulkClientItemOutputDto,
@@ -113,7 +113,7 @@ export class ClientItemAdminController {
 
   @Delete(':id')
   @Swagger({
-    tags: ['Itens do Cliente'],
+    tags: ['Clientes - Itens'],
     summary: 'Deletar item do cliente',
     applyBadRequest: true,
     applyNotFound: true,

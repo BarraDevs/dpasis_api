@@ -28,7 +28,7 @@ export class BankAdminController {
 
   @Post()
   @Swagger({
-    tags: ['Configurações - Bank'],
+    tags: ['Bancos'],
     summary: 'Criar novo banco',
     applyBadRequest: true,
     applyConflict: true,
@@ -40,7 +40,7 @@ export class BankAdminController {
 
   @Get()
   @Swagger({
-    tags: ['Configurações - Bank'],
+    tags: ['Bancos'],
     summary: 'Listar bancos com paginação e busca',
     applyBadRequest: true,
     okPaginatedResponse: BankDto,
@@ -51,7 +51,7 @@ export class BankAdminController {
 
   @Get(':id')
   @Swagger({
-    tags: ['Configurações - Bank'],
+    tags: ['Bancos'],
     summary: 'Buscar banco por ID',
     applyBadRequest: true,
     applyNotFound: true,
@@ -63,7 +63,7 @@ export class BankAdminController {
 
   @Patch(':id/status')
   @Swagger({
-    tags: ['Configurações - Bank'],
+    tags: ['Bancos'],
     summary: 'Inverter status ativo do banco',
     applyBadRequest: true,
     applyNotFound: true,
@@ -75,7 +75,7 @@ export class BankAdminController {
 
   @Patch(':id')
   @Swagger({
-    tags: ['Configurações - Bank'],
+    tags: ['Bancos'],
     summary: 'Editar banco',
     applyBadRequest: true,
     applyNotFound: true,

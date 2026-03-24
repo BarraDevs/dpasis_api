@@ -30,7 +30,7 @@ export class ServiceProposalValidityAdminController {
 
   @Post()
   @Swagger({
-    tags: ['Validade de Proposta de Serviço'],
+    tags: ['Serviços - Validade de proposta'],
     summary: 'Criar nova validade de proposta',
     applyBadRequest: true,
     createdResponse: CreateServiceProposalValidityOutputDto,
@@ -41,7 +41,7 @@ export class ServiceProposalValidityAdminController {
 
   @Get()
   @Swagger({
-    tags: ['Validade de Proposta de Serviço'],
+    tags: ['Serviços - Validade de proposta'],
     summary: 'Listar validades de proposta com paginação e busca',
     applyBadRequest: true,
     okPaginatedResponse: ServiceProposalValidityDto,
@@ -52,7 +52,7 @@ export class ServiceProposalValidityAdminController {
 
   @Get(':id')
   @Swagger({
-    tags: ['Validade de Proposta de Serviço'],
+    tags: ['Serviços - Validade de proposta'],
     summary: 'Buscar validade de proposta por ID',
     applyBadRequest: true,
     applyNotFound: true,
@@ -64,7 +64,7 @@ export class ServiceProposalValidityAdminController {
 
   @Patch(':id/status')
   @Swagger({
-    tags: ['Validade de Proposta de Serviço'],
+    tags: ['Serviços - Validade de proposta'],
     summary: 'Inverter status ativo da validade de proposta',
     applyBadRequest: true,
     applyNotFound: true,
@@ -76,7 +76,7 @@ export class ServiceProposalValidityAdminController {
 
   @Patch(':id')
   @Swagger({
-    tags: ['Validade de Proposta de Serviço'],
+    tags: ['Serviços - Validade de proposta'],
     summary: 'Editar validade de proposta',
     applyBadRequest: true,
     applyNotFound: true,
@@ -88,7 +88,7 @@ export class ServiceProposalValidityAdminController {
 
   @Delete(':id')
   @Swagger({
-    tags: ['Validade de Proposta de Serviço'],
+    tags: ['Serviços - Validade de proposta'],
     summary: 'Deletar validade de proposta',
     applyBadRequest: true,
     applyNotFound: true,

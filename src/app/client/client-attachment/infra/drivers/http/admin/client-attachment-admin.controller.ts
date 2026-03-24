@@ -33,7 +33,7 @@ export class ClientAttachmentAdminController {
 
   @Post()
   @Swagger({
-    tags: ['Anexos de Clientes'],
+    tags: ['Clientes - Anexos'],
     summary: 'Criar novo anexo de cliente',
     applyBadRequest: true,
     createdResponse: CreateClientAttachmentOutputDto,
@@ -44,7 +44,7 @@ export class ClientAttachmentAdminController {
 
   @Get()
   @Swagger({
-    tags: ['Anexos de Clientes'],
+    tags: ['Clientes - Anexos'],
     summary: 'Listar anexos de cliente com paginação e filtros',
     applyBadRequest: true,
     okPaginatedResponse: ClientAttachmentDto,
@@ -55,7 +55,7 @@ export class ClientAttachmentAdminController {
 
   @Get(':id')
   @Swagger({
-    tags: ['Anexos de Clientes'],
+    tags: ['Clientes - Anexos'],
     summary: 'Buscar anexo de cliente por ID',
     applyBadRequest: true,
     applyNotFound: true,
@@ -67,7 +67,7 @@ export class ClientAttachmentAdminController {
 
   @Patch(':id/status')
   @Swagger({
-    tags: ['Anexos de Clientes'],
+    tags: ['Clientes - Anexos'],
     summary: 'Inverter status ativo do anexo de cliente',
     applyBadRequest: true,
     applyNotFound: true,
@@ -79,7 +79,7 @@ export class ClientAttachmentAdminController {
 
   @Patch(':id')
   @Swagger({
-    tags: ['Anexos de Clientes'],
+    tags: ['Clientes - Anexos'],
     summary: 'Editar anexo de cliente',
     applyBadRequest: true,
     applyNotFound: true,
@@ -91,7 +91,7 @@ export class ClientAttachmentAdminController {
 
   @Delete(':id')
   @Swagger({
-    tags: ['Anexos de Clientes'],
+    tags: ['Clientes - Anexos'],
     summary: 'Deletar anexo de cliente',
     applyBadRequest: true,
     applyNotFound: true,

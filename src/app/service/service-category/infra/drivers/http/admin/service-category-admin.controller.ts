@@ -30,7 +30,7 @@ export class ServiceCategoryAdminController {
 
   @Post()
   @Swagger({
-    tags: ['Categorias de Serviço'],
+    tags: ['Serviços - Categorias'],
     summary: 'Criar nova categoria de serviço',
     applyBadRequest: true,
     createdResponse: CreateServiceCategoryOutputDto,
@@ -41,7 +41,7 @@ export class ServiceCategoryAdminController {
 
   @Get()
   @Swagger({
-    tags: ['Categorias de Serviço'],
+    tags: ['Serviços - Categorias'],
     summary: 'Listar categorias de serviço com paginação e busca',
     applyBadRequest: true,
     okPaginatedResponse: ServiceCategoryDto,
@@ -52,7 +52,7 @@ export class ServiceCategoryAdminController {
 
   @Get(':id')
   @Swagger({
-    tags: ['Categorias de Serviço'],
+    tags: ['Serviços - Categorias'],
     summary: 'Buscar categoria de serviço por ID',
     applyBadRequest: true,
     applyNotFound: true,
@@ -64,7 +64,7 @@ export class ServiceCategoryAdminController {
 
   @Patch(':id/status')
   @Swagger({
-    tags: ['Categorias de Serviço'],
+    tags: ['Serviços - Categorias'],
     summary: 'Inverter status ativo da categoria de serviço',
     applyBadRequest: true,
     applyNotFound: true,
@@ -76,7 +76,7 @@ export class ServiceCategoryAdminController {
 
   @Patch(':id')
   @Swagger({
-    tags: ['Categorias de Serviço'],
+    tags: ['Serviços - Categorias'],
     summary: 'Editar categoria de serviço',
     applyBadRequest: true,
     applyNotFound: true,
@@ -88,7 +88,7 @@ export class ServiceCategoryAdminController {
 
   @Delete(':id')
   @Swagger({
-    tags: ['Categorias de Serviço'],
+    tags: ['Serviços - Categorias'],
     summary: 'Deletar categoria de serviço',
     applyBadRequest: true,
     applyNotFound: true,

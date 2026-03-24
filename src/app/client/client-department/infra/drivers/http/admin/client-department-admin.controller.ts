@@ -30,7 +30,7 @@ export class ClientDepartmentAdminController {
 
   @Post()
   @Swagger({
-    tags: ['Departamentos de Clientes'],
+    tags: ['Clientes - Departamentos'],
     summary: 'Criar novo departamento de clientes',
     applyBadRequest: true,
     createdResponse: CreateClientDepartmentOutputDto,
@@ -41,7 +41,7 @@ export class ClientDepartmentAdminController {
 
   @Get()
   @Swagger({
-    tags: ['Departamentos de Clientes'],
+    tags: ['Clientes - Departamentos'],
     summary: 'Listar departamentos de clientes com paginação e busca',
     applyBadRequest: true,
     okPaginatedResponse: ClientDepartmentDto,
@@ -52,7 +52,7 @@ export class ClientDepartmentAdminController {
 
   @Get(':id')
   @Swagger({
-    tags: ['Departamentos de Clientes'],
+    tags: ['Clientes - Departamentos'],
     summary: 'Buscar departamento de clientes por ID',
     applyBadRequest: true,
     applyNotFound: true,
@@ -64,7 +64,7 @@ export class ClientDepartmentAdminController {
 
   @Patch(':id/status')
   @Swagger({
-    tags: ['Departamentos de Clientes'],
+    tags: ['Clientes - Departamentos'],
     summary: 'Inverter status ativo do departamento de clientes',
     applyBadRequest: true,
     applyNotFound: true,
@@ -76,7 +76,7 @@ export class ClientDepartmentAdminController {
 
   @Patch(':id')
   @Swagger({
-    tags: ['Departamentos de Clientes'],
+    tags: ['Clientes - Departamentos'],
     summary: 'Editar departamento de clientes',
     applyBadRequest: true,
     applyNotFound: true,
@@ -88,7 +88,7 @@ export class ClientDepartmentAdminController {
 
   @Delete(':id')
   @Swagger({
-    tags: ['Departamentos de Clientes'],
+    tags: ['Clientes - Departamentos'],
     summary: 'Deletar departamento de clientes',
     applyBadRequest: true,
     applyNotFound: true,

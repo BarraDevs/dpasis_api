@@ -30,7 +30,7 @@ export class ClientGroupAdminController {
 
   @Post()
   @Swagger({
-    tags: ['Grupos de Clientes'],
+    tags: ['Clientes - Grupos'],
     summary: 'Criar novo grupo de clientes',
     applyBadRequest: true,
     createdResponse: CreateClientGroupOutputDto,
@@ -41,7 +41,7 @@ export class ClientGroupAdminController {
 
   @Get()
   @Swagger({
-    tags: ['Grupos de Clientes'],
+    tags: ['Clientes - Grupos'],
     summary: 'Listar grupos de clientes com paginação e busca',
     applyBadRequest: true,
     okPaginatedResponse: ClientGroupDto,
@@ -52,7 +52,7 @@ export class ClientGroupAdminController {
 
   @Get(':id')
   @Swagger({
-    tags: ['Grupos de Clientes'],
+    tags: ['Clientes - Grupos'],
     summary: 'Buscar grupo de clientes por ID',
     applyBadRequest: true,
     applyNotFound: true,
@@ -64,7 +64,7 @@ export class ClientGroupAdminController {
 
   @Patch(':id/status')
   @Swagger({
-    tags: ['Grupos de Clientes'],
+    tags: ['Clientes - Grupos'],
     summary: 'Inverter status ativo do grupo de clientes',
     applyBadRequest: true,
     applyNotFound: true,
@@ -76,7 +76,7 @@ export class ClientGroupAdminController {
 
   @Patch(':id')
   @Swagger({
-    tags: ['Grupos de Clientes'],
+    tags: ['Clientes - Grupos'],
     summary: 'Editar grupo de clientes',
     applyBadRequest: true,
     applyNotFound: true,
@@ -88,7 +88,7 @@ export class ClientGroupAdminController {
 
   @Delete(':id')
   @Swagger({
-    tags: ['Grupos de Clientes'],
+    tags: ['Clientes - Grupos'],
     summary: 'Deletar grupo de clientes',
     applyBadRequest: true,
     applyNotFound: true,

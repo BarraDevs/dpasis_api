@@ -25,7 +25,7 @@ export class ClientInvoiceConfigAdminController {
 
   @Post()
   @Swagger({
-    tags: ['Configuração NF e Boleto'],
+    tags: ['Clientes - Configuração NF e Boleto'],
     summary: 'Criar configuração de NF e boleto para cliente',
     applyBadRequest: true,
     applyConflict: true,
@@ -37,7 +37,7 @@ export class ClientInvoiceConfigAdminController {
 
   @Get('client/:clientId')
   @Swagger({
-    tags: ['Configuração NF e Boleto'],
+    tags: ['Clientes - Configuração NF e Boleto'],
     summary: 'Buscar configuração por ID do cliente',
     applyBadRequest: true,
     applyNotFound: true,
@@ -49,7 +49,7 @@ export class ClientInvoiceConfigAdminController {
 
   @Patch(':id')
   @Swagger({
-    tags: ['Configuração NF e Boleto'],
+    tags: ['Clientes - Configuração NF e Boleto'],
     summary: 'Editar configuração de NF e boleto',
     applyBadRequest: true,
     applyNotFound: true,
@@ -61,7 +61,7 @@ export class ClientInvoiceConfigAdminController {
 
   @Delete(':id')
   @Swagger({
-    tags: ['Configuração NF e Boleto'],
+    tags: ['Clientes - Configuração NF e Boleto'],
     summary: 'Excluir configuração de NF e boleto',
     applyBadRequest: true,
     applyNotFound: true,

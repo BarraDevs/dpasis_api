@@ -32,7 +32,7 @@ export class ClientAddressAdminController {
 
   @Post()
   @Swagger({
-    tags: ['Endereços de Clientes'],
+    tags: ['Clientes - Endereços'],
     summary: 'Criar novo endereço de cliente',
     applyBadRequest: true,
     createdResponse: CreateClientAddressOutputDto,
@@ -43,7 +43,7 @@ export class ClientAddressAdminController {
 
   @Get()
   @Swagger({
-    tags: ['Endereços de Clientes'],
+    tags: ['Clientes - Endereços'],
     summary: 'Listar endereços de clientes com paginação e busca',
     applyBadRequest: true,
     okPaginatedResponse: ClientAddressDto,
@@ -54,7 +54,7 @@ export class ClientAddressAdminController {
 
   @Get(':id')
   @Swagger({
-    tags: ['Endereços de Clientes'],
+    tags: ['Clientes - Endereços'],
     summary: 'Buscar endereço de cliente por ID',
     applyBadRequest: true,
     applyNotFound: true,
@@ -66,7 +66,7 @@ export class ClientAddressAdminController {
 
   @Patch(':id/activate')
   @Swagger({
-    tags: ['Endereços de Clientes'],
+    tags: ['Clientes - Endereços'],
     summary: 'Ativar endereço de cliente',
     applyBadRequest: true,
     applyNotFound: true,
@@ -78,7 +78,7 @@ export class ClientAddressAdminController {
 
   @Patch(':id/deactivate')
   @Swagger({
-    tags: ['Endereços de Clientes'],
+    tags: ['Clientes - Endereços'],
     summary: 'Desativar endereço de cliente',
     applyBadRequest: true,
     applyNotFound: true,
@@ -90,7 +90,7 @@ export class ClientAddressAdminController {
 
   @Patch(':id')
   @Swagger({
-    tags: ['Endereços de Clientes'],
+    tags: ['Clientes - Endereços'],
     summary: 'Editar endereço de cliente',
     applyBadRequest: true,
     applyNotFound: true,
@@ -102,7 +102,7 @@ export class ClientAddressAdminController {
 
   @Delete(':id')
   @Swagger({
-    tags: ['Endereços de Clientes'],
+    tags: ['Clientes - Endereços'],
     summary: 'Deletar endereço de cliente',
     applyBadRequest: true,
     applyNotFound: true,

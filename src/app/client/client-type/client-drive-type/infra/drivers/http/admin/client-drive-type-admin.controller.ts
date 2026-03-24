@@ -30,7 +30,7 @@ export class ClientDriveTypeAdminController {
 
   @Post()
   @Swagger({
-    tags: ['Tipos de Drive de Clientes'],
+    tags: ['Clientes - Tipos de cliente - Tipos de drive'],
     summary: 'Criar novo tipo de drive de cliente',
     applyBadRequest: true,
     createdResponse: CreateClientDriveTypeOutputDto,
@@ -41,7 +41,7 @@ export class ClientDriveTypeAdminController {
 
   @Get()
   @Swagger({
-    tags: ['Tipos de Drive de Clientes'],
+    tags: ['Clientes - Tipos de cliente - Tipos de drive'],
     summary: 'Listar tipos de drive de cliente com paginação e busca',
     applyBadRequest: true,
     okPaginatedResponse: ClientDriveTypeDto,
@@ -52,7 +52,7 @@ export class ClientDriveTypeAdminController {
 
   @Get(':id')
   @Swagger({
-    tags: ['Tipos de Drive de Clientes'],
+    tags: ['Clientes - Tipos de cliente - Tipos de drive'],
     summary: 'Buscar tipo de drive de cliente por ID',
     applyBadRequest: true,
     applyNotFound: true,
@@ -64,7 +64,7 @@ export class ClientDriveTypeAdminController {
 
   @Patch(':id/status')
   @Swagger({
-    tags: ['Tipos de Drive de Clientes'],
+    tags: ['Clientes - Tipos de cliente - Tipos de drive'],
     summary: 'Inverter status ativo do tipo de drive de cliente',
     applyBadRequest: true,
     applyNotFound: true,
@@ -76,7 +76,7 @@ export class ClientDriveTypeAdminController {
 
   @Patch(':id')
   @Swagger({
-    tags: ['Tipos de Drive de Clientes'],
+    tags: ['Clientes - Tipos de cliente - Tipos de drive'],
     summary: 'Editar tipo de drive de cliente',
     applyBadRequest: true,
     applyNotFound: true,
@@ -88,7 +88,7 @@ export class ClientDriveTypeAdminController {
 
   @Delete(':id')
   @Swagger({
-    tags: ['Tipos de Drive de Clientes'],
+    tags: ['Clientes - Tipos de cliente - Tipos de drive'],
     summary: 'Deletar tipo de drive de cliente',
     applyBadRequest: true,
     applyNotFound: true,

@@ -30,7 +30,7 @@ export class ClientDescriptionTypeAdminController {
 
   @Post()
   @Swagger({
-    tags: ['Tipos de Descrição de Clientes'],
+    tags: ['Clientes - Tipos de cliente - Tipos de descrição'],
     summary: 'Criar novo tipo de descrição de cliente',
     applyBadRequest: true,
     createdResponse: CreateClientDescriptionTypeOutputDto,
@@ -41,7 +41,7 @@ export class ClientDescriptionTypeAdminController {
 
   @Get()
   @Swagger({
-    tags: ['Tipos de Descrição de Clientes'],
+    tags: ['Clientes - Tipos de cliente - Tipos de descrição'],
     summary: 'Listar tipos de descrição de cliente com paginação e busca',
     applyBadRequest: true,
     okPaginatedResponse: ClientDescriptionTypeDto,
@@ -52,7 +52,7 @@ export class ClientDescriptionTypeAdminController {
 
   @Get(':id')
   @Swagger({
-    tags: ['Tipos de Descrição de Clientes'],
+    tags: ['Clientes - Tipos de cliente - Tipos de descrição'],
     summary: 'Buscar tipo de descrição de cliente por ID',
     applyBadRequest: true,
     applyNotFound: true,
@@ -64,7 +64,7 @@ export class ClientDescriptionTypeAdminController {
 
   @Patch(':id/status')
   @Swagger({
-    tags: ['Tipos de Descrição de Clientes'],
+    tags: ['Clientes - Tipos de cliente - Tipos de descrição'],
     summary: 'Inverter status ativo do tipo de descrição de cliente',
     applyBadRequest: true,
     applyNotFound: true,
@@ -76,7 +76,7 @@ export class ClientDescriptionTypeAdminController {
 
   @Patch(':id')
   @Swagger({
-    tags: ['Tipos de Descrição de Clientes'],
+    tags: ['Clientes - Tipos de cliente - Tipos de descrição'],
     summary: 'Editar tipo de descrição de cliente',
     applyBadRequest: true,
     applyNotFound: true,
@@ -88,7 +88,7 @@ export class ClientDescriptionTypeAdminController {
 
   @Delete(':id')
   @Swagger({
-    tags: ['Tipos de Descrição de Clientes'],
+    tags: ['Clientes - Tipos de cliente - Tipos de descrição'],
     summary: 'Deletar tipo de descrição de cliente',
     applyBadRequest: true,
     applyNotFound: true,

@@ -28,7 +28,7 @@ export class IndopAdminController {
 
   @Post()
   @Swagger({
-    tags: ['Configurações - INDOP'],
+    tags: ['Tributação - INDOP'],
     summary: 'Criar novo INDOP',
     applyBadRequest: true,
     applyConflict: true,
@@ -40,7 +40,7 @@ export class IndopAdminController {
 
   @Get()
   @Swagger({
-    tags: ['Configurações - INDOP'],
+    tags: ['Tributação - INDOP'],
     summary: 'Listar INDOP com paginação e busca',
     applyBadRequest: true,
     okPaginatedResponse: IndopDto,
@@ -51,7 +51,7 @@ export class IndopAdminController {
 
   @Get(':id')
   @Swagger({
-    tags: ['Configurações - INDOP'],
+    tags: ['Tributação - INDOP'],
     summary: 'Buscar INDOP por ID',
     applyBadRequest: true,
     applyNotFound: true,
@@ -63,7 +63,7 @@ export class IndopAdminController {
 
   @Patch(':id/status')
   @Swagger({
-    tags: ['Configurações - INDOP'],
+    tags: ['Tributação - INDOP'],
     summary: 'Inverter status ativo do INDOP',
     applyBadRequest: true,
     applyNotFound: true,
@@ -75,7 +75,7 @@ export class IndopAdminController {
 
   @Patch(':id')
   @Swagger({
-    tags: ['Configurações - INDOP'],
+    tags: ['Tributação - INDOP'],
     summary: 'Editar INDOP',
     applyBadRequest: true,
     applyNotFound: true,

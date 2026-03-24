@@ -30,7 +30,7 @@ export class ServiceWarrantyAdminController {
 
   @Post()
   @Swagger({
-    tags: ['Garantia de Serviço'],
+    tags: ['Serviços - Garantia'],
     summary: 'Criar nova garantia de serviço',
     applyBadRequest: true,
     createdResponse: CreateServiceWarrantyOutputDto,
@@ -41,7 +41,7 @@ export class ServiceWarrantyAdminController {
 
   @Get()
   @Swagger({
-    tags: ['Garantia de Serviço'],
+    tags: ['Serviços - Garantia'],
     summary: 'Listar garantias de serviço com paginação e busca',
     applyBadRequest: true,
     okPaginatedResponse: ServiceWarrantyDto,
@@ -52,7 +52,7 @@ export class ServiceWarrantyAdminController {
 
   @Get(':id')
   @Swagger({
-    tags: ['Garantia de Serviço'],
+    tags: ['Serviços - Garantia'],
     summary: 'Buscar garantia de serviço por ID',
     applyBadRequest: true,
     applyNotFound: true,
@@ -64,7 +64,7 @@ export class ServiceWarrantyAdminController {
 
   @Patch(':id/status')
   @Swagger({
-    tags: ['Garantia de Serviço'],
+    tags: ['Serviços - Garantia'],
     summary: 'Inverter status ativo da garantia de serviço',
     applyBadRequest: true,
     applyNotFound: true,
@@ -76,7 +76,7 @@ export class ServiceWarrantyAdminController {
 
   @Patch(':id')
   @Swagger({
-    tags: ['Garantia de Serviço'],
+    tags: ['Serviços - Garantia'],
     summary: 'Editar garantia de serviço',
     applyBadRequest: true,
     applyNotFound: true,
@@ -88,7 +88,7 @@ export class ServiceWarrantyAdminController {
 
   @Delete(':id')
   @Swagger({
-    tags: ['Garantia de Serviço'],
+    tags: ['Serviços - Garantia'],
     summary: 'Deletar garantia de serviço',
     applyBadRequest: true,
     applyNotFound: true,

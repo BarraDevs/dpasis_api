@@ -30,7 +30,7 @@ export class ServiceFreightAdminController {
 
   @Post()
   @Swagger({
-    tags: ['Frete de Serviço'],
+    tags: ['Serviços - Frete'],
     summary: 'Criar novo frete de serviço',
     applyBadRequest: true,
     createdResponse: CreateServiceFreightOutputDto,
@@ -41,7 +41,7 @@ export class ServiceFreightAdminController {
 
   @Get()
   @Swagger({
-    tags: ['Frete de Serviço'],
+    tags: ['Serviços - Frete'],
     summary: 'Listar fretes de serviço com paginação e busca',
     applyBadRequest: true,
     okPaginatedResponse: ServiceFreightDto,
@@ -52,7 +52,7 @@ export class ServiceFreightAdminController {
 
   @Get(':id')
   @Swagger({
-    tags: ['Frete de Serviço'],
+    tags: ['Serviços - Frete'],
     summary: 'Buscar frete de serviço por ID',
     applyBadRequest: true,
     applyNotFound: true,
@@ -64,7 +64,7 @@ export class ServiceFreightAdminController {
 
   @Patch(':id/status')
   @Swagger({
-    tags: ['Frete de Serviço'],
+    tags: ['Serviços - Frete'],
     summary: 'Inverter status ativo do frete de serviço',
     applyBadRequest: true,
     applyNotFound: true,
@@ -76,7 +76,7 @@ export class ServiceFreightAdminController {
 
   @Patch(':id')
   @Swagger({
-    tags: ['Frete de Serviço'],
+    tags: ['Serviços - Frete'],
     summary: 'Editar frete de serviço',
     applyBadRequest: true,
     applyNotFound: true,
@@ -88,7 +88,7 @@ export class ServiceFreightAdminController {
 
   @Delete(':id')
   @Swagger({
-    tags: ['Frete de Serviço'],
+    tags: ['Serviços - Frete'],
     summary: 'Deletar frete de serviço',
     applyBadRequest: true,
     applyNotFound: true,

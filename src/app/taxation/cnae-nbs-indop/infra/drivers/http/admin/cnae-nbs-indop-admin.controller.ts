@@ -39,7 +39,7 @@ export class CnaeNbsIndopAdminController {
 
   @Post()
   @Swagger({
-    tags: ['Configurações - CNAE/NBS/INDOP'],
+    tags: ['Tributação - CNAE/NBS/INDOP'],
     summary: 'Criar nova combinação CNAE + NBS + INDOP',
     applyBadRequest: true,
     applyNotFound: true,
@@ -52,7 +52,7 @@ export class CnaeNbsIndopAdminController {
 
   @Get()
   @Swagger({
-    tags: ['Configurações - CNAE/NBS/INDOP'],
+    tags: ['Tributação - CNAE/NBS/INDOP'],
     summary: 'Listar combinações com paginação e filtros',
     applyBadRequest: true,
     okPaginatedResponse: CnaeNbsIndopDto,
@@ -63,7 +63,7 @@ export class CnaeNbsIndopAdminController {
 
   @Get('cnaes')
   @Swagger({
-    tags: ['Configurações - CNAE/NBS/INDOP'],
+    tags: ['Tributação - CNAE/NBS/INDOP'],
     summary: 'Listar CNAEs para select (combinações existentes)',
     applyBadRequest: true,
     okResponse: CnaeDto,
@@ -74,7 +74,7 @@ export class CnaeNbsIndopAdminController {
 
   @Get('nbs')
   @Swagger({
-    tags: ['Configurações - CNAE/NBS/INDOP'],
+    tags: ['Tributação - CNAE/NBS/INDOP'],
     summary: 'Listar NBSs para select (filtrado por CNAE)',
     applyBadRequest: true,
     okResponse: NbsDto,
@@ -85,7 +85,7 @@ export class CnaeNbsIndopAdminController {
 
   @Get('indops')
   @Swagger({
-    tags: ['Configurações - CNAE/NBS/INDOP'],
+    tags: ['Tributação - CNAE/NBS/INDOP'],
     summary: 'Listar INDOPs para select (filtrado por CNAE e NBS)',
     applyBadRequest: true,
     okResponse: IndopDto,
@@ -96,7 +96,7 @@ export class CnaeNbsIndopAdminController {
 
   @Patch(':id/status')
   @Swagger({
-    tags: ['Configurações - CNAE/NBS/INDOP'],
+    tags: ['Tributação - CNAE/NBS/INDOP'],
     summary: 'Inverter status ativo da combinação CNAE/NBS/INDOP',
     applyBadRequest: true,
     applyNotFound: true,
@@ -108,7 +108,7 @@ export class CnaeNbsIndopAdminController {
 
   @Delete(':id')
   @Swagger({
-    tags: ['Configurações - CNAE/NBS/INDOP'],
+    tags: ['Tributação - CNAE/NBS/INDOP'],
     summary: 'Excluir combinação',
     applyBadRequest: true,
     applyNotFound: true,

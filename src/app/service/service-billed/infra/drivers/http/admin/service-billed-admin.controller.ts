@@ -32,7 +32,7 @@ export class ServiceBilledAdminController {
 
   @Post()
   @Swagger({
-    tags: ['Serviços Faturados'],
+    tags: ['Serviços - Faturados'],
     summary: 'Criar novo serviço faturado',
     applyBadRequest: true,
     createdResponse: CreateServiceBilledOutputDto,
@@ -43,7 +43,7 @@ export class ServiceBilledAdminController {
 
   @Get()
   @Swagger({
-    tags: ['Serviços Faturados'],
+    tags: ['Serviços - Faturados'],
     summary: 'Listar serviços faturados com paginação e busca',
     applyBadRequest: true,
     okPaginatedResponse: ServiceBilledDto,
@@ -54,7 +54,7 @@ export class ServiceBilledAdminController {
 
   @Get(':id')
   @Swagger({
-    tags: ['Serviços Faturados'],
+    tags: ['Serviços - Faturados'],
     summary: 'Buscar serviço faturado por ID',
     applyBadRequest: true,
     applyNotFound: true,
@@ -66,7 +66,7 @@ export class ServiceBilledAdminController {
 
   @Patch(':id/activate')
   @Swagger({
-    tags: ['Serviços Faturados'],
+    tags: ['Serviços - Faturados'],
     summary: 'Ativar serviço faturado',
     applyBadRequest: true,
     applyNotFound: true,
@@ -78,7 +78,7 @@ export class ServiceBilledAdminController {
 
   @Patch(':id/deactivate')
   @Swagger({
-    tags: ['Serviços Faturados'],
+    tags: ['Serviços - Faturados'],
     summary: 'Desativar serviço faturado',
     applyBadRequest: true,
     applyNotFound: true,
@@ -90,7 +90,7 @@ export class ServiceBilledAdminController {
 
   @Patch(':id')
   @Swagger({
-    tags: ['Serviços Faturados'],
+    tags: ['Serviços - Faturados'],
     summary: 'Editar serviço faturado',
     applyBadRequest: true,
     applyNotFound: true,
@@ -102,7 +102,7 @@ export class ServiceBilledAdminController {
 
   @Delete(':id')
   @Swagger({
-    tags: ['Serviços Faturados'],
+    tags: ['Serviços - Faturados'],
     summary: 'Deletar serviço faturado',
     applyBadRequest: true,
     applyNotFound: true,

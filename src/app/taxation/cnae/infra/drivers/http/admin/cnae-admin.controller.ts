@@ -28,7 +28,7 @@ export class CnaeAdminController {
 
   @Post()
   @Swagger({
-    tags: ['Configurações - CNAE'],
+    tags: ['Tributação - CNAE'],
     summary: 'Criar novo CNAE',
     applyBadRequest: true,
     applyConflict: true,
@@ -40,7 +40,7 @@ export class CnaeAdminController {
 
   @Get()
   @Swagger({
-    tags: ['Configurações - CNAE'],
+    tags: ['Tributação - CNAE'],
     summary: 'Listar CNAEs com paginação e busca',
     applyBadRequest: true,
     okPaginatedResponse: CnaeDto,
@@ -51,7 +51,7 @@ export class CnaeAdminController {
 
   @Get(':id')
   @Swagger({
-    tags: ['Configurações - CNAE'],
+    tags: ['Tributação - CNAE'],
     summary: 'Buscar CNAE por ID',
     applyBadRequest: true,
     applyNotFound: true,
@@ -63,7 +63,7 @@ export class CnaeAdminController {
 
   @Patch(':id/status')
   @Swagger({
-    tags: ['Configurações - CNAE'],
+    tags: ['Tributação - CNAE'],
     summary: 'Inverter status ativo do CNAE',
     applyBadRequest: true,
     applyNotFound: true,
@@ -75,7 +75,7 @@ export class CnaeAdminController {
 
   @Patch(':id')
   @Swagger({
-    tags: ['Configurações - CNAE'],
+    tags: ['Tributação - CNAE'],
     summary: 'Editar CNAE',
     applyBadRequest: true,
     applyNotFound: true,

@@ -31,7 +31,7 @@ export class ClientDiscountAdminController {
 
   @Post()
   @Swagger({
-    tags: ['Descontos de Clientes'],
+    tags: ['Clientes - Descontos'],
     summary: 'Criar novo desconto',
     applyBadRequest: true,
     createdResponse: CreateClientDiscountOutputDto,
@@ -42,7 +42,7 @@ export class ClientDiscountAdminController {
 
   @Get()
   @Swagger({
-    tags: ['Descontos de Clientes'],
+    tags: ['Clientes - Descontos'],
     summary: 'Listar descontos com paginação e filtros',
     applyBadRequest: true,
     okPaginatedResponse: ClientDiscountDto,
@@ -53,7 +53,7 @@ export class ClientDiscountAdminController {
 
   @Get(':id')
   @Swagger({
-    tags: ['Descontos de Clientes'],
+    tags: ['Clientes - Descontos'],
     summary: 'Buscar desconto por ID',
     applyBadRequest: true,
     applyNotFound: true,
@@ -65,7 +65,7 @@ export class ClientDiscountAdminController {
 
   @Patch(':id')
   @Swagger({
-    tags: ['Descontos de Clientes'],
+    tags: ['Clientes - Descontos'],
     summary: 'Editar desconto',
     applyBadRequest: true,
     applyNotFound: true,
@@ -77,7 +77,7 @@ export class ClientDiscountAdminController {
 
   @Delete(':id')
   @Swagger({
-    tags: ['Descontos de Clientes'],
+    tags: ['Clientes - Descontos'],
     summary: 'Excluir desconto',
     applyBadRequest: true,
     applyNotFound: true,

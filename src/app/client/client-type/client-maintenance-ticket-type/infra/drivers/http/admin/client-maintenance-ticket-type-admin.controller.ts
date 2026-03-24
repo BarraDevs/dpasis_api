@@ -30,7 +30,7 @@ export class ClientMaintenanceTicketTypeAdminController {
 
   @Post()
   @Swagger({
-    tags: ['Tipos de Chamados de Manutenção de Clientes'],
+    tags: ['Clientes - Tipos de cliente - Tipos de chamado de manutenção'],
     summary: 'Criar novo tipo de chamado de manutenção de cliente',
     applyBadRequest: true,
     createdResponse: CreateClientMaintenanceTicketTypeOutputDto,
@@ -41,7 +41,7 @@ export class ClientMaintenanceTicketTypeAdminController {
 
   @Get()
   @Swagger({
-    tags: ['Tipos de Chamados de Manutenção de Clientes'],
+    tags: ['Clientes - Tipos de cliente - Tipos de chamado de manutenção'],
     summary: 'Listar tipos de chamados de manutenção de cliente com paginação e busca',
     applyBadRequest: true,
     okPaginatedResponse: ClientMaintenanceTicketTypeDto,
@@ -52,7 +52,7 @@ export class ClientMaintenanceTicketTypeAdminController {
 
   @Get(':id')
   @Swagger({
-    tags: ['Tipos de Chamados de Manutenção de Clientes'],
+    tags: ['Clientes - Tipos de cliente - Tipos de chamado de manutenção'],
     summary: 'Buscar tipo de chamado de manutenção de cliente por ID',
     applyBadRequest: true,
     applyNotFound: true,
@@ -64,7 +64,7 @@ export class ClientMaintenanceTicketTypeAdminController {
 
   @Patch(':id/status')
   @Swagger({
-    tags: ['Tipos de Chamados de Manutenção de Clientes'],
+    tags: ['Clientes - Tipos de cliente - Tipos de chamado de manutenção'],
     summary: 'Inverter status ativo do tipo de chamado de manutenção de cliente',
     applyBadRequest: true,
     applyNotFound: true,
@@ -76,7 +76,7 @@ export class ClientMaintenanceTicketTypeAdminController {
 
   @Patch(':id')
   @Swagger({
-    tags: ['Tipos de Chamados de Manutenção de Clientes'],
+    tags: ['Clientes - Tipos de cliente - Tipos de chamado de manutenção'],
     summary: 'Editar tipo de chamado de manutenção de cliente',
     applyBadRequest: true,
     applyNotFound: true,
@@ -88,7 +88,7 @@ export class ClientMaintenanceTicketTypeAdminController {
 
   @Delete(':id')
   @Swagger({
-    tags: ['Tipos de Chamados de Manutenção de Clientes'],
+    tags: ['Clientes - Tipos de cliente - Tipos de chamado de manutenção'],
     summary: 'Deletar tipo de chamado de manutenção de cliente',
     applyBadRequest: true,
     applyNotFound: true,

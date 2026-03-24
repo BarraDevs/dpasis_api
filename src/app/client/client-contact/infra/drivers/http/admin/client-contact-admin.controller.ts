@@ -35,7 +35,7 @@ export class ClientContactAdminController {
 
   @Post()
   @Swagger({
-    tags: ['Contatos de Clientes'],
+    tags: ['Clientes - Contatos'],
     summary: 'Criar novo contato de cliente',
     applyBadRequest: true,
     createdResponse: CreateClientContactOutputDto,
@@ -48,7 +48,7 @@ export class ClientContactAdminController {
 
   @Get()
   @Swagger({
-    tags: ['Contatos de Clientes'],
+    tags: ['Clientes - Contatos'],
     summary: 'Listar contatos de cliente com paginação e filtros',
     applyBadRequest: true,
     okPaginatedResponse: ClientContactDto,
@@ -59,7 +59,7 @@ export class ClientContactAdminController {
 
   @Get(':id')
   @Swagger({
-    tags: ['Contatos de Clientes'],
+    tags: ['Clientes - Contatos'],
     summary: 'Buscar contato de cliente por ID',
     applyBadRequest: true,
     applyNotFound: true,
@@ -71,7 +71,7 @@ export class ClientContactAdminController {
 
   @Patch(':id/activate')
   @Swagger({
-    tags: ['Contatos de Clientes'],
+    tags: ['Clientes - Contatos'],
     summary: 'Ativar contato de cliente',
     applyBadRequest: true,
     applyNotFound: true,
@@ -83,7 +83,7 @@ export class ClientContactAdminController {
 
   @Patch(':id/deactivate')
   @Swagger({
-    tags: ['Contatos de Clientes'],
+    tags: ['Clientes - Contatos'],
     summary: 'Desativar contato de cliente',
     applyBadRequest: true,
     applyNotFound: true,
@@ -95,7 +95,7 @@ export class ClientContactAdminController {
 
   @Patch(':id')
   @Swagger({
-    tags: ['Contatos de Clientes'],
+    tags: ['Clientes - Contatos'],
     summary: 'Editar contato de cliente',
     applyBadRequest: true,
     applyNotFound: true,
@@ -107,7 +107,7 @@ export class ClientContactAdminController {
 
   @Delete(':id')
   @Swagger({
-    tags: ['Contatos de Clientes'],
+    tags: ['Clientes - Contatos'],
     summary: 'Deletar contato de cliente',
     applyBadRequest: true,
     applyNotFound: true,

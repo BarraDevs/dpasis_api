@@ -30,7 +30,7 @@ export class ClientSystemTypeAdminController {
 
   @Post()
   @Swagger({
-    tags: ['Tipos de Sistema de Clientes'],
+    tags: ['Clientes - Tipos de cliente - Tipos de sistema'],
     summary: 'Criar novo tipo de sistema de cliente',
     applyBadRequest: true,
     createdResponse: CreateClientSystemTypeOutputDto,
@@ -41,7 +41,7 @@ export class ClientSystemTypeAdminController {
 
   @Get()
   @Swagger({
-    tags: ['Tipos de Sistema de Clientes'],
+    tags: ['Clientes - Tipos de cliente - Tipos de sistema'],
     summary: 'Listar tipos de sistema de cliente com paginação e busca',
     applyBadRequest: true,
     okPaginatedResponse: ClientSystemTypeDto,
@@ -52,7 +52,7 @@ export class ClientSystemTypeAdminController {
 
   @Get(':id')
   @Swagger({
-    tags: ['Tipos de Sistema de Clientes'],
+    tags: ['Clientes - Tipos de cliente - Tipos de sistema'],
     summary: 'Buscar tipo de sistema de cliente por ID',
     applyBadRequest: true,
     applyNotFound: true,
@@ -64,7 +64,7 @@ export class ClientSystemTypeAdminController {
 
   @Patch(':id/status')
   @Swagger({
-    tags: ['Tipos de Sistema de Clientes'],
+    tags: ['Clientes - Tipos de cliente - Tipos de sistema'],
     summary: 'Inverter status ativo do tipo de sistema de cliente',
     applyBadRequest: true,
     applyNotFound: true,
@@ -76,7 +76,7 @@ export class ClientSystemTypeAdminController {
 
   @Patch(':id')
   @Swagger({
-    tags: ['Tipos de Sistema de Clientes'],
+    tags: ['Clientes - Tipos de cliente - Tipos de sistema'],
     summary: 'Editar tipo de sistema de cliente',
     applyBadRequest: true,
     applyNotFound: true,
@@ -88,7 +88,7 @@ export class ClientSystemTypeAdminController {
 
   @Delete(':id')
   @Swagger({
-    tags: ['Tipos de Sistema de Clientes'],
+    tags: ['Clientes - Tipos de cliente - Tipos de sistema'],
     summary: 'Deletar tipo de sistema de cliente',
     applyBadRequest: true,
     applyNotFound: true,

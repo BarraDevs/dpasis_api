@@ -30,7 +30,7 @@ export class ClientOwnerAdminController {
 
   @Post()
   @Swagger({
-    tags: ['Proprietários de Clientes'],
+    tags: ['Clientes - Proprietários'],
     summary: 'Criar novo proprietário de clientes',
     applyBadRequest: true,
     createdResponse: CreateClientOwnerOutputDto,
@@ -41,7 +41,7 @@ export class ClientOwnerAdminController {
 
   @Get()
   @Swagger({
-    tags: ['Proprietários de Clientes'],
+    tags: ['Clientes - Proprietários'],
     summary: 'Listar proprietários de clientes com paginação e busca',
     applyBadRequest: true,
     okPaginatedResponse: ClientOwnerDto,
@@ -52,7 +52,7 @@ export class ClientOwnerAdminController {
 
   @Get(':id')
   @Swagger({
-    tags: ['Proprietários de Clientes'],
+    tags: ['Clientes - Proprietários'],
     summary: 'Buscar proprietário de clientes por ID',
     applyBadRequest: true,
     applyNotFound: true,
@@ -64,7 +64,7 @@ export class ClientOwnerAdminController {
 
   @Patch(':id/status')
   @Swagger({
-    tags: ['Proprietários de Clientes'],
+    tags: ['Clientes - Proprietários'],
     summary: 'Inverter status ativo do proprietário de clientes',
     applyBadRequest: true,
     applyNotFound: true,
@@ -76,7 +76,7 @@ export class ClientOwnerAdminController {
 
   @Patch(':id')
   @Swagger({
-    tags: ['Proprietários de Clientes'],
+    tags: ['Clientes - Proprietários'],
     summary: 'Editar proprietário de clientes',
     applyBadRequest: true,
     applyNotFound: true,
@@ -88,7 +88,7 @@ export class ClientOwnerAdminController {
 
   @Delete(':id')
   @Swagger({
-    tags: ['Proprietários de Clientes'],
+    tags: ['Clientes - Proprietários'],
     summary: 'Deletar proprietário de clientes',
     applyBadRequest: true,
     applyNotFound: true,

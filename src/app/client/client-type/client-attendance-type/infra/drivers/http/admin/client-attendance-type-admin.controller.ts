@@ -30,7 +30,7 @@ export class ClientAttendanceTypeAdminController {
 
   @Post()
   @Swagger({
-    tags: ['Tipos de Atendimento de Clientes'],
+    tags: ['Clientes - Tipos de cliente - Tipos de atendimento'],
     summary: 'Criar novo tipo de atendimento de cliente',
     applyBadRequest: true,
     createdResponse: CreateClientAttendanceTypeOutputDto,
@@ -41,7 +41,7 @@ export class ClientAttendanceTypeAdminController {
 
   @Get()
   @Swagger({
-    tags: ['Tipos de Atendimento de Clientes'],
+    tags: ['Clientes - Tipos de cliente - Tipos de atendimento'],
     summary: 'Listar tipos de atendimento de cliente com paginação e busca',
     applyBadRequest: true,
     okPaginatedResponse: ClientAttendanceTypeDto,
@@ -52,7 +52,7 @@ export class ClientAttendanceTypeAdminController {
 
   @Get(':id')
   @Swagger({
-    tags: ['Tipos de Atendimento de Clientes'],
+    tags: ['Clientes - Tipos de cliente - Tipos de atendimento'],
     summary: 'Buscar tipo de atendimento de cliente por ID',
     applyBadRequest: true,
     applyNotFound: true,
@@ -64,7 +64,7 @@ export class ClientAttendanceTypeAdminController {
 
   @Patch(':id/status')
   @Swagger({
-    tags: ['Tipos de Atendimento de Clientes'],
+    tags: ['Clientes - Tipos de cliente - Tipos de atendimento'],
     summary: 'Inverter status ativo do tipo de atendimento de cliente',
     applyBadRequest: true,
     applyNotFound: true,
@@ -76,7 +76,7 @@ export class ClientAttendanceTypeAdminController {
 
   @Patch(':id')
   @Swagger({
-    tags: ['Tipos de Atendimento de Clientes'],
+    tags: ['Clientes - Tipos de cliente - Tipos de atendimento'],
     summary: 'Editar tipo de atendimento de cliente',
     applyBadRequest: true,
     applyNotFound: true,
@@ -88,7 +88,7 @@ export class ClientAttendanceTypeAdminController {
 
   @Delete(':id')
   @Swagger({
-    tags: ['Tipos de Atendimento de Clientes'],
+    tags: ['Clientes - Tipos de cliente - Tipos de atendimento'],
     summary: 'Deletar tipo de atendimento de cliente',
     applyBadRequest: true,
     applyNotFound: true,

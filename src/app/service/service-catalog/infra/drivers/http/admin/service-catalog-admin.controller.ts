@@ -32,7 +32,7 @@ export class ServiceCatalogAdminController {
 
   @Post()
   @Swagger({
-    tags: ['Catálogo de serviços'],
+    tags: ['Serviços - Serviços'],
     summary: 'Criar serviço no catálogo',
     applyBadRequest: true,
     createdResponse: CreateServiceCatalogOutputDto,
@@ -43,7 +43,7 @@ export class ServiceCatalogAdminController {
 
   @Get()
   @Swagger({
-    tags: ['Catálogo de serviços'],
+    tags: ['Serviços - Serviços'],
     summary: 'Listar serviços do catálogo com paginação e busca',
     applyBadRequest: true,
     okPaginatedResponse: ServiceCatalogDto,
@@ -54,7 +54,7 @@ export class ServiceCatalogAdminController {
 
   @Get(':id')
   @Swagger({
-    tags: ['Catálogo de serviços'],
+    tags: ['Serviços - Serviços'],
     summary: 'Buscar serviço do catálogo por ID',
     applyBadRequest: true,
     applyNotFound: true,
@@ -66,7 +66,7 @@ export class ServiceCatalogAdminController {
 
   @Patch(':id/activate')
   @Swagger({
-    tags: ['Catálogo de serviços'],
+    tags: ['Serviços - Serviços'],
     summary: 'Ativar serviço do catálogo',
     applyBadRequest: true,
     applyNotFound: true,
@@ -78,7 +78,7 @@ export class ServiceCatalogAdminController {
 
   @Patch(':id/deactivate')
   @Swagger({
-    tags: ['Catálogo de serviços'],
+    tags: ['Serviços - Serviços'],
     summary: 'Desativar serviço do catálogo',
     applyBadRequest: true,
     applyNotFound: true,
@@ -90,7 +90,7 @@ export class ServiceCatalogAdminController {
 
   @Patch(':id')
   @Swagger({
-    tags: ['Catálogo de serviços'],
+    tags: ['Serviços - Serviços'],
     summary: 'Editar serviço do catálogo',
     applyBadRequest: true,
     applyNotFound: true,
@@ -102,7 +102,7 @@ export class ServiceCatalogAdminController {
 
   @Delete(':id')
   @Swagger({
-    tags: ['Catálogo de serviços'],
+    tags: ['Serviços - Serviços'],
     summary: 'Excluir serviço do catálogo',
     applyBadRequest: true,
     applyNotFound: true,
