@@ -11,12 +11,12 @@ model ClientType {
   createdAt                     DateTime @default(now())
   updatedAt                     DateTime @updatedAt
 
+  client                      Client                      @relation(fields: [clientId], references: [id], onDelete: Cascade)
   clientAttendanceType        ClientAttendanceType        @relation(fields: [clientAttendanceTypeId], references: [id])
   clientMaintenanceTicketType ClientMaintenanceTicketType @relation(fields: [clientMaintenanceTicketTypeId], references: [id])
   clientSystemType            ClientSystemType            @relation(fields: [clientSystemTypeId], references: [id])
   clientDescriptionType       ClientDescriptionType       @relation(fields: [clientDescriptionTypeId], references: [id])
   clientDriveType             ClientDriveType             @relation(fields: [clientDriveTypeId], references: [id])
-  client                      Client                      @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
   @@map("client_types")
 }

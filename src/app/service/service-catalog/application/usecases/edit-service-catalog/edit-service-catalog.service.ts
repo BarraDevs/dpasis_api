@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { FindCompanyById } from 'src/app/company/application/usecases/find-company-by-id/find-company-by-id.service';
 import { FindServiceBilledById } from 'src/app/service/service-billed/application/usecases/find-service-billed-by-id/find-service-billed-by-id.service';
 import { ServiceCatalogNotFoundError } from 'src/app/service/service-catalog/domain/errors/service-catalog-not-found.error';
 import { ServiceCatalogFactory } from 'src/app/service/service-catalog/domain/factories/service-catalog.factory';
@@ -28,6 +29,7 @@ export class EditServiceCatalog {
     private readonly findServiceFreightById: FindServiceFreightById,
     private readonly findServiceProposalValidityById: FindServiceProposalValidityById,
     private readonly findServiceWarrantyById: FindServiceWarrantyById,
+    private readonly findCompanyById: FindCompanyById,
   ) {}
 
   public async execute(id: number, data: EditServiceCatalogInputDto): Promise<SuccessMessage> {
@@ -38,6 +40,9 @@ export class EditServiceCatalog {
 
     await this.validateActiveForeignKeysIfProvided(data);
 
+    const companyIds =
+      data.companyIds !== undefined ? data.companyIds : (existing.companies ?? []).map((c) => c.id);
+
     const entity = ServiceCatalogFactory.edit({
       cnaeNbsIndopId: data.cnaeNbsIndopId ?? existing.cnaeNbsIndop.id,
       serviceBilledId: data.serviceBilledId ?? existing.serviceBilled.id,
@@ -46,6 +51,7 @@ export class EditServiceCatalog {
       serviceFreightId: data.serviceFreightId ?? existing.serviceFreight.id,
       serviceProposalValidityId: data.serviceProposalValidityId ?? existing.serviceProposalValidity.id,
       serviceWarrantyId: data.serviceWarrantyId ?? existing.serviceWarranty.id,
+      companyIds,
       name: data.name ?? existing.name,
       unitPriceInCents: data.unitPriceInCents ?? existing.unitPriceInCents,
       description: data.description ?? existing.description,
@@ -84,6 +90,11 @@ export class EditServiceCatalog {
     }
     if (tasks.length > 0) {
       await Promise.all(tasks);
+    }
+    if (data.companyIds) {
+      for (const companyId of data.companyIds) {
+        await this.findCompanyById.execute(companyId, { onlyActive: true });
+      }
     }
   }
 }

@@ -11,6 +11,7 @@ function makeCreateProps(overrides?: Partial<ServiceCatalogCreateProps>): Servic
     serviceFreightId: 5,
     serviceProposalValidityId: 6,
     serviceWarrantyId: 7,
+    companyIds: [1],
     name: 'Serviço catálogo',
     unitPriceInCents: 1000,
     description: 'Descrição do serviço',
@@ -105,6 +106,20 @@ describe('ServiceCatalogFactory', () => {
       const props = { ...makeCreateProps(), isCommercial: 'true' as unknown as boolean };
 
       expect(() => ServiceCatalogFactory.create(props)).toThrow(AppException);
+    });
+
+    it('should throw when companyIds contains invalid id', () => {
+      const props = makeCreateProps({ companyIds: [0] });
+
+      expect(() => ServiceCatalogFactory.create(props)).toThrow(AppException);
+    });
+
+    it('should accept valid companyIds', () => {
+      const props = makeCreateProps({ companyIds: [1, 2, 3] });
+
+      const entity = ServiceCatalogFactory.create(props);
+
+      expect(entity.props.companyIds).toEqual([1, 2, 3]);
     });
   });
 

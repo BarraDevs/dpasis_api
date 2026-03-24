@@ -1,7 +1,10 @@
 import { Test } from '@nestjs/testing';
 import type { IServiceCatalogDao } from 'src/app/service/service-catalog/application/persistence/dao/service-catalog-dao.interface';
 import { ServiceCatalogNotFoundError } from 'src/app/service/service-catalog/domain/errors/service-catalog-not-found.error';
-import { seedServiceCatalogForeignKeys } from 'src/app/service/service-catalog/infra/driven/persistence/prisma/service-catalog-prisma-test.helpers';
+import {
+  seedServiceCatalogForeignKeys,
+  serviceFkScalars,
+} from 'src/app/service/service-catalog/infra/driven/persistence/prisma/service-catalog-prisma-test.helpers';
 import { ServiceCatalogModule } from 'src/app/service/service-catalog/service-catalog.module';
 import { TOKENS } from 'src/core/di/token';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
@@ -45,7 +48,7 @@ describe('FindServiceCatalogById - Integration tests', () => {
     const fk = await seedServiceCatalogForeignKeys(prisma);
     const created = await prisma.service.create({
       data: {
-        ...fk,
+        ...serviceFkScalars(fk),
         name: `Inativo ${Date.now()}`,
         unitPriceInCents: 1000,
         description: 'D',
@@ -64,7 +67,7 @@ describe('FindServiceCatalogById - Integration tests', () => {
     const fk = await seedServiceCatalogForeignKeys(prisma);
     const created = await prisma.service.create({
       data: {
-        ...fk,
+        ...serviceFkScalars(fk),
         name: `Nome ${Date.now()}`,
         unitPriceInCents: 5000,
         description: 'Descrição',
@@ -84,7 +87,7 @@ describe('FindServiceCatalogById - Integration tests', () => {
     const fk = await seedServiceCatalogForeignKeys(prisma);
     const created = await prisma.service.create({
       data: {
-        ...fk,
+        ...serviceFkScalars(fk),
         name: `VIP ${Date.now()}`,
         unitPriceInCents: 100,
         description: 'Texto',
@@ -103,7 +106,7 @@ describe('FindServiceCatalogById - Integration tests', () => {
     const fk = await seedServiceCatalogForeignKeys(prisma);
     const created = await prisma.service.create({
       data: {
-        ...fk,
+        ...serviceFkScalars(fk),
         name: `Off ${Date.now()}`,
         unitPriceInCents: 1,
         description: 'D',

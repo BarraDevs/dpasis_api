@@ -21,6 +21,7 @@ function makeValidData(overrides?: Partial<CreateServiceCatalogInputDto>): Creat
     serviceFreightId: 5,
     serviceProposalValidityId: 6,
     serviceWarrantyId: 7,
+    companyIds: [1],
     name: 'Instalação de sistema',
     unitPriceInCents: 150000,
     description: 'Descrição do serviço ofertado.',
@@ -90,6 +91,34 @@ describe('CreateServiceCatalogInputDto', () => {
       return target.transform(data, metadata).catch((error) => {
         expectMessageToContain(error.getResponse().message, 'cnaeNbsIndopId deve ser um número inteiro');
       });
+    });
+  });
+
+  describe('companyIds', () => {
+    it.each([undefined, null])('should throw if companyIds is empty (%s)', async(value: unknown) => {
+      const data = makeValidData({ companyIds: value as number[] });
+
+      expect.assertions(1);
+      return target.transform(data, metadata).catch((error) => {
+        expectMessageToContain(error.getResponse().message, 'companyIds');
+      });
+    });
+
+    it('should throw if companyIds is empty array', async() => {
+      const data = makeValidData({ companyIds: [] });
+
+      expect.assertions(1);
+      return target.transform(data, metadata).catch((error) => {
+        expectMessageToContain(error.getResponse().message, 'companyIds');
+      });
+    });
+
+    it('should accept valid companyIds', async() => {
+      const data = makeValidData({ companyIds: [1, 2, 3] });
+
+      const result = await target.transform(data, metadata);
+
+      expect(result.companyIds).toEqual([1, 2, 3]);
     });
   });
 

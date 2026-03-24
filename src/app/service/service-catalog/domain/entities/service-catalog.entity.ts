@@ -11,6 +11,7 @@ export type ServiceCatalogCreateProps = {
   serviceFreightId: number;
   serviceProposalValidityId: number;
   serviceWarrantyId: number;
+  companyIds: number[];
   name: string;
   unitPriceInCents: number;
   description: string;

@@ -1,3 +1,4 @@
+import { MinimalCompanyDto } from 'src/app/company/application/dtos/company.dto';
 import { CnaeNbsIndopDto } from 'src/app/taxation/cnae-nbs-indop/application/dtos/cnae-nbs-indop.dto';
 
 export class ServiceCatalogDto {
@@ -7,6 +8,7 @@ export class ServiceCatalogDto {
   description: string;
   isCommercial: boolean;
   active: boolean;
+  companies: MinimalCompanyDto[];
   cnaeNbsIndop: CnaeNbsIndopDto;
   serviceBilled: {
     id: number;

@@ -12,6 +12,12 @@ export const ServiceCatalogSelect = {
   description: true,
   isCommercial: true,
   active: true,
+  companies: {
+    select: {
+      id: true,
+      name: true,
+    },
+  },
   cnaeNbsIndop: {
     select: {
       id: true,

@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsBoolean, IsInt, IsNotEmpty, IsString, MaxLength, Min } from 'class-validator';
+import { ArrayMinSize, IsArray, IsBoolean, IsInt, IsNotEmpty, IsPositive, IsString, MaxLength, Min } from 'class-validator';
 import { StringToBoolean } from 'src/infra/validators/class/decorators/string-boolean/string-boolean';
 import { Trim } from 'src/infra/validators/class/decorators/trim/trim';
 
@@ -45,6 +45,13 @@ export class CreateServiceCatalogInputDto {
   @Min(1, { message: '$property deve ser maior ou igual a 1' })
   @IsNotEmpty({ message: '$property é obrigatório' })
   serviceWarrantyId: number;
+
+  @ApiProperty({ example: [1], description: 'IDs das empresas associadas ao serviço (obrigatório pelo menos 1)' })
+  @IsArray({ message: '$property deve ser um array' })
+  @ArrayMinSize(1, { message: '$property deve ter pelo menos 1 empresa' })
+  @IsInt({ each: true, message: 'Cada ID deve ser um número inteiro' })
+  @IsPositive({ each: true, message: 'Cada ID deve ser um número positivo' })
+  companyIds: number[];
 
   @ApiProperty({ example: 'Instalação de sistema' })
   @IsString({ message: '$property deve ser uma string' })

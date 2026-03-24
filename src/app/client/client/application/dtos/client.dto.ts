@@ -1,3 +1,5 @@
+import { MinimalCompanyDto } from 'src/app/company/application/dtos/company.dto';
+
 export class ClientDto {
   id: number;
   type: string;
@@ -17,12 +19,7 @@ export class ClientDto {
     id: number;
     name: string;
   };
-  companies: ClientCompanyDto[];
+  companies: MinimalCompanyDto[];
   createdAt: Date;
   updatedAt: Date;
-}
-
-class ClientCompanyDto {
-  id: number;
-  name: string;
 }

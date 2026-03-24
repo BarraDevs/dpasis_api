@@ -1,4 +1,5 @@
 import { Test } from '@nestjs/testing';
+import { CompanyNotFoundError } from 'src/app/company/domain/errors/company-not-found.error';
 import { ServiceBilledNotFoundError } from 'src/app/service/service-billed/domain/errors/service-billed-not-found.error';
 import { ServiceCategoryNotFoundError } from 'src/app/service/service-category/domain/errors/service-category-not-found.error';
 import { ServiceDeliveryTermNotFoundError } from 'src/app/service/service-delivery-term/domain/errors/service-delivery-term-not-found.error';
@@ -6,7 +7,10 @@ import { ServiceFreightNotFoundError } from 'src/app/service/service-freight/dom
 import { ServiceProposalValidityNotFoundError } from 'src/app/service/service-proposal-validity/domain/errors/service-proposal-validity-not-found.error';
 import { ServiceCatalogNotFoundError } from 'src/app/service/service-catalog/domain/errors/service-catalog-not-found.error';
 import { ServiceWarrantyNotFoundError } from 'src/app/service/service-warranty/domain/errors/service-warranty-not-found.error';
-import { seedServiceCatalogForeignKeys } from 'src/app/service/service-catalog/infra/driven/persistence/prisma/service-catalog-prisma-test.helpers';
+import {
+  seedServiceCatalogForeignKeys,
+  serviceFkScalars,
+} from 'src/app/service/service-catalog/infra/driven/persistence/prisma/service-catalog-prisma-test.helpers';
 import { ServiceCatalogModule } from 'src/app/service/service-catalog/service-catalog.module';
 import { CnaeNbsIndopNotFoundError } from 'src/app/taxation/cnae-nbs-indop/domain/errors/cnae-nbs-indop-not-found.error';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
@@ -46,7 +50,7 @@ describe('EditServiceCatalog - Integration tests', () => {
     const fk = await seedServiceCatalogForeignKeys(prisma);
     const created = await prisma.service.create({
       data: {
-        ...fk,
+        ...serviceFkScalars(fk),
         name: `Original ${Date.now()}`,
         unitPriceInCents: 1000,
         description: 'D',
@@ -73,7 +77,7 @@ describe('EditServiceCatalog - Integration tests', () => {
 
     const created = await prisma.service.create({
       data: {
-        ...fkService,
+        ...serviceFkScalars(fkService),
         name: 'S',
         unitPriceInCents: 1,
         description: 'D',
@@ -94,7 +98,7 @@ describe('EditServiceCatalog - Integration tests', () => {
 
     const created = await prisma.service.create({
       data: {
-        ...fkService,
+        ...serviceFkScalars(fkService),
         name: 'S',
         unitPriceInCents: 1,
         description: 'D',
@@ -115,7 +119,7 @@ describe('EditServiceCatalog - Integration tests', () => {
 
     const created = await prisma.service.create({
       data: {
-        ...fkService,
+        ...serviceFkScalars(fkService),
         name: 'S',
         unitPriceInCents: 1,
         description: 'D',
@@ -136,7 +140,7 @@ describe('EditServiceCatalog - Integration tests', () => {
 
     const created = await prisma.service.create({
       data: {
-        ...fkService,
+        ...serviceFkScalars(fkService),
         name: 'S',
         unitPriceInCents: 1,
         description: 'D',
@@ -157,7 +161,7 @@ describe('EditServiceCatalog - Integration tests', () => {
 
     const created = await prisma.service.create({
       data: {
-        ...fkService,
+        ...serviceFkScalars(fkService),
         name: 'S',
         unitPriceInCents: 1,
         description: 'D',
@@ -178,7 +182,7 @@ describe('EditServiceCatalog - Integration tests', () => {
 
     const created = await prisma.service.create({
       data: {
-        ...fkService,
+        ...serviceFkScalars(fkService),
         name: 'S',
         unitPriceInCents: 1,
         description: 'D',
@@ -199,7 +203,7 @@ describe('EditServiceCatalog - Integration tests', () => {
 
     const created = await prisma.service.create({
       data: {
-        ...fkService,
+        ...serviceFkScalars(fkService),
         name: 'S',
         unitPriceInCents: 1,
         description: 'D',
@@ -213,13 +217,34 @@ describe('EditServiceCatalog - Integration tests', () => {
     ).rejects.toThrow(ServiceWarrantyNotFoundError);
   });
 
+  it('should throw CompanyNotFoundError when a company is inactive', async() => {
+    const fk = await seedServiceCatalogForeignKeys(prisma);
+    const created = await prisma.service.create({
+      data: {
+        ...serviceFkScalars(fk),
+        companies: { connect: [{ id: fk.companyId }] },
+        name: 'S',
+        unitPriceInCents: 1,
+        description: 'D',
+        isCommercial: true,
+        active: true,
+      },
+    });
+
+    await prisma.company.update({ where: { id: fk.companyId }, data: { active: false } });
+
+    await expect(sut.execute(created.id, { companyIds: [fk.companyId] })).rejects.toThrow(
+      CompanyNotFoundError,
+    );
+  });
+
   it('should persist FK change when informed id is active', async() => {
     const fkService = await seedServiceCatalogForeignKeys(prisma);
     const fkAlt = await seedServiceCatalogForeignKeys(prisma);
 
     const created = await prisma.service.create({
       data: {
-        ...fkService,
+        ...serviceFkScalars(fkService),
         name: 'S',
         unitPriceInCents: 1,
         description: 'D',

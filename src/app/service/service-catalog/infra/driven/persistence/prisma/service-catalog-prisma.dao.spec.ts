@@ -2,7 +2,7 @@ import { Test } from '@nestjs/testing';
 import { FindAllServiceCatalogQueryDto } from 'src/app/service/service-catalog/application/usecases/find-all-service-catalog/dtos/find-all-service-catalog.dto';
 import { ConfigModule } from 'src/core/config/config.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
-import { seedServiceCatalogForeignKeys } from './service-catalog-prisma-test.helpers';
+import { seedServiceCatalogForeignKeys, serviceFkScalars } from './service-catalog-prisma-test.helpers';
 import { ServiceCatalogDaoAdapterPrisma, ServiceCatalogSelect } from './service-catalog-prisma.dao';
 
 describe('ServiceCatalogDaoAdapterPrisma - Integration tests', () => {
@@ -42,7 +42,7 @@ describe('ServiceCatalogDaoAdapterPrisma - Integration tests', () => {
       const fk = await seedServiceCatalogForeignKeys(prisma);
       const created = await prisma.service.create({
         data: {
-          ...fk,
+          ...serviceFkScalars(fk),
           name: `Svc ${Date.now()}`,
           unitPriceInCents: 5000,
           description: 'Descrição',
@@ -66,7 +66,7 @@ describe('ServiceCatalogDaoAdapterPrisma - Integration tests', () => {
       const base = Date.now();
       await prisma.service.createMany({
         data: Array.from({ length: 25 }, (_, i) => ({
-          ...fk,
+          ...serviceFkScalars(fk),
           name: `Svc ${base}-${i}`,
           unitPriceInCents: 1000 + i,
           description: `Desc ${i}`,
@@ -89,7 +89,7 @@ describe('ServiceCatalogDaoAdapterPrisma - Integration tests', () => {
       const fkB = await seedServiceCatalogForeignKeys(prisma);
       await prisma.service.create({
         data: {
-          ...fkA,
+          ...serviceFkScalars(fkA),
           name: `Svc A ${Date.now()}`,
           unitPriceInCents: 1000,
           description: 'A',
@@ -99,7 +99,7 @@ describe('ServiceCatalogDaoAdapterPrisma - Integration tests', () => {
       });
       await prisma.service.create({
         data: {
-          ...fkB,
+          ...serviceFkScalars(fkB),
           name: `Svc B ${Date.now()}`,
           unitPriceInCents: 2000,
           description: 'B',
@@ -119,7 +119,7 @@ describe('ServiceCatalogDaoAdapterPrisma - Integration tests', () => {
       const fk = await seedServiceCatalogForeignKeys(prisma);
       await prisma.service.create({
         data: {
-          ...fk,
+          ...serviceFkScalars(fk),
           name: `Ativo ${Date.now()}`,
           unitPriceInCents: 1000,
           description: 'A',
@@ -129,7 +129,7 @@ describe('ServiceCatalogDaoAdapterPrisma - Integration tests', () => {
       });
       await prisma.service.create({
         data: {
-          ...fk,
+          ...serviceFkScalars(fk),
           name: `Inativo ${Date.now()}`,
           unitPriceInCents: 2000,
           description: 'B',
@@ -151,7 +151,7 @@ describe('ServiceCatalogDaoAdapterPrisma - Integration tests', () => {
       const fk = await seedServiceCatalogForeignKeys(prisma);
       await prisma.service.create({
         data: {
-          ...fk,
+          ...serviceFkScalars(fk),
           name: `Instalação ${Date.now()}`,
           unitPriceInCents: 1000,
           description: 'X',
@@ -161,7 +161,7 @@ describe('ServiceCatalogDaoAdapterPrisma - Integration tests', () => {
       });
       await prisma.service.create({
         data: {
-          ...fk,
+          ...serviceFkScalars(fk),
           name: `Outro ${Date.now()}`,
           unitPriceInCents: 2000,
           description: 'Manutenção preventiva',
@@ -183,7 +183,7 @@ describe('ServiceCatalogDaoAdapterPrisma - Integration tests', () => {
       const fk = await seedServiceCatalogForeignKeys(prisma);
       const first = await prisma.service.create({
         data: {
-          ...fk,
+          ...serviceFkScalars(fk),
           name: `Z ${Date.now()}`,
           unitPriceInCents: 1,
           description: '1',
@@ -193,7 +193,7 @@ describe('ServiceCatalogDaoAdapterPrisma - Integration tests', () => {
       });
       const second = await prisma.service.create({
         data: {
-          ...fk,
+          ...serviceFkScalars(fk),
           name: `A ${Date.now()}`,
           unitPriceInCents: 2,
           description: '2',
@@ -213,7 +213,7 @@ describe('ServiceCatalogDaoAdapterPrisma - Integration tests', () => {
       const fk = await seedServiceCatalogForeignKeys(prisma);
       const created = await prisma.service.create({
         data: {
-          ...fk,
+          ...serviceFkScalars(fk),
           name: `Completo ${Date.now()}`,
           unitPriceInCents: 9999,
           description: 'Texto longo',
@@ -241,7 +241,7 @@ describe('ServiceCatalogDaoAdapterPrisma - Integration tests', () => {
       const fk = await seedServiceCatalogForeignKeys(prisma);
       const created = await prisma.service.create({
         data: {
-          ...fk,
+          ...serviceFkScalars(fk),
           name: 'Find by id',
           unitPriceInCents: 3000,
           description: 'D',

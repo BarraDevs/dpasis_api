@@ -1,6 +1,9 @@
 import { Test } from '@nestjs/testing';
 import { ServiceCatalogNotFoundError } from 'src/app/service/service-catalog/domain/errors/service-catalog-not-found.error';
-import { seedServiceCatalogForeignKeys } from 'src/app/service/service-catalog/infra/driven/persistence/prisma/service-catalog-prisma-test.helpers';
+import {
+  seedServiceCatalogForeignKeys,
+  serviceFkScalars,
+} from 'src/app/service/service-catalog/infra/driven/persistence/prisma/service-catalog-prisma-test.helpers';
 import { ServiceCatalogModule } from 'src/app/service/service-catalog/service-catalog.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { ActivateServiceCatalog } from './activate-service-catalog.service';
@@ -39,7 +42,7 @@ describe('ActivateServiceCatalog - Integration tests', () => {
     const fk = await seedServiceCatalogForeignKeys(prisma);
     const created = await prisma.service.create({
       data: {
-        ...fk,
+        ...serviceFkScalars(fk),
         name: `Svc ${Date.now()}`,
         unitPriceInCents: 1000,
         description: 'Descrição',
@@ -58,7 +61,7 @@ describe('ActivateServiceCatalog - Integration tests', () => {
     const fk = await seedServiceCatalogForeignKeys(prisma);
     const created = await prisma.service.create({
       data: {
-        ...fk,
+        ...serviceFkScalars(fk),
         name: `Svc ${Date.now()}`,
         unitPriceInCents: 1000,
         description: 'Descrição',
@@ -76,7 +79,7 @@ describe('ActivateServiceCatalog - Integration tests', () => {
     const fk = await seedServiceCatalogForeignKeys(prisma);
     const created = await prisma.service.create({
       data: {
-        ...fk,
+        ...serviceFkScalars(fk),
         name: `Manutenção ${Date.now()}`,
         unitPriceInCents: 5000,
         description: 'Descrição completa',
@@ -99,7 +102,7 @@ describe('ActivateServiceCatalog - Integration tests', () => {
     const fk = await seedServiceCatalogForeignKeys(prisma);
     const created = await prisma.service.create({
       data: {
-        ...fk,
+        ...serviceFkScalars(fk),
         name: `Svc ${Date.now()}`,
         unitPriceInCents: 1000,
         description: 'Descrição',

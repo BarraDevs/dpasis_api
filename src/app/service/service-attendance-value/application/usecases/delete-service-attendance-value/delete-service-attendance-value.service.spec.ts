@@ -1,6 +1,9 @@
 import { Test } from '@nestjs/testing';
 import { ServiceAttendanceValueNotFoundError } from 'src/app/service/service-attendance-value/domain/errors/service-attendance-value-not-found.error';
-import { seedServiceCatalogForeignKeys } from 'src/app/service/service-catalog/infra/driven/persistence/prisma/service-catalog-prisma-test.helpers';
+import {
+  seedServiceCatalogForeignKeys,
+  serviceFkScalars,
+} from 'src/app/service/service-catalog/infra/driven/persistence/prisma/service-catalog-prisma-test.helpers';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { ServiceAttendanceValueModule } from '../../../service-attendance-value.module';
 import { DeleteServiceAttendanceValue } from './delete-service-attendance-value.service';
@@ -9,7 +12,8 @@ async function seedActiveService(prisma: PrismaService): Promise<{ id: number }>
   const fk = await seedServiceCatalogForeignKeys(prisma);
   const service = await prisma.service.create({
     data: {
-      ...fk,
+      ...serviceFkScalars(fk),
+      companies: { connect: [{ id: fk.companyId }] },
       name: 'Serviço teste delete attendance value',
       unitPriceInCents: 1000,
       description: 'Descrição para teste de integração',

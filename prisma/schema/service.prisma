@@ -23,6 +23,7 @@ model Service {
   serviceProposalValidity ServiceProposalValidity  @relation(fields: [serviceProposalValidityId], references: [id])
   serviceWarranty         ServiceWarranty          @relation(fields: [serviceWarrantyId], references: [id])
   serviceAttendanceValues ServiceAttendanceValue[]
+  companies               Company[]
 
   @@map("services")
 }

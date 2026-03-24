@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { CompanyModule } from 'src/app/company/company.module';
 import { AuthenticationGuardsModule } from 'src/app/authentication/application/guards/guards.module';
 import { ServiceBilledModule } from 'src/app/service/service-billed/service-billed.module';
 import { ServiceCategoryModule } from 'src/app/service/service-category/service-category.module';
@@ -20,6 +21,7 @@ import { ServiceCatalogAdminController } from './infra/drivers/http/admin/servic
 @Module({
   imports: [
     AuthenticationGuardsModule,
+    CompanyModule,
     ServiceCatalogPersistenceModule,
     ServiceBilledModule,
     ServiceCategoryModule,

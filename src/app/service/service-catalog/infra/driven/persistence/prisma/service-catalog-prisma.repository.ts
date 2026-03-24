@@ -10,31 +10,48 @@ export class ServiceCatalogRepositoryAdapterPrisma implements IServiceCatalogRep
 
   public async save(entity: ServiceCatalog): Promise<number> {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { id, ...props } = entity.props;
+    const { id, companyIds, ...props } = entity.props;
 
     const created = await this.prisma.service.create({
-      data: { ...props },
+      data: {
+        ...props,
+        companies: {
+          connect: companyIds.map((companyId) => ({ id: companyId })),
+        },
+      },
     });
     return created.id;
   }
 
   public async edit(entity: ServiceCatalog): Promise<void> {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { id, ...props } = entity.props;
+    const { id, companyIds, ...props } = entity.props;
 
     await this.prisma.service.update({
       where: { id: id! },
-      data: { ...props },
+      data: {
+        ...props,
+        companies: {
+          set: companyIds.map((companyId) => ({ id: companyId })),
+        },
+      },
     });
   }
 
   public async findById(id: number): Promise<ServiceCatalog | null> {
     const data = await this.prisma.service.findUnique({
       where: { id },
+      include: { companies: true },
     });
     if (!data) return null;
 
-    return ServiceCatalogFactory.load(data);
+    const { companies, ...serviceData } = data;
+    const companyIds = companies?.map((c) => c.id) ?? [];
+
+    return ServiceCatalogFactory.load({
+      ...serviceData,
+      companyIds,
+    });
   }
 
   public async delete(id: number): Promise<void> {

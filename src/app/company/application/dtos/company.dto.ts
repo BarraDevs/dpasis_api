@@ -20,3 +20,8 @@ export class CompanyDto {
   createdAt: Date;
   updatedAt: Date;
 }
+
+export class MinimalCompanyDto {
+  id: number;
+  name: string;
+}

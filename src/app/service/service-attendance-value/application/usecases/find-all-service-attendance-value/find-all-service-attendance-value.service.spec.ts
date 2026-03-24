@@ -1,5 +1,8 @@
 import { Test } from '@nestjs/testing';
-import { seedServiceCatalogForeignKeys } from 'src/app/service/service-catalog/infra/driven/persistence/prisma/service-catalog-prisma-test.helpers';
+import {
+  seedServiceCatalogForeignKeys,
+  serviceFkScalars,
+} from 'src/app/service/service-catalog/infra/driven/persistence/prisma/service-catalog-prisma-test.helpers';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
 import { ServiceAttendanceValueModule } from '../../../service-attendance-value.module';
@@ -11,7 +14,8 @@ async function seedActiveService(prisma: PrismaService, nameLabel: string): Prom
   const fk = await seedServiceCatalogForeignKeys(prisma);
   const service = await prisma.service.create({
     data: {
-      ...fk,
+      ...serviceFkScalars(fk),
+      companies: { connect: [{ id: fk.companyId }] },
       name: `Serviço listagem ${nameLabel}`,
       unitPriceInCents: 1000,
       description: 'Descrição teste find-all',

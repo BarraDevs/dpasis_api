@@ -8,6 +8,13 @@ import {
 } from '../entities/service-catalog.entity';
 
 export class ServiceCatalogFactory {
+  private static validateCompanyIds(companyIds: number[], fieldName: string): number[] {
+    if (!Array.isArray(companyIds)) {
+      throw new Error(`${fieldName} deve ser um array`);
+    }
+    return companyIds.map((id, index) => new PositiveInt(id, `${fieldName}[${index}]`).value);
+  }
+
   private static validateCreateProps(props: ServiceCatalogCreateProps): ServiceCatalogCreateProps {
     return {
       cnaeNbsIndopId: new PositiveInt(props.cnaeNbsIndopId, 'cnaeNbsIndopId').value,
@@ -17,6 +24,7 @@ export class ServiceCatalogFactory {
       serviceFreightId: new PositiveInt(props.serviceFreightId, 'serviceFreightId').value,
       serviceProposalValidityId: new PositiveInt(props.serviceProposalValidityId, 'serviceProposalValidityId').value,
       serviceWarrantyId: new PositiveInt(props.serviceWarrantyId, 'serviceWarrantyId').value,
+      companyIds: this.validateCompanyIds(props.companyIds ?? [], 'companyIds'),
       name: new NonEmptyString(props.name.trim(), 'name').value,
       unitPriceInCents: new PositiveInt(props.unitPriceInCents, 'unitPriceInCents', true).value,
       description: new NonEmptyString(props.description.trim(), 'description').value,
@@ -54,6 +62,7 @@ export class ServiceCatalogFactory {
       serviceFreightId: props.serviceFreightId,
       serviceProposalValidityId: props.serviceProposalValidityId,
       serviceWarrantyId: props.serviceWarrantyId,
+      companyIds: props.companyIds ?? [],
       name: props.name,
       unitPriceInCents: props.unitPriceInCents,
       description: props.description,

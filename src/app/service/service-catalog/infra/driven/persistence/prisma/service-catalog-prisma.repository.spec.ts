@@ -3,7 +3,7 @@ import { ServiceCatalogProps } from 'src/app/service/service-catalog/domain/enti
 import { ServiceCatalogFactory } from 'src/app/service/service-catalog/domain/factories/service-catalog.factory';
 import { ConfigModule } from 'src/core/config/config.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
-import { seedServiceCatalogForeignKeys } from './service-catalog-prisma-test.helpers';
+import { seedServiceCatalogForeignKeys, serviceFkScalars } from './service-catalog-prisma-test.helpers';
 import { ServiceCatalogRepositoryAdapterPrisma } from './service-catalog-prisma.repository';
 
 describe('ServiceCatalogRepositoryAdapterPrisma - Integration tests', () => {
@@ -33,7 +33,8 @@ describe('ServiceCatalogRepositoryAdapterPrisma - Integration tests', () => {
     it('should persist entity in services table (prisma.service)', async() => {
       const fk = await seedServiceCatalogForeignKeys(prisma);
       const entity = ServiceCatalogFactory.create({
-        ...fk,
+        ...serviceFkScalars(fk),
+        companyIds: [fk.companyId],
         name: 'Serviço catálogo',
         unitPriceInCents: 15000,
         description: 'Descrição do serviço',
@@ -66,7 +67,8 @@ describe('ServiceCatalogRepositoryAdapterPrisma - Integration tests', () => {
     it('should return the created id present in services', async() => {
       const fk = await seedServiceCatalogForeignKeys(prisma);
       const entity = ServiceCatalogFactory.create({
-        ...fk,
+        ...serviceFkScalars(fk),
+        companyIds: [fk.companyId],
         name: `Id retorno ${Date.now()}`,
         unitPriceInCents: 100,
         description: 'X',
@@ -94,7 +96,8 @@ describe('ServiceCatalogRepositoryAdapterPrisma - Integration tests', () => {
       const fk = await seedServiceCatalogForeignKeys(prisma);
       const created = await prisma.service.create({
         data: {
-          ...fk,
+          ...serviceFkScalars(fk),
+          companies: { connect: [{ id: fk.companyId }] },
           name: 'Find by id',
           unitPriceInCents: 777,
           description: 'Y',
@@ -115,6 +118,7 @@ describe('ServiceCatalogRepositoryAdapterPrisma - Integration tests', () => {
         serviceFreightId: fk.serviceFreightId,
         serviceProposalValidityId: fk.serviceProposalValidityId,
         serviceWarrantyId: fk.serviceWarrantyId,
+        companyIds: [fk.companyId],
         name: 'Find by id',
         unitPriceInCents: 777,
         description: 'Y',
@@ -129,7 +133,8 @@ describe('ServiceCatalogRepositoryAdapterPrisma - Integration tests', () => {
       const fk = await seedServiceCatalogForeignKeys(prisma);
       const created = await prisma.service.create({
         data: {
-          ...fk,
+          ...serviceFkScalars(fk),
+          companies: { connect: [{ id: fk.companyId }] },
           name: `Original ${Date.now()}`,
           unitPriceInCents: 1000,
           description: 'Original desc',
@@ -140,7 +145,8 @@ describe('ServiceCatalogRepositoryAdapterPrisma - Integration tests', () => {
 
       const entity = ServiceCatalogFactory.edit({
         id: created.id,
-        ...fk,
+        ...serviceFkScalars(fk),
+        companyIds: [fk.companyId],
         name: 'Serviço atualizado',
         unitPriceInCents: 2000,
         description: 'Nova descrição',
@@ -168,7 +174,8 @@ describe('ServiceCatalogRepositoryAdapterPrisma - Integration tests', () => {
       const fk = await seedServiceCatalogForeignKeys(prisma);
       const created = await prisma.service.create({
         data: {
-          ...fk,
+          ...serviceFkScalars(fk),
+          companies: { connect: [{ id: fk.companyId }] },
           name: `Delete ${Date.now()}`,
           unitPriceInCents: 1,
           description: 'Z',

@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { FindCompanyById } from 'src/app/company/application/usecases/find-company-by-id/find-company-by-id.service';
 import { FindServiceBilledById } from 'src/app/service/service-billed/application/usecases/find-service-billed-by-id/find-service-billed-by-id.service';
 import { ServiceCatalogFactory } from 'src/app/service/service-catalog/domain/factories/service-catalog.factory';
 import { FindServiceCategoryById } from 'src/app/service/service-category/application/usecases/find-service-category-by-id/find-service-category-by-id.service';
@@ -22,6 +23,7 @@ export class CreateServiceCatalog {
     private readonly findServiceFreightById: FindServiceFreightById,
     private readonly findServiceProposalValidityById: FindServiceProposalValidityById,
     private readonly findServiceWarrantyById: FindServiceWarrantyById,
+    private readonly findCompanyById: FindCompanyById,
   ) {}
 
   public async execute(data: CreateServiceCatalogInputDto): Promise<CreateServiceCatalogOutputDto> {
@@ -34,6 +36,10 @@ export class CreateServiceCatalog {
       this.findServiceProposalValidityById.execute(data.serviceProposalValidityId, { onlyActive: true }),
       this.findServiceWarrantyById.execute(data.serviceWarrantyId, { onlyActive: true }),
     ]);
+
+    for (const companyId of data.companyIds) {
+      await this.findCompanyById.execute(companyId, { onlyActive: true });
+    }
 
     const entity = ServiceCatalogFactory.create(data);
 
