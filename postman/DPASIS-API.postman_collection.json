@@ -79,7 +79,7 @@
       ]
     },
     {
-      "name": "Configurações - Bank",
+      "name": "Bancos",
       "item": [
         {
           "name": "Listar bancos com paginação e busca",
@@ -273,739 +273,6 @@
               ]
             },
             "description": "Inverter status ativo do banco",
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{accessToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Clientes",
-      "item": [
-        {
-          "name": "Listar clientes com paginação e busca",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/admin/client",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "admin",
-                "client"
-              ],
-              "query": [
-                {
-                  "key": "page",
-                  "value": "{{page}}",
-                  "description": "Opcional"
-                },
-                {
-                  "key": "size",
-                  "value": "{{size}}",
-                  "description": "Opcional"
-                },
-                {
-                  "key": "search",
-                  "value": "{{search}}",
-                  "description": "Opcional"
-                },
-                {
-                  "key": "active",
-                  "value": "{{active}}",
-                  "description": "Opcional"
-                }
-              ]
-            },
-            "description": "Listar clientes com paginação e busca",
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{accessToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Criar novo cliente",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/admin/client",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "admin",
-                "client"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"type\": \"PF, PJ\",\n  \"document\": \"09.748.165/0001-10\",\n  \"ie\": \"123456789\",\n  \"groupId\": 1,\n  \"ownerId\": 1,\n  \"companyIds\": [\n    1\n  ],\n  \"companyName\": \"Empresa LTDA\",\n  \"fantasyName\": \"Empresa\",\n  \"headquarters\": \"São Paulo\",\n  \"invoiceType\": \"Avulso, Contrato\",\n  \"generateInvoice\": true\n}"
-            },
-            "description": "Criar novo cliente",
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{accessToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Buscar cliente por ID",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/admin/client/{{id}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "admin",
-                "client",
-                "{{id}}"
-              ]
-            },
-            "description": "Buscar cliente por ID",
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{accessToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Editar cliente",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/admin/client/{{id}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "admin",
-                "client",
-                "{{id}}"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"type\": \"PF, PJ\",\n  \"document\": \"09.748.165/0001-10\",\n  \"ie\": \"123456789\",\n  \"groupId\": 1,\n  \"ownerId\": 1,\n  \"companyIds\": [\n    1\n  ],\n  \"companyName\": \"Empresa LTDA\",\n  \"fantasyName\": \"Empresa\",\n  \"headquarters\": \"São Paulo\",\n  \"invoiceType\": \"Avulso, Contrato\",\n  \"generateInvoice\": true\n}"
-            },
-            "description": "Editar cliente",
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{accessToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Ativar cliente",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/admin/client/{{id}}/activate",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "admin",
-                "client",
-                "{{id}}",
-                "activate"
-              ]
-            },
-            "description": "Ativar cliente",
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{accessToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Desativar cliente",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/admin/client/{{id}}/deactivate",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "admin",
-                "client",
-                "{{id}}",
-                "deactivate"
-              ]
-            },
-            "description": "Desativar cliente",
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{accessToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Grupos de Clientes",
-      "item": [
-        {
-          "name": "Listar grupos de clientes com paginação e busca",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/admin/client-group",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "admin",
-                "client-group"
-              ],
-              "query": [
-                {
-                  "key": "page",
-                  "value": "{{page}}",
-                  "description": "Opcional"
-                },
-                {
-                  "key": "size",
-                  "value": "{{size}}",
-                  "description": "Opcional"
-                },
-                {
-                  "key": "search",
-                  "value": "{{search}}",
-                  "description": "Opcional"
-                },
-                {
-                  "key": "active",
-                  "value": "{{active}}",
-                  "description": "Opcional"
-                }
-              ]
-            },
-            "description": "Listar grupos de clientes com paginação e busca",
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{accessToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Criar novo grupo de clientes",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/admin/client-group",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "admin",
-                "client-group"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Grupo Premium\"\n}"
-            },
-            "description": "Criar novo grupo de clientes",
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{accessToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Buscar grupo de clientes por ID",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/admin/client-group/{{id}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "admin",
-                "client-group",
-                "{{id}}"
-              ]
-            },
-            "description": "Buscar grupo de clientes por ID",
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{accessToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Editar grupo de clientes",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/admin/client-group/{{id}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "admin",
-                "client-group",
-                "{{id}}"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Grupo Premium\"\n}"
-            },
-            "description": "Editar grupo de clientes",
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{accessToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Deletar grupo de clientes",
-          "request": {
-            "method": "DELETE",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/admin/client-group/{{id}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "admin",
-                "client-group",
-                "{{id}}"
-              ]
-            },
-            "description": "Deletar grupo de clientes",
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{accessToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Inverter status ativo do grupo de clientes",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/admin/client-group/{{id}}/status",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "admin",
-                "client-group",
-                "{{id}}",
-                "status"
-              ]
-            },
-            "description": "Inverter status ativo do grupo de clientes",
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{accessToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Proprietários de Clientes",
-      "item": [
-        {
-          "name": "Listar proprietários de clientes com paginação e busca",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/admin/client-owner",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "admin",
-                "client-owner"
-              ],
-              "query": [
-                {
-                  "key": "page",
-                  "value": "{{page}}",
-                  "description": "Opcional"
-                },
-                {
-                  "key": "size",
-                  "value": "{{size}}",
-                  "description": "Opcional"
-                },
-                {
-                  "key": "search",
-                  "value": "{{search}}",
-                  "description": "Opcional"
-                },
-                {
-                  "key": "active",
-                  "value": "{{active}}",
-                  "description": "Opcional"
-                }
-              ]
-            },
-            "description": "Listar proprietários de clientes com paginação e busca",
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{accessToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Criar novo proprietário de clientes",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/admin/client-owner",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "admin",
-                "client-owner"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Proprietário Premium\"\n}"
-            },
-            "description": "Criar novo proprietário de clientes",
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{accessToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Buscar proprietário de clientes por ID",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/admin/client-owner/{{id}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "admin",
-                "client-owner",
-                "{{id}}"
-              ]
-            },
-            "description": "Buscar proprietário de clientes por ID",
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{accessToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Editar proprietário de clientes",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/admin/client-owner/{{id}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "admin",
-                "client-owner",
-                "{{id}}"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Proprietário Premium\"\n}"
-            },
-            "description": "Editar proprietário de clientes",
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{accessToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Deletar proprietário de clientes",
-          "request": {
-            "method": "DELETE",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/admin/client-owner/{{id}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "admin",
-                "client-owner",
-                "{{id}}"
-              ]
-            },
-            "description": "Deletar proprietário de clientes",
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{accessToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Inverter status ativo do proprietário de clientes",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/admin/client-owner/{{id}}/status",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "admin",
-                "client-owner",
-                "{{id}}",
-                "status"
-              ]
-            },
-            "description": "Inverter status ativo do proprietário de clientes",
             "auth": {
               "type": "bearer",
               "bearer": [
@@ -1266,7 +533,740 @@
       ]
     },
     {
-      "name": "Endereços de Clientes",
+      "name": "Clientes",
+      "item": [
+        {
+          "name": "Listar clientes com paginação e busca",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "{{page}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "size",
+                  "value": "{{size}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "search",
+                  "value": "{{search}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "active",
+                  "value": "{{active}}",
+                  "description": "Opcional"
+                }
+              ]
+            },
+            "description": "Listar clientes com paginação e busca",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Criar novo cliente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"PF, PJ\",\n  \"document\": \"09.748.165/0001-10\",\n  \"ie\": \"123456789\",\n  \"groupId\": 1,\n  \"ownerId\": 1,\n  \"companyIds\": [\n    1\n  ],\n  \"companyName\": \"Empresa LTDA\",\n  \"fantasyName\": \"Empresa\",\n  \"headquarters\": \"São Paulo\",\n  \"invoiceType\": \"Avulso, Contrato\",\n  \"generateInvoice\": true\n}"
+            },
+            "description": "Criar novo cliente",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar cliente por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client",
+                "{{id}}"
+              ]
+            },
+            "description": "Buscar cliente por ID",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Editar cliente",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client",
+                "{{id}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"PF, PJ\",\n  \"document\": \"09.748.165/0001-10\",\n  \"ie\": \"123456789\",\n  \"groupId\": 1,\n  \"ownerId\": 1,\n  \"companyIds\": [\n    1\n  ],\n  \"companyName\": \"Empresa LTDA\",\n  \"fantasyName\": \"Empresa\",\n  \"headquarters\": \"São Paulo\",\n  \"invoiceType\": \"Avulso, Contrato\",\n  \"generateInvoice\": true\n}"
+            },
+            "description": "Editar cliente",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Ativar cliente",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client/{{id}}/activate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client",
+                "{{id}}",
+                "activate"
+              ]
+            },
+            "description": "Ativar cliente",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Desativar cliente",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client/{{id}}/deactivate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client",
+                "{{id}}",
+                "deactivate"
+              ]
+            },
+            "description": "Desativar cliente",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Clientes - Grupos",
+      "item": [
+        {
+          "name": "Listar grupos de clientes com paginação e busca",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-group",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-group"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "{{page}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "size",
+                  "value": "{{size}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "search",
+                  "value": "{{search}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "active",
+                  "value": "{{active}}",
+                  "description": "Opcional"
+                }
+              ]
+            },
+            "description": "Listar grupos de clientes com paginação e busca",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Criar novo grupo de clientes",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-group",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-group"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Grupo Premium\"\n}"
+            },
+            "description": "Criar novo grupo de clientes",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar grupo de clientes por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-group/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-group",
+                "{{id}}"
+              ]
+            },
+            "description": "Buscar grupo de clientes por ID",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Editar grupo de clientes",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-group/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-group",
+                "{{id}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Grupo Premium\"\n}"
+            },
+            "description": "Editar grupo de clientes",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Deletar grupo de clientes",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-group/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-group",
+                "{{id}}"
+              ]
+            },
+            "description": "Deletar grupo de clientes",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Inverter status ativo do grupo de clientes",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-group/{{id}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-group",
+                "{{id}}",
+                "status"
+              ]
+            },
+            "description": "Inverter status ativo do grupo de clientes",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Clientes - Proprietários",
+      "item": [
+        {
+          "name": "Listar proprietários de clientes com paginação e busca",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-owner",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-owner"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "{{page}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "size",
+                  "value": "{{size}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "search",
+                  "value": "{{search}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "active",
+                  "value": "{{active}}",
+                  "description": "Opcional"
+                }
+              ]
+            },
+            "description": "Listar proprietários de clientes com paginação e busca",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Criar novo proprietário de clientes",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-owner",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-owner"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Proprietário Premium\"\n}"
+            },
+            "description": "Criar novo proprietário de clientes",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar proprietário de clientes por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-owner/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-owner",
+                "{{id}}"
+              ]
+            },
+            "description": "Buscar proprietário de clientes por ID",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Editar proprietário de clientes",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-owner/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-owner",
+                "{{id}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Proprietário Premium\"\n}"
+            },
+            "description": "Editar proprietário de clientes",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Deletar proprietário de clientes",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-owner/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-owner",
+                "{{id}}"
+              ]
+            },
+            "description": "Deletar proprietário de clientes",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Inverter status ativo do proprietário de clientes",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/client-owner/{{id}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "client-owner",
+                "{{id}}",
+                "status"
+              ]
+            },
+            "description": "Inverter status ativo do proprietário de clientes",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Clientes - Endereços",
       "item": [
         {
           "name": "Listar endereços de clientes com paginação e busca",
@@ -1556,7 +1556,7 @@
       ]
     },
     {
-      "name": "Anexos de Clientes",
+      "name": "Clientes - Anexos",
       "item": [
         {
           "name": "Listar anexos de cliente com paginação e filtros",
@@ -1805,7 +1805,7 @@
       ]
     },
     {
-      "name": "Contatos de Clientes",
+      "name": "Clientes - Contatos",
       "item": [
         {
           "name": "Listar contatos de cliente com paginação e filtros",
@@ -2100,7 +2100,7 @@
       ]
     },
     {
-      "name": "Departamentos de Clientes",
+      "name": "Clientes - Departamentos",
       "item": [
         {
           "name": "Listar departamentos de clientes com paginação e busca",
@@ -2344,7 +2344,7 @@
       ]
     },
     {
-      "name": "Descontos de Clientes",
+      "name": "Clientes - Descontos",
       "item": [
         {
           "name": "Listar descontos com paginação e filtros",
@@ -2562,7 +2562,7 @@
       ]
     },
     {
-      "name": "Configuração NF e Boleto",
+      "name": "Clientes - Configuração NF e Boleto",
       "item": [
         {
           "name": "Criar configuração de NF e boleto para cliente",
@@ -2715,7 +2715,7 @@
       ]
     },
     {
-      "name": "Itens do Cliente",
+      "name": "Clientes - Itens",
       "item": [
         {
           "name": "Listar itens do cliente com paginação e filtros",
@@ -3017,7 +3017,7 @@
       ]
     },
     {
-      "name": "Configurações - CNAE/NBS/INDOP",
+      "name": "Tributação - CNAE/NBS/INDOP",
       "item": [
         {
           "name": "Listar combinações com paginação e filtros",
@@ -3321,7 +3321,7 @@
       ]
     },
     {
-      "name": "Configurações - CNAE",
+      "name": "Tributação - CNAE",
       "item": [
         {
           "name": "Listar CNAEs com paginação e busca",
@@ -3530,7 +3530,7 @@
       ]
     },
     {
-      "name": "Configurações - NBS",
+      "name": "Tributação - NBS",
       "item": [
         {
           "name": "Listar NBS com paginação e busca",
@@ -3739,7 +3739,7 @@
       ]
     },
     {
-      "name": "Configurações - INDOP",
+      "name": "Tributação - INDOP",
       "item": [
         {
           "name": "Listar INDOP com paginação e busca",
@@ -3948,7 +3948,7 @@
       ]
     },
     {
-      "name": "Tipos de Atendimento de Clientes",
+      "name": "Clientes - Tipos de cliente - Tipos de atendimento",
       "item": [
         {
           "name": "Listar tipos de atendimento de cliente com paginação e busca",
@@ -4192,7 +4192,7 @@
       ]
     },
     {
-      "name": "Tipos de Descrição de Clientes",
+      "name": "Clientes - Tipos de cliente - Tipos de descrição",
       "item": [
         {
           "name": "Listar tipos de descrição de cliente com paginação e busca",
@@ -4436,7 +4436,7 @@
       ]
     },
     {
-      "name": "Tipos de Drive de Clientes",
+      "name": "Clientes - Tipos de cliente - Tipos de drive",
       "item": [
         {
           "name": "Listar tipos de drive de cliente com paginação e busca",
@@ -4680,7 +4680,7 @@
       ]
     },
     {
-      "name": "Tipos de Chamados de Manutenção de Clientes",
+      "name": "Clientes - Tipos de cliente - Tipos de chamado de manutenção",
       "item": [
         {
           "name": "Listar tipos de chamados de manutenção de cliente com paginação e busca",
@@ -4924,7 +4924,7 @@
       ]
     },
     {
-      "name": "Tipos de Sistema de Clientes",
+      "name": "Clientes - Tipos de cliente - Tipos de sistema",
       "item": [
         {
           "name": "Listar tipos de sistema de cliente com paginação e busca",
@@ -5168,7 +5168,7 @@
       ]
     },
     {
-      "name": "Tipos de Cliente",
+      "name": "Clientes - Tipos de cliente",
       "item": [
         {
           "name": "Listar tipos de cliente com paginação e busca",
@@ -5808,7 +5808,785 @@
       ]
     },
     {
-      "name": "Categorias de Serviço",
+      "name": "Serviços - Valores de atendimento",
+      "item": [
+        {
+          "name": "Listar valores de atendimento por serviço (paginação)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/service-attendance-values",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "service-attendance-values"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "{{page}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "size",
+                  "value": "{{size}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "search",
+                  "value": "{{search}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "active",
+                  "value": "{{active}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "serviceId",
+                  "value": "{{serviceId}}",
+                  "description": "Obrigatório"
+                }
+              ]
+            },
+            "description": "Listar valores de atendimento por serviço (paginação)",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Criar valores de atendimento de serviço",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/service-attendance-values",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "service-attendance-values"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"serviceId\": 1,\n  \"values\": {\n    \"maoDeObra\": 10000,\n    \"deslocamento\": 5000\n  }\n}"
+            },
+            "description": "Criar valores de atendimento de serviço",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar valores de atendimento por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/service-attendance-values/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "service-attendance-values",
+                "{{id}}"
+              ]
+            },
+            "description": "Buscar valores de atendimento por ID",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Editar valores de atendimento",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/service-attendance-values/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "service-attendance-values",
+                "{{id}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"values\": {\n    \"maoDeObra\": 12000,\n    \"deslocamento\": 5000\n  }\n}"
+            },
+            "description": "Editar valores de atendimento",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Excluir valores de atendimento",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/service-attendance-values/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "service-attendance-values",
+                "{{id}}"
+              ]
+            },
+            "description": "Excluir valores de atendimento",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Serviços - Serviços",
+      "item": [
+        {
+          "name": "Listar serviços do catálogo com paginação e busca",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/service-catalog",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "service-catalog"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "{{page}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "size",
+                  "value": "{{size}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "search",
+                  "value": "{{search}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "active",
+                  "value": "{{active}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "cnaeNbsIndopId",
+                  "value": "{{cnaeNbsIndopId}}",
+                  "description": "Opcional"
+                }
+              ]
+            },
+            "description": "Listar serviços do catálogo com paginação e busca",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Criar serviço no catálogo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/service-catalog",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "service-catalog"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cnaeNbsIndopId\": 1,\n  \"serviceBilledId\": 1,\n  \"serviceCategoryId\": 1,\n  \"serviceDeliveryTermId\": 1,\n  \"serviceFreightId\": 1,\n  \"serviceProposalValidityId\": 1,\n  \"serviceWarrantyId\": 1,\n  \"name\": \"Instalação de sistema\",\n  \"unitPriceInCents\": 150000,\n  \"description\": \"Descrição do serviço ofertado.\",\n  \"isCommercial\": true\n}"
+            },
+            "description": "Criar serviço no catálogo",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar serviço do catálogo por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/service-catalog/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "service-catalog",
+                "{{id}}"
+              ]
+            },
+            "description": "Buscar serviço do catálogo por ID",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Editar serviço do catálogo",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/service-catalog/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "service-catalog",
+                "{{id}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cnaeNbsIndopId\": 1,\n  \"serviceBilledId\": 1,\n  \"serviceCategoryId\": 1,\n  \"serviceDeliveryTermId\": 1,\n  \"serviceFreightId\": 1,\n  \"serviceProposalValidityId\": 1,\n  \"serviceWarrantyId\": 1,\n  \"name\": \"Instalação de sistema\",\n  \"unitPriceInCents\": 150000,\n  \"description\": \"Descrição do serviço ofertado.\",\n  \"isCommercial\": true\n}"
+            },
+            "description": "Editar serviço do catálogo",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Excluir serviço do catálogo",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/service-catalog/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "service-catalog",
+                "{{id}}"
+              ]
+            },
+            "description": "Excluir serviço do catálogo",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Ativar serviço do catálogo",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/service-catalog/{{id}}/activate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "service-catalog",
+                "{{id}}",
+                "activate"
+              ]
+            },
+            "description": "Ativar serviço do catálogo",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Desativar serviço do catálogo",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/service-catalog/{{id}}/deactivate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "service-catalog",
+                "{{id}}",
+                "deactivate"
+              ]
+            },
+            "description": "Desativar serviço do catálogo",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Serviços - Faturados",
+      "item": [
+        {
+          "name": "Listar serviços faturados com paginação e busca",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/service-billed",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "service-billed"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "{{page}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "size",
+                  "value": "{{size}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "search",
+                  "value": "{{search}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "active",
+                  "value": "{{active}}",
+                  "description": "Opcional"
+                }
+              ]
+            },
+            "description": "Listar serviços faturados com paginação e busca",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Criar novo serviço faturado",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/service-billed",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "service-billed"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Descrição do serviço faturado\",\n  \"isJunction\": false,\n  \"installmentDays\": [\n    5,\n    15,\n    25\n  ]\n}"
+            },
+            "description": "Criar novo serviço faturado",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar serviço faturado por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/service-billed/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "service-billed",
+                "{{id}}"
+              ]
+            },
+            "description": "Buscar serviço faturado por ID",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Editar serviço faturado",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/service-billed/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "service-billed",
+                "{{id}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Descrição do serviço faturado\",\n  \"isJunction\": false,\n  \"installmentDays\": [\n    5,\n    15,\n    25\n  ]\n}"
+            },
+            "description": "Editar serviço faturado",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Deletar serviço faturado",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/service-billed/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "service-billed",
+                "{{id}}"
+              ]
+            },
+            "description": "Deletar serviço faturado",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Ativar serviço faturado",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/service-billed/{{id}}/activate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "service-billed",
+                "{{id}}",
+                "activate"
+              ]
+            },
+            "description": "Ativar serviço faturado",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Desativar serviço faturado",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/service-billed/{{id}}/deactivate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "service-billed",
+                "{{id}}",
+                "deactivate"
+              ]
+            },
+            "description": "Desativar serviço faturado",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Serviços - Categorias",
       "item": [
         {
           "name": "Listar categorias de serviço com paginação e busca",
@@ -6052,251 +6830,7 @@
       ]
     },
     {
-      "name": "Frete de Serviço",
-      "item": [
-        {
-          "name": "Listar fretes de serviço com paginação e busca",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/admin/service-freight",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "admin",
-                "service-freight"
-              ],
-              "query": [
-                {
-                  "key": "page",
-                  "value": "{{page}}",
-                  "description": "Opcional"
-                },
-                {
-                  "key": "size",
-                  "value": "{{size}}",
-                  "description": "Opcional"
-                },
-                {
-                  "key": "search",
-                  "value": "{{search}}",
-                  "description": "Opcional"
-                },
-                {
-                  "key": "active",
-                  "value": "{{active}}",
-                  "description": "Opcional"
-                }
-              ]
-            },
-            "description": "Listar fretes de serviço com paginação e busca",
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{accessToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Criar novo frete de serviço",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/admin/service-freight",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "admin",
-                "service-freight"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"CIF\"\n}"
-            },
-            "description": "Criar novo frete de serviço",
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{accessToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Buscar frete de serviço por ID",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/admin/service-freight/{{id}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "admin",
-                "service-freight",
-                "{{id}}"
-              ]
-            },
-            "description": "Buscar frete de serviço por ID",
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{accessToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Editar frete de serviço",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/admin/service-freight/{{id}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "admin",
-                "service-freight",
-                "{{id}}"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"CIF\"\n}"
-            },
-            "description": "Editar frete de serviço",
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{accessToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Deletar frete de serviço",
-          "request": {
-            "method": "DELETE",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/admin/service-freight/{{id}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "admin",
-                "service-freight",
-                "{{id}}"
-              ]
-            },
-            "description": "Deletar frete de serviço",
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{accessToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Inverter status ativo do frete de serviço",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/admin/service-freight/{{id}}/status",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "admin",
-                "service-freight",
-                "{{id}}",
-                "status"
-              ]
-            },
-            "description": "Inverter status ativo do frete de serviço",
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{accessToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Prazo de Entrega de Serviço",
+      "name": "Serviços - Prazo de entrega",
       "item": [
         {
           "name": "Listar prazos de entrega com paginação e busca",
@@ -6540,10 +7074,10 @@
       ]
     },
     {
-      "name": "Garantia de Serviço",
+      "name": "Serviços - Frete",
       "item": [
         {
-          "name": "Listar garantias de serviço com paginação e busca",
+          "name": "Listar fretes de serviço com paginação e busca",
           "request": {
             "method": "GET",
             "header": [
@@ -6554,13 +7088,13 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/admin/service-warranty",
+              "raw": "{{baseUrl}}/admin/service-freight",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "admin",
-                "service-warranty"
+                "service-freight"
               ],
               "query": [
                 {
@@ -6585,7 +7119,7 @@
                 }
               ]
             },
-            "description": "Listar garantias de serviço com paginação e busca",
+            "description": "Listar fretes de serviço com paginação e busca",
             "auth": {
               "type": "bearer",
               "bearer": [
@@ -6599,7 +7133,7 @@
           }
         },
         {
-          "name": "Criar nova garantia de serviço",
+          "name": "Criar novo frete de serviço",
           "request": {
             "method": "POST",
             "header": [
@@ -6610,20 +7144,20 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/admin/service-warranty",
+              "raw": "{{baseUrl}}/admin/service-freight",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "admin",
-                "service-warranty"
+                "service-freight"
               ]
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"90 dias\"\n}"
+              "raw": "{\n  \"name\": \"CIF\"\n}"
             },
-            "description": "Criar nova garantia de serviço",
+            "description": "Criar novo frete de serviço",
             "auth": {
               "type": "bearer",
               "bearer": [
@@ -6637,7 +7171,7 @@
           }
         },
         {
-          "name": "Buscar garantia de serviço por ID",
+          "name": "Buscar frete de serviço por ID",
           "request": {
             "method": "GET",
             "header": [
@@ -6648,17 +7182,17 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/admin/service-warranty/{{id}}",
+              "raw": "{{baseUrl}}/admin/service-freight/{{id}}",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "admin",
-                "service-warranty",
+                "service-freight",
                 "{{id}}"
               ]
             },
-            "description": "Buscar garantia de serviço por ID",
+            "description": "Buscar frete de serviço por ID",
             "auth": {
               "type": "bearer",
               "bearer": [
@@ -6672,7 +7206,7 @@
           }
         },
         {
-          "name": "Editar garantia de serviço",
+          "name": "Editar frete de serviço",
           "request": {
             "method": "PATCH",
             "header": [
@@ -6683,21 +7217,21 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/admin/service-warranty/{{id}}",
+              "raw": "{{baseUrl}}/admin/service-freight/{{id}}",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "admin",
-                "service-warranty",
+                "service-freight",
                 "{{id}}"
               ]
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"90 dias\"\n}"
+              "raw": "{\n  \"name\": \"CIF\"\n}"
             },
-            "description": "Editar garantia de serviço",
+            "description": "Editar frete de serviço",
             "auth": {
               "type": "bearer",
               "bearer": [
@@ -6711,7 +7245,7 @@
           }
         },
         {
-          "name": "Deletar garantia de serviço",
+          "name": "Deletar frete de serviço",
           "request": {
             "method": "DELETE",
             "header": [
@@ -6722,17 +7256,17 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/admin/service-warranty/{{id}}",
+              "raw": "{{baseUrl}}/admin/service-freight/{{id}}",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "admin",
-                "service-warranty",
+                "service-freight",
                 "{{id}}"
               ]
             },
-            "description": "Deletar garantia de serviço",
+            "description": "Deletar frete de serviço",
             "auth": {
               "type": "bearer",
               "bearer": [
@@ -6746,7 +7280,7 @@
           }
         },
         {
-          "name": "Inverter status ativo da garantia de serviço",
+          "name": "Inverter status ativo do frete de serviço",
           "request": {
             "method": "PATCH",
             "header": [
@@ -6757,18 +7291,18 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/admin/service-warranty/{{id}}/status",
+              "raw": "{{baseUrl}}/admin/service-freight/{{id}}/status",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "admin",
-                "service-warranty",
+                "service-freight",
                 "{{id}}",
                 "status"
               ]
             },
-            "description": "Inverter status ativo da garantia de serviço",
+            "description": "Inverter status ativo do frete de serviço",
             "auth": {
               "type": "bearer",
               "bearer": [
@@ -6784,7 +7318,7 @@
       ]
     },
     {
-      "name": "Validade de Proposta de Serviço",
+      "name": "Serviços - Validade de proposta",
       "item": [
         {
           "name": "Listar validades de proposta com paginação e busca",
@@ -7013,6 +7547,250 @@
               ]
             },
             "description": "Inverter status ativo da validade de proposta",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Serviços - Garantia",
+      "item": [
+        {
+          "name": "Listar garantias de serviço com paginação e busca",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/service-warranty",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "service-warranty"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "{{page}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "size",
+                  "value": "{{size}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "search",
+                  "value": "{{search}}",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "active",
+                  "value": "{{active}}",
+                  "description": "Opcional"
+                }
+              ]
+            },
+            "description": "Listar garantias de serviço com paginação e busca",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Criar nova garantia de serviço",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/service-warranty",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "service-warranty"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"90 dias\"\n}"
+            },
+            "description": "Criar nova garantia de serviço",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar garantia de serviço por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/service-warranty/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "service-warranty",
+                "{{id}}"
+              ]
+            },
+            "description": "Buscar garantia de serviço por ID",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Editar garantia de serviço",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/service-warranty/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "service-warranty",
+                "{{id}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"90 dias\"\n}"
+            },
+            "description": "Editar garantia de serviço",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Deletar garantia de serviço",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/service-warranty/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "service-warranty",
+                "{{id}}"
+              ]
+            },
+            "description": "Deletar garantia de serviço",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Inverter status ativo da garantia de serviço",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/service-warranty/{{id}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "service-warranty",
+                "{{id}}",
+                "status"
+              ]
+            },
+            "description": "Inverter status ativo da garantia de serviço",
             "auth": {
               "type": "bearer",
               "bearer": [
