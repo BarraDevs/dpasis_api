@@ -57,6 +57,9 @@ const TOKENS = {
 
   ServiceCatalogDao: Symbol.for('ServiceCatalogDao'),
   ServiceCatalogRepository: Symbol.for('ServiceCatalogRepository'),
+
+  ServiceAttendanceValueDao: Symbol.for('ServiceAttendanceValueDao'),
+  ServiceAttendanceValueRepository: Symbol.for('ServiceAttendanceValueRepository'),
 };
 
 export { TOKENS };

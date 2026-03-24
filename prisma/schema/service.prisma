@@ -15,15 +15,29 @@ model Service {
   createdAt                 DateTime @default(now())
   updatedAt                 DateTime @updatedAt
 
-  cnaeNbsIndop            CnaeNbsIndop            @relation(fields: [cnaeNbsIndopId], references: [id])
-  serviceBilled           ServiceBilled           @relation(fields: [serviceBilledId], references: [id])
-  serviceCategory         ServiceCategory         @relation(fields: [serviceCategoryId], references: [id])
-  serviceDeliveryTerm     ServiceDeliveryTerm     @relation(fields: [serviceDeliveryTermId], references: [id])
-  serviceFreight          ServiceFreight          @relation(fields: [serviceFreightId], references: [id])
-  serviceProposalValidity ServiceProposalValidity @relation(fields: [serviceProposalValidityId], references: [id])
-  serviceWarranty         ServiceWarranty         @relation(fields: [serviceWarrantyId], references: [id])
+  cnaeNbsIndop            CnaeNbsIndop             @relation(fields: [cnaeNbsIndopId], references: [id])
+  serviceBilled           ServiceBilled            @relation(fields: [serviceBilledId], references: [id])
+  serviceCategory         ServiceCategory          @relation(fields: [serviceCategoryId], references: [id])
+  serviceDeliveryTerm     ServiceDeliveryTerm      @relation(fields: [serviceDeliveryTermId], references: [id])
+  serviceFreight          ServiceFreight           @relation(fields: [serviceFreightId], references: [id])
+  serviceProposalValidity ServiceProposalValidity  @relation(fields: [serviceProposalValidityId], references: [id])
+  serviceWarranty         ServiceWarranty          @relation(fields: [serviceWarrantyId], references: [id])
+  serviceAttendanceValues ServiceAttendanceValue[]
 
   @@map("services")
+}
+
+model ServiceAttendanceValue {
+  id                Int      @id @default(autoincrement())
+  serviceId         Int
+  values            Json
+  totalValueInCents Int
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  service Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@map("service_attendance_values")
 }
 
 model ServiceBilled {
