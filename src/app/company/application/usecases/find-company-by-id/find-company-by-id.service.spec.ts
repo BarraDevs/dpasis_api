@@ -2,6 +2,7 @@ import { Test } from '@nestjs/testing';
 import { CompanyNotFoundError } from 'src/app/company/domain/errors/company-not-found.error';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { CompanyModule } from '../../../company.module';
+import { CompanyDto } from '../../dtos/company.dto';
 import { FindCompanyById } from './find-company-by-id.service';
 
 function makeCompanyData(overrides?: Partial<{
@@ -134,7 +135,7 @@ describe('FindCompanyById - Integration tests', () => {
 
     const result = await sut.execute(company.id);
 
-    expect(result).toEqual({
+    expect(result).toEqual<CompanyDto>({
       id: company.id,
       name: 'Empresa Completa',
       fantasyName: 'Completa',

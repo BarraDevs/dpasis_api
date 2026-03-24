@@ -71,6 +71,7 @@ describe('FindClientAddressById', () => {
         neighborhood: 'Centro',
         city: 'São Paulo',
         state: 'SP',
+        active: true,
       },
     });
 
@@ -105,6 +106,7 @@ describe('FindClientAddressById', () => {
         neighborhood: 'Jardins',
         city: 'Rio de Janeiro',
         state: 'RJ',
+        active: true,
       },
     });
 

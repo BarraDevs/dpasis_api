@@ -50,7 +50,7 @@ describe('ServiceBilled Entity', () => {
 
       const serviceBilled = ServiceBilled._instantiate(props);
 
-      expect(serviceBilled.props).toEqual({
+      expect(serviceBilled.props).toEqual<ServiceBilledProps>({
         id: 42,
         description: 'Custom description',
         isJunction: true,

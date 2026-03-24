@@ -1,4 +1,5 @@
 import { Test } from '@nestjs/testing';
+import { ClientItemProps } from 'src/app/client/client-item/domain/entities/client-item.entity';
 import { ClientItemFactory } from 'src/app/client/client-item/domain/factories/client-item.factory';
 import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
 import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum';
@@ -174,6 +175,7 @@ describe('ClientItemRepositoryAdapterPrisma - Integration tests', () => {
           quantity: 1,
           unitValueInCents: 10000,
           cnaeNbsIndopId,
+          active: true,
         },
       });
 
@@ -192,12 +194,13 @@ describe('ClientItemRepositoryAdapterPrisma - Integration tests', () => {
           quantity: 7,
           unitValueInCents: 3333,
           cnaeNbsIndopId,
+          active: true,
         },
       });
 
       const result = await sut.findById(created.id);
 
-      expect(result?.props).toEqual({
+      expect(result?.props).toEqual<ClientItemProps>({
         id: created.id,
         clientId: created.clientId,
         description: created.description,
@@ -217,6 +220,7 @@ describe('ClientItemRepositoryAdapterPrisma - Integration tests', () => {
           quantity: 1,
           unitValueInCents: 10000,
           cnaeNbsIndopId,
+          active: true,
         },
       });
 
@@ -252,6 +256,7 @@ describe('ClientItemRepositoryAdapterPrisma - Integration tests', () => {
           quantity: 1,
           unitValueInCents: 10000,
           cnaeNbsIndopId,
+          active: true,
         },
       });
 
@@ -276,6 +281,7 @@ describe('ClientItemRepositoryAdapterPrisma - Integration tests', () => {
           quantity: 10,
           unitValueInCents: 10000,
           cnaeNbsIndopId,
+          active: true,
         },
       });
 
@@ -298,6 +304,7 @@ describe('ClientItemRepositoryAdapterPrisma - Integration tests', () => {
           quantity: 1,
           unitValueInCents: 10000,
           cnaeNbsIndopId,
+          active: true,
         },
       });
 

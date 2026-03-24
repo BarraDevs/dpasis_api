@@ -73,7 +73,7 @@ describe('ClientAddressFactory', () => {
 
       const clientAddress = ClientAddressFactory.create(props);
 
-      expect(clientAddress.props).toEqual({
+      expect(clientAddress.props).toEqual<ClientAddressProps>({
         id: null,
         clientId: 42,
         type: ClientAddressType.BILLING,
@@ -191,7 +191,7 @@ describe('ClientAddressFactory', () => {
 
       const clientAddress = ClientAddressFactory.load(props);
 
-      expect(clientAddress.props).toEqual({
+      expect(clientAddress.props).toEqual<ClientAddressProps>({
         id: 50,
         clientId: 100,
         type: ClientAddressType.BILLING,

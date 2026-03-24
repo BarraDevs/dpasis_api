@@ -77,6 +77,7 @@ describe('DeleteCnaeNbsIndop - Integration tests', () => {
         quantity: 1,
         unitValueInCents: 1000,
         cnaeNbsIndopId: created.id,
+        active: true,
       },
     });
 

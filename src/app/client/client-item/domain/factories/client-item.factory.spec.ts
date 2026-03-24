@@ -50,7 +50,7 @@ describe('ClientItemFactory', () => {
 
       const clientItem = ClientItemFactory.create(props);
 
-      expect(clientItem.props).toEqual({
+      expect(clientItem.props).toEqual<ClientItemProps>({
         id: null,
         clientId: 42,
         description: 'Descrição completa',
@@ -84,7 +84,7 @@ describe('ClientItemFactory', () => {
 
       const clientItem = ClientItemFactory.edit(existing, data);
 
-      expect(clientItem.props).toEqual({
+      expect(clientItem.props).toEqual<ClientItemProps>({
         ...existing.props,
         description: 'Descrição Atualizada',
       });
@@ -96,7 +96,7 @@ describe('ClientItemFactory', () => {
 
       const clientItem = ClientItemFactory.edit(existing, data);
 
-      expect(clientItem.props).toEqual({
+      expect(clientItem.props).toEqual<ClientItemProps>({
         ...existing.props,
         quantity: 10,
         unitValueInCents: 20000,
@@ -109,7 +109,7 @@ describe('ClientItemFactory', () => {
 
       const clientItem = ClientItemFactory.edit(existing, data);
 
-      expect(clientItem.props).toEqual({
+      expect(clientItem.props).toEqual<ClientItemProps>({
         ...existing.props,
         cnaeNbsIndopId: 3,
       });
@@ -134,7 +134,7 @@ describe('ClientItemFactory', () => {
 
       const clientItem = ClientItemFactory.edit(existing, {});
 
-      expect(clientItem.props).toEqual(existing.props);
+      expect(clientItem.props).toEqual<ClientItemProps>(existing.props);
     });
 
     it('should use nullish coalescing - undefined keeps existing value', () => {
@@ -189,7 +189,7 @@ describe('ClientItemFactory', () => {
       const clientItem = ClientItemFactory.load(props);
 
       expect(clientItem).toBeInstanceOf(ClientItem);
-      expect(clientItem.props).toEqual({
+      expect(clientItem.props).toEqual<ClientItemProps>({
         id: 99,
         clientId: 20,
         description: 'Item Carregado',

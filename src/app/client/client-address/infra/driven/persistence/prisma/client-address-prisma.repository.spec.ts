@@ -257,6 +257,7 @@ describe('ClientAddressRepositoryAdapterPrisma - Integration tests', () => {
           neighborhood: 'Centro',
           city: 'São Paulo',
           state: 'SP',
+          active: true,
         },
       });
 

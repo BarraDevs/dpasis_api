@@ -74,6 +74,7 @@ describe('DeleteClientAddress', () => {
         neighborhood: 'Centro',
         city: 'São Paulo',
         state: 'SP',
+        active: true,
       },
     });
 
@@ -96,6 +97,7 @@ describe('DeleteClientAddress', () => {
         neighborhood: 'Centro',
         city: 'São Paulo',
         state: 'SP',
+        active: true,
       },
     });
 
@@ -150,6 +152,7 @@ describe('DeleteClientAddress', () => {
         neighborhood: 'Centro',
         city: 'São Paulo',
         state: 'SP',
+        active: true,
       },
     });
 
@@ -173,6 +176,7 @@ describe('DeleteClientAddress', () => {
         neighborhood: 'Centro',
         city: 'São Paulo',
         state: 'SP',
+        active: true,
       },
     });
 
@@ -195,6 +199,7 @@ describe('DeleteClientAddress', () => {
         neighborhood: 'Centro',
         city: 'São Paulo',
         state: 'SP',
+        active: true,
       },
     });
 

@@ -71,7 +71,7 @@ describe('ClientAddress Entity', () => {
 
       const clientAddress = ClientAddress._instantiate(props);
 
-      expect(clientAddress.props).toEqual({
+      expect(clientAddress.props).toEqual<ClientAddressProps>({
         id: 42,
         clientId: 10,
         type: ClientAddressType.SUPPORT,

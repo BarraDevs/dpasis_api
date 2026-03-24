@@ -48,6 +48,7 @@ export class ClientDiscountFactory {
     return ClientDiscount._instantiate({
       ...validatedProps,
       id: null,
+      active: true,
     });
   }
 
@@ -57,6 +58,7 @@ export class ClientDiscountFactory {
     return ClientDiscount._instantiate({
       ...validatedProps,
       id: props.id,
+      active: props.active,
     });
   }
 

@@ -83,6 +83,7 @@ describe('EditClientContact - Integration tests', () => {
         name: 'João',
         email: 'joao@example.com',
         receiveNF: false,
+        active: true,
       },
     });
     const data: EditClientContactInputDto = {
@@ -110,6 +111,7 @@ describe('EditClientContact - Integration tests', () => {
         name: 'João',
         email: 'joao@example.com',
         receiveNF: false,
+        active: true,
       },
     });
     const data: EditClientContactInputDto = {
@@ -132,6 +134,7 @@ describe('EditClientContact - Integration tests', () => {
         name: 'João',
         email: 'joao@example.com',
         receiveNF: false,
+        active: true,
       },
     });
     const contact2 = await prisma.clientContact.create({
@@ -141,6 +144,7 @@ describe('EditClientContact - Integration tests', () => {
         name: 'Maria',
         email: 'maria@example.com',
         receiveNF: false,
+        active: true,
       },
     });
     const data: EditClientContactInputDto = {
@@ -161,6 +165,7 @@ describe('EditClientContact - Integration tests', () => {
         name: 'João',
         email: 'joao@example.com',
         receiveNF: false,
+        active: true,
       },
     });
     const data: EditClientContactInputDto = {
@@ -186,6 +191,7 @@ describe('EditClientContact - Integration tests', () => {
         name: 'João',
         email: 'joao@example.com',
         receiveNF: false,
+        active: true,
       },
     });
     const data: EditClientContactInputDto = {
@@ -206,6 +212,7 @@ describe('EditClientContact - Integration tests', () => {
         name: 'João',
         email: 'joao@example.com',
         receiveNF: false,
+        active: true,
       },
     });
     const data: EditClientContactInputDto = {
@@ -227,6 +234,7 @@ describe('EditClientContact - Integration tests', () => {
         name: 'João',
         email: 'joao@example.com',
         receiveNF: false,
+        active: true,
       },
     });
     const data: EditClientContactInputDto = {
@@ -252,6 +260,7 @@ describe('EditClientContact - Integration tests', () => {
         name: 'João',
         email: 'joao@example.com',
         receiveNF: false,
+        active: true,
       },
     });
     const data: EditClientContactInputDto = {

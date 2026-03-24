@@ -1,5 +1,6 @@
 import { Test } from '@nestjs/testing';
 import { ClientAddressType } from 'src/app/client/client-address/domain/enums/client-address-type.enum';
+import { ClientInvoiceConfigDto } from 'src/app/client/client-invoice-config/application/dtos/client-invoice-config.dto';
 import { ClientInvoiceConfigDueDateType } from 'src/app/client/client-invoice-config/domain/enums/client-invoice-config-due-date-type.enum';
 import { ClientInvoiceConfigType } from 'src/app/client/client-invoice-config/domain/enums/client-invoice-config-type.enum';
 import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
@@ -60,6 +61,7 @@ describe('ClientInvoiceConfigDaoAdapterPrisma - Integration tests', () => {
         neighborhood: 'Centro',
         city: 'São Paulo',
         state: 'SP',
+        active: true,
       },
     });
 
@@ -114,7 +116,7 @@ describe('ClientInvoiceConfigDaoAdapterPrisma - Integration tests', () => {
       const result = await sut.findById(created.id);
 
       expect(result).not.toBeNull();
-      expect(result).toEqual({
+      expect(result).toEqual<ClientInvoiceConfigDto>({
         id: created.id,
         clientId,
         generateNf: true,
@@ -154,7 +156,7 @@ describe('ClientInvoiceConfigDaoAdapterPrisma - Integration tests', () => {
       const result = await sut.findById(created.id);
 
       expect(result).not.toBeNull();
-      expect(result).toEqual({
+      expect(result).toEqual<ClientInvoiceConfigDto>({
         id: created.id,
         clientId,
         generateNf: false,
@@ -202,7 +204,7 @@ describe('ClientInvoiceConfigDaoAdapterPrisma - Integration tests', () => {
       const result = await sut.findByClientId(clientId);
 
       expect(result).not.toBeNull();
-      expect(result).toEqual({
+      expect(result).toEqual<ClientInvoiceConfigDto>({
         id: created.id,
         clientId,
         generateNf: true,

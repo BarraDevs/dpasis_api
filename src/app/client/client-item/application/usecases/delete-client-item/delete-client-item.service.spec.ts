@@ -77,6 +77,7 @@ describe('DeleteClientItem - Integration tests', () => {
         quantity: 1,
         unitValueInCents: 10000,
         cnaeNbsIndopId,
+        active: true,
       },
     });
 
@@ -96,6 +97,7 @@ describe('DeleteClientItem - Integration tests', () => {
         quantity: 1,
         unitValueInCents: 10000,
         cnaeNbsIndopId,
+        active: true,
       },
     });
 
@@ -120,6 +122,7 @@ describe('DeleteClientItem - Integration tests', () => {
         quantity: 1,
         unitValueInCents: 10000,
         cnaeNbsIndopId,
+        active: true,
       },
     });
 

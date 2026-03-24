@@ -7,6 +7,7 @@ import { ClientInvoiceConfigNotFoundError } from 'src/app/client/client-invoice-
 import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
 import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
+import { ClientInvoiceConfigDto } from '../../dtos/client-invoice-config.dto';
 import { FindClientInvoiceConfigByClientId } from './find-client-invoice-config-by-client-id.service';
 
 describe('FindClientInvoiceConfigByClientId - Integration tests', () => {
@@ -60,6 +61,7 @@ describe('FindClientInvoiceConfigByClientId - Integration tests', () => {
         neighborhood: 'Centro',
         city: 'São Paulo',
         state: 'SP',
+        active: true,
       },
     });
 
@@ -118,7 +120,7 @@ describe('FindClientInvoiceConfigByClientId - Integration tests', () => {
     const result = await sut.execute(clientId);
 
     expect(result).not.toBeNull();
-    expect(result).toEqual({
+    expect(result).toEqual<ClientInvoiceConfigDto>({
       id: config.id,
       clientId,
       generateNf: true,
@@ -157,7 +159,7 @@ describe('FindClientInvoiceConfigByClientId - Integration tests', () => {
 
     const result = await sut.execute(clientId);
 
-    expect(result).toEqual({
+    expect(result).toEqual<ClientInvoiceConfigDto>({
       id: config.id,
       clientId,
       generateNf: false,

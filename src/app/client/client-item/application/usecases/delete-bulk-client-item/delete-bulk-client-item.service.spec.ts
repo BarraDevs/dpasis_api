@@ -79,6 +79,7 @@ describe('DeleteBulkClientItem - Integration tests', () => {
           quantity: 1,
           unitValueInCents: 10000,
           cnaeNbsIndopId,
+          active: true,
         },
       }),
       prisma.clientItem.create({
@@ -88,6 +89,7 @@ describe('DeleteBulkClientItem - Integration tests', () => {
           quantity: 1,
           unitValueInCents: 10000,
           cnaeNbsIndopId,
+          active: true,
         },
       }),
       prisma.clientItem.create({
@@ -97,6 +99,7 @@ describe('DeleteBulkClientItem - Integration tests', () => {
           quantity: 1,
           unitValueInCents: 10000,
           cnaeNbsIndopId,
+          active: true,
         },
       }),
     ]);
@@ -129,6 +132,7 @@ describe('DeleteBulkClientItem - Integration tests', () => {
           quantity: 1,
           unitValueInCents: 10000,
           cnaeNbsIndopId,
+          active: true,
         },
       }),
       prisma.clientItem.create({
@@ -138,6 +142,7 @@ describe('DeleteBulkClientItem - Integration tests', () => {
           quantity: 1,
           unitValueInCents: 10000,
           cnaeNbsIndopId,
+          active: true,
         },
       }),
     ]);

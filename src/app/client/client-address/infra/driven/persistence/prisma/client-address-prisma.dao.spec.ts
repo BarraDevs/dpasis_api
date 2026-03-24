@@ -1,4 +1,5 @@
 import { Test } from '@nestjs/testing';
+import { ClientAddressDto } from 'src/app/client/client-address/application/dtos/client-address.dto';
 import { ClientAddressType } from 'src/app/client/client-address/domain/enums/client-address-type.enum';
 import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
 import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum';
@@ -73,6 +74,7 @@ describe('ClientAddressDaoAdapterPrisma - Integration tests', () => {
           neighborhood: 'Centro',
           city: 'São Paulo',
           state: 'SP',
+          active: true,
         },
       });
 
@@ -80,7 +82,7 @@ describe('ClientAddressDaoAdapterPrisma - Integration tests', () => {
 
       expect(addresses).toHaveLength(1);
       expect(total).toBe(1);
-      expect(addresses[0]).toEqual({
+      expect(addresses[0]).toEqual<ClientAddressDto>({
         id: created.id,
         clientId,
         type: ClientAddressType.MAIN,
@@ -158,6 +160,7 @@ describe('ClientAddressDaoAdapterPrisma - Integration tests', () => {
           neighborhood: 'Centro',
           city: 'São Paulo',
           state: 'SP',
+          active: true,
         })),
       });
 
@@ -181,6 +184,7 @@ describe('ClientAddressDaoAdapterPrisma - Integration tests', () => {
           neighborhood: 'Centro',
           city: 'São Paulo',
           state: 'SP',
+          active: true,
         },
       });
 
@@ -195,6 +199,7 @@ describe('ClientAddressDaoAdapterPrisma - Integration tests', () => {
           neighborhood: 'Centro',
           city: 'São Paulo',
           state: 'SP',
+          active: true,
         },
       });
 
@@ -218,6 +223,7 @@ describe('ClientAddressDaoAdapterPrisma - Integration tests', () => {
           neighborhood: 'Centro',
           city: 'São Paulo',
           state: 'SP',
+          active: true,
         },
       });
 
@@ -232,6 +238,7 @@ describe('ClientAddressDaoAdapterPrisma - Integration tests', () => {
           neighborhood: 'Jardins',
           city: 'Rio de Janeiro',
           state: 'RJ',
+          active: true,
         },
       });
 
@@ -254,6 +261,7 @@ describe('ClientAddressDaoAdapterPrisma - Integration tests', () => {
           neighborhood: 'Centro',
           city: 'São Paulo',
           state: 'SP',
+          active: true,
         },
       });
 
@@ -268,6 +276,7 @@ describe('ClientAddressDaoAdapterPrisma - Integration tests', () => {
           neighborhood: 'Centro',
           city: 'São Paulo',
           state: 'SP',
+          active: true,
         },
       });
 
@@ -309,13 +318,14 @@ describe('ClientAddressDaoAdapterPrisma - Integration tests', () => {
           neighborhood: 'Centro',
           city: 'São Paulo',
           state: 'SP',
+          active: true,
         },
       });
 
       const result = await sut.findById(created.id);
 
       expect(result).not.toBeNull();
-      expect(result).toEqual({
+      expect(result).toEqual<ClientAddressDto>({
         id: created.id,
         clientId,
         type: ClientAddressType.MAIN,
@@ -344,6 +354,7 @@ describe('ClientAddressDaoAdapterPrisma - Integration tests', () => {
           neighborhood: 'Jardins',
           city: 'Rio de Janeiro',
           state: 'RJ',
+          active: true,
         },
       });
 
@@ -374,6 +385,7 @@ describe('ClientAddressDaoAdapterPrisma - Integration tests', () => {
           neighborhood: 'Centro',
           city: 'São Paulo',
           state: 'SP',
+          active: true,
         },
       });
 
@@ -394,13 +406,14 @@ describe('ClientAddressDaoAdapterPrisma - Integration tests', () => {
           neighborhood: 'Centro',
           city: 'São Paulo',
           state: 'SP',
+          active: true,
         },
       });
 
       const result = await sut.findByClientIdAndType(clientId, ClientAddressType.MAIN);
 
       expect(result).not.toBeNull();
-      expect(result).toEqual({
+      expect(result).toEqual<ClientAddressDto>({
         id: created.id,
         clientId,
         type: ClientAddressType.MAIN,
@@ -450,6 +463,7 @@ describe('ClientAddressDaoAdapterPrisma - Integration tests', () => {
           neighborhood: 'Centro',
           city: 'Rio de Janeiro',
           state: 'RJ',
+          active: true,
         },
       });
 
@@ -470,6 +484,7 @@ describe('ClientAddressDaoAdapterPrisma - Integration tests', () => {
           neighborhood: 'Centro',
           city: 'São Paulo',
           state: 'SP',
+          active: true,
         },
       });
 
@@ -484,6 +499,7 @@ describe('ClientAddressDaoAdapterPrisma - Integration tests', () => {
           neighborhood: 'Centro',
           city: 'São Paulo',
           state: 'SP',
+          active: true,
         },
       });
 

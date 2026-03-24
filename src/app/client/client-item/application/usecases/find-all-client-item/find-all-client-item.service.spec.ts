@@ -91,6 +91,7 @@ describe('FindAllClientItem - Integration tests', () => {
         quantity: 3,
         unitValueInCents: 5000,
         cnaeNbsIndopId: cnaeNbsIndop.id,
+        active: true,
       },
     });
 
@@ -137,6 +138,7 @@ describe('FindAllClientItem - Integration tests', () => {
           quantity: 1,
           unitValueInCents: 10000,
           cnaeNbsIndopId,
+          active: true,
         },
         {
           clientId,
@@ -144,6 +146,7 @@ describe('FindAllClientItem - Integration tests', () => {
           quantity: 2,
           unitValueInCents: 5000,
           cnaeNbsIndopId,
+          active: true,
         },
       ],
     });
@@ -182,6 +185,7 @@ describe('FindAllClientItem - Integration tests', () => {
         quantity: 1,
         unitValueInCents: 10000,
         cnaeNbsIndopId,
+        active: true,
       },
     });
     await prisma.clientItem.create({
@@ -191,6 +195,7 @@ describe('FindAllClientItem - Integration tests', () => {
         quantity: 1,
         unitValueInCents: 10000,
         cnaeNbsIndopId,
+        active: true,
       },
     });
 
@@ -210,6 +215,7 @@ describe('FindAllClientItem - Integration tests', () => {
           quantity: 1,
           unitValueInCents: 10000,
           cnaeNbsIndopId,
+          active: true,
         },
         {
           clientId,
@@ -217,6 +223,7 @@ describe('FindAllClientItem - Integration tests', () => {
           quantity: 1,
           unitValueInCents: 5000,
           cnaeNbsIndopId,
+          active: true,
         },
       ],
     });
@@ -241,8 +248,8 @@ describe('FindAllClientItem - Integration tests', () => {
 
     await prisma.clientItem.createMany({
       data: [
-        { clientId, description: 'Item A', quantity: 1, unitValueInCents: 10000, cnaeNbsIndopId: cni1.id },
-        { clientId, description: 'Item B', quantity: 1, unitValueInCents: 5000, cnaeNbsIndopId: cni2.id },
+        { clientId, description: 'Item A', quantity: 1, unitValueInCents: 10000, cnaeNbsIndopId: cni1.id, active: true },
+        { clientId, description: 'Item B', quantity: 1, unitValueInCents: 5000, cnaeNbsIndopId: cni2.id, active: true },
       ],
     });
 
@@ -266,8 +273,8 @@ describe('FindAllClientItem - Integration tests', () => {
 
     await prisma.clientItem.createMany({
       data: [
-        { clientId, description: 'Item A', quantity: 1, unitValueInCents: 10000, cnaeNbsIndopId: cni1.id },
-        { clientId, description: 'Item B', quantity: 1, unitValueInCents: 5000, cnaeNbsIndopId: cni2.id },
+        { clientId, description: 'Item A', quantity: 1, unitValueInCents: 10000, cnaeNbsIndopId: cni1.id, active: true },
+        { clientId, description: 'Item B', quantity: 1, unitValueInCents: 5000, cnaeNbsIndopId: cni2.id, active: true },
       ],
     });
 
@@ -291,8 +298,8 @@ describe('FindAllClientItem - Integration tests', () => {
 
     await prisma.clientItem.createMany({
       data: [
-        { clientId, description: 'Item A', quantity: 1, unitValueInCents: 10000, cnaeNbsIndopId: cni1.id },
-        { clientId, description: 'Item B', quantity: 1, unitValueInCents: 5000, cnaeNbsIndopId: cni2.id },
+        { clientId, description: 'Item A', quantity: 1, unitValueInCents: 10000, cnaeNbsIndopId: cni1.id, active: true },
+        { clientId, description: 'Item B', quantity: 1, unitValueInCents: 5000, cnaeNbsIndopId: cni2.id, active: true },
       ],
     });
 
@@ -311,6 +318,7 @@ describe('FindAllClientItem - Integration tests', () => {
           quantity: 1,
           unitValueInCents: 10000,
           cnaeNbsIndopId,
+          active: true,
         },
         {
           clientId,
@@ -318,6 +326,7 @@ describe('FindAllClientItem - Integration tests', () => {
           quantity: 2,
           unitValueInCents: 5000,
           cnaeNbsIndopId,
+          active: true,
         },
       ],
     });
@@ -338,6 +347,7 @@ describe('FindAllClientItem - Integration tests', () => {
           quantity: 1,
           unitValueInCents: 10000,
           cnaeNbsIndopId,
+          active: true,
         },
         {
           clientId,
@@ -345,6 +355,7 @@ describe('FindAllClientItem - Integration tests', () => {
           quantity: 1,
           unitValueInCents: 5000,
           cnaeNbsIndopId,
+          active: true,
         },
       ],
     });
@@ -370,6 +381,7 @@ describe('FindAllClientItem - Integration tests', () => {
           quantity: 1,
           unitValueInCents: 10000,
           cnaeNbsIndopId,
+          active: true,
         },
         {
           clientId,
@@ -377,6 +389,7 @@ describe('FindAllClientItem - Integration tests', () => {
           quantity: 1,
           unitValueInCents: 5000,
           cnaeNbsIndopId,
+          active: true,
         },
         {
           clientId,
@@ -384,6 +397,7 @@ describe('FindAllClientItem - Integration tests', () => {
           quantity: 1,
           unitValueInCents: 7500,
           cnaeNbsIndopId,
+          active: true,
         },
       ],
     });
@@ -406,6 +420,7 @@ describe('FindAllClientItem - Integration tests', () => {
           quantity: 1,
           unitValueInCents: 10000,
           cnaeNbsIndopId,
+          active: true,
         },
         {
           clientId,
@@ -413,6 +428,7 @@ describe('FindAllClientItem - Integration tests', () => {
           quantity: 1,
           unitValueInCents: 5000,
           cnaeNbsIndopId,
+          active: true,
         },
         {
           clientId,
@@ -420,6 +436,7 @@ describe('FindAllClientItem - Integration tests', () => {
           quantity: 1,
           unitValueInCents: 7500,
           cnaeNbsIndopId,
+          active: true,
         },
       ],
     });
@@ -440,6 +457,7 @@ describe('FindAllClientItem - Integration tests', () => {
         quantity: 1,
         unitValueInCents: 10000,
         cnaeNbsIndopId,
+        active: true,
       },
     });
     const item2 = await prisma.clientItem.create({
@@ -449,6 +467,7 @@ describe('FindAllClientItem - Integration tests', () => {
         quantity: 1,
         unitValueInCents: 5000,
         cnaeNbsIndopId,
+        active: true,
       },
     });
 

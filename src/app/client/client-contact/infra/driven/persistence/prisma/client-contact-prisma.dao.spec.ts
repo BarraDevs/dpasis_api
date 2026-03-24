@@ -67,8 +67,8 @@ describe('ClientContactDaoAdapterPrisma - Integration tests', () => {
     it('should return client contacts with default pagination', async() => {
       await prisma.clientContact.createMany({
         data: [
-          { clientId, departmentId, name: 'João', email: 'joao@example.com', receiveNF: false },
-          { clientId, departmentId, name: 'Maria', email: 'maria@example.com', receiveNF: true },
+          { clientId, departmentId, name: 'João', email: 'joao@example.com', receiveNF: false, active: true },
+          { clientId, departmentId, name: 'Maria', email: 'maria@example.com', receiveNF: true, active: true },
         ],
       });
 
@@ -86,6 +86,7 @@ describe('ClientContactDaoAdapterPrisma - Integration tests', () => {
           name: `Contact ${i + 1}`,
           email: `contact${i + 1}@example.com`,
           receiveNF: false,
+          active: true,
         })),
       });
 
@@ -120,10 +121,10 @@ describe('ClientContactDaoAdapterPrisma - Integration tests', () => {
 
     it('should search in name and email (case-insensitive)', async() => {
       await prisma.clientContact.create({
-        data: { clientId, departmentId, name: 'João', email: 'joao@example.com', receiveNF: false },
+        data: { clientId, departmentId, name: 'João', email: 'joao@example.com', receiveNF: false, active: true },
       });
       await prisma.clientContact.create({
-        data: { clientId, departmentId, name: 'Maria', email: 'maria@example.com', receiveNF: false },
+        data: { clientId, departmentId, name: 'Maria', email: 'maria@example.com', receiveNF: false, active: true },
       });
 
       const [contacts, total] = await sut.findAll({ clientId, search: 'JOAO' });
@@ -138,10 +139,10 @@ describe('ClientContactDaoAdapterPrisma - Integration tests', () => {
         data: { name: `Dept2 ${Date.now()}`, active: true },
       });
       await prisma.clientContact.create({
-        data: { clientId, departmentId, name: 'João', email: 'joao@example.com', receiveNF: false },
+        data: { clientId, departmentId, name: 'João', email: 'joao@example.com', receiveNF: false, active: true },
       });
       await prisma.clientContact.create({
-        data: { clientId, departmentId: dept2.id, name: 'Maria', email: 'maria@example.com', receiveNF: false },
+        data: { clientId, departmentId: dept2.id, name: 'Maria', email: 'maria@example.com', receiveNF: false, active: true },
       });
 
       const [contacts, total] = await sut.findAll({ clientId, departmentId });
@@ -155,8 +156,8 @@ describe('ClientContactDaoAdapterPrisma - Integration tests', () => {
     it('should filter by receiveNF', async() => {
       await prisma.clientContact.createMany({
         data: [
-          { clientId, departmentId, name: 'João', email: 'joao@example.com', receiveNF: true },
-          { clientId, departmentId, name: 'Maria', email: 'maria@example.com', receiveNF: false },
+          { clientId, departmentId, name: 'João', email: 'joao@example.com', receiveNF: true, active: true },
+          { clientId, departmentId, name: 'Maria', email: 'maria@example.com', receiveNF: false, active: true },
         ],
       });
 
@@ -169,10 +170,10 @@ describe('ClientContactDaoAdapterPrisma - Integration tests', () => {
 
     it('should return results ordered by name asc', async() => {
       const first = await prisma.clientContact.create({
-        data: { clientId, departmentId, name: 'B', email: 'b@example.com', receiveNF: false },
+        data: { clientId, departmentId, name: 'B', email: 'b@example.com', receiveNF: false, active: true },
       });
       const second = await prisma.clientContact.create({
-        data: { clientId, departmentId, name: 'A', email: 'a@example.com', receiveNF: false },
+        data: { clientId, departmentId, name: 'A', email: 'a@example.com', receiveNF: false, active: true },
       });
 
       const [contacts] = await sut.findAll({ clientId });
@@ -197,6 +198,7 @@ describe('ClientContactDaoAdapterPrisma - Integration tests', () => {
           name: 'João',
           email: 'joao@example.com',
           receiveNF: false,
+          active: true,
         },
       });
 
@@ -233,6 +235,7 @@ describe('ClientContactDaoAdapterPrisma - Integration tests', () => {
           whatsapp: '11988887777',
           observations: 'Observação',
           receiveNF: true,
+          active: true,
         },
       });
 
@@ -264,6 +267,7 @@ describe('ClientContactDaoAdapterPrisma - Integration tests', () => {
           name: 'João',
           email: 'joao@example.com',
           receiveNF: false,
+          active: true,
         },
       });
 
@@ -282,6 +286,7 @@ describe('ClientContactDaoAdapterPrisma - Integration tests', () => {
           name: 'João',
           email: 'joao@example.com',
           receiveNF: false,
+          active: true,
         },
       });
 

@@ -40,6 +40,7 @@ export class ClientContactSeed {
           },
           create: {
             clientId: clients[c.clientIdx].id,
+            active: true,
             departmentId: c.dept.id,
             name: c.name,
             email: c.email,

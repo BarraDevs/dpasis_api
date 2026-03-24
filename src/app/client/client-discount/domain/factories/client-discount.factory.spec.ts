@@ -22,6 +22,7 @@ function makeCreateProps(overrides?: Partial<ClientDiscountCreateProps>): Client
 function makeLoadProps(overrides?: Partial<ClientDiscountProps>): ClientDiscountProps {
   return {
     id: 1,
+    active: true,
     clientId: 1,
     description: 'Desconto de teste',
     type: DiscountType.PERCENTAGE,

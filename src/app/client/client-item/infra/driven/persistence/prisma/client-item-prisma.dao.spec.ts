@@ -85,6 +85,7 @@ describe('ClientItemDaoAdapterPrisma - Integration tests', () => {
             quantity: 11,
             unitValueInCents: 10000,
             cnaeNbsIndopId,
+            active: true,
           },
           {
             clientId,
@@ -92,6 +93,7 @@ describe('ClientItemDaoAdapterPrisma - Integration tests', () => {
             quantity: 2,
             unitValueInCents: 5000,
             cnaeNbsIndopId,
+            active: true,
           },
         ],
       });
@@ -113,6 +115,7 @@ describe('ClientItemDaoAdapterPrisma - Integration tests', () => {
             quantity: 1,
             unitValueInCents: 10000,
             cnaeNbsIndopId,
+            active: true,
           },
           {
             clientId,
@@ -120,6 +123,7 @@ describe('ClientItemDaoAdapterPrisma - Integration tests', () => {
             quantity: 1,
             unitValueInCents: 5000,
             cnaeNbsIndopId,
+            active: true,
           },
           {
             clientId,
@@ -127,6 +131,7 @@ describe('ClientItemDaoAdapterPrisma - Integration tests', () => {
             quantity: 1,
             unitValueInCents: 7500,
             cnaeNbsIndopId,
+            active: true,
           },
         ],
       });
@@ -152,6 +157,7 @@ describe('ClientItemDaoAdapterPrisma - Integration tests', () => {
           quantity: 1,
           unitValueInCents: 10000,
           cnaeNbsIndopId,
+          active: true,
         },
       });
       await prisma.clientItem.create({
@@ -161,6 +167,7 @@ describe('ClientItemDaoAdapterPrisma - Integration tests', () => {
           quantity: 1,
           unitValueInCents: 5000,
           cnaeNbsIndopId,
+          active: true,
         },
       });
 
@@ -185,8 +192,8 @@ describe('ClientItemDaoAdapterPrisma - Integration tests', () => {
 
       await prisma.clientItem.createMany({
         data: [
-          { clientId, description: 'Item A', quantity: 1, unitValueInCents: 10000, cnaeNbsIndopId: cni1.id },
-          { clientId, description: 'Item B', quantity: 1, unitValueInCents: 5000, cnaeNbsIndopId: cni2.id },
+          { clientId, description: 'Item A', quantity: 1, unitValueInCents: 10000, cnaeNbsIndopId: cni1.id, active: true },
+          { clientId, description: 'Item B', quantity: 1, unitValueInCents: 5000, cnaeNbsIndopId: cni2.id, active: true },
         ],
       });
 
@@ -210,8 +217,8 @@ describe('ClientItemDaoAdapterPrisma - Integration tests', () => {
 
       await prisma.clientItem.createMany({
         data: [
-          { clientId, description: 'Item A', quantity: 1, unitValueInCents: 10000, cnaeNbsIndopId: cni1.id },
-          { clientId, description: 'Item B', quantity: 1, unitValueInCents: 5000, cnaeNbsIndopId: cni2.id },
+          { clientId, description: 'Item A', quantity: 1, unitValueInCents: 10000, cnaeNbsIndopId: cni1.id, active: true },
+          { clientId, description: 'Item B', quantity: 1, unitValueInCents: 5000, cnaeNbsIndopId: cni2.id, active: true },
         ],
       });
 
@@ -235,8 +242,8 @@ describe('ClientItemDaoAdapterPrisma - Integration tests', () => {
 
       await prisma.clientItem.createMany({
         data: [
-          { clientId, description: 'Item A', quantity: 1, unitValueInCents: 10000, cnaeNbsIndopId: cni1.id },
-          { clientId, description: 'Item B', quantity: 1, unitValueInCents: 5000, cnaeNbsIndopId: cni2.id },
+          { clientId, description: 'Item A', quantity: 1, unitValueInCents: 10000, cnaeNbsIndopId: cni1.id, active: true },
+          { clientId, description: 'Item B', quantity: 1, unitValueInCents: 5000, cnaeNbsIndopId: cni2.id, active: true },
         ],
       });
 
@@ -260,8 +267,8 @@ describe('ClientItemDaoAdapterPrisma - Integration tests', () => {
 
       await prisma.clientItem.createMany({
         data: [
-          { clientId, description: 'Item CNAE 1', quantity: 1, unitValueInCents: 10000, cnaeNbsIndopId: cni1.id },
-          { clientId, description: 'Item CNAE 2', quantity: 1, unitValueInCents: 5000, cnaeNbsIndopId: cni2.id },
+          { clientId, description: 'Item CNAE 1', quantity: 1, unitValueInCents: 10000, cnaeNbsIndopId: cni1.id, active: true },
+          { clientId, description: 'Item CNAE 2', quantity: 1, unitValueInCents: 5000, cnaeNbsIndopId: cni2.id, active: true },
         ],
       });
 
@@ -286,8 +293,8 @@ describe('ClientItemDaoAdapterPrisma - Integration tests', () => {
 
       await prisma.clientItem.createMany({
         data: [
-          { clientId, description: 'Item NBS 1', quantity: 1, unitValueInCents: 10000, cnaeNbsIndopId: cni1.id },
-          { clientId, description: 'Item NBS 2', quantity: 1, unitValueInCents: 5000, cnaeNbsIndopId: cni2.id },
+          { clientId, description: 'Item NBS 1', quantity: 1, unitValueInCents: 10000, cnaeNbsIndopId: cni1.id, active: true },
+          { clientId, description: 'Item NBS 2', quantity: 1, unitValueInCents: 5000, cnaeNbsIndopId: cni2.id, active: true },
         ],
       });
 
@@ -312,8 +319,8 @@ describe('ClientItemDaoAdapterPrisma - Integration tests', () => {
 
       await prisma.clientItem.createMany({
         data: [
-          { clientId, description: 'Item INDOP 1', quantity: 1, unitValueInCents: 10000, cnaeNbsIndopId: cni1.id },
-          { clientId, description: 'Item INDOP 2', quantity: 1, unitValueInCents: 5000, cnaeNbsIndopId: cni2.id },
+          { clientId, description: 'Item INDOP 1', quantity: 1, unitValueInCents: 10000, cnaeNbsIndopId: cni1.id, active: true },
+          { clientId, description: 'Item INDOP 2', quantity: 1, unitValueInCents: 5000, cnaeNbsIndopId: cni2.id, active: true },
         ],
       });
 
@@ -342,8 +349,8 @@ describe('ClientItemDaoAdapterPrisma - Integration tests', () => {
 
       await prisma.clientItem.createMany({
         data: [
-          { clientId, description: 'Item Combo 1', quantity: 1, unitValueInCents: 10000, cnaeNbsIndopId: cni1.id },
-          { clientId, description: 'Item Combo 2', quantity: 1, unitValueInCents: 5000, cnaeNbsIndopId: cni2.id },
+          { clientId, description: 'Item Combo 1', quantity: 1, unitValueInCents: 10000, cnaeNbsIndopId: cni1.id, active: true },
+          { clientId, description: 'Item Combo 2', quantity: 1, unitValueInCents: 5000, cnaeNbsIndopId: cni2.id, active: true },
         ],
       });
 
@@ -389,6 +396,7 @@ describe('ClientItemDaoAdapterPrisma - Integration tests', () => {
           quantity: 3,
           unitValueInCents: 5000,
           cnaeNbsIndopId,
+          active: true,
         },
       });
 
@@ -410,6 +418,7 @@ describe('ClientItemDaoAdapterPrisma - Integration tests', () => {
           quantity: 0,
           unitValueInCents: 10000,
           cnaeNbsIndopId,
+          active: true,
         },
       });
 
@@ -426,6 +435,7 @@ describe('ClientItemDaoAdapterPrisma - Integration tests', () => {
           quantity: 2,
           unitValueInCents: 5000,
           cnaeNbsIndopId,
+          active: true,
         },
       });
 

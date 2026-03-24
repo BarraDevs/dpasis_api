@@ -47,6 +47,7 @@ model CnaeNbsIndop {
   nbs         Nbs          @relation(fields: [nbsId], references: [id])
   indop       Indop        @relation(fields: [indopId], references: [id])
   clientItems ClientItem[]
+  services    Service[]
 
   @@unique([cnaeId, nbsId, indopId])
   @@map("cnae_nbs_indops")

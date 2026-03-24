@@ -75,6 +75,7 @@ describe('FindAllClientAddress', () => {
         neighborhood: 'Centro',
         city: 'São Paulo',
         state: 'SP',
+        active: true,
       },
     });
 
@@ -118,6 +119,7 @@ describe('FindAllClientAddress', () => {
         neighborhood: 'Centro',
         city: 'São Paulo',
         state: 'SP',
+        active: true,
       })),
     });
 
@@ -142,6 +144,7 @@ describe('FindAllClientAddress', () => {
         neighborhood: 'Centro',
         city: 'São Paulo',
         state: 'SP',
+        active: true,
       },
     });
 
@@ -156,6 +159,7 @@ describe('FindAllClientAddress', () => {
         neighborhood: 'Centro',
         city: 'São Paulo',
         state: 'SP',
+        active: true,
       },
     });
 
@@ -199,6 +203,7 @@ describe('FindAllClientAddress', () => {
         neighborhood: 'Centro',
         city: 'São Paulo',
         state: 'SP',
+        active: true,
       },
     });
 
@@ -213,6 +218,7 @@ describe('FindAllClientAddress', () => {
         neighborhood: 'Centro',
         city: 'Rio de Janeiro',
         state: 'RJ',
+        active: true,
       },
     });
 
@@ -241,6 +247,7 @@ describe('FindAllClientAddress', () => {
           neighborhood: 'Centro',
           city: 'São Paulo',
           state: 'SP',
+          active: true,
         })),
       });
 
@@ -272,6 +279,7 @@ describe('FindAllClientAddress', () => {
           neighborhood: 'Centro',
           city: 'São Paulo',
           state: 'SP',
+          active: true,
         })),
       });
 
@@ -302,6 +310,7 @@ describe('FindAllClientAddress', () => {
           neighborhood: 'Centro',
           city: 'São Paulo',
           state: 'SP',
+          active: true,
         })),
       });
 
@@ -332,6 +341,7 @@ describe('FindAllClientAddress', () => {
           neighborhood: 'Centro',
           city: 'São Paulo',
           state: 'SP',
+          active: true,
         })),
       });
 
@@ -457,6 +467,7 @@ describe('FindAllClientAddress', () => {
             neighborhood: 'Centro',
             city: 'São Paulo',
             state: 'SP',
+            active: true,
           },
           {
             clientId,
@@ -468,6 +479,7 @@ describe('FindAllClientAddress', () => {
             neighborhood: 'Centro',
             city: 'São Paulo',
             state: 'SP',
+            active: true,
           },
           {
             clientId,
@@ -479,6 +491,7 @@ describe('FindAllClientAddress', () => {
             neighborhood: 'Centro',
             city: 'São Paulo',
             state: 'SP',
+            active: true,
           },
           {
             clientId,
@@ -490,6 +503,7 @@ describe('FindAllClientAddress', () => {
             neighborhood: 'Centro',
             city: 'São Paulo',
             state: 'SP',
+            active: true,
           },
         ],
       });
@@ -512,6 +526,7 @@ describe('FindAllClientAddress', () => {
           neighborhood: 'Centro',
           city: 'São Paulo',
           state: 'SP',
+          active: true,
         },
       });
 
@@ -526,6 +541,7 @@ describe('FindAllClientAddress', () => {
           neighborhood: 'Jardins',
           city: 'Rio de Janeiro',
           state: 'RJ',
+          active: true,
         },
       });
 
@@ -547,6 +563,7 @@ describe('FindAllClientAddress', () => {
           neighborhood: 'Centro',
           city: 'São Paulo',
           state: 'SP',
+          active: true,
         },
       });
 
@@ -561,6 +578,7 @@ describe('FindAllClientAddress', () => {
           neighborhood: 'Centro',
           city: 'Rio de Janeiro',
           state: 'RJ',
+          active: true,
         },
       });
 
@@ -582,6 +600,7 @@ describe('FindAllClientAddress', () => {
           neighborhood: 'Centro',
           city: 'São Paulo',
           state: 'SP',
+          active: true,
         },
       });
 
@@ -596,6 +615,7 @@ describe('FindAllClientAddress', () => {
           neighborhood: 'Centro',
           city: 'São Paulo',
           state: 'SP',
+          active: true,
         },
       });
 
@@ -617,6 +637,7 @@ describe('FindAllClientAddress', () => {
           neighborhood: 'Centro',
           city: 'São Paulo',
           state: 'SP',
+          active: true,
         },
       });
 
@@ -631,6 +652,7 @@ describe('FindAllClientAddress', () => {
           neighborhood: 'Jardins',
           city: 'São Paulo',
           state: 'SP',
+          active: true,
         },
       });
 
@@ -652,6 +674,7 @@ describe('FindAllClientAddress', () => {
           neighborhood: 'Centro',
           city: 'São Paulo',
           state: 'SP',
+          active: true,
         },
       });
 
@@ -673,6 +696,7 @@ describe('FindAllClientAddress', () => {
           neighborhood: 'Centro',
           city: 'São Paulo',
           state: 'SP',
+          active: true,
         },
       });
 
@@ -687,6 +711,7 @@ describe('FindAllClientAddress', () => {
           neighborhood: 'Centro',
           city: 'São Paulo',
           state: 'SP',
+          active: true,
         },
       });
 
@@ -713,6 +738,7 @@ describe('FindAllClientAddress', () => {
           neighborhood: 'Centro',
           city: 'São Paulo',
           state: 'SP',
+          active: true,
         },
       });
 
@@ -727,6 +753,7 @@ describe('FindAllClientAddress', () => {
           neighborhood: 'Centro',
           city: 'São Paulo',
           state: 'SP',
+          active: true,
         },
       });
 

@@ -16,6 +16,7 @@ const ClientDiscountSelect = {
   year: true,
   doNotGenerateCharge: true,
   terminateContract: true,
+  active: true,
   createdAt: true,
   updatedAt: true,
 } satisfies Prisma.ClientDiscountSelect;
@@ -30,17 +31,8 @@ export class ClientDiscountDaoAdapterPrisma implements IClientDiscountDao {
 
   private mapToDto(data: ClientDiscountData): ClientDiscountDto {
     return {
-      id: data.id,
-      clientId: data.clientId,
-      description: data.description,
+      ...data,
       type: data.type as DiscountType,
-      discountValue: data.discountValue,
-      month: data.month,
-      year: data.year,
-      doNotGenerateCharge: data.doNotGenerateCharge,
-      terminateContract: data.terminateContract,
-      createdAt: data.createdAt,
-      updatedAt: data.updatedAt,
     };
   }
 

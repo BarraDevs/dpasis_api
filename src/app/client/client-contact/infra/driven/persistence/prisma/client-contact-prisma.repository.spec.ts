@@ -133,6 +133,7 @@ describe('ClientContactRepositoryAdapterPrisma - Integration tests', () => {
           name: 'João',
           email: 'joao@example.com',
           receiveNF: false,
+          active: true,
         },
       });
 
@@ -154,6 +155,7 @@ describe('ClientContactRepositoryAdapterPrisma - Integration tests', () => {
           name: 'João',
           email: 'joao@example.com',
           receiveNF: false,
+          active: true,
         },
       });
 
@@ -186,6 +188,7 @@ describe('ClientContactRepositoryAdapterPrisma - Integration tests', () => {
           name: 'João',
           email: 'joao@example.com',
           receiveNF: false,
+          active: true,
         },
       });
 

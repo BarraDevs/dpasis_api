@@ -93,19 +93,20 @@ describe('ServiceProposalValidityDaoAdapterPrisma - Integration tests', () => {
     });
 
     it('should search in name field (case-insensitive)', async() => {
+      const suffix = Date.now();
       await prisma.serviceProposalValidity.createMany({
         data: [
-          { name: `30 dias ${Date.now()}`, active: true },
-          { name: `90 dias ${Date.now()}`, active: true },
+          { name: `30 dias busca-alfa-${suffix}`, active: true },
+          { name: `90 dias busca-beta-${suffix}`, active: true },
         ],
       });
 
-      const query: FindAllServiceProposalValidityQueryDto = { search: '30' };
+      const query: FindAllServiceProposalValidityQueryDto = { search: 'busca-alfa' };
       const [serviceProposalValidities, total] = await sut.findAll(query);
 
       expect(serviceProposalValidities).toHaveLength(1);
       expect(total).toBe(1);
-      expect(serviceProposalValidities[0].name).toContain('30');
+      expect(serviceProposalValidities[0].name).toContain('30 dias');
     });
 
     it('should return results ordered by name asc', async() => {

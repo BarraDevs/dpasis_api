@@ -44,7 +44,7 @@ describe('ClientItem', () => {
 
       const clientItem = ClientItem._instantiate(props);
 
-      expect(clientItem.props).toEqual({
+      expect(clientItem.props).toEqual<ClientItemProps>({
         id: 42,
         clientId: 20,
         description: 'Descrição',

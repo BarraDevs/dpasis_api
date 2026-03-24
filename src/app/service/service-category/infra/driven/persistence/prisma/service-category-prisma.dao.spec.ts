@@ -224,6 +224,15 @@ describe('ServiceCategoryDaoAdapterPrisma - Integration tests', () => {
         data: { name: `Cat ${Date.now()}`, active: true },
       });
 
+      const [cnae, nbs, indop] = await Promise.all([
+        prisma.cnae.create({ data: { code: `CNAE${Date.now()}`, description: 'CNAE Test', active: true } }),
+        prisma.nbs.create({ data: { code: `NBS${Date.now()}`, description: 'NBS Test', active: true } }),
+        prisma.indop.create({ data: { code: `IND${Date.now()}`, description: 'INDOP Test', active: true } }),
+      ]);
+      const cnaeNbsIndop = await prisma.cnaeNbsIndop.create({
+        data: { cnaeId: cnae.id, nbsId: nbs.id, indopId: indop.id },
+      });
+
       const [billed, deliveryTerm, freight, proposalValidity, warranty] = await Promise.all([
         prisma.serviceBilled.create({
           data: { description: `Billed ${Date.now()}`, isJunction: false, installmentDays: [10], active: true },
@@ -236,6 +245,7 @@ describe('ServiceCategoryDaoAdapterPrisma - Integration tests', () => {
 
       await prisma.service.create({
         data: {
+          cnaeNbsIndopId: cnaeNbsIndop.id,
           serviceBilledId: billed.id,
           serviceCategoryId: category.id,
           serviceDeliveryTermId: deliveryTerm.id,
@@ -243,6 +253,10 @@ describe('ServiceCategoryDaoAdapterPrisma - Integration tests', () => {
           serviceProposalValidityId: proposalValidity.id,
           serviceWarrantyId: warranty.id,
           name: 'Service Test',
+          unitPriceInCents: 10000,
+          description: 'Service Test',
+          isCommercial: true,
+          active: true,
         },
       });
 

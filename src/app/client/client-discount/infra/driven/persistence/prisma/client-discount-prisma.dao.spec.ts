@@ -72,6 +72,7 @@ describe('ClientDiscountDaoAdapterPrisma - Integration tests', () => {
           year: 2026,
           doNotGenerateCharge: false,
           terminateContract: false,
+          active: true,
         },
       });
 
@@ -126,6 +127,7 @@ describe('ClientDiscountDaoAdapterPrisma - Integration tests', () => {
           year: 2026,
           doNotGenerateCharge: false,
           terminateContract: false,
+          active: true,
         },
       });
 
@@ -139,6 +141,7 @@ describe('ClientDiscountDaoAdapterPrisma - Integration tests', () => {
           year: 2026,
           doNotGenerateCharge: false,
           terminateContract: false,
+          active: true,
         },
       });
 
@@ -162,6 +165,7 @@ describe('ClientDiscountDaoAdapterPrisma - Integration tests', () => {
             year: 2026,
             doNotGenerateCharge: false,
             terminateContract: false,
+            active: true,
           },
           {
             clientId,
@@ -172,6 +176,7 @@ describe('ClientDiscountDaoAdapterPrisma - Integration tests', () => {
             year: 2026,
             doNotGenerateCharge: false,
             terminateContract: false,
+            active: true,
           },
           {
             clientId,
@@ -182,6 +187,7 @@ describe('ClientDiscountDaoAdapterPrisma - Integration tests', () => {
             year: 2026,
             doNotGenerateCharge: false,
             terminateContract: false,
+            active: true,
           },
         ],
       });
@@ -205,6 +211,7 @@ describe('ClientDiscountDaoAdapterPrisma - Integration tests', () => {
             year: 2025,
             doNotGenerateCharge: false,
             terminateContract: false,
+            active: true,
           },
           {
             clientId,
@@ -215,6 +222,7 @@ describe('ClientDiscountDaoAdapterPrisma - Integration tests', () => {
             year: 2026,
             doNotGenerateCharge: false,
             terminateContract: false,
+            active: true,
           },
         ],
       });
@@ -238,6 +246,7 @@ describe('ClientDiscountDaoAdapterPrisma - Integration tests', () => {
             year: 2026,
             doNotGenerateCharge: false,
             terminateContract: false,
+            active: true,
           },
           {
             clientId,
@@ -248,6 +257,7 @@ describe('ClientDiscountDaoAdapterPrisma - Integration tests', () => {
             year: 2025,
             doNotGenerateCharge: false,
             terminateContract: false,
+            active: true,
           },
           {
             clientId,
@@ -258,6 +268,7 @@ describe('ClientDiscountDaoAdapterPrisma - Integration tests', () => {
             year: 2026,
             doNotGenerateCharge: false,
             terminateContract: false,
+            active: true,
           },
         ],
       });
@@ -281,6 +292,7 @@ describe('ClientDiscountDaoAdapterPrisma - Integration tests', () => {
           year: 2026,
           doNotGenerateCharge: false,
           terminateContract: false,
+          active: true,
         },
       });
 
@@ -294,6 +306,7 @@ describe('ClientDiscountDaoAdapterPrisma - Integration tests', () => {
           year: 2026,
           doNotGenerateCharge: false,
           terminateContract: false,
+          active: true,
         },
       });
 
@@ -315,6 +328,7 @@ describe('ClientDiscountDaoAdapterPrisma - Integration tests', () => {
           year: 2026,
           doNotGenerateCharge: false,
           terminateContract: false,
+          active: true,
         })),
       });
 
@@ -337,6 +351,7 @@ describe('ClientDiscountDaoAdapterPrisma - Integration tests', () => {
           year: 2025,
           doNotGenerateCharge: false,
           terminateContract: false,
+          active: true,
         },
       });
 
@@ -350,6 +365,7 @@ describe('ClientDiscountDaoAdapterPrisma - Integration tests', () => {
           year: 2025,
           doNotGenerateCharge: false,
           terminateContract: false,
+          active: true,
         },
       });
 
@@ -363,6 +379,7 @@ describe('ClientDiscountDaoAdapterPrisma - Integration tests', () => {
           year: 2026,
           doNotGenerateCharge: false,
           terminateContract: false,
+          active: true,
         },
       });
 
@@ -384,6 +401,7 @@ describe('ClientDiscountDaoAdapterPrisma - Integration tests', () => {
           year: 2026,
           doNotGenerateCharge: true,
           terminateContract: true,
+          active: true,
         },
       });
 
@@ -414,6 +432,7 @@ describe('ClientDiscountDaoAdapterPrisma - Integration tests', () => {
           year: 2026,
           doNotGenerateCharge: false,
           terminateContract: false,
+          active: true,
         },
       });
 
@@ -446,6 +465,7 @@ describe('ClientDiscountDaoAdapterPrisma - Integration tests', () => {
           year: 2025,
           doNotGenerateCharge: true,
           terminateContract: true,
+          active: true,
         },
       });
 

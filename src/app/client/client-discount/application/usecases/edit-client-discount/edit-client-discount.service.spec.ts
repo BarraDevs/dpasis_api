@@ -6,6 +6,7 @@ import { InvalidDiscountValueError } from 'src/app/client/client-discount/domain
 import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
 import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
+import { ClientDiscountDto } from '../../dtos/client-discount.dto';
 import { EditClientDiscount } from './edit-client-discount.service';
 
 describe('EditClientDiscount', () => {
@@ -76,6 +77,7 @@ describe('EditClientDiscount', () => {
         year: 2026,
         doNotGenerateCharge: false,
         terminateContract: false,
+        active: true,
       },
     });
 
@@ -87,8 +89,13 @@ describe('EditClientDiscount', () => {
     expect(result).toEqual({ message: 'Edição realizada com sucesso' });
 
     const updated = await prisma.clientDiscount.findUnique({ where: { id: created.id } });
-    expect(updated?.description).toBe('Desconto editado');
-    expect(updated?.discountValue).toBe(1000);
+    expect(updated).toEqual<ClientDiscountDto>({
+      ...created,
+      type: DiscountType.PERCENTAGE,
+      description: 'Desconto editado',
+      discountValue: 1000,
+      updatedAt: updated!.updatedAt,
+    });
   });
 
   it('should edit only provided fields (partial update)', async() => {
@@ -102,16 +109,19 @@ describe('EditClientDiscount', () => {
         year: 2026,
         doNotGenerateCharge: false,
         terminateContract: false,
+        active: true,
       },
     });
 
     await sut.execute(created.id, { description: 'Descrição atualizada' });
 
     const updated = await prisma.clientDiscount.findUnique({ where: { id: created.id } });
-    expect(updated?.description).toBe('Descrição atualizada');
-    expect(updated?.discountValue).toBe(1050);
-    expect(updated?.month).toBe(3);
-    expect(updated?.year).toBe(2026);
+    expect(updated).toEqual<ClientDiscountDto>({
+      ...created,
+      description: 'Descrição atualizada',
+      type: DiscountType.PERCENTAGE,
+      updatedAt: updated!.updatedAt,
+    });
   });
 
   it('should edit all fields', async() => {
@@ -125,6 +135,7 @@ describe('EditClientDiscount', () => {
         year: 2026,
         doNotGenerateCharge: false,
         terminateContract: false,
+        active: true,
       },
     });
 
@@ -139,13 +150,17 @@ describe('EditClientDiscount', () => {
     });
 
     const updated = await prisma.clientDiscount.findUnique({ where: { id: created.id } });
-    expect(updated?.description).toBe('Desconto monetário atualizado');
-    expect(updated?.type).toBe(DiscountType.MONETARY);
-    expect(updated?.discountValue).toBe(15000);
-    expect(updated?.month).toBe(12);
-    expect(updated?.year).toBe(2025);
-    expect(updated?.doNotGenerateCharge).toBe(true);
-    expect(updated?.terminateContract).toBe(true);
+    expect(updated).toEqual<ClientDiscountDto>({
+      ...created,
+      description: 'Desconto monetário atualizado',
+      type: DiscountType.MONETARY,
+      discountValue: 15000,
+      month: 12,
+      year: 2025,
+      doNotGenerateCharge: true,
+      terminateContract: true,
+      updatedAt: updated!.updatedAt,
+    });
   });
 
   it('should throw InvalidDiscountValueError when percentage exceeds 10000', async() => {
@@ -159,6 +174,7 @@ describe('EditClientDiscount', () => {
         year: 2026,
         doNotGenerateCharge: false,
         terminateContract: false,
+        active: true,
       },
     });
 
@@ -181,6 +197,7 @@ describe('EditClientDiscount', () => {
         year: 2026,
         doNotGenerateCharge: false,
         terminateContract: false,
+        active: true,
       },
     });
 

@@ -81,6 +81,7 @@ describe('CreateClientInvoiceConfig', () => {
         neighborhood: 'Centro',
         city: 'São Paulo',
         state: 'SP',
+        active: true,
       },
     });
 
@@ -220,6 +221,7 @@ describe('CreateClientInvoiceConfig', () => {
         neighborhood: 'Centro',
         city: 'Rio',
         state: 'RJ',
+        active: true,
       },
     });
     const input = makeValidInput({
@@ -264,6 +266,7 @@ describe('CreateClientInvoiceConfig', () => {
         neighborhood: 'Centro',
         city: 'Rio',
         state: 'RJ',
+        active: true,
       },
     });
 

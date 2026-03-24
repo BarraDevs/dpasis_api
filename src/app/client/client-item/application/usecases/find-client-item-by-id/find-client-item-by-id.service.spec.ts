@@ -81,6 +81,7 @@ describe('FindClientItemById - Integration tests', () => {
         quantity: 2,
         unitValueInCents: 10000,
         cnaeNbsIndopId,
+        active: true,
       },
     });
 
@@ -107,6 +108,7 @@ describe('FindClientItemById - Integration tests', () => {
         quantity: 3,
         unitValueInCents: 5000,
         cnaeNbsIndopId: cnaeNbsIndop.id,
+        active: true,
       },
     });
 
@@ -160,6 +162,7 @@ describe('FindClientItemById - Integration tests', () => {
         quantity: 0,
         unitValueInCents: 10000,
         cnaeNbsIndopId,
+        active: true,
       },
     });
 
@@ -176,6 +179,7 @@ describe('FindClientItemById - Integration tests', () => {
         quantity: 1000,
         unitValueInCents: 999999,
         cnaeNbsIndopId,
+        active: true,
       },
     });
 

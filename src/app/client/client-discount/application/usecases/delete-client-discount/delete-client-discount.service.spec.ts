@@ -73,6 +73,7 @@ describe('DeleteClientDiscount', () => {
         year: 2026,
         doNotGenerateCharge: false,
         terminateContract: false,
+        active: true,
       },
     });
 
@@ -95,6 +96,7 @@ describe('DeleteClientDiscount', () => {
         year: 2026,
         doNotGenerateCharge: false,
         terminateContract: false,
+        active: true,
       },
     });
 
@@ -116,6 +118,7 @@ describe('DeleteClientDiscount', () => {
         year: 2026,
         doNotGenerateCharge: true,
         terminateContract: true,
+        active: true,
       },
     });
 

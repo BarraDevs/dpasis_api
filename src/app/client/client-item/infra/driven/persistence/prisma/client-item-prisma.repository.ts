@@ -18,6 +18,7 @@ export class ClientItemRepositoryAdapterPrisma implements IClientItemRepository 
         quantity: props.quantity,
         unitValueInCents: props.unitValueInCents,
         cnaeNbsIndopId: props.cnaeNbsIndopId,
+        active: true,
       },
     });
 

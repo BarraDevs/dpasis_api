@@ -90,6 +90,7 @@ describe('EditClientItem - Integration tests', () => {
         quantity: 1,
         unitValueInCents: 10000,
         cnaeNbsIndopId,
+        active: true,
       },
     });
 
@@ -137,6 +138,7 @@ describe('EditClientItem - Integration tests', () => {
         quantity: 1,
         unitValueInCents: 10000,
         cnaeNbsIndopId,
+        active: true,
       },
     });
 
@@ -165,6 +167,7 @@ describe('EditClientItem - Integration tests', () => {
         quantity: 5,
         unitValueInCents: 20000,
         cnaeNbsIndopId,
+        active: true,
       },
     });
 
@@ -184,6 +187,7 @@ describe('EditClientItem - Integration tests', () => {
         quantity: 1,
         unitValueInCents: 10000,
         cnaeNbsIndopId,
+        active: true,
       },
     });
 
@@ -200,6 +204,7 @@ describe('EditClientItem - Integration tests', () => {
         quantity: 1,
         unitValueInCents: 10000,
         cnaeNbsIndopId,
+        active: true,
       },
     });
 
@@ -221,6 +226,7 @@ describe('EditClientItem - Integration tests', () => {
         quantity: 10,
         unitValueInCents: 10000,
         cnaeNbsIndopId,
+        active: true,
       },
     });
 
@@ -238,6 +244,7 @@ describe('EditClientItem - Integration tests', () => {
         quantity: 2,
         unitValueInCents: 15000,
         cnaeNbsIndopId,
+        active: true,
       },
     });
 

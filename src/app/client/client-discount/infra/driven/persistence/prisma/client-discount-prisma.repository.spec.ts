@@ -153,6 +153,7 @@ describe('ClientDiscountRepositoryAdapterPrisma - Integration tests', () => {
           year: 2026,
           doNotGenerateCharge: true,
           terminateContract: false,
+          active: true,
         },
       });
 
@@ -174,6 +175,7 @@ describe('ClientDiscountRepositoryAdapterPrisma - Integration tests', () => {
           year: 2025,
           doNotGenerateCharge: true,
           terminateContract: true,
+          active: true,
         },
       });
 
@@ -204,6 +206,7 @@ describe('ClientDiscountRepositoryAdapterPrisma - Integration tests', () => {
           year: 2026,
           doNotGenerateCharge: false,
           terminateContract: false,
+          active: true,
         },
       });
 
@@ -227,26 +230,25 @@ describe('ClientDiscountRepositoryAdapterPrisma - Integration tests', () => {
           year: 2026,
           doNotGenerateCharge: false,
           terminateContract: false,
+          active: true,
         },
       });
 
       const entity = ClientDiscountFactory.edit({
-        id: created.id,
-        clientId,
+        ...created,
         description: 'Atualizado',
-        type: DiscountType.PERCENTAGE,
+        type: DiscountType.MONETARY,
         discountValue: 1000,
-        month: 1,
-        year: 2026,
-        doNotGenerateCharge: false,
-        terminateContract: false,
+        active: false,
       });
 
       await sut.edit(entity);
 
       const updated = await prisma.clientDiscount.findUnique({ where: { id: created.id } });
       expect(updated?.description).toBe('Atualizado');
+      expect(updated?.type).toBe(DiscountType.MONETARY);
       expect(updated?.discountValue).toBe(1000);
+      expect(updated?.active).toBe(false);
     });
 
     it('should update all fields including type and flags', async() => {
@@ -260,6 +262,7 @@ describe('ClientDiscountRepositoryAdapterPrisma - Integration tests', () => {
           year: 2026,
           doNotGenerateCharge: false,
           terminateContract: false,
+          active: true,
         },
       });
 
@@ -273,6 +276,7 @@ describe('ClientDiscountRepositoryAdapterPrisma - Integration tests', () => {
         year: 2025,
         doNotGenerateCharge: true,
         terminateContract: true,
+        active: false,
       });
 
       await sut.edit(entity);
@@ -285,6 +289,7 @@ describe('ClientDiscountRepositoryAdapterPrisma - Integration tests', () => {
       expect(updated?.year).toBe(2025);
       expect(updated?.doNotGenerateCharge).toBe(true);
       expect(updated?.terminateContract).toBe(true);
+      expect(updated?.active).toBe(false);
     });
   });
 
@@ -300,6 +305,7 @@ describe('ClientDiscountRepositoryAdapterPrisma - Integration tests', () => {
           year: 2026,
           doNotGenerateCharge: false,
           terminateContract: false,
+          active: true,
         },
       });
 

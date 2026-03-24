@@ -7,8 +7,9 @@ import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum'
 import { ClientNotFoundError } from 'src/app/client/client/domain/errors/client-not-found.error';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { CreateClientDiscount } from './create-client-discount.service';
+import { CreateClientDiscountInputDto } from './dtos/create-client-discount.dto';
 
-function makeValidInput(overrides?: Record<string, unknown>) {
+function makeValidInput(overrides?: Record<string, unknown>): CreateClientDiscountInputDto {
   return {
     clientId: 0,
     description: 'Desconto de teste',

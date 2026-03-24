@@ -72,7 +72,7 @@ describe('ClientContactFactory', () => {
 
       const clientContact = ClientContactFactory.create(props);
 
-      expect(clientContact.props).toEqual({
+      expect(clientContact.props).toEqual<ClientContactProps>({
         id: null,
         clientId: 42,
         departmentId: 8,
@@ -168,7 +168,7 @@ describe('ClientContactFactory', () => {
 
       const clientContact = ClientContactFactory.edit(existing, data);
 
-      expect(clientContact.props).toEqual({
+      expect(clientContact.props).toEqual<ClientContactProps>({
         ...existing.props,
         name: 'Nome Atualizado',
         observations: 'Nova observação',
@@ -182,7 +182,7 @@ describe('ClientContactFactory', () => {
 
       const clientContact = ClientContactFactory.edit(existing, data);
 
-      expect(clientContact.props).toEqual({
+      expect(clientContact.props).toEqual<ClientContactProps>({
         ...existing.props,
         ...data,
         departmentId: 99,
@@ -195,7 +195,7 @@ describe('ClientContactFactory', () => {
 
       const clientContact = ClientContactFactory.edit(existing, data);
 
-      expect(clientContact.props).toEqual({
+      expect(clientContact.props).toEqual<ClientContactProps>({
         ...existing.props,
         ...data,
         email: 'novo@example.com',
@@ -208,7 +208,7 @@ describe('ClientContactFactory', () => {
 
       const clientContact = ClientContactFactory.edit(existing, data);
 
-      expect(clientContact.props).toEqual({
+      expect(clientContact.props).toEqual<ClientContactProps>({
         ...existing.props,
         ...data,
         phone: null,
@@ -221,7 +221,7 @@ describe('ClientContactFactory', () => {
 
       const clientContact = ClientContactFactory.edit(existing, data);
 
-      expect(clientContact.props).toEqual({
+      expect(clientContact.props).toEqual<ClientContactProps>({
         ...existing.props,
         ...data,
         phone: '11955555555',
@@ -234,7 +234,7 @@ describe('ClientContactFactory', () => {
 
       const clientContact = ClientContactFactory.edit(existing, data);
 
-      expect(clientContact.props).toEqual({
+      expect(clientContact.props).toEqual<ClientContactProps>({
         ...existing.props,
         ...data,
         receiveNF: false,
@@ -247,7 +247,7 @@ describe('ClientContactFactory', () => {
 
       const clientContact = ClientContactFactory.edit(existing, data);
 
-      expect(clientContact.props).toEqual({
+      expect(clientContact.props).toEqual<ClientContactProps>({
         ...existing.props,
         ...data,
         observations: 'Nova observação',
@@ -302,7 +302,7 @@ describe('ClientContactFactory', () => {
 
       const clientContact = ClientContactFactory.load(props);
 
-      expect(clientContact.props).toEqual(props);
+      expect(clientContact.props).toEqual<ClientContactProps>(props);
     });
   });
 });

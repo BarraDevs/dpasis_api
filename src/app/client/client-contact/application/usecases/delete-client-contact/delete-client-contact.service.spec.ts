@@ -71,6 +71,7 @@ describe('DeleteClientContact - Integration tests', () => {
         name: 'João',
         email: 'joao@example.com',
         receiveNF: false,
+        active: true,
       },
     });
 
@@ -90,6 +91,7 @@ describe('DeleteClientContact - Integration tests', () => {
         name: 'João',
         email: 'joao@example.com',
         receiveNF: false,
+        active: true,
       },
     });
 

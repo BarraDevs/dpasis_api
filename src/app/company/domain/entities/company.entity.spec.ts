@@ -60,7 +60,7 @@ describe('Company', () => {
 
       const company = Company._instantiate(props);
 
-      expect(company.props).toEqual({
+      expect(company.props).toEqual<CompanyProps>({
         id: 42,
         active: false,
         name: 'Custom Company',

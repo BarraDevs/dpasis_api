@@ -2,6 +2,7 @@ import { DiscountType } from '../enums/discount-type.enum';
 
 export type ClientDiscountProps = ClientDiscountCreateProps & {
   id: number | null;
+  active: boolean;
 };
 
 export type ClientDiscountCreateProps = {
@@ -33,6 +34,7 @@ export class ClientDiscount {
       year: props.year,
       doNotGenerateCharge: props.doNotGenerateCharge,
       terminateContract: props.terminateContract,
+      active: props.active,
     };
   }
 

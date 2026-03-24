@@ -1,5 +1,7 @@
 import { Test } from '@nestjs/testing';
 import { ClientAddressType } from 'src/app/client/client-address/domain/enums/client-address-type.enum';
+import { ClientInvoiceConfigDto } from 'src/app/client/client-invoice-config/application/dtos/client-invoice-config.dto';
+import { ClientInvoiceConfigProps } from 'src/app/client/client-invoice-config/domain/entities/client-invoice-config.entity';
 import { ClientInvoiceConfigDueDateType } from 'src/app/client/client-invoice-config/domain/enums/client-invoice-config-due-date-type.enum';
 import { ClientInvoiceConfigType } from 'src/app/client/client-invoice-config/domain/enums/client-invoice-config-type.enum';
 import { ClientInvoiceConfigFactory } from 'src/app/client/client-invoice-config/domain/factories/client-invoice-config.factory';
@@ -61,6 +63,7 @@ describe('ClientInvoiceConfigRepositoryAdapterPrisma - Integration tests', () =>
         neighborhood: 'Centro',
         city: 'São Paulo',
         state: 'SP',
+        active: true,
       },
     });
 
@@ -111,7 +114,7 @@ describe('ClientInvoiceConfigRepositoryAdapterPrisma - Integration tests', () =>
 
       const saved = await prisma.clientInvoiceConfig.findUnique({ where: { id } });
       expect(saved).not.toBeNull();
-      expect(saved).toEqual({
+      expect(saved).toEqual<ClientInvoiceConfigDto>({
         id: expect.any(Number),
         clientId,
         generateNf: true,
@@ -150,7 +153,7 @@ describe('ClientInvoiceConfigRepositoryAdapterPrisma - Integration tests', () =>
 
       const saved = await prisma.clientInvoiceConfig.findUnique({ where: { id } });
       expect(saved).not.toBeNull();
-      expect(saved).toEqual({
+      expect(saved).toEqual<ClientInvoiceConfigDto>({
         id: expect.any(Number),
         clientId,
         generateNf: false,
@@ -207,7 +210,7 @@ describe('ClientInvoiceConfigRepositoryAdapterPrisma - Integration tests', () =>
 
       const saved = await prisma.clientInvoiceConfig.findUnique({ where: { id } });
       expect(saved).not.toBeNull();
-      expect(saved).toEqual({
+      expect(saved).toEqual<ClientInvoiceConfigDto>({
         id,
         clientId,
         generateNf: false,
@@ -255,7 +258,7 @@ describe('ClientInvoiceConfigRepositoryAdapterPrisma - Integration tests', () =>
       const result = await sut.findById(created.id);
 
       expect(result).not.toBeNull();
-      expect(result?.props).toEqual({
+      expect(result?.props).toEqual<ClientInvoiceConfigProps>({
         id: created.id,
         clientId,
         generateNf: true,
@@ -301,7 +304,7 @@ describe('ClientInvoiceConfigRepositoryAdapterPrisma - Integration tests', () =>
       const result = await sut.findByClientId(clientId);
 
       expect(result).not.toBeNull();
-      expect(result?.props).toEqual({
+      expect(result?.props).toEqual<ClientInvoiceConfigProps>({
         id: created.id,
         clientId,
         generateNf: false,

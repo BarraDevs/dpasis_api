@@ -4,6 +4,7 @@ import { ClientDiscount, ClientDiscountProps } from './client-discount.entity';
 function makeClientDiscountProps(overrides?: Partial<ClientDiscountProps>): ClientDiscountProps {
   return {
     id: 1,
+    active: true,
     clientId: 1,
     description: 'Desconto de teste',
     type: DiscountType.PERCENTAGE,
@@ -32,6 +33,14 @@ describe('ClientDiscount Entity', () => {
       const discount = ClientDiscount._instantiate(props);
 
       expect(discount.props.id).toBeNull();
+    });
+
+    it('should create a ClientDiscount with active true', () => {
+      const props = makeClientDiscountProps({ active: true });
+
+      const discount = ClientDiscount._instantiate(props);
+
+      expect(discount.props.active).toBe(true);
     });
 
     it('should create a ClientDiscount with PERCENTAGE type', () => {
@@ -105,7 +114,7 @@ describe('ClientDiscount Entity', () => {
 
       const discount = ClientDiscount._instantiate(props);
 
-      expect(discount.props).toEqual({
+      expect(discount.props).toEqual<ClientDiscountProps>({
         id: 42,
         clientId: 10,
         description: 'Desconto especial',
@@ -115,6 +124,7 @@ describe('ClientDiscount Entity', () => {
         year: 2025,
         doNotGenerateCharge: true,
         terminateContract: true,
+        active: true,
       });
     });
 
@@ -133,6 +143,7 @@ describe('ClientDiscount Entity', () => {
         'year',
         'doNotGenerateCharge',
         'terminateContract',
+        'active',
       ]);
     });
 

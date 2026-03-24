@@ -5,6 +5,7 @@ import { ConfigService } from 'src/core/config/config.service';
 import { TOKENS } from 'src/core/di/token';
 import { LogContext, type ILoggerGateway } from 'src/infra/logger/logger.gateway';
 import { ExternalApiError } from 'src/shared/errors/external-api.error';
+import { CepLookupOutputDto } from '../../dtos/cep-lookup.dto';
 import { CepLookupViacepAdapterGateway } from './cep-lookup-viacep.gateway';
 import { ViacepOutputDto } from './dtos/viacep.dto';
 
@@ -106,7 +107,7 @@ describe('CepLookupViacepAdapterGateway', () => {
 
         const result = await sut.lookup(CEP);
 
-        expect(result).toEqual({
+        expect(result).toEqual<CepLookupOutputDto>({
           zipCode: '01001-000',
           street: 'Praça da Sé',
           complement: 'lado ímpar',
@@ -182,7 +183,7 @@ describe('CepLookupViacepAdapterGateway', () => {
 
         const result = await sut.lookup(CEP);
 
-        expect(result).toEqual({
+        expect(result).toEqual<CepLookupOutputDto>({
           zipCode: '01001-000',
           street: '',
           complement: null,

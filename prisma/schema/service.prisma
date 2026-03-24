@@ -1,5 +1,6 @@
 model Service {
   id                        Int      @id @default(autoincrement())
+  cnaeNbsIndopId            Int
   serviceBilledId           Int
   serviceCategoryId         Int
   serviceDeliveryTermId     Int
@@ -7,10 +8,14 @@ model Service {
   serviceProposalValidityId Int
   serviceWarrantyId         Int
   name                      String
-  active                    Boolean  @default(true)
+  unitPriceInCents          Int
+  description               String   @db.Text
+  isCommercial              Boolean
+  active                    Boolean
   createdAt                 DateTime @default(now())
   updatedAt                 DateTime @updatedAt
 
+  cnaeNbsIndop            CnaeNbsIndop            @relation(fields: [cnaeNbsIndopId], references: [id])
   serviceBilled           ServiceBilled           @relation(fields: [serviceBilledId], references: [id])
   serviceCategory         ServiceCategory         @relation(fields: [serviceCategoryId], references: [id])
   serviceDeliveryTerm     ServiceDeliveryTerm     @relation(fields: [serviceDeliveryTermId], references: [id])
@@ -26,7 +31,7 @@ model ServiceBilled {
   description     String   @db.Text
   isJunction      Boolean
   installmentDays Int[]
-  active          Boolean  @default(true)
+  active          Boolean
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 

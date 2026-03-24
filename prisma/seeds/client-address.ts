@@ -34,8 +34,9 @@ export class ClientAddressSeed {
           },
         },
         create: {
-          clientId: client.id,
           ...addr,
+          clientId: client.id,
+          active: true,
         },
         update: {},
       });

@@ -4,6 +4,7 @@ import { DiscountType } from 'src/app/client/client-discount/domain/enums/discou
 import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
 import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
+import { ClientDiscountDto } from '../../dtos/client-discount.dto';
 import { FindAllClientDiscount } from './find-all-client-discount.service';
 
 describe('FindAllClientDiscount', () => {
@@ -77,6 +78,7 @@ describe('FindAllClientDiscount', () => {
         year: 2026,
         doNotGenerateCharge: false,
         terminateContract: false,
+        active: true,
       },
     });
 
@@ -85,7 +87,7 @@ describe('FindAllClientDiscount', () => {
     expect(result.currentPage).toBe(1);
     expect(result.totalItems).toBe(1);
     expect(result.data).toHaveLength(1);
-    expect(result.data[0]).toEqual({
+    expect(result.data[0]).toEqual<ClientDiscountDto>({
       id: created.id,
       clientId,
       description: 'Desconto 10%',
@@ -95,6 +97,7 @@ describe('FindAllClientDiscount', () => {
       year: 2026,
       doNotGenerateCharge: false,
       terminateContract: false,
+      active: true,
       createdAt: created.createdAt,
       updatedAt: created.updatedAt,
     });
@@ -111,6 +114,7 @@ describe('FindAllClientDiscount', () => {
         year: 2026,
         doNotGenerateCharge: false,
         terminateContract: false,
+        active: true,
       })),
     });
 
@@ -134,6 +138,7 @@ describe('FindAllClientDiscount', () => {
         year: 2026,
         doNotGenerateCharge: false,
         terminateContract: false,
+        active: true,
       },
     });
 
@@ -147,6 +152,7 @@ describe('FindAllClientDiscount', () => {
         year: 2026,
         doNotGenerateCharge: false,
         terminateContract: false,
+        active: true,
       },
     });
 
@@ -168,6 +174,7 @@ describe('FindAllClientDiscount', () => {
         year: 2025,
         doNotGenerateCharge: false,
         terminateContract: false,
+        active: true,
       },
     });
 
@@ -181,6 +188,7 @@ describe('FindAllClientDiscount', () => {
         year: 2026,
         doNotGenerateCharge: false,
         terminateContract: false,
+        active: true,
       },
     });
 
@@ -203,6 +211,7 @@ describe('FindAllClientDiscount', () => {
           year: 2026,
           doNotGenerateCharge: false,
           terminateContract: false,
+          active: true,
         },
         {
           clientId,
@@ -213,6 +222,7 @@ describe('FindAllClientDiscount', () => {
           year: 2025,
           doNotGenerateCharge: false,
           terminateContract: false,
+          active: true,
         },
         {
           clientId,
@@ -223,6 +233,7 @@ describe('FindAllClientDiscount', () => {
           year: 2026,
           doNotGenerateCharge: false,
           terminateContract: false,
+          active: true,
         },
       ],
     });
@@ -246,6 +257,7 @@ describe('FindAllClientDiscount', () => {
         year: 2026,
         doNotGenerateCharge: false,
         terminateContract: false,
+        active: true,
       },
     });
 
@@ -259,6 +271,7 @@ describe('FindAllClientDiscount', () => {
         year: 2026,
         doNotGenerateCharge: false,
         terminateContract: false,
+        active: true,
       },
     });
 
@@ -300,6 +313,7 @@ describe('FindAllClientDiscount', () => {
         year: 2026,
         doNotGenerateCharge: false,
         terminateContract: false,
+        active: true,
       },
     });
 
@@ -313,6 +327,7 @@ describe('FindAllClientDiscount', () => {
         year: 2026,
         doNotGenerateCharge: false,
         terminateContract: false,
+        active: true,
       },
     });
 
@@ -333,6 +348,7 @@ describe('FindAllClientDiscount', () => {
         year: 2025,
         doNotGenerateCharge: false,
         terminateContract: false,
+        active: true,
       },
     });
 
@@ -346,6 +362,7 @@ describe('FindAllClientDiscount', () => {
         year: 2025,
         doNotGenerateCharge: false,
         terminateContract: false,
+        active: true,
       },
     });
 
@@ -359,6 +376,7 @@ describe('FindAllClientDiscount', () => {
         year: 2026,
         doNotGenerateCharge: false,
         terminateContract: false,
+        active: true,
       },
     });
 

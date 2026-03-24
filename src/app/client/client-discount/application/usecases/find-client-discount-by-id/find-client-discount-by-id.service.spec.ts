@@ -5,6 +5,7 @@ import { ClientDiscountNotFoundError } from 'src/app/client/client-discount/doma
 import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
 import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
+import { ClientDiscountDto } from '../../dtos/client-discount.dto';
 import { FindClientDiscountById } from './find-client-discount-by-id.service';
 
 describe('FindClientDiscountById', () => {
@@ -73,12 +74,13 @@ describe('FindClientDiscountById', () => {
         year: 2026,
         doNotGenerateCharge: false,
         terminateContract: false,
+        active: true,
       },
     });
 
     const result = await sut.execute(created.id);
 
-    expect(result).toEqual({
+    expect(result).toEqual<ClientDiscountDto>({
       id: created.id,
       clientId,
       description: 'Desconto de teste',
@@ -88,6 +90,7 @@ describe('FindClientDiscountById', () => {
       year: 2026,
       doNotGenerateCharge: false,
       terminateContract: false,
+      active: true,
       createdAt: created.createdAt,
       updatedAt: created.updatedAt,
     });
@@ -104,21 +107,25 @@ describe('FindClientDiscountById', () => {
         year: 2025,
         doNotGenerateCharge: true,
         terminateContract: true,
+        active: true,
       },
     });
 
     const result = await sut.execute(created.id);
 
-    expect(result.id).toBe(created.id);
-    expect(result.clientId).toBe(clientId);
-    expect(result.description).toBe('Desconto R$ 50');
-    expect(result.type).toBe(DiscountType.MONETARY);
-    expect(result.discountValue).toBe(5000);
-    expect(result.month).toBe(6);
-    expect(result.year).toBe(2025);
-    expect(result.doNotGenerateCharge).toBe(true);
-    expect(result.terminateContract).toBe(true);
-    expect(result.createdAt).toBeInstanceOf(Date);
-    expect(result.updatedAt).toBeInstanceOf(Date);
+    expect(result).toEqual<ClientDiscountDto>({
+      id: created.id,
+      clientId,
+      description: 'Desconto R$ 50',
+      type: DiscountType.MONETARY,
+      discountValue: 5000,
+      month: 6,
+      year: 2025,
+      doNotGenerateCharge: true,
+      terminateContract: true,
+      active: created.active,
+      createdAt: created.createdAt,
+      updatedAt: created.updatedAt,
+    });
   });
 });

@@ -96,6 +96,7 @@ describe('FindClientAddressByIdAndClientId', () => {
         neighborhood: 'Centro',
         city: 'Rio de Janeiro',
         state: 'RJ',
+        active: true,
       },
     });
 
@@ -114,6 +115,7 @@ describe('FindClientAddressByIdAndClientId', () => {
         neighborhood: 'Centro',
         city: 'São Paulo',
         state: 'SP',
+        active: true,
       },
     });
 
@@ -148,6 +150,7 @@ describe('FindClientAddressByIdAndClientId', () => {
         neighborhood: 'Jardins',
         city: 'Rio de Janeiro',
         state: 'RJ',
+        active: true,
       },
     });
 

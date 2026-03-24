@@ -10,6 +10,7 @@ export class ClientDiscountDto {
   year: number;
   doNotGenerateCharge: boolean;
   terminateContract: boolean;
+  active: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

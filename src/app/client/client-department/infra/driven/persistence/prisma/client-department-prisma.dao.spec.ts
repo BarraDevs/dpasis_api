@@ -385,6 +385,7 @@ describe('ClientDepartmentDaoAdapterPrisma - Integration tests', () => {
           name: 'Contato',
           email: 'contato@test.com',
           receiveNF: true,
+          active: true,
         },
       });
 
@@ -444,6 +445,7 @@ describe('ClientDepartmentDaoAdapterPrisma - Integration tests', () => {
             name: 'Contato 1',
             email: 'contato1@test.com',
             receiveNF: true,
+            active: true,
           },
           {
             clientId: client2.id,
@@ -451,6 +453,7 @@ describe('ClientDepartmentDaoAdapterPrisma - Integration tests', () => {
             name: 'Contato 2',
             email: 'contato2@test.com',
             receiveNF: true,
+            active: true,
           },
         ],
       });

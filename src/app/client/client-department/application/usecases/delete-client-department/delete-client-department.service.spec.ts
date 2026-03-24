@@ -99,6 +99,7 @@ describe('DeleteClientDepartment - Integration tests', () => {
         name: 'Contato',
         email: 'contato@example.com',
         receiveNF: false,
+        active: true,
       },
     });
 

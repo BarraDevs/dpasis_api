@@ -62,6 +62,7 @@ describe('EditClientInvoiceConfig - Integration tests', () => {
         neighborhood: 'Centro',
         city: 'São Paulo',
         state: 'SP',
+        active: true,
       },
     });
 
@@ -231,6 +232,7 @@ describe('EditClientInvoiceConfig - Integration tests', () => {
         neighborhood: 'Centro',
         city: 'Rio',
         state: 'RJ',
+        active: true,
       },
     });
 
@@ -253,6 +255,7 @@ describe('EditClientInvoiceConfig - Integration tests', () => {
         neighborhood: 'Centro',
         city: 'São Paulo',
         state: 'SP',
+        active: true,
       },
     });
 

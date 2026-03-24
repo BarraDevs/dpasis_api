@@ -75,6 +75,7 @@ describe('FindClientContactById - Integration tests', () => {
         name: 'João',
         email: 'joao@example.com',
         receiveNF: false,
+        active: true,
       },
     });
 
@@ -97,6 +98,7 @@ describe('FindClientContactById - Integration tests', () => {
         whatsapp: '11988887777',
         observations: 'Observação',
         receiveNF: true,
+        active: true,
       },
     });
 

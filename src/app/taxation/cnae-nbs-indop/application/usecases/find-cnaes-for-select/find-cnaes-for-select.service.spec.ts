@@ -83,7 +83,7 @@ describe('FindCnaesForSelect - Integration tests', () => {
       prisma.cnae.create({ data: { code: 'Z999', description: 'CNAE Z', active: true } }),
       prisma.cnae.create({ data: { code: 'A001', description: 'CNAE A', active: true } }),
     ]);
-    const [indop2, indop3] = await Promise.all([
+    const [indop2] = await Promise.all([
       prisma.indop.create({ data: { code: `IND2${Date.now()}`, description: 'INDOP 2', active: true } }),
       prisma.indop.create({ data: { code: `IND3${Date.now()}`, description: 'INDOP 3', active: true } }),
     ]);

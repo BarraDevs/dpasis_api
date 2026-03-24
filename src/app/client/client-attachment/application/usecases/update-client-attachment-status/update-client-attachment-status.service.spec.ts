@@ -105,9 +105,7 @@ describe('UpdateClientAttachmentStatus - Integration tests', () => {
 
     const result = await sut.execute(attachment.id);
 
-    expect(result).toEqual({
-      message: 'Status do anexo do cliente atualizado com sucesso',
-    });
+    expect(result).toEqual({ message: 'Status do anexo do cliente atualizado com sucesso' });
   });
 
   it('should preserve other fields when inverting status', async() => {

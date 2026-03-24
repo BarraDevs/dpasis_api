@@ -18,14 +18,28 @@ model Client {
   owner         ClientOwner          @relation(fields: [ownerId], references: [id])
   companies     Company[]
   addresses     ClientAddress[]
+  attachments   ClientAttachment[]
   contacts      ClientContact[]
   items         ClientItem[]
   invoiceConfig ClientInvoiceConfig?
   discounts     ClientDiscount[]
-  attachments   ClientAttachment[]
   types         ClientType[]
 
   @@map("clients")
+}
+
+model ClientAttachment {
+  id          Int      @id @default(autoincrement())
+  clientId    Int
+  description String   @db.Text
+  link        String   @db.Text
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@map("client_attachments")
 }
 
 model ClientGroup {
@@ -74,7 +88,7 @@ model ClientContact {
   whatsapp     String?
   observations String?  @db.Text
   receiveNF    Boolean
-  active       Boolean  @default(true)
+  active       Boolean
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -96,7 +110,7 @@ model ClientAddress {
   neighborhood String
   city         String
   state        String
-  active       Boolean  @default(true)
+  active       Boolean
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -107,20 +121,6 @@ model ClientAddress {
   @@map("client_addresses")
 }
 
-model ClientAttachment {
-  id          Int      @id @default(autoincrement())
-  clientId    Int
-  description String   @db.Text
-  link        String   @db.Text
-  active      Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
-
-  @@map("client_attachments")
-}
-
 model ClientItem {
   id               Int      @id @default(autoincrement())
   clientId         Int
@@ -128,7 +128,7 @@ model ClientItem {
   quantity         Int
   unitValueInCents Int
   cnaeNbsIndopId   Int
-  active           Boolean  @default(true)
+  active           Boolean
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
@@ -172,7 +172,7 @@ model ClientDiscount {
   year                Int
   doNotGenerateCharge Boolean
   terminateContract   Boolean
-  active              Boolean  @default(true)
+  active              Boolean
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 
