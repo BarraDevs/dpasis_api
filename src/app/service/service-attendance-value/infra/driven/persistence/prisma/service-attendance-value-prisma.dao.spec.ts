@@ -88,6 +88,35 @@ describe('ServiceAttendanceValueDaoAdapterPrisma - Integration tests', () => {
       expect(rows[0].serviceId).toBe(s1.id);
     });
 
+    it('should return all rows when serviceId is omitted', async() => {
+      const s1 = await createService();
+      const s2 = await createService();
+
+      await prisma.serviceAttendanceValue.create({
+        data: {
+          serviceId: s1.id,
+          values: { a: 1 },
+          totalValueInCents: 1,
+        },
+      });
+      await prisma.serviceAttendanceValue.create({
+        data: {
+          serviceId: s2.id,
+          values: { b: 2 },
+          totalValueInCents: 2,
+        },
+      });
+
+      const [rows, total] = await sut.findAll({
+        page: 1,
+        size: 10,
+      });
+
+      expect(total).toBe(2);
+      expect(rows).toHaveLength(2);
+      expect(rows.map((r) => r.serviceId).sort((a, b) => a - b)).toEqual([s1.id, s2.id].sort((a, b) => a - b));
+    });
+
     it('should paginate results correctly', async() => {
       const service = await createService();
       await prisma.serviceAttendanceValue.createMany({

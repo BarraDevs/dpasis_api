@@ -18,6 +18,7 @@ import { CnaeNbsIndopSeed } from './cnae-nbs-indop';
 import { CompanySeed } from './company';
 import { IndopSeed } from './indop';
 import { NbsSeed } from './nbs';
+import { ServiceBilledSeed } from './service-billed';
 import { ServiceCategorySeed } from './service-category';
 import { ServiceDeliveryTermSeed } from './service-delivery-term';
 import { ServiceFreightSeed } from './service-freight';
@@ -43,6 +44,7 @@ async function main() {
   await ClientDescriptionTypeSeed.seed(prisma);
   await ClientDriveTypeSeed.seed(prisma);
   await ServiceCategorySeed.seed(prisma);
+  await ServiceBilledSeed.seed(prisma);
   await ServiceFreightSeed.seed(prisma);
   await ServiceDeliveryTermSeed.seed(prisma);
   await ServiceWarrantySeed.seed(prisma);

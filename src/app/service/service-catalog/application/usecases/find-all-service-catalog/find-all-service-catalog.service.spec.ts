@@ -1,14 +1,17 @@
 import { Test } from '@nestjs/testing';
-import { ServiceCatalogDto } from 'src/app/service/service-catalog/application/dtos/service-catalog.dto';
+import type { IServiceCatalogDao } from 'src/app/service/service-catalog/application/persistence/dao/service-catalog-dao.interface';
 import { seedServiceCatalogForeignKeys } from 'src/app/service/service-catalog/infra/driven/persistence/prisma/service-catalog-prisma-test.helpers';
 import { ServiceCatalogModule } from 'src/app/service/service-catalog/service-catalog.module';
+import { TOKENS } from 'src/core/di/token';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
+import { ServiceCatalogDto } from '../../dtos/service-catalog.dto';
 import { FindAllServiceCatalogQueryDto } from './dtos/find-all-service-catalog.dto';
 import { FindAllServiceCatalog } from './find-all-service-catalog.service';
 
 describe('FindAllServiceCatalog - Integration tests', () => {
   let sut: FindAllServiceCatalog;
   let prisma: PrismaService;
+  let serviceCatalogDao: IServiceCatalogDao;
 
   beforeAll(async() => {
     const module = await Test.createTestingModule({
@@ -17,6 +20,7 @@ describe('FindAllServiceCatalog - Integration tests', () => {
 
     sut = module.get(FindAllServiceCatalog);
     prisma = module.get(PrismaService);
+    serviceCatalogDao = module.get(TOKENS.ServiceCatalogDao);
   });
 
   beforeEach(async() => {
@@ -261,7 +265,7 @@ describe('FindAllServiceCatalog - Integration tests', () => {
 
     expect(result.data).toHaveLength(1);
     expect(result.totalItems).toBe(1);
-    expect(result.data[0].cnaeNbsIndopId).toBe(fkA.cnaeNbsIndopId);
+    expect(result.data[0].cnaeNbsIndop.id).toBe(fkA.cnaeNbsIndopId);
   });
 
   it('should return correct ServiceCatalogDto structure', async() => {
@@ -279,22 +283,7 @@ describe('FindAllServiceCatalog - Integration tests', () => {
 
     const result = await sut.execute({ page: 1, size: 10 });
 
-    expect(result.data[0]).toEqual<ServiceCatalogDto>({
-      id: created.id,
-      cnaeNbsIndopId: created.cnaeNbsIndopId,
-      serviceBilledId: created.serviceBilledId,
-      serviceCategoryId: created.serviceCategoryId,
-      serviceDeliveryTermId: created.serviceDeliveryTermId,
-      serviceFreightId: created.serviceFreightId,
-      serviceProposalValidityId: created.serviceProposalValidityId,
-      serviceWarrantyId: created.serviceWarrantyId,
-      name: created.name,
-      unitPriceInCents: created.unitPriceInCents,
-      description: created.description,
-      isCommercial: created.isCommercial,
-      active: created.active,
-      createdAt: created.createdAt,
-      updatedAt: created.updatedAt,
-    });
+    const expected = await serviceCatalogDao.findById(created.id);
+    expect(result.data[0]).toEqual<ServiceCatalogDto>(expected!);
   });
 });

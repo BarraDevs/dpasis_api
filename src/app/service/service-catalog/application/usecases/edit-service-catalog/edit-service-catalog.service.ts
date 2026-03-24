@@ -39,13 +39,13 @@ export class EditServiceCatalog {
     await this.validateActiveForeignKeysIfProvided(data);
 
     const entity = ServiceCatalogFactory.edit({
-      cnaeNbsIndopId: data.cnaeNbsIndopId ?? existing.cnaeNbsIndopId,
-      serviceBilledId: data.serviceBilledId ?? existing.serviceBilledId,
-      serviceCategoryId: data.serviceCategoryId ?? existing.serviceCategoryId,
-      serviceDeliveryTermId: data.serviceDeliveryTermId ?? existing.serviceDeliveryTermId,
-      serviceFreightId: data.serviceFreightId ?? existing.serviceFreightId,
-      serviceProposalValidityId: data.serviceProposalValidityId ?? existing.serviceProposalValidityId,
-      serviceWarrantyId: data.serviceWarrantyId ?? existing.serviceWarrantyId,
+      cnaeNbsIndopId: data.cnaeNbsIndopId ?? existing.cnaeNbsIndop.id,
+      serviceBilledId: data.serviceBilledId ?? existing.serviceBilled.id,
+      serviceCategoryId: data.serviceCategoryId ?? existing.serviceCategory.id,
+      serviceDeliveryTermId: data.serviceDeliveryTermId ?? existing.serviceDeliveryTerm.id,
+      serviceFreightId: data.serviceFreightId ?? existing.serviceFreight.id,
+      serviceProposalValidityId: data.serviceProposalValidityId ?? existing.serviceProposalValidity.id,
+      serviceWarrantyId: data.serviceWarrantyId ?? existing.serviceWarranty.id,
       name: data.name ?? existing.name,
       unitPriceInCents: data.unitPriceInCents ?? existing.unitPriceInCents,
       description: data.description ?? existing.description,

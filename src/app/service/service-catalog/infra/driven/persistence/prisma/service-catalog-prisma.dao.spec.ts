@@ -1,10 +1,9 @@
 import { Test } from '@nestjs/testing';
-import { ServiceCatalogDto } from 'src/app/service/service-catalog/application/dtos/service-catalog.dto';
 import { FindAllServiceCatalogQueryDto } from 'src/app/service/service-catalog/application/usecases/find-all-service-catalog/dtos/find-all-service-catalog.dto';
 import { ConfigModule } from 'src/core/config/config.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { seedServiceCatalogForeignKeys } from './service-catalog-prisma-test.helpers';
-import { ServiceCatalogDaoAdapterPrisma } from './service-catalog-prisma.dao';
+import { ServiceCatalogDaoAdapterPrisma, ServiceCatalogSelect } from './service-catalog-prisma.dao';
 
 describe('ServiceCatalogDaoAdapterPrisma - Integration tests', () => {
   let sut: ServiceCatalogDaoAdapterPrisma;
@@ -113,7 +112,7 @@ describe('ServiceCatalogDaoAdapterPrisma - Integration tests', () => {
 
       expect(total).toBe(1);
       expect(filtered).toHaveLength(1);
-      expect(filtered[0].cnaeNbsIndopId).toBe(fkA.cnaeNbsIndopId);
+      expect(filtered[0].cnaeNbsIndop.id).toBe(fkA.cnaeNbsIndopId);
     });
 
     it('should filter by active when provided', async() => {
@@ -226,23 +225,8 @@ describe('ServiceCatalogDaoAdapterPrisma - Integration tests', () => {
       const [rows] = await sut.findAll({});
 
       expect(rows).toHaveLength(1);
-      expect(rows[0]).toEqual<ServiceCatalogDto>({
-        id: created.id,
-        cnaeNbsIndopId: created.cnaeNbsIndopId,
-        serviceBilledId: created.serviceBilledId,
-        serviceCategoryId: created.serviceCategoryId,
-        serviceDeliveryTermId: created.serviceDeliveryTermId,
-        serviceFreightId: created.serviceFreightId,
-        serviceProposalValidityId: created.serviceProposalValidityId,
-        serviceWarrantyId: created.serviceWarrantyId,
-        name: created.name,
-        unitPriceInCents: created.unitPriceInCents,
-        description: created.description,
-        isCommercial: created.isCommercial,
-        active: created.active,
-        createdAt: created.createdAt,
-        updatedAt: created.updatedAt,
-      });
+      const expected = await sut.findById(created.id);
+      expect(rows[0]).toEqual(expected);
     });
   });
 
@@ -268,23 +252,11 @@ describe('ServiceCatalogDaoAdapterPrisma - Integration tests', () => {
 
       const result = await sut.findById(created.id);
 
-      expect(result).toEqual<ServiceCatalogDto>({
-        id: created.id,
-        cnaeNbsIndopId: fk.cnaeNbsIndopId,
-        serviceBilledId: fk.serviceBilledId,
-        serviceCategoryId: fk.serviceCategoryId,
-        serviceDeliveryTermId: fk.serviceDeliveryTermId,
-        serviceFreightId: fk.serviceFreightId,
-        serviceProposalValidityId: fk.serviceProposalValidityId,
-        serviceWarrantyId: fk.serviceWarrantyId,
-        name: 'Find by id',
-        unitPriceInCents: 3000,
-        description: 'D',
-        isCommercial: true,
-        active: false,
-        createdAt: created.createdAt,
-        updatedAt: created.updatedAt,
+      const expected = await prisma.service.findUnique({
+        where: { id: created.id },
+        select: ServiceCatalogSelect,
       });
+      expect(result).toEqual(expected);
     });
   });
 });

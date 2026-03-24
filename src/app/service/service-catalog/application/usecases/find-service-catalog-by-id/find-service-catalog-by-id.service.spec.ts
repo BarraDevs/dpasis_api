@@ -1,14 +1,17 @@
 import { Test } from '@nestjs/testing';
-import { ServiceCatalogDto } from 'src/app/service/service-catalog/application/dtos/service-catalog.dto';
+import type { IServiceCatalogDao } from 'src/app/service/service-catalog/application/persistence/dao/service-catalog-dao.interface';
 import { ServiceCatalogNotFoundError } from 'src/app/service/service-catalog/domain/errors/service-catalog-not-found.error';
 import { seedServiceCatalogForeignKeys } from 'src/app/service/service-catalog/infra/driven/persistence/prisma/service-catalog-prisma-test.helpers';
 import { ServiceCatalogModule } from 'src/app/service/service-catalog/service-catalog.module';
+import { TOKENS } from 'src/core/di/token';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
+import { ServiceCatalogDto } from '../../dtos/service-catalog.dto';
 import { FindServiceCatalogById } from './find-service-catalog-by-id.service';
 
 describe('FindServiceCatalogById - Integration tests', () => {
   let sut: FindServiceCatalogById;
   let prisma: PrismaService;
+  let serviceCatalogDao: IServiceCatalogDao;
 
   beforeAll(async() => {
     const module = await Test.createTestingModule({
@@ -17,6 +20,7 @@ describe('FindServiceCatalogById - Integration tests', () => {
 
     sut = module.get(FindServiceCatalogById);
     prisma = module.get(PrismaService);
+    serviceCatalogDao = module.get(TOKENS.ServiceCatalogDao);
   });
 
   beforeEach(async() => {
@@ -91,23 +95,8 @@ describe('FindServiceCatalogById - Integration tests', () => {
 
     const result = await sut.execute(created.id);
 
-    expect(result).toEqual<ServiceCatalogDto>({
-      id: created.id,
-      cnaeNbsIndopId: created.cnaeNbsIndopId,
-      serviceBilledId: created.serviceBilledId,
-      serviceCategoryId: created.serviceCategoryId,
-      serviceDeliveryTermId: created.serviceDeliveryTermId,
-      serviceFreightId: created.serviceFreightId,
-      serviceProposalValidityId: created.serviceProposalValidityId,
-      serviceWarrantyId: created.serviceWarrantyId,
-      name: created.name,
-      unitPriceInCents: created.unitPriceInCents,
-      description: created.description,
-      isCommercial: created.isCommercial,
-      active: created.active,
-      createdAt: created.createdAt,
-      updatedAt: created.updatedAt,
-    });
+    const expected = await serviceCatalogDao.findById(created.id);
+    expect(result).toEqual<ServiceCatalogDto>(expected!);
   });
 
   it('should return inactive service when onlyActive is not set', async() => {

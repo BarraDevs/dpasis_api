@@ -5,20 +5,76 @@ import { IServiceCatalogDao } from 'src/app/service/service-catalog/application/
 import { FindAllServiceCatalogQueryDto } from 'src/app/service/service-catalog/application/usecases/find-all-service-catalog/dtos/find-all-service-catalog.dto';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 
-const ServiceCatalogSelect = {
+export const ServiceCatalogSelect = {
   id: true,
-  cnaeNbsIndopId: true,
-  serviceBilledId: true,
-  serviceCategoryId: true,
-  serviceDeliveryTermId: true,
-  serviceFreightId: true,
-  serviceProposalValidityId: true,
-  serviceWarrantyId: true,
   name: true,
   unitPriceInCents: true,
   description: true,
   isCommercial: true,
   active: true,
+  cnaeNbsIndop: {
+    select: {
+      id: true,
+      active: true,
+      cnae: {
+        select: {
+          id: true,
+          code: true,
+          description: true,
+        },
+      },
+      nbs: {
+        select: {
+          id: true,
+          code: true,
+          description: true,
+        },
+      },
+      indop: {
+        select: {
+          id: true,
+          code: true,
+          description: true,
+        },
+      },
+    },
+  },
+  serviceBilled: {
+    select: {
+      id: true,
+      description: true,
+    },
+  },
+  serviceCategory: {
+    select: {
+      id: true,
+      name: true,
+    },
+  },
+  serviceDeliveryTerm: {
+    select: {
+      id: true,
+      name: true,
+    },
+  },
+  serviceFreight: {
+    select: {
+      id: true,
+      name: true,
+    },
+  },
+  serviceProposalValidity: {
+    select: {
+      id: true,
+      name: true,
+    },
+  },
+  serviceWarranty: {
+    select: {
+      id: true,
+      name: true,
+    },
+  },
   createdAt: true,
   updatedAt: true,
 } satisfies Prisma.ServiceSelect;

@@ -3,7 +3,6 @@ import { ServiceCatalogNotFoundError } from 'src/app/service/service-catalog/dom
 import { seedServiceCatalogForeignKeys } from 'src/app/service/service-catalog/infra/driven/persistence/prisma/service-catalog-prisma-test.helpers';
 import { ServiceCatalogModule } from 'src/app/service/service-catalog/service-catalog.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
-import { ServiceCatalogDto } from '../../dtos/service-catalog.dto';
 import { DeactivateServiceCatalog } from './deactivate-service-catalog.service';
 
 describe('DeactivateServiceCatalog - Integration tests', () => {
@@ -89,7 +88,7 @@ describe('DeactivateServiceCatalog - Integration tests', () => {
     await sut.execute(created.id);
 
     const updated = await prisma.service.findUnique({ where: { id: created.id } });
-    expect(updated).toEqual<ServiceCatalogDto>({
+    expect(updated).toEqual({
       ...created,
       active: false,
       updatedAt: updated!.updatedAt,
@@ -113,7 +112,7 @@ describe('DeactivateServiceCatalog - Integration tests', () => {
 
     expect(result.message).toBe('Serviço do catálogo desativado com sucesso');
     const row = await prisma.service.findUnique({ where: { id: created.id } });
-    expect(row).toEqual<ServiceCatalogDto>({
+    expect(row).toEqual({
       ...created,
       active: false,
       updatedAt: row!.updatedAt,

@@ -18,7 +18,6 @@ function makeValidQuery(
   return {
     page: 1,
     size: 10,
-    serviceId: 1,
     ...overrides,
   };
 }
@@ -30,13 +29,12 @@ describe('FindAllServiceAttendanceValueQueryDto', () => {
     target = new ValidationPipe(pipeOptions);
   });
 
-  it('should throw if serviceId is missing', async() => {
+  it('should accept when serviceId is omitted', async() => {
     const data = { page: 1, size: 10 };
 
-    expect.assertions(1);
-    return target.transform(data, metadata).catch((error) => {
-      expectMessageToContain(error.getResponse().message, 'serviceId é obrigatório');
-    });
+    const result = await target.transform(data, metadata);
+
+    expect(result.serviceId).toBeUndefined();
   });
 
   it('should accept valid serviceId', async() => {

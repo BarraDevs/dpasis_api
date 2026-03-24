@@ -62,6 +62,33 @@ describe('FindAllServiceAttendanceValue - Integration tests', () => {
     });
   });
 
+  it('should return rows from all services when serviceId is omitted', async() => {
+    const { id: serviceIdA } = await seedActiveService(prisma, 'all-A');
+    const { id: serviceIdB } = await seedActiveService(prisma, 'all-B');
+
+    await prisma.serviceAttendanceValue.create({
+      data: {
+        serviceId: serviceIdA,
+        values: { a: 1 },
+        totalValueInCents: 1,
+      },
+    });
+    await prisma.serviceAttendanceValue.create({
+      data: {
+        serviceId: serviceIdB,
+        values: { b: 2 },
+        totalValueInCents: 2,
+      },
+    });
+
+    const result = await sut.execute({ page: 1, size: 10 } as FindAllServiceAttendanceValueQueryDto);
+
+    expect(result.totalItems).toBe(2);
+    expect(result.data).toHaveLength(2);
+    const serviceIds = result.data.map((r) => r.serviceId).sort((a, b) => a - b);
+    expect(serviceIds).toEqual([serviceIdA, serviceIdB].sort((a, b) => a - b));
+  });
+
   it('should filter by serviceId and exclude rows from other services', async() => {
     const { id: serviceIdA } = await seedActiveService(prisma, 'A');
     const { id: serviceIdB } = await seedActiveService(prisma, 'B');

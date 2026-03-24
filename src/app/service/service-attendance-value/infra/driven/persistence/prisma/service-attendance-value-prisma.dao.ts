@@ -25,11 +25,13 @@ export class ServiceAttendanceValueDaoAdapterPrisma implements IServiceAttendanc
   public async findAll(queries: FindAllServiceAttendanceValueQueryDto): Promise<[ServiceAttendanceValueDto[], number]> {
     const pagination = this.prisma.paginationFactory(queries.page, queries.size);
 
-    const conditions: Prisma.ServiceAttendanceValueWhereInput[] = [
-      { serviceId: { equals: queries.serviceId } },
-    ];
+    const conditions: Prisma.ServiceAttendanceValueWhereInput[] = [];
 
-    const where: Prisma.ServiceAttendanceValueWhereInput = { AND: conditions };
+    if (queries.serviceId != null) {
+      conditions.push({ serviceId: { equals: queries.serviceId } });
+    }
+
+    const where: Prisma.ServiceAttendanceValueWhereInput = conditions.length > 0 ? { AND: conditions } : {};
 
     const [rows, total] = await this.prisma.$transaction([
       this.prisma.serviceAttendanceValue.findMany({

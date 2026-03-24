@@ -1,5 +1,4 @@
 import { Test } from '@nestjs/testing';
-import { ServiceCatalogDto } from 'src/app/service/service-catalog/application/dtos/service-catalog.dto';
 import { ServiceCatalogProps } from 'src/app/service/service-catalog/domain/entities/service-catalog.entity';
 import { ServiceCatalogFactory } from 'src/app/service/service-catalog/domain/factories/service-catalog.factory';
 import { ConfigModule } from 'src/core/config/config.module';
@@ -45,7 +44,7 @@ describe('ServiceCatalogRepositoryAdapterPrisma - Integration tests', () => {
 
       const saved = await prisma.service.findUnique({ where: { id } });
       expect(saved).not.toBeNull();
-      expect(saved).toEqual<ServiceCatalogDto>({
+      expect(saved).toEqual({
         id,
         cnaeNbsIndopId: fk.cnaeNbsIndopId,
         serviceBilledId: fk.serviceBilledId,
@@ -152,7 +151,7 @@ describe('ServiceCatalogRepositoryAdapterPrisma - Integration tests', () => {
       await sut.edit(entity);
 
       const updated = await prisma.service.findUnique({ where: { id: created.id } });
-      expect(updated).toEqual<ServiceCatalogDto>({
+      expect(updated).toEqual({
         ...created,
         name: 'Serviço atualizado',
         unitPriceInCents: 2000,
