@@ -57,4 +57,18 @@ describe('FindCnaeNbsIndopById - Integration tests', () => {
     expect(result.nbs.id).toBe(nbs.id);
     expect(result.indop.id).toBe(indop.id);
   });
+
+  it('should throw CnaeNbsIndopNotFoundError when combination exists but is inactive and onlyActive is true', async() => {
+    const [cnae, nbs, indop] = await Promise.all([
+      prisma.cnae.create({ data: { code: '7654321', description: 'CNAE Inativo', active: true } }),
+      prisma.nbs.create({ data: { code: '87654321', description: 'NBS Inativo', active: true } }),
+      prisma.indop.create({ data: { code: '2', description: 'INDOP Inativo', active: true } }),
+    ]);
+
+    const created = await prisma.cnaeNbsIndop.create({
+      data: { cnaeId: cnae.id, nbsId: nbs.id, indopId: indop.id, active: false },
+    });
+
+    await expect(sut.execute(created.id, { onlyActive: true })).rejects.toThrow(CnaeNbsIndopNotFoundError);
+  });
 });

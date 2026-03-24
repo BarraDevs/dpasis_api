@@ -131,9 +131,9 @@ describe('FindAllServiceProposalValidity - Integration tests', () => {
   it('should filter by search in name', async() => {
     await prisma.serviceProposalValidity.createMany({
       data: [
-        { name: `30 dias ${Date.now()}`, active: true },
-        { name: `90 dias ${Date.now()}`, active: true },
-        { name: `30 dias estendido ${Date.now()}`, active: true },
+        { name: '30 dias', active: true },
+        { name: '90 dias', active: true },
+        { name: '30 dias estendido', active: true },
       ],
     });
 
