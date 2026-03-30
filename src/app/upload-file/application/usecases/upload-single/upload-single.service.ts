@@ -26,7 +26,7 @@ export class UploadSingle {
       throw new RequiredFileError();
     }
     if (file.size > this.TWENTY_MEGABYTES) {
-      throw new FileTooBigError(this.TWENTY_MEGABYTES);
+      throw new FileTooBigError(this.TWENTY_MEGABYTES / 1024 / 1024);
     }
     if (!this.SUPPORTED_MIME_TYPES.includes(file.mimetype)) {
       throw new InvalidFileError(this.SUPPORTED_MIME_TYPES);

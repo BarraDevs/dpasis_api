@@ -54,9 +54,10 @@ describe('UploadSingle', () => {
       });
       const uploadSpy = jest.spyOn(sut['uploadFileGateway'], 'upload');
 
-      expect.assertions(2);
+      expect.assertions(3);
       return sut.execute(file).catch((error) => {
         expect(error).toBeInstanceOf(FileTooBigError);
+        expect(error.message).toBe(`Tamanho do arquivo excedido. O arquivo deve ter no máximo ${TWENTY_MB / 1024 / 1024}MB.`);
         expect(uploadSpy).not.toHaveBeenCalled();
       });
     });
