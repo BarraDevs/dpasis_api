@@ -7,8 +7,8 @@ import { JobName } from 'src/infra/queue/enums/job-name.enum';
 import { QueueName } from 'src/infra/queue/enums/queue-name.enum';
 import type { IUploadFileGateway } from 'src/infra/upload-file/upload-file.gateway';
 import { Readable } from 'stream';
-import type { DeleteFileJobDto } from '../../../application/queue/jobs/delete-file-job.dto';
-import type { UploadFileJobDto } from '../../../application/queue/jobs/upload-file-job.dto';
+import type { DeleteFileJobDto } from '../../../../application/queue/jobs/delete-file-job.dto';
+import type { UploadFileJobDto } from '../../../../application/queue/jobs/upload-file-job.dto';
 
 function createMulterFileFromUploadJobDto(dto: UploadFileJobDto): Express.Multer.File {
   const buffer = Buffer.from(dto.bufferBase64, 'base64');
@@ -36,7 +36,6 @@ export class UploadFileBullmqConsumer extends WorkerHost {
   }
 
   public async process(job: Job<UploadFileJobDto | DeleteFileJobDto>): Promise<void> {
-    console.log('job.name', job.name);
     switch (job.name) {
       case JobName.UploadFile: {
         const payload = job.data as UploadFileJobDto;
