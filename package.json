@@ -21,7 +21,7 @@
     "db:reset": "dotenv -e .env.development -- prisma db push --force-reset && prisma db seed",
     "db:studio": "dotenv -e .env.development -- prisma studio",
     "generate:module": "ts-node -r tsconfig-paths/register scripts/cli.ts",
-    "generate:postman": "ts-node -r tsconfig-paths/register scripts/swagger-to-postman.ts"
+    "generate:postman": "ts-node -r tsconfig-paths/register postman/swagger-to-postman.ts"
   },
   "prisma": {
     "schema": "./prisma/schema",

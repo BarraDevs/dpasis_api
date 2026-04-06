@@ -1640,10 +1640,6 @@
                 "client-attachment"
               ]
             },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"clientId\": 1,\n  \"description\": \"Descrição do anexo\",\n  \"link\": \"https://example.com/document.pdf\"\n}"
-            },
             "description": "Criar novo anexo de cliente",
             "auth": {
               "type": "bearer",
@@ -1713,10 +1709,6 @@
                 "client-attachment",
                 "{{id}}"
               ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"clientId\": 1,\n  \"description\": \"Descrição do anexo\",\n  \"link\": \"https://example.com/document.pdf\"\n}"
             },
             "description": "Editar anexo de cliente",
             "auth": {
@@ -5854,7 +5846,7 @@
                 {
                   "key": "serviceId",
                   "value": "{{serviceId}}",
-                  "description": "Obrigatório"
+                  "description": "Opcional"
                 }
               ]
             },
@@ -6107,7 +6099,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"cnaeNbsIndopId\": 1,\n  \"serviceBilledId\": 1,\n  \"serviceCategoryId\": 1,\n  \"serviceDeliveryTermId\": 1,\n  \"serviceFreightId\": 1,\n  \"serviceProposalValidityId\": 1,\n  \"serviceWarrantyId\": 1,\n  \"name\": \"Instalação de sistema\",\n  \"unitPriceInCents\": 150000,\n  \"description\": \"Descrição do serviço ofertado.\",\n  \"isCommercial\": true\n}"
+              "raw": "{\n  \"cnaeNbsIndopId\": 1,\n  \"serviceBilledId\": 1,\n  \"serviceCategoryId\": 1,\n  \"serviceDeliveryTermId\": 1,\n  \"serviceFreightId\": 1,\n  \"serviceProposalValidityId\": 1,\n  \"serviceWarrantyId\": 1,\n  \"companyIds\": [\n    1\n  ],\n  \"name\": \"Instalação de sistema\",\n  \"unitPriceInCents\": 150000,\n  \"description\": \"Descrição do serviço ofertado.\",\n  \"isCommercial\": true\n}"
             },
             "description": "Criar serviço no catálogo",
             "auth": {
@@ -6181,7 +6173,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"cnaeNbsIndopId\": 1,\n  \"serviceBilledId\": 1,\n  \"serviceCategoryId\": 1,\n  \"serviceDeliveryTermId\": 1,\n  \"serviceFreightId\": 1,\n  \"serviceProposalValidityId\": 1,\n  \"serviceWarrantyId\": 1,\n  \"name\": \"Instalação de sistema\",\n  \"unitPriceInCents\": 150000,\n  \"description\": \"Descrição do serviço ofertado.\",\n  \"isCommercial\": true\n}"
+              "raw": "{\n  \"cnaeNbsIndopId\": 1,\n  \"serviceBilledId\": 1,\n  \"serviceCategoryId\": 1,\n  \"serviceDeliveryTermId\": 1,\n  \"serviceFreightId\": 1,\n  \"serviceProposalValidityId\": 1,\n  \"serviceWarrantyId\": 1,\n  \"companyIds\": [\n    1\n  ],\n  \"name\": \"Instalação de sistema\",\n  \"unitPriceInCents\": 150000,\n  \"description\": \"Descrição do serviço ofertado.\",\n  \"isCommercial\": true\n}"
             },
             "description": "Editar serviço do catálogo",
             "auth": {
