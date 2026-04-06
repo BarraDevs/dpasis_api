@@ -11,7 +11,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiBody, ApiConsumes } from '@nestjs/swagger';
+import { ApiConsumes } from '@nestjs/swagger';
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
 import { RequiredRoles } from 'src/app/authentication/infra/decorators/required-role.decorator';
 import { ClientAttachmentDto } from 'src/app/client/client-attachment/application/dtos/client-attachment.dto';
@@ -27,6 +27,7 @@ import { FindAllClientAttachmentQueryDto } from 'src/app/client/client-attachmen
 import { FindAllClientAttachment } from 'src/app/client/client-attachment/application/usecases/find-all-client-attachment/find-all-client-attachment.service';
 import { FindClientAttachmentById } from 'src/app/client/client-attachment/application/usecases/find-client-attachment-by-id/find-client-attachment-by-id.service';
 import { UpdateClientAttachmentStatus } from 'src/app/client/client-attachment/application/usecases/update-client-attachment-status/update-client-attachment-status.service';
+import { UploadSingleInputDto } from 'src/app/upload-file/application/usecases/upload-single/dtos/upload-single.dto';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
 import { Swagger } from 'src/infra/openapi/swagger';
 import { Params } from 'src/infra/validators/class/dtos/params/params.dto';
@@ -46,22 +47,12 @@ export class ClientAttachmentAdminController {
 
   @Post()
   @ApiConsumes('multipart/form-data')
-  @ApiBody({
-    schema: {
-      type: 'object',
-      required: ['file', 'clientId', 'description'],
-      properties: {
-        file: { type: 'string', format: 'binary' },
-        clientId: { type: 'integer' },
-        description: { type: 'string' },
-      },
-    },
-  })
   @UseInterceptors(FileInterceptor('file'))
   @Swagger({
     tags: ['Clientes - Anexos'],
     summary: 'Criar novo anexo de cliente',
     applyBadRequest: true,
+    mergeRequestBody: [CreateClientAttachmentInputDto, UploadSingleInputDto],
     createdResponse: CreateClientAttachmentOutputDto,
   })
   public create(@UploadedFile() file: Express.Multer.File, @Body() body: CreateClientAttachmentInputDto): Promise<CreateClientAttachmentOutputDto> {
@@ -105,22 +96,13 @@ export class ClientAttachmentAdminController {
 
   @Patch(':id')
   @ApiConsumes('multipart/form-data')
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        file: { type: 'string', format: 'binary' },
-        clientId: { type: 'integer' },
-        description: { type: 'string' },
-      },
-    },
-  })
   @UseInterceptors(FileInterceptor('file'))
   @Swagger({
     tags: ['Clientes - Anexos'],
     summary: 'Editar anexo de cliente',
     applyBadRequest: true,
     applyNotFound: true,
+    mergeRequestBody: [EditClientAttachmentInputDto, UploadSingleInputDto],
     okResponse: SuccessMessage,
   })
   public update(
