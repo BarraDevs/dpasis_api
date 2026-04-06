@@ -59,9 +59,10 @@ type SmtpData = CommomData & {
 
 type UploadFileData = CommomData & {
   action: string;
-  fileName: string;
-  fileSize: number;
-  fileType: string;
+  fileName?: string;
+  fileSize?: number;
+  fileType?: string;
+  fileKey?: string;
 }
 
 type CepLookupData = CommomData & {

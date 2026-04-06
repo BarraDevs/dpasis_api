@@ -1,0 +1,41 @@
+import { BullModule } from '@nestjs/bullmq';
+import { DynamicModule, Global, Module } from '@nestjs/common';
+import { ConfigModule } from 'src/core/config/config.module';
+import { ConfigService } from 'src/core/config/config.service';
+import { Environment } from 'src/core/config/environment.enum';
+
+@Global()
+@Module({})
+export class QueueModule {
+  static register(): DynamicModule {
+    const isTest = process.env.NODE_ENV === Environment.Test;
+
+    if (isTest) {
+      return {
+        module: QueueModule,
+      };
+    }
+
+    return {
+      module: QueueModule,
+      imports: [
+        BullModule.forRootAsync({
+          imports: [ConfigModule],
+          inject: [ConfigService],
+          useFactory: (config: ConfigService) => {
+            const url = new URL(config.redisUrl);
+            return {
+              connection: {
+                host: url.hostname,
+                port: Number(url.port) || 6379,
+                username: url.username ? decodeURIComponent(url.username) : undefined,
+                password: url.password ? decodeURIComponent(url.password) : undefined,
+                db: config.redisQueueDatabase,
+              },
+            };
+          },
+        }),
+      ],
+    };
+  }
+}

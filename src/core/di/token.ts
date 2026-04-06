@@ -3,7 +3,9 @@ const TOKENS = {
   CepLookupGateway: Symbol.for('CepLookupGateway'),
   CnpjLookupGateway: Symbol.for('CnpjLookupGateway'),
   LoggerGateway: Symbol.for('LoggerGateway'),
+
   UploadFileGateway: Symbol.for('UploadFileGateway'),
+  UploadFileQueueProducer: Symbol.for('UploadFileQueueProducer'),
 
   AccountDao: Symbol.for('AccountDao'),
   FaqDao: Symbol.for('FaqDao'),
