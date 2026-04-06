@@ -1,12 +1,15 @@
 import { Test } from '@nestjs/testing';
 import { ClientAttachmentModule } from 'src/app/client/client-attachment/client-attachment.module';
 import { ClientAttachmentNotFoundError } from 'src/app/client/client-attachment/domain/errors/client-attachment-not-found.error';
+import { UploadFileQueueFakeAdapterProducer } from 'src/app/upload-file/infra/driven/queue/fake/upload-file-queue-fake.producer';
+import { TOKENS } from 'src/core/di/token';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { DeleteClientAttachment } from './delete-client-attachment.service';
 
 describe('DeleteClientAttachment - Integration tests', () => {
   let sut: DeleteClientAttachment;
   let prisma: PrismaService;
+  let uploadQueue: UploadFileQueueFakeAdapterProducer;
 
   const createClient = async() => {
     const [group, owner] = await Promise.all([
@@ -37,10 +40,12 @@ describe('DeleteClientAttachment - Integration tests', () => {
 
     sut = module.get(DeleteClientAttachment);
     prisma = module.get(PrismaService);
+    uploadQueue = module.get(TOKENS.UploadFileQueueProducer) as UploadFileQueueFakeAdapterProducer;
   });
 
   beforeEach(async() => {
     await prisma.truncate();
+    uploadQueue.addedDeleteJobs.length = 0;
   });
 
   afterAll(async() => {
@@ -64,7 +69,7 @@ describe('DeleteClientAttachment - Integration tests', () => {
       data: {
         clientId: client.id,
         description: 'Para deletar',
-        link: 'https://del.com',
+        link: 'https://del.com/path/file.pdf',
         active: true,
       },
     });
@@ -75,13 +80,31 @@ describe('DeleteClientAttachment - Integration tests', () => {
     expect(deleted).toBeNull();
   });
 
+  it('should enqueue delete job with S3 key from link', async() => {
+    const client = await createClient();
+    const link = 'https://bucket.s3.amazonaws.com/client-attachments/uuid-name.pdf';
+    const attachment = await prisma.clientAttachment.create({
+      data: {
+        clientId: client.id,
+        description: 'Desc',
+        link,
+        active: true,
+      },
+    });
+
+    await sut.execute(attachment.id);
+
+    expect(uploadQueue.addedDeleteJobs).toHaveLength(1);
+    expect(uploadQueue.addedDeleteJobs[0].data.fileUrl).toBe(link);
+  });
+
   it('should return success message', async() => {
     const client = await createClient();
     const attachment = await prisma.clientAttachment.create({
       data: {
         clientId: client.id,
         description: 'Desc',
-        link: 'https://a.com',
+        link: 'https://a.com/x/y.pdf',
         active: true,
       },
     });

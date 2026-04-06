@@ -8,5 +8,5 @@ export class UploadFakeAdapterGateway implements IUploadFileGateway {
     return 'http://fake-url.com/' + Date.now();
   }
 
-  public async delete(_fileKey: string): Promise<void> {}
+  public async delete(_publicUrl: string): Promise<void> {}
 }

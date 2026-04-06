@@ -1,3 +1,3 @@
 export class DeleteFileJobDto {
-  fileKey: string;
+  fileUrl: string;
 }

@@ -6,8 +6,8 @@ import { FindAllClientAttachmentQueryDto } from '../../usecases/find-all-client-
 export interface IClientAttachmentDao {
   findAll(queries: FindAllClientAttachmentQueryDto): Promise<[ClientAttachmentDto[], number]>;
   findById(id: number): Promise<ClientAttachmentDto | null>;
-  save(data: CreateClientAttachmentInputDto): Promise<number>;
-  edit(id: number, data: EditClientAttachmentInputDto): Promise<void>;
+  save(data: CreateClientAttachmentInputDto & { link: string }): Promise<number>;
+  edit(id: number, data: EditClientAttachmentInputDto & { link?: string }): Promise<void>;
   delete(id: number): Promise<void>;
   updateStatus(id: number, active: boolean): Promise<void>;
 }

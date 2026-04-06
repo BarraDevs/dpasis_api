@@ -36,12 +36,15 @@ export class UploadFileBullmqConsumer extends WorkerHost {
   }
 
   public async process(job: Job<UploadFileJobDto | DeleteFileJobDto>): Promise<void> {
+    console.log('job.name', job.name);
     switch (job.name) {
-      case JobName.UploadFile:
-        await this.uploadFileGateway.upload(createMulterFileFromUploadJobDto(job.data as UploadFileJobDto));
+      case JobName.UploadFile: {
+        const payload = job.data as UploadFileJobDto;
+        await this.uploadFileGateway.upload(createMulterFileFromUploadJobDto(payload), payload.folder);
         return;
+      }
       case JobName.DeleteFile:
-        await this.uploadFileGateway.delete((job.data as DeleteFileJobDto).fileKey);
+        await this.uploadFileGateway.delete((job.data as DeleteFileJobDto).fileUrl);
         return;
       default:
         throw new AppException(`Unknown job name: ${job.name}`);

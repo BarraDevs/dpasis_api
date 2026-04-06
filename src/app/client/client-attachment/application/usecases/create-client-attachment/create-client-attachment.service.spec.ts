@@ -4,6 +4,22 @@ import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { CreateClientAttachment } from './create-client-attachment.service';
 import { CreateClientAttachmentInputDto, CreateClientAttachmentOutputDto } from './dtos/create-client-attachment.dto';
 
+function createMockFile(overrides: Partial<Express.Multer.File> = {}): Express.Multer.File {
+  return {
+    fieldname: 'file',
+    originalname: 'doc.pdf',
+    encoding: '7bit',
+    mimetype: 'application/pdf',
+    size: 100,
+    buffer: Buffer.from('test'),
+    destination: '',
+    filename: '',
+    path: '',
+    stream: null as any,
+    ...overrides,
+  };
+}
+
 describe('CreateClientAttachment - Integration tests', () => {
   let sut: CreateClientAttachment;
   let prisma: PrismaService;
@@ -57,10 +73,10 @@ describe('CreateClientAttachment - Integration tests', () => {
     const input: CreateClientAttachmentInputDto = {
       clientId: client.id,
       description: 'Contrato de prestação',
-      link: 'https://example.com/contract.pdf',
     };
+    const file = createMockFile();
 
-    const result = await sut.execute(input);
+    const result = await sut.execute(file, input);
 
     expect(result).toBeDefined();
     expect(result).toMatchObject<CreateClientAttachmentOutputDto>({ id: expect.any(Number) });
@@ -70,7 +86,7 @@ describe('CreateClientAttachment - Integration tests', () => {
     expect(saved).not.toBeNull();
     expect(saved?.clientId).toBe(input.clientId);
     expect(saved?.description).toBe(input.description);
-    expect(saved?.link).toBe(input.link);
+    expect(saved?.link).toMatch(/^http:\/\/fake-url\.com\//);
     expect(saved?.active).toBe(true);
   });
 
@@ -79,10 +95,10 @@ describe('CreateClientAttachment - Integration tests', () => {
     const input: CreateClientAttachmentInputDto = {
       clientId: client.id,
       description: 'Nota fiscal',
-      link: 'https://nf.example.com/123.pdf',
     };
+    const file = createMockFile();
 
-    const { id } = await sut.execute(input);
+    const { id } = await sut.execute(file, input);
 
     const attachment = await prisma.clientAttachment.findUnique({ where: { id } });
     expect(attachment).toEqual(
@@ -90,10 +106,10 @@ describe('CreateClientAttachment - Integration tests', () => {
         id,
         clientId: input.clientId,
         description: input.description,
-        link: input.link,
         active: true,
       }),
     );
+    expect(attachment?.link).toMatch(/^http:\/\/fake-url\.com\//);
     expect(attachment?.createdAt).toBeInstanceOf(Date);
     expect(attachment?.updatedAt).toBeInstanceOf(Date);
   });
@@ -103,16 +119,14 @@ describe('CreateClientAttachment - Integration tests', () => {
     const input1: CreateClientAttachmentInputDto = {
       clientId: client.id,
       description: 'Anexo 1',
-      link: 'https://a.com/1',
     };
     const input2: CreateClientAttachmentInputDto = {
       clientId: client.id,
       description: 'Anexo 2',
-      link: 'https://a.com/2',
     };
 
-    const result1 = await sut.execute(input1);
-    const result2 = await sut.execute(input2);
+    const result1 = await sut.execute(createMockFile(), input1);
+    const result2 = await sut.execute(createMockFile(), input2);
 
     expect(result1.id).not.toBe(result2.id);
     const count = await prisma.clientAttachment.count({ where: { clientId: client.id } });

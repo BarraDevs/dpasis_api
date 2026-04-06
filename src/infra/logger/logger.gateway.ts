@@ -63,6 +63,7 @@ type UploadFileData = CommomData & {
   fileSize?: number;
   fileType?: string;
   fileKey?: string;
+  publicUrl?: string;
 }
 
 type CepLookupData = CommomData & {

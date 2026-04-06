@@ -1,13 +1,32 @@
 import { Test } from '@nestjs/testing';
 import { ClientAttachmentModule } from 'src/app/client/client-attachment/client-attachment.module';
 import { ClientAttachmentNotFoundError } from 'src/app/client/client-attachment/domain/errors/client-attachment-not-found.error';
+import { UploadFileQueueFakeAdapterProducer } from 'src/app/upload-file/infra/driven/queue/fake/upload-file-queue-fake.producer';
+import { TOKENS } from 'src/core/di/token';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { EditClientAttachmentInputDto } from './dtos/edit-client-attachment.dto';
 import { EditClientAttachment } from './edit-client-attachment.service';
 
+function createMockFile(overrides: Partial<Express.Multer.File> = {}): Express.Multer.File {
+  return {
+    fieldname: 'file',
+    originalname: 'new.pdf',
+    encoding: '7bit',
+    mimetype: 'application/pdf',
+    size: 100,
+    buffer: Buffer.from('new'),
+    destination: '',
+    filename: '',
+    path: '',
+    stream: null as any,
+    ...overrides,
+  };
+}
+
 describe('EditClientAttachment - Integration tests', () => {
   let sut: EditClientAttachment;
   let prisma: PrismaService;
+  let uploadQueue: UploadFileQueueFakeAdapterProducer;
 
   const createClient = async() => {
     const [group, owner] = await Promise.all([
@@ -38,10 +57,12 @@ describe('EditClientAttachment - Integration tests', () => {
 
     sut = module.get(EditClientAttachment);
     prisma = module.get(PrismaService);
+    uploadQueue = module.get(TOKENS.UploadFileQueueProducer) as UploadFileQueueFakeAdapterProducer;
   });
 
   beforeEach(async() => {
     await prisma.truncate();
+    uploadQueue.addedDeleteJobs.length = 0;
   });
 
   afterAll(async() => {
@@ -57,7 +78,7 @@ describe('EditClientAttachment - Integration tests', () => {
     const id = 0;
     const data: EditClientAttachmentInputDto = { description: 'Nova descrição' };
 
-    await expect(sut.execute(id, data)).rejects.toThrow(ClientAttachmentNotFoundError);
+    await expect(sut.execute(id, data, undefined)).rejects.toThrow(ClientAttachmentNotFoundError);
   });
 
   it('should update attachment description', async() => {
@@ -72,7 +93,7 @@ describe('EditClientAttachment - Integration tests', () => {
     });
     const data: EditClientAttachmentInputDto = { description: 'Atualizado' };
 
-    await sut.execute(attachment.id, data);
+    await sut.execute(attachment.id, data, undefined);
 
     const updated = await prisma.clientAttachment.findUnique({ where: { id: attachment.id } });
     expect(updated?.description).toBe('Atualizado');
@@ -80,45 +101,42 @@ describe('EditClientAttachment - Integration tests', () => {
     expect(updated?.active).toBe(true);
   });
 
-  it('should update attachment link', async() => {
+  it('should replace link and enqueue delete of old object when file is provided', async() => {
+    const client = await createClient();
+    const oldUrl = 'https://my-bucket.s3.amazonaws.com/client-attachments/old-uuid-file.pdf';
+    const attachment = await prisma.clientAttachment.create({
+      data: {
+        clientId: client.id,
+        description: 'Desc',
+        link: oldUrl,
+        active: true,
+      },
+    });
+
+    await sut.execute(attachment.id, { description: 'Com arquivo' }, createMockFile());
+
+    const updated = await prisma.clientAttachment.findUnique({ where: { id: attachment.id } });
+    expect(updated?.link).toMatch(/^http:\/\/fake-url\.com\//);
+    expect(updated?.description).toBe('Com arquivo');
+
+    expect(uploadQueue.addedDeleteJobs).toHaveLength(1);
+    expect(uploadQueue.addedDeleteJobs[0].data.fileUrl).toBe(oldUrl);
+  });
+
+  it('should return success message when no file and no body fields (no-op)', async() => {
     const client = await createClient();
     const attachment = await prisma.clientAttachment.create({
       data: {
         clientId: client.id,
         description: 'Desc',
-        link: 'https://old.com',
+        link: 'https://a.com',
         active: true,
       },
     });
-    const data: EditClientAttachmentInputDto = { link: 'https://new.com' };
 
-    await sut.execute(attachment.id, data);
+    const result = await sut.execute(attachment.id, {}, undefined);
 
-    const updated = await prisma.clientAttachment.findUnique({ where: { id: attachment.id } });
-    expect(updated?.description).toBe('Desc');
-    expect(updated?.link).toBe('https://new.com');
-  });
-
-  it('should update both description and link', async() => {
-    const client = await createClient();
-    const attachment = await prisma.clientAttachment.create({
-      data: {
-        clientId: client.id,
-        description: 'Original',
-        link: 'https://old.com',
-        active: true,
-      },
-    });
-    const data: EditClientAttachmentInputDto = {
-      description: 'Nova descrição',
-      link: 'https://new.com',
-    };
-
-    await sut.execute(attachment.id, data);
-
-    const updated = await prisma.clientAttachment.findUnique({ where: { id: attachment.id } });
-    expect(updated?.description).toBe('Nova descrição');
-    expect(updated?.link).toBe('https://new.com');
+    expect(result).toEqual({ message: 'Anexo do cliente atualizado com sucesso' });
   });
 
   it('should return success message', async() => {
@@ -133,7 +151,7 @@ describe('EditClientAttachment - Integration tests', () => {
     });
     const data: EditClientAttachmentInputDto = { description: 'Nova' };
 
-    const result = await sut.execute(attachment.id, data);
+    const result = await sut.execute(attachment.id, data, undefined);
 
     expect(result).toEqual({ message: 'Anexo do cliente atualizado com sucesso' });
   });

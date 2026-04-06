@@ -63,7 +63,7 @@ export class ClientAttachmentDaoAdapterPrisma implements IClientAttachmentDao {
     });
   }
 
-  public async save(data: CreateClientAttachmentInputDto): Promise<number> {
+  public async save(data: CreateClientAttachmentInputDto & { link: string }): Promise<number> {
     const result = await this.prisma.clientAttachment.create({
       data,
     });
@@ -71,7 +71,7 @@ export class ClientAttachmentDaoAdapterPrisma implements IClientAttachmentDao {
     return result.id;
   }
 
-  public async edit(id: number, data: EditClientAttachmentInputDto): Promise<void> {
+  public async edit(id: number, data: EditClientAttachmentInputDto & { link?: string }): Promise<void> {
     await this.prisma.clientAttachment.update({
       where: { id },
       data,

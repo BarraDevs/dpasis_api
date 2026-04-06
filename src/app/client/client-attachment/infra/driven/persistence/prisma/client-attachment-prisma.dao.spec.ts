@@ -312,7 +312,7 @@ describe('ClientAttachmentDaoAdapterPrisma - Integration tests', () => {
     it('should create attachment and return id', async() => {
       // Arrange
       const client = await createClient();
-      const data: CreateClientAttachmentInputDto = {
+      const data: CreateClientAttachmentInputDto & { link: string } = {
         clientId: client.id,
         description: 'Novo anexo',
         link: 'https://new.com',
@@ -336,7 +336,7 @@ describe('ClientAttachmentDaoAdapterPrisma - Integration tests', () => {
     it('should persist attachment in client_attachments table', async() => {
       // Arrange
       const client = await createClient();
-      const data: CreateClientAttachmentInputDto = {
+      const data: CreateClientAttachmentInputDto & { link: string } = {
         clientId: client.id,
         description: 'Documento importante',
         link: 'https://doc.com/file.pdf',
@@ -394,7 +394,7 @@ describe('ClientAttachmentDaoAdapterPrisma - Integration tests', () => {
           active: true,
         },
       });
-      const data: EditClientAttachmentInputDto = { link: 'https://new.com' };
+      const data: EditClientAttachmentInputDto & { link: string } = { link: 'https://new.com' };
 
       // Act
       await sut.edit(attachment.id, data);
@@ -417,7 +417,7 @@ describe('ClientAttachmentDaoAdapterPrisma - Integration tests', () => {
           active: true,
         },
       });
-      const data: EditClientAttachmentInputDto = {
+      const data: EditClientAttachmentInputDto & { link: string } = {
         description: 'Nova descrição',
         link: 'https://new.com',
       };

@@ -1,4 +1,17 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UploadedFile,
+  UseInterceptors,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiBody, ApiConsumes } from '@nestjs/swagger';
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
 import { RequiredRoles } from 'src/app/authentication/infra/decorators/required-role.decorator';
 import { ClientAttachmentDto } from 'src/app/client/client-attachment/application/dtos/client-attachment.dto';
@@ -32,14 +45,27 @@ export class ClientAttachmentAdminController {
   ) {}
 
   @Post()
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['file', 'clientId', 'description'],
+      properties: {
+        file: { type: 'string', format: 'binary' },
+        clientId: { type: 'integer' },
+        description: { type: 'string' },
+      },
+    },
+  })
+  @UseInterceptors(FileInterceptor('file'))
   @Swagger({
     tags: ['Clientes - Anexos'],
     summary: 'Criar novo anexo de cliente',
     applyBadRequest: true,
     createdResponse: CreateClientAttachmentOutputDto,
   })
-  public create(@Body() body: CreateClientAttachmentInputDto): Promise<CreateClientAttachmentOutputDto> {
-    return this.createClientAttachment.execute(body);
+  public create(@UploadedFile() file: Express.Multer.File, @Body() body: CreateClientAttachmentInputDto): Promise<CreateClientAttachmentOutputDto> {
+    return this.createClientAttachment.execute(file, body);
   }
 
   @Get()
@@ -78,6 +104,18 @@ export class ClientAttachmentAdminController {
   }
 
   @Patch(':id')
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: { type: 'string', format: 'binary' },
+        clientId: { type: 'integer' },
+        description: { type: 'string' },
+      },
+    },
+  })
+  @UseInterceptors(FileInterceptor('file'))
   @Swagger({
     tags: ['Clientes - Anexos'],
     summary: 'Editar anexo de cliente',
@@ -85,8 +123,12 @@ export class ClientAttachmentAdminController {
     applyNotFound: true,
     okResponse: SuccessMessage,
   })
-  public update(@Param() params: Params, @Body() body: EditClientAttachmentInputDto): Promise<SuccessMessage> {
-    return this.editClientAttachment.execute(params.id, body);
+  public update(
+    @Param() params: Params,
+    @Body() body: EditClientAttachmentInputDto,
+    @UploadedFile() file?: Express.Multer.File | undefined,
+  ): Promise<SuccessMessage> {
+    return this.editClientAttachment.execute(params.id, body, file);
   }
 
   @Delete(':id')
