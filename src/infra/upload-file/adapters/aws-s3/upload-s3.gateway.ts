@@ -45,7 +45,6 @@ export class UploadS3AdapterGateway implements IUploadFileGateway {
   }
 
   public async upload(file: Express.Multer.File, folder?: string): Promise<string> {
-    console.log('upload', file, folder);
     try {
       const s3 = await this.getS3Client();
 
@@ -76,7 +75,6 @@ export class UploadS3AdapterGateway implements IUploadFileGateway {
   }
 
   public async delete(publicUrl: string): Promise<void> {
-    console.log('delete', publicUrl);
     const fileKey = this.getFileKey(publicUrl);
     if (!fileKey) {
       return;
