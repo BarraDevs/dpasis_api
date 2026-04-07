@@ -68,7 +68,7 @@ describe('FindAdminById - Integration tests', () => {
       document: '52998224725',
       status: AccountStatus.ACTIVE,
       profilePicture: null,
-      permissions: [
+      claims: [
         { subject: Claim.BANK_LIST.subject, action: Claim.BANK_LIST.action },
         { subject: Claim.FAQ_LIST.subject, action: Claim.FAQ_LIST.action },
       ],

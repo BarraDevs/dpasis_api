@@ -13,5 +13,5 @@ export class AdminListDto {
 }
 
 export class AdminDetailDto extends AdminListDto {
-  permissions: ClaimValue[];
+  claims: ClaimValue[];
 }

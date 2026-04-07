@@ -63,7 +63,7 @@ describe('CaslAbilityFactory', () => {
 
       const ability = await factory.createForUser({ sub: 1, role: AccountRole.ADMIN });
 
-      // Test all possible ClaimAction and ClaimSubject pairs for false (no permission at all)
+      // Test all possible ClaimAction and ClaimSubject pairs for false (no claim at all)
       const allSubjects = Object.values(ClaimSubject);
       const allActions = Object.values(ClaimAction);
 

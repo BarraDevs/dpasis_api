@@ -6,8 +6,8 @@ import { AdminDetailDto, AdminListDto } from 'src/app/admin/application/dtos/adm
 import { IAdminDao } from 'src/app/admin/application/persistence/dao/admin-dao.interface';
 import { FindAllAdminQueryDto } from 'src/app/admin/application/usecases/find-all-admin/dtos/find-all-admin.dto';
 import {
-  claimFromSubjectAction,
-  type ClaimValue,
+    claimFromSubjectAction,
+    type ClaimValue,
 } from 'src/app/authentication/domain/authorization/claim';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 
@@ -125,7 +125,7 @@ export class AdminDaoAdapterPrisma implements IAdminDao {
 
     return {
       ...mapToDto(row),
-      permissions: claims,
+      claims: claims,
     };
   }
 

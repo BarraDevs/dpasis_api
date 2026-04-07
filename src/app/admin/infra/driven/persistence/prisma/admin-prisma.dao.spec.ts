@@ -85,13 +85,13 @@ async function expectedAdminDetailDto(
     orderBy: { id: 'asc' },
     select: { subject: true, action: true },
   });
-  const permissions: ClaimValue[] = claimRows
+  const claims: ClaimValue[] = claimRows
     .map(c => claimFromSubjectAction(c.subject, c.action))
     .filter((c): c is ClaimValue => c !== null);
 
   return {
     ...list,
-    permissions,
+    claims,
   };
 }
 
@@ -310,7 +310,7 @@ describe('AdminDaoAdapterPrisma - Integration tests', () => {
       expect(result).toBeNull();
     });
 
-    it('should return detail with permissions mapped from account_claim', async() => {
+    it('should return detail with claims mapped from account_claim', async() => {
       const account = await prisma.account.create({
         data: {
           role: AccountRole.ADMIN,
@@ -335,8 +335,8 @@ describe('AdminDaoAdapterPrisma - Integration tests', () => {
       const result = await sut.findByIdWithClaims(account.id);
 
       expect(result).not.toBeNull();
-      expect(result?.permissions).toHaveLength(1);
-      expect(result?.permissions[0]).toEqual({
+      expect(result?.claims).toHaveLength(1);
+      expect(result?.claims[0]).toEqual({
         subject: ClaimSubject.Bank,
         action: ClaimAction.Create,
       });
