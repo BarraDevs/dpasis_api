@@ -10,7 +10,7 @@ describe('Authorization decorators metadata', () => {
     @Controller()
     class TestController {
       @Get()
-      @RequiredClaims(Claim.BANK_LIST, Claim.BANK_READ)
+      @RequiredClaims(Claim.BANK_LIST, Claim.BANK_DETAIL)
       list(): void {}
     }
 
@@ -19,7 +19,7 @@ describe('Authorization decorators metadata', () => {
       TestController.prototype.list,
     );
 
-    expect(meta).toEqual([Claim.BANK_LIST, Claim.BANK_READ]);
+    expect(meta).toEqual([Claim.BANK_LIST, Claim.BANK_DETAIL]);
   });
 
   it('should set required roles metadata on the controller class when using RequiredRoles', () => {

@@ -6,8 +6,8 @@ import { RequiredRoles } from 'src/app/authentication/infra/decorators/required-
 import { ClientDiscountDto } from 'src/app/client/client-discount/application/dtos/client-discount.dto';
 import { CreateClientDiscount } from 'src/app/client/client-discount/application/usecases/create-client-discount/create-client-discount.service';
 import {
-  CreateClientDiscountInputDto,
-  CreateClientDiscountOutputDto,
+    CreateClientDiscountInputDto,
+    CreateClientDiscountOutputDto,
 } from 'src/app/client/client-discount/application/usecases/create-client-discount/dtos/create-client-discount.dto';
 import { DeleteClientDiscount } from 'src/app/client/client-discount/application/usecases/delete-client-discount/delete-client-discount.service';
 import { EditClientDiscountInputDto } from 'src/app/client/client-discount/application/usecases/edit-client-discount/dtos/edit-client-discount.dto';
@@ -56,7 +56,7 @@ export class ClientDiscountAdminController {
   }
 
   @Get(':id')
-  @RequiredClaims(Claim.CLIENT_DISCOUNT_READ)
+  @RequiredClaims(Claim.CLIENT_DISCOUNT_DETAIL)
   @Swagger({
     tags: ['Clientes - Descontos'],
     summary: 'Buscar desconto por ID',

@@ -55,7 +55,7 @@ export class ServiceFreightAdminController {
   }
 
   @Get(':id')
-  @RequiredClaims(Claim.SERVICE_FREIGHT_READ)
+  @RequiredClaims(Claim.SERVICE_FREIGHT_DETAIL)
   @Swagger({
     tags: ['Serviços - Frete'],
     summary: 'Buscar frete de serviço por ID',

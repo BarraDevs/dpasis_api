@@ -57,7 +57,7 @@ export class ServiceBilledAdminController {
   }
 
   @Get(':id')
-  @RequiredClaims(Claim.SERVICE_BILLED_READ)
+  @RequiredClaims(Claim.SERVICE_BILLED_DETAIL)
   @Swagger({
     tags: ['Serviços - Faturados'],
     summary: 'Buscar serviço faturado por ID',

@@ -55,7 +55,7 @@ export class ClientDriveTypeAdminController {
   }
 
   @Get(':id')
-  @RequiredClaims(Claim.CLIENT_DRIVE_TYPE_READ)
+  @RequiredClaims(Claim.CLIENT_DRIVE_TYPE_DETAIL)
   @Swagger({
     tags: ['Clientes - Tipos de cliente - Tipos de drive'],
     summary: 'Buscar tipo de drive de cliente por ID',

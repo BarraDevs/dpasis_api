@@ -55,7 +55,7 @@ export class ClientOwnerAdminController {
   }
 
   @Get(':id')
-  @RequiredClaims(Claim.CLIENT_OWNER_READ)
+  @RequiredClaims(Claim.CLIENT_OWNER_DETAIL)
   @Swagger({
     tags: ['Clientes - Proprietários'],
     summary: 'Buscar proprietário de clientes por ID',

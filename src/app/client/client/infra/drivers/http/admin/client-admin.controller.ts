@@ -55,7 +55,7 @@ export class ClientAdminController {
   }
 
   @Get(':id')
-  @RequiredClaims(Claim.CLIENT_READ)
+  @RequiredClaims(Claim.CLIENT_DETAIL)
   @Swagger({
     tags: ['Clientes'],
     summary: 'Buscar cliente por ID',

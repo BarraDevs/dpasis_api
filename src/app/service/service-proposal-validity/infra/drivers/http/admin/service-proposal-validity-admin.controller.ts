@@ -55,7 +55,7 @@ export class ServiceProposalValidityAdminController {
   }
 
   @Get(':id')
-  @RequiredClaims(Claim.SERVICE_PROPOSAL_VALIDITY_READ)
+  @RequiredClaims(Claim.SERVICE_PROPOSAL_VALIDITY_DETAIL)
   @Swagger({
     tags: ['Serviços - Validade de proposta'],
     summary: 'Buscar validade de proposta por ID',

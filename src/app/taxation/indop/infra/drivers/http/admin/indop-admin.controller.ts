@@ -54,7 +54,7 @@ export class IndopAdminController {
   }
 
   @Get(':id')
-  @RequiredClaims(Claim.INDOP_READ)
+  @RequiredClaims(Claim.INDOP_DETAIL)
   @Swagger({
     tags: ['Tributação - INDOP'],
     summary: 'Buscar INDOP por ID',

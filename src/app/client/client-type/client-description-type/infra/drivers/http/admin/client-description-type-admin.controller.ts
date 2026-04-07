@@ -55,7 +55,7 @@ export class ClientDescriptionTypeAdminController {
   }
 
   @Get(':id')
-  @RequiredClaims(Claim.CLIENT_DESCRIPTION_TYPE_READ)
+  @RequiredClaims(Claim.CLIENT_DESCRIPTION_TYPE_DETAIL)
   @Swagger({
     tags: ['Clientes - Tipos de cliente - Tipos de descrição'],
     summary: 'Buscar tipo de descrição de cliente por ID',

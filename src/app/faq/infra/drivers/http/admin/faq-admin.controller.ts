@@ -55,7 +55,7 @@ export class FaqAdminController {
   }
 
   @Get(':id')
-  @RequiredClaims(Claim.FAQ_READ)
+  @RequiredClaims(Claim.FAQ_DETAIL)
   @Swagger({
     tags: ['FAQs'],
     summary: 'Buscar FAQ por ID',

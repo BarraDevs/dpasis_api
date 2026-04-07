@@ -54,7 +54,7 @@ export class BankAdminController {
   }
 
   @Get(':id')
-  @RequiredClaims(Claim.BANK_READ)
+  @RequiredClaims(Claim.BANK_DETAIL)
   @Swagger({
     tags: ['Bancos'],
     summary: 'Buscar banco por ID',

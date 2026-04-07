@@ -164,7 +164,7 @@ describe('AdminRepositoryAdapterPrisma - Integration tests', () => {
         document: '09.748.165/0001-10',
         profilePicture: null,
         claims: [
-          { subject: ClaimSubject.Faq, action: ClaimAction.Read },
+          { subject: ClaimSubject.Faq, action: ClaimAction.Detail },
         ],
       });
       const id = await sut.save(created, 'hash');
@@ -179,7 +179,7 @@ describe('AdminRepositoryAdapterPrisma - Integration tests', () => {
       expect(found?.props.claims).toHaveLength(1);
       expect(found?.props.claims[0]).toEqual({
         subject: ClaimSubject.Faq,
-        action: ClaimAction.Read,
+        action: ClaimAction.Detail,
       });
     });
   });

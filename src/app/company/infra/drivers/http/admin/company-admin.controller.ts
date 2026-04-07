@@ -55,7 +55,7 @@ export class CompanyAdminController {
   }
 
   @Get(':id')
-  @RequiredClaims(Claim.COMPANY_READ)
+  @RequiredClaims(Claim.COMPANY_DETAIL)
   @Swagger({
     tags: ['Empresas'],
     summary: 'Buscar empresa por ID',

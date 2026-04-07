@@ -55,7 +55,7 @@ export class ServiceCategoryAdminController {
   }
 
   @Get(':id')
-  @RequiredClaims(Claim.SERVICE_CATEGORY_READ)
+  @RequiredClaims(Claim.SERVICE_CATEGORY_DETAIL)
   @Swagger({
     tags: ['Serviços - Categorias'],
     summary: 'Buscar categoria de serviço por ID',

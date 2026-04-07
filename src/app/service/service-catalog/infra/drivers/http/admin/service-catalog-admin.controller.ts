@@ -57,7 +57,7 @@ export class ServiceCatalogAdminController {
   }
 
   @Get(':id')
-  @RequiredClaims(Claim.SERVICE_CATALOG_READ)
+  @RequiredClaims(Claim.SERVICE_CATALOG_DETAIL)
   @Swagger({
     tags: ['Serviços - Serviços'],
     summary: 'Buscar serviço do catálogo por ID',

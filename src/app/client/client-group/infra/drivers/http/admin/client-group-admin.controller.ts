@@ -55,7 +55,7 @@ export class ClientGroupAdminController {
   }
 
   @Get(':id')
-  @RequiredClaims(Claim.CLIENT_GROUP_READ)
+  @RequiredClaims(Claim.CLIENT_GROUP_DETAIL)
   @Swagger({
     tags: ['Clientes - Grupos'],
     summary: 'Buscar grupo de clientes por ID',

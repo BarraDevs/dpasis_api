@@ -54,7 +54,7 @@ export class CnaeAdminController {
   }
 
   @Get(':id')
-  @RequiredClaims(Claim.CNAE_READ)
+  @RequiredClaims(Claim.CNAE_DETAIL)
   @Swagger({
     tags: ['Tributação - CNAE'],
     summary: 'Buscar CNAE por ID',

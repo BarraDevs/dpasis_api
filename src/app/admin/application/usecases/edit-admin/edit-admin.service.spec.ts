@@ -55,7 +55,7 @@ describe('EditAdmin - Integration tests', () => {
   it('should throw AdminNotFoundError when admin does not exist', async() => {
     const data: EditAdminInputDto = {
       name: 'X',
-      claims: [{ subject: Claim.BANK_READ.subject, action: Claim.BANK_READ.action }],
+      claims: [{ subject: Claim.BANK_DETAIL.subject, action: Claim.BANK_DETAIL.action }],
     };
 
     await expect(sut.execute(999999, data)).rejects.toThrow(AdminNotFoundError);

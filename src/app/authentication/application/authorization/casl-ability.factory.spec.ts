@@ -33,18 +33,18 @@ describe('CaslAbilityFactory', () => {
       // arrange: simulate DB returning specific claims
       findClaimsByAccountId.mockResolvedValue([
         Claim.BANK_LIST,
-        Claim.BANK_READ,
+        Claim.BANK_DETAIL,
       ]);
       const ability = await factory.createForUser({ sub: 1, role: AccountRole.ADMIN });
 
       // All true cases: should be granted ONLY those returned in the DB array
       expect(ability.can(ClaimAction.List, ClaimSubject.Bank)).toBe(true);
-      expect(ability.can(ClaimAction.Read, ClaimSubject.Bank)).toBe(true);
+      expect(ability.can(ClaimAction.Detail, ClaimSubject.Bank)).toBe(true);
 
       // All else (all other combinations of action/subject) should be false
       const permitted = new Set([
         [ClaimAction.List, ClaimSubject.Bank].join(':'),
-        [ClaimAction.Read, ClaimSubject.Bank].join(':'),
+        [ClaimAction.Detail, ClaimSubject.Bank].join(':'),
       ]);
       for (const subject of Object.values(ClaimSubject)) {
         for (const action of Object.values(ClaimAction)) {

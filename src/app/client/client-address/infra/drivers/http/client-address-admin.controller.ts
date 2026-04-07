@@ -57,7 +57,7 @@ export class ClientAddressAdminController {
   }
 
   @Get(':id')
-  @RequiredClaims(Claim.CLIENT_ADDRESS_READ)
+  @RequiredClaims(Claim.CLIENT_ADDRESS_DETAIL)
   @Swagger({
     tags: ['Clientes - Endereços'],
     summary: 'Buscar endereço de cliente por ID',

@@ -39,7 +39,7 @@ export class ClientInvoiceConfigAdminController {
   }
 
   @Get('client/:clientId')
-  @RequiredClaims(Claim.CLIENT_INVOICE_CONFIG_READ)
+  @RequiredClaims(Claim.CLIENT_INVOICE_CONFIG_DETAIL)
   @Swagger({
     tags: ['Clientes - Configuração NF e Boleto'],
     summary: 'Buscar configuração por ID do cliente',

@@ -55,7 +55,7 @@ export class ClientAttendanceTypeAdminController {
   }
 
   @Get(':id')
-  @RequiredClaims(Claim.CLIENT_ATTENDANCE_TYPE_READ)
+  @RequiredClaims(Claim.CLIENT_ATTENDANCE_TYPE_DETAIL)
   @Swagger({
     tags: ['Clientes - Tipos de cliente - Tipos de atendimento'],
     summary: 'Buscar tipo de atendimento de cliente por ID',

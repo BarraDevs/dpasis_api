@@ -55,7 +55,7 @@ export class AdminAdminController {
   }
 
   @Get(':id')
-  @RequiredClaims(Claim.ADMIN_READ)
+  @RequiredClaims(Claim.ADMIN_DETAIL)
   @Swagger({
     tags: ['Administradores'],
     summary: 'Buscar administrador por ID',

@@ -6,10 +6,11 @@ export enum ClaimAction {
   Deactivate = 'deactivate',
   Delete = 'delete',
   List = 'list',
-  ListCnaes = 'listCnaes',
-  ListIndops = 'listIndops',
-  ListNbs = 'listNbs',
-  Read = 'read',
+  Detail = 'detail',
   Update = 'update',
   UpdateStatus = 'updateStatus',
+
+  // generic actions for v1
+  Read = 'read',
+  Write = 'write',
 }

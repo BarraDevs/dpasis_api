@@ -54,7 +54,7 @@ export class NbsAdminController {
   }
 
   @Get(':id')
-  @RequiredClaims(Claim.NBS_READ)
+  @RequiredClaims(Claim.NBS_DETAIL)
   @Swagger({
     tags: ['Tributação - NBS'],
     summary: 'Buscar NBS por ID',

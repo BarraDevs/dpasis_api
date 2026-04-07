@@ -55,7 +55,7 @@ export class ClientMaintenanceTicketTypeAdminController {
   }
 
   @Get(':id')
-  @RequiredClaims(Claim.CLIENT_MAINTENANCE_TICKET_TYPE_READ)
+  @RequiredClaims(Claim.CLIENT_MAINTENANCE_TICKET_TYPE_DETAIL)
   @Swagger({
     tags: ['Clientes - Tipos de cliente - Tipos de chamado de manutenção'],
     summary: 'Buscar tipo de chamado de manutenção de cliente por ID',

@@ -55,7 +55,7 @@ export class ServiceDeliveryTermAdminController {
   }
 
   @Get(':id')
-  @RequiredClaims(Claim.SERVICE_DELIVERY_TERM_READ)
+  @RequiredClaims(Claim.SERVICE_DELIVERY_TERM_DETAIL)
   @Swagger({
     tags: ['Serviços - Prazo de entrega'],
     summary: 'Buscar prazo de entrega por ID',

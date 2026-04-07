@@ -55,7 +55,7 @@ export class ClientSystemTypeAdminController {
   }
 
   @Get(':id')
-  @RequiredClaims(Claim.CLIENT_SYSTEM_TYPE_READ)
+  @RequiredClaims(Claim.CLIENT_SYSTEM_TYPE_DETAIL)
   @Swagger({
     tags: ['Clientes - Tipos de cliente - Tipos de sistema'],
     summary: 'Buscar tipo de sistema de cliente por ID',

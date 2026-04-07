@@ -55,7 +55,7 @@ export class ServiceWarrantyAdminController {
   }
 
   @Get(':id')
-  @RequiredClaims(Claim.SERVICE_WARRANTY_READ)
+  @RequiredClaims(Claim.SERVICE_WARRANTY_DETAIL)
   @Swagger({
     tags: ['Serviços - Garantia'],
     summary: 'Buscar garantia de serviço por ID',

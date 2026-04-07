@@ -55,7 +55,7 @@ export class ClientDepartmentAdminController {
   }
 
   @Get(':id')
-  @RequiredClaims(Claim.CLIENT_DEPARTMENT_READ)
+  @RequiredClaims(Claim.CLIENT_DEPARTMENT_DETAIL)
   @Swagger({
     tags: ['Clientes - Departamentos'],
     summary: 'Buscar departamento de clientes por ID',
