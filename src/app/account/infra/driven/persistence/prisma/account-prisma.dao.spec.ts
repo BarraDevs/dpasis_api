@@ -62,6 +62,31 @@ describe('AccountDaoAdapterPrisma - Integration tests', () => {
         status: AccountStatus.ACTIVE,
       });
     });
+
+    it('should return account with sensitive data when found by email (case insensitive)', async() => {
+      const created = await prisma.account.create({
+        data: {
+          name: 'Jhon Doe',
+          email: 'jhondoe@email.com',
+          password: 'hashedpassword',
+          status: AccountStatus.ACTIVE,
+          role: AccountRole.ADMIN,
+        },
+      });
+
+      const result = await sut.findByCredential('JHONDoe@email.com');
+
+      expect(result).not.toBeNull();
+      expect(result).toEqual<AccountWithSensitiveDataDto>({
+        id: created.id,
+        name: 'Jhon Doe',
+        email: 'jhondoe@email.com',
+        password: 'hashedpassword',
+        passwordResetToken: null,
+        role: AccountRole.ADMIN,
+        status: AccountStatus.ACTIVE,
+      });
+    });
   });
 
   describe('findByEmail', () => {

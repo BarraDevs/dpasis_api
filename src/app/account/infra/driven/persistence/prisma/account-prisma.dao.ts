@@ -27,8 +27,8 @@ export class AccountDaoAdapterPrisma implements IAccountDao {
 
   public async findByCredential(credential: string): Promise<AccountWithSensitiveDataDto | null> {
     // credential can be either email, document, phone... but, for now, we are using only email.
-    const account = await this.prisma.account.findUnique({
-      where: { email: credential },
+    const account = await this.prisma.account.findFirst({
+      where: { email: { equals: credential, mode: 'insensitive' } },
       select: AccountWithSensitiveDataSelect,
     });
     if (!account) {
