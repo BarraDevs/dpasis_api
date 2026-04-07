@@ -145,6 +145,13 @@ export const Claim = {
   COMPANY_ACTIVATE: { subject: ClaimSubject.Company, action: ClaimAction.Activate },
   COMPANY_DEACTIVATE: { subject: ClaimSubject.Company, action: ClaimAction.Deactivate },
 
+  ADMIN_CREATE: { subject: ClaimSubject.Admin, action: ClaimAction.Create },
+  ADMIN_LIST: { subject: ClaimSubject.Admin, action: ClaimAction.List },
+  ADMIN_READ: { subject: ClaimSubject.Admin, action: ClaimAction.Read },
+  ADMIN_UPDATE: { subject: ClaimSubject.Admin, action: ClaimAction.Update },
+  ADMIN_ACTIVATE: { subject: ClaimSubject.Admin, action: ClaimAction.Activate },
+  ADMIN_DEACTIVATE: { subject: ClaimSubject.Admin, action: ClaimAction.Deactivate },
+
   FAQ_CREATE: { subject: ClaimSubject.Faq, action: ClaimAction.Create },
   FAQ_LIST: { subject: ClaimSubject.Faq, action: ClaimAction.List },
   FAQ_READ: { subject: ClaimSubject.Faq, action: ClaimAction.Read },

@@ -19,13 +19,24 @@ describe('Params DTO', () => {
       undefined,
       null,
       '',
-      '  ',
-    ])('should throw an error if id is empty (%s)', async(value: any) => {
+    ])('should throw an error if id is empty (%s)', async(value: unknown) => {
       const data = { id: value };
 
       expect.assertions(1);
       return target.transform(data, metadata).catch((error) => {
         expect(error.getResponse().message).toContain('id é obrigatório');
+      });
+    });
+
+    it('should reject whitespace-only id (not treated as empty by IsNotEmpty)', async() => {
+      const data = { id: '  ' };
+
+      expect.assertions(1);
+      return target.transform(data, metadata).catch((error) => {
+        const message = error.getResponse().message as string[];
+        expect(message).toEqual(
+          expect.arrayContaining(['id deve ser um número']),
+        );
       });
     });
 
@@ -56,6 +67,21 @@ describe('Params DTO', () => {
 
       expect(result).toBeInstanceOf(Params);
       expect(result).toEqual({ id: 42 });
+    });
+
+    it.each([
+      ['0', 'id deve ser um número positivo'],
+      ['-1', 'id deve ser um número positivo'],
+      ['1.5', 'id deve ser um número inteiro'],
+      ['abc', 'id deve ser um número'],
+    ])('should reject invalid id (%s)', async(value: string, expectedMessage: string) => {
+      const data = { id: value };
+
+      expect.assertions(1);
+      return target.transform(data, metadata).catch((error) => {
+        const message = error.getResponse().message as string[];
+        expect(message).toContain(expectedMessage);
+      });
     });
   });
 });

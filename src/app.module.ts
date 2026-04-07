@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { AdminModule } from './app/admin/admin.module';
 import { AuthenticationModule } from './app/authentication/authentication.module';
 import { BankModule } from './app/bank/bank.module';
 import { ClientModuleModule } from './app/client/client-module.module';
@@ -16,6 +17,7 @@ import { InfraModule } from './infra/infra.module';
     CoreModule,
     InfraModule,
     AuthenticationModule,
+    AdminModule,
     BankModule,
     CompanyModule,
     ClientModuleModule,

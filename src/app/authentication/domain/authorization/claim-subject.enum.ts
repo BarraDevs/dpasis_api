@@ -1,4 +1,5 @@
 export enum ClaimSubject {
+  Admin = 'admin',
   Bank = 'bank',
   Client = 'client',
   ClientAddress = 'client-address',

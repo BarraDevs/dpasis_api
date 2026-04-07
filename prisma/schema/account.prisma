@@ -6,6 +6,7 @@ model Account {
   password           String  @db.Text
   passwordResetToken String? @db.VarChar(64)
   status             String
+  profilePicture     String? @db.Text
 
   admin  Admin?
   claims AccountClaim[]
