@@ -9,6 +9,8 @@
  *
  * **Uso no projeto**
  * - `MongoAbility<[ClaimAction, ClaimSubject]>`: ação e assunto tipados (alinhado ao domínio).
+ * - **Admin:** usa apenas as linhas de `AccountClaim`; se a lista estiver vazia, nenhuma regra `can` é
+ *   aplicada (rotas protegidas por claim negam acesso).
  * - Pares inválidos em listas vindas do banco são ignorados em `applyClaims` (silencioso);
  *   rotas devem usar {@link Claim} para consistência.
  */
@@ -16,7 +18,7 @@ import { AbilityBuilder, createMongoAbility, MongoAbility } from '@casl/ability'
 import { Inject, Injectable } from '@nestjs/common';
 import type { IAccountDao } from 'src/app/account/application/persistence/dao/account-dao.interface';
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
-import { ALL_CLAIM_VALUES, type ClaimValue } from 'src/app/authentication/domain/authorization/claim';
+import { type ClaimValue } from 'src/app/authentication/domain/authorization/claim';
 import { Payload } from 'src/app/authentication/domain/types/payload.type';
 import { TOKENS } from 'src/core/di/token';
 import { ClaimAction } from '../../domain/authorization/claim-action.enum';
@@ -38,8 +40,7 @@ export class CaslAbilityFactory {
       case AccountRole.ADMIN:
         // TODO: cache to improve performance
         const fromDb = await this.accountDao.findClaimsByAccountId(user.sub);
-        const adminClaims = fromDb.length > 0 ? fromDb : [...ALL_CLAIM_VALUES];
-        this.applyClaims(can, adminClaims);
+        this.applyClaims(can, fromDb);
         break;
       default:
         const claims = STATIC_CLAIMS[user.role as Exclude<AccountRole, AccountRole.ADMIN>] ?? [];

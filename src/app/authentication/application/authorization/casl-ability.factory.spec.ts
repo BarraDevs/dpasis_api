@@ -2,7 +2,7 @@ import { Test } from '@nestjs/testing';
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
 import { Payload } from 'src/app/authentication/domain/types/payload.type';
 import { TOKENS } from 'src/core/di/token';
-import { ALL_CLAIM_VALUES, Claim } from '../../domain/authorization/claim';
+import { Claim } from '../../domain/authorization/claim';
 import { ClaimAction } from '../../domain/authorization/claim-action.enum';
 import { ClaimSubject } from '../../domain/authorization/claim-subject.enum';
 import { CaslAbilityFactory } from './casl-ability.factory';
@@ -30,23 +30,48 @@ describe('CaslAbilityFactory', () => {
 
   describe('dynamic claims for admin role', () => {
     it('should grant admin only the claims returned from the database when the list is non-empty', async() => {
-      findClaimsByAccountId.mockResolvedValue([Claim.BANK_LIST, Claim.BANK_READ]);
-
+      // arrange: simulate DB returning specific claims
+      findClaimsByAccountId.mockResolvedValue([
+        Claim.BANK_LIST,
+        Claim.BANK_READ,
+      ]);
       const ability = await factory.createForUser({ sub: 1, role: AccountRole.ADMIN });
 
+      // All true cases: should be granted ONLY those returned in the DB array
       expect(ability.can(ClaimAction.List, ClaimSubject.Bank)).toBe(true);
       expect(ability.can(ClaimAction.Read, ClaimSubject.Bank)).toBe(true);
-      expect(ability.can(ClaimAction.Create, ClaimSubject.Bank)).toBe(false);
+
+      // All else (all other combinations of action/subject) should be false
+      const permitted = new Set([
+        [ClaimAction.List, ClaimSubject.Bank].join(':'),
+        [ClaimAction.Read, ClaimSubject.Bank].join(':'),
+      ]);
+      for (const subject of Object.values(ClaimSubject)) {
+        for (const action of Object.values(ClaimAction)) {
+          const key = [action, subject].join(':');
+          if (!permitted.has(key)) {
+            expect(ability.can(action, subject)).toBe(false);
+          }
+        }
+      }
+
       expect(findClaimsByAccountId).toHaveBeenCalledWith(1);
     });
 
-    it('should grant admin the full catalog when the database returns zero claims', async() => {
+    it('should grant admin no claim-based abilities when the database returns zero claims', async() => {
       findClaimsByAccountId.mockResolvedValue([]);
 
       const ability = await factory.createForUser({ sub: 1, role: AccountRole.ADMIN });
 
-      expect(ability.can(ClaimAction.Create, ClaimSubject.Bank)).toBe(true);
-      expect(ALL_CLAIM_VALUES.length).toBeGreaterThan(0);
+      // Test all possible ClaimAction and ClaimSubject pairs for false (no permission at all)
+      const allSubjects = Object.values(ClaimSubject);
+      const allActions = Object.values(ClaimAction);
+
+      for (const subject of allSubjects) {
+        for (const action of allActions) {
+          expect(ability.can(action, subject)).toBe(false);
+        }
+      }
     });
 
     it('should reject when loading admin claims from the database fails', async() => {

@@ -66,9 +66,8 @@ export class AdminRepositoryAdapterPrisma implements IAdminRepository {
 
       // Sempre remove todas as claims antes de persistir a nova lista.
       // Não colocar o delete dentro do `if (rows.length > 0)`: se o payload vier
-      // com lista vazia, precisamos apagar as antigas para refletir o estado
-      // (sem linhas em account_claim). O CaslAbilityFactory trata admin com
-      // zero claims no banco como acesso ao catálogo completo (ALL_CLAIM_VALUES).
+      // com lista vazia, precisamos apagar as antigas para refletir o estado (sem linhas em account_claim).
+      // O CaslAbilityFactory não concede permissões CASL quando não há linhas em account_claim para esse admin.
       await tx.accountClaim.deleteMany({ where: { accountId: id } });
 
       const rows = this.dedupeClaimsForCreate(claims, id);

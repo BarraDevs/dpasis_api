@@ -7,8 +7,8 @@
  * e às regras CASL em {@link CaslAbilityFactory}, verificadas nos guards com `ability.can(ação, assunto)`.
  *
  * **Fluxo de dados**
- * - **Admin:** claims vêm do banco (`AccountClaim`); se a lista estiver vazia, o factory aplica
- *   {@link ALL_CLAIM_VALUES} (acesso total às rotas protegidas por claim).
+ * - **Admin:** claims vêm do banco (`AccountClaim`); lista vazia ⇒ nenhuma permissão via CASL nas rotas
+ *   protegidas por claim (comportamento “fail closed”).
  * - **Demais papéis:** {@link STATIC_CLAIMS} (fixo no código).
  *
  * **Constantes `Claim`**
