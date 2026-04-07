@@ -1,5 +1,7 @@
 import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
+import { Claim } from 'src/app/authentication/domain/authorization/claim';
+import { RequiredClaims } from 'src/app/authentication/infra/decorators/required-claims.decorator';
 import { RequiredRoles } from 'src/app/authentication/infra/decorators/required-role.decorator';
 import { NbsDto } from 'src/app/taxation/nbs/application/dtos/nbs.dto';
 import { CreateNbs } from 'src/app/taxation/nbs/application/usecases/create-nbs/create-nbs.service';
@@ -27,6 +29,7 @@ export class NbsAdminController {
   ) {}
 
   @Post()
+  @RequiredClaims(Claim.NBS_CREATE)
   @Swagger({
     tags: ['Tributação - NBS'],
     summary: 'Criar novo NBS',
@@ -39,6 +42,7 @@ export class NbsAdminController {
   }
 
   @Get()
+  @RequiredClaims(Claim.NBS_LIST)
   @Swagger({
     tags: ['Tributação - NBS'],
     summary: 'Listar NBS com paginação e busca',
@@ -50,6 +54,7 @@ export class NbsAdminController {
   }
 
   @Get(':id')
+  @RequiredClaims(Claim.NBS_READ)
   @Swagger({
     tags: ['Tributação - NBS'],
     summary: 'Buscar NBS por ID',
@@ -62,6 +67,7 @@ export class NbsAdminController {
   }
 
   @Patch(':id/status')
+  @RequiredClaims(Claim.NBS_UPDATE_STATUS)
   @Swagger({
     tags: ['Tributação - NBS'],
     summary: 'Inverter status ativo do NBS',
@@ -74,6 +80,7 @@ export class NbsAdminController {
   }
 
   @Patch(':id')
+  @RequiredClaims(Claim.NBS_UPDATE)
   @Swagger({
     tags: ['Tributação - NBS'],
     summary: 'Editar NBS',

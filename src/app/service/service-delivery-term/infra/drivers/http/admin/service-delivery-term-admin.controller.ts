@@ -1,5 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
+import { Claim } from 'src/app/authentication/domain/authorization/claim';
+import { RequiredClaims } from 'src/app/authentication/infra/decorators/required-claims.decorator';
 import { RequiredRoles } from 'src/app/authentication/infra/decorators/required-role.decorator';
 import { ServiceDeliveryTermDto } from 'src/app/service/service-delivery-term/application/dtos/service-delivery-term.dto';
 import { CreateServiceDeliveryTerm } from 'src/app/service/service-delivery-term/application/usecases/create-service-delivery-term/create-service-delivery-term.service';
@@ -29,6 +31,7 @@ export class ServiceDeliveryTermAdminController {
   ) {}
 
   @Post()
+  @RequiredClaims(Claim.SERVICE_DELIVERY_TERM_CREATE)
   @Swagger({
     tags: ['Serviços - Prazo de entrega'],
     summary: 'Criar novo prazo de entrega',
@@ -40,6 +43,7 @@ export class ServiceDeliveryTermAdminController {
   }
 
   @Get()
+  @RequiredClaims(Claim.SERVICE_DELIVERY_TERM_LIST)
   @Swagger({
     tags: ['Serviços - Prazo de entrega'],
     summary: 'Listar prazos de entrega com paginação e busca',
@@ -51,6 +55,7 @@ export class ServiceDeliveryTermAdminController {
   }
 
   @Get(':id')
+  @RequiredClaims(Claim.SERVICE_DELIVERY_TERM_READ)
   @Swagger({
     tags: ['Serviços - Prazo de entrega'],
     summary: 'Buscar prazo de entrega por ID',
@@ -63,6 +68,7 @@ export class ServiceDeliveryTermAdminController {
   }
 
   @Patch(':id/status')
+  @RequiredClaims(Claim.SERVICE_DELIVERY_TERM_UPDATE_STATUS)
   @Swagger({
     tags: ['Serviços - Prazo de entrega'],
     summary: 'Inverter status ativo do prazo de entrega',
@@ -75,6 +81,7 @@ export class ServiceDeliveryTermAdminController {
   }
 
   @Patch(':id')
+  @RequiredClaims(Claim.SERVICE_DELIVERY_TERM_UPDATE)
   @Swagger({
     tags: ['Serviços - Prazo de entrega'],
     summary: 'Editar prazo de entrega',
@@ -87,6 +94,7 @@ export class ServiceDeliveryTermAdminController {
   }
 
   @Delete(':id')
+  @RequiredClaims(Claim.SERVICE_DELIVERY_TERM_DELETE)
   @Swagger({
     tags: ['Serviços - Prazo de entrega'],
     summary: 'Deletar prazo de entrega',

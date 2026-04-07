@@ -1,5 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
+import { Claim } from 'src/app/authentication/domain/authorization/claim';
+import { RequiredClaims } from 'src/app/authentication/infra/decorators/required-claims.decorator';
 import { RequiredRoles } from 'src/app/authentication/infra/decorators/required-role.decorator';
 import { ClientMaintenanceTicketTypeDto } from 'src/app/client/client-type/client-maintenance-ticket-type/application/dtos/client-maintenance-ticket-type.dto';
 import { CreateClientMaintenanceTicketType } from 'src/app/client/client-type/client-maintenance-ticket-type/application/usecases/create-client-maintenance-ticket-type/create-client-maintenance-ticket-type.service';
@@ -29,6 +31,7 @@ export class ClientMaintenanceTicketTypeAdminController {
   ) {}
 
   @Post()
+  @RequiredClaims(Claim.CLIENT_MAINTENANCE_TICKET_TYPE_CREATE)
   @Swagger({
     tags: ['Clientes - Tipos de cliente - Tipos de chamado de manutenção'],
     summary: 'Criar novo tipo de chamado de manutenção de cliente',
@@ -40,6 +43,7 @@ export class ClientMaintenanceTicketTypeAdminController {
   }
 
   @Get()
+  @RequiredClaims(Claim.CLIENT_MAINTENANCE_TICKET_TYPE_LIST)
   @Swagger({
     tags: ['Clientes - Tipos de cliente - Tipos de chamado de manutenção'],
     summary: 'Listar tipos de chamados de manutenção de cliente com paginação e busca',
@@ -51,6 +55,7 @@ export class ClientMaintenanceTicketTypeAdminController {
   }
 
   @Get(':id')
+  @RequiredClaims(Claim.CLIENT_MAINTENANCE_TICKET_TYPE_READ)
   @Swagger({
     tags: ['Clientes - Tipos de cliente - Tipos de chamado de manutenção'],
     summary: 'Buscar tipo de chamado de manutenção de cliente por ID',
@@ -63,6 +68,7 @@ export class ClientMaintenanceTicketTypeAdminController {
   }
 
   @Patch(':id/status')
+  @RequiredClaims(Claim.CLIENT_MAINTENANCE_TICKET_TYPE_UPDATE_STATUS)
   @Swagger({
     tags: ['Clientes - Tipos de cliente - Tipos de chamado de manutenção'],
     summary: 'Inverter status ativo do tipo de chamado de manutenção de cliente',
@@ -75,6 +81,7 @@ export class ClientMaintenanceTicketTypeAdminController {
   }
 
   @Patch(':id')
+  @RequiredClaims(Claim.CLIENT_MAINTENANCE_TICKET_TYPE_UPDATE)
   @Swagger({
     tags: ['Clientes - Tipos de cliente - Tipos de chamado de manutenção'],
     summary: 'Editar tipo de chamado de manutenção de cliente',
@@ -87,6 +94,7 @@ export class ClientMaintenanceTicketTypeAdminController {
   }
 
   @Delete(':id')
+  @RequiredClaims(Claim.CLIENT_MAINTENANCE_TICKET_TYPE_DELETE)
   @Swagger({
     tags: ['Clientes - Tipos de cliente - Tipos de chamado de manutenção'],
     summary: 'Deletar tipo de chamado de manutenção de cliente',

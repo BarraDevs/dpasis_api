@@ -1,5 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
+import { Claim } from 'src/app/authentication/domain/authorization/claim';
+import { RequiredClaims } from 'src/app/authentication/infra/decorators/required-claims.decorator';
 import { RequiredRoles } from 'src/app/authentication/infra/decorators/required-role.decorator';
 import { ClientTypeDto } from 'src/app/client/client-type/client-type/application/dtos/client-type.dto';
 import { CreateClientType } from 'src/app/client/client-type/client-type/application/usecases/create-client-type/create-client-type.service';
@@ -35,6 +37,7 @@ export class ClientTypeAdminController {
   ) {}
 
   @Post()
+  @RequiredClaims(Claim.CLIENT_TYPE_CREATE)
   @Swagger({
     tags: ['Clientes - Tipos de cliente'],
     summary: 'Criar novo tipo de cliente',
@@ -46,6 +49,7 @@ export class ClientTypeAdminController {
   }
 
   @Get()
+  @RequiredClaims(Claim.CLIENT_TYPE_LIST)
   @Swagger({
     tags: ['Clientes - Tipos de cliente'],
     summary: 'Listar tipos de cliente com paginação e busca',
@@ -57,6 +61,7 @@ export class ClientTypeAdminController {
   }
 
   @Get(':id')
+  @RequiredClaims(Claim.CLIENT_TYPE_READ)
   @Swagger({
     tags: ['Clientes - Tipos de cliente'],
     summary: 'Buscar tipo de cliente por ID',
@@ -69,6 +74,7 @@ export class ClientTypeAdminController {
   }
 
   @Patch(':id/status')
+  @RequiredClaims(Claim.CLIENT_TYPE_UPDATE_STATUS)
   @Swagger({
     tags: ['Clientes - Tipos de cliente'],
     summary: 'Inverter status ativo do tipo de cliente',
@@ -81,6 +87,7 @@ export class ClientTypeAdminController {
   }
 
   @Patch(':id')
+  @RequiredClaims(Claim.CLIENT_TYPE_UPDATE)
   @Swagger({
     tags: ['Clientes - Tipos de cliente'],
     summary: 'Editar tipo de cliente',
@@ -93,6 +100,7 @@ export class ClientTypeAdminController {
   }
 
   @Delete('bulk')
+  @RequiredClaims(Claim.CLIENT_TYPE_BULK_DELETE)
   @Swagger({
     tags: ['Clientes - Tipos de cliente'],
     summary: 'Deletar múltiplos tipos de cliente',
@@ -104,6 +112,7 @@ export class ClientTypeAdminController {
   }
 
   @Delete(':id')
+  @RequiredClaims(Claim.CLIENT_TYPE_DELETE)
   @Swagger({
     tags: ['Clientes - Tipos de cliente'],
     summary: 'Deletar tipo de cliente',

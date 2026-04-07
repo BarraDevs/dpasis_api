@@ -1,9 +1,12 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
+import { Claim } from 'src/app/authentication/domain/authorization/claim';
+import { RequiredClaims } from 'src/app/authentication/infra/decorators/required-claims.decorator';
 import { RequiredRoles } from 'src/app/authentication/infra/decorators/required-role.decorator';
 import { ServiceBilledDto } from 'src/app/service/service-billed/application/dtos/service-billed.dto';
 import { ActivateServiceBilled } from 'src/app/service/service-billed/application/usecases/activate-service-billed/activate-service-billed.service';
 import { CreateServiceBilled } from 'src/app/service/service-billed/application/usecases/create-service-billed/create-service-billed.service';
+import { CreateServiceBilledInputDto, CreateServiceBilledOutputDto } from 'src/app/service/service-billed/application/usecases/create-service-billed/dtos/create-service-billed.dto';
 import { DeactivateServiceBilled } from 'src/app/service/service-billed/application/usecases/deactivate-service-billed/deactivate-service-billed.service';
 import { DeleteServiceBilled } from 'src/app/service/service-billed/application/usecases/delete-service-billed/delete-service-billed.service';
 import { EditServiceBilledInputDto } from 'src/app/service/service-billed/application/usecases/edit-service-billed/dtos/edit-service-billed.dto';
@@ -11,7 +14,6 @@ import { EditServiceBilled } from 'src/app/service/service-billed/application/us
 import { FindAllServiceBilledQueryDto } from 'src/app/service/service-billed/application/usecases/find-all-service-billed/dtos/find-all-service-billed.dto';
 import { FindAllServiceBilled } from 'src/app/service/service-billed/application/usecases/find-all-service-billed/find-all-service-billed.service';
 import { FindServiceBilledById } from 'src/app/service/service-billed/application/usecases/find-service-billed-by-id/find-service-billed-by-id.service';
-import { CreateServiceBilledInputDto, CreateServiceBilledOutputDto } from 'src/app/service/service-billed/application/usecases/create-service-billed/dtos/create-service-billed.dto';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
 import { Swagger } from 'src/infra/openapi/swagger';
 import { Params } from 'src/infra/validators/class/dtos/params/params.dto';
@@ -31,6 +33,7 @@ export class ServiceBilledAdminController {
   ) {}
 
   @Post()
+  @RequiredClaims(Claim.SERVICE_BILLED_CREATE)
   @Swagger({
     tags: ['Serviços - Faturados'],
     summary: 'Criar novo serviço faturado',
@@ -42,6 +45,7 @@ export class ServiceBilledAdminController {
   }
 
   @Get()
+  @RequiredClaims(Claim.SERVICE_BILLED_LIST)
   @Swagger({
     tags: ['Serviços - Faturados'],
     summary: 'Listar serviços faturados com paginação e busca',
@@ -53,6 +57,7 @@ export class ServiceBilledAdminController {
   }
 
   @Get(':id')
+  @RequiredClaims(Claim.SERVICE_BILLED_READ)
   @Swagger({
     tags: ['Serviços - Faturados'],
     summary: 'Buscar serviço faturado por ID',
@@ -65,6 +70,7 @@ export class ServiceBilledAdminController {
   }
 
   @Patch(':id/activate')
+  @RequiredClaims(Claim.SERVICE_BILLED_ACTIVATE)
   @Swagger({
     tags: ['Serviços - Faturados'],
     summary: 'Ativar serviço faturado',
@@ -77,6 +83,7 @@ export class ServiceBilledAdminController {
   }
 
   @Patch(':id/deactivate')
+  @RequiredClaims(Claim.SERVICE_BILLED_DEACTIVATE)
   @Swagger({
     tags: ['Serviços - Faturados'],
     summary: 'Desativar serviço faturado',
@@ -89,6 +96,7 @@ export class ServiceBilledAdminController {
   }
 
   @Patch(':id')
+  @RequiredClaims(Claim.SERVICE_BILLED_UPDATE)
   @Swagger({
     tags: ['Serviços - Faturados'],
     summary: 'Editar serviço faturado',
@@ -101,6 +109,7 @@ export class ServiceBilledAdminController {
   }
 
   @Delete(':id')
+  @RequiredClaims(Claim.SERVICE_BILLED_DELETE)
   @Swagger({
     tags: ['Serviços - Faturados'],
     summary: 'Deletar serviço faturado',

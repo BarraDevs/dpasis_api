@@ -1,5 +1,7 @@
 import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
+import { Claim } from 'src/app/authentication/domain/authorization/claim';
+import { RequiredClaims } from 'src/app/authentication/infra/decorators/required-claims.decorator';
 import { RequiredRoles } from 'src/app/authentication/infra/decorators/required-role.decorator';
 import { CompanyDto } from 'src/app/company/application/dtos/company.dto';
 import { ActivateCompany } from 'src/app/company/application/usecases/activate-company/activate-company.service';
@@ -29,6 +31,7 @@ export class CompanyAdminController {
   ) {}
 
   @Post()
+  @RequiredClaims(Claim.COMPANY_CREATE)
   @Swagger({
     tags: ['Empresas'],
     summary: 'Criar nova empresa',
@@ -40,6 +43,7 @@ export class CompanyAdminController {
   }
 
   @Get()
+  @RequiredClaims(Claim.COMPANY_LIST)
   @Swagger({
     tags: ['Empresas'],
     summary: 'Listar empresas com paginação e busca',
@@ -51,6 +55,7 @@ export class CompanyAdminController {
   }
 
   @Get(':id')
+  @RequiredClaims(Claim.COMPANY_READ)
   @Swagger({
     tags: ['Empresas'],
     summary: 'Buscar empresa por ID',
@@ -63,6 +68,7 @@ export class CompanyAdminController {
   }
 
   @Patch(':id/activate')
+  @RequiredClaims(Claim.COMPANY_ACTIVATE)
   @Swagger({
     tags: ['Empresas'],
     summary: 'Ativar empresa',
@@ -75,6 +81,7 @@ export class CompanyAdminController {
   }
 
   @Patch(':id/deactivate')
+  @RequiredClaims(Claim.COMPANY_DEACTIVATE)
   @Swagger({
     tags: ['Empresas'],
     summary: 'Desativar empresa',
@@ -87,6 +94,7 @@ export class CompanyAdminController {
   }
 
   @Patch(':id')
+  @RequiredClaims(Claim.COMPANY_UPDATE)
   @Swagger({
     tags: ['Empresas'],
     summary: 'Editar empresa',

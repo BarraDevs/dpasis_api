@@ -1,5 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
+import { Claim } from 'src/app/authentication/domain/authorization/claim';
+import { RequiredClaims } from 'src/app/authentication/infra/decorators/required-claims.decorator';
 import { RequiredRoles } from 'src/app/authentication/infra/decorators/required-role.decorator';
 import { ClientOwnerDto } from 'src/app/client/client-owner/application/dtos/client-owner.dto';
 import { CreateClientOwner } from 'src/app/client/client-owner/application/usecases/create-client-owner/create-client-owner.service';
@@ -29,6 +31,7 @@ export class ClientOwnerAdminController {
   ) {}
 
   @Post()
+  @RequiredClaims(Claim.CLIENT_OWNER_CREATE)
   @Swagger({
     tags: ['Clientes - Proprietários'],
     summary: 'Criar novo proprietário de clientes',
@@ -40,6 +43,7 @@ export class ClientOwnerAdminController {
   }
 
   @Get()
+  @RequiredClaims(Claim.CLIENT_OWNER_LIST)
   @Swagger({
     tags: ['Clientes - Proprietários'],
     summary: 'Listar proprietários de clientes com paginação e busca',
@@ -51,6 +55,7 @@ export class ClientOwnerAdminController {
   }
 
   @Get(':id')
+  @RequiredClaims(Claim.CLIENT_OWNER_READ)
   @Swagger({
     tags: ['Clientes - Proprietários'],
     summary: 'Buscar proprietário de clientes por ID',
@@ -63,6 +68,7 @@ export class ClientOwnerAdminController {
   }
 
   @Patch(':id/status')
+  @RequiredClaims(Claim.CLIENT_OWNER_UPDATE_STATUS)
   @Swagger({
     tags: ['Clientes - Proprietários'],
     summary: 'Inverter status ativo do proprietário de clientes',
@@ -75,6 +81,7 @@ export class ClientOwnerAdminController {
   }
 
   @Patch(':id')
+  @RequiredClaims(Claim.CLIENT_OWNER_UPDATE)
   @Swagger({
     tags: ['Clientes - Proprietários'],
     summary: 'Editar proprietário de clientes',
@@ -87,6 +94,7 @@ export class ClientOwnerAdminController {
   }
 
   @Delete(':id')
+  @RequiredClaims(Claim.CLIENT_OWNER_DELETE)
   @Swagger({
     tags: ['Clientes - Proprietários'],
     summary: 'Deletar proprietário de clientes',

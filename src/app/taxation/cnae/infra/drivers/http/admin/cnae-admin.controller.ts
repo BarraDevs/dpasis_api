@@ -1,5 +1,7 @@
 import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
+import { Claim } from 'src/app/authentication/domain/authorization/claim';
+import { RequiredClaims } from 'src/app/authentication/infra/decorators/required-claims.decorator';
 import { RequiredRoles } from 'src/app/authentication/infra/decorators/required-role.decorator';
 import { CnaeDto } from 'src/app/taxation/cnae/application/dtos/cnae.dto';
 import { CreateCnae } from 'src/app/taxation/cnae/application/usecases/create-cnae/create-cnae.service';
@@ -27,6 +29,7 @@ export class CnaeAdminController {
   ) {}
 
   @Post()
+  @RequiredClaims(Claim.CNAE_CREATE)
   @Swagger({
     tags: ['Tributação - CNAE'],
     summary: 'Criar novo CNAE',
@@ -39,6 +42,7 @@ export class CnaeAdminController {
   }
 
   @Get()
+  @RequiredClaims(Claim.CNAE_LIST)
   @Swagger({
     tags: ['Tributação - CNAE'],
     summary: 'Listar CNAEs com paginação e busca',
@@ -50,6 +54,7 @@ export class CnaeAdminController {
   }
 
   @Get(':id')
+  @RequiredClaims(Claim.CNAE_READ)
   @Swagger({
     tags: ['Tributação - CNAE'],
     summary: 'Buscar CNAE por ID',
@@ -62,6 +67,7 @@ export class CnaeAdminController {
   }
 
   @Patch(':id/status')
+  @RequiredClaims(Claim.CNAE_UPDATE_STATUS)
   @Swagger({
     tags: ['Tributação - CNAE'],
     summary: 'Inverter status ativo do CNAE',
@@ -74,6 +80,7 @@ export class CnaeAdminController {
   }
 
   @Patch(':id')
+  @RequiredClaims(Claim.CNAE_UPDATE)
   @Swagger({
     tags: ['Tributação - CNAE'],
     summary: 'Editar CNAE',

@@ -1,5 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
+import { Claim } from 'src/app/authentication/domain/authorization/claim';
+import { RequiredClaims } from 'src/app/authentication/infra/decorators/required-claims.decorator';
 import { RequiredRoles } from 'src/app/authentication/infra/decorators/required-role.decorator';
 import { ClientSystemTypeDto } from 'src/app/client/client-type/client-system-type/application/dtos/client-system-type.dto';
 import { CreateClientSystemType } from 'src/app/client/client-type/client-system-type/application/usecases/create-client-system-type/create-client-system-type.service';
@@ -29,6 +31,7 @@ export class ClientSystemTypeAdminController {
   ) {}
 
   @Post()
+  @RequiredClaims(Claim.CLIENT_SYSTEM_TYPE_CREATE)
   @Swagger({
     tags: ['Clientes - Tipos de cliente - Tipos de sistema'],
     summary: 'Criar novo tipo de sistema de cliente',
@@ -40,6 +43,7 @@ export class ClientSystemTypeAdminController {
   }
 
   @Get()
+  @RequiredClaims(Claim.CLIENT_SYSTEM_TYPE_LIST)
   @Swagger({
     tags: ['Clientes - Tipos de cliente - Tipos de sistema'],
     summary: 'Listar tipos de sistema de cliente com paginação e busca',
@@ -51,6 +55,7 @@ export class ClientSystemTypeAdminController {
   }
 
   @Get(':id')
+  @RequiredClaims(Claim.CLIENT_SYSTEM_TYPE_READ)
   @Swagger({
     tags: ['Clientes - Tipos de cliente - Tipos de sistema'],
     summary: 'Buscar tipo de sistema de cliente por ID',
@@ -63,6 +68,7 @@ export class ClientSystemTypeAdminController {
   }
 
   @Patch(':id/status')
+  @RequiredClaims(Claim.CLIENT_SYSTEM_TYPE_UPDATE_STATUS)
   @Swagger({
     tags: ['Clientes - Tipos de cliente - Tipos de sistema'],
     summary: 'Inverter status ativo do tipo de sistema de cliente',
@@ -75,6 +81,7 @@ export class ClientSystemTypeAdminController {
   }
 
   @Patch(':id')
+  @RequiredClaims(Claim.CLIENT_SYSTEM_TYPE_UPDATE)
   @Swagger({
     tags: ['Clientes - Tipos de cliente - Tipos de sistema'],
     summary: 'Editar tipo de sistema de cliente',
@@ -87,6 +94,7 @@ export class ClientSystemTypeAdminController {
   }
 
   @Delete(':id')
+  @RequiredClaims(Claim.CLIENT_SYSTEM_TYPE_DELETE)
   @Swagger({
     tags: ['Clientes - Tipos de cliente - Tipos de sistema'],
     summary: 'Deletar tipo de sistema de cliente',

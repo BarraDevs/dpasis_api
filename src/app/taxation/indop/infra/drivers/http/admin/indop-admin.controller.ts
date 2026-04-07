@@ -1,5 +1,7 @@
 import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
+import { Claim } from 'src/app/authentication/domain/authorization/claim';
+import { RequiredClaims } from 'src/app/authentication/infra/decorators/required-claims.decorator';
 import { RequiredRoles } from 'src/app/authentication/infra/decorators/required-role.decorator';
 import { IndopDto } from 'src/app/taxation/indop/application/dtos/indop.dto';
 import { CreateIndop } from 'src/app/taxation/indop/application/usecases/create-indop/create-indop.service';
@@ -27,6 +29,7 @@ export class IndopAdminController {
   ) {}
 
   @Post()
+  @RequiredClaims(Claim.INDOP_CREATE)
   @Swagger({
     tags: ['Tributação - INDOP'],
     summary: 'Criar novo INDOP',
@@ -39,6 +42,7 @@ export class IndopAdminController {
   }
 
   @Get()
+  @RequiredClaims(Claim.INDOP_LIST)
   @Swagger({
     tags: ['Tributação - INDOP'],
     summary: 'Listar INDOP com paginação e busca',
@@ -50,6 +54,7 @@ export class IndopAdminController {
   }
 
   @Get(':id')
+  @RequiredClaims(Claim.INDOP_READ)
   @Swagger({
     tags: ['Tributação - INDOP'],
     summary: 'Buscar INDOP por ID',
@@ -62,6 +67,7 @@ export class IndopAdminController {
   }
 
   @Patch(':id/status')
+  @RequiredClaims(Claim.INDOP_UPDATE_STATUS)
   @Swagger({
     tags: ['Tributação - INDOP'],
     summary: 'Inverter status ativo do INDOP',
@@ -74,6 +80,7 @@ export class IndopAdminController {
   }
 
   @Patch(':id')
+  @RequiredClaims(Claim.INDOP_UPDATE)
   @Swagger({
     tags: ['Tributação - INDOP'],
     summary: 'Editar INDOP',

@@ -1,5 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
+import { Claim } from 'src/app/authentication/domain/authorization/claim';
+import { RequiredClaims } from 'src/app/authentication/infra/decorators/required-claims.decorator';
 import { RequiredRoles } from 'src/app/authentication/infra/decorators/required-role.decorator';
 import { ClientDescriptionTypeDto } from 'src/app/client/client-type/client-description-type/application/dtos/client-description-type.dto';
 import { CreateClientDescriptionType } from 'src/app/client/client-type/client-description-type/application/usecases/create-client-description-type/create-client-description-type.service';
@@ -29,6 +31,7 @@ export class ClientDescriptionTypeAdminController {
   ) {}
 
   @Post()
+  @RequiredClaims(Claim.CLIENT_DESCRIPTION_TYPE_CREATE)
   @Swagger({
     tags: ['Clientes - Tipos de cliente - Tipos de descrição'],
     summary: 'Criar novo tipo de descrição de cliente',
@@ -40,6 +43,7 @@ export class ClientDescriptionTypeAdminController {
   }
 
   @Get()
+  @RequiredClaims(Claim.CLIENT_DESCRIPTION_TYPE_LIST)
   @Swagger({
     tags: ['Clientes - Tipos de cliente - Tipos de descrição'],
     summary: 'Listar tipos de descrição de cliente com paginação e busca',
@@ -51,6 +55,7 @@ export class ClientDescriptionTypeAdminController {
   }
 
   @Get(':id')
+  @RequiredClaims(Claim.CLIENT_DESCRIPTION_TYPE_READ)
   @Swagger({
     tags: ['Clientes - Tipos de cliente - Tipos de descrição'],
     summary: 'Buscar tipo de descrição de cliente por ID',
@@ -63,6 +68,7 @@ export class ClientDescriptionTypeAdminController {
   }
 
   @Patch(':id/status')
+  @RequiredClaims(Claim.CLIENT_DESCRIPTION_TYPE_UPDATE_STATUS)
   @Swagger({
     tags: ['Clientes - Tipos de cliente - Tipos de descrição'],
     summary: 'Inverter status ativo do tipo de descrição de cliente',
@@ -75,6 +81,7 @@ export class ClientDescriptionTypeAdminController {
   }
 
   @Patch(':id')
+  @RequiredClaims(Claim.CLIENT_DESCRIPTION_TYPE_UPDATE)
   @Swagger({
     tags: ['Clientes - Tipos de cliente - Tipos de descrição'],
     summary: 'Editar tipo de descrição de cliente',
@@ -87,6 +94,7 @@ export class ClientDescriptionTypeAdminController {
   }
 
   @Delete(':id')
+  @RequiredClaims(Claim.CLIENT_DESCRIPTION_TYPE_DELETE)
   @Swagger({
     tags: ['Clientes - Tipos de cliente - Tipos de descrição'],
     summary: 'Deletar tipo de descrição de cliente',

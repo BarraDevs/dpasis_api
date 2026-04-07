@@ -1,5 +1,7 @@
 import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
+import { Claim } from 'src/app/authentication/domain/authorization/claim';
+import { RequiredClaims } from 'src/app/authentication/infra/decorators/required-claims.decorator';
 import { RequiredRoles } from 'src/app/authentication/infra/decorators/required-role.decorator';
 import { BankDto } from 'src/app/bank/application/dtos/bank.dto';
 import { CreateBank } from 'src/app/bank/application/usecases/create-bank/create-bank.service';
@@ -27,6 +29,7 @@ export class BankAdminController {
   ) {}
 
   @Post()
+  @RequiredClaims(Claim.BANK_CREATE)
   @Swagger({
     tags: ['Bancos'],
     summary: 'Criar novo banco',
@@ -39,6 +42,7 @@ export class BankAdminController {
   }
 
   @Get()
+  @RequiredClaims(Claim.BANK_LIST)
   @Swagger({
     tags: ['Bancos'],
     summary: 'Listar bancos com paginação e busca',
@@ -50,6 +54,7 @@ export class BankAdminController {
   }
 
   @Get(':id')
+  @RequiredClaims(Claim.BANK_READ)
   @Swagger({
     tags: ['Bancos'],
     summary: 'Buscar banco por ID',
@@ -62,6 +67,7 @@ export class BankAdminController {
   }
 
   @Patch(':id/status')
+  @RequiredClaims(Claim.BANK_UPDATE_STATUS)
   @Swagger({
     tags: ['Bancos'],
     summary: 'Inverter status ativo do banco',
@@ -74,6 +80,7 @@ export class BankAdminController {
   }
 
   @Patch(':id')
+  @RequiredClaims(Claim.BANK_UPDATE)
   @Swagger({
     tags: ['Bancos'],
     summary: 'Editar banco',

@@ -1,3 +1,7 @@
+/**
+ * Módulo de autenticação (JWT, sign-in). Importa {@link AuthenticationGuardsModule}, que por sua vez
+ * expõe o stack CASL (`AuthorizationCaslModule`) para uso nas rotas protegidas.
+ */
 import { Module } from '@nestjs/common';
 import { PassportModule } from '@nestjs/passport';
 import { AccountModule } from '../account/account.module';

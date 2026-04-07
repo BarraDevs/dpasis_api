@@ -1,5 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
+import { Claim } from 'src/app/authentication/domain/authorization/claim';
+import { RequiredClaims } from 'src/app/authentication/infra/decorators/required-claims.decorator';
 import { RequiredRoles } from 'src/app/authentication/infra/decorators/required-role.decorator';
 import { ClientDiscountDto } from 'src/app/client/client-discount/application/dtos/client-discount.dto';
 import { CreateClientDiscount } from 'src/app/client/client-discount/application/usecases/create-client-discount/create-client-discount.service';
@@ -30,6 +32,7 @@ export class ClientDiscountAdminController {
   ) {}
 
   @Post()
+  @RequiredClaims(Claim.CLIENT_DISCOUNT_CREATE)
   @Swagger({
     tags: ['Clientes - Descontos'],
     summary: 'Criar novo desconto',
@@ -41,6 +44,7 @@ export class ClientDiscountAdminController {
   }
 
   @Get()
+  @RequiredClaims(Claim.CLIENT_DISCOUNT_LIST)
   @Swagger({
     tags: ['Clientes - Descontos'],
     summary: 'Listar descontos com paginação e filtros',
@@ -52,6 +56,7 @@ export class ClientDiscountAdminController {
   }
 
   @Get(':id')
+  @RequiredClaims(Claim.CLIENT_DISCOUNT_READ)
   @Swagger({
     tags: ['Clientes - Descontos'],
     summary: 'Buscar desconto por ID',
@@ -64,6 +69,7 @@ export class ClientDiscountAdminController {
   }
 
   @Patch(':id')
+  @RequiredClaims(Claim.CLIENT_DISCOUNT_UPDATE)
   @Swagger({
     tags: ['Clientes - Descontos'],
     summary: 'Editar desconto',
@@ -76,6 +82,7 @@ export class ClientDiscountAdminController {
   }
 
   @Delete(':id')
+  @RequiredClaims(Claim.CLIENT_DISCOUNT_DELETE)
   @Swagger({
     tags: ['Clientes - Descontos'],
     summary: 'Excluir desconto',

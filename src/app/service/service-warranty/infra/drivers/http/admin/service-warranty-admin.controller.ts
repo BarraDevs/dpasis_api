@@ -1,5 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
+import { Claim } from 'src/app/authentication/domain/authorization/claim';
+import { RequiredClaims } from 'src/app/authentication/infra/decorators/required-claims.decorator';
 import { RequiredRoles } from 'src/app/authentication/infra/decorators/required-role.decorator';
 import { ServiceWarrantyDto } from 'src/app/service/service-warranty/application/dtos/service-warranty.dto';
 import { CreateServiceWarranty } from 'src/app/service/service-warranty/application/usecases/create-service-warranty/create-service-warranty.service';
@@ -29,6 +31,7 @@ export class ServiceWarrantyAdminController {
   ) {}
 
   @Post()
+  @RequiredClaims(Claim.SERVICE_WARRANTY_CREATE)
   @Swagger({
     tags: ['Serviços - Garantia'],
     summary: 'Criar nova garantia de serviço',
@@ -40,6 +43,7 @@ export class ServiceWarrantyAdminController {
   }
 
   @Get()
+  @RequiredClaims(Claim.SERVICE_WARRANTY_LIST)
   @Swagger({
     tags: ['Serviços - Garantia'],
     summary: 'Listar garantias de serviço com paginação e busca',
@@ -51,6 +55,7 @@ export class ServiceWarrantyAdminController {
   }
 
   @Get(':id')
+  @RequiredClaims(Claim.SERVICE_WARRANTY_READ)
   @Swagger({
     tags: ['Serviços - Garantia'],
     summary: 'Buscar garantia de serviço por ID',
@@ -63,6 +68,7 @@ export class ServiceWarrantyAdminController {
   }
 
   @Patch(':id/status')
+  @RequiredClaims(Claim.SERVICE_WARRANTY_UPDATE_STATUS)
   @Swagger({
     tags: ['Serviços - Garantia'],
     summary: 'Inverter status ativo da garantia de serviço',
@@ -75,6 +81,7 @@ export class ServiceWarrantyAdminController {
   }
 
   @Patch(':id')
+  @RequiredClaims(Claim.SERVICE_WARRANTY_UPDATE)
   @Swagger({
     tags: ['Serviços - Garantia'],
     summary: 'Editar garantia de serviço',
@@ -87,6 +94,7 @@ export class ServiceWarrantyAdminController {
   }
 
   @Delete(':id')
+  @RequiredClaims(Claim.SERVICE_WARRANTY_DELETE)
   @Swagger({
     tags: ['Serviços - Garantia'],
     summary: 'Deletar garantia de serviço',

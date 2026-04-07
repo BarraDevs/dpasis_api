@@ -1,5 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
+import { Claim } from 'src/app/authentication/domain/authorization/claim';
+import { RequiredClaims } from 'src/app/authentication/infra/decorators/required-claims.decorator';
 import { RequiredRoles } from 'src/app/authentication/infra/decorators/required-role.decorator';
 import { ClientAddressDto } from 'src/app/client/client-address/application/dtos/client-address.dto';
 import { ActivateClientAddress } from 'src/app/client/client-address/application/usecases/activate-client-address/activate-client-address.service';
@@ -31,6 +33,7 @@ export class ClientAddressAdminController {
   ) {}
 
   @Post()
+  @RequiredClaims(Claim.CLIENT_ADDRESS_CREATE)
   @Swagger({
     tags: ['Clientes - Endereços'],
     summary: 'Criar novo endereço de cliente',
@@ -42,6 +45,7 @@ export class ClientAddressAdminController {
   }
 
   @Get()
+  @RequiredClaims(Claim.CLIENT_ADDRESS_LIST)
   @Swagger({
     tags: ['Clientes - Endereços'],
     summary: 'Listar endereços de clientes com paginação e busca',
@@ -53,6 +57,7 @@ export class ClientAddressAdminController {
   }
 
   @Get(':id')
+  @RequiredClaims(Claim.CLIENT_ADDRESS_READ)
   @Swagger({
     tags: ['Clientes - Endereços'],
     summary: 'Buscar endereço de cliente por ID',
@@ -65,6 +70,7 @@ export class ClientAddressAdminController {
   }
 
   @Patch(':id/activate')
+  @RequiredClaims(Claim.CLIENT_ADDRESS_ACTIVATE)
   @Swagger({
     tags: ['Clientes - Endereços'],
     summary: 'Ativar endereço de cliente',
@@ -77,6 +83,7 @@ export class ClientAddressAdminController {
   }
 
   @Patch(':id/deactivate')
+  @RequiredClaims(Claim.CLIENT_ADDRESS_DEACTIVATE)
   @Swagger({
     tags: ['Clientes - Endereços'],
     summary: 'Desativar endereço de cliente',
@@ -89,6 +96,7 @@ export class ClientAddressAdminController {
   }
 
   @Patch(':id')
+  @RequiredClaims(Claim.CLIENT_ADDRESS_UPDATE)
   @Swagger({
     tags: ['Clientes - Endereços'],
     summary: 'Editar endereço de cliente',
@@ -101,6 +109,7 @@ export class ClientAddressAdminController {
   }
 
   @Delete(':id')
+  @RequiredClaims(Claim.CLIENT_ADDRESS_DELETE)
   @Swagger({
     tags: ['Clientes - Endereços'],
     summary: 'Deletar endereço de cliente',

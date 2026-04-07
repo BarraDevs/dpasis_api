@@ -1,5 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
+import { Claim } from 'src/app/authentication/domain/authorization/claim';
+import { RequiredClaims } from 'src/app/authentication/infra/decorators/required-claims.decorator';
 import { RequiredRoles } from 'src/app/authentication/infra/decorators/required-role.decorator';
 import { ClientInvoiceConfigDto } from 'src/app/client/client-invoice-config/application/dtos/client-invoice-config.dto';
 import { CreateClientInvoiceConfig } from 'src/app/client/client-invoice-config/application/usecases/create-client-invoice-config/create-client-invoice-config.service';
@@ -24,6 +26,7 @@ export class ClientInvoiceConfigAdminController {
   ) {}
 
   @Post()
+  @RequiredClaims(Claim.CLIENT_INVOICE_CONFIG_CREATE)
   @Swagger({
     tags: ['Clientes - Configuração NF e Boleto'],
     summary: 'Criar configuração de NF e boleto para cliente',
@@ -36,6 +39,7 @@ export class ClientInvoiceConfigAdminController {
   }
 
   @Get('client/:clientId')
+  @RequiredClaims(Claim.CLIENT_INVOICE_CONFIG_READ)
   @Swagger({
     tags: ['Clientes - Configuração NF e Boleto'],
     summary: 'Buscar configuração por ID do cliente',
@@ -48,6 +52,7 @@ export class ClientInvoiceConfigAdminController {
   }
 
   @Patch(':id')
+  @RequiredClaims(Claim.CLIENT_INVOICE_CONFIG_UPDATE)
   @Swagger({
     tags: ['Clientes - Configuração NF e Boleto'],
     summary: 'Editar configuração de NF e boleto',
@@ -60,6 +65,7 @@ export class ClientInvoiceConfigAdminController {
   }
 
   @Delete(':id')
+  @RequiredClaims(Claim.CLIENT_INVOICE_CONFIG_DELETE)
   @Swagger({
     tags: ['Clientes - Configuração NF e Boleto'],
     summary: 'Excluir configuração de NF e boleto',

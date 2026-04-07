@@ -1,5 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
+import { Claim } from 'src/app/authentication/domain/authorization/claim';
+import { RequiredClaims } from 'src/app/authentication/infra/decorators/required-claims.decorator';
 import { RequiredRoles } from 'src/app/authentication/infra/decorators/required-role.decorator';
 import { ClientGroupDto } from 'src/app/client/client-group/application/dtos/client-group.dto';
 import { CreateClientGroup } from 'src/app/client/client-group/application/usecases/create-client-group/create-client-group.service';
@@ -29,6 +31,7 @@ export class ClientGroupAdminController {
   ) {}
 
   @Post()
+  @RequiredClaims(Claim.CLIENT_GROUP_CREATE)
   @Swagger({
     tags: ['Clientes - Grupos'],
     summary: 'Criar novo grupo de clientes',
@@ -40,6 +43,7 @@ export class ClientGroupAdminController {
   }
 
   @Get()
+  @RequiredClaims(Claim.CLIENT_GROUP_LIST)
   @Swagger({
     tags: ['Clientes - Grupos'],
     summary: 'Listar grupos de clientes com paginação e busca',
@@ -51,6 +55,7 @@ export class ClientGroupAdminController {
   }
 
   @Get(':id')
+  @RequiredClaims(Claim.CLIENT_GROUP_READ)
   @Swagger({
     tags: ['Clientes - Grupos'],
     summary: 'Buscar grupo de clientes por ID',
@@ -63,6 +68,7 @@ export class ClientGroupAdminController {
   }
 
   @Patch(':id/status')
+  @RequiredClaims(Claim.CLIENT_GROUP_UPDATE_STATUS)
   @Swagger({
     tags: ['Clientes - Grupos'],
     summary: 'Inverter status ativo do grupo de clientes',
@@ -75,6 +81,7 @@ export class ClientGroupAdminController {
   }
 
   @Patch(':id')
+  @RequiredClaims(Claim.CLIENT_GROUP_UPDATE)
   @Swagger({
     tags: ['Clientes - Grupos'],
     summary: 'Editar grupo de clientes',
@@ -87,6 +94,7 @@ export class ClientGroupAdminController {
   }
 
   @Delete(':id')
+  @RequiredClaims(Claim.CLIENT_GROUP_DELETE)
   @Swagger({
     tags: ['Clientes - Grupos'],
     summary: 'Deletar grupo de clientes',

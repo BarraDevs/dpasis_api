@@ -1,5 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
+import { Claim } from 'src/app/authentication/domain/authorization/claim';
+import { RequiredClaims } from 'src/app/authentication/infra/decorators/required-claims.decorator';
 import { RequiredRoles } from 'src/app/authentication/infra/decorators/required-role.decorator';
 import { CnaeNbsIndopDto } from 'src/app/taxation/cnae-nbs-indop/application/dtos/cnae-nbs-indop.dto';
 import { CreateCnaeNbsIndop } from 'src/app/taxation/cnae-nbs-indop/application/usecases/create-cnae-nbs-indop/create-cnae-nbs-indop.service';
@@ -38,6 +40,7 @@ export class CnaeNbsIndopAdminController {
   ) {}
 
   @Post()
+  @RequiredClaims(Claim.CNAE_NBS_INDOP_CREATE)
   @Swagger({
     tags: ['Tributação - CNAE/NBS/INDOP'],
     summary: 'Criar nova combinação CNAE + NBS + INDOP',
@@ -51,6 +54,7 @@ export class CnaeNbsIndopAdminController {
   }
 
   @Get()
+  @RequiredClaims(Claim.CNAE_NBS_INDOP_LIST)
   @Swagger({
     tags: ['Tributação - CNAE/NBS/INDOP'],
     summary: 'Listar combinações com paginação e filtros',
@@ -62,6 +66,7 @@ export class CnaeNbsIndopAdminController {
   }
 
   @Get('cnaes')
+  @RequiredClaims(Claim.CNAE_NBS_INDOP_LIST_CNAES)
   @Swagger({
     tags: ['Tributação - CNAE/NBS/INDOP'],
     summary: 'Listar CNAEs para select (combinações existentes)',
@@ -73,6 +78,7 @@ export class CnaeNbsIndopAdminController {
   }
 
   @Get('nbs')
+  @RequiredClaims(Claim.CNAE_NBS_INDOP_LIST_NBS)
   @Swagger({
     tags: ['Tributação - CNAE/NBS/INDOP'],
     summary: 'Listar NBSs para select (filtrado por CNAE)',
@@ -84,6 +90,7 @@ export class CnaeNbsIndopAdminController {
   }
 
   @Get('indops')
+  @RequiredClaims(Claim.CNAE_NBS_INDOP_LIST_INDOPS)
   @Swagger({
     tags: ['Tributação - CNAE/NBS/INDOP'],
     summary: 'Listar INDOPs para select (filtrado por CNAE e NBS)',
@@ -95,6 +102,7 @@ export class CnaeNbsIndopAdminController {
   }
 
   @Patch(':id/status')
+  @RequiredClaims(Claim.CNAE_NBS_INDOP_UPDATE_STATUS)
   @Swagger({
     tags: ['Tributação - CNAE/NBS/INDOP'],
     summary: 'Inverter status ativo da combinação CNAE/NBS/INDOP',
@@ -107,6 +115,7 @@ export class CnaeNbsIndopAdminController {
   }
 
   @Delete(':id')
+  @RequiredClaims(Claim.CNAE_NBS_INDOP_DELETE)
   @Swagger({
     tags: ['Tributação - CNAE/NBS/INDOP'],
     summary: 'Excluir combinação',

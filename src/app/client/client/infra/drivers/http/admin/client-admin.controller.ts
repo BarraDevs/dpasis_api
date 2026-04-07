@@ -1,5 +1,7 @@
 import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
+import { Claim } from 'src/app/authentication/domain/authorization/claim';
+import { RequiredClaims } from 'src/app/authentication/infra/decorators/required-claims.decorator';
 import { RequiredRoles } from 'src/app/authentication/infra/decorators/required-role.decorator';
 import { ClientDto } from 'src/app/client/client/application/dtos/client.dto';
 import { ActivateClient } from 'src/app/client/client/application/usecases/activate-client/activate-client.service';
@@ -29,6 +31,7 @@ export class ClientAdminController {
   ) {}
 
   @Post()
+  @RequiredClaims(Claim.CLIENT_CREATE)
   @Swagger({
     tags: ['Clientes'],
     summary: 'Criar novo cliente',
@@ -40,6 +43,7 @@ export class ClientAdminController {
   }
 
   @Get()
+  @RequiredClaims(Claim.CLIENT_LIST)
   @Swagger({
     tags: ['Clientes'],
     summary: 'Listar clientes com paginação e busca',
@@ -51,6 +55,7 @@ export class ClientAdminController {
   }
 
   @Get(':id')
+  @RequiredClaims(Claim.CLIENT_READ)
   @Swagger({
     tags: ['Clientes'],
     summary: 'Buscar cliente por ID',
@@ -63,6 +68,7 @@ export class ClientAdminController {
   }
 
   @Patch(':id/activate')
+  @RequiredClaims(Claim.CLIENT_ACTIVATE)
   @Swagger({
     tags: ['Clientes'],
     summary: 'Ativar cliente',
@@ -75,6 +81,7 @@ export class ClientAdminController {
   }
 
   @Patch(':id/deactivate')
+  @RequiredClaims(Claim.CLIENT_DEACTIVATE)
   @Swagger({
     tags: ['Clientes'],
     summary: 'Desativar cliente',
@@ -87,6 +94,7 @@ export class ClientAdminController {
   }
 
   @Patch(':id')
+  @RequiredClaims(Claim.CLIENT_UPDATE)
   @Swagger({
     tags: ['Clientes'],
     summary: 'Editar cliente',

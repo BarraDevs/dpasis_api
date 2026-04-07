@@ -1,5 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
+import { Claim } from 'src/app/authentication/domain/authorization/claim';
+import { RequiredClaims } from 'src/app/authentication/infra/decorators/required-claims.decorator';
 import { RequiredRoles } from 'src/app/authentication/infra/decorators/required-role.decorator';
 import { ServiceFreightDto } from 'src/app/service/service-freight/application/dtos/service-freight.dto';
 import { CreateServiceFreight } from 'src/app/service/service-freight/application/usecases/create-service-freight/create-service-freight.service';
@@ -29,6 +31,7 @@ export class ServiceFreightAdminController {
   ) {}
 
   @Post()
+  @RequiredClaims(Claim.SERVICE_FREIGHT_CREATE)
   @Swagger({
     tags: ['Serviços - Frete'],
     summary: 'Criar novo frete de serviço',
@@ -40,6 +43,7 @@ export class ServiceFreightAdminController {
   }
 
   @Get()
+  @RequiredClaims(Claim.SERVICE_FREIGHT_LIST)
   @Swagger({
     tags: ['Serviços - Frete'],
     summary: 'Listar fretes de serviço com paginação e busca',
@@ -51,6 +55,7 @@ export class ServiceFreightAdminController {
   }
 
   @Get(':id')
+  @RequiredClaims(Claim.SERVICE_FREIGHT_READ)
   @Swagger({
     tags: ['Serviços - Frete'],
     summary: 'Buscar frete de serviço por ID',
@@ -63,6 +68,7 @@ export class ServiceFreightAdminController {
   }
 
   @Patch(':id/status')
+  @RequiredClaims(Claim.SERVICE_FREIGHT_UPDATE_STATUS)
   @Swagger({
     tags: ['Serviços - Frete'],
     summary: 'Inverter status ativo do frete de serviço',
@@ -75,6 +81,7 @@ export class ServiceFreightAdminController {
   }
 
   @Patch(':id')
+  @RequiredClaims(Claim.SERVICE_FREIGHT_UPDATE)
   @Swagger({
     tags: ['Serviços - Frete'],
     summary: 'Editar frete de serviço',
@@ -87,6 +94,7 @@ export class ServiceFreightAdminController {
   }
 
   @Delete(':id')
+  @RequiredClaims(Claim.SERVICE_FREIGHT_DELETE)
   @Swagger({
     tags: ['Serviços - Frete'],
     summary: 'Deletar frete de serviço',

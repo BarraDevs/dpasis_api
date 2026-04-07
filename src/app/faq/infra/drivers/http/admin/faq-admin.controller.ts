@@ -1,5 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
+import { Claim } from 'src/app/authentication/domain/authorization/claim';
+import { RequiredClaims } from 'src/app/authentication/infra/decorators/required-claims.decorator';
 import { RequiredRoles } from 'src/app/authentication/infra/decorators/required-role.decorator';
 import { FaqDto } from 'src/app/faq/application/dtos/faq.dto';
 import { CreateFaq } from 'src/app/faq/application/usecases/create-faq/create-faq.service';
@@ -29,6 +31,7 @@ export class FaqAdminController {
   ) {}
 
   @Post()
+  @RequiredClaims(Claim.FAQ_CREATE)
   @Swagger({
     tags: ['FAQs'],
     summary: 'Criar nova FAQ',
@@ -40,6 +43,7 @@ export class FaqAdminController {
   }
 
   @Get()
+  @RequiredClaims(Claim.FAQ_LIST)
   @Swagger({
     tags: ['FAQs'],
     summary: 'Listar FAQs com paginação e busca',
@@ -51,6 +55,7 @@ export class FaqAdminController {
   }
 
   @Get(':id')
+  @RequiredClaims(Claim.FAQ_READ)
   @Swagger({
     tags: ['FAQs'],
     summary: 'Buscar FAQ por ID',
@@ -63,6 +68,7 @@ export class FaqAdminController {
   }
 
   @Patch(':id/status')
+  @RequiredClaims(Claim.FAQ_UPDATE_STATUS)
   @Swagger({
     tags: ['FAQs'],
     summary: 'Inverter status ativo da FAQ',
@@ -75,6 +81,7 @@ export class FaqAdminController {
   }
 
   @Patch(':id')
+  @RequiredClaims(Claim.FAQ_UPDATE)
   @Swagger({
     tags: ['FAQs'],
     summary: 'Editar FAQ',
@@ -87,6 +94,7 @@ export class FaqAdminController {
   }
 
   @Delete(':id')
+  @RequiredClaims(Claim.FAQ_DELETE)
   @Swagger({
     tags: ['FAQs'],
     summary: 'Deletar FAQ',

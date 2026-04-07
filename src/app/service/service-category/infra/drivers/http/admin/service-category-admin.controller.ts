@@ -1,5 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
+import { Claim } from 'src/app/authentication/domain/authorization/claim';
+import { RequiredClaims } from 'src/app/authentication/infra/decorators/required-claims.decorator';
 import { RequiredRoles } from 'src/app/authentication/infra/decorators/required-role.decorator';
 import { ServiceCategoryDto } from 'src/app/service/service-category/application/dtos/service-category.dto';
 import { CreateServiceCategory } from 'src/app/service/service-category/application/usecases/create-service-category/create-service-category.service';
@@ -29,6 +31,7 @@ export class ServiceCategoryAdminController {
   ) {}
 
   @Post()
+  @RequiredClaims(Claim.SERVICE_CATEGORY_CREATE)
   @Swagger({
     tags: ['Serviços - Categorias'],
     summary: 'Criar nova categoria de serviço',
@@ -40,6 +43,7 @@ export class ServiceCategoryAdminController {
   }
 
   @Get()
+  @RequiredClaims(Claim.SERVICE_CATEGORY_LIST)
   @Swagger({
     tags: ['Serviços - Categorias'],
     summary: 'Listar categorias de serviço com paginação e busca',
@@ -51,6 +55,7 @@ export class ServiceCategoryAdminController {
   }
 
   @Get(':id')
+  @RequiredClaims(Claim.SERVICE_CATEGORY_READ)
   @Swagger({
     tags: ['Serviços - Categorias'],
     summary: 'Buscar categoria de serviço por ID',
@@ -63,6 +68,7 @@ export class ServiceCategoryAdminController {
   }
 
   @Patch(':id/status')
+  @RequiredClaims(Claim.SERVICE_CATEGORY_UPDATE_STATUS)
   @Swagger({
     tags: ['Serviços - Categorias'],
     summary: 'Inverter status ativo da categoria de serviço',
@@ -75,6 +81,7 @@ export class ServiceCategoryAdminController {
   }
 
   @Patch(':id')
+  @RequiredClaims(Claim.SERVICE_CATEGORY_UPDATE)
   @Swagger({
     tags: ['Serviços - Categorias'],
     summary: 'Editar categoria de serviço',
@@ -87,6 +94,7 @@ export class ServiceCategoryAdminController {
   }
 
   @Delete(':id')
+  @RequiredClaims(Claim.SERVICE_CATEGORY_DELETE)
   @Swagger({
     tags: ['Serviços - Categorias'],
     summary: 'Deletar categoria de serviço',

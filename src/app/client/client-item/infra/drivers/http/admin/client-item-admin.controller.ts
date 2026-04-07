@@ -1,5 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
+import { Claim } from 'src/app/authentication/domain/authorization/claim';
+import { RequiredClaims } from 'src/app/authentication/infra/decorators/required-claims.decorator';
 import { RequiredRoles } from 'src/app/authentication/infra/decorators/required-role.decorator';
 import { ClientItemDto } from 'src/app/client/client-item/application/dtos/client-item.dto';
 import { CreateBulkClientItem } from 'src/app/client/client-item/application/usecases/create-bulk-client-item/create-bulk-client-item.service';
@@ -42,6 +44,7 @@ export class ClientItemAdminController {
   ) {}
 
   @Post()
+  @RequiredClaims(Claim.CLIENT_ITEM_CREATE)
   @Swagger({
     tags: ['Clientes - Itens'],
     summary: 'Criar novo item do cliente',
@@ -55,6 +58,7 @@ export class ClientItemAdminController {
   }
 
   @Post('bulk')
+  @RequiredClaims(Claim.CLIENT_ITEM_BULK_CREATE)
   @Swagger({
     tags: ['Clientes - Itens'],
     summary: 'Criar múltiplos itens do cliente',
@@ -66,6 +70,7 @@ export class ClientItemAdminController {
   }
 
   @Get()
+  @RequiredClaims(Claim.CLIENT_ITEM_LIST)
   @Swagger({
     tags: ['Clientes - Itens'],
     summary: 'Listar itens do cliente com paginação e filtros',
@@ -77,6 +82,7 @@ export class ClientItemAdminController {
   }
 
   @Get(':id')
+  @RequiredClaims(Claim.CLIENT_ITEM_READ)
   @Swagger({
     tags: ['Clientes - Itens'],
     summary: 'Buscar item do cliente por ID',
@@ -89,6 +95,7 @@ export class ClientItemAdminController {
   }
 
   @Patch(':id')
+  @RequiredClaims(Claim.CLIENT_ITEM_UPDATE)
   @Swagger({
     tags: ['Clientes - Itens'],
     summary: 'Editar item do cliente',
@@ -101,6 +108,7 @@ export class ClientItemAdminController {
   }
 
   @Delete('bulk')
+  @RequiredClaims(Claim.CLIENT_ITEM_BULK_DELETE)
   @Swagger({
     tags: ['Clientes - Itens'],
     summary: 'Deletar múltiplos itens do cliente',
@@ -112,6 +120,7 @@ export class ClientItemAdminController {
   }
 
   @Delete(':id')
+  @RequiredClaims(Claim.CLIENT_ITEM_DELETE)
   @Swagger({
     tags: ['Clientes - Itens'],
     summary: 'Deletar item do cliente',

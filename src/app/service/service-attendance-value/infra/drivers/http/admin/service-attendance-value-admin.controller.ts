@@ -1,5 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
+import { Claim } from 'src/app/authentication/domain/authorization/claim';
+import { RequiredClaims } from 'src/app/authentication/infra/decorators/required-claims.decorator';
 import { RequiredRoles } from 'src/app/authentication/infra/decorators/required-role.decorator';
 import { ServiceAttendanceValueDto } from 'src/app/service/service-attendance-value/application/dtos/service-attendance-value.dto';
 import { CreateServiceAttendanceValue } from 'src/app/service/service-attendance-value/application/usecases/create-service-attendance-value/create-service-attendance-value.service';
@@ -30,6 +32,7 @@ export class ServiceAttendanceValueAdminController {
   ) {}
 
   @Post()
+  @RequiredClaims(Claim.SERVICE_ATTENDANCE_VALUE_CREATE)
   @Swagger({
     tags: ['Serviços - Valores de atendimento'],
     summary: 'Criar valores de atendimento de serviço',
@@ -41,6 +44,7 @@ export class ServiceAttendanceValueAdminController {
   }
 
   @Get()
+  @RequiredClaims(Claim.SERVICE_ATTENDANCE_VALUE_LIST)
   @Swagger({
     tags: ['Serviços - Valores de atendimento'],
     summary: 'Listar valores de atendimento por serviço (paginação)',
@@ -52,6 +56,7 @@ export class ServiceAttendanceValueAdminController {
   }
 
   @Get(':id')
+  @RequiredClaims(Claim.SERVICE_ATTENDANCE_VALUE_READ)
   @Swagger({
     tags: ['Serviços - Valores de atendimento'],
     summary: 'Buscar valores de atendimento por ID',
@@ -64,6 +69,7 @@ export class ServiceAttendanceValueAdminController {
   }
 
   @Patch(':id')
+  @RequiredClaims(Claim.SERVICE_ATTENDANCE_VALUE_UPDATE)
   @Swagger({
     tags: ['Serviços - Valores de atendimento'],
     summary: 'Editar valores de atendimento',
@@ -76,6 +82,7 @@ export class ServiceAttendanceValueAdminController {
   }
 
   @Delete(':id')
+  @RequiredClaims(Claim.SERVICE_ATTENDANCE_VALUE_DELETE)
   @Swagger({
     tags: ['Serviços - Valores de atendimento'],
     summary: 'Excluir valores de atendimento',

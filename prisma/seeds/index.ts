@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import { AccountClaimSeed } from './account-claims';
 import { AdminSeed } from './admin';
 import { BankSeed } from './bank';
 import { ClientSeed } from './client';
@@ -29,6 +30,7 @@ const prisma = new PrismaClient();
 
 async function main() {
   await AdminSeed.seed(prisma);
+  await AccountClaimSeed.seed(prisma);
   await BankSeed.seed(prisma);
   await CompanySeed.seed(prisma);
   await CnaeSeed.seed(prisma);

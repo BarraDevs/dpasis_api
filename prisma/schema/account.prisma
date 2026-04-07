@@ -7,10 +7,21 @@ model Account {
   passwordResetToken String? @db.VarChar(64)
   status             String
 
-  admin Admin?
+  admin   Admin?
+  claims AccountClaim[]
 
   @@unique([id, role])
   @@map("accounts")
+}
+
+model AccountClaim {
+  id        Int    @id @default(autoincrement())
+  accountId Int
+  claim     String
+  account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@unique([accountId, claim])
+  @@map("account_claims")
 }
 
 model Admin {

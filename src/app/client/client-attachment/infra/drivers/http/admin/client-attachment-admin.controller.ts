@@ -13,6 +13,8 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiConsumes } from '@nestjs/swagger';
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
+import { Claim } from 'src/app/authentication/domain/authorization/claim';
+import { RequiredClaims } from 'src/app/authentication/infra/decorators/required-claims.decorator';
 import { RequiredRoles } from 'src/app/authentication/infra/decorators/required-role.decorator';
 import { ClientAttachmentDto } from 'src/app/client/client-attachment/application/dtos/client-attachment.dto';
 import { CreateClientAttachment } from 'src/app/client/client-attachment/application/usecases/create-client-attachment/create-client-attachment.service';
@@ -46,6 +48,7 @@ export class ClientAttachmentAdminController {
   ) {}
 
   @Post()
+  @RequiredClaims(Claim.CLIENT_ATTACHMENT_CREATE)
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(FileInterceptor('file'))
   @Swagger({
@@ -60,6 +63,7 @@ export class ClientAttachmentAdminController {
   }
 
   @Get()
+  @RequiredClaims(Claim.CLIENT_ATTACHMENT_LIST)
   @Swagger({
     tags: ['Clientes - Anexos'],
     summary: 'Listar anexos de cliente com paginação e filtros',
@@ -71,6 +75,7 @@ export class ClientAttachmentAdminController {
   }
 
   @Get(':id')
+  @RequiredClaims(Claim.CLIENT_ATTACHMENT_READ)
   @Swagger({
     tags: ['Clientes - Anexos'],
     summary: 'Buscar anexo de cliente por ID',
@@ -83,6 +88,7 @@ export class ClientAttachmentAdminController {
   }
 
   @Patch(':id/status')
+  @RequiredClaims(Claim.CLIENT_ATTACHMENT_UPDATE_STATUS)
   @Swagger({
     tags: ['Clientes - Anexos'],
     summary: 'Inverter status ativo do anexo de cliente',
@@ -95,6 +101,7 @@ export class ClientAttachmentAdminController {
   }
 
   @Patch(':id')
+  @RequiredClaims(Claim.CLIENT_ATTACHMENT_UPDATE)
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(FileInterceptor('file'))
   @Swagger({
@@ -114,6 +121,7 @@ export class ClientAttachmentAdminController {
   }
 
   @Delete(':id')
+  @RequiredClaims(Claim.CLIENT_ATTACHMENT_DELETE)
   @Swagger({
     tags: ['Clientes - Anexos'],
     summary: 'Deletar anexo de cliente',

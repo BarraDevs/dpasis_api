@@ -1,5 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
+import { Claim } from 'src/app/authentication/domain/authorization/claim';
+import { RequiredClaims } from 'src/app/authentication/infra/decorators/required-claims.decorator';
 import { RequiredRoles } from 'src/app/authentication/infra/decorators/required-role.decorator';
 import { ClientContactDto } from 'src/app/client/client-contact/application/dtos/client-contact.dto';
 import { ActivateClientContact } from 'src/app/client/client-contact/application/usecases/activate-client-contact/activate-client-contact.service';
@@ -34,6 +36,7 @@ export class ClientContactAdminController {
   ) {}
 
   @Post()
+  @RequiredClaims(Claim.CLIENT_CONTACT_CREATE)
   @Swagger({
     tags: ['Clientes - Contatos'],
     summary: 'Criar novo contato de cliente',
@@ -47,6 +50,7 @@ export class ClientContactAdminController {
   }
 
   @Get()
+  @RequiredClaims(Claim.CLIENT_CONTACT_LIST)
   @Swagger({
     tags: ['Clientes - Contatos'],
     summary: 'Listar contatos de cliente com paginação e filtros',
@@ -58,6 +62,7 @@ export class ClientContactAdminController {
   }
 
   @Get(':id')
+  @RequiredClaims(Claim.CLIENT_CONTACT_READ)
   @Swagger({
     tags: ['Clientes - Contatos'],
     summary: 'Buscar contato de cliente por ID',
@@ -70,6 +75,7 @@ export class ClientContactAdminController {
   }
 
   @Patch(':id/activate')
+  @RequiredClaims(Claim.CLIENT_CONTACT_ACTIVATE)
   @Swagger({
     tags: ['Clientes - Contatos'],
     summary: 'Ativar contato de cliente',
@@ -82,6 +88,7 @@ export class ClientContactAdminController {
   }
 
   @Patch(':id/deactivate')
+  @RequiredClaims(Claim.CLIENT_CONTACT_DEACTIVATE)
   @Swagger({
     tags: ['Clientes - Contatos'],
     summary: 'Desativar contato de cliente',
@@ -94,6 +101,7 @@ export class ClientContactAdminController {
   }
 
   @Patch(':id')
+  @RequiredClaims(Claim.CLIENT_CONTACT_UPDATE)
   @Swagger({
     tags: ['Clientes - Contatos'],
     summary: 'Editar contato de cliente',
@@ -106,6 +114,7 @@ export class ClientContactAdminController {
   }
 
   @Delete(':id')
+  @RequiredClaims(Claim.CLIENT_CONTACT_DELETE)
   @Swagger({
     tags: ['Clientes - Contatos'],
     summary: 'Deletar contato de cliente',

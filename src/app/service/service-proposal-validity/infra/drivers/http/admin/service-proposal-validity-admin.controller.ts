@@ -1,5 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
+import { Claim } from 'src/app/authentication/domain/authorization/claim';
+import { RequiredClaims } from 'src/app/authentication/infra/decorators/required-claims.decorator';
 import { RequiredRoles } from 'src/app/authentication/infra/decorators/required-role.decorator';
 import { ServiceProposalValidityDto } from 'src/app/service/service-proposal-validity/application/dtos/service-proposal-validity.dto';
 import { CreateServiceProposalValidity } from 'src/app/service/service-proposal-validity/application/usecases/create-service-proposal-validity/create-service-proposal-validity.service';
@@ -29,6 +31,7 @@ export class ServiceProposalValidityAdminController {
   ) {}
 
   @Post()
+  @RequiredClaims(Claim.SERVICE_PROPOSAL_VALIDITY_CREATE)
   @Swagger({
     tags: ['Serviços - Validade de proposta'],
     summary: 'Criar nova validade de proposta',
@@ -40,6 +43,7 @@ export class ServiceProposalValidityAdminController {
   }
 
   @Get()
+  @RequiredClaims(Claim.SERVICE_PROPOSAL_VALIDITY_LIST)
   @Swagger({
     tags: ['Serviços - Validade de proposta'],
     summary: 'Listar validades de proposta com paginação e busca',
@@ -51,6 +55,7 @@ export class ServiceProposalValidityAdminController {
   }
 
   @Get(':id')
+  @RequiredClaims(Claim.SERVICE_PROPOSAL_VALIDITY_READ)
   @Swagger({
     tags: ['Serviços - Validade de proposta'],
     summary: 'Buscar validade de proposta por ID',
@@ -63,6 +68,7 @@ export class ServiceProposalValidityAdminController {
   }
 
   @Patch(':id/status')
+  @RequiredClaims(Claim.SERVICE_PROPOSAL_VALIDITY_UPDATE_STATUS)
   @Swagger({
     tags: ['Serviços - Validade de proposta'],
     summary: 'Inverter status ativo da validade de proposta',
@@ -75,6 +81,7 @@ export class ServiceProposalValidityAdminController {
   }
 
   @Patch(':id')
+  @RequiredClaims(Claim.SERVICE_PROPOSAL_VALIDITY_UPDATE)
   @Swagger({
     tags: ['Serviços - Validade de proposta'],
     summary: 'Editar validade de proposta',
@@ -87,6 +94,7 @@ export class ServiceProposalValidityAdminController {
   }
 
   @Delete(':id')
+  @RequiredClaims(Claim.SERVICE_PROPOSAL_VALIDITY_DELETE)
   @Swagger({
     tags: ['Serviços - Validade de proposta'],
     summary: 'Deletar validade de proposta',

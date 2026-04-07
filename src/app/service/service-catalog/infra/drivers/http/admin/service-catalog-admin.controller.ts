@@ -1,5 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
+import { Claim } from 'src/app/authentication/domain/authorization/claim';
+import { RequiredClaims } from 'src/app/authentication/infra/decorators/required-claims.decorator';
 import { RequiredRoles } from 'src/app/authentication/infra/decorators/required-role.decorator';
 import { ServiceCatalogDto } from 'src/app/service/service-catalog/application/dtos/service-catalog.dto';
 import { ActivateServiceCatalog } from 'src/app/service/service-catalog/application/usecases/activate-service-catalog/activate-service-catalog.service';
@@ -31,6 +33,7 @@ export class ServiceCatalogAdminController {
   ) {}
 
   @Post()
+  @RequiredClaims(Claim.SERVICE_CATALOG_CREATE)
   @Swagger({
     tags: ['Serviços - Serviços'],
     summary: 'Criar serviço no catálogo',
@@ -42,6 +45,7 @@ export class ServiceCatalogAdminController {
   }
 
   @Get()
+  @RequiredClaims(Claim.SERVICE_CATALOG_LIST)
   @Swagger({
     tags: ['Serviços - Serviços'],
     summary: 'Listar serviços do catálogo com paginação e busca',
@@ -53,6 +57,7 @@ export class ServiceCatalogAdminController {
   }
 
   @Get(':id')
+  @RequiredClaims(Claim.SERVICE_CATALOG_READ)
   @Swagger({
     tags: ['Serviços - Serviços'],
     summary: 'Buscar serviço do catálogo por ID',
@@ -65,6 +70,7 @@ export class ServiceCatalogAdminController {
   }
 
   @Patch(':id/activate')
+  @RequiredClaims(Claim.SERVICE_CATALOG_ACTIVATE)
   @Swagger({
     tags: ['Serviços - Serviços'],
     summary: 'Ativar serviço do catálogo',
@@ -77,6 +83,7 @@ export class ServiceCatalogAdminController {
   }
 
   @Patch(':id/deactivate')
+  @RequiredClaims(Claim.SERVICE_CATALOG_DEACTIVATE)
   @Swagger({
     tags: ['Serviços - Serviços'],
     summary: 'Desativar serviço do catálogo',
@@ -89,6 +96,7 @@ export class ServiceCatalogAdminController {
   }
 
   @Patch(':id')
+  @RequiredClaims(Claim.SERVICE_CATALOG_UPDATE)
   @Swagger({
     tags: ['Serviços - Serviços'],
     summary: 'Editar serviço do catálogo',
@@ -101,6 +109,7 @@ export class ServiceCatalogAdminController {
   }
 
   @Delete(':id')
+  @RequiredClaims(Claim.SERVICE_CATALOG_DELETE)
   @Swagger({
     tags: ['Serviços - Serviços'],
     summary: 'Excluir serviço do catálogo',

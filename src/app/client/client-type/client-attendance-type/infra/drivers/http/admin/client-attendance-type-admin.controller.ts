@@ -1,5 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
+import { Claim } from 'src/app/authentication/domain/authorization/claim';
+import { RequiredClaims } from 'src/app/authentication/infra/decorators/required-claims.decorator';
 import { RequiredRoles } from 'src/app/authentication/infra/decorators/required-role.decorator';
 import { ClientAttendanceTypeDto } from 'src/app/client/client-type/client-attendance-type/application/dtos/client-attendance-type.dto';
 import { CreateClientAttendanceType } from 'src/app/client/client-type/client-attendance-type/application/usecases/create-client-attendance-type/create-client-attendance-type.service';
@@ -29,6 +31,7 @@ export class ClientAttendanceTypeAdminController {
   ) {}
 
   @Post()
+  @RequiredClaims(Claim.CLIENT_ATTENDANCE_TYPE_CREATE)
   @Swagger({
     tags: ['Clientes - Tipos de cliente - Tipos de atendimento'],
     summary: 'Criar novo tipo de atendimento de cliente',
@@ -40,6 +43,7 @@ export class ClientAttendanceTypeAdminController {
   }
 
   @Get()
+  @RequiredClaims(Claim.CLIENT_ATTENDANCE_TYPE_LIST)
   @Swagger({
     tags: ['Clientes - Tipos de cliente - Tipos de atendimento'],
     summary: 'Listar tipos de atendimento de cliente com paginação e busca',
@@ -51,6 +55,7 @@ export class ClientAttendanceTypeAdminController {
   }
 
   @Get(':id')
+  @RequiredClaims(Claim.CLIENT_ATTENDANCE_TYPE_READ)
   @Swagger({
     tags: ['Clientes - Tipos de cliente - Tipos de atendimento'],
     summary: 'Buscar tipo de atendimento de cliente por ID',
@@ -63,6 +68,7 @@ export class ClientAttendanceTypeAdminController {
   }
 
   @Patch(':id/status')
+  @RequiredClaims(Claim.CLIENT_ATTENDANCE_TYPE_UPDATE_STATUS)
   @Swagger({
     tags: ['Clientes - Tipos de cliente - Tipos de atendimento'],
     summary: 'Inverter status ativo do tipo de atendimento de cliente',
@@ -75,6 +81,7 @@ export class ClientAttendanceTypeAdminController {
   }
 
   @Patch(':id')
+  @RequiredClaims(Claim.CLIENT_ATTENDANCE_TYPE_UPDATE)
   @Swagger({
     tags: ['Clientes - Tipos de cliente - Tipos de atendimento'],
     summary: 'Editar tipo de atendimento de cliente',
@@ -87,6 +94,7 @@ export class ClientAttendanceTypeAdminController {
   }
 
   @Delete(':id')
+  @RequiredClaims(Claim.CLIENT_ATTENDANCE_TYPE_DELETE)
   @Swagger({
     tags: ['Clientes - Tipos de cliente - Tipos de atendimento'],
     summary: 'Deletar tipo de atendimento de cliente',

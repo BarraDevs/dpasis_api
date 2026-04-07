@@ -73,6 +73,14 @@ export class AccountDaoAdapterPrisma implements IAccountDao {
     };
   }
 
+  public async findClaimStringsByAccountId(accountId: number): Promise<string[]> {
+    const rows = await this.prisma.accountClaim.findMany({
+      where: { accountId },
+      select: { claim: true },
+    });
+    return rows.map(r => r.claim);
+  }
+
   public async forgotPassword(id: number, passwordResetToken: string): Promise<void> {
     await this.prisma.account.update({
       where: { id },

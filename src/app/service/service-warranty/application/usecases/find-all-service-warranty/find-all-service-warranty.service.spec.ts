@@ -137,11 +137,11 @@ describe('FindAllServiceWarranty - Integration tests', () => {
       ],
     });
 
-    const result = await sut.execute({ page: 1, size: 10, search: '90' });
+    const result = await sut.execute({ page: 1, size: 10, search: 'DIAS' });
 
     expect(result.data).toHaveLength(2);
     expect(result.totalItems).toBe(2);
-    expect(result.data.every((d: ServiceWarrantyDto) => d.name.includes('90'))).toBe(true);
+    expect(result.data.every((d: ServiceWarrantyDto) => d.name.includes('dias'))).toBe(true);
   });
 
   it('should return correct ServiceWarrantyDto structure', async() => {

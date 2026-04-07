@@ -1,5 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
+import { Claim } from 'src/app/authentication/domain/authorization/claim';
+import { RequiredClaims } from 'src/app/authentication/infra/decorators/required-claims.decorator';
 import { RequiredRoles } from 'src/app/authentication/infra/decorators/required-role.decorator';
 import { ClientDepartmentDto } from 'src/app/client/client-department/application/dtos/client-department.dto';
 import { CreateClientDepartment } from 'src/app/client/client-department/application/usecases/create-client-department/create-client-department.service';
@@ -29,6 +31,7 @@ export class ClientDepartmentAdminController {
   ) {}
 
   @Post()
+  @RequiredClaims(Claim.CLIENT_DEPARTMENT_CREATE)
   @Swagger({
     tags: ['Clientes - Departamentos'],
     summary: 'Criar novo departamento de clientes',
@@ -40,6 +43,7 @@ export class ClientDepartmentAdminController {
   }
 
   @Get()
+  @RequiredClaims(Claim.CLIENT_DEPARTMENT_LIST)
   @Swagger({
     tags: ['Clientes - Departamentos'],
     summary: 'Listar departamentos de clientes com paginação e busca',
@@ -51,6 +55,7 @@ export class ClientDepartmentAdminController {
   }
 
   @Get(':id')
+  @RequiredClaims(Claim.CLIENT_DEPARTMENT_READ)
   @Swagger({
     tags: ['Clientes - Departamentos'],
     summary: 'Buscar departamento de clientes por ID',
@@ -63,6 +68,7 @@ export class ClientDepartmentAdminController {
   }
 
   @Patch(':id/status')
+  @RequiredClaims(Claim.CLIENT_DEPARTMENT_UPDATE_STATUS)
   @Swagger({
     tags: ['Clientes - Departamentos'],
     summary: 'Inverter status ativo do departamento de clientes',
@@ -75,6 +81,7 @@ export class ClientDepartmentAdminController {
   }
 
   @Patch(':id')
+  @RequiredClaims(Claim.CLIENT_DEPARTMENT_UPDATE)
   @Swagger({
     tags: ['Clientes - Departamentos'],
     summary: 'Editar departamento de clientes',
@@ -87,6 +94,7 @@ export class ClientDepartmentAdminController {
   }
 
   @Delete(':id')
+  @RequiredClaims(Claim.CLIENT_DEPARTMENT_DELETE)
   @Swagger({
     tags: ['Clientes - Departamentos'],
     summary: 'Deletar departamento de clientes',
