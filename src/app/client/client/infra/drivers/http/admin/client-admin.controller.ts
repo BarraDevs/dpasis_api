@@ -31,7 +31,7 @@ export class ClientAdminController {
   ) {}
 
   @Post()
-  @RequiredClaims(Claim.CLIENT_CREATE)
+  @RequiredClaims(Claim.CLIENT_WRITE)
   @Swagger({
     tags: ['Clientes'],
     summary: 'Criar novo cliente',
@@ -43,7 +43,7 @@ export class ClientAdminController {
   }
 
   @Get()
-  @RequiredClaims(Claim.CLIENT_LIST)
+  @RequiredClaims(Claim.CLIENT_READ)
   @Swagger({
     tags: ['Clientes'],
     summary: 'Listar clientes com paginação e busca',
@@ -55,7 +55,7 @@ export class ClientAdminController {
   }
 
   @Get(':id')
-  @RequiredClaims(Claim.CLIENT_DETAIL)
+  @RequiredClaims(Claim.CLIENT_READ)
   @Swagger({
     tags: ['Clientes'],
     summary: 'Buscar cliente por ID',
@@ -68,7 +68,7 @@ export class ClientAdminController {
   }
 
   @Patch(':id/activate')
-  @RequiredClaims(Claim.CLIENT_ACTIVATE)
+  @RequiredClaims(Claim.CLIENT_WRITE)
   @Swagger({
     tags: ['Clientes'],
     summary: 'Ativar cliente',
@@ -81,7 +81,7 @@ export class ClientAdminController {
   }
 
   @Patch(':id/deactivate')
-  @RequiredClaims(Claim.CLIENT_DEACTIVATE)
+  @RequiredClaims(Claim.CLIENT_WRITE)
   @Swagger({
     tags: ['Clientes'],
     summary: 'Desativar cliente',
@@ -94,7 +94,7 @@ export class ClientAdminController {
   }
 
   @Patch(':id')
-  @RequiredClaims(Claim.CLIENT_UPDATE)
+  @RequiredClaims(Claim.CLIENT_WRITE)
   @Swagger({
     tags: ['Clientes'],
     summary: 'Editar cliente',

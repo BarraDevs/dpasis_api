@@ -31,7 +31,7 @@ export class ServiceWarrantyAdminController {
   ) {}
 
   @Post()
-  @RequiredClaims(Claim.SERVICE_WARRANTY_CREATE)
+  @RequiredClaims(Claim.SERVICE_WARRANTY_WRITE)
   @Swagger({
     tags: ['Serviços - Garantia'],
     summary: 'Criar nova garantia de serviço',
@@ -43,7 +43,7 @@ export class ServiceWarrantyAdminController {
   }
 
   @Get()
-  @RequiredClaims(Claim.SERVICE_WARRANTY_LIST)
+  @RequiredClaims(Claim.SERVICE_WARRANTY_READ)
   @Swagger({
     tags: ['Serviços - Garantia'],
     summary: 'Listar garantias de serviço com paginação e busca',
@@ -55,7 +55,7 @@ export class ServiceWarrantyAdminController {
   }
 
   @Get(':id')
-  @RequiredClaims(Claim.SERVICE_WARRANTY_DETAIL)
+  @RequiredClaims(Claim.SERVICE_WARRANTY_READ)
   @Swagger({
     tags: ['Serviços - Garantia'],
     summary: 'Buscar garantia de serviço por ID',
@@ -68,7 +68,7 @@ export class ServiceWarrantyAdminController {
   }
 
   @Patch(':id/status')
-  @RequiredClaims(Claim.SERVICE_WARRANTY_UPDATE_STATUS)
+  @RequiredClaims(Claim.SERVICE_WARRANTY_WRITE)
   @Swagger({
     tags: ['Serviços - Garantia'],
     summary: 'Inverter status ativo da garantia de serviço',
@@ -81,7 +81,7 @@ export class ServiceWarrantyAdminController {
   }
 
   @Patch(':id')
-  @RequiredClaims(Claim.SERVICE_WARRANTY_UPDATE)
+  @RequiredClaims(Claim.SERVICE_WARRANTY_WRITE)
   @Swagger({
     tags: ['Serviços - Garantia'],
     summary: 'Editar garantia de serviço',
@@ -94,7 +94,7 @@ export class ServiceWarrantyAdminController {
   }
 
   @Delete(':id')
-  @RequiredClaims(Claim.SERVICE_WARRANTY_DELETE)
+  @RequiredClaims(Claim.SERVICE_WARRANTY_WRITE)
   @Swagger({
     tags: ['Serviços - Garantia'],
     summary: 'Deletar garantia de serviço',

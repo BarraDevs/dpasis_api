@@ -31,7 +31,7 @@ export class ClientMaintenanceTicketTypeAdminController {
   ) {}
 
   @Post()
-  @RequiredClaims(Claim.CLIENT_MAINTENANCE_TICKET_TYPE_CREATE)
+  @RequiredClaims(Claim.CLIENT_MAINTENANCE_TICKET_TYPE_WRITE)
   @Swagger({
     tags: ['Clientes - Tipos de cliente - Tipos de chamado de manutenção'],
     summary: 'Criar novo tipo de chamado de manutenção de cliente',
@@ -43,7 +43,7 @@ export class ClientMaintenanceTicketTypeAdminController {
   }
 
   @Get()
-  @RequiredClaims(Claim.CLIENT_MAINTENANCE_TICKET_TYPE_LIST)
+  @RequiredClaims(Claim.CLIENT_MAINTENANCE_TICKET_TYPE_READ)
   @Swagger({
     tags: ['Clientes - Tipos de cliente - Tipos de chamado de manutenção'],
     summary: 'Listar tipos de chamados de manutenção de cliente com paginação e busca',
@@ -55,7 +55,7 @@ export class ClientMaintenanceTicketTypeAdminController {
   }
 
   @Get(':id')
-  @RequiredClaims(Claim.CLIENT_MAINTENANCE_TICKET_TYPE_DETAIL)
+  @RequiredClaims(Claim.CLIENT_MAINTENANCE_TICKET_TYPE_READ)
   @Swagger({
     tags: ['Clientes - Tipos de cliente - Tipos de chamado de manutenção'],
     summary: 'Buscar tipo de chamado de manutenção de cliente por ID',
@@ -68,7 +68,7 @@ export class ClientMaintenanceTicketTypeAdminController {
   }
 
   @Patch(':id/status')
-  @RequiredClaims(Claim.CLIENT_MAINTENANCE_TICKET_TYPE_UPDATE_STATUS)
+  @RequiredClaims(Claim.CLIENT_MAINTENANCE_TICKET_TYPE_WRITE)
   @Swagger({
     tags: ['Clientes - Tipos de cliente - Tipos de chamado de manutenção'],
     summary: 'Inverter status ativo do tipo de chamado de manutenção de cliente',
@@ -81,7 +81,7 @@ export class ClientMaintenanceTicketTypeAdminController {
   }
 
   @Patch(':id')
-  @RequiredClaims(Claim.CLIENT_MAINTENANCE_TICKET_TYPE_UPDATE)
+  @RequiredClaims(Claim.CLIENT_MAINTENANCE_TICKET_TYPE_WRITE)
   @Swagger({
     tags: ['Clientes - Tipos de cliente - Tipos de chamado de manutenção'],
     summary: 'Editar tipo de chamado de manutenção de cliente',
@@ -94,7 +94,7 @@ export class ClientMaintenanceTicketTypeAdminController {
   }
 
   @Delete(':id')
-  @RequiredClaims(Claim.CLIENT_MAINTENANCE_TICKET_TYPE_DELETE)
+  @RequiredClaims(Claim.CLIENT_MAINTENANCE_TICKET_TYPE_WRITE)
   @Swagger({
     tags: ['Clientes - Tipos de cliente - Tipos de chamado de manutenção'],
     summary: 'Deletar tipo de chamado de manutenção de cliente',

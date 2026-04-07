@@ -40,7 +40,7 @@ export class CnaeNbsIndopAdminController {
   ) {}
 
   @Post()
-  @RequiredClaims(Claim.CNAE_NBS_INDOP_CREATE)
+  @RequiredClaims(Claim.CNAE_NBS_INDOP_WRITE)
   @Swagger({
     tags: ['Tributação - CNAE/NBS/INDOP'],
     summary: 'Criar nova combinação CNAE + NBS + INDOP',
@@ -54,7 +54,7 @@ export class CnaeNbsIndopAdminController {
   }
 
   @Get()
-  @RequiredClaims(Claim.CNAE_NBS_INDOP_LIST)
+  @RequiredClaims(Claim.CNAE_NBS_INDOP_READ)
   @Swagger({
     tags: ['Tributação - CNAE/NBS/INDOP'],
     summary: 'Listar combinações com paginação e filtros',
@@ -66,7 +66,7 @@ export class CnaeNbsIndopAdminController {
   }
 
   @Get('cnaes')
-  @RequiredClaims(Claim.CNAE_NBS_INDOP_LIST_CNAES)
+  @RequiredClaims(Claim.CNAE_NBS_INDOP_READ)
   @Swagger({
     tags: ['Tributação - CNAE/NBS/INDOP'],
     summary: 'Listar CNAEs para select (combinações existentes)',
@@ -78,7 +78,7 @@ export class CnaeNbsIndopAdminController {
   }
 
   @Get('nbs')
-  @RequiredClaims(Claim.CNAE_NBS_INDOP_LIST_NBS)
+  @RequiredClaims(Claim.CNAE_NBS_INDOP_READ)
   @Swagger({
     tags: ['Tributação - CNAE/NBS/INDOP'],
     summary: 'Listar NBSs para select (filtrado por CNAE)',
@@ -90,7 +90,7 @@ export class CnaeNbsIndopAdminController {
   }
 
   @Get('indops')
-  @RequiredClaims(Claim.CNAE_NBS_INDOP_LIST_INDOPS)
+  @RequiredClaims(Claim.CNAE_NBS_INDOP_READ)
   @Swagger({
     tags: ['Tributação - CNAE/NBS/INDOP'],
     summary: 'Listar INDOPs para select (filtrado por CNAE e NBS)',
@@ -102,7 +102,7 @@ export class CnaeNbsIndopAdminController {
   }
 
   @Patch(':id/status')
-  @RequiredClaims(Claim.CNAE_NBS_INDOP_UPDATE_STATUS)
+  @RequiredClaims(Claim.CNAE_NBS_INDOP_WRITE)
   @Swagger({
     tags: ['Tributação - CNAE/NBS/INDOP'],
     summary: 'Inverter status ativo da combinação CNAE/NBS/INDOP',
@@ -115,7 +115,7 @@ export class CnaeNbsIndopAdminController {
   }
 
   @Delete(':id')
-  @RequiredClaims(Claim.CNAE_NBS_INDOP_DELETE)
+  @RequiredClaims(Claim.CNAE_NBS_INDOP_WRITE)
   @Swagger({
     tags: ['Tributação - CNAE/NBS/INDOP'],
     summary: 'Excluir combinação',

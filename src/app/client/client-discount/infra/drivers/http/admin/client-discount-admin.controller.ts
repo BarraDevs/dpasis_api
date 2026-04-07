@@ -32,7 +32,7 @@ export class ClientDiscountAdminController {
   ) {}
 
   @Post()
-  @RequiredClaims(Claim.CLIENT_DISCOUNT_CREATE)
+  @RequiredClaims(Claim.CLIENT_DISCOUNT_WRITE)
   @Swagger({
     tags: ['Clientes - Descontos'],
     summary: 'Criar novo desconto',
@@ -44,7 +44,7 @@ export class ClientDiscountAdminController {
   }
 
   @Get()
-  @RequiredClaims(Claim.CLIENT_DISCOUNT_LIST)
+  @RequiredClaims(Claim.CLIENT_DISCOUNT_READ)
   @Swagger({
     tags: ['Clientes - Descontos'],
     summary: 'Listar descontos com paginação e filtros',
@@ -56,7 +56,7 @@ export class ClientDiscountAdminController {
   }
 
   @Get(':id')
-  @RequiredClaims(Claim.CLIENT_DISCOUNT_DETAIL)
+  @RequiredClaims(Claim.CLIENT_DISCOUNT_READ)
   @Swagger({
     tags: ['Clientes - Descontos'],
     summary: 'Buscar desconto por ID',
@@ -69,7 +69,7 @@ export class ClientDiscountAdminController {
   }
 
   @Patch(':id')
-  @RequiredClaims(Claim.CLIENT_DISCOUNT_UPDATE)
+  @RequiredClaims(Claim.CLIENT_DISCOUNT_WRITE)
   @Swagger({
     tags: ['Clientes - Descontos'],
     summary: 'Editar desconto',
@@ -82,7 +82,7 @@ export class ClientDiscountAdminController {
   }
 
   @Delete(':id')
-  @RequiredClaims(Claim.CLIENT_DISCOUNT_DELETE)
+  @RequiredClaims(Claim.CLIENT_DISCOUNT_WRITE)
   @Swagger({
     tags: ['Clientes - Descontos'],
     summary: 'Excluir desconto',

@@ -37,7 +37,7 @@ export class ClientTypeAdminController {
   ) {}
 
   @Post()
-  @RequiredClaims(Claim.CLIENT_TYPE_CREATE)
+  @RequiredClaims(Claim.CLIENT_TYPE_WRITE)
   @Swagger({
     tags: ['Clientes - Tipos de cliente'],
     summary: 'Criar novo tipo de cliente',
@@ -49,7 +49,7 @@ export class ClientTypeAdminController {
   }
 
   @Get()
-  @RequiredClaims(Claim.CLIENT_TYPE_LIST)
+  @RequiredClaims(Claim.CLIENT_TYPE_READ)
   @Swagger({
     tags: ['Clientes - Tipos de cliente'],
     summary: 'Listar tipos de cliente com paginação e busca',
@@ -61,7 +61,7 @@ export class ClientTypeAdminController {
   }
 
   @Get(':id')
-  @RequiredClaims(Claim.CLIENT_TYPE_DETAIL)
+  @RequiredClaims(Claim.CLIENT_TYPE_READ)
   @Swagger({
     tags: ['Clientes - Tipos de cliente'],
     summary: 'Buscar tipo de cliente por ID',
@@ -74,7 +74,7 @@ export class ClientTypeAdminController {
   }
 
   @Patch(':id/status')
-  @RequiredClaims(Claim.CLIENT_TYPE_UPDATE_STATUS)
+  @RequiredClaims(Claim.CLIENT_TYPE_WRITE)
   @Swagger({
     tags: ['Clientes - Tipos de cliente'],
     summary: 'Inverter status ativo do tipo de cliente',
@@ -87,7 +87,7 @@ export class ClientTypeAdminController {
   }
 
   @Patch(':id')
-  @RequiredClaims(Claim.CLIENT_TYPE_UPDATE)
+  @RequiredClaims(Claim.CLIENT_TYPE_WRITE)
   @Swagger({
     tags: ['Clientes - Tipos de cliente'],
     summary: 'Editar tipo de cliente',
@@ -100,7 +100,7 @@ export class ClientTypeAdminController {
   }
 
   @Delete('bulk')
-  @RequiredClaims(Claim.CLIENT_TYPE_BULK_DELETE)
+  @RequiredClaims(Claim.CLIENT_TYPE_WRITE)
   @Swagger({
     tags: ['Clientes - Tipos de cliente'],
     summary: 'Deletar múltiplos tipos de cliente',
@@ -112,7 +112,7 @@ export class ClientTypeAdminController {
   }
 
   @Delete(':id')
-  @RequiredClaims(Claim.CLIENT_TYPE_DELETE)
+  @RequiredClaims(Claim.CLIENT_TYPE_WRITE)
   @Swagger({
     tags: ['Clientes - Tipos de cliente'],
     summary: 'Deletar tipo de cliente',

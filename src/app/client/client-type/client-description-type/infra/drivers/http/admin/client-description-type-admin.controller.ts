@@ -31,7 +31,7 @@ export class ClientDescriptionTypeAdminController {
   ) {}
 
   @Post()
-  @RequiredClaims(Claim.CLIENT_DESCRIPTION_TYPE_CREATE)
+  @RequiredClaims(Claim.CLIENT_DESCRIPTION_TYPE_WRITE)
   @Swagger({
     tags: ['Clientes - Tipos de cliente - Tipos de descrição'],
     summary: 'Criar novo tipo de descrição de cliente',
@@ -43,7 +43,7 @@ export class ClientDescriptionTypeAdminController {
   }
 
   @Get()
-  @RequiredClaims(Claim.CLIENT_DESCRIPTION_TYPE_LIST)
+  @RequiredClaims(Claim.CLIENT_DESCRIPTION_TYPE_READ)
   @Swagger({
     tags: ['Clientes - Tipos de cliente - Tipos de descrição'],
     summary: 'Listar tipos de descrição de cliente com paginação e busca',
@@ -55,7 +55,7 @@ export class ClientDescriptionTypeAdminController {
   }
 
   @Get(':id')
-  @RequiredClaims(Claim.CLIENT_DESCRIPTION_TYPE_DETAIL)
+  @RequiredClaims(Claim.CLIENT_DESCRIPTION_TYPE_READ)
   @Swagger({
     tags: ['Clientes - Tipos de cliente - Tipos de descrição'],
     summary: 'Buscar tipo de descrição de cliente por ID',
@@ -68,7 +68,7 @@ export class ClientDescriptionTypeAdminController {
   }
 
   @Patch(':id/status')
-  @RequiredClaims(Claim.CLIENT_DESCRIPTION_TYPE_UPDATE_STATUS)
+  @RequiredClaims(Claim.CLIENT_DESCRIPTION_TYPE_WRITE)
   @Swagger({
     tags: ['Clientes - Tipos de cliente - Tipos de descrição'],
     summary: 'Inverter status ativo do tipo de descrição de cliente',
@@ -81,7 +81,7 @@ export class ClientDescriptionTypeAdminController {
   }
 
   @Patch(':id')
-  @RequiredClaims(Claim.CLIENT_DESCRIPTION_TYPE_UPDATE)
+  @RequiredClaims(Claim.CLIENT_DESCRIPTION_TYPE_WRITE)
   @Swagger({
     tags: ['Clientes - Tipos de cliente - Tipos de descrição'],
     summary: 'Editar tipo de descrição de cliente',
@@ -94,7 +94,7 @@ export class ClientDescriptionTypeAdminController {
   }
 
   @Delete(':id')
-  @RequiredClaims(Claim.CLIENT_DESCRIPTION_TYPE_DELETE)
+  @RequiredClaims(Claim.CLIENT_DESCRIPTION_TYPE_WRITE)
   @Swagger({
     tags: ['Clientes - Tipos de cliente - Tipos de descrição'],
     summary: 'Deletar tipo de descrição de cliente',

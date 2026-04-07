@@ -44,7 +44,7 @@ export class ClientItemAdminController {
   ) {}
 
   @Post()
-  @RequiredClaims(Claim.CLIENT_ITEM_CREATE)
+  @RequiredClaims(Claim.CLIENT_ITEM_WRITE)
   @Swagger({
     tags: ['Clientes - Itens'],
     summary: 'Criar novo item do cliente',
@@ -58,7 +58,7 @@ export class ClientItemAdminController {
   }
 
   @Post('bulk')
-  @RequiredClaims(Claim.CLIENT_ITEM_BULK_CREATE)
+  @RequiredClaims(Claim.CLIENT_ITEM_WRITE)
   @Swagger({
     tags: ['Clientes - Itens'],
     summary: 'Criar múltiplos itens do cliente',
@@ -70,7 +70,7 @@ export class ClientItemAdminController {
   }
 
   @Get()
-  @RequiredClaims(Claim.CLIENT_ITEM_LIST)
+  @RequiredClaims(Claim.CLIENT_ITEM_READ)
   @Swagger({
     tags: ['Clientes - Itens'],
     summary: 'Listar itens do cliente com paginação e filtros',
@@ -82,7 +82,7 @@ export class ClientItemAdminController {
   }
 
   @Get(':id')
-  @RequiredClaims(Claim.CLIENT_ITEM_DETAIL)
+  @RequiredClaims(Claim.CLIENT_ITEM_READ)
   @Swagger({
     tags: ['Clientes - Itens'],
     summary: 'Buscar item do cliente por ID',
@@ -95,7 +95,7 @@ export class ClientItemAdminController {
   }
 
   @Patch(':id')
-  @RequiredClaims(Claim.CLIENT_ITEM_UPDATE)
+  @RequiredClaims(Claim.CLIENT_ITEM_WRITE)
   @Swagger({
     tags: ['Clientes - Itens'],
     summary: 'Editar item do cliente',
@@ -108,7 +108,7 @@ export class ClientItemAdminController {
   }
 
   @Delete('bulk')
-  @RequiredClaims(Claim.CLIENT_ITEM_BULK_DELETE)
+  @RequiredClaims(Claim.CLIENT_ITEM_WRITE)
   @Swagger({
     tags: ['Clientes - Itens'],
     summary: 'Deletar múltiplos itens do cliente',
@@ -120,7 +120,7 @@ export class ClientItemAdminController {
   }
 
   @Delete(':id')
-  @RequiredClaims(Claim.CLIENT_ITEM_DELETE)
+  @RequiredClaims(Claim.CLIENT_ITEM_WRITE)
   @Swagger({
     tags: ['Clientes - Itens'],
     summary: 'Deletar item do cliente',

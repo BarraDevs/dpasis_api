@@ -42,7 +42,7 @@ describe('EditAdmin - Integration tests', () => {
       document: '529.982.247-25',
       profilePicture: null,
       claims: [
-        { subject: Claim.BANK_LIST.subject, action: Claim.BANK_LIST.action },
+        { subject: Claim.BANK_READ.subject, action: Claim.BANK_READ.action },
       ],
       ...overrides,
     };
@@ -55,7 +55,7 @@ describe('EditAdmin - Integration tests', () => {
   it('should throw AdminNotFoundError when admin does not exist', async() => {
     const data: EditAdminInputDto = {
       name: 'X',
-      claims: [{ subject: Claim.BANK_DETAIL.subject, action: Claim.BANK_DETAIL.action }],
+      claims: [{ subject: Claim.BANK_READ.subject, action: Claim.BANK_READ.action }],
     };
 
     await expect(sut.execute(999999, data)).rejects.toThrow(AdminNotFoundError);
@@ -67,8 +67,8 @@ describe('EditAdmin - Integration tests', () => {
     const result = await sut.execute(id, {
       name: 'Nome Novo',
       claims: [
-        { subject: Claim.COMPANY_LIST.subject, action: Claim.COMPANY_LIST.action },
-        { subject: Claim.FAQ_LIST.subject, action: Claim.FAQ_LIST.action },
+        { subject: Claim.COMPANY_READ.subject, action: Claim.COMPANY_READ.action },
+        { subject: Claim.FAQ_READ.subject, action: Claim.FAQ_READ.action },
       ],
     });
 
@@ -94,7 +94,7 @@ describe('EditAdmin - Integration tests', () => {
     await expect(
       sut.execute(first.id, {
         document: '390.533.447-05',
-        claims: [{ subject: Claim.BANK_LIST.subject, action: Claim.BANK_LIST.action }],
+        claims: [{ subject: Claim.BANK_READ.subject, action: Claim.BANK_READ.action }],
       }),
     ).rejects.toThrow(DocumentAlreadyTakenError);
   });
@@ -105,7 +105,7 @@ describe('EditAdmin - Integration tests', () => {
 
     await sut.execute(id, {
       name: 'Só nome',
-      claims: [{ subject: Claim.BANK_LIST.subject, action: Claim.BANK_LIST.action }],
+      claims: [{ subject: Claim.BANK_READ.subject, action: Claim.BANK_READ.action }],
     });
 
     const after = await prisma.account.findUnique({ where: { id } });
@@ -121,7 +121,7 @@ describe('EditAdmin - Integration tests', () => {
     });
 
     await sut.execute(id, {
-      claims: [{ subject: Claim.BANK_LIST.subject, action: Claim.BANK_LIST.action }],
+      claims: [{ subject: Claim.BANK_READ.subject, action: Claim.BANK_READ.action }],
     });
 
     const acc = await prisma.account.findUnique({ where: { id } });

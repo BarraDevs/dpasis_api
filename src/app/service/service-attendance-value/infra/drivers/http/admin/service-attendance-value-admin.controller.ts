@@ -32,7 +32,7 @@ export class ServiceAttendanceValueAdminController {
   ) {}
 
   @Post()
-  @RequiredClaims(Claim.SERVICE_ATTENDANCE_VALUE_CREATE)
+  @RequiredClaims(Claim.SERVICE_ATTENDANCE_VALUE_WRITE)
   @Swagger({
     tags: ['Serviços - Valores de atendimento'],
     summary: 'Criar valores de atendimento de serviço',
@@ -44,7 +44,7 @@ export class ServiceAttendanceValueAdminController {
   }
 
   @Get()
-  @RequiredClaims(Claim.SERVICE_ATTENDANCE_VALUE_LIST)
+  @RequiredClaims(Claim.SERVICE_ATTENDANCE_VALUE_READ)
   @Swagger({
     tags: ['Serviços - Valores de atendimento'],
     summary: 'Listar valores de atendimento por serviço (paginação)',
@@ -56,7 +56,7 @@ export class ServiceAttendanceValueAdminController {
   }
 
   @Get(':id')
-  @RequiredClaims(Claim.SERVICE_ATTENDANCE_VALUE_DETAIL)
+  @RequiredClaims(Claim.SERVICE_ATTENDANCE_VALUE_READ)
   @Swagger({
     tags: ['Serviços - Valores de atendimento'],
     summary: 'Buscar valores de atendimento por ID',
@@ -69,7 +69,7 @@ export class ServiceAttendanceValueAdminController {
   }
 
   @Patch(':id')
-  @RequiredClaims(Claim.SERVICE_ATTENDANCE_VALUE_UPDATE)
+  @RequiredClaims(Claim.SERVICE_ATTENDANCE_VALUE_WRITE)
   @Swagger({
     tags: ['Serviços - Valores de atendimento'],
     summary: 'Editar valores de atendimento',
@@ -82,7 +82,7 @@ export class ServiceAttendanceValueAdminController {
   }
 
   @Delete(':id')
-  @RequiredClaims(Claim.SERVICE_ATTENDANCE_VALUE_DELETE)
+  @RequiredClaims(Claim.SERVICE_ATTENDANCE_VALUE_WRITE)
   @Swagger({
     tags: ['Serviços - Valores de atendimento'],
     summary: 'Excluir valores de atendimento',

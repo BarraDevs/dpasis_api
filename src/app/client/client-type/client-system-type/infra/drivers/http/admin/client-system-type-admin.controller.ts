@@ -31,7 +31,7 @@ export class ClientSystemTypeAdminController {
   ) {}
 
   @Post()
-  @RequiredClaims(Claim.CLIENT_SYSTEM_TYPE_CREATE)
+  @RequiredClaims(Claim.CLIENT_SYSTEM_TYPE_WRITE)
   @Swagger({
     tags: ['Clientes - Tipos de cliente - Tipos de sistema'],
     summary: 'Criar novo tipo de sistema de cliente',
@@ -43,7 +43,7 @@ export class ClientSystemTypeAdminController {
   }
 
   @Get()
-  @RequiredClaims(Claim.CLIENT_SYSTEM_TYPE_LIST)
+  @RequiredClaims(Claim.CLIENT_SYSTEM_TYPE_READ)
   @Swagger({
     tags: ['Clientes - Tipos de cliente - Tipos de sistema'],
     summary: 'Listar tipos de sistema de cliente com paginação e busca',
@@ -55,7 +55,7 @@ export class ClientSystemTypeAdminController {
   }
 
   @Get(':id')
-  @RequiredClaims(Claim.CLIENT_SYSTEM_TYPE_DETAIL)
+  @RequiredClaims(Claim.CLIENT_SYSTEM_TYPE_READ)
   @Swagger({
     tags: ['Clientes - Tipos de cliente - Tipos de sistema'],
     summary: 'Buscar tipo de sistema de cliente por ID',
@@ -68,7 +68,7 @@ export class ClientSystemTypeAdminController {
   }
 
   @Patch(':id/status')
-  @RequiredClaims(Claim.CLIENT_SYSTEM_TYPE_UPDATE_STATUS)
+  @RequiredClaims(Claim.CLIENT_SYSTEM_TYPE_WRITE)
   @Swagger({
     tags: ['Clientes - Tipos de cliente - Tipos de sistema'],
     summary: 'Inverter status ativo do tipo de sistema de cliente',
@@ -81,7 +81,7 @@ export class ClientSystemTypeAdminController {
   }
 
   @Patch(':id')
-  @RequiredClaims(Claim.CLIENT_SYSTEM_TYPE_UPDATE)
+  @RequiredClaims(Claim.CLIENT_SYSTEM_TYPE_WRITE)
   @Swagger({
     tags: ['Clientes - Tipos de cliente - Tipos de sistema'],
     summary: 'Editar tipo de sistema de cliente',
@@ -94,7 +94,7 @@ export class ClientSystemTypeAdminController {
   }
 
   @Delete(':id')
-  @RequiredClaims(Claim.CLIENT_SYSTEM_TYPE_DELETE)
+  @RequiredClaims(Claim.CLIENT_SYSTEM_TYPE_WRITE)
   @Swagger({
     tags: ['Clientes - Tipos de cliente - Tipos de sistema'],
     summary: 'Deletar tipo de sistema de cliente',

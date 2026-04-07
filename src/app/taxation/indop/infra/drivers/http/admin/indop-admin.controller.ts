@@ -29,7 +29,7 @@ export class IndopAdminController {
   ) {}
 
   @Post()
-  @RequiredClaims(Claim.INDOP_CREATE)
+  @RequiredClaims(Claim.INDOP_WRITE)
   @Swagger({
     tags: ['Tributação - INDOP'],
     summary: 'Criar novo INDOP',
@@ -42,7 +42,7 @@ export class IndopAdminController {
   }
 
   @Get()
-  @RequiredClaims(Claim.INDOP_LIST)
+  @RequiredClaims(Claim.INDOP_READ)
   @Swagger({
     tags: ['Tributação - INDOP'],
     summary: 'Listar INDOP com paginação e busca',
@@ -54,7 +54,7 @@ export class IndopAdminController {
   }
 
   @Get(':id')
-  @RequiredClaims(Claim.INDOP_DETAIL)
+  @RequiredClaims(Claim.INDOP_READ)
   @Swagger({
     tags: ['Tributação - INDOP'],
     summary: 'Buscar INDOP por ID',
@@ -67,7 +67,7 @@ export class IndopAdminController {
   }
 
   @Patch(':id/status')
-  @RequiredClaims(Claim.INDOP_UPDATE_STATUS)
+  @RequiredClaims(Claim.INDOP_WRITE)
   @Swagger({
     tags: ['Tributação - INDOP'],
     summary: 'Inverter status ativo do INDOP',
@@ -80,7 +80,7 @@ export class IndopAdminController {
   }
 
   @Patch(':id')
-  @RequiredClaims(Claim.INDOP_UPDATE)
+  @RequiredClaims(Claim.INDOP_WRITE)
   @Swagger({
     tags: ['Tributação - INDOP'],
     summary: 'Editar INDOP',

@@ -31,7 +31,7 @@ export class FaqAdminController {
   ) {}
 
   @Post()
-  @RequiredClaims(Claim.FAQ_CREATE)
+  @RequiredClaims(Claim.FAQ_WRITE)
   @Swagger({
     tags: ['FAQs'],
     summary: 'Criar nova FAQ',
@@ -43,7 +43,7 @@ export class FaqAdminController {
   }
 
   @Get()
-  @RequiredClaims(Claim.FAQ_LIST)
+  @RequiredClaims(Claim.FAQ_READ)
   @Swagger({
     tags: ['FAQs'],
     summary: 'Listar FAQs com paginação e busca',
@@ -55,7 +55,7 @@ export class FaqAdminController {
   }
 
   @Get(':id')
-  @RequiredClaims(Claim.FAQ_DETAIL)
+  @RequiredClaims(Claim.FAQ_READ)
   @Swagger({
     tags: ['FAQs'],
     summary: 'Buscar FAQ por ID',
@@ -68,7 +68,7 @@ export class FaqAdminController {
   }
 
   @Patch(':id/status')
-  @RequiredClaims(Claim.FAQ_UPDATE_STATUS)
+  @RequiredClaims(Claim.FAQ_WRITE)
   @Swagger({
     tags: ['FAQs'],
     summary: 'Inverter status ativo da FAQ',
@@ -81,7 +81,7 @@ export class FaqAdminController {
   }
 
   @Patch(':id')
-  @RequiredClaims(Claim.FAQ_UPDATE)
+  @RequiredClaims(Claim.FAQ_WRITE)
   @Swagger({
     tags: ['FAQs'],
     summary: 'Editar FAQ',
@@ -94,7 +94,7 @@ export class FaqAdminController {
   }
 
   @Delete(':id')
-  @RequiredClaims(Claim.FAQ_DELETE)
+  @RequiredClaims(Claim.FAQ_WRITE)
   @Swagger({
     tags: ['FAQs'],
     summary: 'Deletar FAQ',

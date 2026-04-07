@@ -29,7 +29,7 @@ export class BankAdminController {
   ) {}
 
   @Post()
-  @RequiredClaims(Claim.BANK_CREATE)
+  @RequiredClaims(Claim.BANK_WRITE)
   @Swagger({
     tags: ['Bancos'],
     summary: 'Criar novo banco',
@@ -42,7 +42,7 @@ export class BankAdminController {
   }
 
   @Get()
-  @RequiredClaims(Claim.BANK_LIST)
+  @RequiredClaims(Claim.BANK_READ)
   @Swagger({
     tags: ['Bancos'],
     summary: 'Listar bancos com paginação e busca',
@@ -54,7 +54,7 @@ export class BankAdminController {
   }
 
   @Get(':id')
-  @RequiredClaims(Claim.BANK_DETAIL)
+  @RequiredClaims(Claim.BANK_READ)
   @Swagger({
     tags: ['Bancos'],
     summary: 'Buscar banco por ID',
@@ -67,7 +67,7 @@ export class BankAdminController {
   }
 
   @Patch(':id/status')
-  @RequiredClaims(Claim.BANK_UPDATE_STATUS)
+  @RequiredClaims(Claim.BANK_WRITE)
   @Swagger({
     tags: ['Bancos'],
     summary: 'Inverter status ativo do banco',
@@ -80,7 +80,7 @@ export class BankAdminController {
   }
 
   @Patch(':id')
-  @RequiredClaims(Claim.BANK_UPDATE)
+  @RequiredClaims(Claim.BANK_WRITE)
   @Swagger({
     tags: ['Bancos'],
     summary: 'Editar banco',

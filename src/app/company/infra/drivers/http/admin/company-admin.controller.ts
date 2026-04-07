@@ -31,7 +31,7 @@ export class CompanyAdminController {
   ) {}
 
   @Post()
-  @RequiredClaims(Claim.COMPANY_CREATE)
+  @RequiredClaims(Claim.COMPANY_WRITE)
   @Swagger({
     tags: ['Empresas'],
     summary: 'Criar nova empresa',
@@ -43,7 +43,7 @@ export class CompanyAdminController {
   }
 
   @Get()
-  @RequiredClaims(Claim.COMPANY_LIST)
+  @RequiredClaims(Claim.COMPANY_READ)
   @Swagger({
     tags: ['Empresas'],
     summary: 'Listar empresas com paginação e busca',
@@ -55,7 +55,7 @@ export class CompanyAdminController {
   }
 
   @Get(':id')
-  @RequiredClaims(Claim.COMPANY_DETAIL)
+  @RequiredClaims(Claim.COMPANY_READ)
   @Swagger({
     tags: ['Empresas'],
     summary: 'Buscar empresa por ID',
@@ -68,7 +68,7 @@ export class CompanyAdminController {
   }
 
   @Patch(':id/activate')
-  @RequiredClaims(Claim.COMPANY_ACTIVATE)
+  @RequiredClaims(Claim.COMPANY_WRITE)
   @Swagger({
     tags: ['Empresas'],
     summary: 'Ativar empresa',
@@ -81,7 +81,7 @@ export class CompanyAdminController {
   }
 
   @Patch(':id/deactivate')
-  @RequiredClaims(Claim.COMPANY_DEACTIVATE)
+  @RequiredClaims(Claim.COMPANY_WRITE)
   @Swagger({
     tags: ['Empresas'],
     summary: 'Desativar empresa',
@@ -94,7 +94,7 @@ export class CompanyAdminController {
   }
 
   @Patch(':id')
-  @RequiredClaims(Claim.COMPANY_UPDATE)
+  @RequiredClaims(Claim.COMPANY_WRITE)
   @Swagger({
     tags: ['Empresas'],
     summary: 'Editar empresa',

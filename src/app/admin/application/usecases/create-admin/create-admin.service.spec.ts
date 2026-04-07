@@ -37,7 +37,7 @@ describe('CreateAdmin - Integration tests', () => {
       document: '529.982.247-25',
       profilePicture: null,
       claims: [
-        { subject: Claim.BANK_LIST.subject, action: Claim.BANK_LIST.action },
+        { subject: Claim.BANK_READ.subject, action: Claim.BANK_READ.action },
       ],
       ...overrides,
     };
@@ -63,8 +63,8 @@ describe('CreateAdmin - Integration tests', () => {
     expect(admin?.document).toBe('52998224725');
     expect(admin?.account.email).toBe('admin@test.com');
     expect(admin?.account.claims).toHaveLength(1);
-    expect(admin?.account.claims[0].subject).toBe(Claim.BANK_LIST.subject);
-    expect(admin?.account.claims[0].action).toBe(Claim.BANK_LIST.action);
+    expect(admin?.account.claims[0].subject).toBe(Claim.BANK_READ.subject);
+    expect(admin?.account.claims[0].action).toBe(Claim.BANK_READ.action);
   });
 
   it('should throw EmailAlreadyTakenError when email exists', async() => {

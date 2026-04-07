@@ -11,10 +11,10 @@ describe('AdminFactory', () => {
         name: 'Maria',
         email: 'maria@test.com',
         profilePicture: null,
-        claims: [{ subject: Claim.BANK_LIST.subject, action: Claim.BANK_LIST.action }],
+        claims: [{ subject: Claim.BANK_READ.subject, action: Claim.BANK_READ.action }],
       });
 
-      expect(admin.props.claims).toEqual([Claim.BANK_LIST]);
+      expect(admin.props.claims).toEqual([Claim.BANK_READ]);
     });
 
     it('should throw InvalidAdminClaimsError when pair is unknown', () => {
@@ -35,7 +35,7 @@ describe('AdminFactory', () => {
         name: 'Maria',
         email: 'maria@test.com',
         profilePicture: null,
-        claims: [Claim.COMPANY_LIST].map(c => ({ subject: c.subject, action: c.action })),
+        claims: [Claim.COMPANY_READ].map(c => ({ subject: c.subject, action: c.action })),
       });
 
       expect(admin.props.accountId).toBe(0);

@@ -32,19 +32,19 @@ describe('CaslAbilityFactory', () => {
     it('should grant admin only the claims returned from the database when the list is non-empty', async() => {
       // arrange: simulate DB returning specific claims
       findClaimsByAccountId.mockResolvedValue([
-        Claim.BANK_LIST,
-        Claim.BANK_DETAIL,
+        Claim.BANK_READ,
+        Claim.BANK_WRITE,
       ]);
       const ability = await factory.createForUser({ sub: 1, role: AccountRole.ADMIN });
 
       // All true cases: should be granted ONLY those returned in the DB array
-      expect(ability.can(ClaimAction.List, ClaimSubject.Bank)).toBe(true);
-      expect(ability.can(ClaimAction.Detail, ClaimSubject.Bank)).toBe(true);
+      expect(ability.can(ClaimAction.Read, ClaimSubject.Bank)).toBe(true);
+      expect(ability.can(ClaimAction.Write, ClaimSubject.Bank)).toBe(true);
 
       // All else (all other combinations of action/subject) should be false
       const permitted = new Set([
-        [ClaimAction.List, ClaimSubject.Bank].join(':'),
-        [ClaimAction.Detail, ClaimSubject.Bank].join(':'),
+        [ClaimAction.Read, ClaimSubject.Bank].join(':'),
+        [ClaimAction.Write, ClaimSubject.Bank].join(':'),
       ]);
       for (const subject of Object.values(ClaimSubject)) {
         for (const action of Object.values(ClaimAction)) {
@@ -87,20 +87,20 @@ describe('CaslAbilityFactory', () => {
     it('should grant seller no abilities when STATIC_CLAIMS for seller is empty', async() => {
       const ability = await factory.createForUser({ sub: 2, role: AccountRole.SELLER });
 
-      expect(ability.can(ClaimAction.List, ClaimSubject.Bank)).toBe(false);
+      expect(ability.can(ClaimAction.Read, ClaimSubject.Bank)).toBe(false);
       expect(findClaimsByAccountId).not.toHaveBeenCalled();
     });
 
     it('should produce independent abilities for different users', async() => {
-      findClaimsByAccountId.mockResolvedValueOnce([Claim.BANK_LIST]);
-      findClaimsByAccountId.mockResolvedValueOnce([Claim.CLIENT_LIST]);
+      findClaimsByAccountId.mockResolvedValueOnce([Claim.BANK_READ]);
+      findClaimsByAccountId.mockResolvedValueOnce([Claim.CLIENT_READ]);
 
       const adminA = await factory.createForUser({ sub: 1, role: AccountRole.ADMIN });
       const adminB = await factory.createForUser({ sub: 2, role: AccountRole.ADMIN });
 
-      expect(adminA.can(ClaimAction.List, ClaimSubject.Bank)).toBe(true);
-      expect(adminB.can(ClaimAction.List, ClaimSubject.Bank)).toBe(false);
-      expect(adminB.can(ClaimAction.List, ClaimSubject.Client)).toBe(true);
+      expect(adminA.can(ClaimAction.Read, ClaimSubject.Bank)).toBe(true);
+      expect(adminB.can(ClaimAction.Read, ClaimSubject.Bank)).toBe(false);
+      expect(adminB.can(ClaimAction.Read, ClaimSubject.Client)).toBe(true);
     });
   });
 

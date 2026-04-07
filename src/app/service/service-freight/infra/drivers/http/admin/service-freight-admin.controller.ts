@@ -31,7 +31,7 @@ export class ServiceFreightAdminController {
   ) {}
 
   @Post()
-  @RequiredClaims(Claim.SERVICE_FREIGHT_CREATE)
+  @RequiredClaims(Claim.SERVICE_FREIGHT_WRITE)
   @Swagger({
     tags: ['Serviços - Frete'],
     summary: 'Criar novo frete de serviço',
@@ -43,7 +43,7 @@ export class ServiceFreightAdminController {
   }
 
   @Get()
-  @RequiredClaims(Claim.SERVICE_FREIGHT_LIST)
+  @RequiredClaims(Claim.SERVICE_FREIGHT_READ)
   @Swagger({
     tags: ['Serviços - Frete'],
     summary: 'Listar fretes de serviço com paginação e busca',
@@ -55,7 +55,7 @@ export class ServiceFreightAdminController {
   }
 
   @Get(':id')
-  @RequiredClaims(Claim.SERVICE_FREIGHT_DETAIL)
+  @RequiredClaims(Claim.SERVICE_FREIGHT_READ)
   @Swagger({
     tags: ['Serviços - Frete'],
     summary: 'Buscar frete de serviço por ID',
@@ -68,7 +68,7 @@ export class ServiceFreightAdminController {
   }
 
   @Patch(':id/status')
-  @RequiredClaims(Claim.SERVICE_FREIGHT_UPDATE_STATUS)
+  @RequiredClaims(Claim.SERVICE_FREIGHT_WRITE)
   @Swagger({
     tags: ['Serviços - Frete'],
     summary: 'Inverter status ativo do frete de serviço',
@@ -81,7 +81,7 @@ export class ServiceFreightAdminController {
   }
 
   @Patch(':id')
-  @RequiredClaims(Claim.SERVICE_FREIGHT_UPDATE)
+  @RequiredClaims(Claim.SERVICE_FREIGHT_WRITE)
   @Swagger({
     tags: ['Serviços - Frete'],
     summary: 'Editar frete de serviço',
@@ -94,7 +94,7 @@ export class ServiceFreightAdminController {
   }
 
   @Delete(':id')
-  @RequiredClaims(Claim.SERVICE_FREIGHT_DELETE)
+  @RequiredClaims(Claim.SERVICE_FREIGHT_WRITE)
   @Swagger({
     tags: ['Serviços - Frete'],
     summary: 'Deletar frete de serviço',

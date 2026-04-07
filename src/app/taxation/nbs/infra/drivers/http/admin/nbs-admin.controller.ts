@@ -29,7 +29,7 @@ export class NbsAdminController {
   ) {}
 
   @Post()
-  @RequiredClaims(Claim.NBS_CREATE)
+  @RequiredClaims(Claim.NBS_WRITE)
   @Swagger({
     tags: ['Tributação - NBS'],
     summary: 'Criar novo NBS',
@@ -42,7 +42,7 @@ export class NbsAdminController {
   }
 
   @Get()
-  @RequiredClaims(Claim.NBS_LIST)
+  @RequiredClaims(Claim.NBS_READ)
   @Swagger({
     tags: ['Tributação - NBS'],
     summary: 'Listar NBS com paginação e busca',
@@ -54,7 +54,7 @@ export class NbsAdminController {
   }
 
   @Get(':id')
-  @RequiredClaims(Claim.NBS_DETAIL)
+  @RequiredClaims(Claim.NBS_READ)
   @Swagger({
     tags: ['Tributação - NBS'],
     summary: 'Buscar NBS por ID',
@@ -67,7 +67,7 @@ export class NbsAdminController {
   }
 
   @Patch(':id/status')
-  @RequiredClaims(Claim.NBS_UPDATE_STATUS)
+  @RequiredClaims(Claim.NBS_WRITE)
   @Swagger({
     tags: ['Tributação - NBS'],
     summary: 'Inverter status ativo do NBS',
@@ -80,7 +80,7 @@ export class NbsAdminController {
   }
 
   @Patch(':id')
-  @RequiredClaims(Claim.NBS_UPDATE)
+  @RequiredClaims(Claim.NBS_WRITE)
   @Swagger({
     tags: ['Tributação - NBS'],
     summary: 'Editar NBS',

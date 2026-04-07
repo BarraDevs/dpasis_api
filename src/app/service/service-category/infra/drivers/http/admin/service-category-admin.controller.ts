@@ -31,7 +31,7 @@ export class ServiceCategoryAdminController {
   ) {}
 
   @Post()
-  @RequiredClaims(Claim.SERVICE_CATEGORY_CREATE)
+  @RequiredClaims(Claim.SERVICE_CATEGORY_WRITE)
   @Swagger({
     tags: ['Serviços - Categorias'],
     summary: 'Criar nova categoria de serviço',
@@ -43,7 +43,7 @@ export class ServiceCategoryAdminController {
   }
 
   @Get()
-  @RequiredClaims(Claim.SERVICE_CATEGORY_LIST)
+  @RequiredClaims(Claim.SERVICE_CATEGORY_READ)
   @Swagger({
     tags: ['Serviços - Categorias'],
     summary: 'Listar categorias de serviço com paginação e busca',
@@ -55,7 +55,7 @@ export class ServiceCategoryAdminController {
   }
 
   @Get(':id')
-  @RequiredClaims(Claim.SERVICE_CATEGORY_DETAIL)
+  @RequiredClaims(Claim.SERVICE_CATEGORY_READ)
   @Swagger({
     tags: ['Serviços - Categorias'],
     summary: 'Buscar categoria de serviço por ID',
@@ -68,7 +68,7 @@ export class ServiceCategoryAdminController {
   }
 
   @Patch(':id/status')
-  @RequiredClaims(Claim.SERVICE_CATEGORY_UPDATE_STATUS)
+  @RequiredClaims(Claim.SERVICE_CATEGORY_WRITE)
   @Swagger({
     tags: ['Serviços - Categorias'],
     summary: 'Inverter status ativo da categoria de serviço',
@@ -81,7 +81,7 @@ export class ServiceCategoryAdminController {
   }
 
   @Patch(':id')
-  @RequiredClaims(Claim.SERVICE_CATEGORY_UPDATE)
+  @RequiredClaims(Claim.SERVICE_CATEGORY_WRITE)
   @Swagger({
     tags: ['Serviços - Categorias'],
     summary: 'Editar categoria de serviço',
@@ -94,7 +94,7 @@ export class ServiceCategoryAdminController {
   }
 
   @Delete(':id')
-  @RequiredClaims(Claim.SERVICE_CATEGORY_DELETE)
+  @RequiredClaims(Claim.SERVICE_CATEGORY_WRITE)
   @Swagger({
     tags: ['Serviços - Categorias'],
     summary: 'Deletar categoria de serviço',

@@ -38,7 +38,7 @@ describe('FindAllAdmin - Integration tests', () => {
       document: '529.982.247-25',
       profilePicture: null,
       claims: [
-        { subject: Claim.BANK_LIST.subject, action: Claim.BANK_LIST.action },
+        { subject: Claim.BANK_READ.subject, action: Claim.BANK_READ.action },
       ],
       ...overrides,
     };

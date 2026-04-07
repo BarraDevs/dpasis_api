@@ -41,8 +41,8 @@ describe('FindAdminById - Integration tests', () => {
       document: '529.982.247-25',
       profilePicture: null,
       claims: [
-        { subject: Claim.BANK_LIST.subject, action: Claim.BANK_LIST.action },
-        { subject: Claim.FAQ_LIST.subject, action: Claim.FAQ_LIST.action },
+        { subject: Claim.BANK_READ.subject, action: Claim.BANK_READ.action },
+        { subject: Claim.FAQ_READ.subject, action: Claim.FAQ_READ.action },
       ],
       ...overrides,
     };
@@ -69,8 +69,8 @@ describe('FindAdminById - Integration tests', () => {
       status: AccountStatus.ACTIVE,
       profilePicture: null,
       claims: [
-        { subject: Claim.BANK_LIST.subject, action: Claim.BANK_LIST.action },
-        { subject: Claim.FAQ_LIST.subject, action: Claim.FAQ_LIST.action },
+        { subject: Claim.BANK_READ.subject, action: Claim.BANK_READ.action },
+        { subject: Claim.FAQ_READ.subject, action: Claim.FAQ_READ.action },
       ],
       createdAt: expect.any(Date),
       updatedAt: expect.any(Date),

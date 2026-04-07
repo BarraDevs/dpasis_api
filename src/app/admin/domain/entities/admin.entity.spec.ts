@@ -10,7 +10,7 @@ function makeAdminProps(overrides?: Partial<AdminProps>): AdminProps {
     email: 'admin@test.com',
     profilePicture: null,
     status: AccountStatus.ACTIVE,
-    claims: [Claim.BANK_LIST],
+    claims: [Claim.BANK_READ],
     ...overrides,
   };
 }

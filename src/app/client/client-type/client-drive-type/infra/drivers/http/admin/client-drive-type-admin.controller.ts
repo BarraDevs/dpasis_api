@@ -31,7 +31,7 @@ export class ClientDriveTypeAdminController {
   ) {}
 
   @Post()
-  @RequiredClaims(Claim.CLIENT_DRIVE_TYPE_CREATE)
+  @RequiredClaims(Claim.CLIENT_DRIVE_TYPE_WRITE)
   @Swagger({
     tags: ['Clientes - Tipos de cliente - Tipos de drive'],
     summary: 'Criar novo tipo de drive de cliente',
@@ -43,7 +43,7 @@ export class ClientDriveTypeAdminController {
   }
 
   @Get()
-  @RequiredClaims(Claim.CLIENT_DRIVE_TYPE_LIST)
+  @RequiredClaims(Claim.CLIENT_DRIVE_TYPE_READ)
   @Swagger({
     tags: ['Clientes - Tipos de cliente - Tipos de drive'],
     summary: 'Listar tipos de drive de cliente com paginação e busca',
@@ -55,7 +55,7 @@ export class ClientDriveTypeAdminController {
   }
 
   @Get(':id')
-  @RequiredClaims(Claim.CLIENT_DRIVE_TYPE_DETAIL)
+  @RequiredClaims(Claim.CLIENT_DRIVE_TYPE_READ)
   @Swagger({
     tags: ['Clientes - Tipos de cliente - Tipos de drive'],
     summary: 'Buscar tipo de drive de cliente por ID',
@@ -68,7 +68,7 @@ export class ClientDriveTypeAdminController {
   }
 
   @Patch(':id/status')
-  @RequiredClaims(Claim.CLIENT_DRIVE_TYPE_UPDATE_STATUS)
+  @RequiredClaims(Claim.CLIENT_DRIVE_TYPE_WRITE)
   @Swagger({
     tags: ['Clientes - Tipos de cliente - Tipos de drive'],
     summary: 'Inverter status ativo do tipo de drive de cliente',
@@ -81,7 +81,7 @@ export class ClientDriveTypeAdminController {
   }
 
   @Patch(':id')
-  @RequiredClaims(Claim.CLIENT_DRIVE_TYPE_UPDATE)
+  @RequiredClaims(Claim.CLIENT_DRIVE_TYPE_WRITE)
   @Swagger({
     tags: ['Clientes - Tipos de cliente - Tipos de drive'],
     summary: 'Editar tipo de drive de cliente',
@@ -94,7 +94,7 @@ export class ClientDriveTypeAdminController {
   }
 
   @Delete(':id')
-  @RequiredClaims(Claim.CLIENT_DRIVE_TYPE_DELETE)
+  @RequiredClaims(Claim.CLIENT_DRIVE_TYPE_WRITE)
   @Swagger({
     tags: ['Clientes - Tipos de cliente - Tipos de drive'],
     summary: 'Deletar tipo de drive de cliente',

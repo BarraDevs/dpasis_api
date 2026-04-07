@@ -26,7 +26,7 @@ export class ClientInvoiceConfigAdminController {
   ) {}
 
   @Post()
-  @RequiredClaims(Claim.CLIENT_INVOICE_CONFIG_CREATE)
+  @RequiredClaims(Claim.CLIENT_INVOICE_CONFIG_WRITE)
   @Swagger({
     tags: ['Clientes - Configuração NF e Boleto'],
     summary: 'Criar configuração de NF e boleto para cliente',
@@ -39,7 +39,7 @@ export class ClientInvoiceConfigAdminController {
   }
 
   @Get('client/:clientId')
-  @RequiredClaims(Claim.CLIENT_INVOICE_CONFIG_DETAIL)
+  @RequiredClaims(Claim.CLIENT_INVOICE_CONFIG_READ)
   @Swagger({
     tags: ['Clientes - Configuração NF e Boleto'],
     summary: 'Buscar configuração por ID do cliente',
@@ -52,7 +52,7 @@ export class ClientInvoiceConfigAdminController {
   }
 
   @Patch(':id')
-  @RequiredClaims(Claim.CLIENT_INVOICE_CONFIG_UPDATE)
+  @RequiredClaims(Claim.CLIENT_INVOICE_CONFIG_WRITE)
   @Swagger({
     tags: ['Clientes - Configuração NF e Boleto'],
     summary: 'Editar configuração de NF e boleto',
@@ -65,7 +65,7 @@ export class ClientInvoiceConfigAdminController {
   }
 
   @Delete(':id')
-  @RequiredClaims(Claim.CLIENT_INVOICE_CONFIG_DELETE)
+  @RequiredClaims(Claim.CLIENT_INVOICE_CONFIG_WRITE)
   @Swagger({
     tags: ['Clientes - Configuração NF e Boleto'],
     summary: 'Excluir configuração de NF e boleto',

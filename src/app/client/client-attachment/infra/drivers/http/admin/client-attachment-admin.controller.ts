@@ -48,7 +48,7 @@ export class ClientAttachmentAdminController {
   ) {}
 
   @Post()
-  @RequiredClaims(Claim.CLIENT_ATTACHMENT_CREATE)
+  @RequiredClaims(Claim.CLIENT_ATTACHMENT_WRITE)
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(FileInterceptor('file'))
   @Swagger({
@@ -63,7 +63,7 @@ export class ClientAttachmentAdminController {
   }
 
   @Get()
-  @RequiredClaims(Claim.CLIENT_ATTACHMENT_LIST)
+  @RequiredClaims(Claim.CLIENT_ATTACHMENT_READ)
   @Swagger({
     tags: ['Clientes - Anexos'],
     summary: 'Listar anexos de cliente com paginação e filtros',
@@ -75,7 +75,7 @@ export class ClientAttachmentAdminController {
   }
 
   @Get(':id')
-  @RequiredClaims(Claim.CLIENT_ATTACHMENT_DETAIL)
+  @RequiredClaims(Claim.CLIENT_ATTACHMENT_READ)
   @Swagger({
     tags: ['Clientes - Anexos'],
     summary: 'Buscar anexo de cliente por ID',
@@ -88,7 +88,7 @@ export class ClientAttachmentAdminController {
   }
 
   @Patch(':id/status')
-  @RequiredClaims(Claim.CLIENT_ATTACHMENT_UPDATE_STATUS)
+  @RequiredClaims(Claim.CLIENT_ATTACHMENT_WRITE)
   @Swagger({
     tags: ['Clientes - Anexos'],
     summary: 'Inverter status ativo do anexo de cliente',
@@ -101,7 +101,7 @@ export class ClientAttachmentAdminController {
   }
 
   @Patch(':id')
-  @RequiredClaims(Claim.CLIENT_ATTACHMENT_UPDATE)
+  @RequiredClaims(Claim.CLIENT_ATTACHMENT_WRITE)
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(FileInterceptor('file'))
   @Swagger({
@@ -121,7 +121,7 @@ export class ClientAttachmentAdminController {
   }
 
   @Delete(':id')
-  @RequiredClaims(Claim.CLIENT_ATTACHMENT_DELETE)
+  @RequiredClaims(Claim.CLIENT_ATTACHMENT_WRITE)
   @Swagger({
     tags: ['Clientes - Anexos'],
     summary: 'Deletar anexo de cliente',

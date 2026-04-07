@@ -36,7 +36,7 @@ export class ClientContactAdminController {
   ) {}
 
   @Post()
-  @RequiredClaims(Claim.CLIENT_CONTACT_CREATE)
+  @RequiredClaims(Claim.CLIENT_CONTACT_WRITE)
   @Swagger({
     tags: ['Clientes - Contatos'],
     summary: 'Criar novo contato de cliente',
@@ -50,7 +50,7 @@ export class ClientContactAdminController {
   }
 
   @Get()
-  @RequiredClaims(Claim.CLIENT_CONTACT_LIST)
+  @RequiredClaims(Claim.CLIENT_CONTACT_READ)
   @Swagger({
     tags: ['Clientes - Contatos'],
     summary: 'Listar contatos de cliente com paginação e filtros',
@@ -62,7 +62,7 @@ export class ClientContactAdminController {
   }
 
   @Get(':id')
-  @RequiredClaims(Claim.CLIENT_CONTACT_DETAIL)
+  @RequiredClaims(Claim.CLIENT_CONTACT_READ)
   @Swagger({
     tags: ['Clientes - Contatos'],
     summary: 'Buscar contato de cliente por ID',
@@ -75,7 +75,7 @@ export class ClientContactAdminController {
   }
 
   @Patch(':id/activate')
-  @RequiredClaims(Claim.CLIENT_CONTACT_ACTIVATE)
+  @RequiredClaims(Claim.CLIENT_CONTACT_WRITE)
   @Swagger({
     tags: ['Clientes - Contatos'],
     summary: 'Ativar contato de cliente',
@@ -88,7 +88,7 @@ export class ClientContactAdminController {
   }
 
   @Patch(':id/deactivate')
-  @RequiredClaims(Claim.CLIENT_CONTACT_DEACTIVATE)
+  @RequiredClaims(Claim.CLIENT_CONTACT_WRITE)
   @Swagger({
     tags: ['Clientes - Contatos'],
     summary: 'Desativar contato de cliente',
@@ -101,7 +101,7 @@ export class ClientContactAdminController {
   }
 
   @Patch(':id')
-  @RequiredClaims(Claim.CLIENT_CONTACT_UPDATE)
+  @RequiredClaims(Claim.CLIENT_CONTACT_WRITE)
   @Swagger({
     tags: ['Clientes - Contatos'],
     summary: 'Editar contato de cliente',
@@ -114,7 +114,7 @@ export class ClientContactAdminController {
   }
 
   @Delete(':id')
-  @RequiredClaims(Claim.CLIENT_CONTACT_DELETE)
+  @RequiredClaims(Claim.CLIENT_CONTACT_WRITE)
   @Swagger({
     tags: ['Clientes - Contatos'],
     summary: 'Deletar contato de cliente',

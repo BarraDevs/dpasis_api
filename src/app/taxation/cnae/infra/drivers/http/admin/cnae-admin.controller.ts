@@ -29,7 +29,7 @@ export class CnaeAdminController {
   ) {}
 
   @Post()
-  @RequiredClaims(Claim.CNAE_CREATE)
+  @RequiredClaims(Claim.CNAE_WRITE)
   @Swagger({
     tags: ['Tributação - CNAE'],
     summary: 'Criar novo CNAE',
@@ -42,7 +42,7 @@ export class CnaeAdminController {
   }
 
   @Get()
-  @RequiredClaims(Claim.CNAE_LIST)
+  @RequiredClaims(Claim.CNAE_READ)
   @Swagger({
     tags: ['Tributação - CNAE'],
     summary: 'Listar CNAEs com paginação e busca',
@@ -54,7 +54,7 @@ export class CnaeAdminController {
   }
 
   @Get(':id')
-  @RequiredClaims(Claim.CNAE_DETAIL)
+  @RequiredClaims(Claim.CNAE_READ)
   @Swagger({
     tags: ['Tributação - CNAE'],
     summary: 'Buscar CNAE por ID',
@@ -67,7 +67,7 @@ export class CnaeAdminController {
   }
 
   @Patch(':id/status')
-  @RequiredClaims(Claim.CNAE_UPDATE_STATUS)
+  @RequiredClaims(Claim.CNAE_WRITE)
   @Swagger({
     tags: ['Tributação - CNAE'],
     summary: 'Inverter status ativo do CNAE',
@@ -80,7 +80,7 @@ export class CnaeAdminController {
   }
 
   @Patch(':id')
-  @RequiredClaims(Claim.CNAE_UPDATE)
+  @RequiredClaims(Claim.CNAE_WRITE)
   @Swagger({
     tags: ['Tributação - CNAE'],
     summary: 'Editar CNAE',

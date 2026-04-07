@@ -31,7 +31,7 @@ export class ClientDepartmentAdminController {
   ) {}
 
   @Post()
-  @RequiredClaims(Claim.CLIENT_DEPARTMENT_CREATE)
+  @RequiredClaims(Claim.CLIENT_DEPARTMENT_WRITE)
   @Swagger({
     tags: ['Clientes - Departamentos'],
     summary: 'Criar novo departamento de clientes',
@@ -43,7 +43,7 @@ export class ClientDepartmentAdminController {
   }
 
   @Get()
-  @RequiredClaims(Claim.CLIENT_DEPARTMENT_LIST)
+  @RequiredClaims(Claim.CLIENT_DEPARTMENT_READ)
   @Swagger({
     tags: ['Clientes - Departamentos'],
     summary: 'Listar departamentos de clientes com paginação e busca',
@@ -55,7 +55,7 @@ export class ClientDepartmentAdminController {
   }
 
   @Get(':id')
-  @RequiredClaims(Claim.CLIENT_DEPARTMENT_DETAIL)
+  @RequiredClaims(Claim.CLIENT_DEPARTMENT_READ)
   @Swagger({
     tags: ['Clientes - Departamentos'],
     summary: 'Buscar departamento de clientes por ID',
@@ -68,7 +68,7 @@ export class ClientDepartmentAdminController {
   }
 
   @Patch(':id/status')
-  @RequiredClaims(Claim.CLIENT_DEPARTMENT_UPDATE_STATUS)
+  @RequiredClaims(Claim.CLIENT_DEPARTMENT_WRITE)
   @Swagger({
     tags: ['Clientes - Departamentos'],
     summary: 'Inverter status ativo do departamento de clientes',
@@ -81,7 +81,7 @@ export class ClientDepartmentAdminController {
   }
 
   @Patch(':id')
-  @RequiredClaims(Claim.CLIENT_DEPARTMENT_UPDATE)
+  @RequiredClaims(Claim.CLIENT_DEPARTMENT_WRITE)
   @Swagger({
     tags: ['Clientes - Departamentos'],
     summary: 'Editar departamento de clientes',
@@ -94,7 +94,7 @@ export class ClientDepartmentAdminController {
   }
 
   @Delete(':id')
-  @RequiredClaims(Claim.CLIENT_DEPARTMENT_DELETE)
+  @RequiredClaims(Claim.CLIENT_DEPARTMENT_WRITE)
   @Swagger({
     tags: ['Clientes - Departamentos'],
     summary: 'Deletar departamento de clientes',

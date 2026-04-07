@@ -31,7 +31,7 @@ export class ServiceProposalValidityAdminController {
   ) {}
 
   @Post()
-  @RequiredClaims(Claim.SERVICE_PROPOSAL_VALIDITY_CREATE)
+  @RequiredClaims(Claim.SERVICE_PROPOSAL_VALIDITY_WRITE)
   @Swagger({
     tags: ['Serviços - Validade de proposta'],
     summary: 'Criar nova validade de proposta',
@@ -43,7 +43,7 @@ export class ServiceProposalValidityAdminController {
   }
 
   @Get()
-  @RequiredClaims(Claim.SERVICE_PROPOSAL_VALIDITY_LIST)
+  @RequiredClaims(Claim.SERVICE_PROPOSAL_VALIDITY_READ)
   @Swagger({
     tags: ['Serviços - Validade de proposta'],
     summary: 'Listar validades de proposta com paginação e busca',
@@ -55,7 +55,7 @@ export class ServiceProposalValidityAdminController {
   }
 
   @Get(':id')
-  @RequiredClaims(Claim.SERVICE_PROPOSAL_VALIDITY_DETAIL)
+  @RequiredClaims(Claim.SERVICE_PROPOSAL_VALIDITY_READ)
   @Swagger({
     tags: ['Serviços - Validade de proposta'],
     summary: 'Buscar validade de proposta por ID',
@@ -68,7 +68,7 @@ export class ServiceProposalValidityAdminController {
   }
 
   @Patch(':id/status')
-  @RequiredClaims(Claim.SERVICE_PROPOSAL_VALIDITY_UPDATE_STATUS)
+  @RequiredClaims(Claim.SERVICE_PROPOSAL_VALIDITY_WRITE)
   @Swagger({
     tags: ['Serviços - Validade de proposta'],
     summary: 'Inverter status ativo da validade de proposta',
@@ -81,7 +81,7 @@ export class ServiceProposalValidityAdminController {
   }
 
   @Patch(':id')
-  @RequiredClaims(Claim.SERVICE_PROPOSAL_VALIDITY_UPDATE)
+  @RequiredClaims(Claim.SERVICE_PROPOSAL_VALIDITY_WRITE)
   @Swagger({
     tags: ['Serviços - Validade de proposta'],
     summary: 'Editar validade de proposta',
@@ -94,7 +94,7 @@ export class ServiceProposalValidityAdminController {
   }
 
   @Delete(':id')
-  @RequiredClaims(Claim.SERVICE_PROPOSAL_VALIDITY_DELETE)
+  @RequiredClaims(Claim.SERVICE_PROPOSAL_VALIDITY_WRITE)
   @Swagger({
     tags: ['Serviços - Validade de proposta'],
     summary: 'Deletar validade de proposta',

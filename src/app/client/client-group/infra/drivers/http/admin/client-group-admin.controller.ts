@@ -31,7 +31,7 @@ export class ClientGroupAdminController {
   ) {}
 
   @Post()
-  @RequiredClaims(Claim.CLIENT_GROUP_CREATE)
+  @RequiredClaims(Claim.CLIENT_GROUP_WRITE)
   @Swagger({
     tags: ['Clientes - Grupos'],
     summary: 'Criar novo grupo de clientes',
@@ -43,7 +43,7 @@ export class ClientGroupAdminController {
   }
 
   @Get()
-  @RequiredClaims(Claim.CLIENT_GROUP_LIST)
+  @RequiredClaims(Claim.CLIENT_GROUP_READ)
   @Swagger({
     tags: ['Clientes - Grupos'],
     summary: 'Listar grupos de clientes com paginação e busca',
@@ -55,7 +55,7 @@ export class ClientGroupAdminController {
   }
 
   @Get(':id')
-  @RequiredClaims(Claim.CLIENT_GROUP_DETAIL)
+  @RequiredClaims(Claim.CLIENT_GROUP_READ)
   @Swagger({
     tags: ['Clientes - Grupos'],
     summary: 'Buscar grupo de clientes por ID',
@@ -68,7 +68,7 @@ export class ClientGroupAdminController {
   }
 
   @Patch(':id/status')
-  @RequiredClaims(Claim.CLIENT_GROUP_UPDATE_STATUS)
+  @RequiredClaims(Claim.CLIENT_GROUP_WRITE)
   @Swagger({
     tags: ['Clientes - Grupos'],
     summary: 'Inverter status ativo do grupo de clientes',
@@ -81,7 +81,7 @@ export class ClientGroupAdminController {
   }
 
   @Patch(':id')
-  @RequiredClaims(Claim.CLIENT_GROUP_UPDATE)
+  @RequiredClaims(Claim.CLIENT_GROUP_WRITE)
   @Swagger({
     tags: ['Clientes - Grupos'],
     summary: 'Editar grupo de clientes',
@@ -94,7 +94,7 @@ export class ClientGroupAdminController {
   }
 
   @Delete(':id')
-  @RequiredClaims(Claim.CLIENT_GROUP_DELETE)
+  @RequiredClaims(Claim.CLIENT_GROUP_WRITE)
   @Swagger({
     tags: ['Clientes - Grupos'],
     summary: 'Deletar grupo de clientes',

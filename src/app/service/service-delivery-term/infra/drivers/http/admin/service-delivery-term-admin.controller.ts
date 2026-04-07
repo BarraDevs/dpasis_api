@@ -31,7 +31,7 @@ export class ServiceDeliveryTermAdminController {
   ) {}
 
   @Post()
-  @RequiredClaims(Claim.SERVICE_DELIVERY_TERM_CREATE)
+  @RequiredClaims(Claim.SERVICE_DELIVERY_TERM_WRITE)
   @Swagger({
     tags: ['Serviços - Prazo de entrega'],
     summary: 'Criar novo prazo de entrega',
@@ -43,7 +43,7 @@ export class ServiceDeliveryTermAdminController {
   }
 
   @Get()
-  @RequiredClaims(Claim.SERVICE_DELIVERY_TERM_LIST)
+  @RequiredClaims(Claim.SERVICE_DELIVERY_TERM_READ)
   @Swagger({
     tags: ['Serviços - Prazo de entrega'],
     summary: 'Listar prazos de entrega com paginação e busca',
@@ -55,7 +55,7 @@ export class ServiceDeliveryTermAdminController {
   }
 
   @Get(':id')
-  @RequiredClaims(Claim.SERVICE_DELIVERY_TERM_DETAIL)
+  @RequiredClaims(Claim.SERVICE_DELIVERY_TERM_READ)
   @Swagger({
     tags: ['Serviços - Prazo de entrega'],
     summary: 'Buscar prazo de entrega por ID',
@@ -68,7 +68,7 @@ export class ServiceDeliveryTermAdminController {
   }
 
   @Patch(':id/status')
-  @RequiredClaims(Claim.SERVICE_DELIVERY_TERM_UPDATE_STATUS)
+  @RequiredClaims(Claim.SERVICE_DELIVERY_TERM_WRITE)
   @Swagger({
     tags: ['Serviços - Prazo de entrega'],
     summary: 'Inverter status ativo do prazo de entrega',
@@ -81,7 +81,7 @@ export class ServiceDeliveryTermAdminController {
   }
 
   @Patch(':id')
-  @RequiredClaims(Claim.SERVICE_DELIVERY_TERM_UPDATE)
+  @RequiredClaims(Claim.SERVICE_DELIVERY_TERM_WRITE)
   @Swagger({
     tags: ['Serviços - Prazo de entrega'],
     summary: 'Editar prazo de entrega',
@@ -94,7 +94,7 @@ export class ServiceDeliveryTermAdminController {
   }
 
   @Delete(':id')
-  @RequiredClaims(Claim.SERVICE_DELIVERY_TERM_DELETE)
+  @RequiredClaims(Claim.SERVICE_DELIVERY_TERM_WRITE)
   @Swagger({
     tags: ['Serviços - Prazo de entrega'],
     summary: 'Deletar prazo de entrega',

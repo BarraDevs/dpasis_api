@@ -328,7 +328,7 @@ describe('AdminDaoAdapterPrisma - Integration tests', () => {
         data: {
           accountId: account.id,
           subject: ClaimSubject.Bank,
-          action: ClaimAction.Create,
+          action: ClaimAction.Write,
         },
       });
 
@@ -338,7 +338,7 @@ describe('AdminDaoAdapterPrisma - Integration tests', () => {
       expect(result?.claims).toHaveLength(1);
       expect(result?.claims[0]).toEqual({
         subject: ClaimSubject.Bank,
-        action: ClaimAction.Create,
+        action: ClaimAction.Write,
       });
     });
 
@@ -353,7 +353,7 @@ describe('AdminDaoAdapterPrisma - Integration tests', () => {
         data: {
           accountId: account.id,
           subject: ClaimSubject.Company,
-          action: ClaimAction.List,
+          action: ClaimAction.Read,
         },
       });
 

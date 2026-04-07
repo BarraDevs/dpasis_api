@@ -33,7 +33,7 @@ export class ServiceBilledAdminController {
   ) {}
 
   @Post()
-  @RequiredClaims(Claim.SERVICE_BILLED_CREATE)
+  @RequiredClaims(Claim.SERVICE_BILLED_WRITE)
   @Swagger({
     tags: ['Serviços - Faturados'],
     summary: 'Criar novo serviço faturado',
@@ -45,7 +45,7 @@ export class ServiceBilledAdminController {
   }
 
   @Get()
-  @RequiredClaims(Claim.SERVICE_BILLED_LIST)
+  @RequiredClaims(Claim.SERVICE_BILLED_READ)
   @Swagger({
     tags: ['Serviços - Faturados'],
     summary: 'Listar serviços faturados com paginação e busca',
@@ -57,7 +57,7 @@ export class ServiceBilledAdminController {
   }
 
   @Get(':id')
-  @RequiredClaims(Claim.SERVICE_BILLED_DETAIL)
+  @RequiredClaims(Claim.SERVICE_BILLED_READ)
   @Swagger({
     tags: ['Serviços - Faturados'],
     summary: 'Buscar serviço faturado por ID',
@@ -70,7 +70,7 @@ export class ServiceBilledAdminController {
   }
 
   @Patch(':id/activate')
-  @RequiredClaims(Claim.SERVICE_BILLED_ACTIVATE)
+  @RequiredClaims(Claim.SERVICE_BILLED_WRITE)
   @Swagger({
     tags: ['Serviços - Faturados'],
     summary: 'Ativar serviço faturado',
@@ -83,7 +83,7 @@ export class ServiceBilledAdminController {
   }
 
   @Patch(':id/deactivate')
-  @RequiredClaims(Claim.SERVICE_BILLED_DEACTIVATE)
+  @RequiredClaims(Claim.SERVICE_BILLED_WRITE)
   @Swagger({
     tags: ['Serviços - Faturados'],
     summary: 'Desativar serviço faturado',
@@ -96,7 +96,7 @@ export class ServiceBilledAdminController {
   }
 
   @Patch(':id')
-  @RequiredClaims(Claim.SERVICE_BILLED_UPDATE)
+  @RequiredClaims(Claim.SERVICE_BILLED_WRITE)
   @Swagger({
     tags: ['Serviços - Faturados'],
     summary: 'Editar serviço faturado',
@@ -109,7 +109,7 @@ export class ServiceBilledAdminController {
   }
 
   @Delete(':id')
-  @RequiredClaims(Claim.SERVICE_BILLED_DELETE)
+  @RequiredClaims(Claim.SERVICE_BILLED_WRITE)
   @Swagger({
     tags: ['Serviços - Faturados'],
     summary: 'Deletar serviço faturado',

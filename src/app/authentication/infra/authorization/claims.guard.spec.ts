@@ -69,7 +69,7 @@ describe('ClaimsGuard', () => {
   });
 
   it('should deny access with an application error when no authenticated user is on the request', async() => {
-    reflector.getAllAndOverride.mockReturnValue([Claim.BANK_LIST]);
+    reflector.getAllAndOverride.mockReturnValue([Claim.BANK_READ]);
     const ctx = httpContext(undefined, {}, {}) as any;
 
     await expect(guard.canActivate(ctx)).resolves.toBe(false);
@@ -77,11 +77,11 @@ describe('ClaimsGuard', () => {
 
   it('should allow access when the user ability satisfies every required claim', async() => {
     reflector.getAllAndOverride.mockImplementation((key: string) =>
-      key === REQUIRED_CLAIMS_KEY ? [Claim.BANK_LIST] : undefined,
+      key === REQUIRED_CLAIMS_KEY ? [Claim.BANK_READ] : undefined,
     );
     createForUser.mockResolvedValue({
       can: (action: ClaimAction, subject: ClaimSubject) =>
-        action === ClaimAction.List && subject === ClaimSubject.Bank,
+        action === ClaimAction.Read && subject === ClaimSubject.Bank,
     });
     const ctx = httpContext(
       { sub: 1, role: AccountRole.ADMIN },
@@ -93,10 +93,10 @@ describe('ClaimsGuard', () => {
   });
 
   it('should deny access when the user is missing one of several required claims', async() => {
-    reflector.getAllAndOverride.mockReturnValue([Claim.BANK_LIST, Claim.BANK_CREATE]);
+    reflector.getAllAndOverride.mockReturnValue([Claim.BANK_READ, Claim.BANK_WRITE]);
     createForUser.mockResolvedValue({
       can: (action: ClaimAction, subject: ClaimSubject) =>
-        subject === ClaimSubject.Bank && action === ClaimAction.List,
+        subject === ClaimSubject.Bank && action === ClaimAction.Read,
     });
     const ctx = httpContext(
       { sub: 1, role: AccountRole.ADMIN },

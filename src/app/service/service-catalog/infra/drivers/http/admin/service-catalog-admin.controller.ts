@@ -33,7 +33,7 @@ export class ServiceCatalogAdminController {
   ) {}
 
   @Post()
-  @RequiredClaims(Claim.SERVICE_CATALOG_CREATE)
+  @RequiredClaims(Claim.SERVICE_CATALOG_WRITE)
   @Swagger({
     tags: ['Serviços - Serviços'],
     summary: 'Criar serviço no catálogo',
@@ -45,7 +45,7 @@ export class ServiceCatalogAdminController {
   }
 
   @Get()
-  @RequiredClaims(Claim.SERVICE_CATALOG_LIST)
+  @RequiredClaims(Claim.SERVICE_CATALOG_READ)
   @Swagger({
     tags: ['Serviços - Serviços'],
     summary: 'Listar serviços do catálogo com paginação e busca',
@@ -57,7 +57,7 @@ export class ServiceCatalogAdminController {
   }
 
   @Get(':id')
-  @RequiredClaims(Claim.SERVICE_CATALOG_DETAIL)
+  @RequiredClaims(Claim.SERVICE_CATALOG_READ)
   @Swagger({
     tags: ['Serviços - Serviços'],
     summary: 'Buscar serviço do catálogo por ID',
@@ -70,7 +70,7 @@ export class ServiceCatalogAdminController {
   }
 
   @Patch(':id/activate')
-  @RequiredClaims(Claim.SERVICE_CATALOG_ACTIVATE)
+  @RequiredClaims(Claim.SERVICE_CATALOG_WRITE)
   @Swagger({
     tags: ['Serviços - Serviços'],
     summary: 'Ativar serviço do catálogo',
@@ -83,7 +83,7 @@ export class ServiceCatalogAdminController {
   }
 
   @Patch(':id/deactivate')
-  @RequiredClaims(Claim.SERVICE_CATALOG_DEACTIVATE)
+  @RequiredClaims(Claim.SERVICE_CATALOG_WRITE)
   @Swagger({
     tags: ['Serviços - Serviços'],
     summary: 'Desativar serviço do catálogo',
@@ -96,7 +96,7 @@ export class ServiceCatalogAdminController {
   }
 
   @Patch(':id')
-  @RequiredClaims(Claim.SERVICE_CATALOG_UPDATE)
+  @RequiredClaims(Claim.SERVICE_CATALOG_WRITE)
   @Swagger({
     tags: ['Serviços - Serviços'],
     summary: 'Editar serviço do catálogo',
@@ -109,7 +109,7 @@ export class ServiceCatalogAdminController {
   }
 
   @Delete(':id')
-  @RequiredClaims(Claim.SERVICE_CATALOG_DELETE)
+  @RequiredClaims(Claim.SERVICE_CATALOG_WRITE)
   @Swagger({
     tags: ['Serviços - Serviços'],
     summary: 'Excluir serviço do catálogo',

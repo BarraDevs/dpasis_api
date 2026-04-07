@@ -31,7 +31,7 @@ export class ClientOwnerAdminController {
   ) {}
 
   @Post()
-  @RequiredClaims(Claim.CLIENT_OWNER_CREATE)
+  @RequiredClaims(Claim.CLIENT_OWNER_WRITE)
   @Swagger({
     tags: ['Clientes - Proprietários'],
     summary: 'Criar novo proprietário de clientes',
@@ -43,7 +43,7 @@ export class ClientOwnerAdminController {
   }
 
   @Get()
-  @RequiredClaims(Claim.CLIENT_OWNER_LIST)
+  @RequiredClaims(Claim.CLIENT_OWNER_READ)
   @Swagger({
     tags: ['Clientes - Proprietários'],
     summary: 'Listar proprietários de clientes com paginação e busca',
@@ -55,7 +55,7 @@ export class ClientOwnerAdminController {
   }
 
   @Get(':id')
-  @RequiredClaims(Claim.CLIENT_OWNER_DETAIL)
+  @RequiredClaims(Claim.CLIENT_OWNER_READ)
   @Swagger({
     tags: ['Clientes - Proprietários'],
     summary: 'Buscar proprietário de clientes por ID',
@@ -68,7 +68,7 @@ export class ClientOwnerAdminController {
   }
 
   @Patch(':id/status')
-  @RequiredClaims(Claim.CLIENT_OWNER_UPDATE_STATUS)
+  @RequiredClaims(Claim.CLIENT_OWNER_WRITE)
   @Swagger({
     tags: ['Clientes - Proprietários'],
     summary: 'Inverter status ativo do proprietário de clientes',
@@ -81,7 +81,7 @@ export class ClientOwnerAdminController {
   }
 
   @Patch(':id')
-  @RequiredClaims(Claim.CLIENT_OWNER_UPDATE)
+  @RequiredClaims(Claim.CLIENT_OWNER_WRITE)
   @Swagger({
     tags: ['Clientes - Proprietários'],
     summary: 'Editar proprietário de clientes',
@@ -94,7 +94,7 @@ export class ClientOwnerAdminController {
   }
 
   @Delete(':id')
-  @RequiredClaims(Claim.CLIENT_OWNER_DELETE)
+  @RequiredClaims(Claim.CLIENT_OWNER_WRITE)
   @Swagger({
     tags: ['Clientes - Proprietários'],
     summary: 'Deletar proprietário de clientes',

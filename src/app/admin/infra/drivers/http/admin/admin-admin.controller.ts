@@ -31,7 +31,7 @@ export class AdminAdminController {
   ) {}
 
   @Post()
-  @RequiredClaims(Claim.ADMIN_CREATE)
+  @RequiredClaims(Claim.ADMIN_WRITE)
   @Swagger({
     tags: ['Administradores'],
     summary: 'Criar novo administrador',
@@ -43,7 +43,7 @@ export class AdminAdminController {
   }
 
   @Get()
-  @RequiredClaims(Claim.ADMIN_LIST)
+  @RequiredClaims(Claim.ADMIN_READ)
   @Swagger({
     tags: ['Administradores'],
     summary: 'Listar administradores com paginação e busca',
@@ -55,7 +55,7 @@ export class AdminAdminController {
   }
 
   @Get(':id')
-  @RequiredClaims(Claim.ADMIN_DETAIL)
+  @RequiredClaims(Claim.ADMIN_READ)
   @Swagger({
     tags: ['Administradores'],
     summary: 'Buscar administrador por ID',
@@ -68,7 +68,7 @@ export class AdminAdminController {
   }
 
   @Patch(':id/activate')
-  @RequiredClaims(Claim.ADMIN_ACTIVATE)
+  @RequiredClaims(Claim.ADMIN_WRITE)
   @Swagger({
     tags: ['Administradores'],
     summary: 'Ativar administrador',
@@ -81,7 +81,7 @@ export class AdminAdminController {
   }
 
   @Patch(':id/inactivate')
-  @RequiredClaims(Claim.ADMIN_DEACTIVATE)
+  @RequiredClaims(Claim.ADMIN_WRITE)
   @Swagger({
     tags: ['Administradores'],
     summary: 'Inativar administrador',
@@ -94,7 +94,7 @@ export class AdminAdminController {
   }
 
   @Patch(':id')
-  @RequiredClaims(Claim.ADMIN_UPDATE)
+  @RequiredClaims(Claim.ADMIN_WRITE)
   @Swagger({
     tags: ['Administradores'],
     summary: 'Editar administrador',

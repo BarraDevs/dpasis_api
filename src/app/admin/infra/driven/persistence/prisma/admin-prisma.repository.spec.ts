@@ -38,7 +38,7 @@ describe('AdminRepositoryAdapterPrisma - Integration tests', () => {
         document: '09.748.165/0001-10',
         profilePicture: null,
         claims: [
-          { subject: ClaimSubject.Bank, action: ClaimAction.Create },
+          { subject: ClaimSubject.Bank, action: ClaimAction.Write },
         ],
       });
 
@@ -60,7 +60,7 @@ describe('AdminRepositoryAdapterPrisma - Integration tests', () => {
       expect(account?.claims).toHaveLength(1);
       expect(account?.claims[0]).toMatchObject({
         subject: ClaimSubject.Bank,
-        action: ClaimAction.Create,
+        action: ClaimAction.Write,
       });
     });
 
@@ -71,8 +71,8 @@ describe('AdminRepositoryAdapterPrisma - Integration tests', () => {
         document: '33.000.167/0001-01',
         profilePicture: null,
         claims: [
-          { subject: ClaimSubject.Bank, action: ClaimAction.Create },
-          { subject: ClaimSubject.Bank, action: ClaimAction.Create },
+          { subject: ClaimSubject.Bank, action: ClaimAction.Write },
+          { subject: ClaimSubject.Bank, action: ClaimAction.Write },
         ],
       });
 
@@ -83,7 +83,7 @@ describe('AdminRepositoryAdapterPrisma - Integration tests', () => {
       expect(claims).toHaveLength(1);
       expect(claims[0]).toMatchObject({
         subject: ClaimSubject.Bank,
-        action: ClaimAction.Create,
+        action: ClaimAction.Write,
       });
     });
   });
@@ -95,7 +95,7 @@ describe('AdminRepositoryAdapterPrisma - Integration tests', () => {
         email: 'edit@test.com',
         document: '09.748.165/0001-10',
         profilePicture: null,
-        claims: [{ subject: ClaimSubject.Bank, action: ClaimAction.Create }],
+        claims: [{ subject: ClaimSubject.Bank, action: ClaimAction.Write }],
       });
       const id = await sut.save(created, 'hash');
 
@@ -106,7 +106,7 @@ describe('AdminRepositoryAdapterPrisma - Integration tests', () => {
         document: '33.000.167/0001-01',
         profilePicture: 'https://pic.example/id.png',
         status: AccountStatus.INACTIVE,
-        claims: [{ subject: ClaimSubject.Company, action: ClaimAction.List }],
+        claims: [{ subject: ClaimSubject.Company, action: ClaimAction.Read }],
       });
 
       await sut.edit(edited);
@@ -128,7 +128,7 @@ describe('AdminRepositoryAdapterPrisma - Integration tests', () => {
         email: 'claims2@test.com',
         document: '09.748.165/0001-10',
         profilePicture: null,
-        claims: [{ subject: ClaimSubject.Bank, action: ClaimAction.Create }],
+        claims: [{ subject: ClaimSubject.Bank, action: ClaimAction.Write }],
       });
       const id = await sut.save(created, 'hash');
 
@@ -164,7 +164,7 @@ describe('AdminRepositoryAdapterPrisma - Integration tests', () => {
         document: '09.748.165/0001-10',
         profilePicture: null,
         claims: [
-          { subject: ClaimSubject.Faq, action: ClaimAction.Detail },
+          { subject: ClaimSubject.Faq, action: ClaimAction.Read },
         ],
       });
       const id = await sut.save(created, 'hash');
@@ -179,7 +179,7 @@ describe('AdminRepositoryAdapterPrisma - Integration tests', () => {
       expect(found?.props.claims).toHaveLength(1);
       expect(found?.props.claims[0]).toEqual({
         subject: ClaimSubject.Faq,
-        action: ClaimAction.Detail,
+        action: ClaimAction.Read,
       });
     });
   });
