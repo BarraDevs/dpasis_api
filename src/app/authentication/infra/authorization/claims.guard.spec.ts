@@ -2,9 +2,11 @@ import { Reflector } from '@nestjs/core';
 import { Test } from '@nestjs/testing';
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
 import { CaslAbilityFactory } from 'src/app/authentication/application/authorization/casl-ability.factory';
-import { Claim } from 'src/app/authentication/domain/authorization/claim';
 import { Payload } from 'src/app/authentication/domain/types/payload.type';
 import { REQUIRED_CLAIMS_KEY } from 'src/app/authentication/infra/decorators/authorization-metadata.constants';
+import { Claim } from '../../domain/authorization/claim';
+import { ClaimAction } from '../../domain/authorization/claim-action.enum';
+import { ClaimSubject } from '../../domain/authorization/claim-subject.enum';
 import { ClaimsGuard } from './claims.guard';
 
 function httpContext(
@@ -78,7 +80,8 @@ describe('ClaimsGuard', () => {
       key === REQUIRED_CLAIMS_KEY ? [Claim.BANK_LIST] : undefined,
     );
     createForUser.mockResolvedValue({
-      can: (action: string, subject: string) => action === 'list' && subject === 'bank',
+      can: (action: ClaimAction, subject: ClaimSubject) =>
+        action === ClaimAction.List && subject === ClaimSubject.Bank,
     });
     const ctx = httpContext(
       { sub: 1, role: AccountRole.ADMIN },
@@ -92,7 +95,8 @@ describe('ClaimsGuard', () => {
   it('should deny access when the user is missing one of several required claims', async() => {
     reflector.getAllAndOverride.mockReturnValue([Claim.BANK_LIST, Claim.BANK_CREATE]);
     createForUser.mockResolvedValue({
-      can: (action: string, subject: string) => subject === 'bank' && action === 'list',
+      can: (action: ClaimAction, subject: ClaimSubject) =>
+        subject === ClaimSubject.Bank && action === ClaimAction.List,
     });
     const ctx = httpContext(
       { sub: 1, role: AccountRole.ADMIN },
@@ -101,17 +105,5 @@ describe('ClaimsGuard', () => {
     ) as any;
 
     await expect(guard.canActivate(ctx)).resolves.toBe(false);
-  });
-
-  it('should allow access when a required claim string is malformed and cannot be parsed', async() => {
-    reflector.getAllAndOverride.mockReturnValue(['not-a-valid-claim']);
-    createForUser.mockResolvedValue({ can: () => false });
-    const ctx = httpContext(
-      { sub: 1, role: AccountRole.ADMIN },
-      {},
-      {},
-    ) as any;
-
-    await expect(guard.canActivate(ctx)).resolves.toBe(true);
   });
 });

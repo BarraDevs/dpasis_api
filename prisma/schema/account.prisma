@@ -7,7 +7,7 @@ model Account {
   passwordResetToken String? @db.VarChar(64)
   status             String
 
-  admin   Admin?
+  admin  Admin?
   claims AccountClaim[]
 
   @@unique([id, role])
@@ -15,22 +15,12 @@ model Account {
 }
 
 model AccountClaim {
-  id        Int    @id @default(autoincrement())
+  id        Int     @id @default(autoincrement())
   accountId Int
-  claim     String
+  subject   String
+  action    String
   account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
 
-  @@unique([accountId, claim])
+  @@unique([accountId, subject, action])
   @@map("account_claims")
-}
-
-model Admin {
-  accountId Int      @unique
-  account   Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  document  String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@id([accountId])
-  @@map("admins")
 }

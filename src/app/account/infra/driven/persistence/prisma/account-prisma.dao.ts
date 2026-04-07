@@ -4,6 +4,7 @@ import { AccountDto, AccountWithSensitiveDataDto } from 'src/app/account/applica
 import { IAccountDao } from 'src/app/account/application/persistence/dao/account-dao.interface';
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
 import { AccountStatus } from 'src/app/account/domain/enums/account-status.enum';
+import { claimFromSubjectAction, type ClaimValue } from 'src/app/authentication/domain/authorization/claim';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 
 const AccountSelect = {
@@ -73,12 +74,16 @@ export class AccountDaoAdapterPrisma implements IAccountDao {
     };
   }
 
-  public async findClaimStringsByAccountId(accountId: number): Promise<string[]> {
+  public async findClaimsByAccountId(accountId: number): Promise<ClaimValue[]> {
     const rows = await this.prisma.accountClaim.findMany({
       where: { accountId },
-      select: { claim: true },
+      select: { subject: true, action: true },
     });
-    return rows.map(r => r.claim);
+
+    // TODO: possibilidade de remover essa transformação
+    return rows
+      .map(row => claimFromSubjectAction(row.subject, row.action))
+      .filter((c): c is ClaimValue => c !== null);
   }
 
   public async forgotPassword(id: number, passwordResetToken: string): Promise<void> {

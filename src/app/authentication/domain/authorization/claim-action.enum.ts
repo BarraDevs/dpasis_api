@@ -1,0 +1,15 @@
+export enum ClaimAction {
+  Activate = 'activate',
+  BulkCreate = 'bulkCreate',
+  BulkDelete = 'bulkDelete',
+  Create = 'create',
+  Deactivate = 'deactivate',
+  Delete = 'delete',
+  List = 'list',
+  ListCnaes = 'listCnaes',
+  ListIndops = 'listIndops',
+  ListNbs = 'listNbs',
+  Read = 'read',
+  Update = 'update',
+  UpdateStatus = 'updateStatus',
+}

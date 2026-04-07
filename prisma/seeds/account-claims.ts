@@ -14,14 +14,16 @@ export class AccountClaimSeed {
         await prisma.accountClaim.upsert({
           where: {
             // eslint-disable-next-line camelcase
-            accountId_claim: {
+            accountId_subject_action: {
               accountId: id,
-              claim,
+              subject: claim.subject,
+              action: claim.action,
             },
           },
           create: {
             accountId: id,
-            claim,
+            subject: claim.subject,
+            action: claim.action,
           },
           update: {},
         });

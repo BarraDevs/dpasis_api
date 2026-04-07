@@ -4,7 +4,7 @@
  *
  * **Papel no CASL**
  * Não cria regras; apenas obtém a `AppAbility` já montada pelo {@link CaslAbilityFactory} e avalia
- * `ability.can(action, subject)` para cada claim obrigatória (parse com {@link parseClaimString}).
+ * `ability.can(action, subject)` para cada claim obrigatória.
  * Se faltar qualquer permissão, responde com erro de autorização.
  *
  * **Uso no projeto**
@@ -19,7 +19,7 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { CaslAbilityFactory } from 'src/app/authentication/application/authorization/casl-ability.factory';
-import { parseClaimString } from 'src/app/authentication/domain/authorization/claim';
+import type { ClaimValue } from 'src/app/authentication/domain/authorization/claim';
 import { Payload } from 'src/app/authentication/domain/types/payload.type';
 import { REQUIRED_CLAIMS_KEY } from 'src/app/authentication/infra/decorators/authorization-metadata.constants';
 
@@ -31,7 +31,7 @@ export class ClaimsGuard implements CanActivate {
   ) {}
 
   public async canActivate(context: ExecutionContext): Promise<boolean> {
-    const requiredClaims = this.reflector.getAllAndOverride<string[]>(REQUIRED_CLAIMS_KEY, [
+    const requiredClaims = this.reflector.getAllAndOverride<ClaimValue[]>(REQUIRED_CLAIMS_KEY, [
       context.getHandler(),
       context.getClass(),
     ]);
@@ -46,16 +46,12 @@ export class ClaimsGuard implements CanActivate {
       return false;
     }
 
-    // even though we can filter by subject and action,
-    // it's better to create the ability with all claims only once to avoid database (or cache) calls per claim.
+    // create the ability with all claims only once to avoid database (or cache) calls per claim
     const ability = await this.caslAbilityFactory.createForUser(user);
 
+    // check if the user has all the required claims
     for (const claim of requiredClaims) {
-      const parsed = parseClaimString(claim);
-      if (!parsed) {
-        continue;
-      }
-      if (!ability.can(parsed.action, parsed.subject)) {
+      if (!ability.can(claim.action, claim.subject)) {
         return false;
       }
     }

@@ -1,10 +1,9 @@
 /**
  * Decorator que apenas **associa metadata** à rota: lista de claims exigidas (`REQUIRED_CLAIMS_KEY`).
  *
- * O CASL em si não lê este decorator; quem lê é o {@link ClaimsGuard} via `Reflector`. As strings devem
- * seguir `subject:action` válido (ver {@link parseClaimString}). Prefira constantes {@link Claim} para
- * type-safety. Para aplicar JWT + autenticação + papel + verificação CASL de uma vez, use
- * {@link RequiredRoles} ou combine com `UseGuards` manualmente.
+ * O CASL em si não lê este decorator; quem lê é o {@link ClaimsGuard} via `Reflector`. Cada entrada é
+ * um par `{ subject, action }` do catálogo {@link Claim}. Para aplicar JWT + autenticação + papel +
+ * verificação CASL de uma vez, use {@link RequiredRoles} ou combine com `UseGuards` manualmente.
  */
 import { SetMetadata } from '@nestjs/common';
 import type { ClaimValue } from 'src/app/authentication/domain/authorization/claim';

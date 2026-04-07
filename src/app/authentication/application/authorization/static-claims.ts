@@ -6,7 +6,7 @@
  * rotas HTTP forem expostas a vendedores ou outros papéis.
  */
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
-import type { ClaimValue } from 'src/app/authentication/domain/authorization/claim';
+import { type ClaimValue } from 'src/app/authentication/domain/authorization/claim';
 
 export const STATIC_CLAIMS: Record<Exclude<AccountRole, AccountRole.ADMIN>, ClaimValue[]> = {
   [AccountRole.SELLER]: [],
