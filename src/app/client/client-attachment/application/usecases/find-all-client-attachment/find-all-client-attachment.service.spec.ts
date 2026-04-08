@@ -17,7 +17,7 @@ describe('FindAllClientAttachment - Integration tests', () => {
     return prisma.client.create({
       data: {
         type: 'PJ',
-        document: `12345678${Date.now() % 100000}00199`,
+        document: `12345678${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}00199`,
         ie: null,
         groupId: group.id,
         ownerId: owner.id,

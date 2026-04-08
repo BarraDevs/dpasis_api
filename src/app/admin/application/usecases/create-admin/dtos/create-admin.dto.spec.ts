@@ -1,6 +1,8 @@
 import { ArgumentMetadata, ValidationPipe } from '@nestjs/common';
+import { ClaimSubject } from 'src/app/authentication/domain/authorization/claim-subject.enum';
 import { pipeOptions } from 'src/infra/validators/class/config';
-import { ClaimInputDto, CreateAdminInputDto } from './create-admin.dto';
+import { PermissionLevel } from '../../../permission/permission-level.enum';
+import { CreateAdminInputDto } from './create-admin.dto';
 
 const metadata: ArgumentMetadata = {
   type: 'body',
@@ -19,7 +21,7 @@ function makeValidInputDto(overrides: Partial<CreateAdminInputDto> = {}): Create
     password: 'SenhaForte123',
     document: '529.982.247-25',
     profilePicture: null,
-    claims: [{ subject: 'bank', action: 'list' }],
+    subjects: [{ subject: ClaimSubject.Bank, enabled: true, level: PermissionLevel.Read }],
     ...overrides,
   };
 }
@@ -143,55 +145,44 @@ describe('CreateAdminInputDto', () => {
     });
   });
 
-  describe('claims field', () => {
-    it('should reject when claims is not an array', async() => {
-      const data = makeValidInputDto({ claims: {} as unknown as ClaimInputDto[] });
+  describe('subjects field', () => {
+    it('should reject when subjects is not an array', async() => {
+      const data = makeValidInputDto({ subjects: {} as unknown as CreateAdminInputDto['subjects'] });
 
       expect.assertions(1);
       return target.transform(data, metadata).catch(error => {
-        expectMessageToContain(error.getResponse().message, 'claims');
+        expectMessageToContain(error.getResponse().message, 'subjects');
       });
     });
 
-    it('should reject nested claim with empty subject', async() => {
+    it('should reject nested item with enabled true but missing level', async() => {
       const data = makeValidInputDto({
-        claims: [{ subject: '', action: 'list' }],
-      });
-
-      expect.assertions(1);
-      return target.transform(data, metadata).catch(error => {
-        expectMessageToContain(error.getResponse().message, 'subject');
-      });
-    });
-
-    it('should reject nested claim with empty action', async() => {
-      const data = makeValidInputDto({
-        claims: [{ subject: 'bank', action: '' }],
+        subjects: [{ subject: ClaimSubject.Bank, enabled: true }],
       });
 
       expect.assertions(1);
       return target.transform(data, metadata).catch(error => {
-        expectMessageToContain(error.getResponse().message, 'action');
+        expectMessageToContain(error.getResponse().message, 'level');
       });
     });
 
-    it('should trim subject and action in claims', async() => {
+    it('should accept nested item with enabled false without level', async() => {
       const data = makeValidInputDto({
-        claims: [{ subject: '  bank  ', action: '  list  ' }],
+        subjects: [{ subject: ClaimSubject.Bank, enabled: false }],
       });
 
       const result = await target.transform(data, metadata);
 
-      expect(result.claims[0].subject).toBe('bank');
-      expect(result.claims[0].action).toBe('list');
+      expect(result.subjects[0].enabled).toBe(false);
+      expect(result.subjects[0].level).toBeUndefined();
     });
 
-    it('should accept empty claims array', async() => {
-      const data = makeValidInputDto({ claims: [] });
+    it('should accept empty subjects array', async() => {
+      const data = makeValidInputDto({ subjects: [] });
 
       const result = await target.transform(data, metadata);
 
-      expect(result.claims).toEqual([]);
+      expect(result.subjects).toEqual([]);
     });
   });
 
@@ -208,7 +199,12 @@ describe('CreateAdminInputDto', () => {
         document: '529.982.247-25',
         profilePicture: null,
       });
-      expect(result.claims).toHaveLength(1);
+      expect(result.subjects).toHaveLength(1);
+      expect(result.subjects[0]).toMatchObject({
+        subject: ClaimSubject.Bank,
+        enabled: true,
+        level: PermissionLevel.Read,
+      });
     });
   });
 });

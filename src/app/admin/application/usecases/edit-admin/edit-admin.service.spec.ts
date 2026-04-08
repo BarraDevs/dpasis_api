@@ -1,6 +1,7 @@
 import { Test } from '@nestjs/testing';
 import { AccountStatus } from 'src/app/account/domain/enums/account-status.enum';
-import { Claim } from 'src/app/authentication/domain/authorization/claim';
+import { PermissionLevel } from 'src/app/admin/application/permission/permission-level.enum';
+import { ClaimSubject } from 'src/app/authentication/domain/authorization/claim-subject.enum';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { DocumentAlreadyTakenError } from 'src/shared/errors/document-already-taken';
 import { AdminModule } from '../../../admin.module';
@@ -41,8 +42,8 @@ describe('EditAdmin - Integration tests', () => {
       password: 'SenhaForte123',
       document: '529.982.247-25',
       profilePicture: null,
-      claims: [
-        { subject: Claim.BANK_READ.subject, action: Claim.BANK_READ.action },
+      subjects: [
+        { subject: ClaimSubject.Bank, enabled: true, level: PermissionLevel.Read },
       ],
       ...overrides,
     };
@@ -55,7 +56,7 @@ describe('EditAdmin - Integration tests', () => {
   it('should throw AdminNotFoundError when admin does not exist', async() => {
     const data: EditAdminInputDto = {
       name: 'X',
-      claims: [{ subject: Claim.BANK_READ.subject, action: Claim.BANK_READ.action }],
+      subjects: [{ subject: ClaimSubject.Bank, enabled: true, level: PermissionLevel.Read }],
     };
 
     await expect(sut.execute(999999, data)).rejects.toThrow(AdminNotFoundError);
@@ -66,9 +67,9 @@ describe('EditAdmin - Integration tests', () => {
 
     const result = await sut.execute(id, {
       name: 'Nome Novo',
-      claims: [
-        { subject: Claim.COMPANY_READ.subject, action: Claim.COMPANY_READ.action },
-        { subject: Claim.FAQ_READ.subject, action: Claim.FAQ_READ.action },
+      subjects: [
+        { subject: ClaimSubject.Company, enabled: true, level: PermissionLevel.Read },
+        { subject: ClaimSubject.Faq, enabled: true, level: PermissionLevel.Read },
       ],
     });
 
@@ -94,7 +95,7 @@ describe('EditAdmin - Integration tests', () => {
     await expect(
       sut.execute(first.id, {
         document: '390.533.447-05',
-        claims: [{ subject: Claim.BANK_READ.subject, action: Claim.BANK_READ.action }],
+        subjects: [{ subject: ClaimSubject.Bank, enabled: true, level: PermissionLevel.Read }],
       }),
     ).rejects.toThrow(DocumentAlreadyTakenError);
   });
@@ -105,7 +106,7 @@ describe('EditAdmin - Integration tests', () => {
 
     await sut.execute(id, {
       name: 'Só nome',
-      claims: [{ subject: Claim.BANK_READ.subject, action: Claim.BANK_READ.action }],
+      subjects: [{ subject: ClaimSubject.Bank, enabled: true, level: PermissionLevel.Read }],
     });
 
     const after = await prisma.account.findUnique({ where: { id } });
@@ -121,7 +122,7 @@ describe('EditAdmin - Integration tests', () => {
     });
 
     await sut.execute(id, {
-      claims: [{ subject: Claim.BANK_READ.subject, action: Claim.BANK_READ.action }],
+      subjects: [{ subject: ClaimSubject.Bank, enabled: true, level: PermissionLevel.Read }],
     });
 
     const acc = await prisma.account.findUnique({ where: { id } });

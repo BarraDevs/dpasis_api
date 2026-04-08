@@ -14,3 +14,8 @@ export enum ClaimAction {
   Read = 'read',
   Write = 'write',
 }
+
+export const CLAIM_ACTION_LABELS: Record<ClaimAction, string> = {
+  [ClaimAction.Read]: 'Leitura',
+  [ClaimAction.Write]: 'Escrita',
+};

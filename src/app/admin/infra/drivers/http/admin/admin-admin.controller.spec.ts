@@ -9,8 +9,10 @@ import { EditAdmin } from 'src/app/admin/application/usecases/edit-admin/edit-ad
 import { FindAdminById } from 'src/app/admin/application/usecases/find-admin-by-id/find-admin-by-id.service';
 import { FindAllAdminQueryDto } from 'src/app/admin/application/usecases/find-all-admin/dtos/find-all-admin.dto';
 import { FindAllAdmin } from 'src/app/admin/application/usecases/find-all-admin/find-all-admin.service';
+import { FindPermissionSubjects } from 'src/app/admin/application/usecases/find-permission-subjects/find-permission-subjects.service';
 import { InactivateAdmin } from 'src/app/admin/application/usecases/inactivate-admin/inactivate-admin.service';
 import { AuthenticationGuardsModule } from 'src/app/authentication/application/guards/guards.module';
+import { ClaimSubject } from 'src/app/authentication/domain/authorization/claim-subject.enum';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
 import { Params } from 'src/infra/validators/class/dtos/params/params.dto';
 import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
@@ -23,6 +25,7 @@ describe('AdminAdminController - Unit tests', () => {
   let editAdmin: EditAdmin;
   let findAllAdmin: FindAllAdmin;
   let findAdminById: FindAdminById;
+  let findPermissions: FindPermissionSubjects;
   let inactivateAdmin: InactivateAdmin;
 
   beforeEach(async() => {
@@ -35,6 +38,7 @@ describe('AdminAdminController - Unit tests', () => {
         { provide: EditAdmin, useValue: createMock<EditAdmin>() },
         { provide: FindAllAdmin, useValue: createMock<FindAllAdmin>() },
         { provide: FindAdminById, useValue: createMock<FindAdminById>() },
+        { provide: FindPermissionSubjects, useValue: createMock<FindPermissionSubjects>() },
         { provide: InactivateAdmin, useValue: createMock<InactivateAdmin>() },
       ],
     }).compile();
@@ -45,6 +49,7 @@ describe('AdminAdminController - Unit tests', () => {
     editAdmin = module.get(EditAdmin);
     findAllAdmin = module.get(FindAllAdmin);
     findAdminById = module.get(FindAdminById);
+    findPermissions = module.get(FindPermissionSubjects);
     inactivateAdmin = module.get(InactivateAdmin);
   });
 
@@ -62,6 +67,18 @@ describe('AdminAdminController - Unit tests', () => {
 
       expect(result).toEqual(output);
       expect(createSpy).toHaveBeenCalledWith(body);
+    });
+  });
+
+  describe('findPermissions', () => {
+    it('should call findPermissions.execute', async() => {
+      const output = [{ subject: ClaimSubject.Bank, label: 'Bancos' }];
+      const spy = jest.spyOn(findPermissions, 'execute').mockReturnValue(output);
+
+      const result = sut.findPermissions();
+
+      expect(result).toEqual(output);
+      expect(spy).toHaveBeenCalledWith();
     });
   });
 

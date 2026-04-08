@@ -9,20 +9,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Trim } from 'src/infra/validators/class/decorators/trim/trim';
-
-export class ClaimInputDto {
-  @ApiProperty({ example: 'company' })
-  @IsString({ message: '$property deve ser uma string' })
-  @IsNotEmpty({ message: '$property é obrigatório' })
-  @Trim()
-  subject: string;
-
-  @ApiProperty({ example: 'list' })
-  @IsString({ message: '$property deve ser uma string' })
-  @IsNotEmpty({ message: '$property é obrigatório' })
-  @Trim()
-  action: string;
-}
+import { AdminSubjectPermissionInputDto } from '../../../dtos/admin-subject-permission.dto';
 
 export class CreateAdminInputDto {
   @ApiProperty({ example: 'Maria Silva' })
@@ -54,11 +41,11 @@ export class CreateAdminInputDto {
   @Trim()
   profilePicture: string | null;
 
-  @ApiProperty({ type: [ClaimInputDto] })
+  @ApiProperty({ type: [AdminSubjectPermissionInputDto], description: 'Permissões por assunto (nível read/write)' })
   @IsArray({ message: '$property deve ser um array' })
   @ValidateNested({ each: true })
-  @Type(() => ClaimInputDto)
-  claims: ClaimInputDto[];
+  @Type(() => AdminSubjectPermissionInputDto)
+  subjects: AdminSubjectPermissionInputDto[];
 }
 
 export class CreateAdminOutputDto {

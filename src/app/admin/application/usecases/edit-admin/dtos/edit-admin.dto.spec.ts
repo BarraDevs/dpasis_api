@@ -1,5 +1,7 @@
 import { ArgumentMetadata, ValidationPipe } from '@nestjs/common';
+import { ClaimSubject } from 'src/app/authentication/domain/authorization/claim-subject.enum';
 import { pipeOptions } from 'src/infra/validators/class/config';
+import { PermissionLevel } from '../../../permission/permission-level.enum';
 import { EditAdminInputDto } from './edit-admin.dto';
 
 const metadata: ArgumentMetadata = {
@@ -14,7 +16,7 @@ function expectMessageToContain(message: string | string[], substring: string) {
 
 function makeValidInputDto(overrides: Partial<EditAdminInputDto> = {}): EditAdminInputDto {
   return {
-    claims: [{ subject: 'bank', action: 'list' }],
+    subjects: [{ subject: ClaimSubject.Bank, enabled: true, level: PermissionLevel.Read }],
     ...overrides,
   };
 }
@@ -26,53 +28,53 @@ describe('EditAdminInputDto', () => {
     target = new ValidationPipe(pipeOptions);
   });
 
-  describe('claims field', () => {
-    it('should reject when claims is missing', async() => {
+  describe('subjects field', () => {
+    it('should reject when subjects is missing', async() => {
       const data = {} as EditAdminInputDto;
 
       expect.assertions(1);
       return target.transform(data, metadata).catch(error => {
-        expectMessageToContain(error.getResponse().message, 'claims');
+        expectMessageToContain(error.getResponse().message, 'subjects');
       });
     });
 
-    it('should reject when claims is not an array', async() => {
-      const data = makeValidInputDto({ claims: {} as unknown as EditAdminInputDto['claims'] });
+    it('should reject when subjects is not an array', async() => {
+      const data = makeValidInputDto({ subjects: {} as unknown as EditAdminInputDto['subjects'] });
 
       expect.assertions(1);
       return target.transform(data, metadata).catch(error => {
-        expectMessageToContain(error.getResponse().message, 'claims');
+        expectMessageToContain(error.getResponse().message, 'subjects');
       });
     });
 
-    it('should reject nested claim with empty subject', async() => {
+    it('should reject nested item with enabled true but missing level', async() => {
       const data = makeValidInputDto({
-        claims: [{ subject: '', action: 'list' }],
+        subjects: [{ subject: ClaimSubject.Faq, enabled: true }],
       });
 
       expect.assertions(1);
       return target.transform(data, metadata).catch(error => {
-        expectMessageToContain(error.getResponse().message, 'subject');
+        expectMessageToContain(error.getResponse().message, 'level');
       });
     });
 
-    it('should trim subject and action in claims', async() => {
+    it('should accept nested item with enabled false without level', async() => {
       const data = makeValidInputDto({
-        claims: [{ subject: '  faq  ', action: '  read  ' }],
+        subjects: [{ subject: ClaimSubject.Faq, enabled: false }],
       });
 
       const result = await target.transform(data, metadata);
 
-      expect(result.claims[0].subject).toBe('faq');
-      expect(result.claims[0].action).toBe('read');
+      expect(result.subjects[0].enabled).toBe(false);
+      expect(result.subjects[0].level).toBeUndefined();
     });
 
-    it('should accept empty claims array', async() => {
-      const data = makeValidInputDto({ claims: [] });
+    it('should accept empty subjects array', async() => {
+      const data = makeValidInputDto({ subjects: [] });
 
       const result = await target.transform(data, metadata);
 
-      expect(result.claims).toEqual([]);
+      expect(result.subjects).toEqual([]);
     });
   });
 
@@ -142,12 +144,12 @@ describe('EditAdminInputDto', () => {
   });
 
   describe('full payload', () => {
-    it('should pass with only claims', async() => {
+    it('should pass with only subjects', async() => {
       const data = makeValidInputDto();
 
       const result = await target.transform(data, metadata);
 
-      expect(result.claims).toHaveLength(1);
+      expect(result.subjects).toHaveLength(1);
       expect(result.name).toBeUndefined();
     });
 
@@ -157,7 +159,7 @@ describe('EditAdminInputDto', () => {
         email: 'a@b.com',
         document: '529.982.247-25',
         profilePicture: null,
-        claims: [{ subject: 'x', action: 'y' }],
+        subjects: [{ subject: ClaimSubject.Company, enabled: true, level: PermissionLevel.Write }],
       });
 
       const result = await target.transform(data, metadata);
@@ -168,7 +170,11 @@ describe('EditAdminInputDto', () => {
         document: '529.982.247-25',
         profilePicture: null,
       });
-      expect(result.claims[0]).toEqual({ subject: 'x', action: 'y' });
+      expect(result.subjects[0]).toMatchObject({
+        subject: ClaimSubject.Company,
+        enabled: true,
+        level: PermissionLevel.Write,
+      });
     });
   });
 });

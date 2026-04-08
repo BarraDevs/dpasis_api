@@ -1,5 +1,6 @@
 import { Test } from '@nestjs/testing';
-import { Claim } from 'src/app/authentication/domain/authorization/claim';
+import { PermissionLevel } from 'src/app/admin/application/permission/permission-level.enum';
+import { ClaimSubject } from 'src/app/authentication/domain/authorization/claim-subject.enum';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { AdminModule } from '../../../admin.module';
 import { CreateAdmin } from '../create-admin/create-admin.service';
@@ -37,8 +38,8 @@ describe('FindAllAdmin - Integration tests', () => {
       password: 'SenhaForte123',
       document: '529.982.247-25',
       profilePicture: null,
-      claims: [
-        { subject: Claim.BANK_READ.subject, action: Claim.BANK_READ.action },
+      subjects: [
+        { subject: ClaimSubject.Bank, enabled: true, level: PermissionLevel.Read },
       ],
       ...overrides,
     };

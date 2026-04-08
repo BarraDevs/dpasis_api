@@ -2,13 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
 import { AccountStatus } from 'src/app/account/domain/enums/account-status.enum';
-import { AdminDetailDto, AdminListDto } from 'src/app/admin/application/dtos/admin.dto';
+import { AdminDetailFromDao, AdminListDto } from 'src/app/admin/application/dtos/admin.dto';
 import { IAdminDao } from 'src/app/admin/application/persistence/dao/admin-dao.interface';
 import { FindAllAdminQueryDto } from 'src/app/admin/application/usecases/find-all-admin/dtos/find-all-admin.dto';
-import {
-    claimFromSubjectAction,
-    type ClaimValue,
-} from 'src/app/authentication/domain/authorization/claim';
+import { claimFromSubjectAction, type ClaimValue } from 'src/app/authentication/domain/authorization/claim';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 
 const AccountSelect = {
@@ -21,9 +18,13 @@ const AccountSelect = {
 
 const AccountWithClaimsSelect = {
   ...AccountSelect,
-  claims: { select: { subject: true, action: true } },
+  claims: {
+    select: {
+      subject: true,
+      action: true,
+    },
+  },
 } satisfies Prisma.AccountSelect;
-
 
 const AdminInclude = {
   account: {
@@ -110,7 +111,7 @@ export class AdminDaoAdapterPrisma implements IAdminDao {
     return mapToDto(row);
   }
 
-  public async findByIdWithClaims(id: number): Promise<AdminDetailDto | null> {
+  public async findByIdWithClaims(id: number): Promise<AdminDetailFromDao | null> {
     const row = await this.prisma.admin.findUnique({
       where: { accountId: id },
       include: AdminWithClaimsInclude,

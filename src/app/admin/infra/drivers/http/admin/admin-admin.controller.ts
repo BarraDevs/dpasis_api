@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
+import { PermissionSubjectCatalogItemDto } from 'src/app/admin/application/dtos/admin-subject-permission.dto';
 import { AdminDetailDto, AdminListDto } from 'src/app/admin/application/dtos/admin.dto';
 import { ActivateAdmin } from 'src/app/admin/application/usecases/activate-admin/activate-admin.service';
 import { CreateAdmin } from 'src/app/admin/application/usecases/create-admin/create-admin.service';
@@ -9,6 +10,7 @@ import { EditAdmin } from 'src/app/admin/application/usecases/edit-admin/edit-ad
 import { FindAdminById } from 'src/app/admin/application/usecases/find-admin-by-id/find-admin-by-id.service';
 import { FindAllAdminQueryDto } from 'src/app/admin/application/usecases/find-all-admin/dtos/find-all-admin.dto';
 import { FindAllAdmin } from 'src/app/admin/application/usecases/find-all-admin/find-all-admin.service';
+import { FindPermissionSubjects } from 'src/app/admin/application/usecases/find-permission-subjects/find-permission-subjects.service';
 import { InactivateAdmin } from 'src/app/admin/application/usecases/inactivate-admin/inactivate-admin.service';
 import { Claim } from 'src/app/authentication/domain/authorization/claim';
 import { RequiredClaims } from 'src/app/authentication/infra/decorators/required-claims.decorator';
@@ -27,6 +29,7 @@ export class AdminAdminController {
     private readonly editAdmin: EditAdmin,
     private readonly findAllAdmin: FindAllAdmin,
     private readonly findAdminById: FindAdminById,
+    private readonly findPermissionSubjects: FindPermissionSubjects,
     private readonly inactivateAdmin: InactivateAdmin,
   ) {}
 
@@ -52,6 +55,18 @@ export class AdminAdminController {
   })
   public findAll(@Query() queries: FindAllAdminQueryDto): Promise<IPagination<AdminListDto>> {
     return this.findAllAdmin.execute(queries);
+  }
+
+  @Get('permission-subjects')
+  @RequiredClaims(Claim.ADMIN_READ)
+  // @ApiOkResponse({ type: PermissionSubjectCatalogItemDto, isArray: true })
+  @Swagger({
+    tags: ['Administradores'],
+    summary: 'Listar permissões agrupadas por assunto',
+    okResponse: [PermissionSubjectCatalogItemDto],
+  })
+  public findPermissions(): PermissionSubjectCatalogItemDto[] {
+    return this.findPermissionSubjects.execute();
   }
 
   @Get(':id')

@@ -1,7 +1,7 @@
 import { Test } from '@nestjs/testing';
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
 import { AccountStatus } from 'src/app/account/domain/enums/account-status.enum';
-import { AdminDetailDto, AdminListDto } from 'src/app/admin/application/dtos/admin.dto';
+import { AdminDetailFromDao, AdminListDto } from 'src/app/admin/application/dtos/admin.dto';
 import {
   claimFromSubjectAction,
   type ClaimValue,
@@ -75,10 +75,10 @@ async function expectedAdminListDto(
   };
 }
 
-async function expectedAdminDetailDto(
+async function expectedAdminDetailFromDao(
   prisma: PrismaService,
   accountId: number,
-): Promise<AdminDetailDto> {
+): Promise<AdminDetailFromDao> {
   const list = await expectedAdminListDto(prisma, accountId);
   const claimRows = await prisma.accountClaim.findMany({
     where: { accountId },
@@ -357,7 +357,7 @@ describe('AdminDaoAdapterPrisma - Integration tests', () => {
         },
       });
 
-      const expected = await expectedAdminDetailDto(prisma, account.id);
+      const expected = await expectedAdminDetailFromDao(prisma, account.id);
       const result = await sut.findByIdWithClaims(account.id);
 
       expect(result).toEqual(expected);

@@ -160,9 +160,44 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Maria Silva\",\n  \"email\": \"maria@example.com\",\n  \"password\": \"SenhaForte123\",\n  \"document\": \"529.982.247-25\",\n  \"profilePicture\": \"https://example.com/photo.png\",\n  \"claims\": []\n}"
+              "raw": "{\n  \"name\": \"Maria Silva\",\n  \"email\": \"maria@example.com\",\n  \"password\": \"SenhaForte123\",\n  \"document\": \"529.982.247-25\",\n  \"profilePicture\": \"https://example.com/photo.png\",\n  \"subjects\": []\n}"
             },
             "description": "Criar novo administrador",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Listar permissões agrupadas por assunto",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/admins/permission-subjects",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "admins",
+                "permission-subjects"
+              ]
+            },
+            "description": "Listar permissões agrupadas por assunto",
             "auth": {
               "type": "bearer",
               "bearer": [
@@ -234,7 +269,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Maria Silva\",\n  \"email\": \"maria@example.com\",\n  \"profilePicture\": \"https://example.com/photo.png\",\n  \"document\": \"529.982.247-25\",\n  \"claims\": []\n}"
+              "raw": "{\n  \"name\": \"Maria Silva\",\n  \"email\": \"maria@example.com\",\n  \"profilePicture\": \"https://example.com/photo.png\",\n  \"document\": \"529.982.247-25\",\n  \"subjects\": []\n}"
             },
             "description": "Editar administrador",
             "auth": {

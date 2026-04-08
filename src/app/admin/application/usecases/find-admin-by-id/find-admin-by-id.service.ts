@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { claimValuesToSubjectPermissions } from 'src/app/admin/application/permission/admin-subject-permission.mapper';
 import { AdminNotFoundError } from 'src/app/admin/domain/errors/admin-not-found.error';
 import { TOKENS } from 'src/core/di/token';
 import { AdminDetailDto } from '../../dtos/admin.dto';
@@ -16,6 +17,9 @@ export class FindAdminById {
       throw new AdminNotFoundError();
     }
 
-    return result;
+    return {
+      ...result,
+      subjects: claimValuesToSubjectPermissions(result.claims),
+    };
   }
 }

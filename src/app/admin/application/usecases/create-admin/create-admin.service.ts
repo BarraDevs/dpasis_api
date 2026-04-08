@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { AdminFactory } from 'src/app/admin/domain/factories/admin.factory';
+import { subjectPermissionsToClaimInputs } from 'src/app/admin/application/permission/admin-subject-permission.mapper';
 import { TOKENS } from 'src/core/di/token';
 import { DocumentAlreadyTakenError } from 'src/shared/errors/document-already-taken';
 import { EmailAlreadyTakenError } from 'src/shared/errors/email-already-taken';
@@ -16,12 +17,14 @@ export class CreateAdmin {
   ) {}
 
   public async execute(data: CreateAdminInputDto): Promise<CreateAdminOutputDto> {
+    const claims = subjectPermissionsToClaimInputs(data.subjects);
+
     const entity = AdminFactory.create({
       name: data.name,
       email: data.email,
       document: data.document,
       profilePicture: data.profilePicture ?? null,
-      claims: data.claims,
+      claims,
     });
 
     const emailTaken = await this.adminDao.findByEmail(entity.props.email);
