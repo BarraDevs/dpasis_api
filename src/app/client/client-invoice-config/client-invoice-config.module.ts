@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { BankModule } from 'src/app/bank/bank.module';
 import { ClientModule } from 'src/app/client/client/client.module';
+import { BankModule } from 'src/app/global/bank/bank.module';
 import { AuthenticationGuardsModule } from '../../authentication/application/guards/guards.module';
 import { ClientAddressModule } from '../client-address/client-address.module';
 import { ClientInvoiceConfigPersistenceModule } from './application/persistence/client-invoice-config-persistence.module';

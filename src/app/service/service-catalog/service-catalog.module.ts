@@ -1,13 +1,13 @@
 import { Module } from '@nestjs/common';
-import { CompanyModule } from 'src/app/company/company.module';
 import { AuthenticationGuardsModule } from 'src/app/authentication/application/guards/guards.module';
+import { CompanyModule } from 'src/app/company/company.module';
+import { CnaeNbsIndopModule } from 'src/app/global/taxation/cnae-nbs-indop/cnae-nbs-indop.module';
 import { ServiceBilledModule } from 'src/app/service/service-billed/service-billed.module';
 import { ServiceCategoryModule } from 'src/app/service/service-category/service-category.module';
 import { ServiceDeliveryTermModule } from 'src/app/service/service-delivery-term/service-delivery-term.module';
 import { ServiceFreightModule } from 'src/app/service/service-freight/service-freight.module';
 import { ServiceProposalValidityModule } from 'src/app/service/service-proposal-validity/service-proposal-validity.module';
 import { ServiceWarrantyModule } from 'src/app/service/service-warranty/service-warranty.module';
-import { CnaeNbsIndopModule } from 'src/app/taxation/cnae-nbs-indop/cnae-nbs-indop.module';
 import { ServiceCatalogPersistenceModule } from './application/persistence/service-catalog-persistence.module';
 import { ActivateServiceCatalog } from './application/usecases/activate-service-catalog/activate-service-catalog.service';
 import { CreateServiceCatalog } from './application/usecases/create-service-catalog/create-service-catalog.service';

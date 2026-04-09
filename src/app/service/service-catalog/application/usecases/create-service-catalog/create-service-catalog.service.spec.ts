@@ -1,18 +1,18 @@
 import { Test } from '@nestjs/testing';
 import { CompanyNotFoundError } from 'src/app/company/domain/errors/company-not-found.error';
+import { CnaeNbsIndopNotFoundError } from 'src/app/global/taxation/cnae-nbs-indop/domain/errors/cnae-nbs-indop-not-found.error';
 import { ServiceBilledNotFoundError } from 'src/app/service/service-billed/domain/errors/service-billed-not-found.error';
-import { ServiceCategoryNotFoundError } from 'src/app/service/service-category/domain/errors/service-category-not-found.error';
-import { ServiceDeliveryTermNotFoundError } from 'src/app/service/service-delivery-term/domain/errors/service-delivery-term-not-found.error';
-import { ServiceFreightNotFoundError } from 'src/app/service/service-freight/domain/errors/service-freight-not-found.error';
-import { ServiceProposalValidityNotFoundError } from 'src/app/service/service-proposal-validity/domain/errors/service-proposal-validity-not-found.error';
-import { ServiceWarrantyNotFoundError } from 'src/app/service/service-warranty/domain/errors/service-warranty-not-found.error';
 import {
   seedServiceCatalogForeignKeys,
   serviceFkScalars,
   type ServiceCatalogFkIds,
 } from 'src/app/service/service-catalog/infra/driven/persistence/prisma/service-catalog-prisma-test.helpers';
 import { ServiceCatalogModule } from 'src/app/service/service-catalog/service-catalog.module';
-import { CnaeNbsIndopNotFoundError } from 'src/app/taxation/cnae-nbs-indop/domain/errors/cnae-nbs-indop-not-found.error';
+import { ServiceCategoryNotFoundError } from 'src/app/service/service-category/domain/errors/service-category-not-found.error';
+import { ServiceDeliveryTermNotFoundError } from 'src/app/service/service-delivery-term/domain/errors/service-delivery-term-not-found.error';
+import { ServiceFreightNotFoundError } from 'src/app/service/service-freight/domain/errors/service-freight-not-found.error';
+import { ServiceProposalValidityNotFoundError } from 'src/app/service/service-proposal-validity/domain/errors/service-proposal-validity-not-found.error';
+import { ServiceWarrantyNotFoundError } from 'src/app/service/service-warranty/domain/errors/service-warranty-not-found.error';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { CreateServiceCatalog } from './create-service-catalog.service';
 import { CreateServiceCatalogInputDto } from './dtos/create-service-catalog.dto';

@@ -1,5 +1,4 @@
 import { Test } from '@nestjs/testing';
-import { BankNotFoundError } from 'src/app/bank/domain/errors/bank-not-found.error';
 import { ClientAddressType } from 'src/app/client/client-address/domain/enums/client-address-type.enum';
 import { ClientAddressNotFoundError } from 'src/app/client/client-address/domain/errors/client-address-not-found.error';
 import { ClientInvoiceConfigModule } from 'src/app/client/client-invoice-config/client-invoice-config.module';
@@ -9,6 +8,7 @@ import { ClientInvoiceConfigAlreadyExistsError } from 'src/app/client/client-inv
 import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
 import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum';
 import { ClientNotFoundError } from 'src/app/client/client/domain/errors/client-not-found.error';
+import { BankNotFoundError } from 'src/app/global/bank/domain/errors/bank-not-found.error';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { CreateClientInvoiceConfig } from './create-client-invoice-config.service';
 
