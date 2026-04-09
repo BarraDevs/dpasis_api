@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
 import { AccountStatus } from 'src/app/account/domain/enums/account-status.enum';
-import { AdminDetailFromDao, AdminListDto } from 'src/app/admin/application/dtos/admin.dto';
+import { AdminDto, AdminWithClaimsDto } from 'src/app/admin/application/dtos/admin.dto';
 import { IAdminDao } from 'src/app/admin/application/persistence/dao/admin-dao.interface';
 import { FindAllAdminQueryDto } from 'src/app/admin/application/usecases/find-all-admin/dtos/find-all-admin.dto';
 import { claimFromSubjectAction, type ClaimValue } from 'src/app/authentication/domain/authorization/claim';
@@ -40,7 +40,7 @@ const AdminWithClaimsInclude = {
 
 type AdminRow = Prisma.AdminGetPayload<{ include: typeof AdminInclude }>;
 
-function mapToDto(row: AdminRow): AdminListDto {
+function mapToDto(row: AdminRow): AdminDto {
   return {
     id: row.accountId,
     name: row.account.name,
@@ -57,7 +57,7 @@ function mapToDto(row: AdminRow): AdminListDto {
 export class AdminDaoAdapterPrisma implements IAdminDao {
   constructor(private readonly prisma: PrismaService) {}
 
-  public async findAll(queries: FindAllAdminQueryDto): Promise<[AdminListDto[], number]> {
+  public async findAll(queries: FindAllAdminQueryDto): Promise<[AdminDto[], number]> {
     const pagination = this.prisma.paginationFactory(queries.page, queries.size);
 
     const conditions: Prisma.AdminWhereInput[] = [
@@ -99,7 +99,7 @@ export class AdminDaoAdapterPrisma implements IAdminDao {
     return [rows.map(mapToDto), total];
   }
 
-  public async findById(id: number): Promise<AdminListDto | null> {
+  public async findById(id: number): Promise<AdminDto | null> {
     const row = await this.prisma.admin.findUnique({
       where: { accountId: id },
       include: AdminInclude,
@@ -111,7 +111,7 @@ export class AdminDaoAdapterPrisma implements IAdminDao {
     return mapToDto(row);
   }
 
-  public async findByIdWithClaims(id: number): Promise<AdminDetailFromDao | null> {
+  public async findByIdWithClaims(id: number): Promise<AdminWithClaimsDto | null> {
     const row = await this.prisma.admin.findUnique({
       where: { accountId: id },
       include: AdminWithClaimsInclude,
@@ -126,7 +126,7 @@ export class AdminDaoAdapterPrisma implements IAdminDao {
 
     return {
       ...mapToDto(row),
-      claims: claims,
+      claims,
     };
   }
 
@@ -143,8 +143,8 @@ export class AdminDaoAdapterPrisma implements IAdminDao {
   }
 
   public async findByEmail(email: string): Promise<{ id: number } | null> {
-    const account = await this.prisma.account.findUnique({
-      where: { email: email.trim() },
+    const account = await this.prisma.account.findFirst({
+      where: { email: { equals: email, mode: 'insensitive' } },
       select: { id: true },
     });
 

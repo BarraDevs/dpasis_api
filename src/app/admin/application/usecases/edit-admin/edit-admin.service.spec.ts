@@ -1,6 +1,6 @@
 import { Test } from '@nestjs/testing';
 import { AccountStatus } from 'src/app/account/domain/enums/account-status.enum';
-import { PermissionLevel } from 'src/app/admin/application/permission/permission-level.enum';
+import { PermissionLevel } from 'src/app/admin/domain/enums/permission-level.enum';
 import { ClaimSubject } from 'src/app/authentication/domain/authorization/claim-subject.enum';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { DocumentAlreadyTakenError } from 'src/shared/errors/document-already-taken';

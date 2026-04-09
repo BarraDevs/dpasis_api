@@ -6,7 +6,8 @@ import {
   ValidateIf,
 } from 'class-validator';
 import { ClaimSubject } from 'src/app/authentication/domain/authorization/claim-subject.enum';
-import { PermissionLevel } from '../permission/permission-level.enum';
+import { StringToBoolean } from 'src/infra/validators/class/decorators/string-boolean/string-boolean';
+import { PermissionLevel } from '../../domain/enums/permission-level.enum';
 
 export class AdminSubjectPermissionInputDto {
   @ApiProperty({ enum: ClaimSubject, example: ClaimSubject.Bank })
@@ -15,6 +16,7 @@ export class AdminSubjectPermissionInputDto {
 
   @ApiProperty({ example: true })
   @IsBoolean({ message: '$property deve ser um booleano' })
+  @StringToBoolean()
   enabled: boolean;
 
   @ApiPropertyOptional({ enum: PermissionLevel, example: PermissionLevel.Read })
@@ -24,27 +26,16 @@ export class AdminSubjectPermissionInputDto {
   level?: PermissionLevel;
 }
 
-export class AdminSubjectPermissionResponseDto {
-  @ApiProperty({ enum: ClaimSubject })
-  subject: ClaimSubject;
-
+export class AdminSubjectPermissionOutputDto {
   @ApiProperty({ description: 'Rótulo para exibição na UI' })
   label: string;
+
+  @ApiProperty({ enum: ClaimSubject })
+  subject: ClaimSubject;
 
   @ApiProperty()
   enabled: boolean;
 
-  @ApiProperty({
-    enum: PermissionLevel,
-    description: 'Quando enabled é false, retorna read como valor padrão da UI',
-  })
+  @ApiProperty({ enum: PermissionLevel, description: 'Quando enabled é false, retorna read como valor padrão da UI' })
   level: PermissionLevel;
-}
-
-export class PermissionSubjectCatalogItemDto {
-  @ApiProperty({ enum: ClaimSubject })
-  subject: ClaimSubject;
-
-  @ApiProperty()
-  label: string;
 }

@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { AdminNotFoundError } from 'src/app/admin/domain/errors/admin-not-found.error';
 import { AdminFactory } from 'src/app/admin/domain/factories/admin.factory';
-import { subjectPermissionsToClaimInputs } from 'src/app/admin/application/permission/admin-subject-permission.mapper';
+import { AdminSubjectPermissionsVo } from 'src/app/admin/domain/value-objects/admin-subject-permissions/admin-subject-permissions.vo';
 import { TOKENS } from 'src/core/di/token';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
 import { DocumentAlreadyTakenError } from 'src/shared/errors/document-already-taken';
@@ -23,7 +23,7 @@ export class EditAdmin {
       throw new AdminNotFoundError();
     }
 
-    const claims = subjectPermissionsToClaimInputs(data.subjects);
+    const claims = AdminSubjectPermissionsVo.fromInput(data.subjects).toClaims();
 
     const entity = AdminFactory.edit({
       accountId: id,

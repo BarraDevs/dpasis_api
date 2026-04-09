@@ -1,13 +1,13 @@
 import { Test } from '@nestjs/testing';
 import { AccountStatus } from 'src/app/account/domain/enums/account-status.enum';
-import { claimValuesToSubjectPermissions } from 'src/app/admin/application/permission/admin-subject-permission.mapper';
-import { PermissionLevel } from 'src/app/admin/application/permission/permission-level.enum';
+import { PermissionLevel } from 'src/app/admin/domain/enums/permission-level.enum';
+import { AdminSubjectPermissionsVo } from 'src/app/admin/domain/value-objects/admin-subject-permissions/admin-subject-permissions.vo';
 import { Claim } from 'src/app/authentication/domain/authorization/claim';
 import { ClaimSubject } from 'src/app/authentication/domain/authorization/claim-subject.enum';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { AdminModule } from '../../../admin.module';
 import { AdminNotFoundError } from '../../../domain/errors/admin-not-found.error';
-import { AdminDetailDto } from '../../dtos/admin.dto';
+import { AdminWithSubjectsDto } from '../../dtos/admin.dto';
 import { CreateAdmin } from '../create-admin/create-admin.service';
 import { CreateAdminInputDto } from '../create-admin/dtos/create-admin.dto';
 import { FindAdminById } from './find-admin-by-id.service';
@@ -59,7 +59,7 @@ describe('FindAdminById - Integration tests', () => {
     await expect(sut.execute(999999)).rejects.toThrow(AdminNotFoundError);
   });
 
-  it('should return AdminDetailDto with claims from dao', async() => {
+  it('should return AdminWithSubjectsDto with subjects from dao', async() => {
     const { id } = await createAdmin.execute(makeCreateInput());
 
     const result = await sut.execute(id);
@@ -69,18 +69,16 @@ describe('FindAdminById - Integration tests', () => {
       Claim.FAQ_READ,
     ];
 
-    expect(result).toEqual<AdminDetailDto>({
+    expect(result).toEqual<AdminWithSubjectsDto>({
       id,
       name: 'Maria Admin',
       email: 'maria@test.com',
       document: '52998224725',
       status: AccountStatus.ACTIVE,
       profilePicture: null,
-      claims: expect.arrayContaining(expectedClaims),
-      subjects: claimValuesToSubjectPermissions(expectedClaims),
+      subjects: AdminSubjectPermissionsVo.fromClaimValues(expectedClaims).toSubjects(),
       createdAt: expect.any(Date),
       updatedAt: expect.any(Date),
     });
-    expect(result.claims).toHaveLength(2);
   });
 });

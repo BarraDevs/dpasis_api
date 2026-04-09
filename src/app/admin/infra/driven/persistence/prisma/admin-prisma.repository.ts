@@ -109,10 +109,7 @@ export class AdminRepositoryAdapterPrisma implements IAdminRepository {
   }
 
   // dedupe: short for deduplication - remove duplicate data
-  private dedupeClaimsForCreate(
-    claims: ClaimValue[],
-    accountId: number,
-  ): Array<{ accountId: number; subject: string; action: string }> {
+  private dedupeClaimsForCreate(claims: ClaimValue[], accountId: number): Array<{ accountId: number; subject: string; action: string }> {
     const seen = new Set<string>();
     const rows: Array<{ accountId: number; subject: string; action: string }> = [];
 

@@ -1,7 +1,7 @@
 import { ArgumentMetadata, ValidationPipe } from '@nestjs/common';
 import { ClaimSubject } from 'src/app/authentication/domain/authorization/claim-subject.enum';
 import { pipeOptions } from 'src/infra/validators/class/config';
-import { PermissionLevel } from '../../../permission/permission-level.enum';
+import { PermissionLevel } from '../../../../domain/enums/permission-level.enum';
 import { EditAdminInputDto } from './edit-admin.dto';
 
 const metadata: ArgumentMetadata = {

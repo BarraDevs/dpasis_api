@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { permissionSubjectCatalog } from 'src/app/admin/application/permission/admin-subject-permission.mapper';
-import { PermissionSubjectCatalogItemDto } from '../../dtos/admin-subject-permission.dto';
+import { PermissionSubjectCatalogVo } from 'src/app/admin/domain/value-objects/admin-subject-catalog/permission-subject-catalog.vo';
+import { PermissionSubjectCatalogItemDto } from '../../dtos/admin-subject-catalog.dto';
 
 @Injectable()
 export class FindPermissionSubjects {
   public execute(): PermissionSubjectCatalogItemDto[] {
-    return permissionSubjectCatalog();
+    return PermissionSubjectCatalogVo.entries();
   }
 }

@@ -1,5 +1,5 @@
 import { Test } from '@nestjs/testing';
-import { PermissionLevel } from 'src/app/admin/application/permission/permission-level.enum';
+import { PermissionLevel } from 'src/app/admin/domain/enums/permission-level.enum';
 import { Claim } from 'src/app/authentication/domain/authorization/claim';
 import { ClaimSubject } from 'src/app/authentication/domain/authorization/claim-subject.enum';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';

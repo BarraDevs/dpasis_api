@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
-import { PermissionSubjectCatalogItemDto } from 'src/app/admin/application/dtos/admin-subject-permission.dto';
-import { AdminDetailDto, AdminListDto } from 'src/app/admin/application/dtos/admin.dto';
+import { PermissionSubjectCatalogItemDto } from 'src/app/admin/application/dtos/admin-subject-catalog.dto';
+import { AdminDto, AdminWithSubjectsDto } from 'src/app/admin/application/dtos/admin.dto';
 import { ActivateAdmin } from 'src/app/admin/application/usecases/activate-admin/activate-admin.service';
 import { CreateAdmin } from 'src/app/admin/application/usecases/create-admin/create-admin.service';
 import { CreateAdminInputDto, CreateAdminOutputDto } from 'src/app/admin/application/usecases/create-admin/dtos/create-admin.dto';
@@ -51,15 +51,14 @@ export class AdminAdminController {
     tags: ['Administradores'],
     summary: 'Listar administradores com paginação e busca',
     applyBadRequest: true,
-    okPaginatedResponse: AdminListDto,
+    okPaginatedResponse: AdminDto,
   })
-  public findAll(@Query() queries: FindAllAdminQueryDto): Promise<IPagination<AdminListDto>> {
+  public findAll(@Query() queries: FindAllAdminQueryDto): Promise<IPagination<AdminDto>> {
     return this.findAllAdmin.execute(queries);
   }
 
   @Get('permission-subjects')
   @RequiredClaims(Claim.ADMIN_READ)
-  // @ApiOkResponse({ type: PermissionSubjectCatalogItemDto, isArray: true })
   @Swagger({
     tags: ['Administradores'],
     summary: 'Listar permissões agrupadas por assunto',
@@ -76,9 +75,9 @@ export class AdminAdminController {
     summary: 'Buscar administrador por ID',
     applyBadRequest: true,
     applyNotFound: true,
-    okResponse: AdminDetailDto,
+    okResponse: AdminWithSubjectsDto,
   })
-  public findOne(@Param() params: Params): Promise<AdminDetailDto> {
+  public findOne(@Param() params: Params): Promise<AdminWithSubjectsDto> {
     return this.findAdminById.execute(params.id);
   }
 

@@ -1,7 +1,7 @@
 import { Test } from '@nestjs/testing';
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
 import { AccountStatus } from 'src/app/account/domain/enums/account-status.enum';
-import { AdminDetailFromDao, AdminListDto } from 'src/app/admin/application/dtos/admin.dto';
+import { AdminDto, AdminWithClaimsDto } from 'src/app/admin/application/dtos/admin.dto';
 import {
   claimFromSubjectAction,
   type ClaimValue,
@@ -42,10 +42,7 @@ async function seedAdmin(
   return account;
 }
 
-async function expectedAdminListDto(
-  prisma: PrismaService,
-  accountId: number,
-): Promise<AdminListDto> {
+async function expectedAdminDto(prisma: PrismaService, accountId: number): Promise<AdminDto> {
   const row = await prisma.admin.findUnique({
     where: { accountId },
     include: {
@@ -75,11 +72,8 @@ async function expectedAdminListDto(
   };
 }
 
-async function expectedAdminDetailFromDao(
-  prisma: PrismaService,
-  accountId: number,
-): Promise<AdminDetailFromDao> {
-  const list = await expectedAdminListDto(prisma, accountId);
+async function expectedAdminWithClaimsFromDao(prisma: PrismaService, accountId: number): Promise<AdminWithClaimsDto> {
+  const list = await expectedAdminDto(prisma, accountId);
   const claimRows = await prisma.accountClaim.findMany({
     where: { accountId },
     orderBy: { id: 'asc' },
@@ -138,17 +132,16 @@ describe('AdminDaoAdapterPrisma - Integration tests', () => {
 
       expect(rows).toHaveLength(1);
       expect(total).toBe(1);
-      expect(rows[0]).toMatchObject<Partial<AdminListDto>>({
+      expect(rows[0]).toMatchObject<AdminDto>({
         id: account.id,
         name: 'Admin Um',
         email: 'admin1@test.com',
         status: AccountStatus.ACTIVE,
         document: '99000000000001',
+        profilePicture: null,
+        createdAt: expect.any(Date),
+        updatedAt: expect.any(Date),
       });
-      expect(rows[0]).toHaveProperty('createdAt');
-      expect(rows[0]).toHaveProperty('updatedAt');
-      expect(rows[0].createdAt).toBeInstanceOf(Date);
-      expect(rows[0].updatedAt).toBeInstanceOf(Date);
     });
 
     it('should return AdminListDto equal to persisted row (toEqual)', async() => {
@@ -159,7 +152,7 @@ describe('AdminDaoAdapterPrisma - Integration tests', () => {
         status: AccountStatus.ACTIVE,
       });
 
-      const expected = await expectedAdminListDto(prisma, account.id);
+      const expected = await expectedAdminDto(prisma, account.id);
       const [rows] = await sut.findAll({});
 
       expect(rows).toHaveLength(1);
@@ -296,7 +289,7 @@ describe('AdminDaoAdapterPrisma - Integration tests', () => {
         status: AccountStatus.ACTIVE,
       });
 
-      const expected = await expectedAdminListDto(prisma, account.id);
+      const expected = await expectedAdminDto(prisma, account.id);
       const result = await sut.findById(account.id);
 
       expect(result).toEqual(expected);
@@ -357,7 +350,7 @@ describe('AdminDaoAdapterPrisma - Integration tests', () => {
         },
       });
 
-      const expected = await expectedAdminDetailFromDao(prisma, account.id);
+      const expected = await expectedAdminWithClaimsFromDao(prisma, account.id);
       const result = await sut.findByIdWithClaims(account.id);
 
       expect(result).toEqual(expected);
@@ -392,7 +385,7 @@ describe('AdminDaoAdapterPrisma - Integration tests', () => {
       expect(result).toBeNull();
     });
 
-    it('should return account id by email', async() => {
+    it('should return account id by email (case-insensitive)', async() => {
       const account = await seedAdmin(prisma, {
         name: 'E',
         email: 'email.busca@test.com',
@@ -400,7 +393,7 @@ describe('AdminDaoAdapterPrisma - Integration tests', () => {
         status: AccountStatus.ACTIVE,
       });
 
-      const result = await sut.findByEmail('  email.busca@test.com  ');
+      const result = await sut.findByEmail('EMAIL.BUSCA@TEST.COM');
 
       expect(result).toEqual({ id: account.id });
     });

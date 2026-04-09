@@ -1,6 +1,6 @@
 import { createMock } from '@golevelup/ts-jest';
 import { Test } from '@nestjs/testing';
-import { AdminDetailDto, AdminListDto } from 'src/app/admin/application/dtos/admin.dto';
+import { AdminDto, AdminWithSubjectsDto } from 'src/app/admin/application/dtos/admin.dto';
 import { ActivateAdmin } from 'src/app/admin/application/usecases/activate-admin/activate-admin.service';
 import { CreateAdmin } from 'src/app/admin/application/usecases/create-admin/create-admin.service';
 import { CreateAdminInputDto, CreateAdminOutputDto } from 'src/app/admin/application/usecases/create-admin/dtos/create-admin.dto';
@@ -85,7 +85,7 @@ describe('AdminAdminController - Unit tests', () => {
   describe('findAll', () => {
     it('should call findAllAdmin.execute with queries', async() => {
       const queries = createMock<FindAllAdminQueryDto>();
-      const output = createMock<IPagination<AdminListDto>>();
+      const output = createMock<IPagination<AdminDto>>();
       const findAllSpy = jest.spyOn(findAllAdmin, 'execute').mockResolvedValue(output);
 
       const result = await sut.findAll(queries);
@@ -98,7 +98,7 @@ describe('AdminAdminController - Unit tests', () => {
   describe('findOne', () => {
     it('should call findAdminById.execute with params.id', async() => {
       const params = createMock<Params>();
-      const output = createMock<AdminDetailDto>();
+      const output = createMock<AdminWithSubjectsDto>();
       const findOneSpy = jest.spyOn(findAdminById, 'execute').mockResolvedValue(output);
 
       const result = await sut.findOne(params);
