@@ -1,9 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { FileTooBigError } from 'src/app/upload-file/domain/errors/file-too-big.error';
-import { RequiredFileError } from 'src/app/upload-file/domain/errors/required-file.error';
+import { UploadSingle } from 'src/app/upload-file/application/usecases/upload-single/upload-single.service';
 import { TOKENS } from 'src/core/di/token';
-import type { IUploadFileGateway } from 'src/infra/upload-file/upload-file.gateway';
-import { CLIENT_ATTACHMENT_MAX_FILE_BYTES, CLIENT_ATTACHMENT_S3_FOLDER } from '../../constants/client-attachment-upload.constants';
+import { ClientAttachmentFolder } from '../../../domain/value-objects/client-attachment-folder.vo';
 import type { IClientAttachmentDao } from '../../persistence/dao/client-attachment-dao.interface';
 import { CreateClientAttachmentInputDto, CreateClientAttachmentOutputDto } from './dtos/create-client-attachment.dto';
 
@@ -11,25 +9,17 @@ import { CreateClientAttachmentInputDto, CreateClientAttachmentOutputDto } from 
 export class CreateClientAttachment {
   constructor(
     @Inject(TOKENS.ClientAttachmentDao) private readonly clientAttachmentDao: IClientAttachmentDao,
-    @Inject(TOKENS.UploadFileGateway) private readonly uploadFileGateway: IUploadFileGateway,
+    private readonly uploadSingle: UploadSingle,
   ) {}
 
   public async execute(file: Express.Multer.File, data: CreateClientAttachmentInputDto): Promise<CreateClientAttachmentOutputDto> {
-    if (!file) {
-      throw new RequiredFileError();
-    }
-    if (file.size > CLIENT_ATTACHMENT_MAX_FILE_BYTES) {
-      throw new FileTooBigError(CLIENT_ATTACHMENT_MAX_FILE_BYTES / 1024 / 1024);
-    }
-    // TODO: validar MIME
-    // const allowedMimeTypes = ['image/jpeg', 'application/pdf', ...];
-    // if (!allowedMimeTypes.includes(file.mimetype)) { ... }
+    const folder = new ClientAttachmentFolder(data.clientId);
+    const { url } = await this.uploadSingle.execute(file, folder.value);
 
-    const link = await this.uploadFileGateway.upload(file, CLIENT_ATTACHMENT_S3_FOLDER);
     const id = await this.clientAttachmentDao.save({
       clientId: data.clientId,
       description: data.description,
-      link,
+      link: url,
     });
 
     return { id };

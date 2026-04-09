@@ -7,9 +7,9 @@ import { CreateClientAttachmentInputDto, CreateClientAttachmentOutputDto } from 
 function createMockFile(overrides: Partial<Express.Multer.File> = {}): Express.Multer.File {
   return {
     fieldname: 'file',
-    originalname: 'doc.pdf',
+    originalname: 'doc.jpg',
     encoding: '7bit',
-    mimetype: 'application/pdf',
+    mimetype: 'image/jpeg',
     size: 100,
     buffer: Buffer.from('test'),
     destination: '',

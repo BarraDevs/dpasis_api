@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AuthenticationGuardsModule } from 'src/app/authentication/application/guards/guards.module';
 import { UploadFileQueueModule } from 'src/app/upload-file/application/queue/upload-file-queue.module';
-import { UploadFileModule as UploadFileInfraModule } from 'src/infra/upload-file/upload-file.module';
+import { UploadFileModule } from 'src/app/upload-file/upload-file.module';
 import { ClientAttachmentPersistenceModule } from './application/persistence/client-attachment-persistence.module';
 import { CreateClientAttachment } from './application/usecases/create-client-attachment/create-client-attachment.service';
 import { DeleteClientAttachment } from './application/usecases/delete-client-attachment/delete-client-attachment.service';
@@ -15,7 +15,7 @@ import { ClientAttachmentAdminController } from './infra/drivers/http/admin/clie
   imports: [
     ClientAttachmentPersistenceModule,
     AuthenticationGuardsModule,
-    UploadFileInfraModule.register(),
+    UploadFileModule,
     UploadFileQueueModule.register(),
   ],
   controllers: [

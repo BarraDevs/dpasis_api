@@ -10,9 +10,9 @@ import { EditClientAttachment } from './edit-client-attachment.service';
 function createMockFile(overrides: Partial<Express.Multer.File> = {}): Express.Multer.File {
   return {
     fieldname: 'file',
-    originalname: 'new.pdf',
+    originalname: 'new.jpg',
     encoding: '7bit',
-    mimetype: 'application/pdf',
+    mimetype: 'image/jpeg',
     size: 100,
     buffer: Buffer.from('new'),
     destination: '',
