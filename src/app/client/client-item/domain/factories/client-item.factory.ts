@@ -9,6 +9,7 @@ export class ClientItemFactory {
       quantity: props.quantity,
       unitValueInCents: props.unitValueInCents,
       cnaeNbsIndopId: props.cnaeNbsIndopId,
+      active: true,
     });
   }
 
@@ -25,6 +26,7 @@ export class ClientItemFactory {
       quantity: data.quantity ?? props.quantity,
       unitValueInCents: data.unitValueInCents ?? props.unitValueInCents,
       cnaeNbsIndopId: data.cnaeNbsIndopId ?? props.cnaeNbsIndopId,
+      active: props.active,
     });
   }
 
@@ -36,6 +38,7 @@ export class ClientItemFactory {
       quantity: props.quantity,
       unitValueInCents: props.unitValueInCents,
       cnaeNbsIndopId: props.cnaeNbsIndopId,
+      active: props.active,
     });
   }
 }

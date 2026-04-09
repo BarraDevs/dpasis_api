@@ -18,7 +18,7 @@ export class ClientItemRepositoryAdapterPrisma implements IClientItemRepository 
         quantity: props.quantity,
         unitValueInCents: props.unitValueInCents,
         cnaeNbsIndopId: props.cnaeNbsIndopId,
-        active: true,
+        active: props.active,
       },
     });
 
@@ -35,6 +35,7 @@ export class ClientItemRepositoryAdapterPrisma implements IClientItemRepository 
         quantity: props.quantity,
         unitValueInCents: props.unitValueInCents,
         cnaeNbsIndopId: props.cnaeNbsIndopId,
+        active: props.active,
       },
     });
   }
@@ -53,6 +54,7 @@ export class ClientItemRepositoryAdapterPrisma implements IClientItemRepository 
       quantity: data.quantity,
       unitValueInCents: data.unitValueInCents,
       cnaeNbsIndopId: data.cnaeNbsIndopId,
+      active: data.active,
     });
   }
 

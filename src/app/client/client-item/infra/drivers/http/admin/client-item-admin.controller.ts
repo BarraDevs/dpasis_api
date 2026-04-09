@@ -4,20 +4,22 @@ import { Claim } from 'src/app/authentication/domain/authorization/claim';
 import { RequiredClaims } from 'src/app/authentication/infra/decorators/required-claims.decorator';
 import { RequiredRoles } from 'src/app/authentication/infra/decorators/required-role.decorator';
 import { ClientItemDto } from 'src/app/client/client-item/application/dtos/client-item.dto';
+import { ActivateClientItem } from 'src/app/client/client-item/application/usecases/activate-client-item/activate-client-item.service';
 import { CreateBulkClientItem } from 'src/app/client/client-item/application/usecases/create-bulk-client-item/create-bulk-client-item.service';
 import {
-    CreateBulkClientItemInputDto,
-    CreateBulkClientItemOutputDto,
+  CreateBulkClientItemInputDto,
+  CreateBulkClientItemOutputDto,
 } from 'src/app/client/client-item/application/usecases/create-bulk-client-item/dtos/create-bulk-client-item.dto';
 import { CreateClientItem } from 'src/app/client/client-item/application/usecases/create-client-item/create-client-item.service';
 import {
-    CreateClientItemInputDto,
-    CreateClientItemOutputDto,
+  CreateClientItemInputDto,
+  CreateClientItemOutputDto,
 } from 'src/app/client/client-item/application/usecases/create-client-item/dtos/create-client-item.dto';
+import { DeactivateClientItem } from 'src/app/client/client-item/application/usecases/deactivate-client-item/deactivate-client-item.service';
 import { DeleteBulkClientItem } from 'src/app/client/client-item/application/usecases/delete-bulk-client-item/delete-bulk-client-item.service';
 import {
-    DeleteBulkClientItemInputDto,
-    DeleteBulkClientItemOutputDto,
+  DeleteBulkClientItemInputDto,
+  DeleteBulkClientItemOutputDto,
 } from 'src/app/client/client-item/application/usecases/delete-bulk-client-item/dtos/delete-bulk-client-item.dto';
 import { DeleteClientItem } from 'src/app/client/client-item/application/usecases/delete-client-item/delete-client-item.service';
 import { EditClientItemInputDto } from 'src/app/client/client-item/application/usecases/edit-client-item/dtos/edit-client-item.dto';
@@ -39,6 +41,8 @@ export class ClientItemAdminController {
     private readonly findAllClientItem: FindAllClientItem,
     private readonly findClientItemById: FindClientItemById,
     private readonly editClientItem: EditClientItem,
+    private readonly activateClientItem: ActivateClientItem,
+    private readonly deactivateClientItem: DeactivateClientItem,
     private readonly deleteClientItem: DeleteClientItem,
     private readonly deleteBulkClientItem: DeleteBulkClientItem,
   ) {}
@@ -105,6 +109,32 @@ export class ClientItemAdminController {
   })
   public update(@Param() params: Params, @Body() body: EditClientItemInputDto): Promise<SuccessMessage> {
     return this.editClientItem.execute(params.id, body);
+  }
+
+  @Patch(':id/activate')
+  @RequiredClaims(Claim.CLIENT_ITEM_WRITE)
+  @Swagger({
+    tags: ['Clientes - Itens'],
+    summary: 'Ativar item do cliente',
+    applyBadRequest: true,
+    applyNotFound: true,
+    okResponse: SuccessMessage,
+  })
+  public activate(@Param() params: Params): Promise<SuccessMessage> {
+    return this.activateClientItem.execute(params.id);
+  }
+
+  @Patch(':id/deactivate')
+  @RequiredClaims(Claim.CLIENT_ITEM_WRITE)
+  @Swagger({
+    tags: ['Clientes - Itens'],
+    summary: 'Desativar item do cliente',
+    applyBadRequest: true,
+    applyNotFound: true,
+    okResponse: SuccessMessage,
+  })
+  public deactivate(@Param() params: Params): Promise<SuccessMessage> {
+    return this.deactivateClientItem.execute(params.id);
   }
 
   @Delete('bulk')

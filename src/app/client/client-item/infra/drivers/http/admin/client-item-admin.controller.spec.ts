@@ -2,6 +2,7 @@ import { createMock } from '@golevelup/ts-jest';
 import { Test } from '@nestjs/testing';
 import { AuthenticationGuardsModule } from 'src/app/authentication/application/guards/guards.module';
 import { ClientItemDto } from 'src/app/client/client-item/application/dtos/client-item.dto';
+import { ActivateClientItem } from 'src/app/client/client-item/application/usecases/activate-client-item/activate-client-item.service';
 import { CreateBulkClientItem } from 'src/app/client/client-item/application/usecases/create-bulk-client-item/create-bulk-client-item.service';
 import { CreateBulkClientItemInputDto, CreateBulkClientItemOutputDto } from 'src/app/client/client-item/application/usecases/create-bulk-client-item/dtos/create-bulk-client-item.dto';
 import { CreateClientItem } from 'src/app/client/client-item/application/usecases/create-client-item/create-client-item.service';
@@ -9,6 +10,7 @@ import {
   CreateClientItemInputDto,
   CreateClientItemOutputDto,
 } from 'src/app/client/client-item/application/usecases/create-client-item/dtos/create-client-item.dto';
+import { DeactivateClientItem } from 'src/app/client/client-item/application/usecases/deactivate-client-item/deactivate-client-item.service';
 import { DeleteBulkClientItem } from 'src/app/client/client-item/application/usecases/delete-bulk-client-item/delete-bulk-client-item.service';
 import { DeleteBulkClientItemInputDto, DeleteBulkClientItemOutputDto } from 'src/app/client/client-item/application/usecases/delete-bulk-client-item/dtos/delete-bulk-client-item.dto';
 import { DeleteClientItem } from 'src/app/client/client-item/application/usecases/delete-client-item/delete-client-item.service';
@@ -30,6 +32,8 @@ describe('ClientItemAdminController - Unit tests', () => {
   let findAllClientItemService: FindAllClientItem;
   let findClientItemByIdService: FindClientItemById;
   let editClientItemService: EditClientItem;
+  let activateClientItemService: ActivateClientItem;
+  let deactivateClientItemService: DeactivateClientItem;
   let deleteClientItemService: DeleteClientItem;
   let deleteBulkClientItemService: DeleteBulkClientItem;
 
@@ -43,6 +47,8 @@ describe('ClientItemAdminController - Unit tests', () => {
         { provide: FindAllClientItem, useValue: createMock<FindAllClientItem>() },
         { provide: FindClientItemById, useValue: createMock<FindClientItemById>() },
         { provide: EditClientItem, useValue: createMock<EditClientItem>() },
+        { provide: ActivateClientItem, useValue: createMock<ActivateClientItem>() },
+        { provide: DeactivateClientItem, useValue: createMock<DeactivateClientItem>() },
         { provide: DeleteClientItem, useValue: createMock<DeleteClientItem>() },
         { provide: DeleteBulkClientItem, useValue: createMock<DeleteBulkClientItem>() },
       ],
@@ -54,6 +60,8 @@ describe('ClientItemAdminController - Unit tests', () => {
     findAllClientItemService = module.get(FindAllClientItem);
     findClientItemByIdService = module.get(FindClientItemById);
     editClientItemService = module.get(EditClientItem);
+    activateClientItemService = module.get(ActivateClientItem);
+    deactivateClientItemService = module.get(DeactivateClientItem);
     deleteClientItemService = module.get(DeleteClientItem);
     deleteBulkClientItemService = module.get(DeleteBulkClientItem);
   });
@@ -151,6 +159,32 @@ describe('ClientItemAdminController - Unit tests', () => {
 
       expect(result).toEqual(output);
       expect(removeBulkSpy).toHaveBeenCalledWith(body);
+    });
+  });
+
+  describe('activate', () => {
+    it('should call activateClientItem.execute with params.id', async() => {
+      const params = createMock<Params>();
+      const output = createMock<SuccessMessage>();
+      const activateSpy = jest.spyOn(activateClientItemService, 'execute').mockResolvedValue(output);
+
+      const result = await sut.activate(params);
+
+      expect(result).toEqual(output);
+      expect(activateSpy).toHaveBeenCalledWith(params.id);
+    });
+  });
+
+  describe('deactivate', () => {
+    it('should call deactivateClientItem.execute with params.id', async() => {
+      const params = createMock<Params>();
+      const output = createMock<SuccessMessage>();
+      const deactivateSpy = jest.spyOn(deactivateClientItemService, 'execute').mockResolvedValue(output);
+
+      const result = await sut.deactivate(params);
+
+      expect(result).toEqual(output);
+      expect(deactivateSpy).toHaveBeenCalledWith(params.id);
     });
   });
 

@@ -24,6 +24,7 @@ function makeClientItemProps(overrides?: Partial<ClientItemProps>): ClientItemPr
     quantity: 2,
     unitValueInCents: 10000,
     cnaeNbsIndopId: 1,
+    active: true,
     ...overrides,
   };
 }
@@ -57,6 +58,7 @@ describe('ClientItemFactory', () => {
         quantity: 5,
         unitValueInCents: 5000,
         cnaeNbsIndopId: 2,
+        active: true,
       });
     });
 
@@ -196,6 +198,7 @@ describe('ClientItemFactory', () => {
         quantity: 3,
         unitValueInCents: 15000,
         cnaeNbsIndopId: 4,
+        active: true,
       });
     });
 

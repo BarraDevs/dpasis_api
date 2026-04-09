@@ -1,5 +1,6 @@
 export type ClientItemProps = ClientItemCreateProps & {
   id: number | null;
+  active: boolean;
 };
 
 export type ClientItemCreateProps = {
@@ -23,5 +24,17 @@ export class ClientItem {
 
   public get props(): Readonly<ClientItemProps> {
     return { ...this._props };
+  }
+
+  public isActive(): boolean {
+    return this._props.active ?? true;
+  }
+
+  public activate(): void {
+    this._props.active = true;
+  }
+
+  public deactivate(): void {
+    this._props.active = false;
   }
 }

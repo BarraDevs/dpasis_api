@@ -207,6 +207,7 @@ describe('ClientItemRepositoryAdapterPrisma - Integration tests', () => {
         quantity: created.quantity,
         unitValueInCents: created.unitValueInCents,
         cnaeNbsIndopId: created.cnaeNbsIndopId,
+        active: created.active,
       });
     });
   });

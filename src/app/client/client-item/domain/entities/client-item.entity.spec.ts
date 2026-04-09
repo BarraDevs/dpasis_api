@@ -8,6 +8,7 @@ function makeClientItemProps(overrides?: Partial<ClientItemProps>): ClientItemPr
     quantity: 2,
     unitValueInCents: 10000,
     cnaeNbsIndopId: 1,
+    active: true,
     ...overrides,
   };
 }
@@ -51,6 +52,7 @@ describe('ClientItem', () => {
         quantity: 5,
         unitValueInCents: 5000,
         cnaeNbsIndopId: 2,
+        active: true,
       });
     });
 
@@ -76,6 +78,7 @@ describe('ClientItem', () => {
         'quantity',
         'unitValueInCents',
         'cnaeNbsIndopId',
+        'active',
       ]);
     });
   });
