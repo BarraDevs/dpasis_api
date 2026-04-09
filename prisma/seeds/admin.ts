@@ -14,6 +14,7 @@ export class AdminSeed {
           status: AccountStatus.ACTIVE,
           email: 'admin@email.com',
           password: new Password('123456').value,
+          canBeRemoved: false,
         },
       },
     },

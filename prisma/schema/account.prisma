@@ -7,6 +7,7 @@ model Account {
   passwordResetToken String? @db.VarChar(64)
   status             String
   profilePicture     String? @db.Text
+  canBeRemoved       Boolean @default(true) // only first admin (from seed) cannot be removed
 
   admin  Admin?
   claims AccountClaim[]

@@ -1,5 +1,6 @@
 import { AccountStatus } from 'src/app/account/domain/enums/account-status.enum';
 import { Claim } from 'src/app/authentication/domain/authorization/claim';
+import { AdminCannotBeInactiveError } from '../errors/admin-cannot-be-inactive';
 import { Admin, AdminProps } from './admin.entity';
 
 function makeAdminProps(overrides?: Partial<AdminProps>): AdminProps {
@@ -11,6 +12,7 @@ function makeAdminProps(overrides?: Partial<AdminProps>): AdminProps {
     profilePicture: null,
     status: AccountStatus.ACTIVE,
     claims: [Claim.BANK_READ],
+    canBeRemoved: true,
     ...overrides,
   };
 }
@@ -60,7 +62,7 @@ describe('Admin', () => {
 
   describe('deactivate', () => {
     it('should set status to INACTIVE', () => {
-      const admin = Admin._instantiate(makeAdminProps({ status: AccountStatus.ACTIVE }));
+      const admin = Admin._instantiate(makeAdminProps({ status: AccountStatus.ACTIVE, canBeRemoved: true }));
 
       admin.deactivate();
 
@@ -68,11 +70,17 @@ describe('Admin', () => {
     });
 
     it('should keep status as INACTIVE when it is already INACTIVE', () => {
-      const admin = Admin._instantiate(makeAdminProps({ status: AccountStatus.INACTIVE }));
+      const admin = Admin._instantiate(makeAdminProps({ status: AccountStatus.INACTIVE, canBeRemoved: true }));
 
       admin.deactivate();
 
       expect(admin.props.status).toBe(AccountStatus.INACTIVE);
+    });
+
+    it('should throw AdminCannotBeInactiveError when admin cannot be inactive', () => {
+      const admin = Admin._instantiate(makeAdminProps({ status: AccountStatus.ACTIVE, canBeRemoved: false }));
+
+      expect(() => admin.deactivate()).toThrow(AdminCannotBeInactiveError);
     });
   });
 });

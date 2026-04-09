@@ -25,6 +25,7 @@ export class AdminRepositoryAdapterPrisma implements IAdminRepository {
           password: passwordHash,
           status: entity.props.status,
           profilePicture: entity.props.profilePicture,
+          canBeRemoved: entity.props.canBeRemoved,
         },
       });
 
@@ -104,6 +105,7 @@ export class AdminRepositoryAdapterPrisma implements IAdminRepository {
       email: row.account.email,
       profilePicture: row.account.profilePicture,
       status: row.account.status as AccountStatus,
+      canBeRemoved: row.account.canBeRemoved,
       claims,
     });
   }

@@ -1,6 +1,7 @@
 import { Test } from '@nestjs/testing';
 import { AccountStatus } from 'src/app/account/domain/enums/account-status.enum';
 import { PermissionLevel } from 'src/app/admin/domain/enums/permission-level.enum';
+import { AdminCannotBeInactiveError } from 'src/app/admin/domain/errors/admin-cannot-be-inactive';
 import { ClaimSubject } from 'src/app/authentication/domain/authorization/claim-subject.enum';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { AdminModule } from '../../../admin.module';
@@ -53,6 +54,16 @@ describe('InactivateAdmin - Integration tests', () => {
 
   it('should throw AdminNotFoundError when admin does not exist', async() => {
     await expect(sut.execute(999999)).rejects.toThrow(AdminNotFoundError);
+  });
+
+  it('should throw AdminCannotBeInactiveError when admin cannot be inactive', async() => {
+    const { id } = await createAdmin.execute(makeCreateInput());
+    await prisma.account.update({
+      where: { id },
+      data: { canBeRemoved: false },
+    });
+
+    await expect(sut.execute(id)).rejects.toThrow(AdminCannotBeInactiveError);
   });
 
   it('should set account status to inactive', async() => {

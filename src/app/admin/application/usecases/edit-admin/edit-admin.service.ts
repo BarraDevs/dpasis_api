@@ -32,6 +32,7 @@ export class EditAdmin {
       document: data.document ?? existing.props.document,
       profilePicture: data.profilePicture !== undefined ? data.profilePicture : existing.props.profilePicture,
       status: existing.props.status,
+      canBeRemoved: existing.props.canBeRemoved,
       claims,
     });
 

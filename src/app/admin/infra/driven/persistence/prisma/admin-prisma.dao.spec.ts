@@ -29,6 +29,7 @@ async function seedAdmin(
       password: 'hash',
       status: input.status,
       profilePicture: null,
+      canBeRemoved: true,
     },
   });
 
@@ -312,6 +313,7 @@ describe('AdminDaoAdapterPrisma - Integration tests', () => {
           password: 'hash',
           status: AccountStatus.ACTIVE,
           profilePicture: null,
+          canBeRemoved: true,
         },
       });
       await prisma.admin.create({

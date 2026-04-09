@@ -57,6 +57,7 @@ describe('AdminRepositoryAdapterPrisma - Integration tests', () => {
       expect(account?.password).toBe('password-hash');
       expect(account?.status).toBe(AccountStatus.ACTIVE);
       expect(account?.admin?.document).toBe('09748165000110');
+      expect(account?.canBeRemoved).toBe(true);
       expect(account?.claims).toHaveLength(1);
       expect(account?.claims[0]).toMatchObject({
         subject: ClaimSubject.Bank,
@@ -106,6 +107,7 @@ describe('AdminRepositoryAdapterPrisma - Integration tests', () => {
         document: '33.000.167/0001-01',
         profilePicture: 'https://pic.example/id.png',
         status: AccountStatus.INACTIVE,
+        canBeRemoved: true,
         claims: [{ subject: ClaimSubject.Company, action: ClaimAction.Read }],
       });
 
@@ -139,6 +141,7 @@ describe('AdminRepositoryAdapterPrisma - Integration tests', () => {
         document: '09.748.165/0001-10',
         profilePicture: null,
         status: AccountStatus.ACTIVE,
+        canBeRemoved: true,
         claims: [],
       });
 

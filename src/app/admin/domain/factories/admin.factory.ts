@@ -60,6 +60,7 @@ export class AdminFactory {
       ...validatedProps,
       accountId: 0,
       status: AccountStatus.ACTIVE,
+      canBeRemoved: true, // all admins can be removed (except the first one from seed)
     });
   }
 
@@ -77,6 +78,7 @@ export class AdminFactory {
       ...validatedProps,
       accountId: props.accountId,
       status: props.status,
+      canBeRemoved: props.canBeRemoved,
     });
   }
 
@@ -89,6 +91,7 @@ export class AdminFactory {
       profilePicture: props.profilePicture,
       status: props.status,
       claims: props.claims,
+      canBeRemoved: props.canBeRemoved,
     });
   }
 }
