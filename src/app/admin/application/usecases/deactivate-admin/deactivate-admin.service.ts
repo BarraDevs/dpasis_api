@@ -5,7 +5,7 @@ import { SuccessMessage } from 'src/core/dtos/success-message.dto';
 import type { IAdminRepository } from '../../persistence/repository/admin-repository.interface';
 
 @Injectable()
-export class InactivateAdmin {
+export class DeactivateAdmin {
   constructor(
     @Inject(TOKENS.AdminRepository) private readonly adminRepository: IAdminRepository,
   ) {}

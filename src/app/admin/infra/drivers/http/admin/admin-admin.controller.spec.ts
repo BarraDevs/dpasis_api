@@ -4,13 +4,13 @@ import { AdminDto, AdminWithSubjectsDto } from 'src/app/admin/application/dtos/a
 import { ActivateAdmin } from 'src/app/admin/application/usecases/activate-admin/activate-admin.service';
 import { CreateAdmin } from 'src/app/admin/application/usecases/create-admin/create-admin.service';
 import { CreateAdminInputDto, CreateAdminOutputDto } from 'src/app/admin/application/usecases/create-admin/dtos/create-admin.dto';
+import { DeactivateAdmin } from 'src/app/admin/application/usecases/deactivate-admin/deactivate-admin.service';
 import { EditAdminInputDto } from 'src/app/admin/application/usecases/edit-admin/dtos/edit-admin.dto';
 import { EditAdmin } from 'src/app/admin/application/usecases/edit-admin/edit-admin.service';
 import { FindAdminById } from 'src/app/admin/application/usecases/find-admin-by-id/find-admin-by-id.service';
 import { FindAllAdminQueryDto } from 'src/app/admin/application/usecases/find-all-admin/dtos/find-all-admin.dto';
 import { FindAllAdmin } from 'src/app/admin/application/usecases/find-all-admin/find-all-admin.service';
 import { FindPermissionSubjects } from 'src/app/admin/application/usecases/find-permission-subjects/find-permission-subjects.service';
-import { InactivateAdmin } from 'src/app/admin/application/usecases/inactivate-admin/inactivate-admin.service';
 import { AuthenticationGuardsModule } from 'src/app/authentication/application/guards/guards.module';
 import { ClaimSubject } from 'src/app/authentication/domain/authorization/claim-subject.enum';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
@@ -26,7 +26,7 @@ describe('AdminAdminController - Unit tests', () => {
   let findAllAdmin: FindAllAdmin;
   let findAdminById: FindAdminById;
   let findPermissions: FindPermissionSubjects;
-  let inactivateAdmin: InactivateAdmin;
+  let deactivateAdmin: DeactivateAdmin;
 
   beforeEach(async() => {
     const module = await Test.createTestingModule({
@@ -39,7 +39,7 @@ describe('AdminAdminController - Unit tests', () => {
         { provide: FindAllAdmin, useValue: createMock<FindAllAdmin>() },
         { provide: FindAdminById, useValue: createMock<FindAdminById>() },
         { provide: FindPermissionSubjects, useValue: createMock<FindPermissionSubjects>() },
-        { provide: InactivateAdmin, useValue: createMock<InactivateAdmin>() },
+        { provide: DeactivateAdmin, useValue: createMock<DeactivateAdmin>() },
       ],
     }).compile();
 
@@ -50,7 +50,7 @@ describe('AdminAdminController - Unit tests', () => {
     findAllAdmin = module.get(FindAllAdmin);
     findAdminById = module.get(FindAdminById);
     findPermissions = module.get(FindPermissionSubjects);
-    inactivateAdmin = module.get(InactivateAdmin);
+    deactivateAdmin = module.get(DeactivateAdmin);
   });
 
   it('should be defined', () => {
@@ -121,16 +121,16 @@ describe('AdminAdminController - Unit tests', () => {
     });
   });
 
-  describe('inactivate', () => {
+  describe('deactivate', () => {
     it('should call inactivateAdmin.execute with params.id', async() => {
       const params = createMock<Params>();
       const output = createMock<SuccessMessage>();
-      const inactivateSpy = jest.spyOn(inactivateAdmin, 'execute').mockResolvedValue(output);
+      const deactivateSpy = jest.spyOn(deactivateAdmin, 'execute').mockResolvedValue(output);
 
-      const result = await sut.inactivate(params);
+      const result = await sut.deactivate(params);
 
       expect(result).toEqual(output);
-      expect(inactivateSpy).toHaveBeenCalledWith(params.id);
+      expect(deactivateSpy).toHaveBeenCalledWith(params.id);
     });
   });
 

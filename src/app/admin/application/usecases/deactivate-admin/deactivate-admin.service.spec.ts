@@ -8,10 +8,10 @@ import { AdminModule } from '../../../admin.module';
 import { AdminNotFoundError } from '../../../domain/errors/admin-not-found.error';
 import { CreateAdmin } from '../create-admin/create-admin.service';
 import { CreateAdminInputDto } from '../create-admin/dtos/create-admin.dto';
-import { InactivateAdmin } from './inactivate-admin.service';
+import { DeactivateAdmin } from './deactivate-admin.service';
 
-describe('InactivateAdmin - Integration tests', () => {
-  let sut: InactivateAdmin;
+describe('DeactivateAdmin - Integration tests', () => {
+  let sut: DeactivateAdmin;
   let createAdmin: CreateAdmin;
   let prisma: PrismaService;
 
@@ -20,7 +20,7 @@ describe('InactivateAdmin - Integration tests', () => {
       imports: [AdminModule],
     }).compile();
 
-    sut = module.get(InactivateAdmin);
+    sut = module.get(DeactivateAdmin);
     createAdmin = module.get(CreateAdmin);
     prisma = module.get(PrismaService);
   });
