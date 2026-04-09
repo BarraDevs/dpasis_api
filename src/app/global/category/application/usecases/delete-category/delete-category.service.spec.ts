@@ -35,7 +35,7 @@ describe('DeleteCategory - Integration tests', () => {
     await expect(sut.execute(0)).rejects.toThrow(CategoryNotFoundError);
   });
 
-  it('should throw CategoryInUseError when services use the category', async() => {
+  it('should throw CategoryInUseError when there are linked records', async() => {
     const category = await prisma.category.create({
       data: { name: `Cat ${Date.now()}`, active: true },
     });
@@ -77,7 +77,7 @@ describe('DeleteCategory - Integration tests', () => {
     });
 
     await expect(sut.execute(category.id)).rejects.toThrow(CategoryInUseError);
-    await expect(sut.execute(category.id)).rejects.toThrow('Não é possível excluir pois existem serviços vinculados.');
+    await expect(sut.execute(category.id)).rejects.toThrow('Não é possível excluir a categoria pois existem registros vinculados.');
 
     const stillExists = await prisma.category.findUnique({ where: { id: category.id } });
     expect(stillExists).not.toBeNull();

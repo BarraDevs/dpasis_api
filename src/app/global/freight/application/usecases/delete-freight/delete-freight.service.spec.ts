@@ -35,7 +35,7 @@ describe('DeleteFreight - Integration tests', () => {
     await expect(sut.execute(0)).rejects.toThrow(FreightNotFoundError);
   });
 
-  it('should throw FreightInUseError when services use the freight', async() => {
+  it('should throw FreightInUseError when there are linked records', async() => {
     const freight = await prisma.freight.create({
       data: { name: `Freight ${Date.now()}`, active: true },
     });
@@ -77,7 +77,7 @@ describe('DeleteFreight - Integration tests', () => {
     });
 
     await expect(sut.execute(freight.id)).rejects.toThrow(FreightInUseError);
-    await expect(sut.execute(freight.id)).rejects.toThrow('Não é possível excluir pois existem serviços vinculados.');
+    await expect(sut.execute(freight.id)).rejects.toThrow('Não é possível excluir o frete pois existem registros vinculados.');
 
     const stillExists = await prisma.freight.findUnique({ where: { id: freight.id } });
     expect(stillExists).not.toBeNull();

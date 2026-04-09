@@ -35,7 +35,7 @@ describe('DeleteDeliveryTerm - Integration tests', () => {
     await expect(sut.execute(0)).rejects.toThrow(DeliveryTermNotFoundError);
   });
 
-  it('should throw DeliveryTermInUseError when services use the delivery term', async() => {
+  it('should throw DeliveryTermInUseError when there are linked records', async() => {
     const deliveryTerm = await prisma.deliveryTerm.create({
       data: { name: `Term ${Date.now()}`, active: true },
     });
@@ -77,7 +77,7 @@ describe('DeleteDeliveryTerm - Integration tests', () => {
     });
 
     await expect(sut.execute(deliveryTerm.id)).rejects.toThrow(DeliveryTermInUseError);
-    await expect(sut.execute(deliveryTerm.id)).rejects.toThrow('Não é possível excluir pois existem serviços vinculados.');
+    await expect(sut.execute(deliveryTerm.id)).rejects.toThrow('Não é possível excluir o prazo de entrega pois existem registros vinculados.');
 
     const stillExists = await prisma.deliveryTerm.findUnique({ where: { id: deliveryTerm.id } });
     expect(stillExists).not.toBeNull();

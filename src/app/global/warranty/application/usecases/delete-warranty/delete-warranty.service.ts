@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { TOKENS } from 'src/core/di/token';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
+import { hasAnyPositiveReference } from 'src/shared/helpers/has-any-positive-reference';
 import { WarrantyInUseError } from '../../../domain/errors/warranty-in-use.error';
 import { WarrantyNotFoundError } from '../../../domain/errors/warranty-not-found.error';
 import type { IWarrantyDao } from '../../persistence/dao/warranty-dao.interface';
@@ -17,8 +18,10 @@ export class DeleteWarranty {
       throw new WarrantyNotFoundError();
     }
 
-    const servicesCount = await this.warrantyDao.countServicesByWarrantyId(id);
-    if (servicesCount > 0) {
+    const inUse = await hasAnyPositiveReference([
+      () => this.warrantyDao.countServicesByWarrantyId(id),
+    ]);
+    if (inUse) {
       throw new WarrantyInUseError();
     }
 

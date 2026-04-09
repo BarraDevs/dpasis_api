@@ -35,7 +35,7 @@ describe('DeleteWarranty - Integration tests', () => {
     await expect(sut.execute(0)).rejects.toThrow(WarrantyNotFoundError);
   });
 
-  it('should throw WarrantyInUseError when services use the warranty', async() => {
+  it('should throw WarrantyInUseError when there are linked records', async() => {
     const warranty = await prisma.warranty.create({
       data: { name: `Warranty ${Date.now()}`, active: true },
     });
@@ -77,7 +77,7 @@ describe('DeleteWarranty - Integration tests', () => {
     });
 
     await expect(sut.execute(warranty.id)).rejects.toThrow(WarrantyInUseError);
-    await expect(sut.execute(warranty.id)).rejects.toThrow('Não é possível excluir pois existem serviços vinculados.');
+    await expect(sut.execute(warranty.id)).rejects.toThrow('Não é possível excluir a garantia pois existem registros vinculados.');
 
     const stillExists = await prisma.warranty.findUnique({ where: { id: warranty.id } });
     expect(stillExists).not.toBeNull();

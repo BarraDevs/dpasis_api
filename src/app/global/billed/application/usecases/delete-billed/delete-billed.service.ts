@@ -3,6 +3,7 @@ import { BilledInUseError } from 'src/app/global/billed/domain/errors/billed-in-
 import { BilledNotFoundError } from 'src/app/global/billed/domain/errors/billed-not-found.error';
 import { TOKENS } from 'src/core/di/token';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
+import { hasAnyPositiveReference } from 'src/shared/helpers/has-any-positive-reference';
 import type { IBilledDao } from '../../persistence/dao/billed-dao.interface';
 import type { IBilledRepository } from '../../persistence/repository/billed-repository.interface';
 
@@ -19,8 +20,10 @@ export class DeleteBilled {
       throw new BilledNotFoundError();
     }
 
-    const servicesCount = await this.billedDao.countServicesByBilledId(id);
-    if (servicesCount > 0) {
+    const inUse = await hasAnyPositiveReference([
+      () => this.billedDao.countServicesByBilledId(id),
+    ]);
+    if (inUse) {
       throw new BilledInUseError();
     }
 

@@ -31,7 +31,7 @@ describe('DeleteBilled - Integration tests', () => {
     await expect(sut.execute(99999)).rejects.toThrow(BilledNotFoundError);
   });
 
-  it('should throw BilledInUseError when services reference this billed', async() => {
+  it('should throw BilledInUseError when there are linked records', async() => {
     const billedRow = await prisma.billed.create({
       data: {
         description: 'Para InUseError',
@@ -76,7 +76,7 @@ describe('DeleteBilled - Integration tests', () => {
     });
 
     await expect(sut.execute(billedRow.id)).rejects.toThrow(BilledInUseError);
-    await expect(sut.execute(billedRow.id)).rejects.toThrow('Não é possível excluir pois existem serviços vinculados.');
+    await expect(sut.execute(billedRow.id)).rejects.toThrow('Não é possível excluir o faturado pois existem registros vinculados.');
 
     const stillExists = await prisma.billed.findUnique({ where: { id: billedRow.id } });
     expect(stillExists).not.toBeNull();

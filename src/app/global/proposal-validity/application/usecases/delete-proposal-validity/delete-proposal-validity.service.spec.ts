@@ -35,7 +35,7 @@ describe('DeleteProposalValidity - Integration tests', () => {
     await expect(sut.execute(0)).rejects.toThrow(ProposalValidityNotFoundError);
   });
 
-  it('should throw ProposalValidityInUseError when services use the proposal validity', async() => {
+  it('should throw ProposalValidityInUseError when there are linked records', async() => {
     const proposalValidity = await prisma.proposalValidity.create({
       data: { name: `Validity ${Date.now()}`, active: true },
     });
@@ -77,7 +77,7 @@ describe('DeleteProposalValidity - Integration tests', () => {
     });
 
     await expect(sut.execute(proposalValidity.id)).rejects.toThrow(ProposalValidityInUseError);
-    await expect(sut.execute(proposalValidity.id)).rejects.toThrow('Não é possível excluir pois existem serviços vinculados.');
+    await expect(sut.execute(proposalValidity.id)).rejects.toThrow('Não é possível excluir a validade pois existem registros vinculados.');
 
     const stillExists = await prisma.proposalValidity.findUnique({ where: { id: proposalValidity.id } });
     expect(stillExists).not.toBeNull();

@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { TOKENS } from 'src/core/di/token';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
+import { hasAnyPositiveReference } from 'src/shared/helpers/has-any-positive-reference';
 import { DeliveryTermInUseError } from '../../../domain/errors/delivery-term-in-use.error';
 import { DeliveryTermNotFoundError } from '../../../domain/errors/delivery-term-not-found.error';
 import type { IDeliveryTermDao } from '../../persistence/dao/delivery-term-dao.interface';
@@ -17,8 +18,10 @@ export class DeleteDeliveryTerm {
       throw new DeliveryTermNotFoundError();
     }
 
-    const servicesCount = await this.deliveryTermDao.countServicesByDeliveryTermId(id);
-    if (servicesCount > 0) {
+    const inUse = await hasAnyPositiveReference([
+      () => this.deliveryTermDao.countServicesByDeliveryTermId(id),
+    ]);
+    if (inUse) {
       throw new DeliveryTermInUseError();
     }
 
