@@ -10,4 +10,6 @@ export interface INbsDao {
   save(data: CreateNbsInputDto): Promise<number>;
   edit(id: number, data: EditNbsInputDto): Promise<void>;
   updateStatus(id: number, active: boolean): Promise<void>;
+  delete(id: number): Promise<void>;
+  countCnaeNbsIndopByNbsId(nbsId: number): Promise<number>;
 }

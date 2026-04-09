@@ -10,4 +10,6 @@ export interface ICnaeDao {
   save(data: CreateCnaeInputDto): Promise<number>;
   edit(id: number, data: EditCnaeInputDto): Promise<void>;
   updateStatus(id: number, active: boolean): Promise<void>;
+  delete(id: number): Promise<void>;
+  countCnaeNbsIndopByCnaeId(cnaeId: number): Promise<number>;
 }

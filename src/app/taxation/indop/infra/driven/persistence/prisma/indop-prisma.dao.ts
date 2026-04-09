@@ -89,4 +89,16 @@ export class IndopDaoAdapterPrisma implements IIndopDao {
       data: { active },
     });
   }
+
+  public async delete(id: number): Promise<void> {
+    await this.prisma.indop.delete({
+      where: { id },
+    });
+  }
+
+  public async countCnaeNbsIndopByIndopId(indopId: number): Promise<number> {
+    return this.prisma.cnaeNbsIndop.count({
+      where: { indopId },
+    });
+  }
 }

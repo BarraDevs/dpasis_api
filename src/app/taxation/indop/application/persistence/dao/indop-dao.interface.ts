@@ -10,4 +10,6 @@ export interface IIndopDao {
   save(data: CreateIndopInputDto): Promise<number>;
   edit(id: number, data: EditIndopInputDto): Promise<void>;
   updateStatus(id: number, active: boolean): Promise<void>;
+  delete(id: number): Promise<void>;
+  countCnaeNbsIndopByIndopId(indopId: number): Promise<number>;
 }

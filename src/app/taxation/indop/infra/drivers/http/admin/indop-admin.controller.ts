@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
 import { Claim } from 'src/app/authentication/domain/authorization/claim';
 import { RequiredClaims } from 'src/app/authentication/infra/decorators/required-claims.decorator';
@@ -6,6 +6,7 @@ import { RequiredRoles } from 'src/app/authentication/infra/decorators/required-
 import { IndopDto } from 'src/app/taxation/indop/application/dtos/indop.dto';
 import { CreateIndop } from 'src/app/taxation/indop/application/usecases/create-indop/create-indop.service';
 import { CreateIndopInputDto, CreateIndopOutputDto } from 'src/app/taxation/indop/application/usecases/create-indop/dtos/create-indop.dto';
+import { DeleteIndop } from 'src/app/taxation/indop/application/usecases/delete-indop/delete-indop.service';
 import { EditIndopInputDto } from 'src/app/taxation/indop/application/usecases/edit-indop/dtos/edit-indop.dto';
 import { EditIndop } from 'src/app/taxation/indop/application/usecases/edit-indop/edit-indop.service';
 import { FindAllIndopQueryDto } from 'src/app/taxation/indop/application/usecases/find-all-indop/dtos/find-all-indop.dto';
@@ -26,6 +27,7 @@ export class IndopAdminController {
     private readonly findIndopById: FindIndopById,
     private readonly editIndop: EditIndop,
     private readonly updateIndopStatus: UpdateIndopStatus,
+    private readonly deleteIndop: DeleteIndop,
   ) {}
 
   @Post()
@@ -91,5 +93,19 @@ export class IndopAdminController {
   })
   public update(@Param() params: Params, @Body() body: EditIndopInputDto): Promise<SuccessMessage> {
     return this.editIndop.execute(params.id, body);
+  }
+
+  @Delete(':id')
+  @RequiredClaims(Claim.INDOP_WRITE)
+  @Swagger({
+    tags: ['Tributação - INDOP'],
+    summary: 'Excluir INDOP',
+    applyBadRequest: true,
+    applyNotFound: true,
+    applyConflict: true,
+    okResponse: SuccessMessage,
+  })
+  public remove(@Param() params: Params): Promise<SuccessMessage> {
+    return this.deleteIndop.execute(params.id);
   }
 }

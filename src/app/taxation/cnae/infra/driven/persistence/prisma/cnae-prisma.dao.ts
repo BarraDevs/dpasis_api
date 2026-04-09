@@ -89,4 +89,16 @@ export class CnaeDaoAdapterPrisma implements ICnaeDao {
       data: { active },
     });
   }
+
+  public async delete(id: number): Promise<void> {
+    await this.prisma.cnae.delete({
+      where: { id },
+    });
+  }
+
+  public async countCnaeNbsIndopByCnaeId(cnaeId: number): Promise<number> {
+    return this.prisma.cnaeNbsIndop.count({
+      where: { cnaeId },
+    });
+  }
 }

@@ -4,6 +4,7 @@ import { AuthenticationGuardsModule } from 'src/app/authentication/application/g
 import { NbsDto } from 'src/app/taxation/nbs/application/dtos/nbs.dto';
 import { CreateNbs } from 'src/app/taxation/nbs/application/usecases/create-nbs/create-nbs.service';
 import { CreateNbsInputDto, CreateNbsOutputDto } from 'src/app/taxation/nbs/application/usecases/create-nbs/dtos/create-nbs.dto';
+import { DeleteNbs } from 'src/app/taxation/nbs/application/usecases/delete-nbs/delete-nbs.service';
 import { EditNbsInputDto } from 'src/app/taxation/nbs/application/usecases/edit-nbs/dtos/edit-nbs.dto';
 import { EditNbs } from 'src/app/taxation/nbs/application/usecases/edit-nbs/edit-nbs.service';
 import { FindAllNbsQueryDto } from 'src/app/taxation/nbs/application/usecases/find-all-nbs/dtos/find-all-nbs.dto';
@@ -22,6 +23,7 @@ describe('NbsAdminController - Unit tests', () => {
   let findNbsByIdService: FindNbsById;
   let editNbsService: EditNbs;
   let updateNbsStatusService: UpdateNbsStatus;
+  let deleteNbsService: DeleteNbs;
 
   beforeEach(async() => {
     const module = await Test.createTestingModule({
@@ -33,6 +35,7 @@ describe('NbsAdminController - Unit tests', () => {
         { provide: FindNbsById, useValue: createMock<FindNbsById>() },
         { provide: EditNbs, useValue: createMock<EditNbs>() },
         { provide: UpdateNbsStatus, useValue: createMock<UpdateNbsStatus>() },
+        { provide: DeleteNbs, useValue: createMock<DeleteNbs>() },
       ],
     }).compile();
 
@@ -42,6 +45,7 @@ describe('NbsAdminController - Unit tests', () => {
     findNbsByIdService = module.get(FindNbsById);
     editNbsService = module.get(EditNbs);
     updateNbsStatusService = module.get(UpdateNbsStatus);
+    deleteNbsService = module.get(DeleteNbs);
   });
 
   it('should be defined', () => {
@@ -126,6 +130,19 @@ describe('NbsAdminController - Unit tests', () => {
       // Assert
       expect(result).toEqual(output);
       expect(updateSpy).toHaveBeenCalledWith(params.id, body);
+    });
+  });
+
+  describe('remove', () => {
+    it('should call deleteNbs.execute with params.id', async() => {
+      const params = createMock<Params>();
+      const output = createMock<SuccessMessage>();
+      const removeSpy = jest.spyOn(deleteNbsService, 'execute').mockResolvedValue(output);
+
+      const result = await sut.remove(params);
+
+      expect(result).toEqual(output);
+      expect(removeSpy).toHaveBeenCalledWith(params.id);
     });
   });
 });

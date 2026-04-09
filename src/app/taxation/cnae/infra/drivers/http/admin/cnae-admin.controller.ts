@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
 import { Claim } from 'src/app/authentication/domain/authorization/claim';
 import { RequiredClaims } from 'src/app/authentication/infra/decorators/required-claims.decorator';
@@ -6,6 +6,7 @@ import { RequiredRoles } from 'src/app/authentication/infra/decorators/required-
 import { CnaeDto } from 'src/app/taxation/cnae/application/dtos/cnae.dto';
 import { CreateCnae } from 'src/app/taxation/cnae/application/usecases/create-cnae/create-cnae.service';
 import { CreateCnaeInputDto, CreateCnaeOutputDto } from 'src/app/taxation/cnae/application/usecases/create-cnae/dtos/create-cnae.dto';
+import { DeleteCnae } from 'src/app/taxation/cnae/application/usecases/delete-cnae/delete-cnae.service';
 import { EditCnaeInputDto } from 'src/app/taxation/cnae/application/usecases/edit-cnae/dtos/edit-cnae.dto';
 import { EditCnae } from 'src/app/taxation/cnae/application/usecases/edit-cnae/edit-cnae.service';
 import { FindAllCnaeQueryDto } from 'src/app/taxation/cnae/application/usecases/find-all-cnae/dtos/find-all-cnae.dto';
@@ -26,6 +27,7 @@ export class CnaeAdminController {
     private readonly findCnaeById: FindCnaeById,
     private readonly editCnae: EditCnae,
     private readonly updateCnaeStatus: UpdateCnaeStatus,
+    private readonly deleteCnae: DeleteCnae,
   ) {}
 
   @Post()
@@ -91,5 +93,19 @@ export class CnaeAdminController {
   })
   public update(@Param() params: Params, @Body() body: EditCnaeInputDto): Promise<SuccessMessage> {
     return this.editCnae.execute(params.id, body);
+  }
+
+  @Delete(':id')
+  @RequiredClaims(Claim.CNAE_WRITE)
+  @Swagger({
+    tags: ['Tributação - CNAE'],
+    summary: 'Excluir CNAE',
+    applyBadRequest: true,
+    applyNotFound: true,
+    applyConflict: true,
+    okResponse: SuccessMessage,
+  })
+  public remove(@Param() params: Params): Promise<SuccessMessage> {
+    return this.deleteCnae.execute(params.id);
   }
 }

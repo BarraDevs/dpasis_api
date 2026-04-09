@@ -305,4 +305,44 @@ describe('CnaeDaoAdapterPrisma - Integration tests', () => {
       expect(updated2?.active).toBe(true);
     });
   });
+
+  describe('delete', () => {
+    it('should remove cnae', async() => {
+      const cnae = await prisma.cnae.create({
+        data: { code: `C${Date.now()}`, description: 'Test', active: true },
+      });
+
+      await sut.delete(cnae.id);
+
+      expect(await prisma.cnae.findUnique({ where: { id: cnae.id } })).toBeNull();
+    });
+  });
+
+  describe('countCnaeNbsIndopByCnaeId', () => {
+    it('should return 0 when there is no combination for this CNAE', async() => {
+      const cnae = await prisma.cnae.create({
+        data: { code: `C${Date.now()}`, description: 'Test', active: true },
+      });
+
+      const count = await sut.countCnaeNbsIndopByCnaeId(cnae.id);
+
+      expect(count).toBe(0);
+    });
+
+    it('should return count of combinations referencing this CNAE', async() => {
+      const suffix = `${Date.now()}`;
+      const [cnae, nbs, indop] = await Promise.all([
+        prisma.cnae.create({ data: { code: `C${suffix}`, description: 'C', active: true } }),
+        prisma.nbs.create({ data: { code: `N${suffix}`, description: 'N', active: true } }),
+        prisma.indop.create({ data: { code: `I${suffix}`, description: 'I', active: true } }),
+      ]);
+      await prisma.cnaeNbsIndop.create({
+        data: { cnaeId: cnae.id, nbsId: nbs.id, indopId: indop.id },
+      });
+
+      const count = await sut.countCnaeNbsIndopByCnaeId(cnae.id);
+
+      expect(count).toBe(1);
+    });
+  });
 });

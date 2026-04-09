@@ -89,4 +89,16 @@ export class NbsDaoAdapterPrisma implements INbsDao {
       data: { active },
     });
   }
+
+  public async delete(id: number): Promise<void> {
+    await this.prisma.nbs.delete({
+      where: { id },
+    });
+  }
+
+  public async countCnaeNbsIndopByNbsId(nbsId: number): Promise<number> {
+    return this.prisma.cnaeNbsIndop.count({
+      where: { nbsId },
+    });
+  }
 }

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
 import { Claim } from 'src/app/authentication/domain/authorization/claim';
 import { RequiredClaims } from 'src/app/authentication/infra/decorators/required-claims.decorator';
@@ -6,6 +6,7 @@ import { RequiredRoles } from 'src/app/authentication/infra/decorators/required-
 import { NbsDto } from 'src/app/taxation/nbs/application/dtos/nbs.dto';
 import { CreateNbs } from 'src/app/taxation/nbs/application/usecases/create-nbs/create-nbs.service';
 import { CreateNbsInputDto, CreateNbsOutputDto } from 'src/app/taxation/nbs/application/usecases/create-nbs/dtos/create-nbs.dto';
+import { DeleteNbs } from 'src/app/taxation/nbs/application/usecases/delete-nbs/delete-nbs.service';
 import { EditNbsInputDto } from 'src/app/taxation/nbs/application/usecases/edit-nbs/dtos/edit-nbs.dto';
 import { EditNbs } from 'src/app/taxation/nbs/application/usecases/edit-nbs/edit-nbs.service';
 import { FindAllNbsQueryDto } from 'src/app/taxation/nbs/application/usecases/find-all-nbs/dtos/find-all-nbs.dto';
@@ -26,6 +27,7 @@ export class NbsAdminController {
     private readonly findNbsById: FindNbsById,
     private readonly editNbs: EditNbs,
     private readonly updateNbsStatus: UpdateNbsStatus,
+    private readonly deleteNbs: DeleteNbs,
   ) {}
 
   @Post()
@@ -91,5 +93,19 @@ export class NbsAdminController {
   })
   public update(@Param() params: Params, @Body() body: EditNbsInputDto): Promise<SuccessMessage> {
     return this.editNbs.execute(params.id, body);
+  }
+
+  @Delete(':id')
+  @RequiredClaims(Claim.NBS_WRITE)
+  @Swagger({
+    tags: ['Tributação - NBS'],
+    summary: 'Excluir NBS',
+    applyBadRequest: true,
+    applyNotFound: true,
+    applyConflict: true,
+    okResponse: SuccessMessage,
+  })
+  public remove(@Param() params: Params): Promise<SuccessMessage> {
+    return this.deleteNbs.execute(params.id);
   }
 }

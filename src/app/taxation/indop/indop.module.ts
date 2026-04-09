@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { AuthenticationGuardsModule } from 'src/app/authentication/application/guards/guards.module';
 import { IndopPersistenceModule } from './application/persistence/indop-persistence.module';
 import { CreateIndop } from './application/usecases/create-indop/create-indop.service';
+import { DeleteIndop } from './application/usecases/delete-indop/delete-indop.service';
 import { EditIndop } from './application/usecases/edit-indop/edit-indop.service';
 import { FindAllIndop } from './application/usecases/find-all-indop/find-all-indop.service';
 import { FindIndopById } from './application/usecases/find-indop-by-id/find-indop-by-id.service';
@@ -18,6 +19,7 @@ import { IndopAdminController } from './infra/drivers/http/admin/indop-admin.con
   ],
   providers: [
     CreateIndop,
+    DeleteIndop,
     EditIndop,
     FindAllIndop,
     FindIndopById,

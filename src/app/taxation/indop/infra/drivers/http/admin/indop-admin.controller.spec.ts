@@ -4,6 +4,7 @@ import { AuthenticationGuardsModule } from 'src/app/authentication/application/g
 import { IndopDto } from 'src/app/taxation/indop/application/dtos/indop.dto';
 import { CreateIndop } from 'src/app/taxation/indop/application/usecases/create-indop/create-indop.service';
 import { CreateIndopInputDto, CreateIndopOutputDto } from 'src/app/taxation/indop/application/usecases/create-indop/dtos/create-indop.dto';
+import { DeleteIndop } from 'src/app/taxation/indop/application/usecases/delete-indop/delete-indop.service';
 import { EditIndopInputDto } from 'src/app/taxation/indop/application/usecases/edit-indop/dtos/edit-indop.dto';
 import { EditIndop } from 'src/app/taxation/indop/application/usecases/edit-indop/edit-indop.service';
 import { FindAllIndopQueryDto } from 'src/app/taxation/indop/application/usecases/find-all-indop/dtos/find-all-indop.dto';
@@ -22,6 +23,7 @@ describe('IndopAdminController - Unit tests', () => {
   let findIndopByIdService: FindIndopById;
   let editIndopService: EditIndop;
   let updateIndopStatusService: UpdateIndopStatus;
+  let deleteIndopService: DeleteIndop;
 
   beforeEach(async() => {
     const module = await Test.createTestingModule({
@@ -33,6 +35,7 @@ describe('IndopAdminController - Unit tests', () => {
         { provide: FindIndopById, useValue: createMock<FindIndopById>() },
         { provide: EditIndop, useValue: createMock<EditIndop>() },
         { provide: UpdateIndopStatus, useValue: createMock<UpdateIndopStatus>() },
+        { provide: DeleteIndop, useValue: createMock<DeleteIndop>() },
       ],
     }).compile();
 
@@ -42,6 +45,7 @@ describe('IndopAdminController - Unit tests', () => {
     findIndopByIdService = module.get(FindIndopById);
     editIndopService = module.get(EditIndop);
     updateIndopStatusService = module.get(UpdateIndopStatus);
+    deleteIndopService = module.get(DeleteIndop);
   });
 
   it('should be defined', () => {
@@ -126,6 +130,19 @@ describe('IndopAdminController - Unit tests', () => {
       // Assert
       expect(result).toEqual(output);
       expect(updateSpy).toHaveBeenCalledWith(params.id, body);
+    });
+  });
+
+  describe('remove', () => {
+    it('should call deleteIndop.execute with params.id', async() => {
+      const params = createMock<Params>();
+      const output = createMock<SuccessMessage>();
+      const removeSpy = jest.spyOn(deleteIndopService, 'execute').mockResolvedValue(output);
+
+      const result = await sut.remove(params);
+
+      expect(result).toEqual(output);
+      expect(removeSpy).toHaveBeenCalledWith(params.id);
     });
   });
 });
