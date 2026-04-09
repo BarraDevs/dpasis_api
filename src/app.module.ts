@@ -5,8 +5,7 @@ import { ClientModuleModule } from './app/client/client-module.module';
 import { CompanyModule } from './app/company/company.module';
 import { ExternalApisModule } from './app/external-apis/external-apis.module';
 import { FaqModule } from './app/faq/faq.module';
-import { BankModule } from './app/global/bank/bank.module';
-import { TaxationModuleModule } from './app/global/taxation/taxation-module.module';
+import { GlobalModule } from './app/global/global.module';
 import { ServiceModuleModule } from './app/service/service-module.module';
 import { UploadFileModule } from './app/upload-file/upload-file.module';
 import { CoreModule } from './core/core.module';
@@ -18,13 +17,12 @@ import { InfraModule } from './infra/infra.module';
     InfraModule,
     AuthenticationModule,
     AdminModule,
-    BankModule,
     CompanyModule,
     ClientModuleModule,
     ExternalApisModule,
     FaqModule,
+    GlobalModule,
     ServiceModuleModule,
-    TaxationModuleModule,
     UploadFileModule,
   ],
 })

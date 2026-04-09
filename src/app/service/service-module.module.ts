@@ -10,17 +10,19 @@ import { ServiceCatalogModule } from './service-catalog/service-catalog.module';
 
 const modules = [
   ServiceAttendanceValueModule,
-  BilledModule,
   ServiceCatalogModule,
-  CategoryModule,
-  FreightModule,
-  DeliveryTermModule,
-  WarrantyModule,
-  ProposalValidityModule,
 ];
 
 @Module({
-  imports: [...modules],
+  imports: [
+    ...modules,
+    BilledModule,
+    CategoryModule,
+    DeliveryTermModule,
+    FreightModule,
+    ProposalValidityModule,
+    WarrantyModule,
+  ],
   exports: [...modules],
 })
 export class ServiceModuleModule {}
