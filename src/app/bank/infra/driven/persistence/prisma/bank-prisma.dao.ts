@@ -119,4 +119,16 @@ export class BankDaoAdapterPrisma implements IBankDao {
       data: { active },
     });
   }
+
+  public async delete(id: number): Promise<void> {
+    await this.prisma.bank.delete({
+      where: { id },
+    });
+  }
+
+  public async countClientInvoiceConfigsByBankId(bankId: number): Promise<number> {
+    return this.prisma.clientInvoiceConfig.count({
+      where: { bankId },
+    });
+  }
 }

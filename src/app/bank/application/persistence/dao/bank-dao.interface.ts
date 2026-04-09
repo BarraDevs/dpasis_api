@@ -10,4 +10,6 @@ export interface IBankDao {
   save(data: CreateBankInputDto): Promise<number>;
   edit(id: number, data: EditBankInputDto): Promise<void>;
   updateStatus(id: number, active: boolean): Promise<void>;
+  delete(id: number): Promise<void>;
+  countClientInvoiceConfigsByBankId(bankId: number): Promise<number>;
 }

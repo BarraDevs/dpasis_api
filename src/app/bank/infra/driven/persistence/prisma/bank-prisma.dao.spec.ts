@@ -3,6 +3,11 @@ import { BankDto } from 'src/app/bank/application/dtos/bank.dto';
 import { CreateBankInputDto } from 'src/app/bank/application/usecases/create-bank/dtos/create-bank.dto';
 import { EditBankInputDto } from 'src/app/bank/application/usecases/edit-bank/dtos/edit-bank.dto';
 import { FindAllBankQueryDto } from 'src/app/bank/application/usecases/find-all-bank/dtos/find-all-bank.dto';
+import { ClientAddressType } from 'src/app/client/client-address/domain/enums/client-address-type.enum';
+import { ClientInvoiceConfigDueDateType } from 'src/app/client/client-invoice-config/domain/enums/client-invoice-config-due-date-type.enum';
+import { ClientInvoiceConfigType } from 'src/app/client/client-invoice-config/domain/enums/client-invoice-config-type.enum';
+import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
+import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum';
 import { ConfigModule } from 'src/core/config/config.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { BankDaoAdapterPrisma } from './bank-prisma.dao';
@@ -369,6 +374,103 @@ describe('BankDaoAdapterPrisma - Integration tests', () => {
       // Assert (again)
       const updated2 = await prisma.bank.findUnique({ where: { id: bank.id } });
       expect(updated2?.active).toBe(true);
+    });
+  });
+
+  describe('delete', () => {
+    it('should remove bank', async() => {
+      const bank = await prisma.bank.create({
+        data: { ...baseBankData, bankCode: `Z${Date.now()}`.slice(0, 20), account: `Q${Date.now()}`.slice(0, 20) },
+      });
+
+      await sut.delete(bank.id);
+
+      expect(await prisma.bank.findUnique({ where: { id: bank.id } })).toBeNull();
+    });
+  });
+
+  describe('countClientInvoiceConfigsByBankId', () => {
+    it('should return 0 when bank has no invoice configs', async() => {
+      const bank = await prisma.bank.create({
+        data: { ...baseBankData, bankCode: `C${Date.now()}`.slice(0, 20), account: `A${Date.now()}`.slice(0, 20) },
+      });
+
+      const count = await sut.countClientInvoiceConfigsByBankId(bank.id);
+
+      expect(count).toBe(0);
+    });
+
+    it('should return count of client invoice configs referencing this bank', async() => {
+      const suffix = `${Date.now()}`;
+      const bank = await prisma.bank.create({
+        data: {
+          drawer: 'D',
+          wallet: '1',
+          account: `I${suffix}`.slice(0, 20),
+          agency: '0001',
+          bankCode: `K${suffix}`.slice(0, 20),
+          bankName: 'Bank',
+          paymentLocation: null,
+          active: true,
+        },
+      });
+
+      const [group, owner] = await Promise.all([
+        prisma.clientGroup.create({ data: { name: `G${suffix}`, active: true } }),
+        prisma.clientOwner.create({ data: { name: `O${suffix}`, active: true } }),
+      ]);
+
+      const client = await prisma.client.create({
+        data: {
+          type: ClientType.PJ,
+          document: String(Date.now()).padStart(14, '0').slice(-14),
+          ie: null,
+          groupId: group.id,
+          ownerId: owner.id,
+          companyName: 'Co',
+          fantasyName: null,
+          headquarters: 'SP',
+          invoiceType: ClientInvoiceType.CONTRACT,
+          generateInvoice: true,
+          active: true,
+        },
+      });
+
+      const address = await prisma.clientAddress.create({
+        data: {
+          clientId: client.id,
+          type: ClientAddressType.BILLING,
+          zipCode: '12345-678',
+          street: 'Rua',
+          number: '1',
+          complement: null,
+          neighborhood: 'C',
+          city: 'SP',
+          state: 'SP',
+          active: true,
+        },
+      });
+
+      await prisma.clientInvoiceConfig.create({
+        data: {
+          clientId: client.id,
+          generateNf: true,
+          type: ClientInvoiceConfigType.MONTHLY,
+          emissionDay: 5,
+          dueDateType: ClientInvoiceConfigDueDateType.DUE_DATE,
+          dueDateDay: 15,
+          deadlineDays: null,
+          months: [],
+          billingAddressId: address.id,
+          bankId: bank.id,
+          autoProtestBoleto: false,
+          message: null,
+        },
+      });
+
+      const count = await sut.countClientInvoiceConfigsByBankId(bank.id);
+
+      expect(count).toBe(1);
     });
   });
 });

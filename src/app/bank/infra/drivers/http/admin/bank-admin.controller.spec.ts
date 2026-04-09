@@ -4,6 +4,7 @@ import { AuthenticationGuardsModule } from 'src/app/authentication/application/g
 import { BankDto } from 'src/app/bank/application/dtos/bank.dto';
 import { CreateBank } from 'src/app/bank/application/usecases/create-bank/create-bank.service';
 import { CreateBankInputDto, CreateBankOutputDto } from 'src/app/bank/application/usecases/create-bank/dtos/create-bank.dto';
+import { DeleteBank } from 'src/app/bank/application/usecases/delete-bank/delete-bank.service';
 import { EditBankInputDto } from 'src/app/bank/application/usecases/edit-bank/dtos/edit-bank.dto';
 import { EditBank } from 'src/app/bank/application/usecases/edit-bank/edit-bank.service';
 import { FindAllBankQueryDto } from 'src/app/bank/application/usecases/find-all-bank/dtos/find-all-bank.dto';
@@ -22,6 +23,7 @@ describe('BankAdminController - Unit tests', () => {
   let findBankByIdService: FindBankById;
   let editBankService: EditBank;
   let updateBankStatusService: UpdateBankStatus;
+  let deleteBankService: DeleteBank;
 
   beforeEach(async() => {
     const module = await Test.createTestingModule({
@@ -33,6 +35,7 @@ describe('BankAdminController - Unit tests', () => {
         { provide: FindBankById, useValue: createMock<FindBankById>() },
         { provide: EditBank, useValue: createMock<EditBank>() },
         { provide: UpdateBankStatus, useValue: createMock<UpdateBankStatus>() },
+        { provide: DeleteBank, useValue: createMock<DeleteBank>() },
       ],
     }).compile();
 
@@ -42,6 +45,7 @@ describe('BankAdminController - Unit tests', () => {
     findBankByIdService = module.get(FindBankById);
     editBankService = module.get(EditBank);
     updateBankStatusService = module.get(UpdateBankStatus);
+    deleteBankService = module.get(DeleteBank);
   });
 
   it('should be defined', () => {
@@ -126,6 +130,19 @@ describe('BankAdminController - Unit tests', () => {
       // Assert
       expect(result).toEqual(output);
       expect(updateSpy).toHaveBeenCalledWith(params.id, body);
+    });
+  });
+
+  describe('remove', () => {
+    it('should call deleteBank.execute with params.id', async() => {
+      const params = createMock<Params>();
+      const output = createMock<SuccessMessage>();
+      const removeSpy = jest.spyOn(deleteBankService, 'execute').mockResolvedValue(output);
+
+      const result = await sut.remove(params);
+
+      expect(result).toEqual(output);
+      expect(removeSpy).toHaveBeenCalledWith(params.id);
     });
   });
 });

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
 import { Claim } from 'src/app/authentication/domain/authorization/claim';
 import { RequiredClaims } from 'src/app/authentication/infra/decorators/required-claims.decorator';
@@ -6,6 +6,7 @@ import { RequiredRoles } from 'src/app/authentication/infra/decorators/required-
 import { BankDto } from 'src/app/bank/application/dtos/bank.dto';
 import { CreateBank } from 'src/app/bank/application/usecases/create-bank/create-bank.service';
 import { CreateBankInputDto, CreateBankOutputDto } from 'src/app/bank/application/usecases/create-bank/dtos/create-bank.dto';
+import { DeleteBank } from 'src/app/bank/application/usecases/delete-bank/delete-bank.service';
 import { EditBankInputDto } from 'src/app/bank/application/usecases/edit-bank/dtos/edit-bank.dto';
 import { EditBank } from 'src/app/bank/application/usecases/edit-bank/edit-bank.service';
 import { FindAllBankQueryDto } from 'src/app/bank/application/usecases/find-all-bank/dtos/find-all-bank.dto';
@@ -26,6 +27,7 @@ export class BankAdminController {
     private readonly findBankById: FindBankById,
     private readonly editBank: EditBank,
     private readonly updateBankStatus: UpdateBankStatus,
+    private readonly deleteBank: DeleteBank,
   ) {}
 
   @Post()
@@ -91,5 +93,19 @@ export class BankAdminController {
   })
   public update(@Param() params: Params, @Body() body: EditBankInputDto): Promise<SuccessMessage> {
     return this.editBank.execute(params.id, body);
+  }
+
+  @Delete(':id')
+  @RequiredClaims(Claim.BANK_WRITE)
+  @Swagger({
+    tags: ['Bancos'],
+    summary: 'Excluir banco',
+    applyBadRequest: true,
+    applyNotFound: true,
+    applyConflict: true,
+    okResponse: SuccessMessage,
+  })
+  public remove(@Param() params: Params): Promise<SuccessMessage> {
+    return this.deleteBank.execute(params.id);
   }
 }
