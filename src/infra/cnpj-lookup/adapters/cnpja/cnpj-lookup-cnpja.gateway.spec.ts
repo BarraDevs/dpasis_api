@@ -102,10 +102,19 @@ describe('CnpjLookupCnpjaAdapterGateway', () => {
     });
 
     describe('success scenarios', () => {
-      it('should return fantasyName and companyName when API returns valid data', async() => {
+      it('should return fantasyName, companyName and address when API returns valid data', async() => {
         const mockResponse = createMock<CnpjaOutputDto>({
           alias: 'Empresa Fantasia',
           company: { name: 'Empresa Razão Social LTDA' },
+          address: {
+            zip: '01001-000',
+            street: 'Rua da Avenida',
+            number: '123',
+            details: 'Apto 101',
+            district: 'Bairro',
+            city: 'São Paulo',
+            state: 'SP',
+          },
         });
 
         httpService.axiosRef.get = jest.fn().mockResolvedValue({ data: mockResponse });
@@ -115,6 +124,15 @@ describe('CnpjLookupCnpjaAdapterGateway', () => {
         expect(result).toEqual<CnpjLookupOutputDto>({
           fantasyName: 'Empresa Fantasia',
           companyName: 'Empresa Razão Social LTDA',
+          address: {
+            zipCode: '01001-000',
+            street: 'Rua da Avenida',
+            number: '123',
+            complement: 'Apto 101',
+            neighborhood: 'Bairro',
+            city: 'São Paulo',
+            state: 'SP',
+          },
         });
         expect(httpService.axiosRef.get).toHaveBeenCalledWith(`${API_URL}/${VALID_CNPJ_NORMALIZED}`);
       });
@@ -131,7 +149,16 @@ describe('CnpjLookupCnpjaAdapterGateway', () => {
 
         expect(result).toEqual<CnpjLookupOutputDto>({
           fantasyName: '',
-          companyName: 'Empresa Razão Social LTDA',
+          companyName: mockResponse.company.name,
+          address: {
+            zipCode: mockResponse.address.zip,
+            street: mockResponse.address.street,
+            number: mockResponse.address.number,
+            complement: mockResponse.address.details,
+            neighborhood: mockResponse.address.district,
+            city: mockResponse.address.city,
+            state: mockResponse.address.state,
+          },
         });
       });
 
@@ -147,7 +174,16 @@ describe('CnpjLookupCnpjaAdapterGateway', () => {
 
         expect(result).toEqual<CnpjLookupOutputDto>({
           fantasyName: '',
-          companyName: 'Empresa Razão Social LTDA',
+          companyName: mockResponse.company.name,
+          address: {
+            zipCode: mockResponse.address.zip,
+            street: mockResponse.address.street,
+            number: mockResponse.address.number,
+            complement: mockResponse.address.details,
+            neighborhood: mockResponse.address.district,
+            city: mockResponse.address.city,
+            state: mockResponse.address.state,
+          },
         });
       });
 

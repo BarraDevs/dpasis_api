@@ -30,6 +30,15 @@ export class CnpjLookupCnpjaAdapterGateway implements ICnpjLookupGateway {
       return {
         fantasyName: result.data.alias ?? '',
         companyName: result.data.company.name,
+        address: {
+          zipCode: result.data.address.zip,
+          street: result.data.address.street,
+          number: result.data.address.number,
+          complement: result.data.address.details,
+          neighborhood: result.data.address.district,
+          city: result.data.address.city,
+          state: result.data.address.state,
+        },
       };
     }
     catch (error) {
