@@ -1,14 +1,14 @@
 import {
-    Body,
-    Controller,
-    Delete,
-    Get,
-    Param,
-    Patch,
-    Post,
-    Query,
-    UploadedFile,
-    UseInterceptors,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiConsumes } from '@nestjs/swagger';
@@ -19,8 +19,8 @@ import { RequiredRoles } from 'src/app/authentication/infra/decorators/required-
 import { ClientAttachmentDto } from 'src/app/client/client-attachment/application/dtos/client-attachment.dto';
 import { CreateClientAttachment } from 'src/app/client/client-attachment/application/usecases/create-client-attachment/create-client-attachment.service';
 import {
-    CreateClientAttachmentInputDto,
-    CreateClientAttachmentOutputDto,
+  CreateClientAttachmentInputDto,
+  CreateClientAttachmentOutputDto,
 } from 'src/app/client/client-attachment/application/usecases/create-client-attachment/dtos/create-client-attachment.dto';
 import { DeleteClientAttachment } from 'src/app/client/client-attachment/application/usecases/delete-client-attachment/delete-client-attachment.service';
 import { EditClientAttachmentInputDto } from 'src/app/client/client-attachment/application/usecases/edit-client-attachment/dtos/edit-client-attachment.dto';
@@ -58,8 +58,8 @@ export class ClientAttachmentAdminController {
     mergeRequestBody: [CreateClientAttachmentInputDto, UploadSingleInputDto],
     createdResponse: CreateClientAttachmentOutputDto,
   })
-  public create(@UploadedFile() file: Express.Multer.File, @Body() body: CreateClientAttachmentInputDto): Promise<CreateClientAttachmentOutputDto> {
-    return this.createClientAttachment.execute(file, body);
+  public create(@Body() body: CreateClientAttachmentInputDto, @UploadedFile() file?: Express.Multer.File | undefined): Promise<CreateClientAttachmentOutputDto> {
+    return this.createClientAttachment.execute(body, file);
   }
 
   @Get()

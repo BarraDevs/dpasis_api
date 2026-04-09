@@ -22,15 +22,21 @@ export class EditClientAttachment {
       throw new ClientAttachmentNotFoundError();
     }
 
-    if (file) {
-      const folder = new ClientAttachmentFolder(attachment.clientId);
-      const { url } = await this.uploadSingle.execute(file, folder.value);
+    let newLink: string | undefined;
 
-      await this.clientAttachmentDao.edit(id, { ...data, link: url });
-      await this.uploadFileQueueProducer.addDeleteJob({ fileUrl: attachment.link });
+    if (data.link !== null && data.link !== undefined) {
+      newLink = data.link;
     }
-    else {
-      await this.clientAttachmentDao.edit(id, data);
+    else if (file) {
+      const folder = new ClientAttachmentFolder(attachment.clientId);
+      const result = await this.uploadSingle.execute(file, folder.value);
+      newLink = result.url;
+    }
+
+    await this.clientAttachmentDao.edit(id, { ...data, link: newLink });
+
+    if (newLink) {
+      await this.uploadFileQueueProducer.addDeleteJob({ fileUrl: attachment.link });
     }
 
     return { message: 'Anexo do cliente atualizado com sucesso' };

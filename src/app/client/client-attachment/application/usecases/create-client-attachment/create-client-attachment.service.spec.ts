@@ -1,5 +1,6 @@
 import { Test } from '@nestjs/testing';
 import { ClientAttachmentModule } from 'src/app/client/client-attachment/client-attachment.module';
+import { RequiredFileError } from 'src/app/upload-file/domain/errors/required-file.error';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { CreateClientAttachment } from './create-client-attachment.service';
 import { CreateClientAttachmentInputDto, CreateClientAttachmentOutputDto } from './dtos/create-client-attachment.dto';
@@ -76,7 +77,7 @@ describe('CreateClientAttachment - Integration tests', () => {
     };
     const file = createMockFile();
 
-    const result = await sut.execute(file, input);
+    const result = await sut.execute(input, file);
 
     expect(result).toBeDefined();
     expect(result).toMatchObject<CreateClientAttachmentOutputDto>({ id: expect.any(Number) });
@@ -98,7 +99,7 @@ describe('CreateClientAttachment - Integration tests', () => {
     };
     const file = createMockFile();
 
-    const { id } = await sut.execute(file, input);
+    const { id } = await sut.execute(input, file);
 
     const attachment = await prisma.clientAttachment.findUnique({ where: { id } });
     expect(attachment).toEqual(
@@ -114,6 +115,35 @@ describe('CreateClientAttachment - Integration tests', () => {
     expect(attachment?.updatedAt).toBeInstanceOf(Date);
   });
 
+  it('should create attachment with link from body without file upload', async() => {
+    const client = await createClient();
+    const externalLink = 'https://external-storage.com/my-file.pdf';
+    const input: CreateClientAttachmentInputDto = {
+      clientId: client.id,
+      description: 'Anexo externo',
+      link: externalLink,
+    };
+
+    const result = await sut.execute(input, undefined);
+
+    expect(result).toMatchObject<CreateClientAttachmentOutputDto>({ id: expect.any(Number) });
+
+    const saved = await prisma.clientAttachment.findUnique({ where: { id: result.id } });
+    expect(saved?.link).toBe(externalLink);
+    expect(saved?.description).toBe(input.description);
+    expect(saved?.clientId).toBe(input.clientId);
+  });
+
+  it('should throw RequiredFileError when neither file nor link is provided', async() => {
+    const client = await createClient();
+    const input: CreateClientAttachmentInputDto = {
+      clientId: client.id,
+      description: 'Sem anexo',
+    };
+
+    await expect(sut.execute(input, undefined)).rejects.toThrow(RequiredFileError);
+  });
+
   it('should create multiple attachments for same client', async() => {
     const client = await createClient();
     const input1: CreateClientAttachmentInputDto = {
@@ -125,8 +155,8 @@ describe('CreateClientAttachment - Integration tests', () => {
       description: 'Anexo 2',
     };
 
-    const result1 = await sut.execute(createMockFile(), input1);
-    const result2 = await sut.execute(createMockFile(), input2);
+    const result1 = await sut.execute(input1, createMockFile());
+    const result2 = await sut.execute(input2, createMockFile());
 
     expect(result1.id).not.toBe(result2.id);
     const count = await prisma.clientAttachment.count({ where: { clientId: client.id } });

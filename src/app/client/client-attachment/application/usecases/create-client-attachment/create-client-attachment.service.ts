@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { UploadSingle } from 'src/app/upload-file/application/usecases/upload-single/upload-single.service';
+import { RequiredFileError } from 'src/app/upload-file/domain/errors/required-file.error';
 import { TOKENS } from 'src/core/di/token';
 import { ClientAttachmentFolder } from '../../../domain/value-objects/client-attachment-folder.vo';
 import type { IClientAttachmentDao } from '../../persistence/dao/client-attachment-dao.interface';
@@ -12,14 +13,23 @@ export class CreateClientAttachment {
     private readonly uploadSingle: UploadSingle,
   ) {}
 
-  public async execute(file: Express.Multer.File, data: CreateClientAttachmentInputDto): Promise<CreateClientAttachmentOutputDto> {
-    const folder = new ClientAttachmentFolder(data.clientId);
-    const { url } = await this.uploadSingle.execute(file, folder.value);
+  public async execute(data: CreateClientAttachmentInputDto, file: Express.Multer.File | undefined): Promise<CreateClientAttachmentOutputDto> {
+    let link: string;
+
+    if (data.link !== null && data.link !== undefined) {
+      link = data.link;
+    }
+    else {
+      if (!file) throw new RequiredFileError();
+      const folder = new ClientAttachmentFolder(data.clientId);
+      const result = await this.uploadSingle.execute(file, folder.value);
+      link = result.url;
+    }
 
     const id = await this.clientAttachmentDao.save({
       clientId: data.clientId,
       description: data.description,
-      link: url,
+      link,
     });
 
     return { id };

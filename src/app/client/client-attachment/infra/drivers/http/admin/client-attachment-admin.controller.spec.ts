@@ -77,10 +77,21 @@ describe('ClientAttachmentAdminController - Unit tests', () => {
       const output = createMock<CreateClientAttachmentOutputDto>();
       const createSpy = jest.spyOn(createClientAttachment, 'execute').mockResolvedValue(output);
 
-      const result = await sut.create(file, body);
+      const result = await sut.create(body, file);
 
       expect(result).toEqual(output);
-      expect(createSpy).toHaveBeenCalledWith(file, body);
+      expect(createSpy).toHaveBeenCalledWith(body, file);
+    });
+
+    it('should call createClientAttachment.execute with body and undefined file when omitted', async() => {
+      const body = createMock<CreateClientAttachmentInputDto>();
+      const output = createMock<CreateClientAttachmentOutputDto>();
+      const createSpy = jest.spyOn(createClientAttachment, 'execute').mockResolvedValue(output);
+
+      const result = await sut.create(body, undefined);
+
+      expect(result).toEqual(output);
+      expect(createSpy).toHaveBeenCalledWith(body, undefined);
     });
   });
 

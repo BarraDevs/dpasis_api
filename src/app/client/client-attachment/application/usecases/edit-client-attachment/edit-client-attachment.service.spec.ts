@@ -123,6 +123,29 @@ describe('EditClientAttachment - Integration tests', () => {
     expect(uploadQueue.addedDeleteJobs[0].data.fileUrl).toBe(oldUrl);
   });
 
+  it('should replace link and enqueue delete of old object when link is provided in body', async() => {
+    const client = await createClient();
+    const oldUrl = 'https://my-bucket.s3.amazonaws.com/client-attachments/old-uuid-file.pdf';
+    const newUrl = 'https://external-storage.com/new-file.pdf';
+    const attachment = await prisma.clientAttachment.create({
+      data: {
+        clientId: client.id,
+        description: 'Desc',
+        link: oldUrl,
+        active: true,
+      },
+    });
+
+    await sut.execute(attachment.id, { description: 'Com link externo', link: newUrl }, undefined);
+
+    const updated = await prisma.clientAttachment.findUnique({ where: { id: attachment.id } });
+    expect(updated?.link).toBe(newUrl);
+    expect(updated?.description).toBe('Com link externo');
+
+    expect(uploadQueue.addedDeleteJobs).toHaveLength(1);
+    expect(uploadQueue.addedDeleteJobs[0].data.fileUrl).toBe(oldUrl);
+  });
+
   it('should return success message when no file and no body fields (no-op)', async() => {
     const client = await createClient();
     const attachment = await prisma.clientAttachment.create({
