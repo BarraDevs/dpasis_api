@@ -4,4 +4,5 @@ export interface IClientRepository {
   save(entity: Client): Promise<number>;
   edit(entity: Client): Promise<void>;
   findById(id: number): Promise<Client | null>;
+  delete(id: number): Promise<void>;
 }

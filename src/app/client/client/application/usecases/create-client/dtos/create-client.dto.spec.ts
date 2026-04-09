@@ -14,6 +14,18 @@ function expectMessageToContain(message: string | string[], substring: string) {
   expect(messages.some(m => m.includes(substring))).toBe(true);
 }
 
+function makeValidAddress(): CreateClientInputDto['address'] {
+  return {
+    zipCode: '12345-678',
+    street: 'Rua das Laranjeiras',
+    number: '100',
+    complement: null,
+    neighborhood: 'Centro',
+    city: 'São Paulo',
+    state: 'SP',
+  };
+}
+
 function makeValidInputDto(overrides: Partial<CreateClientInputDto> = {}): CreateClientInputDto {
   return {
     type: ClientType.PJ,
@@ -27,6 +39,7 @@ function makeValidInputDto(overrides: Partial<CreateClientInputDto> = {}): Creat
     headquarters: 'São Paulo',
     invoiceType: ClientInvoiceType.CONTRACT,
     generateInvoice: true,
+    address: makeValidAddress(),
     ...overrides,
   };
 }
@@ -325,6 +338,81 @@ describe('CreateClientInputDto', () => {
     });
   });
 
+  describe('address field', () => {
+    it.each([undefined, null])('should throw if address is missing (%s)', async(value: unknown) => {
+      const data = makeValidInputDto({ address: value as CreateClientInputDto['address'] });
+
+      expect.assertions(1);
+      return target.transform(data, metadata).catch((error) => {
+        expectMessageToContain(error.getResponse().message, 'address');
+      });
+    });
+
+    it('should throw if address is not a nested object', async() => {
+      const data = makeValidInputDto({ address: 'invalid' as unknown as CreateClientInputDto['address'] });
+
+      expect.assertions(1);
+      return target.transform(data, metadata).catch((error) => {
+        expectMessageToContain(error.getResponse().message, 'address');
+      });
+    });
+
+    it.each([undefined, null, '', '  '])('should throw if address.zipCode is empty (%s)', async(value: unknown) => {
+      const data = makeValidInputDto({
+        address: { ...makeValidAddress(), zipCode: value as string },
+      });
+
+      expect.assertions(1);
+      return target.transform(data, metadata).catch((error) => {
+        expectMessageToContain(error.getResponse().message, 'zipCode');
+      });
+    });
+
+    it.each([undefined, null, '', '  '])('should throw if address.street is empty (%s)', async(value: unknown) => {
+      const data = makeValidInputDto({
+        address: { ...makeValidAddress(), street: value as string },
+      });
+
+      expect.assertions(1);
+      return target.transform(data, metadata).catch((error) => {
+        expectMessageToContain(error.getResponse().message, 'street');
+      });
+    });
+
+    it('should trim address string fields', async() => {
+      const data = makeValidInputDto({
+        address: {
+          zipCode: '  12345-678  ',
+          street: '  Rua das Laranjeiras  ',
+          number: '  100A  ',
+          complement: null,
+          neighborhood: '  Centro  ',
+          city: '  São Paulo  ',
+          state: '  SP  ',
+        },
+      });
+
+      const result = await target.transform(data, metadata);
+
+      expect(result.address.zipCode).toBe('12345-678');
+      expect(result.address.street).toBe('Rua das Laranjeiras');
+      expect(result.address.number).toBe('100A');
+      expect(result.address.neighborhood).toBe('Centro');
+      expect(result.address.city).toBe('São Paulo');
+      expect(result.address.state).toBe('SP');
+    });
+
+    it('should accept null complement in address', async() => {
+      const data = makeValidInputDto({
+        address: { ...makeValidAddress(), complement: null },
+      });
+
+      const result = await target.transform(data, metadata);
+
+      expect(result.address.complement).toBeNull();
+    });
+  });
+
   describe('all fields validation', () => {
     it('should pass if all fields are valid', async() => {
       const data = makeValidInputDto();
@@ -343,18 +431,24 @@ describe('CreateClientInputDto', () => {
       expect(result.headquarters).toBe('São Paulo');
       expect(result.invoiceType).toBe(ClientInvoiceType.CONTRACT);
       expect(result.generateInvoice).toBe(true);
+      expect(result.address).toEqual(makeValidAddress());
     });
 
     it('should pass with all optional fields filled', async() => {
       const data = makeValidInputDto({
         ie: '123456789',
         fantasyName: 'Empresa',
+        address: {
+          ...makeValidAddress(),
+          complement: 'Apto 202',
+        },
       });
 
       const result = await target.transform(data, metadata);
 
       expect(result.ie).toBe('123456789');
       expect(result.fantasyName).toBe('Empresa');
+      expect(result.address.complement).toBe('Apto 202');
     });
   });
 });

@@ -1,4 +1,5 @@
 import { Test } from '@nestjs/testing';
+import { ClientAddressType } from 'src/app/client/client-address/domain/enums/client-address-type.enum';
 import { ClientGroupNotFoundError } from 'src/app/client/client-group/domain/errors/client-group-not-found.error';
 import { ClientOwnerNotFoundError } from 'src/app/client/client-owner/domain/errors/client-owner-not-found.error';
 import { ClientModule } from 'src/app/client/client/client.module';
@@ -66,6 +67,15 @@ describe('CreateClient - Integration tests', () => {
       headquarters: 'São Paulo',
       invoiceType: ClientInvoiceType.CONTRACT,
       generateInvoice: true,
+      address: {
+        zipCode: '12345-678',
+        street: 'Rua das Laranjeiras',
+        number: '100',
+        complement: null,
+        neighborhood: 'Centro',
+        city: 'São Paulo',
+        state: 'SP',
+      },
       ...overrides,
     };
   }
@@ -93,6 +103,44 @@ describe('CreateClient - Integration tests', () => {
       expect(saved?.companyName).toBe('Empresa LTDA');
       expect(saved?.groupId).toBe(group.id);
       expect(saved?.ownerId).toBe(owner.id);
+
+      const address = await prisma.clientAddress.findFirst({
+        where: { clientId: result.id, type: ClientAddressType.MAIN },
+      });
+      expect(address).not.toBeNull();
+      expect(address?.type).toBe(ClientAddressType.MAIN);
+      expect(address?.zipCode).toBe('12345-678');
+      expect(address?.street).toBe('Rua das Laranjeiras');
+      expect(address?.number).toBe('100');
+      expect(address?.complement).toBeNull();
+      expect(address?.neighborhood).toBe('Centro');
+      expect(address?.city).toBe('São Paulo');
+      expect(address?.state).toBe('SP');
+    });
+
+    it('should persist MAIN address with complement when provided', async() => {
+      const [group, owner, company] = await Promise.all([
+        prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
+        prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+        createCompany(),
+      ]);
+
+      const input = makeValidInput({
+        groupId: group.id,
+        ownerId: owner.id,
+        companyIds: [company.id],
+        address: {
+          ...makeValidInput().address,
+          complement: 'Apto 202',
+        },
+      });
+
+      const result = await sut.execute(input);
+
+      const address = await prisma.clientAddress.findFirst({
+        where: { clientId: result.id, type: ClientAddressType.MAIN },
+      });
+      expect(address?.complement).toBe('Apto 202');
     });
 
     it('should create client with optional fields filled', async() => {

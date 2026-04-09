@@ -57,4 +57,10 @@ export class ClientRepositoryAdapterPrisma implements IClientRepository {
       invoiceType: data.invoiceType as ClientInvoiceType,
     });
   }
+
+  public async delete(id: number): Promise<void> {
+    await this.prisma.client.delete({
+      where: { id },
+    });
+  }
 }

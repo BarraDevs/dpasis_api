@@ -1,5 +1,7 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ArrayMinSize, IsArray, IsBoolean, IsEnum, IsInt, IsNotEmpty, IsNumber, IsOptional, IsPositive, IsString } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional, OmitType } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+import { ArrayMinSize, IsArray, IsBoolean, IsEnum, IsInt, IsNotEmpty, IsNumber, IsOptional, IsPositive, IsString, ValidateNested } from 'class-validator';
+import { CreateClientAddressInputDto } from 'src/app/client/client-address/application/usecases/create-client-address/dtos/create-client-address.dto';
 import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
 import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum';
 import { StringToBoolean } from 'src/infra/validators/class/decorators/string-boolean/string-boolean';
@@ -73,6 +75,12 @@ export class CreateClientInputDto {
   @IsBoolean({ message: '$property deve ser um booleano' })
   @StringToBoolean()
   generateInvoice: boolean;
+
+  @ApiProperty({ type: OmitType(CreateClientAddressInputDto, ['clientId', 'type']) })
+  @IsNotEmpty({ message: '$property é obrigatório' })
+  @ValidateNested({ message: '$property deve ser um objeto válido' })
+  @Type(() => OmitType(CreateClientAddressInputDto, ['clientId', 'type']))
+  address: Omit<CreateClientAddressInputDto, 'clientId' | 'type'>;
 }
 
 export class CreateClientOutputDto {

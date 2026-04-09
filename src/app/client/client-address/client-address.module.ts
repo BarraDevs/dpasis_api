@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { AuthenticationGuardsModule } from '../../authentication/application/guards/guards.module';
 import { ClientModule } from '../client/client.module';
 import { ClientAddressPersistenceModule } from './application/persistence/client-address-persistence.module';
@@ -14,8 +14,8 @@ import { ClientAddressAdminController } from './infra/drivers/http/client-addres
 
 @Module({
   imports: [
+    forwardRef(() => ClientModule),
     ClientAddressPersistenceModule,
-    ClientModule,
     AuthenticationGuardsModule,
   ],
   controllers: [
@@ -32,6 +32,7 @@ import { ClientAddressAdminController } from './infra/drivers/http/client-addres
     DeactivateClientAddress,
   ],
   exports: [
+    CreateClientAddress,
     FindClientAddressById,
     FindClientAddressByIdAndClientId,
   ],

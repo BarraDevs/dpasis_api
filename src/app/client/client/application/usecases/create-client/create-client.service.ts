@@ -1,4 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { CreateClientAddress } from 'src/app/client/client-address/application/usecases/create-client-address/create-client-address.service';
+import { ClientAddressType } from 'src/app/client/client-address/domain/enums/client-address-type.enum';
 import { FindClientGroupById } from 'src/app/client/client-group/application/usecases/find-client-group-by-id/find-client-group-by-id.service';
 import { FindClientOwnerById } from 'src/app/client/client-owner/application/usecases/find-client-owner-by-id/find-client-owner-by-id.service';
 import { ClientFactory } from 'src/app/client/client/domain/factories/client.factory';
@@ -14,13 +16,26 @@ export class CreateClient {
   constructor(
     @Inject(TOKENS.ClientDao) private readonly clientDao: IClientDao,
     @Inject(TOKENS.ClientRepository) private readonly clientRepository: IClientRepository,
+    private readonly createClientAddress: CreateClientAddress,
     private readonly findClientGroupById: FindClientGroupById,
     private readonly findClientOwnerById: FindClientOwnerById,
     private readonly findCompanyById: FindCompanyById,
   ) {}
 
   public async execute(data: CreateClientInputDto): Promise<CreateClientOutputDto> {
-    const entity = ClientFactory.create(data);
+    const entity = ClientFactory.create({
+      type: data.type,
+      document: data.document,
+      ie: data.ie,
+      groupId: data.groupId,
+      ownerId: data.ownerId,
+      companyIds: data.companyIds,
+      invoiceType: data.invoiceType,
+      generateInvoice: data.generateInvoice,
+      companyName: data.companyName,
+      fantasyName: data.fantasyName,
+      headquarters: data.headquarters,
+    });
 
     const documentAlreadyTaken = await this.clientDao.findByDocument(entity.props.document);
     if (documentAlreadyTaken) {
@@ -37,7 +52,28 @@ export class CreateClient {
       await this.findCompanyById.execute(companyId, { onlyActive: true });
     }
 
+    // saga step 1: create client
     const id = await this.clientRepository.save(entity);
+
+    // saga step 2: create client address
+    try {
+      await this.createClientAddress.execute({
+        clientId: id,
+        type: ClientAddressType.MAIN,
+        zipCode: data.address.zipCode,
+        street: data.address.street,
+        number: data.address.number,
+        complement: data.address.complement,
+        neighborhood: data.address.neighborhood,
+        city: data.address.city,
+        state: data.address.state,
+      });
+    }
+    catch (error) {
+      // rollback step 1: delete client
+      await this.clientRepository.delete(id);
+      throw error;
+    }
 
     return { id };
   }

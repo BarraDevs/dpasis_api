@@ -1,6 +1,7 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { CompanyModule } from 'src/app/company/company.module';
 import { AuthenticationGuardsModule } from '../../authentication/application/guards/guards.module';
+import { ClientAddressModule } from '../client-address/client-address.module';
 import { ClientGroupModule } from '../client-group/client-group.module';
 import { ClientOwnerModule } from '../client-owner/client-owner.module';
 import { ClientPersistenceModule } from './application/persistence/client-persistence.module';
@@ -14,6 +15,7 @@ import { ClientAdminController } from './infra/drivers/http/admin/client-admin.c
 
 @Module({
   imports: [
+    forwardRef(() => ClientAddressModule),
     ClientPersistenceModule,
     ClientGroupModule,
     ClientOwnerModule,
