@@ -1,18 +1,18 @@
 import { Test } from '@nestjs/testing';
 import { CompanyNotFoundError } from 'src/app/company/domain/errors/company-not-found.error';
+import { BilledNotFoundError } from 'src/app/global/billed/domain/errors/billed-not-found.error';
+import { CategoryNotFoundError } from 'src/app/global/category/domain/errors/category-not-found.error';
+import { DeliveryTermNotFoundError } from 'src/app/global/delivery-term/domain/errors/delivery-term-not-found.error';
+import { FreightNotFoundError } from 'src/app/global/freight/domain/errors/freight-not-found.error';
+import { ProposalValidityNotFoundError } from 'src/app/global/proposal-validity/domain/errors/proposal-validity-not-found.error';
 import { CnaeNbsIndopNotFoundError } from 'src/app/global/taxation/cnae-nbs-indop/domain/errors/cnae-nbs-indop-not-found.error';
-import { BilledNotFoundError } from 'src/app/service/billed/domain/errors/billed-not-found.error';
-import { CategoryNotFoundError } from 'src/app/service/category/domain/errors/category-not-found.error';
-import { DeliveryTermNotFoundError } from 'src/app/service/delivery-term/domain/errors/delivery-term-not-found.error';
-import { FreightNotFoundError } from 'src/app/service/freight/domain/errors/freight-not-found.error';
-import { ProposalValidityNotFoundError } from 'src/app/service/proposal-validity/domain/errors/proposal-validity-not-found.error';
+import { WarrantyNotFoundError } from 'src/app/global/warranty/domain/errors/warranty-not-found.error';
 import {
-  seedServiceCatalogForeignKeys,
-  serviceFkScalars,
-  type ServiceCatalogFkIds,
+    seedServiceCatalogForeignKeys,
+    serviceFkScalars,
+    type ServiceCatalogFkIds,
 } from 'src/app/service/service-catalog/infra/driven/persistence/prisma/service-catalog-prisma-test.helpers';
 import { ServiceCatalogModule } from 'src/app/service/service-catalog/service-catalog.module';
-import { WarrantyNotFoundError } from 'src/app/service/warranty/domain/errors/warranty-not-found.error';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { CreateServiceCatalog } from './create-service-catalog.service';
 import { CreateServiceCatalogInputDto } from './dtos/create-service-catalog.dto';
