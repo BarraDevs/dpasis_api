@@ -1,8 +1,8 @@
 import { Test } from '@nestjs/testing';
 import { ServiceAttendanceValueFactory } from 'src/app/service/service-attendance-value/domain/factories/service-attendance-value.factory';
 import {
-  seedServiceCatalogForeignKeys,
-  serviceFkScalars,
+    seedServiceCatalogForeignKeys,
+    serviceFkScalars,
 } from 'src/app/service/service-catalog/infra/driven/persistence/prisma/service-catalog-prisma-test.helpers';
 import { ConfigModule } from 'src/core/config/config.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';

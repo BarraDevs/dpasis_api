@@ -45,37 +45,37 @@ export const ServiceCatalogSelect = {
       },
     },
   },
-  serviceBilled: {
+  billed: {
     select: {
       id: true,
       description: true,
     },
   },
-  serviceCategory: {
+  category: {
     select: {
       id: true,
       name: true,
     },
   },
-  serviceDeliveryTerm: {
+  deliveryTerm: {
     select: {
       id: true,
       name: true,
     },
   },
-  serviceFreight: {
+  freight: {
     select: {
       id: true,
       name: true,
     },
   },
-  serviceProposalValidity: {
+  proposalValidity: {
     select: {
       id: true,
       name: true,
     },
   },
-  serviceWarranty: {
+  warranty: {
     select: {
       id: true,
       name: true,

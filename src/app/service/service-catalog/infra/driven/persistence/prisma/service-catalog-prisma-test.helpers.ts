@@ -2,12 +2,12 @@ import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 
 export type ServiceCatalogFkIds = {
   cnaeNbsIndopId: number;
-  serviceBilledId: number;
-  serviceCategoryId: number;
-  serviceDeliveryTermId: number;
-  serviceFreightId: number;
-  serviceProposalValidityId: number;
-  serviceWarrantyId: number;
+  billedId: number;
+  categoryId: number;
+  deliveryTermId: number;
+  freightId: number;
+  proposalValidityId: number;
+  warrantyId: number;
   companyId: number;
 };
 
@@ -47,24 +47,24 @@ export async function seedServiceCatalogForeignKeys(prisma: PrismaService): Prom
     data: { cnaeId: cnae.id, nbsId: nbs.id, indopId: indop.id },
   });
   const [serviceCategory, billed, deliveryTerm, freight, proposalValidity, warranty] = await Promise.all([
-    prisma.serviceCategory.create({ data: { name: `Cat ${unique}`, active: true } }),
-    prisma.serviceBilled.create({
+    prisma.category.create({ data: { name: `Cat ${unique}`, active: true } }),
+    prisma.billed.create({
       data: { description: `Billed ${unique}`, isJunction: false, installmentDays: [10], active: true },
     }),
-    prisma.serviceDeliveryTerm.create({ data: { name: `Term ${unique}`, active: true } }),
-    prisma.serviceFreight.create({ data: { name: `Freight ${unique}`, active: true } }),
-    prisma.serviceProposalValidity.create({ data: { name: `Validity ${unique}`, active: true } }),
-    prisma.serviceWarranty.create({ data: { name: `Warranty ${unique}`, active: true } }),
+    prisma.deliveryTerm.create({ data: { name: `Term ${unique}`, active: true } }),
+    prisma.freight.create({ data: { name: `Freight ${unique}`, active: true } }),
+    prisma.proposalValidity.create({ data: { name: `Validity ${unique}`, active: true } }),
+    prisma.warranty.create({ data: { name: `Warranty ${unique}`, active: true } }),
   ]);
 
   return {
     cnaeNbsIndopId: cnaeNbsIndop.id,
-    serviceBilledId: billed.id,
-    serviceCategoryId: serviceCategory.id,
-    serviceDeliveryTermId: deliveryTerm.id,
-    serviceFreightId: freight.id,
-    serviceProposalValidityId: proposalValidity.id,
-    serviceWarrantyId: warranty.id,
+    billedId: billed.id,
+    categoryId: serviceCategory.id,
+    deliveryTermId: deliveryTerm.id,
+    freightId: freight.id,
+    proposalValidityId: proposalValidity.id,
+    warrantyId: warranty.id,
     companyId: company.id,
   };
 }

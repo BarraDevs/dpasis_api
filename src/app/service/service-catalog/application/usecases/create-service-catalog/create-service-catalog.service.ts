@@ -1,13 +1,13 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { FindCompanyById } from 'src/app/company/application/usecases/find-company-by-id/find-company-by-id.service';
 import { FindCnaeNbsIndopById } from 'src/app/global/taxation/cnae-nbs-indop/application/usecases/find-cnae-nbs-indop-by-id/find-cnae-nbs-indop-by-id.service';
-import { FindServiceBilledById } from 'src/app/service/service-billed/application/usecases/find-service-billed-by-id/find-service-billed-by-id.service';
+import { FindBilledById } from 'src/app/service/billed/application/usecases/find-billed-by-id/find-billed-by-id.service';
+import { FindCategoryById } from 'src/app/service/category/application/usecases/find-category-by-id/find-category-by-id.service';
+import { FindDeliveryTermById } from 'src/app/service/delivery-term/application/usecases/find-delivery-term-by-id/find-delivery-term-by-id.service';
+import { FindFreightById } from 'src/app/service/freight/application/usecases/find-freight-by-id/find-freight-by-id.service';
+import { FindProposalValidityById } from 'src/app/service/proposal-validity/application/usecases/find-proposal-validity-by-id/find-proposal-validity-by-id.service';
 import { ServiceCatalogFactory } from 'src/app/service/service-catalog/domain/factories/service-catalog.factory';
-import { FindServiceCategoryById } from 'src/app/service/service-category/application/usecases/find-service-category-by-id/find-service-category-by-id.service';
-import { FindServiceDeliveryTermById } from 'src/app/service/service-delivery-term/application/usecases/find-service-delivery-term-by-id/find-service-delivery-term-by-id.service';
-import { FindServiceFreightById } from 'src/app/service/service-freight/application/usecases/find-service-freight-by-id/find-service-freight-by-id.service';
-import { FindServiceProposalValidityById } from 'src/app/service/service-proposal-validity/application/usecases/find-service-proposal-validity-by-id/find-service-proposal-validity-by-id.service';
-import { FindServiceWarrantyById } from 'src/app/service/service-warranty/application/usecases/find-service-warranty-by-id/find-service-warranty-by-id.service';
+import { FindWarrantyById } from 'src/app/service/warranty/application/usecases/find-warranty-by-id/find-warranty-by-id.service';
 import { TOKENS } from 'src/core/di/token';
 import type { IServiceCatalogRepository } from '../../persistence/repository/service-catalog-repository.interface';
 import { CreateServiceCatalogInputDto, CreateServiceCatalogOutputDto } from './dtos/create-service-catalog.dto';
@@ -17,24 +17,24 @@ export class CreateServiceCatalog {
   constructor(
     @Inject(TOKENS.ServiceCatalogRepository) private readonly serviceCatalogRepository: IServiceCatalogRepository,
     private readonly findCnaeNbsIndopById: FindCnaeNbsIndopById,
-    private readonly findServiceBilledById: FindServiceBilledById,
-    private readonly findServiceCategoryById: FindServiceCategoryById,
-    private readonly findServiceDeliveryTermById: FindServiceDeliveryTermById,
-    private readonly findServiceFreightById: FindServiceFreightById,
-    private readonly findServiceProposalValidityById: FindServiceProposalValidityById,
-    private readonly findServiceWarrantyById: FindServiceWarrantyById,
+    private readonly findBilledById: FindBilledById,
+    private readonly findCategoryById: FindCategoryById,
+    private readonly findDeliveryTermById: FindDeliveryTermById,
+    private readonly findFreightById: FindFreightById,
+    private readonly findProposalValidityById: FindProposalValidityById,
+    private readonly findWarrantyById: FindWarrantyById,
     private readonly findCompanyById: FindCompanyById,
   ) {}
 
   public async execute(data: CreateServiceCatalogInputDto): Promise<CreateServiceCatalogOutputDto> {
     await Promise.all([
       this.findCnaeNbsIndopById.execute(data.cnaeNbsIndopId, { onlyActive: true }),
-      this.findServiceBilledById.execute(data.serviceBilledId, { onlyActive: true }),
-      this.findServiceCategoryById.execute(data.serviceCategoryId, { onlyActive: true }),
-      this.findServiceDeliveryTermById.execute(data.serviceDeliveryTermId, { onlyActive: true }),
-      this.findServiceFreightById.execute(data.serviceFreightId, { onlyActive: true }),
-      this.findServiceProposalValidityById.execute(data.serviceProposalValidityId, { onlyActive: true }),
-      this.findServiceWarrantyById.execute(data.serviceWarrantyId, { onlyActive: true }),
+      this.findBilledById.execute(data.billedId, { onlyActive: true }),
+      this.findCategoryById.execute(data.categoryId, { onlyActive: true }),
+      this.findDeliveryTermById.execute(data.deliveryTermId, { onlyActive: true }),
+      this.findFreightById.execute(data.freightId, { onlyActive: true }),
+      this.findProposalValidityById.execute(data.proposalValidityId, { onlyActive: true }),
+      this.findWarrantyById.execute(data.warrantyId, { onlyActive: true }),
     ]);
 
     for (const companyId of data.companyIds) {

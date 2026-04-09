@@ -5,12 +5,12 @@ import { ServiceCatalogFactory } from './service-catalog.factory';
 function makeCreateProps(overrides?: Partial<ServiceCatalogCreateProps>): ServiceCatalogCreateProps {
   return {
     cnaeNbsIndopId: 1,
-    serviceBilledId: 2,
-    serviceCategoryId: 3,
-    serviceDeliveryTermId: 4,
-    serviceFreightId: 5,
-    serviceProposalValidityId: 6,
-    serviceWarrantyId: 7,
+    billedId: 2,
+    categoryId: 3,
+    deliveryTermId: 4,
+    freightId: 5,
+    proposalValidityId: 6,
+    warrantyId: 7,
     companyIds: [1],
     name: 'Serviço catálogo',
     unitPriceInCents: 1000,

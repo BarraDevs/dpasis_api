@@ -5,12 +5,12 @@ export type ServiceCatalogProps = ServiceCatalogCreateProps & {
 
 export type ServiceCatalogCreateProps = {
   cnaeNbsIndopId: number;
-  serviceBilledId: number;
-  serviceCategoryId: number;
-  serviceDeliveryTermId: number;
-  serviceFreightId: number;
-  serviceProposalValidityId: number;
-  serviceWarrantyId: number;
+  billedId: number;
+  categoryId: number;
+  deliveryTermId: number;
+  freightId: number;
+  proposalValidityId: number;
+  warrantyId: number;
   companyIds: number[];
   name: string;
   unitPriceInCents: number;

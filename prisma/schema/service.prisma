@@ -1,27 +1,27 @@
 model Service {
-  id                        Int      @id @default(autoincrement())
-  cnaeNbsIndopId            Int
-  serviceBilledId           Int
-  serviceCategoryId         Int
-  serviceDeliveryTermId     Int
-  serviceFreightId          Int
-  serviceProposalValidityId Int
-  serviceWarrantyId         Int
-  name                      String
-  unitPriceInCents          Int
-  description               String   @db.Text
-  isCommercial              Boolean
-  active                    Boolean
-  createdAt                 DateTime @default(now())
-  updatedAt                 DateTime @updatedAt
+  id                 Int      @id @default(autoincrement())
+  cnaeNbsIndopId     Int
+  billedId           Int
+  categoryId         Int
+  deliveryTermId     Int
+  freightId          Int
+  proposalValidityId Int
+  warrantyId         Int
+  name               String
+  unitPriceInCents   Int
+  description        String   @db.Text
+  isCommercial       Boolean
+  active             Boolean
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
   cnaeNbsIndop            CnaeNbsIndop             @relation(fields: [cnaeNbsIndopId], references: [id])
-  serviceBilled           ServiceBilled            @relation(fields: [serviceBilledId], references: [id])
-  serviceCategory         ServiceCategory          @relation(fields: [serviceCategoryId], references: [id])
-  serviceDeliveryTerm     ServiceDeliveryTerm      @relation(fields: [serviceDeliveryTermId], references: [id])
-  serviceFreight          ServiceFreight           @relation(fields: [serviceFreightId], references: [id])
-  serviceProposalValidity ServiceProposalValidity  @relation(fields: [serviceProposalValidityId], references: [id])
-  serviceWarranty         ServiceWarranty          @relation(fields: [serviceWarrantyId], references: [id])
+  billed                  Billed                   @relation(fields: [billedId], references: [id])
+  category                Category                 @relation(fields: [categoryId], references: [id])
+  deliveryTerm            DeliveryTerm             @relation(fields: [deliveryTermId], references: [id])
+  freight                 Freight                  @relation(fields: [freightId], references: [id])
+  proposalValidity        ProposalValidity         @relation(fields: [proposalValidityId], references: [id])
+  warranty                Warranty                 @relation(fields: [warrantyId], references: [id])
   serviceAttendanceValues ServiceAttendanceValue[]
   companies               Company[]
 
@@ -39,78 +39,4 @@ model ServiceAttendanceValue {
   service Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
 
   @@map("service_attendance_values")
-}
-
-model ServiceBilled {
-  id              Int      @id @default(autoincrement())
-  description     String   @db.Text
-  isJunction      Boolean
-  installmentDays Int[]
-  active          Boolean
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  services Service[]
-
-  @@map("service_billeds")
-}
-
-model ServiceCategory {
-  id        Int      @id @default(autoincrement())
-  name      String   @unique
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  services Service[]
-
-  @@map("service_categories")
-}
-
-model ServiceDeliveryTerm {
-  id        Int      @id @default(autoincrement())
-  name      String   @unique
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  services Service[]
-
-  @@map("service_delivery_terms")
-}
-
-model ServiceFreight {
-  id        Int      @id @default(autoincrement())
-  name      String   @unique
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  services Service[]
-
-  @@map("service_freights")
-}
-
-model ServiceProposalValidity {
-  id        Int      @id @default(autoincrement())
-  name      String   @unique
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  services Service[]
-
-  @@map("service_proposal_validities")
-}
-
-model ServiceWarranty {
-  id        Int      @id @default(autoincrement())
-  name      String   @unique
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  services Service[]
-
-  @@map("service_warranties")
 }

@@ -1,18 +1,18 @@
 import { Test } from '@nestjs/testing';
 import { CompanyNotFoundError } from 'src/app/company/domain/errors/company-not-found.error';
 import { CnaeNbsIndopNotFoundError } from 'src/app/global/taxation/cnae-nbs-indop/domain/errors/cnae-nbs-indop-not-found.error';
-import { ServiceBilledNotFoundError } from 'src/app/service/service-billed/domain/errors/service-billed-not-found.error';
+import { BilledNotFoundError } from 'src/app/service/billed/domain/errors/billed-not-found.error';
+import { CategoryNotFoundError } from 'src/app/service/category/domain/errors/category-not-found.error';
+import { DeliveryTermNotFoundError } from 'src/app/service/delivery-term/domain/errors/delivery-term-not-found.error';
+import { FreightNotFoundError } from 'src/app/service/freight/domain/errors/freight-not-found.error';
+import { ProposalValidityNotFoundError } from 'src/app/service/proposal-validity/domain/errors/proposal-validity-not-found.error';
 import { ServiceCatalogNotFoundError } from 'src/app/service/service-catalog/domain/errors/service-catalog-not-found.error';
 import {
   seedServiceCatalogForeignKeys,
   serviceFkScalars,
 } from 'src/app/service/service-catalog/infra/driven/persistence/prisma/service-catalog-prisma-test.helpers';
 import { ServiceCatalogModule } from 'src/app/service/service-catalog/service-catalog.module';
-import { ServiceCategoryNotFoundError } from 'src/app/service/service-category/domain/errors/service-category-not-found.error';
-import { ServiceDeliveryTermNotFoundError } from 'src/app/service/service-delivery-term/domain/errors/service-delivery-term-not-found.error';
-import { ServiceFreightNotFoundError } from 'src/app/service/service-freight/domain/errors/service-freight-not-found.error';
-import { ServiceProposalValidityNotFoundError } from 'src/app/service/service-proposal-validity/domain/errors/service-proposal-validity-not-found.error';
-import { ServiceWarrantyNotFoundError } from 'src/app/service/service-warranty/domain/errors/service-warranty-not-found.error';
+import { WarrantyNotFoundError } from 'src/app/service/warranty/domain/errors/warranty-not-found.error';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { EditServiceCatalog } from './edit-service-catalog.service';
 
@@ -91,10 +91,10 @@ describe('EditServiceCatalog - Integration tests', () => {
     ).rejects.toThrow(CnaeNbsIndopNotFoundError);
   });
 
-  it('should throw ServiceBilledNotFoundError when serviceBilledId is informed and inactive', async() => {
+  it('should throw BilledNotFoundError when serviceBilledId is informed and inactive', async() => {
     const fkService = await seedServiceCatalogForeignKeys(prisma);
     const fkAlt = await seedServiceCatalogForeignKeys(prisma);
-    await prisma.serviceBilled.update({ where: { id: fkAlt.serviceBilledId }, data: { active: false } });
+    await prisma.billed.update({ where: { id: fkAlt.billedId }, data: { active: false } });
 
     const created = await prisma.service.create({
       data: {
@@ -108,14 +108,14 @@ describe('EditServiceCatalog - Integration tests', () => {
     });
 
     await expect(
-      sut.execute(created.id, { serviceBilledId: fkAlt.serviceBilledId }),
-    ).rejects.toThrow(ServiceBilledNotFoundError);
+      sut.execute(created.id, { billedId: fkAlt.billedId }),
+    ).rejects.toThrow(BilledNotFoundError);
   });
 
-  it('should throw ServiceCategoryNotFoundError when serviceCategoryId is informed and inactive', async() => {
+  it('should throw CategoryNotFoundError when serviceCategoryId is informed and inactive', async() => {
     const fkService = await seedServiceCatalogForeignKeys(prisma);
     const fkAlt = await seedServiceCatalogForeignKeys(prisma);
-    await prisma.serviceCategory.update({ where: { id: fkAlt.serviceCategoryId }, data: { active: false } });
+    await prisma.category.update({ where: { id: fkAlt.categoryId }, data: { active: false } });
 
     const created = await prisma.service.create({
       data: {
@@ -129,14 +129,14 @@ describe('EditServiceCatalog - Integration tests', () => {
     });
 
     await expect(
-      sut.execute(created.id, { serviceCategoryId: fkAlt.serviceCategoryId }),
-    ).rejects.toThrow(ServiceCategoryNotFoundError);
+      sut.execute(created.id, { categoryId: fkAlt.categoryId }),
+    ).rejects.toThrow(CategoryNotFoundError);
   });
 
-  it('should throw ServiceDeliveryTermNotFoundError when serviceDeliveryTermId is informed and inactive', async() => {
+  it('should throw DeliveryTermNotFoundError when serviceDeliveryTermId is informed and inactive', async() => {
     const fkService = await seedServiceCatalogForeignKeys(prisma);
     const fkAlt = await seedServiceCatalogForeignKeys(prisma);
-    await prisma.serviceDeliveryTerm.update({ where: { id: fkAlt.serviceDeliveryTermId }, data: { active: false } });
+    await prisma.deliveryTerm.update({ where: { id: fkAlt.deliveryTermId }, data: { active: false } });
 
     const created = await prisma.service.create({
       data: {
@@ -150,14 +150,14 @@ describe('EditServiceCatalog - Integration tests', () => {
     });
 
     await expect(
-      sut.execute(created.id, { serviceDeliveryTermId: fkAlt.serviceDeliveryTermId }),
-    ).rejects.toThrow(ServiceDeliveryTermNotFoundError);
+      sut.execute(created.id, { deliveryTermId: fkAlt.deliveryTermId }),
+    ).rejects.toThrow(DeliveryTermNotFoundError);
   });
 
-  it('should throw ServiceFreightNotFoundError when serviceFreightId is informed and inactive', async() => {
+  it('should throw FreightNotFoundError when serviceFreightId is informed and inactive', async() => {
     const fkService = await seedServiceCatalogForeignKeys(prisma);
     const fkAlt = await seedServiceCatalogForeignKeys(prisma);
-    await prisma.serviceFreight.update({ where: { id: fkAlt.serviceFreightId }, data: { active: false } });
+    await prisma.freight.update({ where: { id: fkAlt.freightId }, data: { active: false } });
 
     const created = await prisma.service.create({
       data: {
@@ -171,14 +171,14 @@ describe('EditServiceCatalog - Integration tests', () => {
     });
 
     await expect(
-      sut.execute(created.id, { serviceFreightId: fkAlt.serviceFreightId }),
-    ).rejects.toThrow(ServiceFreightNotFoundError);
+      sut.execute(created.id, { freightId: fkAlt.freightId }),
+    ).rejects.toThrow(FreightNotFoundError);
   });
 
-  it('should throw ServiceProposalValidityNotFoundError when serviceProposalValidityId is informed and inactive', async() => {
+  it('should throw ProposalValidityNotFoundError when serviceProposalValidityId is informed and inactive', async() => {
     const fkService = await seedServiceCatalogForeignKeys(prisma);
     const fkAlt = await seedServiceCatalogForeignKeys(prisma);
-    await prisma.serviceProposalValidity.update({ where: { id: fkAlt.serviceProposalValidityId }, data: { active: false } });
+    await prisma.proposalValidity.update({ where: { id: fkAlt.proposalValidityId }, data: { active: false } });
 
     const created = await prisma.service.create({
       data: {
@@ -192,14 +192,14 @@ describe('EditServiceCatalog - Integration tests', () => {
     });
 
     await expect(
-      sut.execute(created.id, { serviceProposalValidityId: fkAlt.serviceProposalValidityId }),
-    ).rejects.toThrow(ServiceProposalValidityNotFoundError);
+      sut.execute(created.id, { proposalValidityId: fkAlt.proposalValidityId }),
+    ).rejects.toThrow(ProposalValidityNotFoundError);
   });
 
-  it('should throw ServiceWarrantyNotFoundError when serviceWarrantyId is informed and inactive', async() => {
+  it('should throw WarrantyNotFoundError when serviceWarrantyId is informed and inactive', async() => {
     const fkService = await seedServiceCatalogForeignKeys(prisma);
     const fkAlt = await seedServiceCatalogForeignKeys(prisma);
-    await prisma.serviceWarranty.update({ where: { id: fkAlt.serviceWarrantyId }, data: { active: false } });
+    await prisma.warranty.update({ where: { id: fkAlt.warrantyId }, data: { active: false } });
 
     const created = await prisma.service.create({
       data: {
@@ -213,8 +213,8 @@ describe('EditServiceCatalog - Integration tests', () => {
     });
 
     await expect(
-      sut.execute(created.id, { serviceWarrantyId: fkAlt.serviceWarrantyId }),
-    ).rejects.toThrow(ServiceWarrantyNotFoundError);
+      sut.execute(created.id, { warrantyId: fkAlt.warrantyId }),
+    ).rejects.toThrow(WarrantyNotFoundError);
   });
 
   it('should throw CompanyNotFoundError when a company is inactive', async() => {

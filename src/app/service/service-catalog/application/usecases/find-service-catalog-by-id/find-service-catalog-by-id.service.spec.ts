@@ -2,8 +2,8 @@ import { Test } from '@nestjs/testing';
 import type { IServiceCatalogDao } from 'src/app/service/service-catalog/application/persistence/dao/service-catalog-dao.interface';
 import { ServiceCatalogNotFoundError } from 'src/app/service/service-catalog/domain/errors/service-catalog-not-found.error';
 import {
-  seedServiceCatalogForeignKeys,
-  serviceFkScalars,
+    seedServiceCatalogForeignKeys,
+    serviceFkScalars,
 } from 'src/app/service/service-catalog/infra/driven/persistence/prisma/service-catalog-prisma-test.helpers';
 import { ServiceCatalogModule } from 'src/app/service/service-catalog/service-catalog.module';
 import { TOKENS } from 'src/core/di/token';

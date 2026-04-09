@@ -15,6 +15,7 @@ const TOKENS = {
 
   ClientContactDao: Symbol.for('ClientContactDao'),
   ClientContactRepository: Symbol.for('ClientContactRepository'),
+
   ClientDepartmentDao: Symbol.for('ClientDepartmentDao'),
 
   ClientTypeDao: Symbol.for('ClientTypeDao'),
@@ -51,14 +52,13 @@ const TOKENS = {
   CnaeNbsIndopDao: Symbol.for('CnaeNbsIndopDao'),
 
   BankDao: Symbol.for('BankDao'),
-
-  ServiceCategoryDao: Symbol.for('ServiceCategoryDao'),
-  ServiceFreightDao: Symbol.for('ServiceFreightDao'),
-  ServiceDeliveryTermDao: Symbol.for('ServiceDeliveryTermDao'),
-  ServiceWarrantyDao: Symbol.for('ServiceWarrantyDao'),
-  ServiceProposalValidityDao: Symbol.for('ServiceProposalValidityDao'),
-  ServiceBilledDao: Symbol.for('ServiceBilledDao'),
-  ServiceBilledRepository: Symbol.for('ServiceBilledRepository'),
+  BilledDao: Symbol.for('BilledDao'),
+  BilledRepository: Symbol.for('BilledRepository'),
+  CategoryDao: Symbol.for('CategoryDao'),
+  FreightDao: Symbol.for('FreightDao'),
+  DeliveryTermDao: Symbol.for('DeliveryTermDao'),
+  WarrantyDao: Symbol.for('WarrantyDao'),
+  ProposalValidityDao: Symbol.for('ProposalValidityDao'),
 
   ServiceCatalogDao: Symbol.for('ServiceCatalogDao'),
   ServiceCatalogRepository: Symbol.for('ServiceCatalogRepository'),

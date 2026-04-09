@@ -1,8 +1,8 @@
 import { Test } from '@nestjs/testing';
 import { ServiceAttendanceValueNotFoundError } from 'src/app/service/service-attendance-value/domain/errors/service-attendance-value-not-found.error';
 import {
-  seedServiceCatalogForeignKeys,
-  serviceFkScalars,
+    seedServiceCatalogForeignKeys,
+    serviceFkScalars,
 } from 'src/app/service/service-catalog/infra/driven/persistence/prisma/service-catalog-prisma-test.helpers';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { ServiceAttendanceValueModule } from '../../../service-attendance-value.module';

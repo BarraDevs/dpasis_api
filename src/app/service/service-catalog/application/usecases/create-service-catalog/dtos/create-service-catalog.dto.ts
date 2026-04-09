@@ -14,37 +14,37 @@ export class CreateServiceCatalogInputDto {
   @IsInt({ message: '$property deve ser um número inteiro' })
   @Min(1, { message: '$property deve ser maior ou igual a 1' })
   @IsNotEmpty({ message: '$property é obrigatório' })
-  serviceBilledId: number;
+  billedId: number;
 
   @ApiProperty({ example: 1 })
   @IsInt({ message: '$property deve ser um número inteiro' })
   @Min(1, { message: '$property deve ser maior ou igual a 1' })
   @IsNotEmpty({ message: '$property é obrigatório' })
-  serviceCategoryId: number;
+  categoryId: number;
 
   @ApiProperty({ example: 1 })
   @IsInt({ message: '$property deve ser um número inteiro' })
   @Min(1, { message: '$property deve ser maior ou igual a 1' })
   @IsNotEmpty({ message: '$property é obrigatório' })
-  serviceDeliveryTermId: number;
+  deliveryTermId: number;
 
   @ApiProperty({ example: 1 })
   @IsInt({ message: '$property deve ser um número inteiro' })
   @Min(1, { message: '$property deve ser maior ou igual a 1' })
   @IsNotEmpty({ message: '$property é obrigatório' })
-  serviceFreightId: number;
+  freightId: number;
 
   @ApiProperty({ example: 1 })
   @IsInt({ message: '$property deve ser um número inteiro' })
   @Min(1, { message: '$property deve ser maior ou igual a 1' })
   @IsNotEmpty({ message: '$property é obrigatório' })
-  serviceProposalValidityId: number;
+  proposalValidityId: number;
 
   @ApiProperty({ example: 1 })
   @IsInt({ message: '$property deve ser um número inteiro' })
   @Min(1, { message: '$property deve ser maior ou igual a 1' })
   @IsNotEmpty({ message: '$property é obrigatório' })
-  serviceWarrantyId: number;
+  warrantyId: number;
 
   @ApiProperty({ example: [1], description: 'IDs das empresas associadas ao serviço (obrigatório pelo menos 1)' })
   @IsArray({ message: '$property deve ser um array' })

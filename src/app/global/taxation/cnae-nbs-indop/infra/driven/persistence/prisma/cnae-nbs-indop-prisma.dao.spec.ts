@@ -297,28 +297,28 @@ describe('CnaeNbsIndopDaoAdapterPrisma - Integration tests', () => {
         data: { cnaeId, nbsId, indopId },
       });
 
-      const category = await prisma.serviceCategory.create({
+      const category = await prisma.category.create({
         data: { name: `Cat ${Date.now()}`, active: true },
       });
       const [billed, deliveryTerm, freight, proposalValidity, warranty] = await Promise.all([
-        prisma.serviceBilled.create({
+        prisma.billed.create({
           data: { description: `Billed ${Date.now()}`, isJunction: false, installmentDays: [10], active: true },
         }),
-        prisma.serviceDeliveryTerm.create({ data: { name: `Term ${Date.now()}`, active: true } }),
-        prisma.serviceFreight.create({ data: { name: `Freight ${Date.now()}`, active: true } }),
-        prisma.serviceProposalValidity.create({ data: { name: `Validity ${Date.now()}`, active: true } }),
-        prisma.serviceWarranty.create({ data: { name: `Warranty ${Date.now()}`, active: true } }),
+        prisma.deliveryTerm.create({ data: { name: `Term ${Date.now()}`, active: true } }),
+        prisma.freight.create({ data: { name: `Freight ${Date.now()}`, active: true } }),
+        prisma.proposalValidity.create({ data: { name: `Validity ${Date.now()}`, active: true } }),
+        prisma.warranty.create({ data: { name: `Warranty ${Date.now()}`, active: true } }),
       ]);
 
       await prisma.service.create({
         data: {
           cnaeNbsIndopId: created.id,
-          serviceBilledId: billed.id,
-          serviceCategoryId: category.id,
-          serviceDeliveryTermId: deliveryTerm.id,
-          serviceFreightId: freight.id,
-          serviceProposalValidityId: proposalValidity.id,
-          serviceWarrantyId: warranty.id,
+          billedId: billed.id,
+          categoryId: category.id,
+          deliveryTermId: deliveryTerm.id,
+          freightId: freight.id,
+          proposalValidityId: proposalValidity.id,
+          warrantyId: warranty.id,
           name: 'Service Test',
           unitPriceInCents: 10000,
           description: 'Service Test',

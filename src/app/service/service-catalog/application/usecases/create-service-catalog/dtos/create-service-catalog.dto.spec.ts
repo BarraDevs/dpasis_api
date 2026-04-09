@@ -15,12 +15,12 @@ function expectMessageToContain(message: string | string[], substring: string) {
 function makeValidData(overrides?: Partial<CreateServiceCatalogInputDto>): CreateServiceCatalogInputDto {
   return {
     cnaeNbsIndopId: 1,
-    serviceBilledId: 2,
-    serviceCategoryId: 3,
-    serviceDeliveryTermId: 4,
-    serviceFreightId: 5,
-    serviceProposalValidityId: 6,
-    serviceWarrantyId: 7,
+    billedId: 2,
+    categoryId: 3,
+    deliveryTermId: 4,
+    freightId: 5,
+    proposalValidityId: 6,
+    warrantyId: 7,
     companyIds: [1],
     name: 'Instalação de sistema',
     unitPriceInCents: 150000,
@@ -32,12 +32,12 @@ function makeValidData(overrides?: Partial<CreateServiceCatalogInputDto>): Creat
 
 const positiveIntFkFields = [
   'cnaeNbsIndopId',
-  'serviceBilledId',
-  'serviceCategoryId',
-  'serviceDeliveryTermId',
-  'serviceFreightId',
-  'serviceProposalValidityId',
-  'serviceWarrantyId',
+  'billedId',
+  'categoryId',
+  'deliveryTermId',
+  'freightId',
+  'proposalValidityId',
+  'warrantyId',
 ] as const;
 
 describe('CreateServiceCatalogInputDto', () => {

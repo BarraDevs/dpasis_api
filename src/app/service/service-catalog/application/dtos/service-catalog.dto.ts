@@ -10,27 +10,27 @@ export class ServiceCatalogDto {
   active: boolean;
   companies: MinimalCompanyDto[];
   cnaeNbsIndop: CnaeNbsIndopDto;
-  serviceBilled: {
+  billed: {
     id: number;
     description: string;
   };
-  serviceCategory: {
+  category: {
     id: number;
     name: string;
   };
-  serviceDeliveryTerm: {
+  deliveryTerm: {
     id: number;
     name: string;
   };
-  serviceFreight: {
+  freight: {
     id: number;
     name: string;
   };
-  serviceProposalValidity: {
+  proposalValidity: {
     id: number;
     name: string;
   };
-  serviceWarranty: {
+  warranty: {
     id: number;
     name: string;
   };
