@@ -51,6 +51,34 @@ describe('CreateClientInputDto', () => {
     target = new ValidationPipe(pipeOptions);
   });
 
+  describe('id field (optional)', () => {
+    it('should accept undefined id', async() => {
+      const data = { ...makeValidInputDto() };
+      delete (data as { id?: unknown }).id;
+
+      const result = await target.transform(data, metadata);
+
+      expect(result.id).toBeUndefined();
+    });
+
+    it('should accept valid id', async() => {
+      const data = makeValidInputDto({ id: 999 });
+
+      const result = await target.transform(data, metadata);
+
+      expect(result.id).toBe(999);
+    });
+
+    it.each([0, -1, 1.5])('should throw if id is invalid (%s)', async(value: number) => {
+      const data = makeValidInputDto({ id: value });
+
+      expect.assertions(1);
+      return target.transform(data, metadata).catch((error) => {
+        expectMessageToContain(error.getResponse().message, 'id');
+      });
+    });
+  });
+
   describe('type field', () => {
     it.each([undefined, null, '', '  '])('should throw if type is empty (%s)', async(value: unknown) => {
       const data = makeValidInputDto({ type: value as ClientType });

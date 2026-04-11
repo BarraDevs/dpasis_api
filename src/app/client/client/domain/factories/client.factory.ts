@@ -32,12 +32,17 @@ export class ClientFactory {
     };
   }
 
-  static create(props: ClientCreateProps): Client {
-    const validatedProps = this.validateCreateProps(props);
+  static create(props: ClientCreateProps & { id?: number }): Client {
+    const { id: explicitId, ...createProps } = props;
+    const validatedProps = this.validateCreateProps(createProps);
+
+    const id = explicitId !== undefined && explicitId !== null
+      ? new PositiveInt(explicitId, 'id').value
+      : 0;
 
     return Client._instantiate({
       ...validatedProps,
-      id: 0,
+      id,
       active: true,
     });
   }

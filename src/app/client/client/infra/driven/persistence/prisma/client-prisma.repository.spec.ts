@@ -124,6 +124,38 @@ describe('ClientRepositoryAdapterPrisma - Integration tests', () => {
       expect(saved?.companyName).toBe('Pessoa Física');
       expect(saved?.generateInvoice).toBe(false);
     });
+
+    it('should persist client with explicit id when entity has id > 0', async() => {
+      const explicitId = 50_000;
+      const { group, owner, company } = await createClientGroupOwnerAndCompany();
+
+      const entity = ClientFactory.create({
+        type: ClientType.PJ,
+        document: '09.748.165/0001-10',
+        ie: null,
+        groupId: group.id,
+        ownerId: owner.id,
+        companyIds: [company.id],
+        invoiceType: ClientInvoiceType.CONTRACT,
+        generateInvoice: true,
+        companyName: 'Empresa Id Explícito',
+        fantasyName: null,
+        headquarters: 'São Paulo',
+        id: explicitId,
+      });
+
+      const returnedId = await sut.save(entity);
+
+      expect(returnedId).toBe(explicitId);
+
+      const saved = await prisma.client.findUnique({
+        where: { id: explicitId },
+      });
+
+      expect(saved).not.toBeNull();
+      expect(saved?.id).toBe(explicitId);
+      expect(saved?.companyName).toBe('Empresa Id Explícito');
+    });
   });
 
   describe('edit', () => {

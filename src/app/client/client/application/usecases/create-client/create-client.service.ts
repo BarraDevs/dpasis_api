@@ -3,6 +3,7 @@ import { CreateClientAddress } from 'src/app/client/client-address/application/u
 import { ClientAddressType } from 'src/app/client/client-address/domain/enums/client-address-type.enum';
 import { FindClientGroupById } from 'src/app/client/client-group/application/usecases/find-client-group-by-id/find-client-group-by-id.service';
 import { FindClientOwnerById } from 'src/app/client/client-owner/application/usecases/find-client-owner-by-id/find-client-owner-by-id.service';
+import { ClientIdAlreadyTakenError } from 'src/app/client/client/domain/errors/client-id-already-taken.error';
 import { ClientFactory } from 'src/app/client/client/domain/factories/client.factory';
 import { FindCompanyById } from 'src/app/company/application/usecases/find-company-by-id/find-company-by-id.service';
 import { TOKENS } from 'src/core/di/token';
@@ -24,6 +25,7 @@ export class CreateClient {
 
   public async execute(data: CreateClientInputDto): Promise<CreateClientOutputDto> {
     const entity = ClientFactory.create({
+      id: data.id,
       type: data.type,
       document: data.document,
       ie: data.ie,
@@ -40,6 +42,13 @@ export class CreateClient {
     const documentAlreadyTaken = await this.clientDao.findByDocument(entity.props.document);
     if (documentAlreadyTaken) {
       throw new DocumentAlreadyTakenError(entity.props.document);
+    }
+
+    if (data.id != null && data.id !== undefined) {
+      const idAlreadyTaken = await this.clientDao.findById(data.id);
+      if (idAlreadyTaken) {
+        throw new ClientIdAlreadyTakenError(data.id);
+      }
     }
 
     // Verifica se o grupo e o proprietário existem E estão ativos

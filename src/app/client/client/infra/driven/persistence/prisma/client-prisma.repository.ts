@@ -16,6 +16,7 @@ export class ClientRepositoryAdapterPrisma implements IClientRepository {
 
     const created = await this.prisma.client.create({
       data: {
+        ...(id > 0 ? { id } : {}),
         ...props,
         companies: {
           connect: companyIds.map((companyId) => ({ id: companyId })),

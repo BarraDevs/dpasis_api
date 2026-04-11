@@ -5,6 +5,7 @@ import { ClientOwnerNotFoundError } from 'src/app/client/client-owner/domain/err
 import { ClientModule } from 'src/app/client/client/client.module';
 import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
 import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum';
+import { ClientIdAlreadyTakenError } from 'src/app/client/client/domain/errors/client-id-already-taken.error';
 import { CompanyNotFoundError } from 'src/app/company/domain/errors/company-not-found.error';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { DocumentAlreadyTakenError } from 'src/shared/errors/document-already-taken';
@@ -193,6 +194,62 @@ describe('CreateClient - Integration tests', () => {
       });
       expect(saved?.type).toBe(ClientType.PF);
       expect(saved?.document).toBe('97456321558');
+    });
+
+    it('should persist client with explicit id when provided', async() => {
+      const explicitId = 71_000;
+      const [group, owner, company] = await Promise.all([
+        prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
+        prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+        createCompany(),
+      ]);
+
+      const input = makeValidInput({
+        groupId: group.id,
+        ownerId: owner.id,
+        companyIds: [company.id],
+        id: explicitId,
+      });
+
+      const result = await sut.execute(input);
+
+      expect(result.id).toBe(explicitId);
+
+      const saved = await prisma.client.findUnique({ where: { id: explicitId } });
+      expect(saved).not.toBeNull();
+      expect(saved?.id).toBe(explicitId);
+      expect(saved?.document).toBe('09748165000110');
+    });
+  });
+
+  describe('id already taken', () => {
+    it('should throw ClientIdAlreadyTakenError when id already exists', async() => {
+      const explicitId = 72_000;
+      const [group, owner, company] = await Promise.all([
+        prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
+        prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+        createCompany(),
+      ]);
+
+      const inputFirst = makeValidInput({
+        groupId: group.id,
+        ownerId: owner.id,
+        companyIds: [company.id],
+        id: explicitId,
+      });
+      await sut.execute(inputFirst);
+
+      const inputSecond = makeValidInput({
+        groupId: group.id,
+        ownerId: owner.id,
+        companyIds: [company.id],
+        id: explicitId,
+        type: ClientType.PF,
+        document: '974.563.215-58',
+      });
+
+      await expect(sut.execute(inputSecond)).rejects.toThrow(ClientIdAlreadyTakenError);
+      await expect(sut.execute(inputSecond)).rejects.toThrow(`O id ${explicitId} já está em uso.`);
     });
   });
 

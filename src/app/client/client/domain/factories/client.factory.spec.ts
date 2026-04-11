@@ -62,7 +62,7 @@ describe('ClientFactory', () => {
 
       expect(client).toBeDefined();
       expect(client.props).toEqual<ClientProps>({
-        id: expect.any(Number),
+        id: 0,
         active: true,
         type: ClientType.PJ,
         document: '09748165000110',
@@ -76,6 +76,20 @@ describe('ClientFactory', () => {
         fantasyName: null,
         headquarters: 'São Paulo',
       });
+    });
+
+    it('should create a client with explicit id when provided', () => {
+      const props = makeClientCreateProps();
+
+      const client = ClientFactory.create({ ...props, id: 42_000 });
+
+      expect(client.props.id).toBe(42_000);
+    });
+
+    it('should throw when explicit id is not positive', () => {
+      const props = makeClientCreateProps();
+
+      expect(() => ClientFactory.create({ ...props, id: 0 })).toThrow(NumberMustBePositiveAndInt);
     });
 
     it('should create a client with valid CPF document', () => {

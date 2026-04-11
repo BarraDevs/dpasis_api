@@ -8,6 +8,16 @@ import { StringToBoolean } from 'src/infra/validators/class/decorators/string-bo
 import { Trim } from 'src/infra/validators/class/decorators/trim/trim';
 
 export class CreateClientInputDto {
+  @ApiPropertyOptional({
+    example: 67,
+    description: 'ID opcional para alinhar com sistema externo ou legado; se omitido, o banco gera automaticamente.',
+  })
+  @IsOptional()
+  @IsNumber({}, { message: '$property deve ser um número' })
+  @IsPositive({ message: '$property deve ser um número positivo' })
+  @IsInt({ message: '$property deve ser um número inteiro' })
+  id?: number;
+
   @ApiProperty({ example: Object.values(ClientType).join(', ') })
   @IsEnum(ClientType, { message: '$property inválido.' })
   @IsString({ message: '$property deve ser uma string' })
