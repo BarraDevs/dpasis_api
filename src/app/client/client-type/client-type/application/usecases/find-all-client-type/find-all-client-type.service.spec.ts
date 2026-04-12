@@ -8,7 +8,7 @@ describe('FindAllClientType', () => {
   let sut: FindAllClientType;
   let prisma: PrismaService;
 
-  const createClientTypeFixtures = async() => {
+  const createClientTypeFixtures = async(id = 1) => {
     const group = await prisma.clientGroup.create({
       data: { name: `Grupo ${Date.now()}-${Math.random()}`, active: true },
     });
@@ -17,6 +17,7 @@ describe('FindAllClientType', () => {
     });
     const client = await prisma.client.create({
       data: {
+        id,
         type: 'PJ',
         document: `12345678${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}00199`,
         ie: null,
@@ -165,7 +166,7 @@ describe('FindAllClientType', () => {
 
     it('should filter by clientId - return only client types for specified client', async() => {
       const { client, data } = await createClientTypeFixtures();
-      const { data: data2 } = await createClientTypeFixtures();
+      const { data: data2 } = await createClientTypeFixtures(2);
       await prisma.clientType.create({ data });
       await prisma.clientType.create({ data });
       await prisma.clientType.create({ data: data2 });
@@ -243,7 +244,7 @@ describe('FindAllClientType', () => {
 
     it('should combine clientId and search filters', async() => {
       const { client, data } = await createClientTypeFixtures();
-      const { data: data2 } = await createClientTypeFixtures();
+      const { data: data2 } = await createClientTypeFixtures(2);
       const systemTypeMatch = await prisma.clientSystemType.create({
         data: { name: 'Sistema Unico Match', active: true },
       });

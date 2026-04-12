@@ -364,6 +364,7 @@ describe('ClientOwnerDaoAdapterPrisma - Integration tests', () => {
       });
       await prisma.client.create({
         data: {
+          id: 1,
           type: 'PJ',
           document: '09748165000110',
           ie: null,
@@ -396,6 +397,7 @@ describe('ClientOwnerDaoAdapterPrisma - Integration tests', () => {
       await prisma.client.createMany({
         data: [
           {
+            id: 1,
             type: 'PJ',
             document: '09748165000110',
             ie: null,
@@ -409,6 +411,7 @@ describe('ClientOwnerDaoAdapterPrisma - Integration tests', () => {
             active: true,
           },
           {
+            id: 2,
             type: 'PJ',
             document: '11111111000111',
             ie: null,

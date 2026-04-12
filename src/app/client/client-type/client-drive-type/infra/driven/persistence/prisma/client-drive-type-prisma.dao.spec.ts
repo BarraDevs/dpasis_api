@@ -234,6 +234,7 @@ describe('ClientDriveTypeDaoAdapterPrisma - Integration tests', () => {
 
       const client = await prisma.client.create({
         data: {
+          id: 1,
           type: 'PJ',
           document: '09748165000110',
           ie: null,

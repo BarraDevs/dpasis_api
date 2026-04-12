@@ -45,6 +45,7 @@ describe('ActivateClient - Integration tests', () => {
 
     const client = await prisma.client.create({
       data: {
+        id: 1,
         type: ClientType.PJ,
         document: '09748165000110',
         groupId: group.id,
@@ -71,6 +72,7 @@ describe('ActivateClient - Integration tests', () => {
 
     const client = await prisma.client.create({
       data: {
+        id: 2,
         type: ClientType.PJ,
         document: '09748165000110',
         groupId: group.id,

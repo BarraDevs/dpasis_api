@@ -35,6 +35,7 @@ describe('EditClientAttachment - Integration tests', () => {
     ]);
     return prisma.client.create({
       data: {
+        id: 1,
         type: 'PJ',
         document: `12345678${Date.now() % 100000}00199`,
         ie: null,

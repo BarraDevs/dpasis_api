@@ -422,6 +422,7 @@ describe('BankDaoAdapterPrisma - Integration tests', () => {
 
       const client = await prisma.client.create({
         data: {
+          id: 1,
           type: ClientType.PJ,
           document: String(Date.now()).padStart(14, '0').slice(-14),
           ie: null,

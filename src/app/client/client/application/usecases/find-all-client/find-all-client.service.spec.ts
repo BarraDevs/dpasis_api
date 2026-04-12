@@ -51,6 +51,7 @@ describe('FindAllClient - Integration tests', () => {
     await prisma.client.createMany({
       data: [
         {
+          id: 1,
           type: ClientType.PJ,
           document: '09748165000110',
           groupId: group.id,
@@ -62,6 +63,7 @@ describe('FindAllClient - Integration tests', () => {
           active: true,
         },
         {
+          id: 2,
           type: ClientType.PJ,
           document: '09748165000121',
           groupId: group.id,
@@ -90,6 +92,7 @@ describe('FindAllClient - Integration tests', () => {
 
     await prisma.client.createMany({
       data: Array.from({ length: 25 }, (_, i) => ({
+        id: i + 1,
         type: ClientType.PJ,
         document: `097481650001${String(i).padStart(2, '0')}`,
         groupId: group.id,
@@ -119,6 +122,7 @@ describe('FindAllClient - Integration tests', () => {
 
     await prisma.client.createMany({
       data: Array.from({ length: 25 }, (_, i) => ({
+        id: i + 1,
         type: ClientType.PJ,
         document: `097481650001${String(i).padStart(2, '0')}`,
         groupId: group.id,
@@ -147,6 +151,7 @@ describe('FindAllClient - Integration tests', () => {
 
     await prisma.client.createMany({
       data: Array.from({ length: 25 }, (_, i) => ({
+        id: i + 1,
         type: ClientType.PJ,
         document: `097481650001${String(i).padStart(2, '0')}`,
         groupId: group.id,
@@ -176,6 +181,7 @@ describe('FindAllClient - Integration tests', () => {
     await prisma.client.createMany({
       data: [
         {
+          id: 3,
           type: ClientType.PJ,
           document: '09748165000110',
           groupId: group.id,
@@ -187,6 +193,7 @@ describe('FindAllClient - Integration tests', () => {
           active: true,
         },
         {
+          id: 4,
           type: ClientType.PJ,
           document: '09748165000121',
           groupId: group.id,
@@ -216,6 +223,7 @@ describe('FindAllClient - Integration tests', () => {
     await prisma.client.createMany({
       data: [
         {
+          id: 5,
           type: ClientType.PJ,
           document: '09748165000110',
           groupId: group.id,
@@ -228,6 +236,7 @@ describe('FindAllClient - Integration tests', () => {
           active: true,
         },
         {
+          id: 6,
           type: ClientType.PJ,
           document: '09748165000121',
           groupId: group.id,
@@ -258,6 +267,7 @@ describe('FindAllClient - Integration tests', () => {
     await prisma.client.createMany({
       data: [
         {
+          id: 7,
           type: ClientType.PJ,
           document: '09748165000110',
           groupId: group.id,
@@ -269,6 +279,7 @@ describe('FindAllClient - Integration tests', () => {
           active: true,
         },
         {
+          id: 8,
           type: ClientType.PJ,
           document: '33000167000101',
           groupId: group.id,
@@ -297,6 +308,7 @@ describe('FindAllClient - Integration tests', () => {
 
     await prisma.client.create({
       data: {
+        id: 1,
         type: ClientType.PJ,
         document: '09748165000110',
         groupId: group.id,
@@ -324,6 +336,7 @@ describe('FindAllClient - Integration tests', () => {
     await prisma.client.createMany({
       data: [
         {
+          id: 9,
           type: ClientType.PJ,
           document: '09748165000110',
           groupId: group.id,
@@ -335,6 +348,7 @@ describe('FindAllClient - Integration tests', () => {
           active: true,
         },
         {
+          id: 10,
           type: ClientType.PJ,
           document: '09748165000121',
           groupId: group.id,
@@ -365,6 +379,7 @@ describe('FindAllClient - Integration tests', () => {
     await prisma.client.createMany({
       data: [
         {
+          id: 11,
           type: ClientType.PJ,
           document: '09748165000110',
           groupId: group.id,
@@ -376,6 +391,7 @@ describe('FindAllClient - Integration tests', () => {
           active: true,
         },
         {
+          id: 12,
           type: ClientType.PJ,
           document: '09748165000121',
           groupId: group.id,
@@ -387,6 +403,7 @@ describe('FindAllClient - Integration tests', () => {
           active: false,
         },
         {
+          id: 13,
           type: ClientType.PJ,
           document: '09748165000132',
           groupId: group.id,
@@ -416,6 +433,7 @@ describe('FindAllClient - Integration tests', () => {
     await prisma.client.createMany({
       data: [
         {
+          id: 14,
           type: ClientType.PJ,
           document: '09748165000110',
           groupId: group.id,
@@ -427,6 +445,7 @@ describe('FindAllClient - Integration tests', () => {
           active: true,
         },
         {
+          id: 15,
           type: ClientType.PJ,
           document: '09748165000121',
           groupId: group.id,
@@ -455,6 +474,7 @@ describe('FindAllClient - Integration tests', () => {
 
     const client = await prisma.client.create({
       data: {
+        id: 2,
         type: ClientType.PJ,
         document: '09748165000110',
         ie: '123456789',

@@ -30,7 +30,7 @@ describe('ClientTypeDaoAdapterPrisma', () => {
     return { attendanceType, maintenanceTicketType, systemType, descriptionType, driveType };
   };
 
-  const createClient = async() => {
+  const createClient = async(id = 1) => {
     const group = await prisma.clientGroup.create({
       data: { name: `Grupo ${Date.now()}-${Math.random()}`, active: true },
     });
@@ -39,6 +39,7 @@ describe('ClientTypeDaoAdapterPrisma', () => {
     });
     return prisma.client.create({
       data: {
+        id,
         type: 'PJ',
         document: `12345678${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}00199`,
         ie: null,
@@ -101,7 +102,7 @@ describe('ClientTypeDaoAdapterPrisma', () => {
 
     it('should return only client types for the specified clientId', async() => {
       const { client, data } = await createClientTypeData();
-      const client2 = await createClient();
+      const client2 = await createClient(2);
       await prisma.clientType.create({
         data: {
           ...data,

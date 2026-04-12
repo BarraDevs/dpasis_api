@@ -9,13 +9,14 @@ describe('FindAllClientAttachment - Integration tests', () => {
   let sut: FindAllClientAttachment;
   let prisma: PrismaService;
 
-  const createClient = async() => {
+  const createClient = async(id = 1) => {
     const [group, owner] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
       prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
     ]);
     return prisma.client.create({
       data: {
+        id,
         type: 'PJ',
         document: `12345678${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}00199`,
         ie: null,
@@ -141,7 +142,7 @@ describe('FindAllClientAttachment - Integration tests', () => {
 
   it('should filter by clientId', async() => {
     const client1 = await createClient();
-    const client2 = await createClient();
+    const client2 = await createClient(2);
     await prisma.clientAttachment.createMany({
       data: [
         { clientId: client1.id, description: 'A1', link: 'https://1.com', active: true },

@@ -47,6 +47,7 @@ describe('CreateClientAddress', () => {
 
     const client = await prisma.client.create({
       data: {
+        id: 1,
         type: ClientType.PJ,
         document: '09748165000110',
         ie: null,
@@ -147,6 +148,7 @@ describe('CreateClientAddress', () => {
 
     const otherClient = await prisma.client.create({
       data: {
+        id: 2,
         type: ClientType.PJ,
         document: '11111111000111',
         ie: null,

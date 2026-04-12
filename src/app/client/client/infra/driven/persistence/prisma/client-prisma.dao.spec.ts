@@ -50,6 +50,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
 
       const created = await prisma.client.create({
         data: {
+          id: 1,
           type: ClientType.PJ,
           document: '09748165000110',
           ie: '123456789',
@@ -104,6 +105,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
 
       await prisma.client.create({
         data: {
+          id: 2,
           type: ClientType.PJ,
           document: '09748165000110',
           ie: null,
@@ -119,6 +121,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
       });
       await prisma.client.create({
         data: {
+          id: 3,
           type: ClientType.PJ,
           document: '09748165000111',
           ie: null,
@@ -149,6 +152,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
 
       await prisma.client.create({
         data: {
+          id: 4,
           type: ClientType.PJ,
           document: '09748165000110',
           groupId: group.id,
@@ -163,6 +167,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
       });
       await prisma.client.create({
         data: {
+          id: 5,
           type: ClientType.PJ,
           document: '33000167000101',
           groupId: group.id,
@@ -190,6 +195,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
 
       await prisma.client.create({
         data: {
+          id: 6,
           type: ClientType.PJ,
           document: '09748165000110',
           groupId: group.id,
@@ -213,6 +219,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
 
       await prisma.client.createMany({
         data: Array.from({ length: 25 }, (_, i) => ({
+          id: i + 1,
           type: ClientType.PJ,
           document: `097481650001${String(i).padStart(2, '0')}`,
           ie: null,
@@ -242,6 +249,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
 
       const first = await prisma.client.create({
         data: {
+          id: 7,
           type: ClientType.PJ,
           document: '09748165000110',
           groupId: group.id,
@@ -258,6 +266,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
 
       const second = await prisma.client.create({
         data: {
+          id: 8,
           type: ClientType.PJ,
           document: '09748165000121',
           groupId: group.id,
@@ -291,6 +300,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
 
       const created = await prisma.client.create({
         data: {
+          id: 9,
           type: ClientType.PJ,
           document: '09748165000110',
           ie: '123456789',
@@ -340,6 +350,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
 
       const created = await prisma.client.create({
         data: {
+          id: 10,
           type: ClientType.PJ,
           document: '09748165000110',
           groupId: group.id,
@@ -374,6 +385,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
 
       const created = await prisma.client.create({
         data: {
+          id: 11,
           type: ClientType.PJ,
           document: '09748165000110',
           ie: '123456789',
@@ -423,6 +435,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
 
       const created = await prisma.client.create({
         data: {
+          id: 12,
           type: ClientType.PF,
           document: '97456321558',
           groupId: group.id,
@@ -448,6 +461,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
 
       const created = await prisma.client.create({
         data: {
+          id: 13,
           type: ClientType.PJ,
           document: '09748165000110',
           groupId: group.id,
@@ -481,6 +495,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
 
       const first = await prisma.client.create({
         data: {
+          id: 14,
           type: ClientType.PJ,
           document: '09748165000110',
           groupId: group.id,
@@ -495,6 +510,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
 
       const second = await prisma.client.create({
         data: {
+          id: 15,
           type: ClientType.PJ,
           document: '09748165000199',
           groupId: group.id,
@@ -520,6 +536,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
 
       await prisma.client.create({
         data: {
+          id: 16,
           type: ClientType.PJ,
           document: '09748165000110',
           groupId: group.id,
@@ -560,6 +577,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
 
       const parent = await prisma.client.create({
         data: {
+          id: 17,
           type: ClientType.PJ,
           document: '09748165000110',
           groupId: group.id,
@@ -590,6 +608,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
 
       const parent = await prisma.client.create({
         data: {
+          id: 18,
           type: ClientType.PJ,
           document: '09748165000110',
           groupId: group.id,
@@ -604,6 +623,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
 
       const child1 = await prisma.client.create({
         data: {
+          id: 19,
           type: ClientType.PJ,
           document: '09748165000121',
           groupId: group.id,
@@ -620,6 +640,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
 
       const child2 = await prisma.client.create({
         data: {
+          id: 20,
           type: ClientType.PF,
           document: '97456321558',
           groupId: group.id,
@@ -652,6 +673,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
       const [parent1, parent2] = await Promise.all([
         prisma.client.create({
           data: {
+            id: 21,
             type: ClientType.PJ,
             document: '09748165000110',
             groupId: group.id,
@@ -665,6 +687,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
         }),
         prisma.client.create({
           data: {
+            id: 22,
             type: ClientType.PJ,
             document: '09748165000121',
             groupId: group.id,
@@ -680,6 +703,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
 
       await prisma.client.create({
         data: {
+          id: 23,
           type: ClientType.PF,
           document: '97456321558',
           groupId: group.id,
@@ -705,6 +729,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
 
       const parent = await prisma.client.create({
         data: {
+          id: 24,
           type: ClientType.PJ,
           document: '09748165000110',
           groupId: group.id,
@@ -719,6 +744,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
 
       const child = await prisma.client.create({
         data: {
+          id: 25,
           type: ClientType.PF,
           document: '97456321558',
           ie: null,
@@ -765,6 +791,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
 
       const parent = await prisma.client.create({
         data: {
+          id: 260,
           type: ClientType.PJ,
           document: '19748165000110',
           groupId: group.id,
@@ -781,6 +808,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
         Array.from({ length: 15 }, (_, i) =>
           prisma.client.create({
             data: {
+              id: i,
               type: ClientType.PJ,
               document: `097481650001${String(i).padStart(2, '0')}`,
               groupId: group.id,
@@ -810,6 +838,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
 
       const parent = await prisma.client.create({
         data: {
+          id: 28,
           type: ClientType.PJ,
           document: '09748165000110',
           groupId: group.id,
@@ -825,6 +854,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
       await Promise.all([
         prisma.client.create({
           data: {
+            id: 29,
             type: ClientType.PJ,
             document: '09748165000121',
             groupId: group.id,
@@ -840,6 +870,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
         }),
         prisma.client.create({
           data: {
+            id: 30,
             type: ClientType.PJ,
             document: '09748165000132',
             groupId: group.id,
@@ -867,6 +898,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
 
       const parent = await prisma.client.create({
         data: {
+          id: 31,
           type: ClientType.PJ,
           document: '09748165000110',
           groupId: group.id,
@@ -882,6 +914,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
       await Promise.all([
         prisma.client.create({
           data: {
+            id: 32,
             type: ClientType.PJ,
             document: '09748165000121',
             groupId: group.id,
@@ -897,6 +930,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
         }),
         prisma.client.create({
           data: {
+            id: 33,
             type: ClientType.PJ,
             document: '09748165000132',
             groupId: group.id,

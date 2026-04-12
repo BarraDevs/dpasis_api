@@ -39,6 +39,7 @@ describe('FindAllClientItem - Integration tests', () => {
 
     const client = await prisma.client.create({
       data: {
+        id: 1,
         type: ClientType.PJ,
         document: '09748165000110',
         ie: null,
@@ -164,6 +165,7 @@ describe('FindAllClientItem - Integration tests', () => {
     ]);
     const client2 = await prisma.client.create({
       data: {
+        id: 2,
         type: ClientType.PJ,
         document: '22222222000222',
         ie: null,

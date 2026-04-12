@@ -36,6 +36,7 @@ describe('ClientInvoiceConfigDaoAdapterPrisma - Integration tests', () => {
 
     const client = await prisma.client.create({
       data: {
+        id: 1,
         type: ClientType.PJ,
         document: '09748165000110',
         ie: null,

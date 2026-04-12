@@ -18,6 +18,7 @@ describe('ClientAttachmentDaoAdapterPrisma - Integration tests', () => {
     ]);
     return prisma.client.create({
       data: {
+        id: 1,
         type: 'PJ',
         document: overrides?.document ?? `12345678${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}00199`,
         ie: null,
@@ -41,6 +42,7 @@ describe('ClientAttachmentDaoAdapterPrisma - Integration tests', () => {
     const [client1, client2] = await Promise.all([
       prisma.client.create({
         data: {
+          id: 2,
           type: 'PJ',
           document: '11111111000111',
           ie: null,
@@ -56,6 +58,7 @@ describe('ClientAttachmentDaoAdapterPrisma - Integration tests', () => {
       }),
       prisma.client.create({
         data: {
+          id: 3,
           type: 'PJ',
           document: '22222222000122',
           ie: null,

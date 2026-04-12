@@ -46,6 +46,7 @@ describe('FindClientById - Integration tests', () => {
 
     const client = await prisma.client.create({
       data: {
+        id: 1,
         type: ClientType.PJ,
         document: '09748165000110',
         groupId: group.id,
@@ -70,6 +71,7 @@ describe('FindClientById - Integration tests', () => {
 
     const client = await prisma.client.create({
       data: {
+        id: 2,
         type: ClientType.PJ,
         document: '09748165000110',
         groupId: group.id,
@@ -97,6 +99,7 @@ describe('FindClientById - Integration tests', () => {
 
     const client = await prisma.client.create({
       data: {
+        id: 3,
         type: ClientType.PJ,
         document: '09748165000110',
         ie: '123456789',
@@ -128,6 +131,7 @@ describe('FindClientById - Integration tests', () => {
 
     const client = await prisma.client.create({
       data: {
+        id: 4,
         type: ClientType.PF,
         document: '97456321558',
         ie: null,

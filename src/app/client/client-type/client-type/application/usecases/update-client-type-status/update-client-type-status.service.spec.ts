@@ -17,6 +17,7 @@ describe('UpdateClientTypeStatus', () => {
     });
     const client = await prisma.client.create({
       data: {
+        id: 1,
         type: 'PJ',
         document: `12345678${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}00199`,
         ie: null,

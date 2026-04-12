@@ -21,6 +21,7 @@ export class ClientSeed {
 
     const data: Prisma.ClientCreateInput[] = [
       {
+        id: 1,
         type: ClientType.PJ,
         document: '12.345.678/0001-91',
         ie: '123.456.789.001',
@@ -34,6 +35,7 @@ export class ClientSeed {
         active: true,
       },
       {
+        id: 2,
         type: ClientType.PJ,
         document: '98.765.432/0001-11',
         group: { connect: { id: firstGroup.id } },
@@ -46,6 +48,7 @@ export class ClientSeed {
         active: true,
       },
       {
+        id: 3,
         type: ClientType.PF,
         document: '123.456.789-00',
         group: { connect: { id: firstGroup.id } },

@@ -16,6 +16,7 @@ describe('ActivateClientContact - Integration tests', () => {
     ]);
     const client = await prisma.client.create({
       data: {
+        id: 1,
         type: 'PJ',
         document: `12345678${Date.now() % 100000}00199`,
         ie: null,
