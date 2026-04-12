@@ -1,10 +1,12 @@
 model Client {
-  id              Int      @id @default(autoincrement())
+  id              Int      @id
   type            String
   document        String   @unique
   ie              String?
   groupId         Int
   ownerId         Int
+  parentClientId  Int?
+  isSubClient     Boolean  @default(false)
   companyName     String
   fantasyName     String?
   headquarters    String
@@ -16,6 +18,8 @@ model Client {
 
   group         ClientGroup          @relation(fields: [groupId], references: [id])
   owner         ClientOwner          @relation(fields: [ownerId], references: [id])
+  parent        Client?              @relation("ClientSubClients", fields: [parentClientId], references: [id])
+  children      Client[]             @relation("ClientSubClients")
   companies     Company[]
   addresses     ClientAddress[]
   attachments   ClientAttachment[]

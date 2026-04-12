@@ -79,6 +79,8 @@ describe('ClientRepositoryAdapterPrisma - Integration tests', () => {
       });
 
       expect(saved).not.toBeNull();
+      expect(saved?.parentClientId).toBe(null);
+      expect(saved?.isSubClient).toBe(false);
       expect(saved?.type).toBe(ClientType.PJ);
       expect(saved?.document).toBe('09748165000110');
       expect(saved?.ie).toBe('123456789');

@@ -1,0 +1,7 @@
+model ClientSequence {
+  id        Int      @id @default(1)
+  nextId    Int      @map("next_id")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("client_sequences")
+}

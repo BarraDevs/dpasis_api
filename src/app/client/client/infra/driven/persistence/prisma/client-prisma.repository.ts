@@ -28,7 +28,7 @@ export class ClientRepositoryAdapterPrisma implements IClientRepository {
 
   public async edit(entity: Client): Promise<void> {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { id, companyIds, ...props } = entity.props;
+    const { id, companyIds, parentClientId, isSubClient, ...props } = entity.props;
 
     await this.prisma.client.update({
       where: { id: id! },
@@ -54,6 +54,8 @@ export class ClientRepositoryAdapterPrisma implements IClientRepository {
     return ClientFactory.load({
       ...clientData,
       companyIds,
+      parentClientId: data.parentClientId ?? null,
+      isSubClient: data.isSubClient,
       type: data.type as ClientType,
       invoiceType: data.invoiceType as ClientInvoiceType,
     });

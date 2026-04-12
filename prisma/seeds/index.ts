@@ -15,6 +15,7 @@ import { ClientDriveTypeSeed } from './client-drive-type';
 import { ClientGroupSeed } from './client-group';
 import { ClientMaintenanceTicketTypeSeed } from './client-maintenance-ticket-type';
 import { ClientOwnerSeed } from './client-owner';
+import { ClientSequenceSeed } from './client-sequence';
 import { ClientSystemTypeSeed } from './client-system-type';
 import { CnaeSeed } from './cnae';
 import { CnaeNbsIndopSeed } from './cnae-nbs-indop';
@@ -52,6 +53,7 @@ async function main() {
   await ClientDescriptionTypeSeed.seed(prisma);
   await ClientDriveTypeSeed.seed(prisma);
   await ClientSeed.seed(prisma);
+  await ClientSequenceSeed.seed(prisma);
   await ClientAddressSeed.seed(prisma);
   await ClientContactSeed.seed(prisma);
   await ClientAttachmentSeed.seed(prisma);

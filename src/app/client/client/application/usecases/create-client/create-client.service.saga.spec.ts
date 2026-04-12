@@ -23,12 +23,22 @@ describe('CreateClient — saga (step 1: save client, step 2: create MAIN addres
       prisma = module.get(PrismaService);
     });
 
+    async function resetClientSequence(nextId = 1) {
+      await prisma.clientSequence.upsert({
+        where: { id: 1 },
+        create: { id: 1, nextId },
+        update: { nextId },
+      });
+    }
+
     beforeEach(async() => {
       await prisma.truncate();
+      await resetClientSequence(1);
     });
 
     afterAll(async() => {
       await prisma.truncate();
+      await resetClientSequence(1);
       await prisma.$disconnect();
     });
 
@@ -89,6 +99,8 @@ describe('CreateClient — saga (step 1: save client, step 2: create MAIN addres
 
       const result = await sut.execute(input);
 
+      expect(result.id).toBe(1);
+
       const client = await prisma.client.findUnique({ where: { id: result.id } });
       expect(client).not.toBeNull();
       expect(client?.document).toBe('09748165000110');
@@ -123,14 +135,24 @@ describe('CreateClient — saga (step 1: save client, step 2: create MAIN addres
       prisma = module.get(PrismaService);
     });
 
+    async function resetClientSequence(nextId = 1) {
+      await prisma.clientSequence.upsert({
+        where: { id: 1 },
+        create: { id: 1, nextId },
+        update: { nextId },
+      });
+    }
+
     beforeEach(async() => {
       await prisma.truncate();
+      await resetClientSequence(1);
       jest.clearAllMocks();
       createClientAddressMock.execute.mockReset();
     });
 
     afterAll(async() => {
       await prisma.truncate();
+      await resetClientSequence(1);
       await prisma.$disconnect();
     });
 

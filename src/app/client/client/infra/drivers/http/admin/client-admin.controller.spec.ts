@@ -11,6 +11,12 @@ import { EditClient } from 'src/app/client/client/application/usecases/edit-clie
 import { FindAllClientQueryDto } from 'src/app/client/client/application/usecases/find-all-client/dtos/find-all-client.dto';
 import { FindAllClient } from 'src/app/client/client/application/usecases/find-all-client/find-all-client.service';
 import { FindClientById } from 'src/app/client/client/application/usecases/find-client-by-id/find-client-by-id.service';
+import { FindSubClientsQueryDto } from 'src/app/client/client/application/usecases/find-sub-clients/dtos/find-sub-clients.dto';
+import { FindSubClients } from 'src/app/client/client/application/usecases/find-sub-clients/find-sub-clients.service';
+import { GetClientSequenceOutputDto } from 'src/app/client/client/application/usecases/get-client-sequence/dtos/get-client-sequence.dto';
+import { GetClientSequence } from 'src/app/client/client/application/usecases/get-client-sequence/get-client-sequence.service';
+import { SetClientNextIdInputDto } from 'src/app/client/client/application/usecases/set-client-next-id/dtos/set-client-next-id.dto';
+import { SetClientNextId } from 'src/app/client/client/application/usecases/set-client-next-id/set-client-next-id.service';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
 import { Params } from 'src/infra/validators/class/dtos/params/params.dto';
 import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
@@ -23,7 +29,10 @@ describe('ClientAdminController - Unit tests', () => {
   let deactivateClientService: DeactivateClient;
   let findAllClientService: FindAllClient;
   let findClientByIdService: FindClientById;
+  let findSubClientsService: FindSubClients;
   let editClientService: EditClient;
+  let getClientSequenceService: GetClientSequence;
+  let setClientNextIdService: SetClientNextId;
 
   beforeEach(async() => {
     const module = await Test.createTestingModule({
@@ -35,7 +44,10 @@ describe('ClientAdminController - Unit tests', () => {
         { provide: DeactivateClient, useValue: createMock<DeactivateClient>() },
         { provide: FindAllClient, useValue: createMock<FindAllClient>() },
         { provide: FindClientById, useValue: createMock<FindClientById>() },
+        { provide: FindSubClients, useValue: createMock<FindSubClients>() },
         { provide: EditClient, useValue: createMock<EditClient>() },
+        { provide: GetClientSequence, useValue: createMock<GetClientSequence>() },
+        { provide: SetClientNextId, useValue: createMock<SetClientNextId>() },
       ],
     }).compile();
 
@@ -45,7 +57,10 @@ describe('ClientAdminController - Unit tests', () => {
     deactivateClientService = module.get(DeactivateClient);
     findAllClientService = module.get(FindAllClient);
     findClientByIdService = module.get(FindClientById);
+    findSubClientsService = module.get(FindSubClients);
     editClientService = module.get(EditClient);
+    getClientSequenceService = module.get(GetClientSequence);
+    setClientNextIdService = module.get(SetClientNextId);
   });
 
   it('should be defined', () => {
@@ -65,6 +80,31 @@ describe('ClientAdminController - Unit tests', () => {
       // Assert
       expect(result).toEqual(output);
       expect(createSpy).toHaveBeenCalledWith(body);
+    });
+  });
+
+  describe('getSequence', () => {
+    it('should call getClientSequence.execute and return its result', async() => {
+      const output = createMock<GetClientSequenceOutputDto>();
+      const executeSpy = jest.spyOn(getClientSequenceService, 'execute').mockResolvedValue(output);
+
+      const result = await sut.getSequence();
+
+      expect(result).toEqual(output);
+      expect(executeSpy).toHaveBeenCalledWith();
+    });
+  });
+
+  describe('setSequence', () => {
+    it('should call setClientNextId.execute with body', async() => {
+      const body = createMock<SetClientNextIdInputDto>();
+      const output = createMock<SuccessMessage>();
+      const executeSpy = jest.spyOn(setClientNextIdService, 'execute').mockResolvedValue(output);
+
+      const result = await sut.setSequence(body);
+
+      expect(result).toEqual(output);
+      expect(executeSpy).toHaveBeenCalledWith(body);
     });
   });
 
@@ -97,6 +137,23 @@ describe('ClientAdminController - Unit tests', () => {
       // Assert
       expect(result).toEqual(output);
       expect(findOneSpy).toHaveBeenCalledWith(params.id);
+    });
+  });
+
+  describe('findSubClients', () => {
+    it('should call findSubClients.execute with params.id and queries', async() => {
+      // Arrange
+      const params = createMock<Params>();
+      const queries = createMock<FindSubClientsQueryDto>();
+      const output = createMock<IPagination<ClientDto>>();
+      const findSubClientsSpy = jest.spyOn(findSubClientsService, 'execute').mockResolvedValue(output);
+
+      // Act
+      const result = await sut.findSubClientsByClientId(params, queries);
+
+      // Assert
+      expect(result).toEqual(output);
+      expect(findSubClientsSpy).toHaveBeenCalledWith(params.id, queries);
     });
   });
 

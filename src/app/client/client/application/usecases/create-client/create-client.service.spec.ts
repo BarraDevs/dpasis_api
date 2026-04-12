@@ -26,12 +26,22 @@ describe('CreateClient - Integration tests', () => {
     prisma = module.get(PrismaService);
   });
 
+  async function resetClientSequence(nextId = 1) {
+    await prisma.clientSequence.upsert({
+      where: { id: 1 },
+      create: { id: 1, nextId },
+      update: { nextId },
+    });
+  }
+
   beforeEach(async() => {
     await prisma.truncate();
+    await resetClientSequence(1);
   });
 
   afterAll(async() => {
     await prisma.truncate();
+    await resetClientSequence(1);
     await prisma.$disconnect();
   });
 
@@ -93,7 +103,7 @@ describe('CreateClient - Integration tests', () => {
 
       const result = await sut.execute(input);
 
-      expect(result).toHaveProperty('id');
+      expect(result.id).toBe(1);
 
       const saved = await prisma.client.findFirst({
         where: { document: '09748165000110' },
@@ -117,6 +127,28 @@ describe('CreateClient - Integration tests', () => {
       expect(address?.neighborhood).toBe('Centro');
       expect(address?.city).toBe('São Paulo');
       expect(address?.state).toBe('SP');
+
+      const seq = await prisma.clientSequence.findUnique({ where: { id: 1 } });
+      expect(seq?.nextId).toBe(2);
+    });
+
+    it('should allocate id from client sequence when id is omitted (getAndIncrement)', async() => {
+      await resetClientSequence(9000);
+
+      const [group, owner, company] = await Promise.all([
+        prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
+        prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+        createCompany(),
+      ]);
+
+      const input = makeValidInput({ groupId: group.id, ownerId: owner.id, companyIds: [company.id] });
+
+      const result = await sut.execute(input);
+
+      expect(result.id).toBe(9000);
+
+      const seq = await prisma.clientSequence.findUnique({ where: { id: 1 } });
+      expect(seq?.nextId).toBe(9001);
     });
 
     it('should persist MAIN address with complement when provided', async() => {
@@ -219,6 +251,9 @@ describe('CreateClient - Integration tests', () => {
       expect(saved).not.toBeNull();
       expect(saved?.id).toBe(explicitId);
       expect(saved?.document).toBe('09748165000110');
+
+      const seq = await prisma.clientSequence.findUnique({ where: { id: 1 } });
+      expect(seq?.nextId).toBeGreaterThanOrEqual(explicitId + 1);
     });
   });
 
@@ -248,8 +283,14 @@ describe('CreateClient - Integration tests', () => {
         document: '974.563.215-58',
       });
 
-      await expect(sut.execute(inputSecond)).rejects.toThrow(ClientIdAlreadyTakenError);
-      await expect(sut.execute(inputSecond)).rejects.toThrow(`O id ${explicitId} já está em uso.`);
+      try {
+        await sut.execute(inputSecond);
+        throw new Error('expected ClientIdAlreadyTakenError');
+      }
+      catch (err: unknown) {
+        expect(err).toBeInstanceOf(ClientIdAlreadyTakenError);
+        expect((err as Error).message).toMatch(new RegExp(`O id ${explicitId} já está em uso`));
+      }
     });
   });
 

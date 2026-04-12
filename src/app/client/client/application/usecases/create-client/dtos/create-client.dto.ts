@@ -18,6 +18,16 @@ export class CreateClientInputDto {
   @IsInt({ message: '$property deve ser um número inteiro' })
   id?: number;
 
+  @ApiPropertyOptional({
+    example: 10,
+    description: 'ID do cliente pai. Quando informado, este cliente será um sub-cliente (dependente). Não pode ser alterado após o cadastro.',
+  })
+  @IsOptional()
+  @IsNumber({}, { message: '$property deve ser um número' })
+  @IsPositive({ message: '$property deve ser um número positivo' })
+  @IsInt({ message: '$property deve ser um número inteiro' })
+  parentClientId?: number;
+
   @ApiProperty({ example: Object.values(ClientType).join(', ') })
   @IsEnum(ClientType, { message: '$property inválido.' })
   @IsString({ message: '$property deve ser uma string' })

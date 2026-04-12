@@ -13,6 +13,12 @@ import { EditClient } from 'src/app/client/client/application/usecases/edit-clie
 import { FindAllClientQueryDto } from 'src/app/client/client/application/usecases/find-all-client/dtos/find-all-client.dto';
 import { FindAllClient } from 'src/app/client/client/application/usecases/find-all-client/find-all-client.service';
 import { FindClientById } from 'src/app/client/client/application/usecases/find-client-by-id/find-client-by-id.service';
+import { FindSubClientsQueryDto } from 'src/app/client/client/application/usecases/find-sub-clients/dtos/find-sub-clients.dto';
+import { FindSubClients } from 'src/app/client/client/application/usecases/find-sub-clients/find-sub-clients.service';
+import { GetClientSequenceOutputDto } from 'src/app/client/client/application/usecases/get-client-sequence/dtos/get-client-sequence.dto';
+import { GetClientSequence } from 'src/app/client/client/application/usecases/get-client-sequence/get-client-sequence.service';
+import { SetClientNextIdInputDto } from 'src/app/client/client/application/usecases/set-client-next-id/dtos/set-client-next-id.dto';
+import { SetClientNextId } from 'src/app/client/client/application/usecases/set-client-next-id/set-client-next-id.service';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
 import { Swagger } from 'src/infra/openapi/swagger';
 import { Params } from 'src/infra/validators/class/dtos/params/params.dto';
@@ -27,7 +33,10 @@ export class ClientAdminController {
     private readonly deactivateClient: DeactivateClient,
     private readonly findAllClient: FindAllClient,
     private readonly findClientById: FindClientById,
+    private readonly findSubClients: FindSubClients,
     private readonly editClient: EditClient,
+    private readonly getClientSequence: GetClientSequence,
+    private readonly setClientNextId: SetClientNextId,
   ) {}
 
   @Post()
@@ -54,6 +63,29 @@ export class ClientAdminController {
     return this.findAllClient.execute(queries);
   }
 
+  @Get('sequence')
+  @RequiredClaims(Claim.CLIENT_READ)
+  @Swagger({
+    tags: ['Clientes'],
+    summary: 'Consultar próximo ID automático de cliente',
+    okResponse: GetClientSequenceOutputDto,
+  })
+  public getSequence(): Promise<GetClientSequenceOutputDto> {
+    return this.getClientSequence.execute();
+  }
+
+  @Patch('sequence')
+  @RequiredClaims(Claim.CLIENT_WRITE)
+  @Swagger({
+    tags: ['Clientes'],
+    summary: 'Definir próximo ID automático de cliente',
+    applyBadRequest: true,
+    okResponse: SuccessMessage,
+  })
+  public setSequence(@Body() body: SetClientNextIdInputDto): Promise<SuccessMessage> {
+    return this.setClientNextId.execute(body);
+  }
+
   @Get(':id')
   @RequiredClaims(Claim.CLIENT_READ)
   @Swagger({
@@ -65,6 +97,19 @@ export class ClientAdminController {
   })
   public findOne(@Param() params: Params): Promise<ClientDto> {
     return this.findClientById.execute(params.id);
+  }
+
+  @Get(':id/sub-clients')
+  @RequiredClaims(Claim.CLIENT_READ)
+  @Swagger({
+    tags: ['Clientes'],
+    summary: 'Listar sub-clientes de um cliente com paginação e busca',
+    applyBadRequest: true,
+    applyNotFound: true,
+    okPaginatedResponse: ClientDto,
+  })
+  public findSubClientsByClientId(@Param() params: Params, @Query() queries: FindSubClientsQueryDto): Promise<IPagination<ClientDto>> {
+    return this.findSubClients.execute(params.id, queries);
   }
 
   @Patch(':id/activate')

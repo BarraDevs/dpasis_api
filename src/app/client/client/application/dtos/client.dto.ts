@@ -5,6 +5,8 @@ export class ClientDto {
   type: string;
   document: string;
   ie: string | null;
+  parentClientId: number | null;
+  isSubClient: boolean;
   companyName: string;
   fantasyName: string | null;
   headquarters: string;

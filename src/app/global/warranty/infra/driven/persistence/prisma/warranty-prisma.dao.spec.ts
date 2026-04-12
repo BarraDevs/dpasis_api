@@ -100,12 +100,12 @@ describe('WarrantyDaoAdapterPrisma - Integration tests', () => {
         ],
       });
 
-      const query: FindAllWarrantyQueryDto = { search: '90' };
+      const query: FindAllWarrantyQueryDto = { search: 'DIAS' };
       const [rows, total] = await sut.findAll(query);
 
       expect(rows).toHaveLength(1);
       expect(total).toBe(1);
-      expect(rows[0].name).toContain('90');
+      expect(rows[0].name).toContain('dias');
     });
 
     it('should return results ordered by name asc', async() => {

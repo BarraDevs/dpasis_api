@@ -149,6 +149,8 @@ describe('FindClientById - Integration tests', () => {
       type: ClientType.PF,
       document: '97456321558',
       ie: null,
+      parentClientId: null,
+      isSubClient: false,
       group: {
         id: group.id,
         name: group.name,

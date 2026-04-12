@@ -477,6 +477,8 @@ describe('FindAllClient - Integration tests', () => {
       type: ClientType.PJ,
       document: '09748165000110',
       ie: '123456789',
+      parentClientId: null,
+      isSubClient: false,
       group: {
         id: group.id,
         name: group.name,

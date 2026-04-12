@@ -16,13 +16,14 @@ export class ClientFactory {
     return companyIds.map((id, index) => new PositiveInt(id, `${fieldName}[${index}]`).value);
   }
 
-  private static validateCreateProps(props: ClientCreateProps): ClientCreateProps {
+  private static validateCreateProps(props: ClientCreateProps): Omit<ClientProps, 'id' | 'active' | 'isSubClient'> {
     return {
       type: new Enum(props.type, ClientType, 'type').value,
       invoiceType: new Enum(props.invoiceType, ClientInvoiceType, 'invoiceType').value,
       document: new Document(props.document).value,
       groupId: new PositiveInt(props.groupId, 'groupId').value,
       ownerId: new PositiveInt(props.ownerId, 'ownerId').value,
+      parentClientId: props.parentClientId ?? null,
       companyIds: this.validateCompanyIds(props.companyIds ?? [], 'companyIds'),
       companyName: new NonEmptyString(props.companyName, 'companyName').value,
       headquarters: new NonEmptyString(props.headquarters, 'headquarters').value,
@@ -44,6 +45,7 @@ export class ClientFactory {
       ...validatedProps,
       id,
       active: true,
+      isSubClient: validatedProps.parentClientId != null,
     });
   }
 
@@ -54,6 +56,7 @@ export class ClientFactory {
       ...validatedProps,
       id: props.id,
       active: props.active,
+      isSubClient: validatedProps.parentClientId != null,
     });
   }
 
@@ -65,6 +68,8 @@ export class ClientFactory {
       ie: props.ie,
       groupId: props.groupId,
       ownerId: props.ownerId,
+      parentClientId: props.parentClientId ?? null,
+      isSubClient: props.isSubClient ?? false,
       companyIds: props.companyIds ?? [],
       invoiceType: props.invoiceType,
       generateInvoice: props.generateInvoice,

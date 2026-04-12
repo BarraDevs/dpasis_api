@@ -11,6 +11,9 @@ import { DeactivateClient } from './application/usecases/deactivate-client/deact
 import { EditClient } from './application/usecases/edit-client/edit-client.service';
 import { FindAllClient } from './application/usecases/find-all-client/find-all-client.service';
 import { FindClientById } from './application/usecases/find-client-by-id/find-client-by-id.service';
+import { FindSubClients } from './application/usecases/find-sub-clients/find-sub-clients.service';
+import { GetClientSequence } from './application/usecases/get-client-sequence/get-client-sequence.service';
+import { SetClientNextId } from './application/usecases/set-client-next-id/set-client-next-id.service';
 import { ClientAdminController } from './infra/drivers/http/admin/client-admin.controller';
 
 @Module({
@@ -32,6 +35,9 @@ import { ClientAdminController } from './infra/drivers/http/admin/client-admin.c
     EditClient,
     FindAllClient,
     FindClientById,
+    FindSubClients,
+    GetClientSequence,
+    SetClientNextId,
   ],
   exports: [
     FindClientById,
