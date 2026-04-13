@@ -1,4 +1,6 @@
 const TOKENS = {
+  AuditLogDao: Symbol.for('AuditLogDao'),
+
   CacheGateway: Symbol.for('CacheGateway'),
   CepLookupGateway: Symbol.for('CepLookupGateway'),
   CnpjLookupGateway: Symbol.for('CnpjLookupGateway'),

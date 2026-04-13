@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AdminModule } from './app/admin/admin.module';
+import { AuditModule } from './app/audit/audit.module';
 import { AuthenticationModule } from './app/authentication/authentication.module';
 import { ClientModuleModule } from './app/client/client-module.module';
 import { CompanyModule } from './app/company/company.module';
@@ -16,6 +17,7 @@ import { InfraModule } from './infra/infra.module';
     CoreModule,
     InfraModule,
     AuthenticationModule,
+    AuditModule,
     AdminModule,
     CompanyModule,
     ClientModuleModule,

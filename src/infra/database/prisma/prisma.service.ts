@@ -20,6 +20,8 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
 
   public async truncate() {
     await this.$transaction(async(tx) => {
+      // Audit logs (sem dependências)
+      await tx.auditLog.deleteMany();
       // 0. ClientInvoiceConfig (referencia Client, ClientAddress, Bank)
       await tx.clientInvoiceConfig.deleteMany();
       // 0.1 ClientDiscount (referencia Client)
