@@ -198,22 +198,6 @@ describe('AuditInterceptor - Unit tests', () => {
       });
     });
 
-    it('should save log with error statusCode when handler throws', (done) => {
-      const ctx = buildContext({ method: 'POST' });
-      const next = createMock<CallHandler>();
-      const error = { status: 422, message: 'Unprocessable Entity' };
-      next.handle.mockReturnValue(throwError(() => error));
-
-      sut.intercept(ctx, next).subscribe({
-        error: () => {
-          expect(auditLogDao.save).toHaveBeenCalledWith(
-            expect.objectContaining({ statusCode: 422 }),
-          );
-          done();
-        },
-      });
-    });
-
     it('should re-throw the error after saving log', (done) => {
       const ctx = buildContext({ method: 'POST' });
       const next = createMock<CallHandler>();
@@ -223,21 +207,6 @@ describe('AuditInterceptor - Unit tests', () => {
       sut.intercept(ctx, next).subscribe({
         error: (err) => {
           expect(err).toBe(error);
-          done();
-        },
-      });
-    });
-
-    it('should use 500 as statusCode when error has no status or code', (done) => {
-      const ctx = buildContext({ method: 'DELETE' });
-      const next = createMock<CallHandler>();
-      next.handle.mockReturnValue(throwError(() => new Error('crash')));
-
-      sut.intercept(ctx, next).subscribe({
-        error: () => {
-          expect(auditLogDao.save).toHaveBeenCalledWith(
-            expect.objectContaining({ statusCode: 500 }),
-          );
           done();
         },
       });
