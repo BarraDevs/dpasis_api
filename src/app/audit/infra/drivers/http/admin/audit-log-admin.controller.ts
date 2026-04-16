@@ -3,6 +3,8 @@ import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
 import { AuditLogDto } from 'src/app/audit/application/dtos/audit-log.dto';
 import { FindAllAuditLogQueryDto } from 'src/app/audit/application/usecases/find-all-audit-log/dtos/find-all-audit-log.dto';
 import { FindAllAuditLog } from 'src/app/audit/application/usecases/find-all-audit-log/find-all-audit-log.service';
+import { Claim } from 'src/app/authentication/domain/authorization/claim';
+import { RequiredClaims } from 'src/app/authentication/infra/decorators/required-claims.decorator';
 import { RequiredRoles } from 'src/app/authentication/infra/decorators/required-role.decorator';
 import { Swagger } from 'src/infra/openapi/swagger';
 import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
@@ -15,6 +17,7 @@ export class AuditLogAdminController {
   ) {}
 
   @Get()
+  @RequiredClaims(Claim.AUDIT_READ)
   @Swagger({
     tags: ['Auditoria'],
     summary: 'Listar logs de auditoria com paginação e filtros',

@@ -1,5 +1,6 @@
 export enum ClaimSubject {
   Admin = 'admin',
+  Audit = 'audit',
   Bank = 'bank',
   Billed = 'billed',
   Category = 'category',
@@ -35,6 +36,7 @@ export enum ClaimSubject {
 
 export const CLAIM_SUBJECT_LABELS: Record<ClaimSubject, string> = {
   [ClaimSubject.Admin]: 'Administradores',
+  [ClaimSubject.Audit]: 'Auditoria',
   [ClaimSubject.Bank]: 'Bancos',
   [ClaimSubject.Billed]: 'Faturados',
   [ClaimSubject.Category]: 'Categorias de serviço',

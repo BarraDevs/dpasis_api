@@ -18,9 +18,8 @@ export class DeleteClientAttachment {
       throw new ClientAttachmentNotFoundError();
     }
 
-    await this.uploadFileQueueProducer.addDeleteJob({ fileUrl: attachment.link });
-
     await this.clientAttachmentDao.delete(id);
+    await this.uploadFileQueueProducer.addDeleteJob({ fileUrl: attachment.link });
 
     return { message: 'Anexo do cliente excluído com sucesso' };
   }

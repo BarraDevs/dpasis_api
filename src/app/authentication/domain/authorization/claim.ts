@@ -32,6 +32,9 @@ export const Claim = {
   ADMIN_READ: { subject: ClaimSubject.Admin, action: ClaimAction.Read },
   ADMIN_WRITE: { subject: ClaimSubject.Admin, action: ClaimAction.Write },
 
+  AUDIT_READ: { subject: ClaimSubject.Audit, action: ClaimAction.Read },
+  AUDIT_WRITE: { subject: ClaimSubject.Audit, action: ClaimAction.Write },
+
   BANK_READ: { subject: ClaimSubject.Bank, action: ClaimAction.Read },
   BANK_WRITE: { subject: ClaimSubject.Bank, action: ClaimAction.Write },
 
