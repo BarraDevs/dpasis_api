@@ -1,7 +1,10 @@
 import { Test } from '@nestjs/testing';
 import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
 import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum';
+import { UploadFileQueueFakeAdapterProducer } from 'src/app/upload-file/infra/driven/queue/fake/upload-file-queue-fake.producer';
+import { TOKENS } from 'src/core/di/token';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
+import { JobName } from 'src/infra/queue/enums/job-name.enum';
 import { ClientSystemTypeModule } from '../../../client-system-type.module';
 import { ClientSystemTypeInUseError } from '../../../domain/errors/client-system-type-in-use.error';
 import { ClientSystemTypeNotFoundError } from '../../../domain/errors/client-system-type-not-found.error';
@@ -10,6 +13,7 @@ import { DeleteClientSystemType } from './delete-client-system-type.service';
 describe('DeleteClientSystemType - Integration tests', () => {
   let sut: DeleteClientSystemType;
   let prisma: PrismaService;
+  let uploadQueue: UploadFileQueueFakeAdapterProducer;
 
   beforeAll(async() => {
     const module = await Test.createTestingModule({
@@ -18,10 +22,12 @@ describe('DeleteClientSystemType - Integration tests', () => {
 
     sut = module.get(DeleteClientSystemType);
     prisma = module.get(PrismaService);
+    uploadQueue = module.get(TOKENS.UploadFileQueueProducer) as UploadFileQueueFakeAdapterProducer;
   });
 
   beforeEach(async() => {
     await prisma.truncate();
+    uploadQueue.addedDeleteJobs.length = 0;
   });
 
   afterAll(async() => {
@@ -98,6 +104,21 @@ describe('DeleteClientSystemType - Integration tests', () => {
 
     const deleted = await prisma.clientSystemType.findUnique({ where: { id: clientSystemType.id } });
     expect(deleted).toBeNull();
+  });
+
+  it('should enqueue delete job when imageUrl exists', async() => {
+    const imageUrl = 'https://storage.example.com/bucket/old.png';
+    const clientSystemType = await prisma.clientSystemType.create({
+      data: { name: `Tipo ${Date.now()}`, active: true, imageUrl },
+    });
+
+    await sut.execute(clientSystemType.id);
+
+    expect(uploadQueue.addedDeleteJobs).toHaveLength(1);
+    expect(uploadQueue.addedDeleteJobs[0]).toEqual({
+      name: JobName.DeleteFile,
+      data: { fileUrl: imageUrl },
+    });
   });
 
   it('should return success message', async() => {

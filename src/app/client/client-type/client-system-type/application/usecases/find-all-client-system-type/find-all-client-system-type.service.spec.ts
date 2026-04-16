@@ -154,6 +154,7 @@ describe('FindAllClientSystemType - Integration tests', () => {
     expect(result.data[0]).toEqual<ClientSystemTypeDto>({
       id: clientSystemType.id,
       name: clientSystemType.name,
+      imageUrl: clientSystemType.imageUrl,
       active: clientSystemType.active,
       createdAt: clientSystemType.createdAt,
       updatedAt: clientSystemType.updatedAt,

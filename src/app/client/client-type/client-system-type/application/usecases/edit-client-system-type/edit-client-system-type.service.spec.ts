@@ -1,5 +1,8 @@
 import { Test } from '@nestjs/testing';
+import { UploadFileQueueFakeAdapterProducer } from 'src/app/upload-file/infra/driven/queue/fake/upload-file-queue-fake.producer';
+import { TOKENS } from 'src/core/di/token';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
+import { JobName } from 'src/infra/queue/enums/job-name.enum';
 import { ClientSystemTypeModule } from '../../../client-system-type.module';
 import { ClientSystemTypeAlreadyExistsError } from '../../../domain/errors/client-system-type-already-exists.error';
 import { ClientSystemTypeNotFoundError } from '../../../domain/errors/client-system-type-not-found.error';
@@ -9,6 +12,7 @@ import { EditClientSystemType } from './edit-client-system-type.service';
 describe('EditClientSystemType - Integration tests', () => {
   let sut: EditClientSystemType;
   let prisma: PrismaService;
+  let uploadQueue: UploadFileQueueFakeAdapterProducer;
 
   beforeAll(async() => {
     const module = await Test.createTestingModule({
@@ -17,10 +21,12 @@ describe('EditClientSystemType - Integration tests', () => {
 
     sut = module.get(EditClientSystemType);
     prisma = module.get(PrismaService);
+    uploadQueue = module.get(TOKENS.UploadFileQueueProducer) as UploadFileQueueFakeAdapterProducer;
   });
 
   beforeEach(async() => {
     await prisma.truncate();
+    uploadQueue.addedDeleteJobs.length = 0;
   });
 
   afterAll(async() => {
@@ -90,5 +96,25 @@ describe('EditClientSystemType - Integration tests', () => {
     const updated = await prisma.clientSystemType.findUnique({ where: { id: clientSystemType.id } });
     expect(updated?.name).toBe(name);
     expect(updated?.active).toBe(true);
+  });
+
+  it('should enqueue delete of previous image when imageUrl changes', async() => {
+    const oldUrl = 'https://storage.example.com/old.png';
+    const clientSystemType = await prisma.clientSystemType.create({
+      data: { name: `Tipo ${Date.now()}`, active: true, imageUrl: oldUrl },
+    });
+
+    const data: EditClientSystemTypeInputDto = {
+      name: clientSystemType.name,
+      imageUrl: 'https://cdn.example.com/new.png',
+    };
+
+    await sut.execute(clientSystemType.id, data);
+
+    expect(uploadQueue.addedDeleteJobs).toHaveLength(1);
+    expect(uploadQueue.addedDeleteJobs[0]).toEqual({
+      name: JobName.DeleteFile,
+      data: { fileUrl: oldUrl },
+    });
   });
 });

@@ -53,15 +53,15 @@ describe('ClientSystemTypeAdminController - Unit tests', () => {
   });
 
   describe('create', () => {
-    it('should call createClientSystemType.execute with body', async() => {
+    it('should call createClientSystemType.execute with body and file', async() => {
       const body = createMock<CreateClientSystemTypeInputDto>();
       const output = createMock<CreateClientSystemTypeOutputDto>();
       const createSpy = jest.spyOn(createClientSystemTypeService, 'execute').mockResolvedValue(output);
 
-      const result = await sut.create(body);
+      const result = await sut.create(body, undefined);
 
       expect(result).toEqual(output);
-      expect(createSpy).toHaveBeenCalledWith(body);
+      expect(createSpy).toHaveBeenCalledWith(body, undefined);
     });
   });
 
@@ -105,16 +105,16 @@ describe('ClientSystemTypeAdminController - Unit tests', () => {
   });
 
   describe('update', () => {
-    it('should call editClientSystemType.execute with params.id and body', async() => {
+    it('should call editClientSystemType.execute with params.id, body and file', async() => {
       const params = createMock<Params>();
       const body = createMock<EditClientSystemTypeInputDto>();
       const output = createMock<SuccessMessage>();
       const updateSpy = jest.spyOn(editClientSystemTypeService, 'execute').mockResolvedValue(output);
 
-      const result = await sut.update(params, body);
+      const result = await sut.update(params, body, undefined);
 
       expect(result).toEqual(output);
-      expect(updateSpy).toHaveBeenCalledWith(params.id, body);
+      expect(updateSpy).toHaveBeenCalledWith(params.id, body, undefined);
     });
   });
 

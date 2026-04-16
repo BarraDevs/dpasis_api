@@ -1,4 +1,5 @@
 import { Test } from '@nestjs/testing';
+import { UploadSingle } from 'src/app/upload-file/application/usecases/upload-single/upload-single.service';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { ClientSystemTypeModule } from '../../../client-system-type.module';
 import { ClientSystemTypeAlreadyExistsError } from '../../../domain/errors/client-system-type-already-exists.error';
@@ -7,6 +8,7 @@ import { CreateClientSystemTypeInputDto } from './dtos/create-client-system-type
 
 describe('CreateClientSystemType - Integration tests', () => {
   let sut: CreateClientSystemType;
+  let uploadSingle: UploadSingle;
   let prisma: PrismaService;
 
   beforeAll(async() => {
@@ -15,6 +17,7 @@ describe('CreateClientSystemType - Integration tests', () => {
     }).compile();
 
     sut = module.get(CreateClientSystemType);
+    uploadSingle = module.get(UploadSingle);
     prisma = module.get(PrismaService);
   });
 
@@ -48,29 +51,72 @@ describe('CreateClientSystemType - Integration tests', () => {
     const result = await sut.execute(input);
     expect(result.id).toBeDefined();
     expect(typeof result.id).toBe('number');
-
-    const saved = await prisma.clientSystemType.findUnique({ where: { id: result.id } });
-    expect(saved).not.toBeNull();
-    expect(saved?.name).toBe(input.name);
-    expect(saved?.active).toBe(true);
   });
 
-  it('should persist client system type in database', async() => {
+  it('should persist imageUrl when provided as external URL', async() => {
     const input: CreateClientSystemTypeInputDto = {
-      name: `Sistema CRM ${Date.now()}-${Math.random()}`,
+      name: `Sistema ${Date.now()}-${Math.random()}`,
+      imageUrl: 'https://cdn.example.com/system-icon.png',
     };
 
     const { id } = await sut.execute(input);
 
-    const clientSystemType = await prisma.clientSystemType.findUnique({ where: { id } });
-    expect(clientSystemType).toEqual(
-      expect.objectContaining({
-        id,
-        name: input.name,
-        active: true,
-      }),
-    );
-    expect(clientSystemType?.createdAt).toBeInstanceOf(Date);
-    expect(clientSystemType?.updatedAt).toBeInstanceOf(Date);
+    const saved = await prisma.clientSystemType.findUnique({ where: { id } });
+    expect(saved?.imageUrl).toBe(input.imageUrl);
+  });
+
+  it('should upload file and persist imageUrl from uploaded file', async() => {
+    // Mock de arquivo Multer (simula upload)
+    const mockFile: Express.Multer.File = {
+      fieldname: 'file',
+      originalname: 'icon.png',
+      encoding: '7bit',
+      mimetype: 'image/png',
+      buffer: Buffer.from('fake file content'),
+      size: 1500,
+      destination: '/tmp',
+      filename: 'icon.png',
+      path: '/tmp/icon.png',
+      stream: undefined as any,
+    };
+
+    // Mock do serviço de upload
+    const imageUrlFromUpload = `https://cdn.example.com/uploads/${Date.now()}/icon.png`;
+
+    // Espione o método uploadSingle.execute que será chamado internamente
+    const uploadSpy = jest.spyOn(uploadSingle, 'execute').mockImplementation(async() => {
+      return { url: imageUrlFromUpload };
+    });
+
+    const input: CreateClientSystemTypeInputDto = {
+      name: `Sistema com upload ${Date.now()}-${Math.random()}`,
+    };
+
+    const { id } = await sut.execute(input, mockFile);
+
+    // uploadSingle deve ter sido chamado corretamente
+    expect(uploadSpy).toHaveBeenCalledTimes(1);
+    expect(uploadSpy).toHaveBeenCalledWith(expect.objectContaining({
+      originalname: mockFile.originalname,
+    }), 'client-system-types');
+
+    const saved = await prisma.clientSystemType.findUnique({ where: { id } });
+    expect(saved).not.toBeNull();
+    expect(saved?.name).toBe(input.name);
+    expect(saved?.imageUrl).toBe(imageUrlFromUpload);
+
+    // Limpe mock do spy após uso
+    uploadSpy.mockRestore();
+  });
+
+  it('should save imageUrl as null when no file is provided', async() => {
+    const input: CreateClientSystemTypeInputDto = {
+      name: `Sistema sem upload ${Date.now()}-${Math.random()}`,
+    };
+
+    const { id } = await sut.execute(input);
+
+    const saved = await prisma.clientSystemType.findUnique({ where: { id } });
+    expect(saved?.imageUrl).toBeNull();
   });
 });

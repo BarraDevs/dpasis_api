@@ -1,6 +1,6 @@
 import { Test } from '@nestjs/testing';
 import { ClientSystemTypeDto } from 'src/app/client/client-type/client-system-type/application/dtos/client-system-type.dto';
-import { CreateClientSystemTypeInputDto } from 'src/app/client/client-type/client-system-type/application/usecases/create-client-system-type/dtos/create-client-system-type.dto';
+import type { ClientSystemTypeSaveInput } from 'src/app/client/client-type/client-system-type/application/persistence/dao/client-system-type-dao.interface';
 import { EditClientSystemTypeInputDto } from 'src/app/client/client-type/client-system-type/application/usecases/edit-client-system-type/dtos/edit-client-system-type.dto';
 import { FindAllClientSystemTypeQueryDto } from 'src/app/client/client-type/client-system-type/application/usecases/find-all-client-system-type/dtos/find-all-client-system-type.dto';
 import { ConfigModule } from 'src/core/config/config.module';
@@ -135,6 +135,7 @@ describe('ClientSystemTypeDaoAdapterPrisma - Integration tests', () => {
       expect(clientSystemTypes[0]).toEqual<ClientSystemTypeDto>({
         id: created.id,
         name: created.name,
+        imageUrl: created.imageUrl,
         active: created.active,
         createdAt: created.createdAt,
         updatedAt: created.updatedAt,
@@ -172,6 +173,7 @@ describe('ClientSystemTypeDaoAdapterPrisma - Integration tests', () => {
       expect(result).toEqual<ClientSystemTypeDto>({
         id: created.id,
         name: created.name,
+        imageUrl: created.imageUrl,
         active: created.active,
         createdAt: created.createdAt,
         updatedAt: created.updatedAt,
@@ -234,8 +236,9 @@ describe('ClientSystemTypeDaoAdapterPrisma - Integration tests', () => {
 
   describe('save', () => {
     it('should create client system type and return id', async() => {
-      const data: CreateClientSystemTypeInputDto = {
+      const data: ClientSystemTypeSaveInput = {
         name: `Sistema ERP ${Date.now()}`,
+        imageUrl: null,
       };
 
       const id = await sut.save(data);

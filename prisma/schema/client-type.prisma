@@ -48,6 +48,7 @@ model ClientMaintenanceTicketType {
 model ClientSystemType {
   id        Int      @id @default(autoincrement())
   name      String   @unique
+  imageUrl  String?  @db.Text
   active    Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

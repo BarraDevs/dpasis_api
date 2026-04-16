@@ -1,15 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { ClientSystemTypeDto } from 'src/app/client/client-type/client-system-type/application/dtos/client-system-type.dto';
-import { IClientSystemTypeDao } from 'src/app/client/client-type/client-system-type/application/persistence/dao/client-system-type-dao.interface';
-import { CreateClientSystemTypeInputDto } from 'src/app/client/client-type/client-system-type/application/usecases/create-client-system-type/dtos/create-client-system-type.dto';
-import { EditClientSystemTypeInputDto } from 'src/app/client/client-type/client-system-type/application/usecases/edit-client-system-type/dtos/edit-client-system-type.dto';
+import {
+  type ClientSystemTypeEditInput,
+  type ClientSystemTypeSaveInput,
+  IClientSystemTypeDao,
+} from 'src/app/client/client-type/client-system-type/application/persistence/dao/client-system-type-dao.interface';
 import { FindAllClientSystemTypeQueryDto } from 'src/app/client/client-type/client-system-type/application/usecases/find-all-client-system-type/dtos/find-all-client-system-type.dto';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 
 const ClientSystemTypeSelect = {
   id: true,
   name: true,
+  imageUrl: true,
   active: true,
   createdAt: true,
   updatedAt: true,
@@ -64,7 +67,7 @@ export class ClientSystemTypeDaoAdapterPrisma implements IClientSystemTypeDao {
     });
   }
 
-  public async save(data: CreateClientSystemTypeInputDto): Promise<number> {
+  public async save(data: ClientSystemTypeSaveInput): Promise<number> {
     const result = await this.prisma.clientSystemType.create({
       data,
     });
@@ -72,7 +75,7 @@ export class ClientSystemTypeDaoAdapterPrisma implements IClientSystemTypeDao {
     return result.id;
   }
 
-  public async edit(id: number, data: EditClientSystemTypeInputDto): Promise<void> {
+  public async edit(id: number, data: ClientSystemTypeEditInput): Promise<void> {
     await this.prisma.clientSystemType.update({
       where: { id },
       data,

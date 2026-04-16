@@ -1,4 +1,17 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UploadedFile,
+  UseInterceptors,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiConsumes } from '@nestjs/swagger';
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
 import { Claim } from 'src/app/authentication/domain/authorization/claim';
 import { RequiredClaims } from 'src/app/authentication/infra/decorators/required-claims.decorator';
@@ -13,6 +26,7 @@ import { FindAllClientSystemTypeQueryDto } from 'src/app/client/client-type/clie
 import { FindAllClientSystemType } from 'src/app/client/client-type/client-system-type/application/usecases/find-all-client-system-type/find-all-client-system-type.service';
 import { FindClientSystemTypeById } from 'src/app/client/client-type/client-system-type/application/usecases/find-client-system-type-by-id/find-client-system-type-by-id.service';
 import { UpdateClientSystemTypeStatus } from 'src/app/client/client-type/client-system-type/application/usecases/update-client-system-type-status/update-client-system-type-status.service';
+import { UploadSingleInputDto } from 'src/app/upload-file/application/usecases/upload-single/dtos/upload-single.dto';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
 import { Swagger } from 'src/infra/openapi/swagger';
 import { Params } from 'src/infra/validators/class/dtos/params/params.dto';
@@ -32,14 +46,20 @@ export class ClientSystemTypeAdminController {
 
   @Post()
   @RequiredClaims(Claim.CLIENT_SYSTEM_TYPE_WRITE)
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileInterceptor('file'))
   @Swagger({
     tags: ['Clientes - Tipos de cliente - Tipos de sistema'],
     summary: 'Criar novo tipo de sistema de cliente',
     applyBadRequest: true,
+    mergeRequestBody: [CreateClientSystemTypeInputDto, UploadSingleInputDto],
     createdResponse: CreateClientSystemTypeOutputDto,
   })
-  public create(@Body() body: CreateClientSystemTypeInputDto): Promise<CreateClientSystemTypeOutputDto> {
-    return this.createClientSystemType.execute(body);
+  public create(
+    @Body() body: CreateClientSystemTypeInputDto,
+    @UploadedFile() file?: Express.Multer.File,
+  ): Promise<CreateClientSystemTypeOutputDto> {
+    return this.createClientSystemType.execute(body, file);
   }
 
   @Get()
@@ -82,15 +102,22 @@ export class ClientSystemTypeAdminController {
 
   @Patch(':id')
   @RequiredClaims(Claim.CLIENT_SYSTEM_TYPE_WRITE)
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileInterceptor('file'))
   @Swagger({
     tags: ['Clientes - Tipos de cliente - Tipos de sistema'],
     summary: 'Editar tipo de sistema de cliente',
     applyBadRequest: true,
     applyNotFound: true,
+    mergeRequestBody: [EditClientSystemTypeInputDto, UploadSingleInputDto],
     okResponse: SuccessMessage,
   })
-  public update(@Param() params: Params, @Body() body: EditClientSystemTypeInputDto): Promise<SuccessMessage> {
-    return this.editClientSystemType.execute(params.id, body);
+  public update(
+    @Param() params: Params,
+    @Body() body: EditClientSystemTypeInputDto,
+    @UploadedFile() file?: Express.Multer.File,
+  ): Promise<SuccessMessage> {
+    return this.editClientSystemType.execute(params.id, body, file);
   }
 
   @Delete(':id')
