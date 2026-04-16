@@ -21,7 +21,6 @@ export class CreateClientAttachmentInputDto {
   @ApiPropertyOptional({ example: 'https://example.com/file.pdf', description: 'URL do anexo já existente na nuvem. Se informado, o upload de arquivo é ignorado.' })
   @IsOptional()
   @IsString({ message: '$property deve ser uma string' })
-  @MaxLength(2048, { message: '$property deve ter no máximo 2048 caracteres' })
   @Trim()
   link?: string;
 }
