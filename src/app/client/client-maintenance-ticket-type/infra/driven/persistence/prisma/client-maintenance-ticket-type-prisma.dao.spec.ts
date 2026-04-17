@@ -1,8 +1,8 @@
 import { Test } from '@nestjs/testing';
-import { ClientMaintenanceTicketTypeDto } from 'src/app/client/client-type/client-maintenance-ticket-type/application/dtos/client-maintenance-ticket-type.dto';
-import { CreateClientMaintenanceTicketTypeInputDto } from 'src/app/client/client-type/client-maintenance-ticket-type/application/usecases/create-client-maintenance-ticket-type/dtos/create-client-maintenance-ticket-type.dto';
-import { EditClientMaintenanceTicketTypeInputDto } from 'src/app/client/client-type/client-maintenance-ticket-type/application/usecases/edit-client-maintenance-ticket-type/dtos/edit-client-maintenance-ticket-type.dto';
-import { FindAllClientMaintenanceTicketTypeQueryDto } from 'src/app/client/client-type/client-maintenance-ticket-type/application/usecases/find-all-client-maintenance-ticket-type/dtos/find-all-client-maintenance-ticket-type.dto';
+import { ClientMaintenanceTicketTypeDto } from 'src/app/client/client-maintenance-ticket-type/application/dtos/client-maintenance-ticket-type.dto';
+import { CreateClientMaintenanceTicketTypeInputDto } from 'src/app/client/client-maintenance-ticket-type/application/usecases/create-client-maintenance-ticket-type/dtos/create-client-maintenance-ticket-type.dto';
+import { EditClientMaintenanceTicketTypeInputDto } from 'src/app/client/client-maintenance-ticket-type/application/usecases/edit-client-maintenance-ticket-type/dtos/edit-client-maintenance-ticket-type.dto';
+import { FindAllClientMaintenanceTicketTypeQueryDto } from 'src/app/client/client-maintenance-ticket-type/application/usecases/find-all-client-maintenance-ticket-type/dtos/find-all-client-maintenance-ticket-type.dto';
 import { ConfigModule } from 'src/core/config/config.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { ClientMaintenanceTicketTypeDaoAdapterPrisma } from './client-maintenance-ticket-type-prisma.dao';

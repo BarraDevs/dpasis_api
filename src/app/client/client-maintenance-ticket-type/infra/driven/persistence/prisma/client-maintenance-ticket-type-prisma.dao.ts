@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import { ClientMaintenanceTicketTypeDto } from 'src/app/client/client-type/client-maintenance-ticket-type/application/dtos/client-maintenance-ticket-type.dto';
-import { IClientMaintenanceTicketTypeDao } from 'src/app/client/client-type/client-maintenance-ticket-type/application/persistence/dao/client-maintenance-ticket-type-dao.interface';
-import { CreateClientMaintenanceTicketTypeInputDto } from 'src/app/client/client-type/client-maintenance-ticket-type/application/usecases/create-client-maintenance-ticket-type/dtos/create-client-maintenance-ticket-type.dto';
-import { EditClientMaintenanceTicketTypeInputDto } from 'src/app/client/client-type/client-maintenance-ticket-type/application/usecases/edit-client-maintenance-ticket-type/dtos/edit-client-maintenance-ticket-type.dto';
-import { FindAllClientMaintenanceTicketTypeQueryDto } from 'src/app/client/client-type/client-maintenance-ticket-type/application/usecases/find-all-client-maintenance-ticket-type/dtos/find-all-client-maintenance-ticket-type.dto';
+import { ClientMaintenanceTicketTypeDto } from 'src/app/client/client-maintenance-ticket-type/application/dtos/client-maintenance-ticket-type.dto';
+import { IClientMaintenanceTicketTypeDao } from 'src/app/client/client-maintenance-ticket-type/application/persistence/dao/client-maintenance-ticket-type-dao.interface';
+import { CreateClientMaintenanceTicketTypeInputDto } from 'src/app/client/client-maintenance-ticket-type/application/usecases/create-client-maintenance-ticket-type/dtos/create-client-maintenance-ticket-type.dto';
+import { EditClientMaintenanceTicketTypeInputDto } from 'src/app/client/client-maintenance-ticket-type/application/usecases/edit-client-maintenance-ticket-type/dtos/edit-client-maintenance-ticket-type.dto';
+import { FindAllClientMaintenanceTicketTypeQueryDto } from 'src/app/client/client-maintenance-ticket-type/application/usecases/find-all-client-maintenance-ticket-type/dtos/find-all-client-maintenance-ticket-type.dto';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 
 const ClientMaintenanceTicketTypeSelect = {

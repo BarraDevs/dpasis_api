@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import { ClientAttendanceTypeDto } from 'src/app/client/client-type/client-attendance-type/application/dtos/client-attendance-type.dto';
-import { IClientAttendanceTypeDao } from 'src/app/client/client-type/client-attendance-type/application/persistence/dao/client-attendance-type-dao.interface';
-import { CreateClientAttendanceTypeInputDto } from 'src/app/client/client-type/client-attendance-type/application/usecases/create-client-attendance-type/dtos/create-client-attendance-type.dto';
-import { EditClientAttendanceTypeInputDto } from 'src/app/client/client-type/client-attendance-type/application/usecases/edit-client-attendance-type/dtos/edit-client-attendance-type.dto';
-import { FindAllClientAttendanceTypeQueryDto } from 'src/app/client/client-type/client-attendance-type/application/usecases/find-all-client-attendance-type/dtos/find-all-client-attendance-type.dto';
+import { ClientAttendanceTypeDto } from 'src/app/client/client-attendance-type/application/dtos/client-attendance-type.dto';
+import { IClientAttendanceTypeDao } from 'src/app/client/client-attendance-type/application/persistence/dao/client-attendance-type-dao.interface';
+import { CreateClientAttendanceTypeInputDto } from 'src/app/client/client-attendance-type/application/usecases/create-client-attendance-type/dtos/create-client-attendance-type.dto';
+import { EditClientAttendanceTypeInputDto } from 'src/app/client/client-attendance-type/application/usecases/edit-client-attendance-type/dtos/edit-client-attendance-type.dto';
+import { FindAllClientAttendanceTypeQueryDto } from 'src/app/client/client-attendance-type/application/usecases/find-all-client-attendance-type/dtos/find-all-client-attendance-type.dto';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 
 const ClientAttendanceTypeSelect = {

@@ -1,8 +1,8 @@
 import { Test } from '@nestjs/testing';
-import { ClientAttendanceTypeDto } from 'src/app/client/client-type/client-attendance-type/application/dtos/client-attendance-type.dto';
-import { CreateClientAttendanceTypeInputDto } from 'src/app/client/client-type/client-attendance-type/application/usecases/create-client-attendance-type/dtos/create-client-attendance-type.dto';
-import { EditClientAttendanceTypeInputDto } from 'src/app/client/client-type/client-attendance-type/application/usecases/edit-client-attendance-type/dtos/edit-client-attendance-type.dto';
-import { FindAllClientAttendanceTypeQueryDto } from 'src/app/client/client-type/client-attendance-type/application/usecases/find-all-client-attendance-type/dtos/find-all-client-attendance-type.dto';
+import { ClientAttendanceTypeDto } from 'src/app/client/client-attendance-type/application/dtos/client-attendance-type.dto';
+import { CreateClientAttendanceTypeInputDto } from 'src/app/client/client-attendance-type/application/usecases/create-client-attendance-type/dtos/create-client-attendance-type.dto';
+import { EditClientAttendanceTypeInputDto } from 'src/app/client/client-attendance-type/application/usecases/edit-client-attendance-type/dtos/edit-client-attendance-type.dto';
+import { FindAllClientAttendanceTypeQueryDto } from 'src/app/client/client-attendance-type/application/usecases/find-all-client-attendance-type/dtos/find-all-client-attendance-type.dto';
 import { ConfigModule } from 'src/core/config/config.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { ClientAttendanceTypeDaoAdapterPrisma } from './client-attendance-type-prisma.dao';
