@@ -1,10 +1,8 @@
 import { Test } from '@nestjs/testing';
 import { ClientAddressType } from 'src/app/client/client-address/domain/enums/client-address-type.enum';
 import { ClientAddressNotFoundError } from 'src/app/client/client-address/domain/errors/client-address-not-found.error';
-import { ClientAttendanceTypeNotFoundError } from 'src/app/client/client-type/client-attendance-type/domain/errors/client-attendance-type-not-found.error';
 import { ClientDescriptionTypeNotFoundError } from 'src/app/client/client-type/client-description-type/domain/errors/client-description-type-not-found.error';
 import { ClientDriveTypeNotFoundError } from 'src/app/client/client-type/client-drive-type/domain/errors/client-drive-type-not-found.error';
-import { ClientMaintenanceTicketTypeNotFoundError } from 'src/app/client/client-type/client-maintenance-ticket-type/domain/errors/client-maintenance-ticket-type-not-found.error';
 import { ClientSystemTypeNotFoundError } from 'src/app/client/client-type/client-system-type/domain/errors/client-system-type-not-found.error';
 import { ClientTypeModule } from 'src/app/client/client-type/client-type/client-type.module';
 import { ClientNotFoundError } from 'src/app/client/client/domain/errors/client-not-found.error';
@@ -39,12 +37,6 @@ describe('CreateClientType', () => {
         active: true,
       },
     });
-    const attendanceType = await prisma.clientAttendanceType.create({
-      data: { name: `Attendance ${Date.now()}-${Math.random()}`, active: true },
-    });
-    const maintenanceTicketType = await prisma.clientMaintenanceTicketType.create({
-      data: { name: `Maintenance ${Date.now()}-${Math.random()}`, active: true },
-    });
     const systemType = await prisma.clientSystemType.create({
       data: { name: `Sistema ${Date.now()}-${Math.random()}`, active: true },
     });
@@ -70,8 +62,6 @@ describe('CreateClientType', () => {
     });
     const data: CreateClientTypeInputDto = {
       clientId: client.id,
-      clientAttendanceTypeId: attendanceType.id,
-      clientMaintenanceTicketTypeId: maintenanceTicketType.id,
       clientSystemTypeId: systemType.id,
       clientDescriptionTypeId: descriptionType.id,
       clientDriveTypeId: driveType.id,
@@ -156,32 +146,6 @@ describe('CreateClientType', () => {
     });
 
     await expect(sut.execute(data)).rejects.toThrow(ClientNotFoundError);
-
-    const count = await prisma.clientType.count({ where: { clientId: data.clientId } });
-    expect(count).toBe(0);
-  });
-
-  it('should throw ClientAttendanceTypeNotFoundError when clientAttendanceType is inactive', async() => {
-    const { data } = await createClientTypeFixtures();
-    await prisma.clientAttendanceType.update({
-      where: { id: data.clientAttendanceTypeId },
-      data: { active: false },
-    });
-
-    await expect(sut.execute(data)).rejects.toThrow(ClientAttendanceTypeNotFoundError);
-
-    const count = await prisma.clientType.count({ where: { clientId: data.clientId } });
-    expect(count).toBe(0);
-  });
-
-  it('should throw ClientMaintenanceTicketTypeNotFoundError when clientMaintenanceTicketType is inactive', async() => {
-    const { data } = await createClientTypeFixtures();
-    await prisma.clientMaintenanceTicketType.update({
-      where: { id: data.clientMaintenanceTicketTypeId },
-      data: { active: false },
-    });
-
-    await expect(sut.execute(data)).rejects.toThrow(ClientMaintenanceTicketTypeNotFoundError);
 
     const count = await prisma.clientType.count({ where: { clientId: data.clientId } });
     expect(count).toBe(0);

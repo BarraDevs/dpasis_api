@@ -31,12 +31,6 @@ describe('DeleteBulkClientType - Integration tests', () => {
         active: true,
       },
     });
-    const attendanceType = await prisma.clientAttendanceType.create({
-      data: { name: `Attendance ${Date.now()}-${Math.random()}`, active: true },
-    });
-    const maintenanceTicketType = await prisma.clientMaintenanceTicketType.create({
-      data: { name: `Maintenance ${Date.now()}-${Math.random()}`, active: true },
-    });
     const systemType = await prisma.clientSystemType.create({
       data: { name: `Sistema ${Date.now()}-${Math.random()}`, active: true },
     });
@@ -62,8 +56,6 @@ describe('DeleteBulkClientType - Integration tests', () => {
     });
     const data = {
       clientId: client.id,
-      clientAttendanceTypeId: attendanceType.id,
-      clientMaintenanceTicketTypeId: maintenanceTicketType.id,
       clientSystemTypeId: systemType.id,
       clientDescriptionTypeId: descriptionType.id,
       clientDriveTypeId: driveType.id,

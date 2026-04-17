@@ -14,18 +14,6 @@ const ClientTypeSelect = {
   active: true,
   createdAt: true,
   updatedAt: true,
-  clientAttendanceType: {
-    select: {
-      id: true,
-      name: true,
-    },
-  },
-  clientMaintenanceTicketType: {
-    select: {
-      id: true,
-      name: true,
-    },
-  },
   clientSystemType: {
     select: {
       id: true,

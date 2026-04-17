@@ -11,5 +11,4 @@ export interface IClientAttendanceTypeDao {
   edit(id: number, data: EditClientAttendanceTypeInputDto): Promise<void>;
   delete(id: number): Promise<void>;
   updateStatus(id: number, active: boolean): Promise<void>;
-  countClientTypesByAttendanceTypeId(attendanceTypeId: number): Promise<number>;
 }

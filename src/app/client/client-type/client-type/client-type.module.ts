@@ -2,10 +2,8 @@ import { Module } from '@nestjs/common';
 import { AuthenticationGuardsModule } from 'src/app/authentication/application/guards/guards.module';
 import { ClientAddressModule } from '../../client-address/client-address.module';
 import { ClientModule } from '../../client/client.module';
-import { ClientAttendanceTypeModule } from '../client-attendance-type/client-attendance-type.module';
 import { ClientDescriptionTypeModule } from '../client-description-type/client-description-type.module';
 import { ClientDriveTypeModule } from '../client-drive-type/client-drive-type.module';
-import { ClientMaintenanceTicketTypeModule } from '../client-maintenance-ticket-type/client-maintenance-ticket-type.module';
 import { ClientSystemTypeModule } from '../client-system-type/client-system-type.module';
 import { ClientTypePersistenceModule } from './application/persistence/client-type-persistence.module';
 import { CreateClientType } from './application/usecases/create-client-type/create-client-type.service';
@@ -23,8 +21,6 @@ import { ClientTypeAdminController } from './infra/drivers/http/admin/client-typ
     ClientTypePersistenceModule,
     ClientModule,
     ClientAddressModule,
-    ClientAttendanceTypeModule,
-    ClientMaintenanceTicketTypeModule,
     ClientSystemTypeModule,
     ClientDescriptionTypeModule,
     ClientDriveTypeModule,

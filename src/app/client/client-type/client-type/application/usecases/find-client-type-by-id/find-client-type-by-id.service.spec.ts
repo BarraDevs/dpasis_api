@@ -33,12 +33,6 @@ describe('FindClientTypeById', () => {
         active: true,
       },
     });
-    const attendanceType = await prisma.clientAttendanceType.create({
-      data: { name: `Attendance ${Date.now()}-${Math.random()}`, active: true },
-    });
-    const maintenanceTicketType = await prisma.clientMaintenanceTicketType.create({
-      data: { name: `Maintenance ${Date.now()}-${Math.random()}`, active: true },
-    });
     const systemType = await prisma.clientSystemType.create({
       data: { name: `Sistema ${Date.now()}-${Math.random()}`, active: true },
     });
@@ -65,8 +59,6 @@ describe('FindClientTypeById', () => {
     const clientType = await prisma.clientType.create({
       data: {
         clientId: client.id,
-        clientAttendanceTypeId: attendanceType.id,
-        clientMaintenanceTicketTypeId: maintenanceTicketType.id,
         clientSystemTypeId: systemType.id,
         clientDescriptionTypeId: descriptionType.id,
         clientDriveTypeId: driveType.id,
@@ -80,8 +72,6 @@ describe('FindClientTypeById', () => {
       clientType,
       systemType,
       descriptionType,
-      attendanceType,
-      maintenanceTicketType,
       driveType,
       clientAddress,
     };
@@ -121,8 +111,6 @@ describe('FindClientTypeById', () => {
       clientType,
       systemType,
       descriptionType,
-      attendanceType,
-      maintenanceTicketType,
       driveType,
       clientAddress,
     } = await createClientTypeFixtures();
@@ -138,8 +126,6 @@ describe('FindClientTypeById', () => {
       clientSystemType: { id: systemType.id, name: systemType.name },
       clientDriveType: { id: driveType.id, name: driveType.name },
       clientDescriptionType: { id: descriptionType.id, name: descriptionType.name },
-      clientAttendanceType: { id: attendanceType.id, name: attendanceType.name },
-      clientMaintenanceTicketType: { id: maintenanceTicketType.id, name: maintenanceTicketType.name },
       clientAddress: {
         id: clientAddress.id,
         type: ClientAddressType.MAIN,

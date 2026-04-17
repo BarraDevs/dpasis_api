@@ -3,14 +3,6 @@ export class ClientTypeDto {
   clientId: number;
   quantity: number;
   active: boolean;
-  clientAttendanceType: {
-    id: number;
-    name: string;
-  };
-  clientMaintenanceTicketType: {
-    id: number;
-    name: string;
-  };
   clientSystemType: {
     id: number;
     name: string;

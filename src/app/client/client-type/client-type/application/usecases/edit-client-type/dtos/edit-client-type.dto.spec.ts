@@ -32,14 +32,14 @@ describe('EditClientTypeInputDto', () => {
 
   it('should accept partial update with multiple fields', async() => {
     const data = {
-      clientAttendanceTypeId: 2,
+      clientSystemTypeId: 2,
       clientDriveTypeId: 3,
       quantity: 15,
     };
 
     const result = await target.transform(data, metadata);
 
-    expect(result.clientAttendanceTypeId).toBe(2);
+    expect(result.clientSystemTypeId).toBe(2);
     expect(result.clientDriveTypeId).toBe(3);
     expect(result.quantity).toBe(15);
   });

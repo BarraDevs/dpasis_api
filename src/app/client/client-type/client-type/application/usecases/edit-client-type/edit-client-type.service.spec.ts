@@ -1,10 +1,8 @@
 import { Test } from '@nestjs/testing';
 import { ClientAddressType } from 'src/app/client/client-address/domain/enums/client-address-type.enum';
 import { ClientAddressNotFoundError } from 'src/app/client/client-address/domain/errors/client-address-not-found.error';
-import { ClientAttendanceTypeNotFoundError } from 'src/app/client/client-type/client-attendance-type/domain/errors/client-attendance-type-not-found.error';
 import { ClientDescriptionTypeNotFoundError } from 'src/app/client/client-type/client-description-type/domain/errors/client-description-type-not-found.error';
 import { ClientDriveTypeNotFoundError } from 'src/app/client/client-type/client-drive-type/domain/errors/client-drive-type-not-found.error';
-import { ClientMaintenanceTicketTypeNotFoundError } from 'src/app/client/client-type/client-maintenance-ticket-type/domain/errors/client-maintenance-ticket-type-not-found.error';
 import { ClientSystemTypeNotFoundError } from 'src/app/client/client-type/client-system-type/domain/errors/client-system-type-not-found.error';
 import { ClientTypeModule } from 'src/app/client/client-type/client-type/client-type.module';
 import { ClientTypeNotFoundError } from 'src/app/client/client-type/client-type/domain/errors/client-type-not-found.error';
@@ -39,12 +37,6 @@ describe('EditClientType', () => {
         active: true,
       },
     });
-    const attendanceType = await prisma.clientAttendanceType.create({
-      data: { name: `Attendance ${Date.now()}-${Math.random()}`, active: true },
-    });
-    const maintenanceTicketType = await prisma.clientMaintenanceTicketType.create({
-      data: { name: `Maintenance ${Date.now()}-${Math.random()}`, active: true },
-    });
     const systemType = await prisma.clientSystemType.create({
       data: { name: `Sistema ${Date.now()}-${Math.random()}`, active: true },
     });
@@ -71,8 +63,6 @@ describe('EditClientType', () => {
     const clientType = await prisma.clientType.create({
       data: {
         clientId: client.id,
-        clientAttendanceTypeId: attendanceType.id,
-        clientMaintenanceTicketTypeId: maintenanceTicketType.id,
         clientSystemTypeId: systemType.id,
         clientDescriptionTypeId: descriptionType.id,
         clientDriveTypeId: driveType.id,
@@ -84,8 +74,6 @@ describe('EditClientType', () => {
     return {
       client,
       clientType,
-      attendanceType,
-      maintenanceTicketType,
       systemType,
       descriptionType,
       driveType,
@@ -139,32 +127,6 @@ describe('EditClientType', () => {
     const result = await sut.execute(clientType.id, data);
 
     expect(result).toEqual({ message: 'Tipo de cliente atualizado com sucesso' });
-  });
-
-  it('should throw ClientAttendanceTypeNotFoundError when updating to inactive clientAttendanceType', async() => {
-    const { clientType, attendanceType } = await createClientTypeFixtures();
-    const inactiveAttendanceType = await prisma.clientAttendanceType.create({
-      data: { name: `Attendance Inativo ${Date.now()}-${Math.random()}`, active: false },
-    });
-    const data: EditClientTypeInputDto = { clientAttendanceTypeId: inactiveAttendanceType.id };
-
-    await expect(sut.execute(clientType.id, data)).rejects.toThrow(ClientAttendanceTypeNotFoundError);
-
-    const updated = await prisma.clientType.findUnique({ where: { id: clientType.id } });
-    expect(updated?.clientAttendanceTypeId).toBe(attendanceType.id);
-  });
-
-  it('should throw ClientMaintenanceTicketTypeNotFoundError when updating to inactive clientMaintenanceTicketType', async() => {
-    const { clientType, maintenanceTicketType } = await createClientTypeFixtures();
-    const inactiveMaintenanceTicketType = await prisma.clientMaintenanceTicketType.create({
-      data: { name: `Maintenance Inativo ${Date.now()}-${Math.random()}`, active: false },
-    });
-    const data: EditClientTypeInputDto = { clientMaintenanceTicketTypeId: inactiveMaintenanceTicketType.id };
-
-    await expect(sut.execute(clientType.id, data)).rejects.toThrow(ClientMaintenanceTicketTypeNotFoundError);
-
-    const updated = await prisma.clientType.findUnique({ where: { id: clientType.id } });
-    expect(updated?.clientMaintenanceTicketTypeId).toBe(maintenanceTicketType.id);
   });
 
   it('should throw ClientSystemTypeNotFoundError when updating to inactive clientSystemType', async() => {

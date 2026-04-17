@@ -1,5 +1,4 @@
 import { Test } from '@nestjs/testing';
-import { ClientAddressType } from 'src/app/client/client-address/domain/enums/client-address-type.enum';
 import { ClientMaintenanceTicketTypeDto } from 'src/app/client/client-type/client-maintenance-ticket-type/application/dtos/client-maintenance-ticket-type.dto';
 import { CreateClientMaintenanceTicketTypeInputDto } from 'src/app/client/client-type/client-maintenance-ticket-type/application/usecases/create-client-maintenance-ticket-type/dtos/create-client-maintenance-ticket-type.dto';
 import { EditClientMaintenanceTicketTypeInputDto } from 'src/app/client/client-type/client-maintenance-ticket-type/application/usecases/edit-client-maintenance-ticket-type/dtos/edit-client-maintenance-ticket-type.dto';
@@ -311,82 +310,6 @@ describe('ClientMaintenanceTicketTypeDaoAdapterPrisma - Integration tests', () =
       const updated = await prisma.clientMaintenanceTicketType.findUnique({ where: { id: clientMaintenanceTicketType.id } });
       expect(updated?.name).toBe(data.name);
       expect(updated?.active).toBe(true);
-    });
-  });
-
-  describe('countClientTypesByMaintenanceTicketTypeId', () => {
-    it('should return 0 when no client types use the maintenance ticket type', async() => {
-      const clientMaintenanceTicketType = await prisma.clientMaintenanceTicketType.create({
-        data: { name: `Tipo ${Date.now()}`, active: true },
-      });
-
-      const count = await sut.countClientTypesByMaintenanceTicketTypeId(clientMaintenanceTicketType.id);
-
-      expect(count).toBe(0);
-    });
-
-    it('should return count when client types use the maintenance ticket type', async() => {
-      const [attendanceType, maintenanceType, systemType, descriptionType, driveType] = await Promise.all([
-        prisma.clientAttendanceType.create({ data: { name: `Atendimento ${Date.now()}`, active: true } }),
-        prisma.clientMaintenanceTicketType.create({ data: { name: `Manutenção ${Date.now()}`, active: true } }),
-        prisma.clientSystemType.create({ data: { name: `Sistema ${Date.now()}`, active: true } }),
-        prisma.clientDescriptionType.create({ data: { name: `Descrição ${Date.now()}`, active: true } }),
-        prisma.clientDriveType.create({ data: { name: `Drive ${Date.now()}`, active: true } }),
-      ]);
-
-      const [group, owner] = await Promise.all([
-        prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-        prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
-      ]);
-
-      const client = await prisma.client.create({
-        data: {
-          id: 1,
-          type: 'PJ',
-          document: '09748165000110',
-          ie: null,
-          groupId: group.id,
-          ownerId: owner.id,
-          companyName: 'Empresa Test',
-          fantasyName: null,
-          headquarters: 'São Paulo',
-          invoiceType: 'CONTRACT',
-          generateInvoice: false,
-          active: true,
-        },
-      });
-
-      const clientAddress = await prisma.clientAddress.create({
-        data: {
-          clientId: client.id,
-          type: ClientAddressType.MAIN,
-          zipCode: '01310-100',
-          street: 'Av. Teste',
-          number: '100',
-          complement: null,
-          neighborhood: 'Centro',
-          city: 'São Paulo',
-          state: 'SP',
-          active: true,
-        },
-      });
-
-      await prisma.clientType.create({
-        data: {
-          clientId: client.id,
-          clientAttendanceTypeId: attendanceType.id,
-          clientMaintenanceTicketTypeId: maintenanceType.id,
-          clientSystemTypeId: systemType.id,
-          clientDescriptionTypeId: descriptionType.id,
-          clientDriveTypeId: driveType.id,
-          clientAddressId: clientAddress.id,
-          quantity: 1,
-        },
-      });
-
-      const count = await sut.countClientTypesByMaintenanceTicketTypeId(maintenanceType.id);
-
-      expect(count).toBe(1);
     });
   });
 

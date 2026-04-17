@@ -13,12 +13,6 @@ describe('ClientTypeDaoAdapterPrisma', () => {
   let prisma: PrismaService;
 
   const createAllTypes = async() => {
-    const attendanceType = await prisma.clientAttendanceType.create({
-      data: { name: `Attendance ${Date.now()}-${Math.random()}`, active: true },
-    });
-    const maintenanceTicketType = await prisma.clientMaintenanceTicketType.create({
-      data: { name: `Maintenance ${Date.now()}-${Math.random()}`, active: true },
-    });
     const systemType = await prisma.clientSystemType.create({
       data: { name: `Sistema ${Date.now()}-${Math.random()}`, active: true },
     });
@@ -28,7 +22,7 @@ describe('ClientTypeDaoAdapterPrisma', () => {
     const driveType = await prisma.clientDriveType.create({
       data: { name: `Drive ${Date.now()}-${Math.random()}`, active: true },
     });
-    return { attendanceType, maintenanceTicketType, systemType, descriptionType, driveType };
+    return { systemType, descriptionType, driveType };
   };
 
   const createClient = async(id = 1) => {
@@ -75,8 +69,6 @@ describe('ClientTypeDaoAdapterPrisma', () => {
     const types = await createAllTypes();
     const data = {
       clientId: client.id,
-      clientAttendanceTypeId: types.attendanceType.id,
-      clientMaintenanceTicketTypeId: types.maintenanceTicketType.id,
       clientSystemTypeId: types.systemType.id,
       clientDescriptionTypeId: types.descriptionType.id,
       clientDriveTypeId: types.driveType.id,
@@ -149,8 +141,6 @@ describe('ClientTypeDaoAdapterPrisma', () => {
       await prisma.clientType.create({
         data: {
           clientId: client2.id,
-          clientAttendanceTypeId: types2.attendanceType.id,
-          clientMaintenanceTicketTypeId: types2.maintenanceTicketType.id,
           clientSystemTypeId: types2.systemType.id,
           clientDescriptionTypeId: types2.descriptionType.id,
           clientDriveTypeId: types2.driveType.id,
@@ -285,7 +275,6 @@ describe('ClientTypeDaoAdapterPrisma', () => {
         quantity: 5,
         active: true,
       });
-      expect(items[0].clientAttendanceType).toEqual({ id: types.attendanceType.id, name: types.attendanceType.name });
       expect(items[0].clientSystemType).toEqual({ id: types.systemType.id, name: types.systemType.name });
       expect(items[0].clientDriveType).toEqual({ id: types.driveType.id, name: types.driveType.name });
       expect(items[0].clientAddress).toEqual({
@@ -315,8 +304,6 @@ describe('ClientTypeDaoAdapterPrisma', () => {
         clientId: client.id,
         quantity: 5,
         active: true,
-        clientAttendanceType: { id: types.attendanceType.id, name: types.attendanceType.name },
-        clientMaintenanceTicketType: { id: types.maintenanceTicketType.id, name: types.maintenanceTicketType.name },
         clientSystemType: { id: types.systemType.id, name: types.systemType.name },
         clientDescriptionType: { id: types.descriptionType.id, name: types.descriptionType.name },
         clientDriveType: { id: types.driveType.id, name: types.driveType.name },

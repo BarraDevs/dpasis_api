@@ -39,9 +39,7 @@ describe('DeleteClientDriveType - Integration tests', () => {
   });
 
   it('should throw ClientDriveTypeInUseError when client types use the drive type', async() => {
-    const [attendanceType, maintenanceType, systemType, descriptionType, driveType] = await Promise.all([
-      prisma.clientAttendanceType.create({ data: { name: `Atendimento ${Date.now()}`, active: true } }),
-      prisma.clientMaintenanceTicketType.create({ data: { name: `Manutenção ${Date.now()}`, active: true } }),
+    const [systemType, descriptionType, driveType] = await Promise.all([
       prisma.clientSystemType.create({ data: { name: `Sistema ${Date.now()}`, active: true } }),
       prisma.clientDescriptionType.create({ data: { name: `Descrição ${Date.now()}`, active: true } }),
       prisma.clientDriveType.create({ data: { name: `Drive ${Date.now()}`, active: true } }),
@@ -87,8 +85,6 @@ describe('DeleteClientDriveType - Integration tests', () => {
     await prisma.clientType.create({
       data: {
         clientId: client.id,
-        clientAttendanceTypeId: attendanceType.id,
-        clientMaintenanceTicketTypeId: maintenanceType.id,
         clientSystemTypeId: systemType.id,
         clientDescriptionTypeId: descriptionType.id,
         clientDriveTypeId: driveType.id,

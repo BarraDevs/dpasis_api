@@ -10,8 +10,6 @@ const metadata: ArgumentMetadata = {
 function makeValidData(overrides?: Partial<CreateClientTypeInputDto>) {
   return {
     clientId: 1,
-    clientAttendanceTypeId: 1,
-    clientMaintenanceTicketTypeId: 1,
     clientSystemTypeId: 1,
     clientDescriptionTypeId: 1,
     clientDriveTypeId: 1,
@@ -100,8 +98,6 @@ describe('CreateClientTypeInputDto', () => {
 
   describe('type ids', () => {
     const typeFields = [
-      'clientAttendanceTypeId',
-      'clientMaintenanceTicketTypeId',
       'clientSystemTypeId',
       'clientDescriptionTypeId',
       'clientDriveTypeId',
@@ -120,8 +116,6 @@ describe('CreateClientTypeInputDto', () => {
     it('should transform string type ids to numbers', async() => {
       const data = {
         ...makeValidData(),
-        clientAttendanceTypeId: '1',
-        clientMaintenanceTicketTypeId: '2',
         clientSystemTypeId: '3',
         clientDescriptionTypeId: '4',
         clientDriveTypeId: '5',
@@ -130,8 +124,6 @@ describe('CreateClientTypeInputDto', () => {
 
       const result = await target.transform(data, metadata);
 
-      expect(result.clientAttendanceTypeId).toBe(1);
-      expect(result.clientMaintenanceTicketTypeId).toBe(2);
       expect(result.clientSystemTypeId).toBe(3);
       expect(result.clientDescriptionTypeId).toBe(4);
       expect(result.clientDriveTypeId).toBe(5);

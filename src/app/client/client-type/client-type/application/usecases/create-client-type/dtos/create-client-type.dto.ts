@@ -16,20 +16,6 @@ export class CreateClientTypeInputDto {
   @IsInt({ message: '$property deve ser um número inteiro' })
   @StringToNumber()
   @Trim()
-  clientAttendanceTypeId: number;
-
-  @ApiProperty({ example: 1 })
-  @IsNotEmpty({ message: '$property é obrigatório' })
-  @IsInt({ message: '$property deve ser um número inteiro' })
-  @StringToNumber()
-  @Trim()
-  clientMaintenanceTicketTypeId: number;
-
-  @ApiProperty({ example: 1 })
-  @IsNotEmpty({ message: '$property é obrigatório' })
-  @IsInt({ message: '$property deve ser um número inteiro' })
-  @StringToNumber()
-  @Trim()
   clientSystemTypeId: number;
 
   @ApiProperty({ example: 1 })
