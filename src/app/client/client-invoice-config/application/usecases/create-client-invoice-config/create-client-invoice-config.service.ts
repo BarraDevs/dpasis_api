@@ -20,7 +20,7 @@ export class CreateClientInvoiceConfig {
   public async execute(data: CreateClientInvoiceConfigInputDto): Promise<CreateClientInvoiceConfigOutputDto> {
     const bank = await this.findBankById.execute(data.bankId, { onlyActive: true });
     const client = await this.findClientById.execute(data.clientId, { onlyActive: true });
-    const billingAddress = await this.findClientAddressByIdAndClientId.execute(data.billingAddressId, client.id);
+    const billingAddress = await this.findClientAddressByIdAndClientId.execute(data.billingAddressId, client.id, { onlyActive: true });
 
     const existingConfig = await this.clientInvoiceConfigRepository.findByClientId(client.id);
     if (existingConfig) {

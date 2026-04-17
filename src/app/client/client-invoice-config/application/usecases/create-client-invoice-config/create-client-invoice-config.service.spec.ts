@@ -235,7 +235,7 @@ describe('CreateClientInvoiceConfig', () => {
     await expect(sut.execute(input)).rejects.toThrow(ClientNotFoundError);
   });
 
-  it('should throw BillingAddressNotFromClientError when address does not belong to client', async() => {
+  it('should throw ClientAddressNotFoundError when address does not belong to client', async() => {
     const [group, owner] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo2 ${Date.now()}`, active: true } }),
       prisma.clientOwner.create({ data: { name: `Owner2 ${Date.now()}`, active: true } }),
@@ -276,6 +276,31 @@ describe('CreateClientInvoiceConfig', () => {
     const input = makeValidInput({
       clientId,
       billingAddressId: otherAddress.id,
+      bankId,
+    });
+
+    await expect(sut.execute(input)).rejects.toThrow(ClientAddressNotFoundError);
+  });
+
+  it('should throw ClientAddressNotFoundError when address is inactive', async() => {
+    const inactiveAddress = await prisma.clientAddress.create({
+      data: {
+        clientId,
+        type: ClientAddressType.MAIN,
+        zipCode: '12345-000',
+        street: 'Rua Inativa',
+        number: '100',
+        complement: null,
+        neighborhood: 'Centro',
+        city: 'Cidade',
+        state: 'SP',
+        active: false,
+      },
+    });
+
+    const input = makeValidInput({
+      clientId,
+      billingAddressId: inactiveAddress.id,
       bankId,
     });
 

@@ -162,4 +162,48 @@ describe('FindClientAddressByIdAndClientId', () => {
     expect(result.street).toBe('Av. Principal');
     expect(result.type).toBe(ClientAddressType.BILLING);
   });
+
+  it('should throw ClientAddressNotFoundError when onlyActive is true and address is inactive', async() => {
+    const created = await prisma.clientAddress.create({
+      data: {
+        clientId,
+        type: ClientAddressType.MAIN,
+        zipCode: '11111-111',
+        street: 'Rua Inativa',
+        number: '1',
+        complement: null,
+        neighborhood: 'Bairro',
+        city: 'São Paulo',
+        state: 'SP',
+        active: false,
+      },
+    });
+
+    await expect(sut.execute(created.id, clientId, { onlyActive: true })).rejects.toThrow(ClientAddressNotFoundError);
+    await expect(sut.execute(created.id, clientId, { onlyActive: true })).rejects.toThrow(
+      'Endereço do cliente não encontrado.',
+    );
+  });
+
+  it('should return ClientAddressDto when onlyActive is true and address is active', async() => {
+    const created = await prisma.clientAddress.create({
+      data: {
+        clientId,
+        type: ClientAddressType.MAIN,
+        zipCode: '22222-222',
+        street: 'Rua Ativa',
+        number: '2',
+        complement: null,
+        neighborhood: 'Centro',
+        city: 'São Paulo',
+        state: 'SP',
+        active: true,
+      },
+    });
+
+    const result = await sut.execute(created.id, clientId, { onlyActive: true });
+
+    expect(result.id).toBe(created.id);
+    expect(result.active).toBe(true);
+  });
 });

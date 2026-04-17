@@ -245,6 +245,28 @@ describe('EditClientInvoiceConfig - Integration tests', () => {
     await expect(sut.execute(configId, data)).rejects.toThrow(ClientAddressNotFoundError);
   });
 
+  it('should throw ClientAddressNotFoundError when address is inactive', async() => {
+    const inactiveAddress = await prisma.clientAddress.create({
+      data: {
+        clientId,
+        type: ClientAddressType.MAIN,
+        zipCode: '12345-000',
+        street: 'Rua Inativa',
+        number: '100',
+        complement: null,
+        neighborhood: 'Centro',
+        city: 'Cidade',
+        state: 'SP',
+        active: false,
+      },
+    });
+    const data: EditClientInvoiceConfigInputDto = {
+      billingAddressId: inactiveAddress.id,
+    };
+
+    await expect(sut.execute(configId, data)).rejects.toThrow(ClientAddressNotFoundError);
+  });
+
   it('should accept billingAddressId from same client', async() => {
     const secondAddress = await prisma.clientAddress.create({
       data: {
