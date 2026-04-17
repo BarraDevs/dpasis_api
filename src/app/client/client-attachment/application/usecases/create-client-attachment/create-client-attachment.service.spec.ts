@@ -1,5 +1,6 @@
 import { Test } from '@nestjs/testing';
 import { ClientAttachmentModule } from 'src/app/client/client-attachment/client-attachment.module';
+import { ClientNotFoundError } from 'src/app/client/client/domain/errors/client-not-found.error';
 import { RequiredFileError } from 'src/app/upload-file/domain/errors/required-file.error';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { CreateClientAttachment } from './create-client-attachment.service';
@@ -68,6 +69,16 @@ describe('CreateClientAttachment - Integration tests', () => {
 
   it('should be defined', () => {
     expect(sut).toBeDefined();
+  });
+
+  it('should throw ClientNotFoundError when client is not found', async() => {
+    const input: CreateClientAttachmentInputDto = {
+      clientId: 999,
+      description: 'Contrato de prestação',
+    };
+    const file = createMockFile();
+
+    await expect(sut.execute(input, file)).rejects.toThrow(ClientNotFoundError);
   });
 
   it('should create attachment and return id', async() => {

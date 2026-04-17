@@ -18,17 +18,17 @@ export class CreateClientInvoiceConfig {
   ) {}
 
   public async execute(data: CreateClientInvoiceConfigInputDto): Promise<CreateClientInvoiceConfigOutputDto> {
-    await this.findBankById.execute(data.bankId, { onlyActive: true });
-    await this.findClientById.execute(data.clientId, { onlyActive: true });
-    await this.findClientAddressByIdAndClientId.execute(data.billingAddressId, data.clientId);
+    const bank = await this.findBankById.execute(data.bankId, { onlyActive: true });
+    const client = await this.findClientById.execute(data.clientId, { onlyActive: true });
+    const billingAddress = await this.findClientAddressByIdAndClientId.execute(data.billingAddressId, client.id);
 
-    const existingConfig = await this.clientInvoiceConfigRepository.findByClientId(data.clientId);
+    const existingConfig = await this.clientInvoiceConfigRepository.findByClientId(client.id);
     if (existingConfig) {
       throw new ClientInvoiceConfigAlreadyExistsError();
     }
 
     const entity = ClientInvoiceConfigFactory.create({
-      clientId: data.clientId,
+      clientId: client.id,
       generateNf: data.generateNf,
       type: data.type,
       emissionDay: data.emissionDay,
@@ -36,8 +36,8 @@ export class CreateClientInvoiceConfig {
       dueDateDay: data.dueDateDay,
       deadlineDays: data.deadlineDays,
       months: data.months ?? [],
-      billingAddressId: data.billingAddressId,
-      bankId: data.bankId,
+      billingAddressId: billingAddress.id,
+      bankId: bank.id,
       autoProtestBoleto: data.autoProtestBoleto,
       message: data.message,
     });
