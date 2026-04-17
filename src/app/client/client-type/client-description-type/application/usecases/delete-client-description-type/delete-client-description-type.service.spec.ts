@@ -1,4 +1,5 @@
 import { Test } from '@nestjs/testing';
+import { ClientAddressType } from 'src/app/client/client-address/domain/enums/client-address-type.enum';
 import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
 import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
@@ -68,6 +69,21 @@ describe('DeleteClientDescriptionType - Integration tests', () => {
       },
     });
 
+    const clientAddress = await prisma.clientAddress.create({
+      data: {
+        clientId: client.id,
+        type: ClientAddressType.MAIN,
+        zipCode: '01310-100',
+        street: 'Av. Teste',
+        number: '100',
+        complement: null,
+        neighborhood: 'Centro',
+        city: 'São Paulo',
+        state: 'SP',
+        active: true,
+      },
+    });
+
     await prisma.clientType.create({
       data: {
         clientId: client.id,
@@ -76,6 +92,7 @@ describe('DeleteClientDescriptionType - Integration tests', () => {
         clientSystemTypeId: systemType.id,
         clientDescriptionTypeId: descriptionType.id,
         clientDriveTypeId: driveType.id,
+        clientAddressId: clientAddress.id,
         quantity: 1,
       },
     });

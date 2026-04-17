@@ -121,6 +121,7 @@ model ClientAddress {
 
   client                  Client                @relation(fields: [clientId], references: [id])
   invoiceConfigsAsBilling ClientInvoiceConfig[]
+  clientTypes             ClientType[]
 
   @@unique([clientId, type])
   @@map("client_addresses")

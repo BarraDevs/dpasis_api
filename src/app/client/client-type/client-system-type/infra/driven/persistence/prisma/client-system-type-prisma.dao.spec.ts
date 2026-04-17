@@ -1,4 +1,5 @@
 import { Test } from '@nestjs/testing';
+import { ClientAddressType } from 'src/app/client/client-address/domain/enums/client-address-type.enum';
 import { ClientSystemTypeDto } from 'src/app/client/client-type/client-system-type/application/dtos/client-system-type.dto';
 import type { ClientSystemTypeSaveInput } from 'src/app/client/client-type/client-system-type/application/persistence/dao/client-system-type-dao.interface';
 import { EditClientSystemTypeInputDto } from 'src/app/client/client-type/client-system-type/application/usecases/edit-client-system-type/dtos/edit-client-system-type.dto';
@@ -309,6 +310,21 @@ describe('ClientSystemTypeDaoAdapterPrisma - Integration tests', () => {
         },
       });
 
+      const clientAddress = await prisma.clientAddress.create({
+        data: {
+          clientId: client.id,
+          type: ClientAddressType.MAIN,
+          zipCode: '01310-100',
+          street: 'Av. Teste',
+          number: '100',
+          complement: null,
+          neighborhood: 'Centro',
+          city: 'São Paulo',
+          state: 'SP',
+          active: true,
+        },
+      });
+
       await prisma.clientType.create({
         data: {
           clientId: client.id,
@@ -317,6 +333,7 @@ describe('ClientSystemTypeDaoAdapterPrisma - Integration tests', () => {
           clientSystemTypeId: systemType.id,
           clientDescriptionTypeId: descriptionType.id,
           clientDriveTypeId: driveType.id,
+          clientAddressId: clientAddress.id,
           quantity: 1,
         },
       });

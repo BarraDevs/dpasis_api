@@ -1,4 +1,5 @@
 import { Test } from '@nestjs/testing';
+import { ClientAddressType } from 'src/app/client/client-address/domain/enums/client-address-type.enum';
 import { ClientTypeDto } from 'src/app/client/client-type/client-type/application/dtos/client-type.dto';
 import { CreateClientTypeInputDto } from 'src/app/client/client-type/client-type/application/usecases/create-client-type/dtos/create-client-type.dto';
 import { EditClientTypeInputDto } from 'src/app/client/client-type/client-type/application/usecases/edit-client-type/dtos/edit-client-type.dto';
@@ -57,6 +58,20 @@ describe('ClientTypeDaoAdapterPrisma', () => {
 
   const createClientTypeData = async() => {
     const client = await createClient();
+    const clientAddress = await prisma.clientAddress.create({
+      data: {
+        clientId: client.id,
+        type: ClientAddressType.MAIN,
+        zipCode: '01310-100',
+        street: 'Av. Teste',
+        number: '100',
+        complement: null,
+        neighborhood: 'Centro',
+        city: 'São Paulo',
+        state: 'SP',
+        active: true,
+      },
+    });
     const types = await createAllTypes();
     const data = {
       clientId: client.id,
@@ -65,9 +80,10 @@ describe('ClientTypeDaoAdapterPrisma', () => {
       clientSystemTypeId: types.systemType.id,
       clientDescriptionTypeId: types.descriptionType.id,
       clientDriveTypeId: types.driveType.id,
+      clientAddressId: clientAddress.id,
       quantity: 5,
     };
-    return { client, types, data };
+    return { client, types, data, clientAddress };
   };
 
   beforeAll(async() => {
@@ -103,6 +119,20 @@ describe('ClientTypeDaoAdapterPrisma', () => {
     it('should return only client types for the specified clientId', async() => {
       const { client, data } = await createClientTypeData();
       const client2 = await createClient(2);
+      const address2 = await prisma.clientAddress.create({
+        data: {
+          clientId: client2.id,
+          type: ClientAddressType.BILLING,
+          zipCode: '30000-000',
+          street: 'Rua B',
+          number: '2',
+          complement: null,
+          neighborhood: 'Centro',
+          city: 'BH',
+          state: 'MG',
+          active: true,
+        },
+      });
       await prisma.clientType.create({
         data: {
           ...data,
@@ -124,6 +154,7 @@ describe('ClientTypeDaoAdapterPrisma', () => {
           clientSystemTypeId: types2.systemType.id,
           clientDescriptionTypeId: types2.descriptionType.id,
           clientDriveTypeId: types2.driveType.id,
+          clientAddressId: address2.id,
           quantity: 1,
         },
       });
@@ -241,7 +272,7 @@ describe('ClientTypeDaoAdapterPrisma', () => {
     });
 
     it('should return expanded objects in response', async() => {
-      const { client, types, data } = await createClientTypeData();
+      const { client, types, data, clientAddress } = await createClientTypeData();
       const created = await prisma.clientType.create({ data });
       const query: FindAllClientTypeQueryDto = { clientId: client.id };
 
@@ -257,6 +288,12 @@ describe('ClientTypeDaoAdapterPrisma', () => {
       expect(items[0].clientAttendanceType).toEqual({ id: types.attendanceType.id, name: types.attendanceType.name });
       expect(items[0].clientSystemType).toEqual({ id: types.systemType.id, name: types.systemType.name });
       expect(items[0].clientDriveType).toEqual({ id: types.driveType.id, name: types.driveType.name });
+      expect(items[0].clientAddress).toEqual({
+        id: clientAddress.id,
+        type: ClientAddressType.MAIN,
+        city: 'São Paulo',
+        state: 'SP',
+      });
     });
   });
 
@@ -267,7 +304,7 @@ describe('ClientTypeDaoAdapterPrisma', () => {
     });
 
     it('should return client type by id with expanded relations', async() => {
-      const { client, types, data } = await createClientTypeData();
+      const { client, types, data, clientAddress } = await createClientTypeData();
       const created = await prisma.clientType.create({ data });
 
       const result = await sut.findById(created.id);
@@ -283,6 +320,12 @@ describe('ClientTypeDaoAdapterPrisma', () => {
         clientSystemType: { id: types.systemType.id, name: types.systemType.name },
         clientDescriptionType: { id: types.descriptionType.id, name: types.descriptionType.name },
         clientDriveType: { id: types.driveType.id, name: types.driveType.name },
+        clientAddress: {
+          id: clientAddress.id,
+          type: ClientAddressType.MAIN,
+          city: 'São Paulo',
+          state: 'SP',
+        },
         createdAt: created.createdAt,
         updatedAt: created.updatedAt,
       });

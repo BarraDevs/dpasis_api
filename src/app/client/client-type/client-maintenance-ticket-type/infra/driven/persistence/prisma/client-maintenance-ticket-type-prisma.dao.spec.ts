@@ -1,4 +1,5 @@
 import { Test } from '@nestjs/testing';
+import { ClientAddressType } from 'src/app/client/client-address/domain/enums/client-address-type.enum';
 import { ClientMaintenanceTicketTypeDto } from 'src/app/client/client-type/client-maintenance-ticket-type/application/dtos/client-maintenance-ticket-type.dto';
 import { CreateClientMaintenanceTicketTypeInputDto } from 'src/app/client/client-type/client-maintenance-ticket-type/application/usecases/create-client-maintenance-ticket-type/dtos/create-client-maintenance-ticket-type.dto';
 import { EditClientMaintenanceTicketTypeInputDto } from 'src/app/client/client-type/client-maintenance-ticket-type/application/usecases/edit-client-maintenance-ticket-type/dtos/edit-client-maintenance-ticket-type.dto';
@@ -355,6 +356,21 @@ describe('ClientMaintenanceTicketTypeDaoAdapterPrisma - Integration tests', () =
         },
       });
 
+      const clientAddress = await prisma.clientAddress.create({
+        data: {
+          clientId: client.id,
+          type: ClientAddressType.MAIN,
+          zipCode: '01310-100',
+          street: 'Av. Teste',
+          number: '100',
+          complement: null,
+          neighborhood: 'Centro',
+          city: 'São Paulo',
+          state: 'SP',
+          active: true,
+        },
+      });
+
       await prisma.clientType.create({
         data: {
           clientId: client.id,
@@ -363,6 +379,7 @@ describe('ClientMaintenanceTicketTypeDaoAdapterPrisma - Integration tests', () =
           clientSystemTypeId: systemType.id,
           clientDescriptionTypeId: descriptionType.id,
           clientDriveTypeId: driveType.id,
+          clientAddressId: clientAddress.id,
           quantity: 1,
         },
       });

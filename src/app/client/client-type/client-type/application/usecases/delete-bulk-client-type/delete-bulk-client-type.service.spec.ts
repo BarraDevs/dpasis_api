@@ -1,4 +1,5 @@
 import { Test } from '@nestjs/testing';
+import { ClientAddressType } from 'src/app/client/client-address/domain/enums/client-address-type.enum';
 import { ClientTypeModule } from 'src/app/client/client-type/client-type/client-type.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { DeleteBulkClientType } from './delete-bulk-client-type.service';
@@ -45,6 +46,20 @@ describe('DeleteBulkClientType - Integration tests', () => {
     const driveType = await prisma.clientDriveType.create({
       data: { name: `Drive ${Date.now()}-${Math.random()}`, active: true },
     });
+    const clientAddress = await prisma.clientAddress.create({
+      data: {
+        clientId: client.id,
+        type: ClientAddressType.MAIN,
+        zipCode: '01310-100',
+        street: 'Av. Teste',
+        number: '100',
+        complement: null,
+        neighborhood: 'Centro',
+        city: 'São Paulo',
+        state: 'SP',
+        active: true,
+      },
+    });
     const data = {
       clientId: client.id,
       clientAttendanceTypeId: attendanceType.id,
@@ -52,6 +67,7 @@ describe('DeleteBulkClientType - Integration tests', () => {
       clientSystemTypeId: systemType.id,
       clientDescriptionTypeId: descriptionType.id,
       clientDriveTypeId: driveType.id,
+      clientAddressId: clientAddress.id,
       quantity: 5,
       active: true,
     };

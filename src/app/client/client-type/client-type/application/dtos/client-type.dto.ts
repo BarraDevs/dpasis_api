@@ -23,6 +23,12 @@ export class ClientTypeDto {
     id: number;
     name: string;
   };
+  clientAddress: {
+    id: number;
+    type: string;
+    city: string;
+    state: string;
+  };
   createdAt: Date;
   updatedAt: Date;
 }

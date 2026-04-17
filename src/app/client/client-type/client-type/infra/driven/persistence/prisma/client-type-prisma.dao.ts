@@ -44,6 +44,14 @@ const ClientTypeSelect = {
       name: true,
     },
   },
+  clientAddress: {
+    select: {
+      id: true,
+      type: true,
+      city: true,
+      state: true,
+    },
+  },
 } satisfies Prisma.ClientTypeSelect;
 
 @Injectable()

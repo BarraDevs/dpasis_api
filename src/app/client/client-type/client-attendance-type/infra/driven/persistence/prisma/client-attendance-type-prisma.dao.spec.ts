@@ -1,4 +1,5 @@
 import { Test } from '@nestjs/testing';
+import { ClientAddressType } from 'src/app/client/client-address/domain/enums/client-address-type.enum';
 import { ClientAttendanceTypeDto } from 'src/app/client/client-type/client-attendance-type/application/dtos/client-attendance-type.dto';
 import { CreateClientAttendanceTypeInputDto } from 'src/app/client/client-type/client-attendance-type/application/usecases/create-client-attendance-type/dtos/create-client-attendance-type.dto';
 import { EditClientAttendanceTypeInputDto } from 'src/app/client/client-type/client-attendance-type/application/usecases/edit-client-attendance-type/dtos/edit-client-attendance-type.dto';
@@ -360,6 +361,21 @@ describe('ClientAttendanceTypeDaoAdapterPrisma - Integration tests', () => {
         },
       });
 
+      const clientAddress = await prisma.clientAddress.create({
+        data: {
+          clientId: client.id,
+          type: ClientAddressType.MAIN,
+          zipCode: '01310-100',
+          street: 'Av. Teste',
+          number: '100',
+          complement: null,
+          neighborhood: 'Centro',
+          city: 'São Paulo',
+          state: 'SP',
+          active: true,
+        },
+      });
+
       await prisma.clientType.create({
         data: {
           clientId: client.id,
@@ -368,6 +384,7 @@ describe('ClientAttendanceTypeDaoAdapterPrisma - Integration tests', () => {
           clientSystemTypeId: systemType.id,
           clientDescriptionTypeId: descriptionType.id,
           clientDriveTypeId: driveType.id,
+          clientAddressId: clientAddress.id,
           quantity: 1,
         },
       });

@@ -15,6 +15,7 @@ function makeValidData(overrides?: Partial<CreateClientTypeInputDto>) {
     clientSystemTypeId: 1,
     clientDescriptionTypeId: 1,
     clientDriveTypeId: 1,
+    clientAddressId: 1,
     quantity: 5,
     ...overrides,
   };
@@ -104,6 +105,7 @@ describe('CreateClientTypeInputDto', () => {
       'clientSystemTypeId',
       'clientDescriptionTypeId',
       'clientDriveTypeId',
+      'clientAddressId',
     ] as const;
 
     it.each(typeFields)('should require %s', async(field) => {
@@ -123,6 +125,7 @@ describe('CreateClientTypeInputDto', () => {
         clientSystemTypeId: '3',
         clientDescriptionTypeId: '4',
         clientDriveTypeId: '5',
+        clientAddressId: '6',
       };
 
       const result = await target.transform(data, metadata);
@@ -132,6 +135,7 @@ describe('CreateClientTypeInputDto', () => {
       expect(result.clientSystemTypeId).toBe(3);
       expect(result.clientDescriptionTypeId).toBe(4);
       expect(result.clientDriveTypeId).toBe(5);
+      expect(result.clientAddressId).toBe(6);
     });
   });
 

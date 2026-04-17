@@ -1,4 +1,6 @@
 import { Test } from '@nestjs/testing';
+import { ClientAddressType } from 'src/app/client/client-address/domain/enums/client-address-type.enum';
+import { ClientAddressNotFoundError } from 'src/app/client/client-address/domain/errors/client-address-not-found.error';
 import { ClientAttendanceTypeNotFoundError } from 'src/app/client/client-type/client-attendance-type/domain/errors/client-attendance-type-not-found.error';
 import { ClientDescriptionTypeNotFoundError } from 'src/app/client/client-type/client-description-type/domain/errors/client-description-type-not-found.error';
 import { ClientDriveTypeNotFoundError } from 'src/app/client/client-type/client-drive-type/domain/errors/client-drive-type-not-found.error';
@@ -52,6 +54,20 @@ describe('CreateClientType', () => {
     const driveType = await prisma.clientDriveType.create({
       data: { name: `Drive ${Date.now()}-${Math.random()}`, active: true },
     });
+    const clientAddress = await prisma.clientAddress.create({
+      data: {
+        clientId: client.id,
+        type: ClientAddressType.MAIN,
+        zipCode: '01310-100',
+        street: 'Av. Teste',
+        number: '100',
+        complement: null,
+        neighborhood: 'Centro',
+        city: 'São Paulo',
+        state: 'SP',
+        active: true,
+      },
+    });
     const data: CreateClientTypeInputDto = {
       clientId: client.id,
       clientAttendanceTypeId: attendanceType.id,
@@ -59,6 +75,7 @@ describe('CreateClientType', () => {
       clientSystemTypeId: systemType.id,
       clientDescriptionTypeId: descriptionType.id,
       clientDriveTypeId: driveType.id,
+      clientAddressId: clientAddress.id,
       quantity: 5,
     };
     return { client, data };
@@ -194,6 +211,63 @@ describe('CreateClientType', () => {
 
     const count = await prisma.clientType.count({ where: { clientId: data.clientId } });
     expect(count).toBe(0);
+  });
+
+  it('should throw ClientAddressNotFoundError when clientAddressId does not belong to client', async() => {
+    const { data } = await createClientTypeFixtures();
+    const otherClientGroup = await prisma.clientGroup.create({
+      data: { name: `Grupo outro ${Date.now()}-${Math.random()}`, active: true },
+    });
+    const otherOwner = await prisma.clientOwner.create({
+      data: { name: `Owner outro ${Date.now()}-${Math.random()}`, active: true },
+    });
+    const otherClient = await prisma.client.create({
+      data: {
+        id: 999,
+        type: 'PJ',
+        document: `99887766${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}00199`,
+        ie: null,
+        groupId: otherClientGroup.id,
+        ownerId: otherOwner.id,
+        companyName: 'Outra Empresa',
+        fantasyName: null,
+        headquarters: 'SP',
+        invoiceType: 'CONTRACT',
+        generateInvoice: true,
+        active: true,
+      },
+    });
+    const foreignAddress = await prisma.clientAddress.create({
+      data: {
+        clientId: otherClient.id,
+        type: ClientAddressType.BILLING,
+        zipCode: '30130-100',
+        street: 'Rua Outra',
+        number: '1',
+        complement: null,
+        neighborhood: 'Centro',
+        city: 'BH',
+        state: 'MG',
+        active: true,
+      },
+    });
+
+    await expect(
+      sut.execute({ ...data, clientAddressId: foreignAddress.id }),
+    ).rejects.toThrow(ClientAddressNotFoundError);
+
+    const count = await prisma.clientType.count({ where: { clientId: data.clientId } });
+    expect(count).toBe(0);
+  });
+
+  it('should throw ClientAddressNotFoundError when clientAddress is inactive', async() => {
+    const { data } = await createClientTypeFixtures();
+    await prisma.clientAddress.update({
+      where: { id: data.clientAddressId },
+      data: { active: false },
+    });
+
+    await expect(sut.execute(data)).rejects.toThrow(ClientAddressNotFoundError);
   });
 
   it('should throw ClientDriveTypeNotFoundError when clientDriveType is inactive', async() => {

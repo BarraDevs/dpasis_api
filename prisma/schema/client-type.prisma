@@ -6,6 +6,7 @@ model ClientType {
   clientSystemTypeId            Int
   clientDescriptionTypeId       Int
   clientDriveTypeId             Int
+  clientAddressId               Int
   quantity                      Int
   active                        Boolean  @default(true)
   createdAt                     DateTime @default(now())
@@ -17,6 +18,7 @@ model ClientType {
   clientSystemType            ClientSystemType            @relation(fields: [clientSystemTypeId], references: [id])
   clientDescriptionType       ClientDescriptionType       @relation(fields: [clientDescriptionTypeId], references: [id])
   clientDriveType             ClientDriveType             @relation(fields: [clientDriveTypeId], references: [id])
+  clientAddress               ClientAddress               @relation(fields: [clientAddressId], references: [id])
 
   @@map("client_types")
 }

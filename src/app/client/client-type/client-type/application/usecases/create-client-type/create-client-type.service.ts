@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { FindClientAddressByIdAndClientId } from 'src/app/client/client-address/application/usecases/find-client-address-by-id-and-client-id/find-client-address-by-id-and-client-id.service';
 import { FindClientAttendanceTypeById } from 'src/app/client/client-type/client-attendance-type/application/usecases/find-client-attendance-type-by-id/find-client-attendance-type-by-id.service';
 import { FindClientDescriptionTypeById } from 'src/app/client/client-type/client-description-type/application/usecases/find-client-description-type-by-id/find-client-description-type-by-id.service';
 import { FindClientDriveTypeById } from 'src/app/client/client-type/client-drive-type/application/usecases/find-client-drive-type-by-id/find-client-drive-type-by-id.service';
@@ -19,6 +20,7 @@ export class CreateClientType {
     private readonly findClientSystemTypeById: FindClientSystemTypeById,
     private readonly findClientDescriptionTypeById: FindClientDescriptionTypeById,
     private readonly findClientDriveTypeById: FindClientDriveTypeById,
+    private readonly findClientAddressByIdAndClientId: FindClientAddressByIdAndClientId,
   ) {}
 
   public async execute(data: CreateClientTypeInputDto): Promise<CreateClientTypeOutputDto> {
@@ -29,6 +31,7 @@ export class CreateClientType {
       this.findClientSystemTypeById.execute(data.clientSystemTypeId, { onlyActive: true }),
       this.findClientDescriptionTypeById.execute(data.clientDescriptionTypeId, { onlyActive: true }),
       this.findClientDriveTypeById.execute(data.clientDriveTypeId, { onlyActive: true }),
+      this.findClientAddressByIdAndClientId.execute(data.clientAddressId, data.clientId, { onlyActive: true }),
     ]);
 
     const id = await this.clientTypeDao.save(data);

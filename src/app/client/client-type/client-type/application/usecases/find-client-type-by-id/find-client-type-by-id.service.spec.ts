@@ -1,4 +1,5 @@
 import { Test } from '@nestjs/testing';
+import { ClientAddressType } from 'src/app/client/client-address/domain/enums/client-address-type.enum';
 import { ClientTypeModule } from 'src/app/client/client-type/client-type/client-type.module';
 import { ClientTypeNotFoundError } from 'src/app/client/client-type/client-type/domain/errors/client-type-not-found.error';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
@@ -47,6 +48,20 @@ describe('FindClientTypeById', () => {
     const driveType = await prisma.clientDriveType.create({
       data: { name: `Drive ${Date.now()}-${Math.random()}`, active: true },
     });
+    const clientAddress = await prisma.clientAddress.create({
+      data: {
+        clientId: client.id,
+        type: ClientAddressType.MAIN,
+        zipCode: '01310-100',
+        street: 'Av. Teste',
+        number: '100',
+        complement: null,
+        neighborhood: 'Centro',
+        city: 'São Paulo',
+        state: 'SP',
+        active: true,
+      },
+    });
     const clientType = await prisma.clientType.create({
       data: {
         clientId: client.id,
@@ -55,11 +70,21 @@ describe('FindClientTypeById', () => {
         clientSystemTypeId: systemType.id,
         clientDescriptionTypeId: descriptionType.id,
         clientDriveTypeId: driveType.id,
+        clientAddressId: clientAddress.id,
         quantity: 5,
         active: true,
       },
     });
-    return { client, clientType, systemType, descriptionType, attendanceType, maintenanceTicketType, driveType };
+    return {
+      client,
+      clientType,
+      systemType,
+      descriptionType,
+      attendanceType,
+      maintenanceTicketType,
+      driveType,
+      clientAddress,
+    };
   };
 
   beforeAll(async() => {
@@ -99,6 +124,7 @@ describe('FindClientTypeById', () => {
       attendanceType,
       maintenanceTicketType,
       driveType,
+      clientAddress,
     } = await createClientTypeFixtures();
 
     const result = await sut.execute(clientType.id);
@@ -114,6 +140,12 @@ describe('FindClientTypeById', () => {
       clientDescriptionType: { id: descriptionType.id, name: descriptionType.name },
       clientAttendanceType: { id: attendanceType.id, name: attendanceType.name },
       clientMaintenanceTicketType: { id: maintenanceTicketType.id, name: maintenanceTicketType.name },
+      clientAddress: {
+        id: clientAddress.id,
+        type: ClientAddressType.MAIN,
+        city: 'São Paulo',
+        state: 'SP',
+      },
       createdAt: clientType.createdAt,
       updatedAt: clientType.updatedAt,
     });
