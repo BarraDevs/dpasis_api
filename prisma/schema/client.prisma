@@ -1,25 +1,31 @@
 model Client {
-  id              Int      @id
-  type            String
-  document        String   @unique
-  ie              String?
-  groupId         Int
-  ownerId         Int
-  parentClientId  Int?
-  isSubClient     Boolean  @default(false)
-  companyName     String
-  fantasyName     String?
-  headquarters    String
-  invoiceType     String
-  generateInvoice Boolean
-  active          Boolean
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id                  Int      @id
+  type                String
+  parentClientId      Int?
+  isSubClient         Boolean  @default(false)
+  document            String   @unique
+  ie                  String?
+  groupId             Int
+  ownerId             Int
+  attendanceId        Int?
+  maintenanceTicketId Int?
+  companyName         String
+  fantasyName         String?
+  headquarters        String
+  invoiceType         String
+  generateInvoice     Boolean
+  active              Boolean
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 
-  group         ClientGroup          @relation(fields: [groupId], references: [id])
-  owner         ClientOwner          @relation(fields: [ownerId], references: [id])
-  parent        Client?              @relation("ClientSubClients", fields: [parentClientId], references: [id])
-  children      Client[]             @relation("ClientSubClients")
+  parent   Client?  @relation("ClientSubClients", fields: [parentClientId], references: [id])
+  children Client[] @relation("ClientSubClients")
+
+  group             ClientGroup              @relation(fields: [groupId], references: [id])
+  owner             ClientOwner              @relation(fields: [ownerId], references: [id])
+  attendance        ClientAttendance?        @relation(fields: [attendanceId], references: [id])
+  maintenanceTicket ClientMaintenanceTicket? @relation(fields: [maintenanceTicketId], references: [id])
+
   companies     Company[]
   addresses     ClientAddress[]
   attachments   ClientAttachment[]
@@ -30,6 +36,30 @@ model Client {
   types         ClientType[]
 
   @@map("clients")
+}
+
+model ClientAttendance {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  clients Client[]
+
+  @@map("client_attendances")
+}
+
+model ClientMaintenanceTicket {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  clients Client[]
+
+  @@map("client_maintenance_tickets")
 }
 
 model ClientAttachment {

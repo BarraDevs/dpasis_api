@@ -22,11 +22,11 @@ const TOKENS = {
   ClientDepartmentDao: Symbol.for('ClientDepartmentDao'),
 
   ClientTypeDao: Symbol.for('ClientTypeDao'),
-  ClientAttendanceTypeDao: Symbol.for('ClientAttendanceTypeDao'),
+  ClientAttendanceDao: Symbol.for('ClientAttendanceDao'),
   ClientAttachmentDao: Symbol.for('ClientAttachmentDao'),
   ClientDescriptionTypeDao: Symbol.for('ClientDescriptionTypeDao'),
   ClientDriveTypeDao: Symbol.for('ClientDriveTypeDao'),
-  ClientMaintenanceTicketTypeDao: Symbol.for('ClientMaintenanceTicketTypeDao'),
+  ClientMaintenanceTicketDao: Symbol.for('ClientMaintenanceTicketDao'),
   ClientSystemTypeDao: Symbol.for('ClientSystemTypeDao'),
 
   ClientGroupDao: Symbol.for('ClientGroupDao'),

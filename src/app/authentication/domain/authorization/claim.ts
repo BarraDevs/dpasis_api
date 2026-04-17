@@ -80,8 +80,8 @@ export const Claim = {
   CLIENT_ATTACHMENT_READ: { subject: ClaimSubject.ClientAttachment, action: ClaimAction.Read },
   CLIENT_ATTACHMENT_WRITE: { subject: ClaimSubject.ClientAttachment, action: ClaimAction.Write },
 
-  CLIENT_ATTENDANCE_TYPE_READ: { subject: ClaimSubject.ClientAttendanceType, action: ClaimAction.Read },
-  CLIENT_ATTENDANCE_TYPE_WRITE: { subject: ClaimSubject.ClientAttendanceType, action: ClaimAction.Write },
+  CLIENT_ATTENDANCE_READ: { subject: ClaimSubject.ClientAttendance, action: ClaimAction.Read },
+  CLIENT_ATTENDANCE_WRITE: { subject: ClaimSubject.ClientAttendance, action: ClaimAction.Write },
 
   CLIENT_CONTACT_READ: { subject: ClaimSubject.ClientContact, action: ClaimAction.Read },
   CLIENT_CONTACT_WRITE: { subject: ClaimSubject.ClientContact, action: ClaimAction.Write },
@@ -107,8 +107,8 @@ export const Claim = {
   CLIENT_ITEM_READ: { subject: ClaimSubject.ClientItem, action: ClaimAction.Read },
   CLIENT_ITEM_WRITE: { subject: ClaimSubject.ClientItem, action: ClaimAction.Write },
 
-  CLIENT_MAINTENANCE_TICKET_TYPE_READ: { subject: ClaimSubject.ClientMaintenanceTicketType, action: ClaimAction.Read },
-  CLIENT_MAINTENANCE_TICKET_TYPE_WRITE: { subject: ClaimSubject.ClientMaintenanceTicketType, action: ClaimAction.Write },
+  CLIENT_MAINTENANCE_TICKET_READ: { subject: ClaimSubject.ClientMaintenanceTicket, action: ClaimAction.Read },
+  CLIENT_MAINTENANCE_TICKET_WRITE: { subject: ClaimSubject.ClientMaintenanceTicket, action: ClaimAction.Write },
 
   CLIENT_OWNER_READ: { subject: ClaimSubject.ClientOwner, action: ClaimAction.Read },
   CLIENT_OWNER_WRITE: { subject: ClaimSubject.ClientOwner, action: ClaimAction.Write },
