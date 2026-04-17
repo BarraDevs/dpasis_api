@@ -1,3 +1,4 @@
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { Test } from '@nestjs/testing';
 import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
 import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum';
@@ -277,6 +278,63 @@ describe('ClientRepositoryAdapterPrisma - Integration tests', () => {
       });
 
       expect(deleted).toBeNull();
+    });
+  });
+
+  describe('linkAttendanceAndMaintenance', () => {
+    it('should set attendanceId and maintenanceTicketId on client', async() => {
+      const { group, owner, company } = await createClientGroupOwnerAndCompany();
+      const [attendance, ticket] = await Promise.all([
+        prisma.clientAttendance.create({ data: { name: `Att ${Date.now()}`, active: true } }),
+        prisma.clientMaintenanceTicket.create({ data: { name: `Tk ${Date.now()}`, active: true } }),
+      ]);
+
+      const entity = ClientFactory.create({
+        type: ClientType.PJ,
+        document: '09.748.165/0001-10',
+        ie: null,
+        groupId: group.id,
+        ownerId: owner.id,
+        companyIds: [company.id],
+        invoiceType: ClientInvoiceType.CONTRACT,
+        generateInvoice: true,
+        companyName: 'Empresa',
+        fantasyName: null,
+        headquarters: 'SP',
+      });
+
+      await sut.save(entity);
+
+      const saved = await prisma.client.findFirst({
+        where: { document: '09748165000110' },
+      });
+      expect(saved).not.toBeNull();
+      expect(saved?.attendanceId).toBeNull();
+      expect(saved?.maintenanceTicketId).toBeNull();
+
+      await sut.linkAttendanceAndMaintenance(saved!.id, attendance.id, ticket.id);
+
+      const updated = await prisma.client.findUnique({
+        where: { id: saved!.id },
+      });
+
+      expect(updated?.attendanceId).toBe(attendance.id);
+      expect(updated?.maintenanceTicketId).toBe(ticket.id);
+    });
+
+    it('should throw when client does not exist', async() => {
+      const [attendance, ticket] = await Promise.all([
+        prisma.clientAttendance.create({ data: { name: `Att ${Date.now()}`, active: true } }),
+        prisma.clientMaintenanceTicket.create({ data: { name: `Tk ${Date.now()}`, active: true } }),
+      ]);
+
+      await expect(
+        sut.linkAttendanceAndMaintenance(99999, attendance.id, ticket.id),
+      ).rejects.toThrow(PrismaClientKnownRequestError);
+
+      await expect(
+        sut.linkAttendanceAndMaintenance(99999, attendance.id, ticket.id),
+      ).rejects.toMatchObject({ code: 'P2025' });
     });
   });
 });

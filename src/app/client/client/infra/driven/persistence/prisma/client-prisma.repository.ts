@@ -66,4 +66,14 @@ export class ClientRepositoryAdapterPrisma implements IClientRepository {
       where: { id },
     });
   }
+
+  public async linkAttendanceAndMaintenance(clientId: number, attendanceId: number, maintenanceTicketId: number): Promise<void> {
+    await this.prisma.client.update({
+      where: { id: clientId },
+      data: {
+        attendanceId,
+        maintenanceTicketId,
+      },
+    });
+  }
 }

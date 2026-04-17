@@ -5,4 +5,5 @@ export interface IClientRepository {
   edit(entity: Client): Promise<void>;
   findById(id: number): Promise<Client | null>;
   delete(id: number): Promise<void>;
+  linkAttendanceAndMaintenance(clientId: number, attendanceId: number, maintenanceTicketId: number): Promise<void>;
 }

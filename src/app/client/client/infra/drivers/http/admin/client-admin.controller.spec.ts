@@ -15,6 +15,8 @@ import { FindSubClientsQueryDto } from 'src/app/client/client/application/usecas
 import { FindSubClients } from 'src/app/client/client/application/usecases/find-sub-clients/find-sub-clients.service';
 import { GetClientSequenceOutputDto } from 'src/app/client/client/application/usecases/get-client-sequence/dtos/get-client-sequence.dto';
 import { GetClientSequence } from 'src/app/client/client/application/usecases/get-client-sequence/get-client-sequence.service';
+import { LinkClientAttendanceAndMaintenanceInputDto } from 'src/app/client/client/application/usecases/link-client-attendance-and-maintenance/dtos/link-client-attendance-and-maintenance.dto';
+import { LinkClientAttendanceAndMaintenance } from 'src/app/client/client/application/usecases/link-client-attendance-and-maintenance/link-client-attendance-and-maintenance.service';
 import { SetClientNextIdInputDto } from 'src/app/client/client/application/usecases/set-client-next-id/dtos/set-client-next-id.dto';
 import { SetClientNextId } from 'src/app/client/client/application/usecases/set-client-next-id/set-client-next-id.service';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
@@ -32,6 +34,7 @@ describe('ClientAdminController - Unit tests', () => {
   let findSubClientsService: FindSubClients;
   let editClientService: EditClient;
   let getClientSequenceService: GetClientSequence;
+  let linkClientAttendanceAndMaintenanceService: LinkClientAttendanceAndMaintenance;
   let setClientNextIdService: SetClientNextId;
 
   beforeEach(async() => {
@@ -47,6 +50,7 @@ describe('ClientAdminController - Unit tests', () => {
         { provide: FindSubClients, useValue: createMock<FindSubClients>() },
         { provide: EditClient, useValue: createMock<EditClient>() },
         { provide: GetClientSequence, useValue: createMock<GetClientSequence>() },
+        { provide: LinkClientAttendanceAndMaintenance, useValue: createMock<LinkClientAttendanceAndMaintenance>() },
         { provide: SetClientNextId, useValue: createMock<SetClientNextId>() },
       ],
     }).compile();
@@ -60,6 +64,7 @@ describe('ClientAdminController - Unit tests', () => {
     findSubClientsService = module.get(FindSubClients);
     editClientService = module.get(EditClient);
     getClientSequenceService = module.get(GetClientSequence);
+    linkClientAttendanceAndMaintenanceService = module.get(LinkClientAttendanceAndMaintenance);
     setClientNextIdService = module.get(SetClientNextId);
   });
 
@@ -186,6 +191,20 @@ describe('ClientAdminController - Unit tests', () => {
       // Assert
       expect(result).toEqual(output);
       expect(deactivateSpy).toHaveBeenCalledWith(params.id);
+    });
+  });
+
+  describe('linkAttendanceMaintenance', () => {
+    it('should call linkClientAttendanceAndMaintenance.execute with params.id and body', async() => {
+      const params = createMock<Params>();
+      const body = createMock<LinkClientAttendanceAndMaintenanceInputDto>();
+      const output = createMock<SuccessMessage>();
+      const executeSpy = jest.spyOn(linkClientAttendanceAndMaintenanceService, 'execute').mockResolvedValue(output);
+
+      const result = await sut.linkAttendanceMaintenance(params, body);
+
+      expect(result).toEqual(output);
+      expect(executeSpy).toHaveBeenCalledWith(params.id, body);
     });
   });
 
