@@ -6,6 +6,7 @@ import { FindAllClientAttachmentQueryDto } from '../../usecases/find-all-client-
 export interface IClientAttachmentDao {
   findAll(queries: FindAllClientAttachmentQueryDto): Promise<[ClientAttachmentDto[], number]>;
   findById(id: number): Promise<ClientAttachmentDto | null>;
+  findByLinkExcludingId(link: string, excludeId: number): Promise<number>;
   save(data: CreateClientAttachmentInputDto & { link: string }): Promise<number>;
   edit(id: number, data: EditClientAttachmentInputDto & { link?: string }): Promise<void>;
   delete(id: number): Promise<void>;

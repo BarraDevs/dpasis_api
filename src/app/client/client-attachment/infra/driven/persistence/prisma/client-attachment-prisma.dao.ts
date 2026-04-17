@@ -63,6 +63,15 @@ export class ClientAttachmentDaoAdapterPrisma implements IClientAttachmentDao {
     });
   }
 
+  public async findByLinkExcludingId(link: string, excludeId: number): Promise<number> {
+    return this.prisma.clientAttachment.count({
+      where: {
+        link: { equals: link, mode: 'insensitive' },
+        id: { not: excludeId },
+      },
+    });
+  }
+
   public async save(data: CreateClientAttachmentInputDto & { link: string }): Promise<number> {
     const result = await this.prisma.clientAttachment.create({
       data,

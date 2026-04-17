@@ -55,6 +55,7 @@ model ClientSystemType {
 
   clientTypes ClientType[]
 
+  @@index([imageUrl])
   @@map("client_system_types")
 }
 

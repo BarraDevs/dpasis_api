@@ -127,6 +127,7 @@ export class ClientAttachmentAdminController {
     summary: 'Deletar anexo de cliente',
     applyBadRequest: true,
     applyNotFound: true,
+    applyConflict: true,
     okResponse: SuccessMessage,
   })
   public remove(@Param() params: Params): Promise<SuccessMessage> {

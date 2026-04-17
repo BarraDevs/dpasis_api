@@ -327,6 +327,50 @@ describe('ClientSystemTypeDaoAdapterPrisma - Integration tests', () => {
     });
   });
 
+  describe('countByImageUrlExcludingId', () => {
+    it('should return 0 when no other client system type has the same imageUrl', async() => {
+      const row = await prisma.clientSystemType.create({
+        data: { name: `Tipo ${Date.now()}`, active: true, imageUrl: 'https://only.com/img.png' },
+      });
+
+      const count = await sut.findByImageUrlExcludingId(row.imageUrl!, row.id);
+
+      expect(count).toBe(0);
+    });
+
+    it('should return count of other rows with the same imageUrl excluding the given id', async() => {
+      const ts = Date.now();
+      const shared = 'https://shared.com/x.png';
+      const [a, b] = await Promise.all([
+        prisma.clientSystemType.create({
+          data: { name: `A ${ts}`, active: true, imageUrl: shared },
+        }),
+        prisma.clientSystemType.create({
+          data: { name: `B ${ts}`, active: true, imageUrl: shared },
+        }),
+      ]);
+
+      expect(await sut.findByImageUrlExcludingId(shared, a.id)).toBe(1);
+      expect(await sut.findByImageUrlExcludingId(shared, b.id)).toBe(1);
+    });
+
+    it('should return count of other rows with the same imageUrl excluding the given id (case-insensitive)', async() => {
+      const ts = Date.now();
+      const shared = 'https://SHARED.com/x.png';
+      const [a, b] = await Promise.all([
+        prisma.clientSystemType.create({
+          data: { name: `A ${ts}`, active: true, imageUrl: shared },
+        }),
+        prisma.clientSystemType.create({
+          data: { name: `B ${ts}`, active: true, imageUrl: shared },
+        }),
+      ]);
+
+      expect(await sut.findByImageUrlExcludingId(shared.toUpperCase(), a.id)).toBe(1);
+      expect(await sut.findByImageUrlExcludingId(shared.toLowerCase(), b.id)).toBe(1);
+    });
+  });
+
   describe('delete', () => {
     it('should delete client system type from database', async() => {
       const clientSystemType = await prisma.clientSystemType.create({

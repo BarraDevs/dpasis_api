@@ -435,6 +435,76 @@ describe('ClientAttachmentDaoAdapterPrisma - Integration tests', () => {
     });
   });
 
+  describe('countByLinkExcludingId', () => {
+    it('should return 0 when no other attachment has the same link', async() => {
+      const client = await createClient();
+      const attachment = await prisma.clientAttachment.create({
+        data: {
+          clientId: client.id,
+          description: 'Único',
+          link: 'https://only.com/file.pdf',
+          active: true,
+        },
+      });
+
+      const count = await sut.findByLinkExcludingId(attachment.link, attachment.id);
+
+      expect(count).toBe(0);
+    });
+
+    it('should return count of other rows with the same link excluding the given id', async() => {
+      const client = await createClient();
+      const shared = 'https://shared.com/a.pdf';
+      const [a, b] = await Promise.all([
+        prisma.clientAttachment.create({
+          data: {
+            clientId: client.id,
+            description: 'A',
+            link: shared,
+            active: true,
+          },
+        }),
+        prisma.clientAttachment.create({
+          data: {
+            clientId: client.id,
+            description: 'B',
+            link: shared,
+            active: true,
+          },
+        }),
+      ]);
+
+      expect(await sut.findByLinkExcludingId(shared, a.id)).toBe(1);
+      expect(await sut.findByLinkExcludingId(shared, b.id)).toBe(1);
+    });
+
+    it('should return count of other rows with the same link excluding the given id (case-insensitive)', async() => {
+      const client = await createClient();
+      const shared = 'https://SHARED.com/a.pdf';
+      const [a, b] = await Promise.all([
+        prisma.clientAttachment.create({
+          data: {
+            clientId: client.id,
+            description: 'A',
+            link: shared,
+            active: true,
+          },
+        }),
+        prisma.clientAttachment.create({
+          data: {
+            clientId: client.id,
+            description: 'B',
+            link: shared,
+            active: true,
+          },
+        }),
+      ]);
+
+      expect(await sut.findByLinkExcludingId(shared.toUpperCase(), a.id)).toBe(1);
+      expect(await sut.findByLinkExcludingId(shared.toLowerCase(), b.id)).toBe(1);
+    });
+  });
+
   describe('delete', () => {
     it('should delete attachment from database', async() => {
       // Arrange

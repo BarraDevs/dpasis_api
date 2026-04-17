@@ -1,5 +1,6 @@
 import { Test } from '@nestjs/testing';
 import { ClientAttachmentModule } from 'src/app/client/client-attachment/client-attachment.module';
+import { ClientAttachmentLinkSharedError } from 'src/app/client/client-attachment/domain/errors/client-attachment-link-shared.error';
 import { ClientAttachmentNotFoundError } from 'src/app/client/client-attachment/domain/errors/client-attachment-not-found.error';
 import { UploadFileQueueFakeAdapterProducer } from 'src/app/upload-file/infra/driven/queue/fake/upload-file-queue-fake.producer';
 import { TOKENS } from 'src/core/di/token';
@@ -113,5 +114,34 @@ describe('DeleteClientAttachment - Integration tests', () => {
     const result = await sut.execute(attachment.id);
 
     expect(result).toEqual({ message: 'Anexo do cliente excluído com sucesso' });
+  });
+
+  it('should throw ClientAttachmentLinkSharedError and not delete when another attachment uses the same link', async() => {
+    const client = await createClient();
+    const sharedLink = 'https://bucket.s3.amazonaws.com/shared/file.pdf';
+    const [first, second] = await Promise.all([
+      prisma.clientAttachment.create({
+        data: {
+          clientId: client.id,
+          description: 'Primeiro',
+          link: sharedLink,
+          active: true,
+        },
+      }),
+      prisma.clientAttachment.create({
+        data: {
+          clientId: client.id,
+          description: 'Segundo',
+          link: sharedLink,
+          active: true,
+        },
+      }),
+    ]);
+
+    await expect(sut.execute(first.id)).rejects.toThrow(ClientAttachmentLinkSharedError);
+
+    expect(await prisma.clientAttachment.findUnique({ where: { id: first.id } })).not.toBeNull();
+    expect(await prisma.clientAttachment.findUnique({ where: { id: second.id } })).not.toBeNull();
+    expect(uploadQueue.addedDeleteJobs).toHaveLength(0);
   });
 });

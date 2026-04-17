@@ -15,6 +15,7 @@ export interface IClientSystemTypeDao {
   findAll(queries: FindAllClientSystemTypeQueryDto): Promise<[ClientSystemTypeDto[], number]>;
   findById(id: number): Promise<ClientSystemTypeDto | null>;
   findByName(name: string): Promise<ClientSystemTypeDto | null>;
+  findByImageUrlExcludingId(imageUrl: string, excludeId: number): Promise<number>;
   save(data: ClientSystemTypeSaveInput): Promise<number>;
   edit(id: number, data: ClientSystemTypeEditInput): Promise<void>;
   delete(id: number): Promise<void>;

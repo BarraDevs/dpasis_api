@@ -94,6 +94,15 @@ export class ClientSystemTypeDaoAdapterPrisma implements IClientSystemTypeDao {
     });
   }
 
+  public async findByImageUrlExcludingId(imageUrl: string, excludeId: number): Promise<number> {
+    return this.prisma.clientSystemType.count({
+      where: {
+        imageUrl: { equals: imageUrl, mode: 'insensitive' },
+        id: { not: excludeId },
+      },
+    });
+  }
+
   public async updateStatus(id: number, active: boolean): Promise<void> {
     await this.prisma.clientSystemType.update({
       where: { id },

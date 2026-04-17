@@ -43,6 +43,7 @@ model ClientAttachment {
 
   client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
+  @@index([link])
   @@map("client_attachments")
 }
 

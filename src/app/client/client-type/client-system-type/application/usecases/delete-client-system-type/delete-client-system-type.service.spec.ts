@@ -6,6 +6,7 @@ import { TOKENS } from 'src/core/di/token';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { JobName } from 'src/infra/queue/enums/job-name.enum';
 import { ClientSystemTypeModule } from '../../../client-system-type.module';
+import { ClientSystemTypeImageUrlSharedError } from '../../../domain/errors/client-system-type-image-url-shared.error';
 import { ClientSystemTypeInUseError } from '../../../domain/errors/client-system-type-in-use.error';
 import { ClientSystemTypeNotFoundError } from '../../../domain/errors/client-system-type-not-found.error';
 import { DeleteClientSystemType } from './delete-client-system-type.service';
@@ -119,6 +120,25 @@ describe('DeleteClientSystemType - Integration tests', () => {
       name: JobName.DeleteFile,
       data: { fileUrl: imageUrl },
     });
+  });
+
+  it('should throw ClientSystemTypeImageUrlSharedError and not delete when another system type uses the same imageUrl', async() => {
+    const sharedUrl = 'https://storage.example.com/bucket/shared.png';
+    const ts = Date.now();
+    const [first, second] = await Promise.all([
+      prisma.clientSystemType.create({
+        data: { name: `Sistema A ${ts}`, active: true, imageUrl: sharedUrl },
+      }),
+      prisma.clientSystemType.create({
+        data: { name: `Sistema B ${ts}`, active: true, imageUrl: sharedUrl },
+      }),
+    ]);
+
+    await expect(sut.execute(first.id)).rejects.toThrow(ClientSystemTypeImageUrlSharedError);
+
+    expect(await prisma.clientSystemType.findUnique({ where: { id: first.id } })).not.toBeNull();
+    expect(await prisma.clientSystemType.findUnique({ where: { id: second.id } })).not.toBeNull();
+    expect(uploadQueue.addedDeleteJobs).toHaveLength(0);
   });
 
   it('should return success message', async() => {
