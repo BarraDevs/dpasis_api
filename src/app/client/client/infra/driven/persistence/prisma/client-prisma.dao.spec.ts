@@ -76,6 +76,8 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
         ie: '123456789',
         parentClientId: null,
         isSubClient: false,
+        attendanceId: null,
+        maintenanceTicketId: null,
         group: {
           id: group.id,
           name: group.name,
@@ -325,6 +327,8 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
         ie: '123456789',
         parentClientId: null,
         isSubClient: false,
+        attendanceId: null,
+        maintenanceTicketId: null,
         group: {
           id: group.id,
           name: group.name,
@@ -410,6 +414,8 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
         ie: '123456789',
         parentClientId: null,
         isSubClient: false,
+        attendanceId: null,
+        maintenanceTicketId: null,
         companyName: 'Empresa Test',
         group: {
           id: group.id,
@@ -772,6 +778,8 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
         ie: null,
         parentClientId: parent.id,
         isSubClient: true,
+        attendanceId: null,
+        maintenanceTicketId: null,
         companyName: 'Sub-cliente',
         fantasyName: null,
         headquarters: 'RJ',

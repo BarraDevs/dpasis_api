@@ -13,6 +13,8 @@ const ClientSelect = {
   ie: true,
   parentClientId: true,
   isSubClient: true,
+  attendanceId: true,
+  maintenanceTicketId: true,
   companyName: true,
   fantasyName: true,
   headquarters: true,

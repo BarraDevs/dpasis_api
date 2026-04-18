@@ -7,6 +7,8 @@ export class ClientDto {
   ie: string | null;
   parentClientId: number | null;
   isSubClient: boolean;
+  attendanceId: number | null;
+  maintenanceTicketId: number | null;
   companyName: string;
   fantasyName: string | null;
   headquarters: string;

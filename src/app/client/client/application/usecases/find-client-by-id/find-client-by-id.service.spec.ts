@@ -155,6 +155,8 @@ describe('FindClientById - Integration tests', () => {
       ie: null,
       parentClientId: null,
       isSubClient: false,
+      attendanceId: null,
+      maintenanceTicketId: null,
       group: {
         id: group.id,
         name: group.name,

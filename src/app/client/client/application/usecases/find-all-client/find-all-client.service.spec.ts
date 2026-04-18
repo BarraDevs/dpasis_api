@@ -499,6 +499,8 @@ describe('FindAllClient - Integration tests', () => {
       ie: '123456789',
       parentClientId: null,
       isSubClient: false,
+      attendanceId: null,
+      maintenanceTicketId: null,
       group: {
         id: group.id,
         name: group.name,
