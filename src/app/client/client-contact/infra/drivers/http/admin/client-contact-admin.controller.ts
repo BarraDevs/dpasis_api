@@ -7,8 +7,8 @@ import { ClientContactDto } from 'src/app/client/client-contact/application/dtos
 import { ActivateClientContact } from 'src/app/client/client-contact/application/usecases/activate-client-contact/activate-client-contact.service';
 import { CreateClientContact } from 'src/app/client/client-contact/application/usecases/create-client-contact/create-client-contact.service';
 import {
-    CreateClientContactInputDto,
-    CreateClientContactOutputDto,
+  CreateClientContactInputDto,
+  CreateClientContactOutputDto,
 } from 'src/app/client/client-contact/application/usecases/create-client-contact/dtos/create-client-contact.dto';
 import { DeactivateClientContact } from 'src/app/client/client-contact/application/usecases/deactivate-client-contact/deactivate-client-contact.service';
 import { DeleteClientContact } from 'src/app/client/client-contact/application/usecases/delete-client-contact/delete-client-contact.service';

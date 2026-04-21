@@ -8,9 +8,9 @@ import { ProposalValidityNotFoundError } from 'src/app/global/proposal-validity/
 import { CnaeNbsIndopNotFoundError } from 'src/app/global/taxation/cnae-nbs-indop/domain/errors/cnae-nbs-indop-not-found.error';
 import { WarrantyNotFoundError } from 'src/app/global/warranty/domain/errors/warranty-not-found.error';
 import {
-    seedServiceCatalogForeignKeys,
-    serviceFkScalars,
-    type ServiceCatalogFkIds,
+  seedServiceCatalogForeignKeys,
+  serviceFkScalars,
+  type ServiceCatalogFkIds,
 } from 'src/app/service/service-catalog/infra/driven/persistence/prisma/service-catalog-prisma-test.helpers';
 import { ServiceCatalogModule } from 'src/app/service/service-catalog/service-catalog.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';

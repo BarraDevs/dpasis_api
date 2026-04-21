@@ -6,8 +6,8 @@ import { RequiredRoles } from 'src/app/authentication/infra/decorators/required-
 import { ServiceAttendanceValueDto } from 'src/app/service/service-attendance-value/application/dtos/service-attendance-value.dto';
 import { CreateServiceAttendanceValue } from 'src/app/service/service-attendance-value/application/usecases/create-service-attendance-value/create-service-attendance-value.service';
 import {
-    CreateServiceAttendanceValueInputDto,
-    CreateServiceAttendanceValueOutputDto,
+  CreateServiceAttendanceValueInputDto,
+  CreateServiceAttendanceValueOutputDto,
 } from 'src/app/service/service-attendance-value/application/usecases/create-service-attendance-value/dtos/create-service-attendance-value.dto';
 import { DeleteServiceAttendanceValue } from 'src/app/service/service-attendance-value/application/usecases/delete-service-attendance-value/delete-service-attendance-value.service';
 import { EditServiceAttendanceValueInputDto } from 'src/app/service/service-attendance-value/application/usecases/edit-service-attendance-value/dtos/edit-service-attendance-value.dto';

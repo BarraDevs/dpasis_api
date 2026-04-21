@@ -9,8 +9,8 @@ import { CnaeNbsIndopNotFoundError } from 'src/app/global/taxation/cnae-nbs-indo
 import { WarrantyNotFoundError } from 'src/app/global/warranty/domain/errors/warranty-not-found.error';
 import { ServiceCatalogNotFoundError } from 'src/app/service/service-catalog/domain/errors/service-catalog-not-found.error';
 import {
-    seedServiceCatalogForeignKeys,
-    serviceFkScalars,
+  seedServiceCatalogForeignKeys,
+  serviceFkScalars,
 } from 'src/app/service/service-catalog/infra/driven/persistence/prisma/service-catalog-prisma-test.helpers';
 import { ServiceCatalogModule } from 'src/app/service/service-catalog/service-catalog.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';

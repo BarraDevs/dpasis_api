@@ -8,8 +8,8 @@ import { CreateClientType } from 'src/app/client/client-type/client-type/applica
 import { CreateClientTypeInputDto, CreateClientTypeOutputDto } from 'src/app/client/client-type/client-type/application/usecases/create-client-type/dtos/create-client-type.dto';
 import { DeleteBulkClientType } from 'src/app/client/client-type/client-type/application/usecases/delete-bulk-client-type/delete-bulk-client-type.service';
 import {
-    DeleteBulkClientTypeInputDto,
-    DeleteBulkClientTypeOutputDto,
+  DeleteBulkClientTypeInputDto,
+  DeleteBulkClientTypeOutputDto,
 } from 'src/app/client/client-type/client-type/application/usecases/delete-bulk-client-type/dtos/delete-bulk-client-type.dto';
 import { DeleteClientType } from 'src/app/client/client-type/client-type/application/usecases/delete-client-type/delete-client-type.service';
 import { EditClientTypeInputDto } from 'src/app/client/client-type/client-type/application/usecases/edit-client-type/dtos/edit-client-type.dto';

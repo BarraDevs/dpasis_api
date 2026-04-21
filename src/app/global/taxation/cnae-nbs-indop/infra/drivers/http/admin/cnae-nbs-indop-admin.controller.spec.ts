@@ -4,8 +4,8 @@ import { AuthenticationGuardsModule } from 'src/app/authentication/application/g
 import { CnaeNbsIndopDto } from 'src/app/global/taxation/cnae-nbs-indop/application/dtos/cnae-nbs-indop.dto';
 import { CreateCnaeNbsIndop } from 'src/app/global/taxation/cnae-nbs-indop/application/usecases/create-cnae-nbs-indop/create-cnae-nbs-indop.service';
 import {
-    CreateCnaeNbsIndopInputDto,
-    CreateCnaeNbsIndopOutputDto,
+  CreateCnaeNbsIndopInputDto,
+  CreateCnaeNbsIndopOutputDto,
 } from 'src/app/global/taxation/cnae-nbs-indop/application/usecases/create-cnae-nbs-indop/dtos/create-cnae-nbs-indop.dto';
 import { DeleteCnaeNbsIndop } from 'src/app/global/taxation/cnae-nbs-indop/application/usecases/delete-cnae-nbs-indop/delete-cnae-nbs-indop.service';
 import { FindAllCnaeNbsIndopQueryDto } from 'src/app/global/taxation/cnae-nbs-indop/application/usecases/find-all-cnae-nbs-indop/dtos/find-all-cnae-nbs-indop.dto';

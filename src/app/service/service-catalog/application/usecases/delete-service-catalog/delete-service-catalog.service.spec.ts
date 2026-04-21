@@ -1,8 +1,8 @@
 import { Test } from '@nestjs/testing';
 import { ServiceCatalogNotFoundError } from 'src/app/service/service-catalog/domain/errors/service-catalog-not-found.error';
 import {
-    seedServiceCatalogForeignKeys,
-    serviceFkScalars,
+  seedServiceCatalogForeignKeys,
+  serviceFkScalars,
 } from 'src/app/service/service-catalog/infra/driven/persistence/prisma/service-catalog-prisma-test.helpers';
 import { ServiceCatalogModule } from 'src/app/service/service-catalog/service-catalog.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';

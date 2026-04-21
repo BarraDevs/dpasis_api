@@ -71,6 +71,7 @@ describe('CreateResaleInputDto', () => {
   });
 
   it('should reject when code is missing', async() => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { code: _c, ...rest } = validBase();
 
     await expect(pipe.transform(rest, bodyMetadata)).rejects.toBeDefined();
