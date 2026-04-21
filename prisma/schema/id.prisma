@@ -5,3 +5,11 @@ model ClientSequence {
 
   @@map("client_sequences")
 }
+
+model ResaleSequence {
+  id        Int      @id @default(1)
+  nextId    Int      @map("next_id")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("resale_sequences")
+}

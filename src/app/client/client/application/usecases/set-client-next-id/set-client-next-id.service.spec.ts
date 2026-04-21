@@ -104,7 +104,7 @@ describe('SetClientNextId - Integration tests', () => {
     }
     catch (err: unknown) {
       expect(err).toBeInstanceOf(ClientSequenceInvalidNextIdError);
-      expect((err as Error).message).toContain(`O nextId ${maxClientId} é inválido`);
+      expect((err as Error).message).toContain(`O próximo ID ${maxClientId} é inválido`);
       expect((err as Error).message).toContain(`maior ID de cliente existente é ${maxClientId}`);
     }
 
