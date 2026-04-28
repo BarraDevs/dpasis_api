@@ -134,7 +134,7 @@ Nomenclatura:
 
 DAO obrigatórios:
 - Constante `<Entity>Select satisfies Prisma.<Entity>Select` no topo do adapter
-- Where montado com array `conditions: Prisma.<X>WhereInput[]` + `AND` (ver `.cursor/rules/dao-where-pattern.mdc`)
+- Where montado com array `conditions: Prisma.<X>WhereInput[]` + `AND` (ver `.cursor/skills/dao-pattern/SKILL.md`, secção 3)
 - Search com `contains: search.trim(), mode: 'insensitive'`
 - `findAll`: `findMany` + `count` em `$transaction([...])`
 - Pagination via `prisma.paginationFactory(page, size)`
@@ -311,7 +311,7 @@ Se algum item ficou "não aplicável", documente o motivo no PR. Pular passos se
 ## Referências
 
 - Skills detalhadas por tópico: `.cursor/skills/<nome-da-skill>/SKILL.md`
-- Rule específica do padrão Where: `.cursor/rules/dao-where-pattern.mdc`
+- Padrão Where em DAOs: `.cursor/skills/dao-pattern/SKILL.md` (secção 3)
 - Skill de geração CRUD: `.cursor/skills/crud-module-generator/SKILL.md`
 - Skill de CASL: `.cursor/skills/nest-casl/SKILL.md`
 - Passaporte arquitetural conciso: `.cursor/context.md`

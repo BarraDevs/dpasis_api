@@ -194,7 +194,7 @@ Conforme você for criando arquivos, verifique cada padrão:
 - [ ] Classes em `PascalCase`, sem sufixos proibidos (`Service`, `UseCase`, `Entity` em entidade)
 - [ ] DTOs como **classe**, com `@ApiProperty`/`@ApiPropertyOptional`
 - [ ] Mensagens de validação em **pt-BR** com `$property`
-- [ ] Where do DAO segue padrão `conditions[] + AND` (`.cursor/rules/dao-where-pattern.mdc`)
+- [ ] Where do DAO segue padrão `conditions[] + AND` (`.cursor/skills/dao-pattern/SKILL.md`, secção 3)
 - [ ] `<Entity>Select satisfies Prisma.<Entity>Select` no topo do adapter
 - [ ] `findMany` + `count` em `$transaction([...])`
 - [ ] `paginationFactory(page, size)` usado

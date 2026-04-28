@@ -132,7 +132,7 @@ Use cases padrão: `Create`, `Edit`, `Delete`, `FindAll`, `Find<X>ById`, `Update
 - [ ] `infra/driven/persistence/prisma/<modulo>-prisma.dao.ts`
   - Constante `<X>Select satisfies Prisma.<X>Select` no topo
   - `paginationFactory(page, size)` + `$transaction([findMany, count])`
-  - Where com **array `conditions[]` + `AND`** (ver rule `dao-where-pattern`)
+  - Where com **array `conditions[]` + `AND`** (ver `.cursor/skills/dao-pattern/SKILL.md`, secção 3)
   - Search com `contains: search.trim(), mode: 'insensitive'`
 - [ ] (DDD) `application/persistence/repository/<modulo>-repository.interface.ts` com `save(entity)`, `edit(entity)`, `findById(id)`
 - [ ] (DDD) `infra/driven/persistence/prisma/<modulo>-prisma.repository.ts` reidratando via Factory

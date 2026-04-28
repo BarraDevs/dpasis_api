@@ -8,6 +8,7 @@ description: >-
   fazer migration (prisma db push), ao atualizar o truncate, ou quando o
   usuário disser "schema Prisma", "migration", "prisma db push", "model",
   "tabela", "@@map", "schemaFolder", "FK", "onDelete", "transaction", "seed".
+  Para o objeto where em listagens DAO (conditions + AND), veja dao-pattern secção 3.
 ---
 
 # Convenções Prisma
@@ -243,6 +244,8 @@ Vantagens:
 - Reuso entre `findUnique`/`findMany`
 - Garante que campos sensíveis (ex.: `password`) não vazam
 
+Em **`findAll`**, o objeto `where` deve seguir o padrão **array `conditions` + `AND`** (search com OR, filtros opcionais, etc.). Detalhes, tabela de cenários e exemplos: skill **`dao-pattern`**, secção 3 (*Padrão Where nos DAOs Prisma*).
+
 Quando há variantes (com claims, com sensitive data), declare `<Entity>WithXSelect` adicional:
 
 ```10:22:src/app/account/infra/driven/persistence/prisma/account-prisma.dao.ts
@@ -286,6 +289,7 @@ Cada arquivo em `prisma/seeds/<entity>.ts` exporta uma função; o orquestrador 
 - Strings longas com `@db.Text`
 - Enums armazenados como `String` (cast para enum TS no DAO)
 - `<Entity>Select satisfies Prisma.<Entity>Select` no topo de cada DAO
+- Montagem do `where` em listagens: array `conditions` + `AND` — ver skill **`dao-pattern`** (secção 3)
 - `findMany` + `count` em `$transaction([...])`
 - Operações multi-tabela em `$transaction(async(tx) => …)`
 - Toda nova model adicionada em `PrismaService.truncate()` na ordem correta de FK

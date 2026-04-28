@@ -6,8 +6,8 @@ description: >-
   adapter Prisma (xxx-prisma.dao.ts), entender quando usar DAO vs Repository,
   ou quando o usuário disser "criar DAO", "criar interface de persistência",
   "buscar do banco", "implementar findAll/findById", "como ler dados de X",
-  "consulta paginada". Importante: a montagem do where segue o padrão "array
-  de conditions com AND" (ver .cursor/rules/dao-where-pattern.mdc).
+  "consulta paginada", "montar where no Prisma", "conditions AND". Inclui o
+  padrão obrigatório de montagem do where (array conditions + AND).
 ---
 
 # Padrão DAO (Data Access Object)
@@ -127,19 +127,21 @@ export class FaqDaoAdapterPrisma implements IFaqDao {
   }
 ```
 
-### 3) Padrão de Where (REGRA OBRIGATÓRIA)
+### 3) Padrão Where nos DAOs Prisma (obrigatório)
 
-Já está documentada em `.cursor/rules/dao-where-pattern.mdc`. Resumo:
+Todos os DAOs usam o mesmo padrão para construir o objeto `where` em `findAll`: **array de condições com `AND`**.
+
+#### Estrutura padrão
 
 ```typescript
 const conditions: Prisma.XWhereInput[] = [];
 
-// 1. Filtros obrigatórios
+// 1. Condições obrigatórias (quando existir)
 if (queries.clientId != null) {
   conditions.push({ clientId: { equals: queries.clientId } });
 }
 
-// 2. Search (OR + contains + mode: 'insensitive')
+// 2. Search (OR com contains + mode: 'insensitive')
 if (queries.search?.trim()) {
   conditions.push({
     OR: [
@@ -149,13 +151,82 @@ if (queries.search?.trim()) {
   });
 }
 
-// 3. Filtro active
+// 3. Filtro active (quando != null && !== undefined)
 if (queries.active != null && queries.active !== undefined) {
   conditions.push({ active: queries.active });
 }
 
+// 4. Outros filtros específicos do módulo
+if (queries.campo != null) {
+  conditions.push({ campo: { equals: queries.campo } });
+}
+
 const where: Prisma.XWhereInput = conditions.length > 0 ? { AND: conditions } : {};
 ```
+
+#### Regras de convenção
+
+| Cenário | Padrão |
+|---------|--------|
+| **Search em múltiplos campos** | `OR: [{ campo: { contains: search.trim(), mode: 'insensitive' } }, ...]` |
+| **Search em um único campo** | `{ campo: { contains: search.trim(), mode: 'insensitive' } }` |
+| **Search em relacionamentos** | `OR: [{ rel: { campo: { contains, mode } } }, ...]` |
+| **Filtro active** | `queries.active != null && queries.active !== undefined` antes de adicionar |
+| **Equals simples** | `{ campo: { equals: valor } }` |
+| **Equals case-insensitive** | `{ campo: { equals: valor.trim(), mode: 'insensitive' } }` |
+| **Where vazio** | `conditions.length > 0 ? { AND: conditions } : {}` |
+
+#### Exemplos por cenário
+
+**Search em múltiplos campos** (ex.: Bank, Company, FAQ):
+
+```typescript
+if (queries.search?.trim()) {
+  conditions.push({
+    OR: [
+      { drawer: { contains: queries.search.trim(), mode: 'insensitive' } },
+      { bankName: { contains: queries.search.trim(), mode: 'insensitive' } },
+    ],
+  });
+}
+```
+
+**Search em um único campo** (ex.: ClientGroup, ClientOwner):
+
+```typescript
+if (queries.search?.trim()) {
+  conditions.push({
+    name: { contains: queries.search.trim(), mode: 'insensitive' },
+  });
+}
+```
+
+**Search em relacionamentos** (ex.: ClientType, ClientItem):
+
+```typescript
+if (queries.search?.trim()) {
+  conditions.push({
+    OR: [
+      { clientSystemType: { name: { contains: queries.search.trim(), mode: 'insensitive' } } },
+      { clientDescriptionType: { name: { contains: queries.search.trim(), mode: 'insensitive' } } },
+    ],
+  });
+}
+```
+
+**Condição obrigatória** (ex.: `clientId` em sub-recursos):
+
+```typescript
+const conditions: Prisma.XWhereInput[] = [
+  { clientId: { equals: queries.clientId } },
+];
+```
+
+#### Nomenclatura
+
+- Use `conditions` (não `andConditions`) para o array de condições.
+- Sempre use `queries.search?.trim()` para ignorar string vazia.
+- Para `active`: `{ active: queries.active }` (não `{ active: { equals: queries.active } }`).
 
 ### 4) Constante `Select` no topo do adapter
 
@@ -187,20 +258,7 @@ const [rows, total] = await this.prisma.$transaction([
 ]);
 ```
 
-### 7) Search em relacionamentos
-
-```typescript
-if (queries.search?.trim()) {
-  conditions.push({
-    OR: [
-      { clientSystemType: { name: { contains: queries.search.trim(), mode: 'insensitive' } } },
-      { clientDescriptionType: { name: { contains: queries.search.trim(), mode: 'insensitive' } } },
-    ],
-  });
-}
-```
-
-### 8) Mapeamento DTO ↔ Prisma
+### 7) Mapeamento DTO ↔ Prisma
 
 Quando os tipos divergem (ex.: enums armazenados como `String`), faça o cast/mapper no adapter:
 
@@ -224,7 +282,7 @@ Quando os tipos divergem (ex.: enums armazenados como `String`), faça o cast/ma
 
 Em adapters mais complexos use uma função `mapToDto(row): XxxDto` no topo (padrão visto em `admin-prisma.dao.ts`).
 
-### 9) Adapter de DAO em módulo DDD (apenas leitura)
+### 8) Adapter de DAO em módulo DDD (apenas leitura)
 
 Em módulo DDD, o DAO **não tem `save/edit/delete`** — esses ficam no Repository:
 
@@ -249,7 +307,7 @@ export interface IAdminDao {
 - DAO retorna **DTO**, nunca entidade do domínio
 - `findAll` SEMPRE retorna `Promise<[<Dto>[], number]>` (tupla rows + total)
 - `findById` SEMPRE retorna `Promise<<Dto> | null>` — o use case decide se lança 404
-- Where montado com array `conditions: Prisma.XWhereInput[]` + `AND` (ver rule `dao-where-pattern`)
+- Where montado com array `conditions: Prisma.XWhereInput[]` + `AND` (secção 3 desta skill)
 - Pagination via `prisma.paginationFactory(page, size)`
 - Search com `contains: search.trim(), mode: 'insensitive'`
 - `findMany` + `count` em `$transaction`
