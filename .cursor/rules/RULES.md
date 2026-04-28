@@ -279,7 +279,46 @@ Regras:
 
 ---
 
-## Rule 10 — Checklist para Nova Funcionalidade
+## Rule 10 — Filas e Background Jobs (BullMQ)
+
+Toda execução assíncrona via fila usa **BullMQ + Redis**, com infra global em `src/infra/queue/queue.module.ts` (silenciada em `NODE_ENV=test`) e um **`<Feature>QueueModule` por feature**:
+
+```
+src/app/<feature>/
+├── application/queue/
+│   ├── <feature>-queue.module.ts                # static register() (registerQueue + binding)
+│   ├── <feature>-queue-producer.interface.ts    # I<Feature>QueueProducer (port)
+│   └── jobs/<verbo>-<recurso>-job.dto.ts        # payload serializável
+└── infra/
+    ├── driven/queue/
+    │   ├── bullmq/<feature>-queue-bullmq.producer.ts   # <Feature>QueueBullmqAdapterProducer
+    │   └── fake/<feature>-queue-fake.producer.ts       # <Feature>QueueFakeAdapterProducer
+    └── drivers/queue/
+        └── bullmq/<feature>-bullmq.consumer.ts         # @Processor + WorkerHost
+```
+
+Regras absolutas:
+- `bullmq` e `@nestjs/bullmq` (`@InjectQueue`, `@Processor`, `WorkerHost`) **só** em `infra/{driven,drivers}/queue/bullmq/`
+- Toda fila tem **entrada em `QueueName`** (`src/infra/queue/enums/queue-name.enum.ts`) e cada job tem **entrada em `JobName`** (`src/infra/queue/enums/job-name.enum.ts`); valores em kebab-case
+- Token padrão **`<Feature>QueueProducer`** em `src/core/di/token.ts`
+- Producer real **NÃO** captura erros — deixa propagar para o use case decidir
+- Producer fake (sempre presente) implementa a mesma interface e empurra para `public readonly addedXxxJobs: Array<...>`
+- Consumer **estende `WorkerHost`**, decora com `@Processor(QueueName.<X>)` + `@Injectable()`, e faz `switch(job.name)` com `default: throw new AppException('Unknown job name: ...')`
+- Payload do job é **classe pura serializável em JSON** — sem entidades de domínio, sem `Buffer` cru (use `base64`), sem `Date` (use ISO string), sem `class-validator`
+- `<Feature>QueueModule` usa `static register(): DynamicModule` e:
+  - importa `BullModule.registerQueue({ name, defaultJobOptions: { removeOnComplete: true, removeOnFail: true } })` **apenas** quando `!isTest`
+  - registra o consumer como provider **apenas** quando `!isTest`
+  - registra o producer **sempre** com `useClass: isTest ? Fake : Bullmq`
+  - exporta apenas `TOKENS.<Feature>QueueProducer`
+  - não usa `@Global()`
+- **Order of operations**: persistir o estado no banco **antes** de enfileirar. O projeto não tem outbox; falha do producer falha o use case
+- Em testes de use cases, recupere o producer via `module.get(TOKENS.<Feature>QueueProducer) as <Feature>QueueFakeAdapterProducer` e inspecione `addedXxxJobs`
+
+Skill detalhada: `.cursor/skills/queue-bullmq/SKILL.md`. Exemplo canônico no código: `src/app/upload-file/`.
+
+---
+
+## Rule 11 — Checklist para Nova Funcionalidade
 
 Antes de implementar qualquer nova funcionalidade, confirme **na ordem**:
 
@@ -312,6 +351,6 @@ Se algum item ficou "não aplicável", documente o motivo no PR. Pular passos se
 
 - Skills detalhadas por tópico: `.cursor/skills/<nome-da-skill>/SKILL.md`
 - Padrão Where em DAOs: `.cursor/skills/dao-pattern/SKILL.md` (secção 3)
-- Skill de geração CRUD: `.cursor/skills/crud-module-generator/SKILL.md`
-- Skill de CASL: `.cursor/skills/nest-casl/SKILL.md`
+- Scaffolding de módulo (`npm run generate:module`): `.cursor/skills/adding-new-feature/SKILL.md` (passo 3) — implementação em `scripts/cli.ts` + `scripts/templates/`
+- Autorização CASL / claims / rotas protegidas: `.cursor/skills/authentication-and-authorization/SKILL.md`
 - Passaporte arquitetural conciso: `.cursor/context.md`

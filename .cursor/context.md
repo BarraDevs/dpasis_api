@@ -115,7 +115,15 @@ prisma/
 | Module raiz da feature | `src/app/<x>/<modulo>/<modulo>.module.ts` |
 | Schema Prisma | `prisma/schema/<modulo>.prisma` |
 | Seed | `prisma/seeds/<modulo>.ts` (orquestrado em `seeds/index.ts`) |
-| Token DI | `src/core/di/token.ts` (`<Entity>Dao`, `<Entity>Repository`, `<Categoria>Gateway`) |
+| Token DI | `src/core/di/token.ts` (`<Entity>Dao`, `<Entity>Repository`, `<Categoria>Gateway`, `<Feature>QueueProducer`) |
+| Fila — infra global (BullMQ + Redis) | `src/infra/queue/queue.module.ts` |
+| Fila — `QueueName` / `JobName` enums | `src/infra/queue/enums/{queue-name,job-name}.enum.ts` |
+| Fila — module por feature | `src/app/<x>/<modulo>/application/queue/<modulo>-queue.module.ts` |
+| Fila — port producer | `src/app/<x>/<modulo>/application/queue/<modulo>-queue-producer.interface.ts` |
+| Fila — payload de job | `src/app/<x>/<modulo>/application/queue/jobs/<verbo>-<recurso>-job.dto.ts` |
+| Fila — adapter producer (BullMQ) | `src/app/<x>/<modulo>/infra/driven/queue/bullmq/<modulo>-queue-bullmq.producer.ts` |
+| Fila — adapter producer (fake) | `src/app/<x>/<modulo>/infra/driven/queue/fake/<modulo>-queue-fake.producer.ts` |
+| Fila — consumer (worker) | `src/app/<x>/<modulo>/infra/drivers/queue/bullmq/<modulo>-bullmq.consumer.ts` |
 | Claim subject | `src/app/authentication/domain/authorization/claim-subject.enum.ts` |
 | Claim catálogo | `src/app/authentication/domain/authorization/claim.ts` |
 | Decorator de autorização (rota) | `@RequiredRoles(AccountRole.ADMIN)` + `@RequiredClaims(Claim.X_*)` |

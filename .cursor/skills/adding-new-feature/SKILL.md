@@ -201,6 +201,37 @@ Use cases padrão: `Create`, `Edit`, `Delete`, `FindAll`, `Find<X>ById`, `Update
 
 ➡️ Aciona: skill **`error-handling`**.
 
+#### Passo opcional — Filas / Background jobs (BullMQ)
+
+Aplica-se quando o módulo precisa **enfileirar** ou **processar** jobs assíncronos (ex.: upload pesado, e-mail, integração eventual).
+
+Faça **após o passo 8 (Persistence Module)** e **antes do passo 9 (Controllers)**, para que o use case já tenha o port de fila disponível para injeção:
+
+- [ ] Adicionar entrada em `src/infra/queue/enums/queue-name.enum.ts` (`<NomeFeature>` em PascalCase, valor kebab-case)
+- [ ] Adicionar **uma entrada por tipo de job** em `src/infra/queue/enums/job-name.enum.ts`
+- [ ] Adicionar token **`<Feature>QueueProducer`** em `src/core/di/token.ts`
+- [ ] Criar payload(s) em `application/queue/jobs/<verbo>-<recurso>-job.dto.ts` (classes serializáveis em JSON, sem decorators)
+- [ ] Criar **port** `application/queue/<feature>-queue-producer.interface.ts` com `I<Feature>QueueProducer` (1 método `add<Verbo><Recurso>Job` por `JobName`)
+- [ ] Implementar **adapter real** `infra/driven/queue/bullmq/<feature>-queue-bullmq.producer.ts` (`<Feature>QueueBullmqAdapterProducer`, `@InjectQueue(QueueName.<X>)` + `queue.add(JobName.<X>, data)`)
+- [ ] Implementar **adapter fake** `infra/driven/queue/fake/<feature>-queue-fake.producer.ts` (`<Feature>QueueFakeAdapterProducer`, empurra para `public readonly addedXxxJobs: Array<...>`)
+- [ ] Implementar **consumer** `infra/drivers/queue/bullmq/<feature>-bullmq.consumer.ts`
+  - `@Processor(QueueName.<X>)` + `@Injectable()` + `extends WorkerHost`
+  - `process(job: Job<...>)` com `switch(job.name)` e `default: throw new AppException('Unknown job name: ...')`
+- [ ] Criar `application/queue/<feature>-queue.module.ts` com `static register()`:
+  - `BullModule.registerQueue({ name, defaultJobOptions: { removeOnComplete: true, removeOnFail: true } })` **só fora de `NODE_ENV=test`**
+  - Consumer registrado **só fora de `NODE_ENV=test`**
+  - Producer registrado **sempre**: `useClass: isTest ? Fake : Bullmq`
+  - `exports: [TOKENS.<Feature>QueueProducer]`
+- [ ] Importar `<Feature>QueueModule.register()` no `<modulo>.module.ts` da feature **consumidora** (a que injeta o producer no use case)
+- [ ] **Specs** obrigatórios:
+  - producer real: mocka `getQueueToken(QueueName.<X>)` e verifica `queue.add(JobName.<X>, data)`
+  - consumer: cobre cada `case` do `switch` + `default` (lança `AppException`) + propagação de erros do gateway/use case
+  - integration tests dos use cases consumidores: recuperam `module.get(TOKENS.<Feature>QueueProducer) as <Feature>QueueFakeAdapterProducer` e inspecionam `addedXxxJobs`
+
+⚠️ **Order of operations** dentro do use case: persistir o estado consistente **antes** de enfileirar (sem outbox; falha de Redis/producer falha o use case).
+
+➡️ Aciona: skill **`queue-bullmq`** (e mantém os princípios da skill **`gateway-adapters`** para a parte de fake/real binding).
+
 #### 14. Testes
 
 - [ ] Cada use case: unit (`*.spec.ts`) + integration (`*.integration.spec.ts`)

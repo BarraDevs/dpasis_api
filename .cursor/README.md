@@ -11,7 +11,7 @@ Esta pasta concentra a **memória arquitetural** do projeto para uso por agentes
 ├── commands/
 │   └── nova-feature.md             # /nova-feature — pipeline completo de implementação
 ├── rules/
-│   └── RULES.md                    # 10 regras arquiteturais ABSOLUTAS
+│   └── RULES.md                    # 11 regras arquiteturais ABSOLUTAS
 └── skills/
     ├── architecture-overview/SKILL.md
     ├── module-structure/SKILL.md
@@ -28,9 +28,8 @@ Esta pasta concentra a **memória arquitetural** do projeto para uso por agentes
     ├── gateway-adapters/SKILL.md
     ├── prisma-conventions/SKILL.md
     ├── naming-conventions/SKILL.md
-    ├── adding-new-feature/SKILL.md
-    ├── crud-module-generator/SKILL.md       # (pré-existente) Gerador via Handlebars
-    └── nest-casl/SKILL.md                   # (pré-existente) Setup CASL
+    ├── queue-bullmq/SKILL.md
+    └── adding-new-feature/SKILL.md
 ```
 
 ## Como usar
@@ -75,11 +74,12 @@ Para forçar carregamento explícito numa nova sessão, abra com:
 | Como integrar serviço externo (S3, Redis, ViaCEP) | `skills/gateway-adapters/SKILL.md` |
 | Convenções de nome | `skills/naming-conventions/SKILL.md` |
 | Schema Prisma e migrations | `skills/prisma-conventions/SKILL.md` |
-| Regras absolutas | `rules/RULES.md` (10 regras) |
+| Regras absolutas | `rules/RULES.md` (11 regras) |
+| Filas com BullMQ | `skills/queue-bullmq/SKILL.md` |
 
 ### 4) Para revisão de código (PR review)
 
-Use o **checklist da Rule 10** (em `rules/RULES.md`) como guia de revisão de PR para features novas. Cobre arquitetura, persistência, autorização, testes e build.
+Use o **checklist da Rule 11** (em `rules/RULES.md`) como guia de revisão de PR para features novas. Cobre arquitetura, persistência, autorização, testes e build.
 
 ## Anatomia de uma SKILL.md
 

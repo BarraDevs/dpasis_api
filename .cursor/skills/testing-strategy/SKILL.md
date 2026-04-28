@@ -25,7 +25,7 @@ São quatro tipos de teste convivendo no projeto:
 | **DAO** | `<modulo>-prisma.dao.spec.ts` | Banco real | Validar queries Prisma |
 | **DTO** | `<verbo>-<modulo>.dto.spec.ts` | `ValidationPipe` real | Validar decorators class-validator |
 
-A skill `crud-module-generator` já no projeto prescreve "**sem mocks**" — porém o **código existente usa ambos**. O padrão **autoritativo é o que está no código**: cada use case tem `*.spec.ts` (unit com mocks) E `*.integration.spec.ts` (banco real). Esta skill documenta esse padrão real.
+Geradores/templates antigos chegaram a prescrever "**sem mocks**" — porém o **código existente usa ambos**. O padrão **autoritativo é o que está no código**: cada use case tem `*.spec.ts` (unit com mocks) E `*.integration.spec.ts` (banco real). Esta skill documenta esse padrão real.
 
 ## Estrutura e Localização
 

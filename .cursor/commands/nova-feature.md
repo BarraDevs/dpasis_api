@@ -9,7 +9,7 @@ Você é um arquiteto sênior do projeto **dpasis_api** (NestJS + Prisma + Hexag
 Antes de fazer qualquer pergunta ou propor solução, **leia nesta ordem**, em paralelo quando possível:
 
 1. **`.cursor/context.md`** — passaporte arquitetural (stack, estrutura, regras de ouro, onde fica o quê)
-2. **`.cursor/rules/RULES.md`** — 10 regras absolutas que regem o projeto
+2. **`.cursor/rules/RULES.md`** — 11 regras absolutas que regem o projeto
 3. **`.cursor/skills/adding-new-feature/SKILL.md`** — checklist mestre end-to-end
 4. **`.cursor/skills/naming-conventions/SKILL.md`** — convenções de nomenclatura
 
@@ -97,7 +97,7 @@ Se o usuário não trouxe o pedido completo, apresente o **formulário abaixo** 
 
 ## ETAPA 2 — Plano de implementação (apresente ANTES de codificar)
 
-Depois de coletar os requisitos, **construa um plano detalhado** com base no checklist da Rule 10 (`.cursor/rules/RULES.md`) e da skill `adding-new-feature`. O plano deve listar **exatamente os arquivos** que serão criados/modificados, na ordem correta.
+Depois de coletar os requisitos, **construa um plano detalhado** com base no checklist da Rule 11 (`.cursor/rules/RULES.md`) e da skill `adding-new-feature`. O plano deve listar **exatamente os arquivos** que serão criados/modificados, na ordem correta.
 
 Carregue **as skills específicas** que cobrem cada passo do plano:
 
@@ -115,6 +115,7 @@ Carregue **as skills específicas** que cobrem cada passo do plano:
 | Controllers + Swagger | `.cursor/skills/controllers-and-swagger/SKILL.md` |
 | Autorização | `.cursor/skills/authentication-and-authorization/SKILL.md` |
 | Gateways externos (se aplicável) | `.cursor/skills/gateway-adapters/SKILL.md` |
+| Filas / BullMQ (se aplicável) | `.cursor/skills/queue-bullmq/SKILL.md` |
 | Testes | `.cursor/skills/testing-strategy/SKILL.md` |
 
 Leia **somente** as skills relacionadas aos passos que serão executados. Não consuma contexto com skills irrelevantes ao caso.
@@ -169,7 +170,7 @@ Apresente o plano usando este template e **aguarde aprovação do usuário** ant
 
 ## ETAPA 3 — Implementação
 
-Após aprovação do plano, **execute na ordem do checklist** (Rule 10 / skill `adding-new-feature`):
+Após aprovação do plano, **execute na ordem do checklist** (Rule 11 / skill `adding-new-feature`):
 
 1. Schema Prisma → atualizar `truncate()` → rodar `npm run db:migration` se aplicável
 2. Tokens DI em `src/core/di/token.ts`

@@ -51,7 +51,9 @@ Gateways existentes:
 | `cnpj-lookup/` | `CnpjLookupCnpjaAdapterGateway` | `CnpjLookupFakeAdapterGateway` | `TOKENS.CnpjLookupGateway` |
 | `logger/` | `LoggerWinstonAdapterGateway` | `LoggerFakeAdapterGateway` | `TOKENS.LoggerGateway` |
 | `upload-file/` | `UploadS3AdapterGateway` | `UploadFakeAdapterGateway` | `TOKENS.UploadFileGateway` |
-| `queue/` | BullMQ producers/consumers | (depende do contexto) | `TOKENS.<Producer>` |
+| `queue/` (infra global) + `<Feature>QueueModule` por feature | `<Feature>QueueBullmqAdapterProducer` + `<Feature>BullmqConsumer` | `<Feature>QueueFakeAdapterProducer` | `TOKENS.<Feature>QueueProducer` |
+
+> **Filas/BullMQ** seguem o mesmo princípio fake/real, mas têm diferenças importantes (port + producer + consumer em pastas separadas, `BullModule.registerQueue`, enums centrais `QueueName`/`JobName`). Para qualquer trabalho com filas, use a skill dedicada **`.cursor/skills/queue-bullmq/SKILL.md`** (e a Rule 10 em `.cursor/rules/RULES.md`).
 
 ## Como Fazer
 
