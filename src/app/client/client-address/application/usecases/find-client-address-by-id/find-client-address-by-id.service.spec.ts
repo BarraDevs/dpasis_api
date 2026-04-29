@@ -1,3 +1,4 @@
+import { buildMinimalResaleData, nextResaleFixtureId } from 'src/test/fixtures/minimal-resale';
 import { Test } from '@nestjs/testing';
 import { ClientAddressModule } from 'src/app/client/client-address/client-address.module';
 import { ClientAddressType } from 'src/app/client/client-address/domain/enums/client-address-type.enum';
@@ -25,9 +26,9 @@ describe('FindClientAddressById', () => {
   beforeEach(async() => {
     await prisma.truncate();
 
-    const [group, owner] = await Promise.all([
+    const [group, resale] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-      prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+      prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
     ]);
 
     const client = await prisma.client.create({
@@ -37,7 +38,7 @@ describe('FindClientAddressById', () => {
         document: '09748165000110',
         ie: null,
         groupId: group.id,
-        ownerId: owner.id,
+        resaleId: resale.id,
         companyName: 'Empresa Test',
         fantasyName: null,
         headquarters: 'São Paulo',

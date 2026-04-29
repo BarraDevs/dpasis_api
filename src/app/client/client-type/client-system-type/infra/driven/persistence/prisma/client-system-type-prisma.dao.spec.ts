@@ -1,3 +1,4 @@
+import { buildMinimalResaleData, nextResaleFixtureId } from 'src/test/fixtures/minimal-resale';
 import { Test } from '@nestjs/testing';
 import { ClientAddressType } from 'src/app/client/client-address/domain/enums/client-address-type.enum';
 import { ClientSystemTypeDto } from 'src/app/client/client-type/client-system-type/application/dtos/client-system-type.dto';
@@ -286,9 +287,9 @@ describe('ClientSystemTypeDaoAdapterPrisma - Integration tests', () => {
         prisma.clientDriveType.create({ data: { name: `Drive ${Date.now()}`, active: true } }),
       ]);
 
-      const [group, owner] = await Promise.all([
+      const [group, resale] = await Promise.all([
         prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-        prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+        prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
       ]);
 
       const client = await prisma.client.create({
@@ -298,7 +299,7 @@ describe('ClientSystemTypeDaoAdapterPrisma - Integration tests', () => {
           document: '09748165000110',
           ie: null,
           groupId: group.id,
-          ownerId: owner.id,
+          resaleId: resale.id,
           companyName: 'Empresa Test',
           fantasyName: null,
           headquarters: 'São Paulo',

@@ -5,7 +5,7 @@ import { ClientAddressModule } from '../client-address/client-address.module';
 import { ClientAttendanceModule } from '../client-attendance/client-attendance.module';
 import { ClientGroupModule } from '../client-group/client-group.module';
 import { ClientMaintenanceTicketModule } from '../client-maintenance-ticket/client-maintenance-ticket.module';
-import { ClientOwnerModule } from '../client-owner/client-owner.module';
+import { ResaleModule } from 'src/app/resale/resale/resale.module';
 import { ClientPersistenceModule } from './application/persistence/client-persistence.module';
 import { ActivateClient } from './application/usecases/activate-client/activate-client.service';
 import { CreateClient } from './application/usecases/create-client/create-client.service';
@@ -24,7 +24,7 @@ import { ClientAdminController } from './infra/drivers/http/admin/client-admin.c
     forwardRef(() => ClientAddressModule),
     ClientPersistenceModule,
     ClientGroupModule,
-    ClientOwnerModule,
+    ResaleModule,
     ClientAttendanceModule,
     ClientMaintenanceTicketModule,
     CompanyModule,

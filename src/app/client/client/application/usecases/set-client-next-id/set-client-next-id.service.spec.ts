@@ -1,3 +1,4 @@
+import { buildMinimalResaleData, nextResaleFixtureId } from 'src/test/fixtures/minimal-resale';
 import { Test } from '@nestjs/testing';
 import { ClientModule } from 'src/app/client/client/client.module';
 import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
@@ -59,9 +60,9 @@ describe('SetClientNextId - Integration tests', () => {
   }
 
   async function seedClientWithExplicitId(id: number) {
-    const [group, owner, company] = await Promise.all([
+    const [group, resale, company] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-      prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+      prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
       createCompany(),
     ]);
 
@@ -73,7 +74,7 @@ describe('SetClientNextId - Integration tests', () => {
         document: `09.748.165/0001-${suffix}`,
         ie: null,
         groupId: group.id,
-        ownerId: owner.id,
+        resaleId: resale.id,
         companyName: 'Cliente Teste',
         fantasyName: null,
         headquarters: 'São Paulo',

@@ -1,3 +1,4 @@
+import { buildMinimalResaleData, nextResaleFixtureId } from 'src/test/fixtures/minimal-resale';
 import { Test } from '@nestjs/testing';
 import { ClientDepartmentDto } from 'src/app/client/client-department/application/dtos/client-department.dto';
 import { CreateClientDepartmentInputDto } from 'src/app/client/client-department/application/usecases/create-client-department/dtos/create-client-department.dto';
@@ -353,9 +354,9 @@ describe('ClientDepartmentDaoAdapterPrisma - Integration tests', () => {
   describe('countContactsByDepartmentId', () => {
     it('should return 0 when no contacts exist for the department', async() => {
       // Arrange
-      const [group, owner] = await Promise.all([
+      const [group, resale] = await Promise.all([
         prisma.clientGroup.create({ data: { name: 'Grupo', active: true } }),
-        prisma.clientOwner.create({ data: { name: 'Owner', active: true } }),
+        prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
       ]);
       const client = await prisma.client.create({
         data: {
@@ -364,7 +365,7 @@ describe('ClientDepartmentDaoAdapterPrisma - Integration tests', () => {
           document: '09748165000110',
           ie: null,
           groupId: group.id,
-          ownerId: owner.id,
+          resaleId: resale.id,
           companyName: 'Empresa',
           fantasyName: null,
           headquarters: 'SP',
@@ -399,9 +400,9 @@ describe('ClientDepartmentDaoAdapterPrisma - Integration tests', () => {
 
     it('should return correct count of contacts for the department', async() => {
       // Arrange
-      const [group, owner] = await Promise.all([
+      const [group, resale] = await Promise.all([
         prisma.clientGroup.create({ data: { name: 'Grupo', active: true } }),
-        prisma.clientOwner.create({ data: { name: 'Owner', active: true } }),
+        prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
       ]);
       const [client1, client2] = await Promise.all([
         prisma.client.create({
@@ -411,7 +412,7 @@ describe('ClientDepartmentDaoAdapterPrisma - Integration tests', () => {
             document: '09748165000110',
             ie: null,
             groupId: group.id,
-            ownerId: owner.id,
+            resaleId: resale.id,
             companyName: 'Empresa 1',
             fantasyName: null,
             headquarters: 'SP',
@@ -427,7 +428,7 @@ describe('ClientDepartmentDaoAdapterPrisma - Integration tests', () => {
             document: '11111111000111',
             ie: null,
             groupId: group.id,
-            ownerId: owner.id,
+            resaleId: resale.id,
             companyName: 'Empresa 2',
             fantasyName: null,
             headquarters: 'RJ',

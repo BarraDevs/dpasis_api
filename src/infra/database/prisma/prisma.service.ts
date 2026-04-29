@@ -32,7 +32,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
       await tx.clientContact.deleteMany();
       await tx.clientItem.deleteMany();
       await tx.clientAttachment.deleteMany();
-      // 2. Client (referencia ClientGroup e ClientOwner)
+      // 2. Client (referencia ClientGroup e Resale)
       // Auto-relação parentClientId: precisa zerar FKs antes do deleteMany em massa (PostgreSQL).
       await tx.client.updateMany({ data: { parentClientId: null } });
       await tx.client.deleteMany();

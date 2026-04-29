@@ -1,3 +1,4 @@
+import { buildMinimalResaleData, nextResaleFixtureId } from 'src/test/fixtures/minimal-resale';
 import { Test } from '@nestjs/testing';
 import { ClientModule } from 'src/app/client/client/client.module';
 import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
@@ -43,9 +44,9 @@ describe('FindAllClient - Integration tests', () => {
   });
 
   it('should return clients with default pagination', async() => {
-    const [group, owner] = await Promise.all([
+    const [group, resale] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-      prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+      prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
     ]);
 
     await prisma.client.createMany({
@@ -55,7 +56,7 @@ describe('FindAllClient - Integration tests', () => {
           type: ClientType.PJ,
           document: '09748165000110',
           groupId: group.id,
-          ownerId: owner.id,
+          resaleId: resale.id,
           companyName: 'Empresa 1',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -67,7 +68,7 @@ describe('FindAllClient - Integration tests', () => {
           type: ClientType.PJ,
           document: '09748165000121',
           groupId: group.id,
-          ownerId: owner.id,
+          resaleId: resale.id,
           companyName: 'Empresa 2',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -85,9 +86,9 @@ describe('FindAllClient - Integration tests', () => {
   });
 
   it('should paginate results correctly', async() => {
-    const [group, owner] = await Promise.all([
+    const [group, resale] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-      prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+      prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
     ]);
 
     await prisma.client.createMany({
@@ -96,7 +97,7 @@ describe('FindAllClient - Integration tests', () => {
         type: ClientType.PJ,
         document: `097481650001${String(i).padStart(2, '0')}`,
         groupId: group.id,
-        ownerId: owner.id,
+        resaleId: resale.id,
         companyName: `Empresa ${i + 1}`,
         headquarters: 'SP',
         invoiceType: ClientInvoiceType.CONTRACT,
@@ -115,9 +116,9 @@ describe('FindAllClient - Integration tests', () => {
   });
 
   it('should return correct page when requesting page 2', async() => {
-    const [group, owner] = await Promise.all([
+    const [group, resale] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-      prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+      prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
     ]);
 
     await prisma.client.createMany({
@@ -126,7 +127,7 @@ describe('FindAllClient - Integration tests', () => {
         type: ClientType.PJ,
         document: `097481650001${String(i).padStart(2, '0')}`,
         groupId: group.id,
-        ownerId: owner.id,
+        resaleId: resale.id,
         companyName: `Empresa ${i + 1}`,
         headquarters: 'SP',
         invoiceType: ClientInvoiceType.CONTRACT,
@@ -144,9 +145,9 @@ describe('FindAllClient - Integration tests', () => {
   });
 
   it('should return last page with remaining items', async() => {
-    const [group, owner] = await Promise.all([
+    const [group, resale] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-      prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+      prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
     ]);
 
     await prisma.client.createMany({
@@ -155,7 +156,7 @@ describe('FindAllClient - Integration tests', () => {
         type: ClientType.PJ,
         document: `097481650001${String(i).padStart(2, '0')}`,
         groupId: group.id,
-        ownerId: owner.id,
+        resaleId: resale.id,
         companyName: `Empresa ${i + 1}`,
         headquarters: 'SP',
         invoiceType: ClientInvoiceType.CONTRACT,
@@ -173,9 +174,9 @@ describe('FindAllClient - Integration tests', () => {
   });
 
   it('should filter by search in companyName (case-insensitive)', async() => {
-    const [group, owner] = await Promise.all([
+    const [group, resale] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-      prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+      prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
     ]);
 
     await prisma.client.createMany({
@@ -185,7 +186,7 @@ describe('FindAllClient - Integration tests', () => {
           type: ClientType.PJ,
           document: '09748165000110',
           groupId: group.id,
-          ownerId: owner.id,
+          resaleId: resale.id,
           companyName: 'Empresa Premium LTDA',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -197,7 +198,7 @@ describe('FindAllClient - Integration tests', () => {
           type: ClientType.PJ,
           document: '09748165000121',
           groupId: group.id,
-          ownerId: owner.id,
+          resaleId: resale.id,
           companyName: 'Empresa Básica',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -215,9 +216,9 @@ describe('FindAllClient - Integration tests', () => {
   });
 
   it('should filter by search in fantasyName (case-insensitive)', async() => {
-    const [group, owner] = await Promise.all([
+    const [group, resale] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-      prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+      prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
     ]);
 
     await prisma.client.createMany({
@@ -227,7 +228,7 @@ describe('FindAllClient - Integration tests', () => {
           type: ClientType.PJ,
           document: '09748165000110',
           groupId: group.id,
-          ownerId: owner.id,
+          resaleId: resale.id,
           companyName: 'Empresa 1',
           fantasyName: 'Premium Corp',
           headquarters: 'SP',
@@ -240,7 +241,7 @@ describe('FindAllClient - Integration tests', () => {
           type: ClientType.PJ,
           document: '09748165000121',
           groupId: group.id,
-          ownerId: owner.id,
+          resaleId: resale.id,
           companyName: 'Empresa 2',
           fantasyName: 'Básica',
           headquarters: 'SP',
@@ -259,9 +260,9 @@ describe('FindAllClient - Integration tests', () => {
   });
 
   it('should filter by search in document (case-insensitive)', async() => {
-    const [group, owner] = await Promise.all([
+    const [group, resale] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-      prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+      prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
     ]);
 
     await prisma.client.createMany({
@@ -271,7 +272,7 @@ describe('FindAllClient - Integration tests', () => {
           type: ClientType.PJ,
           document: '09748165000110',
           groupId: group.id,
-          ownerId: owner.id,
+          resaleId: resale.id,
           companyName: 'Empresa 1',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -283,7 +284,7 @@ describe('FindAllClient - Integration tests', () => {
           type: ClientType.PJ,
           document: '33000167000101',
           groupId: group.id,
-          ownerId: owner.id,
+          resaleId: resale.id,
           companyName: 'Empresa 2',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -301,9 +302,9 @@ describe('FindAllClient - Integration tests', () => {
   });
 
   it('should return empty when search matches no client', async() => {
-    const [group, owner] = await Promise.all([
+    const [group, resale] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-      prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+      prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
     ]);
 
     await prisma.client.create({
@@ -312,7 +313,7 @@ describe('FindAllClient - Integration tests', () => {
         type: ClientType.PJ,
         document: '09748165000110',
         groupId: group.id,
-        ownerId: owner.id,
+        resaleId: resale.id,
         companyName: 'Empresa Test',
         headquarters: 'SP',
         invoiceType: ClientInvoiceType.CONTRACT,
@@ -328,9 +329,9 @@ describe('FindAllClient - Integration tests', () => {
   });
 
   it('should combine search and active filters', async() => {
-    const [group, owner] = await Promise.all([
+    const [group, resale] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-      prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+      prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
     ]);
 
     await prisma.client.createMany({
@@ -340,7 +341,7 @@ describe('FindAllClient - Integration tests', () => {
           type: ClientType.PJ,
           document: '09748165000110',
           groupId: group.id,
-          ownerId: owner.id,
+          resaleId: resale.id,
           companyName: 'Tech Solutions',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -352,7 +353,7 @@ describe('FindAllClient - Integration tests', () => {
           type: ClientType.PJ,
           document: '09748165000121',
           groupId: group.id,
-          ownerId: owner.id,
+          resaleId: resale.id,
           companyName: 'Tech Inativo',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -371,9 +372,9 @@ describe('FindAllClient - Integration tests', () => {
   });
 
   it('should filter by active when active is true', async() => {
-    const [group, owner] = await Promise.all([
+    const [group, resale] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-      prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+      prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
     ]);
 
     await prisma.client.createMany({
@@ -383,7 +384,7 @@ describe('FindAllClient - Integration tests', () => {
           type: ClientType.PJ,
           document: '09748165000110',
           groupId: group.id,
-          ownerId: owner.id,
+          resaleId: resale.id,
           companyName: 'Empresa 1',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -395,7 +396,7 @@ describe('FindAllClient - Integration tests', () => {
           type: ClientType.PJ,
           document: '09748165000121',
           groupId: group.id,
-          ownerId: owner.id,
+          resaleId: resale.id,
           companyName: 'Empresa 2',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -407,7 +408,7 @@ describe('FindAllClient - Integration tests', () => {
           type: ClientType.PJ,
           document: '09748165000132',
           groupId: group.id,
-          ownerId: owner.id,
+          resaleId: resale.id,
           companyName: 'Empresa 3',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -425,9 +426,9 @@ describe('FindAllClient - Integration tests', () => {
   });
 
   it('should filter by active when active is false', async() => {
-    const [group, owner] = await Promise.all([
+    const [group, resale] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-      prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+      prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
     ]);
 
     await prisma.client.createMany({
@@ -437,7 +438,7 @@ describe('FindAllClient - Integration tests', () => {
           type: ClientType.PJ,
           document: '09748165000110',
           groupId: group.id,
-          ownerId: owner.id,
+          resaleId: resale.id,
           companyName: 'Empresa 1',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -449,7 +450,7 @@ describe('FindAllClient - Integration tests', () => {
           type: ClientType.PJ,
           document: '09748165000121',
           groupId: group.id,
-          ownerId: owner.id,
+          resaleId: resale.id,
           companyName: 'Empresa 2',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -467,9 +468,9 @@ describe('FindAllClient - Integration tests', () => {
   });
 
   it('should return client data with all fields', async() => {
-    const [group, owner] = await Promise.all([
+    const [group, resale] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-      prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+      prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
     ]);
 
     const client = await prisma.client.create({
@@ -479,7 +480,7 @@ describe('FindAllClient - Integration tests', () => {
         document: '09748165000110',
         ie: '123456789',
         groupId: group.id,
-        ownerId: owner.id,
+        resaleId: resale.id,
         companyName: 'Empresa LTDA',
         fantasyName: 'Empresa',
         headquarters: 'São Paulo',
@@ -505,9 +506,9 @@ describe('FindAllClient - Integration tests', () => {
         id: group.id,
         name: group.name,
       },
-      owner: {
-        id: owner.id,
-        name: owner.name,
+      resale: {
+        id: resale.id,
+        name: resale.name,
       },
       companyName: 'Empresa LTDA',
       fantasyName: 'Empresa',

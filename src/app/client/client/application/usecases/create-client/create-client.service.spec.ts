@@ -1,7 +1,8 @@
+import { buildMinimalResaleData, nextResaleFixtureId } from 'src/test/fixtures/minimal-resale';
 import { Test } from '@nestjs/testing';
 import { ClientAddressType } from 'src/app/client/client-address/domain/enums/client-address-type.enum';
 import { ClientGroupNotFoundError } from 'src/app/client/client-group/domain/errors/client-group-not-found.error';
-import { ClientOwnerNotFoundError } from 'src/app/client/client-owner/domain/errors/client-owner-not-found.error';
+import { ResaleNotFoundError } from 'src/app/resale/resale/domain/errors/resale-not-found.error';
 import { ClientModule } from 'src/app/client/client/client.module';
 import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
 import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum';
@@ -71,7 +72,7 @@ describe('CreateClient - Integration tests', () => {
       document: '09.748.165/0001-10',
       ie: null,
       groupId: 0,
-      ownerId: 0,
+      resaleId: 0,
       companyIds: [1],
       companyName: 'Empresa LTDA',
       fantasyName: null,
@@ -93,13 +94,13 @@ describe('CreateClient - Integration tests', () => {
 
   describe('success path', () => {
     it('should create client and persist in database', async() => {
-      const [group, owner, company] = await Promise.all([
+      const [group, resale, company] = await Promise.all([
         prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-        prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+        prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
         createCompany(),
       ]);
 
-      const input = makeValidInput({ groupId: group.id, ownerId: owner.id, companyIds: [company.id] });
+      const input = makeValidInput({ groupId: group.id, resaleId: resale.id, companyIds: [company.id] });
 
       const result = await sut.execute(input);
 
@@ -113,7 +114,7 @@ describe('CreateClient - Integration tests', () => {
       expect(saved?.document).toBe('09748165000110');
       expect(saved?.companyName).toBe('Empresa LTDA');
       expect(saved?.groupId).toBe(group.id);
-      expect(saved?.ownerId).toBe(owner.id);
+      expect(saved?.resaleId).toBe(resale.id);
 
       const address = await prisma.clientAddress.findFirst({
         where: { clientId: result.id, type: ClientAddressType.MAIN },
@@ -135,13 +136,13 @@ describe('CreateClient - Integration tests', () => {
     it('should allocate id from client sequence when id is omitted (getAndIncrement)', async() => {
       await resetClientSequence(9000);
 
-      const [group, owner, company] = await Promise.all([
+      const [group, resale, company] = await Promise.all([
         prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-        prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+        prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
         createCompany(),
       ]);
 
-      const input = makeValidInput({ groupId: group.id, ownerId: owner.id, companyIds: [company.id] });
+      const input = makeValidInput({ groupId: group.id, resaleId: resale.id, companyIds: [company.id] });
 
       const result = await sut.execute(input);
 
@@ -152,15 +153,15 @@ describe('CreateClient - Integration tests', () => {
     });
 
     it('should persist MAIN address with complement when provided', async() => {
-      const [group, owner, company] = await Promise.all([
+      const [group, resale, company] = await Promise.all([
         prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-        prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+        prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
         createCompany(),
       ]);
 
       const input = makeValidInput({
         groupId: group.id,
-        ownerId: owner.id,
+        resaleId: resale.id,
         companyIds: [company.id],
         address: {
           ...makeValidInput().address,
@@ -177,15 +178,15 @@ describe('CreateClient - Integration tests', () => {
     });
 
     it('should create client with optional fields filled', async() => {
-      const [group, owner, company] = await Promise.all([
+      const [group, resale, company] = await Promise.all([
         prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-        prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+        prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
         createCompany(),
       ]);
 
       const input = makeValidInput({
         groupId: group.id,
-        ownerId: owner.id,
+        resaleId: resale.id,
         companyIds: [company.id],
         ie: '123456789',
         fantasyName: 'Empresa',
@@ -203,15 +204,15 @@ describe('CreateClient - Integration tests', () => {
     });
 
     it('should persist domain when provided', async() => {
-      const [group, owner, company] = await Promise.all([
+      const [group, resale, company] = await Promise.all([
         prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-        prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+        prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
         createCompany(),
       ]);
 
       const input = makeValidInput({
         groupId: group.id,
-        ownerId: owner.id,
+        resaleId: resale.id,
         companyIds: [company.id],
         domain: 'integracao.persist.dev',
       });
@@ -223,9 +224,9 @@ describe('CreateClient - Integration tests', () => {
     });
 
     it('should create client with PF type and CPF document', async() => {
-      const [group, owner, company] = await Promise.all([
+      const [group, resale, company] = await Promise.all([
         prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-        prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+        prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
         createCompany(),
       ]);
 
@@ -233,7 +234,7 @@ describe('CreateClient - Integration tests', () => {
         type: ClientType.PF,
         document: '974.563.215-58',
         groupId: group.id,
-        ownerId: owner.id,
+        resaleId: resale.id,
         companyIds: [company.id],
       });
 
@@ -250,15 +251,15 @@ describe('CreateClient - Integration tests', () => {
 
     it('should persist client with explicit id when provided', async() => {
       const explicitId = 71_000;
-      const [group, owner, company] = await Promise.all([
+      const [group, resale, company] = await Promise.all([
         prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-        prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+        prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
         createCompany(),
       ]);
 
       const input = makeValidInput({
         groupId: group.id,
-        ownerId: owner.id,
+        resaleId: resale.id,
         companyIds: [company.id],
         id: explicitId,
       });
@@ -280,15 +281,15 @@ describe('CreateClient - Integration tests', () => {
   describe('id already taken', () => {
     it('should throw ClientIdAlreadyTakenError when id already exists', async() => {
       const explicitId = 72_000;
-      const [group, owner, company] = await Promise.all([
+      const [group, resale, company] = await Promise.all([
         prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-        prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+        prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
         createCompany(),
       ]);
 
       const inputFirst = makeValidInput({
         groupId: group.id,
-        ownerId: owner.id,
+        resaleId: resale.id,
         companyIds: [company.id],
         id: explicitId,
       });
@@ -296,7 +297,7 @@ describe('CreateClient - Integration tests', () => {
 
       const inputSecond = makeValidInput({
         groupId: group.id,
-        ownerId: owner.id,
+        resaleId: resale.id,
         companyIds: [company.id],
         id: explicitId,
         type: ClientType.PF,
@@ -316,13 +317,13 @@ describe('CreateClient - Integration tests', () => {
 
   describe('document already taken', () => {
     it('should throw DocumentAlreadyTakenError when document already exists', async() => {
-      const [group, owner, company] = await Promise.all([
+      const [group, resale, company] = await Promise.all([
         prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-        prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+        prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
         createCompany(),
       ]);
 
-      const input = makeValidInput({ groupId: group.id, ownerId: owner.id, companyIds: [company.id] });
+      const input = makeValidInput({ groupId: group.id, resaleId: resale.id, companyIds: [company.id] });
 
       await sut.execute(input);
 
@@ -331,18 +332,18 @@ describe('CreateClient - Integration tests', () => {
     });
 
     it('should not persist client when document is already taken', async() => {
-      const [group, owner, company] = await Promise.all([
+      const [group, resale, company] = await Promise.all([
         prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-        prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+        prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
         createCompany(),
       ]);
 
-      const input = makeValidInput({ groupId: group.id, ownerId: owner.id, companyIds: [company.id] });
+      const input = makeValidInput({ groupId: group.id, resaleId: resale.id, companyIds: [company.id] });
       await sut.execute(input);
 
       const input2 = makeValidInput({
         groupId: group.id,
-        ownerId: owner.id,
+        resaleId: resale.id,
         companyIds: [company.id],
         document: '09.748.165/0001-10',
         companyName: 'Outra Empresa',
@@ -357,37 +358,37 @@ describe('CreateClient - Integration tests', () => {
 
   describe('group not found', () => {
     it('should throw ClientGroupNotFoundError when groupId does not exist', async() => {
-      const [owner, company] = await Promise.all([
-        prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+      const [resale, company] = await Promise.all([
+        prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
         createCompany(),
       ]);
 
-      const input = makeValidInput({ groupId: 99999, ownerId: owner.id, companyIds: [company.id] });
+      const input = makeValidInput({ groupId: 99999, resaleId: resale.id, companyIds: [company.id] });
 
       await expect(sut.execute(input)).rejects.toThrow(ClientGroupNotFoundError);
       await expect(sut.execute(input)).rejects.toThrow('Grupo de clientes não encontrado na base de dados.');
     });
 
     it('should throw ClientGroupNotFoundError when group is inactive', async() => {
-      const [group, owner, company] = await Promise.all([
+      const [group, resale, company] = await Promise.all([
         prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: false } }),
-        prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+        prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
         createCompany(),
       ]);
 
-      const input = makeValidInput({ groupId: group.id, ownerId: owner.id, companyIds: [company.id] });
+      const input = makeValidInput({ groupId: group.id, resaleId: resale.id, companyIds: [company.id] });
 
       await expect(sut.execute(input)).rejects.toThrow(ClientGroupNotFoundError);
       await expect(sut.execute(input)).rejects.toThrow('Grupo de clientes não encontrado na base de dados.');
     });
 
     it('should not persist client when group does not exist', async() => {
-      const [owner, company] = await Promise.all([
-        prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+      const [resale, company] = await Promise.all([
+        prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
         createCompany(),
       ]);
 
-      const input = makeValidInput({ groupId: 99999, ownerId: owner.id, companyIds: [company.id] });
+      const input = makeValidInput({ groupId: 99999, resaleId: resale.id, companyIds: [company.id] });
 
       await expect(sut.execute(input)).rejects.toThrow(ClientGroupNotFoundError);
 
@@ -400,20 +401,20 @@ describe('CreateClient - Integration tests', () => {
 
   describe('company not found', () => {
     it('should throw CompanyNotFoundError when companyId does not exist', async() => {
-      const [group, owner] = await Promise.all([
+      const [group, resale] = await Promise.all([
         prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-        prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+        prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
       ]);
 
-      const input = makeValidInput({ groupId: group.id, ownerId: owner.id, companyIds: [99999] });
+      const input = makeValidInput({ groupId: group.id, resaleId: resale.id, companyIds: [99999] });
 
       await expect(sut.execute(input)).rejects.toThrow(CompanyNotFoundError);
     });
 
     it('should throw CompanyNotFoundError when company is inactive', async() => {
-      const [group, owner, company] = await Promise.all([
+      const [group, resale, company] = await Promise.all([
         prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-        prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+        prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
         prisma.company.create({
           data: {
             name: `Empresa ${Date.now()}`,
@@ -432,47 +433,47 @@ describe('CreateClient - Integration tests', () => {
         }),
       ]);
 
-      const input = makeValidInput({ groupId: group.id, ownerId: owner.id, companyIds: [company.id] });
+      const input = makeValidInput({ groupId: group.id, resaleId: resale.id, companyIds: [company.id] });
 
       await expect(sut.execute(input)).rejects.toThrow(CompanyNotFoundError);
     });
   });
 
-  describe('owner not found', () => {
-    it('should throw ClientOwnerNotFoundError when ownerId does not exist', async() => {
+  describe('resale not found', () => {
+    it('should throw ResaleNotFoundError when resaleId does not exist', async() => {
       const [group, company] = await Promise.all([
         prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
         createCompany(),
       ]);
 
-      const input = makeValidInput({ groupId: group.id, ownerId: 99999, companyIds: [company.id] });
+      const input = makeValidInput({ groupId: group.id, resaleId: 99999, companyIds: [company.id] });
 
-      await expect(sut.execute(input)).rejects.toThrow(ClientOwnerNotFoundError);
-      await expect(sut.execute(input)).rejects.toThrow('Proprietário de clientes não encontrado na base de dados.');
+      await expect(sut.execute(input)).rejects.toThrow(ResaleNotFoundError);
+      await expect(sut.execute(input)).rejects.toThrow('Revenda não encontrada na base de dados.');
     });
 
-    it('should throw ClientOwnerNotFoundError when owner is inactive', async() => {
-      const [group, owner, company] = await Promise.all([
+    it('should throw ResaleNotFoundError when resale is inactive', async() => {
+      const [group, resale, company] = await Promise.all([
         prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-        prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: false } }),
+        prisma.resale.create({ data: { ...buildMinimalResaleData(nextResaleFixtureId()), active: false } }),
         createCompany(),
       ]);
 
-      const input = makeValidInput({ groupId: group.id, ownerId: owner.id, companyIds: [company.id] });
+      const input = makeValidInput({ groupId: group.id, resaleId: resale.id, companyIds: [company.id] });
 
-      await expect(sut.execute(input)).rejects.toThrow(ClientOwnerNotFoundError);
-      await expect(sut.execute(input)).rejects.toThrow('Proprietário de clientes não encontrado na base de dados.');
+      await expect(sut.execute(input)).rejects.toThrow(ResaleNotFoundError);
+      await expect(sut.execute(input)).rejects.toThrow('Revenda não encontrada na base de dados.');
     });
 
-    it('should not persist client when owner does not exist', async() => {
+    it('should not persist client when resale does not exist', async() => {
       const [group, company] = await Promise.all([
         prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
         createCompany(),
       ]);
 
-      const input = makeValidInput({ groupId: group.id, ownerId: 99999, companyIds: [company.id] });
+      const input = makeValidInput({ groupId: group.id, resaleId: 99999, companyIds: [company.id] });
 
-      await expect(sut.execute(input)).rejects.toThrow(ClientOwnerNotFoundError);
+      await expect(sut.execute(input)).rejects.toThrow(ResaleNotFoundError);
 
       const saved = await prisma.client.findFirst({
         where: { document: '09748165000110' },
@@ -483,15 +484,15 @@ describe('CreateClient - Integration tests', () => {
 
   describe('validation (factory)', () => {
     it('should throw when document has invalid format', async() => {
-      const [group, owner, company] = await Promise.all([
+      const [group, resale, company] = await Promise.all([
         prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-        prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+        prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
         createCompany(),
       ]);
 
       const input = makeValidInput({
         groupId: group.id,
-        ownerId: owner.id,
+        resaleId: resale.id,
         companyIds: [company.id],
         document: '123',
       });
@@ -500,15 +501,15 @@ describe('CreateClient - Integration tests', () => {
     });
 
     it('should throw when type is invalid', async() => {
-      const [group, owner, company] = await Promise.all([
+      const [group, resale, company] = await Promise.all([
         prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-        prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+        prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
         createCompany(),
       ]);
 
       const input = makeValidInput({
         groupId: group.id,
-        ownerId: owner.id,
+        resaleId: resale.id,
         companyIds: [company.id],
         type: 'INVALID' as ClientType,
       });

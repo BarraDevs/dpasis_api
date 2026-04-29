@@ -1,3 +1,4 @@
+import { buildMinimalResaleData, nextResaleFixtureId } from 'src/test/fixtures/minimal-resale';
 import { Test } from '@nestjs/testing';
 import { ClientDto } from 'src/app/client/client/application/dtos/client.dto';
 import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
@@ -29,12 +30,12 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
     await prisma.$disconnect();
   });
 
-  async function createClientGroupAndOwner() {
-    const [group, owner] = await Promise.all([
+  async function createClientGroupAndResale() {
+    const [group, resale] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-      prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+      prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
     ]);
-    return { group, owner };
+    return { group, resale };
   }
 
   describe('findAll', () => {
@@ -46,7 +47,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
     });
 
     it('should return clients saved in clients table with correct format', async() => {
-      const { group, owner } = await createClientGroupAndOwner();
+      const { group, resale } = await createClientGroupAndResale();
 
       const created = await prisma.client.create({
         data: {
@@ -55,7 +56,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           document: '09748165000110',
           ie: '123456789',
           groupId: group.id,
-          ownerId: owner.id,
+          resaleId: resale.id,
           companyName: 'Empresa LTDA',
           fantasyName: 'Empresa',
           headquarters: 'São Paulo',
@@ -82,9 +83,9 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           id: group.id,
           name: group.name,
         },
-        owner: {
-          id: owner.id,
-          name: owner.name,
+        resale: {
+          id: resale.id,
+          name: resale.name,
         },
         companyName: 'Empresa LTDA',
         companies: [],
@@ -104,7 +105,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
     });
 
     it('should filter by active when provided', async() => {
-      const { group, owner } = await createClientGroupAndOwner();
+      const { group, resale } = await createClientGroupAndResale();
 
       await prisma.client.create({
         data: {
@@ -113,7 +114,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           document: '09748165000110',
           ie: null,
           groupId: group.id,
-          ownerId: owner.id,
+          resaleId: resale.id,
           companyName: 'Empresa Ativa',
           fantasyName: null,
           headquarters: 'SP',
@@ -129,7 +130,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           document: '09748165000111',
           ie: null,
           groupId: group.id,
-          ownerId: owner.id,
+          resaleId: resale.id,
           companyName: 'Empresa Inativa',
           fantasyName: null,
           headquarters: 'SP',
@@ -151,7 +152,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
     });
 
     it('should filter by search in companyName, fantasyName and document (case-insensitive)', async() => {
-      const { group, owner } = await createClientGroupAndOwner();
+      const { group, resale } = await createClientGroupAndResale();
 
       await prisma.client.create({
         data: {
@@ -159,7 +160,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           type: ClientType.PJ,
           document: '09748165000110',
           groupId: group.id,
-          ownerId: owner.id,
+          resaleId: resale.id,
           companyName: 'Empresa Premium LTDA',
           fantasyName: null,
           headquarters: 'SP',
@@ -174,7 +175,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           type: ClientType.PJ,
           document: '33000167000101',
           groupId: group.id,
-          ownerId: owner.id,
+          resaleId: resale.id,
           companyName: 'Outra Empresa',
           fantasyName: null,
           headquarters: 'SP',
@@ -194,7 +195,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
     });
 
     it('should filter by search in domain (case-insensitive)', async() => {
-      const { group, owner } = await createClientGroupAndOwner();
+      const { group, resale } = await createClientGroupAndResale();
 
       await prisma.client.create({
         data: {
@@ -202,7 +203,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           type: ClientType.PJ,
           document: '09748165999141',
           groupId: group.id,
-          ownerId: owner.id,
+          resaleId: resale.id,
           companyName: 'Corp Alpha',
           fantasyName: null,
           domain: 'portal.CLIENTE-domain.io',
@@ -218,7 +219,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           type: ClientType.PJ,
           document: '09748165999152',
           groupId: group.id,
-          ownerId: owner.id,
+          resaleId: resale.id,
           companyName: 'Corp Beta',
           fantasyName: null,
           domain: 'outro-site.net',
@@ -240,7 +241,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
     });
 
     it('should apply active filter together with search on domain', async() => {
-      const { group, owner } = await createClientGroupAndOwner();
+      const { group, resale } = await createClientGroupAndResale();
 
       await prisma.client.create({
         data: {
@@ -248,7 +249,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           type: ClientType.PJ,
           document: '09748165996001',
           groupId: group.id,
-          ownerId: owner.id,
+          resaleId: resale.id,
           companyName: 'Inativa LTDA',
           fantasyName: null,
           domain: 'alpha-busca.cli.io',
@@ -264,7 +265,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           type: ClientType.PJ,
           document: '09748165996101',
           groupId: group.id,
-          ownerId: owner.id,
+          resaleId: resale.id,
           companyName: 'Ativa LTDA',
           fantasyName: null,
           domain: 'beta-busca.cli.io',
@@ -286,7 +287,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
     });
 
     it('should return empty when search matches no client', async() => {
-      const { group, owner } = await createClientGroupAndOwner();
+      const { group, resale } = await createClientGroupAndResale();
 
       await prisma.client.create({
         data: {
@@ -294,7 +295,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           type: ClientType.PJ,
           document: '09748165000110',
           groupId: group.id,
-          ownerId: owner.id,
+          resaleId: resale.id,
           companyName: 'Empresa Test',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -310,7 +311,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
     });
 
     it('should paginate results correctly', async() => {
-      const { group, owner } = await createClientGroupAndOwner();
+      const { group, resale } = await createClientGroupAndResale();
 
       await prisma.client.createMany({
         data: Array.from({ length: 25 }, (_, i) => ({
@@ -319,7 +320,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           document: `097481650001${String(i).padStart(2, '0')}`,
           ie: null,
           groupId: group.id,
-          ownerId: owner.id,
+          resaleId: resale.id,
           companyName: `Empresa ${i + 1}`,
           fantasyName: null,
           headquarters: 'São Paulo',
@@ -340,7 +341,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
     });
 
     it('should return results ordered by createdAt desc', async() => {
-      const { group, owner } = await createClientGroupAndOwner();
+      const { group, resale } = await createClientGroupAndResale();
 
       const first = await prisma.client.create({
         data: {
@@ -348,7 +349,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           type: ClientType.PJ,
           document: '09748165000110',
           groupId: group.id,
-          ownerId: owner.id,
+          resaleId: resale.id,
           companyName: 'Primeiro',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -365,7 +366,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           type: ClientType.PJ,
           document: '09748165000121',
           groupId: group.id,
-          ownerId: owner.id,
+          resaleId: resale.id,
           companyName: 'Segundo',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -391,7 +392,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
     });
 
     it('should return client by id with correct format', async() => {
-      const { group, owner } = await createClientGroupAndOwner();
+      const { group, resale } = await createClientGroupAndResale();
 
       const created = await prisma.client.create({
         data: {
@@ -400,7 +401,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           document: '09748165000110',
           ie: '123456789',
           groupId: group.id,
-          ownerId: owner.id,
+          resaleId: resale.id,
           companyName: 'Empresa Test',
           fantasyName: 'Fantasia',
           headquarters: 'São Paulo',
@@ -426,9 +427,9 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           id: group.id,
           name: group.name,
         },
-        owner: {
-          id: owner.id,
-          name: owner.name,
+        resale: {
+          id: resale.id,
+          name: resale.name,
         },
         companyName: 'Empresa Test',
         fantasyName: 'Fantasia',
@@ -444,7 +445,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
     });
 
     it('should verify record is in clients table', async() => {
-      const { group, owner } = await createClientGroupAndOwner();
+      const { group, resale } = await createClientGroupAndResale();
 
       const created = await prisma.client.create({
         data: {
@@ -452,7 +453,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           type: ClientType.PJ,
           document: '09748165000110',
           groupId: group.id,
-          ownerId: owner.id,
+          resaleId: resale.id,
           companyName: 'Empresa',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -479,7 +480,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
     });
 
     it('should return client by document with correct format', async() => {
-      const { group, owner } = await createClientGroupAndOwner();
+      const { group, resale } = await createClientGroupAndResale();
 
       const created = await prisma.client.create({
         data: {
@@ -488,7 +489,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           document: '09748165000110',
           ie: '123456789',
           groupId: group.id,
-          ownerId: owner.id,
+          resaleId: resale.id,
           companyName: 'Empresa Test',
           fantasyName: 'Fantasia',
           headquarters: 'São Paulo',
@@ -515,9 +516,9 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           id: group.id,
           name: group.name,
         },
-        owner: {
-          id: owner.id,
-          name: owner.name,
+        resale: {
+          id: resale.id,
+          name: resale.name,
         },
         companies: [],
         fantasyName: 'Fantasia',
@@ -532,7 +533,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
     });
 
     it('should find client by document (CPF format)', async() => {
-      const { group, owner } = await createClientGroupAndOwner();
+      const { group, resale } = await createClientGroupAndResale();
 
       const created = await prisma.client.create({
         data: {
@@ -540,7 +541,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           type: ClientType.PF,
           document: '97456321558',
           groupId: group.id,
-          ownerId: owner.id,
+          resaleId: resale.id,
           companyName: 'Pessoa Física',
           headquarters: 'Rio de Janeiro',
           invoiceType: ClientInvoiceType.INDIVIDUAL,
@@ -558,7 +559,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
     });
 
     it('should verify record is in clients table', async() => {
-      const { group, owner } = await createClientGroupAndOwner();
+      const { group, resale } = await createClientGroupAndResale();
 
       const created = await prisma.client.create({
         data: {
@@ -566,7 +567,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           type: ClientType.PJ,
           document: '09748165000110',
           groupId: group.id,
-          ownerId: owner.id,
+          resaleId: resale.id,
           companyName: 'Empresa',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -592,7 +593,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
     });
 
     it('should return the highest id among clients', async() => {
-      const { group, owner } = await createClientGroupAndOwner();
+      const { group, resale } = await createClientGroupAndResale();
 
       const first = await prisma.client.create({
         data: {
@@ -600,7 +601,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           type: ClientType.PJ,
           document: '09748165000110',
           groupId: group.id,
-          ownerId: owner.id,
+          resaleId: resale.id,
           companyName: 'Primeira',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -615,7 +616,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           type: ClientType.PJ,
           document: '09748165000199',
           groupId: group.id,
-          ownerId: owner.id,
+          resaleId: resale.id,
           companyName: 'Segunda',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -632,7 +633,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
     });
 
     it('should return explicit id when it is greater than other rows', async() => {
-      const { group, owner } = await createClientGroupAndOwner();
+      const { group, resale } = await createClientGroupAndResale();
       const suffix = String(Date.now()).slice(-4);
 
       await prisma.client.create({
@@ -641,7 +642,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           type: ClientType.PJ,
           document: '09748165000110',
           groupId: group.id,
-          ownerId: owner.id,
+          resaleId: resale.id,
           companyName: 'Auto',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -657,7 +658,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           type: ClientType.PJ,
           document: `09.748.165/0001-${suffix}`,
           groupId: group.id,
-          ownerId: owner.id,
+          resaleId: resale.id,
           companyName: 'Id explícito',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -674,7 +675,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
 
   describe('findSubClients', () => {
     it('should return empty array and zero count when client has no sub-clients', async() => {
-      const { group, owner } = await createClientGroupAndOwner();
+      const { group, resale } = await createClientGroupAndResale();
 
       const parent = await prisma.client.create({
         data: {
@@ -682,7 +683,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           type: ClientType.PJ,
           document: '09748165000110',
           groupId: group.id,
-          ownerId: owner.id,
+          resaleId: resale.id,
           companyName: 'Empresa Pai',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -705,7 +706,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
     });
 
     it('should return sub-clients ordered by id', async() => {
-      const { group, owner } = await createClientGroupAndOwner();
+      const { group, resale } = await createClientGroupAndResale();
 
       const parent = await prisma.client.create({
         data: {
@@ -713,7 +714,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           type: ClientType.PJ,
           document: '09748165000110',
           groupId: group.id,
-          ownerId: owner.id,
+          resaleId: resale.id,
           companyName: 'Empresa Pai',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -728,7 +729,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           type: ClientType.PJ,
           document: '09748165000121',
           groupId: group.id,
-          ownerId: owner.id,
+          resaleId: resale.id,
           companyName: 'Sub-cliente 1',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -745,7 +746,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           type: ClientType.PF,
           document: '97456321558',
           groupId: group.id,
-          ownerId: owner.id,
+          resaleId: resale.id,
           companyName: 'Sub-cliente 2',
           headquarters: 'RJ',
           invoiceType: ClientInvoiceType.INDIVIDUAL,
@@ -769,7 +770,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
     });
 
     it('should not return sub-clients of a different parent', async() => {
-      const { group, owner } = await createClientGroupAndOwner();
+      const { group, resale } = await createClientGroupAndResale();
 
       const [parent1, parent2] = await Promise.all([
         prisma.client.create({
@@ -778,7 +779,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
             type: ClientType.PJ,
             document: '09748165000110',
             groupId: group.id,
-            ownerId: owner.id,
+            resaleId: resale.id,
             companyName: 'Empresa Pai 1',
             headquarters: 'SP',
             invoiceType: ClientInvoiceType.CONTRACT,
@@ -792,7 +793,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
             type: ClientType.PJ,
             document: '09748165000121',
             groupId: group.id,
-            ownerId: owner.id,
+            resaleId: resale.id,
             companyName: 'Empresa Pai 2',
             headquarters: 'SP',
             invoiceType: ClientInvoiceType.CONTRACT,
@@ -808,7 +809,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           type: ClientType.PF,
           document: '97456321558',
           groupId: group.id,
-          ownerId: owner.id,
+          resaleId: resale.id,
           companyName: 'Sub-cliente do Pai 2',
           headquarters: 'RJ',
           invoiceType: ClientInvoiceType.INDIVIDUAL,
@@ -826,7 +827,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
     });
 
     it('should return sub-clients with full ClientDto format', async() => {
-      const { group, owner } = await createClientGroupAndOwner();
+      const { group, resale } = await createClientGroupAndResale();
 
       const parent = await prisma.client.create({
         data: {
@@ -834,7 +835,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           type: ClientType.PJ,
           document: '09748165000110',
           groupId: group.id,
-          ownerId: owner.id,
+          resaleId: resale.id,
           companyName: 'Empresa Pai',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -850,7 +851,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           document: '97456321558',
           ie: null,
           groupId: group.id,
-          ownerId: owner.id,
+          resaleId: resale.id,
           companyName: 'Sub-cliente',
           fantasyName: null,
           headquarters: 'RJ',
@@ -883,7 +884,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
         generateInvoice: false,
         active: true,
         group: { id: group.id, name: group.name },
-        owner: { id: owner.id, name: owner.name },
+        resale: { id: resale.id, name: resale.name },
         companies: [],
         createdAt: child.createdAt,
         updatedAt: child.updatedAt,
@@ -891,7 +892,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
     });
 
     it('should paginate sub-clients correctly', async() => {
-      const { group, owner } = await createClientGroupAndOwner();
+      const { group, resale } = await createClientGroupAndResale();
 
       const parent = await prisma.client.create({
         data: {
@@ -899,7 +900,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           type: ClientType.PJ,
           document: '19748165000110',
           groupId: group.id,
-          ownerId: owner.id,
+          resaleId: resale.id,
           companyName: 'Empresa Pai',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -916,7 +917,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
               type: ClientType.PJ,
               document: `097481650001${String(i).padStart(2, '0')}`,
               groupId: group.id,
-              ownerId: owner.id,
+              resaleId: resale.id,
               companyName: `Sub-cliente ${i + 1}`,
               headquarters: 'SP',
               invoiceType: ClientInvoiceType.CONTRACT,
@@ -938,7 +939,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
     });
 
     it('should filter sub-clients by search', async() => {
-      const { group, owner } = await createClientGroupAndOwner();
+      const { group, resale } = await createClientGroupAndResale();
 
       const parent = await prisma.client.create({
         data: {
@@ -946,7 +947,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           type: ClientType.PJ,
           document: '09748165000110',
           groupId: group.id,
-          ownerId: owner.id,
+          resaleId: resale.id,
           companyName: 'Empresa Pai',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -962,7 +963,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
             type: ClientType.PJ,
             document: '09748165000121',
             groupId: group.id,
-            ownerId: owner.id,
+            resaleId: resale.id,
             companyName: 'Sub Premium',
             headquarters: 'SP',
             invoiceType: ClientInvoiceType.CONTRACT,
@@ -978,7 +979,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
             type: ClientType.PJ,
             document: '09748165000132',
             groupId: group.id,
-            ownerId: owner.id,
+            resaleId: resale.id,
             companyName: 'Sub Básica',
             headquarters: 'SP',
             invoiceType: ClientInvoiceType.CONTRACT,
@@ -998,7 +999,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
     });
 
     it('should filter sub-clients by search in domain (case-insensitive)', async() => {
-      const { group, owner } = await createClientGroupAndOwner();
+      const { group, resale } = await createClientGroupAndResale();
 
       const parent = await prisma.client.create({
         data: {
@@ -1006,7 +1007,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           type: ClientType.PJ,
           document: '09748165997010',
           groupId: group.id,
-          ownerId: owner.id,
+          resaleId: resale.id,
           companyName: 'Empresa Pai',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -1021,7 +1022,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           type: ClientType.PJ,
           document: '09748165997101',
           groupId: group.id,
-          ownerId: owner.id,
+          resaleId: resale.id,
           companyName: 'Sub Genérico',
           domain: 'sub.APP-teste.dev',
           headquarters: 'SP',
@@ -1038,7 +1039,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           type: ClientType.PJ,
           document: '09748165997201',
           groupId: group.id,
-          ownerId: owner.id,
+          resaleId: resale.id,
           companyName: 'Sub Outro',
           domain: null,
           headquarters: 'SP',
@@ -1063,7 +1064,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
     });
 
     it('should filter sub-clients by active status', async() => {
-      const { group, owner } = await createClientGroupAndOwner();
+      const { group, resale } = await createClientGroupAndResale();
 
       const parent = await prisma.client.create({
         data: {
@@ -1071,7 +1072,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           type: ClientType.PJ,
           document: '09748165000110',
           groupId: group.id,
-          ownerId: owner.id,
+          resaleId: resale.id,
           companyName: 'Empresa Pai',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -1087,7 +1088,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
             type: ClientType.PJ,
             document: '09748165000121',
             groupId: group.id,
-            ownerId: owner.id,
+            resaleId: resale.id,
             companyName: 'Sub Ativo',
             headquarters: 'SP',
             invoiceType: ClientInvoiceType.CONTRACT,
@@ -1103,7 +1104,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
             type: ClientType.PJ,
             document: '09748165000132',
             groupId: group.id,
-            ownerId: owner.id,
+            resaleId: resale.id,
             companyName: 'Sub Inativo',
             headquarters: 'SP',
             invoiceType: ClientInvoiceType.CONTRACT,

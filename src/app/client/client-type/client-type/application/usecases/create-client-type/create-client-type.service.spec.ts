@@ -1,3 +1,4 @@
+import { buildMinimalResaleData, nextResaleFixtureId } from 'src/test/fixtures/minimal-resale';
 import { Test } from '@nestjs/testing';
 import { ClientAddressType } from 'src/app/client/client-address/domain/enums/client-address-type.enum';
 import { ClientAddressNotFoundError } from 'src/app/client/client-address/domain/errors/client-address-not-found.error';
@@ -18,9 +19,7 @@ describe('CreateClientType', () => {
     const group = await prisma.clientGroup.create({
       data: { name: `Grupo ${Date.now()}-${Math.random()}`, active: true },
     });
-    const owner = await prisma.clientOwner.create({
-      data: { name: `Owner ${Date.now()}-${Math.random()}`, active: true },
-    });
+    const resale = await prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) });
     const client = await prisma.client.create({
       data: {
         id: 1,
@@ -28,7 +27,7 @@ describe('CreateClientType', () => {
         document: `12345678${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}00199`,
         ie: null,
         groupId: group.id,
-        ownerId: owner.id,
+        resaleId: resale.id,
         companyName: 'Empresa Test',
         fantasyName: null,
         headquarters: 'SP',
@@ -182,8 +181,8 @@ describe('CreateClientType', () => {
     const otherClientGroup = await prisma.clientGroup.create({
       data: { name: `Grupo outro ${Date.now()}-${Math.random()}`, active: true },
     });
-    const otherOwner = await prisma.clientOwner.create({
-      data: { name: `Owner outro ${Date.now()}-${Math.random()}`, active: true },
+    const otherResale = await prisma.resale.create({
+      data: buildMinimalResaleData(nextResaleFixtureId()),
     });
     const otherClient = await prisma.client.create({
       data: {
@@ -192,7 +191,7 @@ describe('CreateClientType', () => {
         document: `99887766${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}00199`,
         ie: null,
         groupId: otherClientGroup.id,
-        ownerId: otherOwner.id,
+        resaleId: otherResale.id,
         companyName: 'Outra Empresa',
         fantasyName: null,
         headquarters: 'SP',

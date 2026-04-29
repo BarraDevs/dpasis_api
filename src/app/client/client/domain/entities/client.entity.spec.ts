@@ -10,7 +10,7 @@ function makeClientProps(overrides?: Partial<ClientProps>): ClientProps {
     document: '12345678000199',
     ie: '123456789',
     groupId: 10,
-    ownerId: 20,
+    resaleId: 20,
     parentClientId: null,
     isSubClient: false,
     companyIds: [1],
@@ -75,7 +75,7 @@ describe('Client', () => {
       expect(client.props.document).toBe('12345678000199');
       expect(client.props.ie).toBe('123456789');
       expect(client.props.groupId).toBe(10);
-      expect(client.props.ownerId).toBe(20);
+      expect(client.props.resaleId).toBe(20);
       expect(client.props.companyIds).toEqual([1]);
       expect(client.props.invoiceType).toBe(ClientInvoiceType.CONTRACT);
       expect(client.props.generateInvoice).toBe(true);
@@ -115,7 +115,7 @@ describe('Client', () => {
         'document',
         'ie',
         'groupId',
-        'ownerId',
+        'resaleId',
         'parentClientId',
         'isSubClient',
         'companyIds',

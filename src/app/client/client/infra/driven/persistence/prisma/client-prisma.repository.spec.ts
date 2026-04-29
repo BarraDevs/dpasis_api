@@ -1,3 +1,4 @@
+import { buildMinimalResaleData, nextResaleFixtureId } from 'src/test/fixtures/minimal-resale';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { Test } from '@nestjs/testing';
 import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
@@ -30,11 +31,11 @@ describe('ClientRepositoryAdapterPrisma - Integration tests', () => {
     await prisma.$disconnect();
   });
 
-  async function createClientGroupOwnerAndCompany() {
+  async function createClientGroupResaleAndCompany() {
     const suffix = String(Date.now()).slice(-4);
-    const [group, owner, company] = await Promise.all([
+    const [group, resale, company] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-      prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+      prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
       prisma.company.create({
         data: {
           name: `Empresa ${Date.now()}`,
@@ -52,19 +53,19 @@ describe('ClientRepositoryAdapterPrisma - Integration tests', () => {
         },
       }),
     ]);
-    return { group, owner, company };
+    return { group, resale, company };
   }
 
   describe('save', () => {
     it('should persist client in clients table with correct data', async() => {
-      const { group, owner, company } = await createClientGroupOwnerAndCompany();
+      const { group, resale, company } = await createClientGroupResaleAndCompany();
 
       const entity = ClientFactory.create({
         type: ClientType.PJ,
         document: '09.748.165/0001-10',
         ie: '123456789',
         groupId: group.id,
-        ownerId: owner.id,
+        resaleId: resale.id,
         companyIds: [company.id],
         invoiceType: ClientInvoiceType.CONTRACT,
         generateInvoice: true,
@@ -86,7 +87,7 @@ describe('ClientRepositoryAdapterPrisma - Integration tests', () => {
       expect(saved?.document).toBe('09748165000110');
       expect(saved?.ie).toBe('123456789');
       expect(saved?.groupId).toBe(group.id);
-      expect(saved?.ownerId).toBe(owner.id);
+      expect(saved?.resaleId).toBe(resale.id);
       expect(saved?.companyName).toBe('Empresa LTDA');
       expect(saved?.fantasyName).toBe('Empresa');
       expect(saved?.headquarters).toBe('São Paulo');
@@ -98,14 +99,14 @@ describe('ClientRepositoryAdapterPrisma - Integration tests', () => {
     });
 
     it('should persist client with optional fields as null', async() => {
-      const { group, owner, company } = await createClientGroupOwnerAndCompany();
+      const { group, resale, company } = await createClientGroupResaleAndCompany();
 
       const entity = ClientFactory.create({
         type: ClientType.PF,
         document: '974.563.215-58',
         ie: null,
         groupId: group.id,
-        ownerId: owner.id,
+        resaleId: resale.id,
         companyIds: [company.id],
         invoiceType: ClientInvoiceType.INDIVIDUAL,
         generateInvoice: false,
@@ -130,14 +131,14 @@ describe('ClientRepositoryAdapterPrisma - Integration tests', () => {
 
     it('should persist client with explicit id when entity has id > 0', async() => {
       const explicitId = 50_000;
-      const { group, owner, company } = await createClientGroupOwnerAndCompany();
+      const { group, resale, company } = await createClientGroupResaleAndCompany();
 
       const entity = ClientFactory.create({
         type: ClientType.PJ,
         document: '09.748.165/0001-10',
         ie: null,
         groupId: group.id,
-        ownerId: owner.id,
+        resaleId: resale.id,
         companyIds: [company.id],
         invoiceType: ClientInvoiceType.CONTRACT,
         generateInvoice: true,
@@ -163,14 +164,14 @@ describe('ClientRepositoryAdapterPrisma - Integration tests', () => {
 
   describe('edit', () => {
     it('should update client in database', async() => {
-      const { group, owner, company } = await createClientGroupOwnerAndCompany();
+      const { group, resale, company } = await createClientGroupResaleAndCompany();
 
       const entity = ClientFactory.create({
         type: ClientType.PJ,
         document: '09.748.165/0001-10',
         ie: null,
         groupId: group.id,
-        ownerId: owner.id,
+        resaleId: resale.id,
         companyIds: [company.id],
         invoiceType: ClientInvoiceType.CONTRACT,
         generateInvoice: true,
@@ -214,14 +215,14 @@ describe('ClientRepositoryAdapterPrisma - Integration tests', () => {
     });
 
     it('should return client entity when found', async() => {
-      const { group, owner, company } = await createClientGroupOwnerAndCompany();
+      const { group, resale, company } = await createClientGroupResaleAndCompany();
 
       const entity = ClientFactory.create({
         type: ClientType.PJ,
         document: '09.748.165/0001-10',
         ie: null,
         groupId: group.id,
-        ownerId: owner.id,
+        resaleId: resale.id,
         companyIds: [company.id],
         invoiceType: ClientInvoiceType.CONTRACT,
         generateInvoice: true,
@@ -248,14 +249,14 @@ describe('ClientRepositoryAdapterPrisma - Integration tests', () => {
 
   describe('delete', () => {
     it('should remove client from database', async() => {
-      const { group, owner, company } = await createClientGroupOwnerAndCompany();
+      const { group, resale, company } = await createClientGroupResaleAndCompany();
 
       const entity = ClientFactory.create({
         type: ClientType.PJ,
         document: '09.748.165/0001-10',
         ie: null,
         groupId: group.id,
-        ownerId: owner.id,
+        resaleId: resale.id,
         companyIds: [company.id],
         invoiceType: ClientInvoiceType.CONTRACT,
         generateInvoice: true,
@@ -283,7 +284,7 @@ describe('ClientRepositoryAdapterPrisma - Integration tests', () => {
 
   describe('linkAttendanceAndMaintenance', () => {
     it('should set attendanceId and maintenanceTicketId on client', async() => {
-      const { group, owner, company } = await createClientGroupOwnerAndCompany();
+      const { group, resale, company } = await createClientGroupResaleAndCompany();
       const [attendance, ticket] = await Promise.all([
         prisma.clientAttendance.create({ data: { name: `Att ${Date.now()}`, active: true } }),
         prisma.clientMaintenanceTicket.create({ data: { name: `Tk ${Date.now()}`, active: true } }),
@@ -294,7 +295,7 @@ describe('ClientRepositoryAdapterPrisma - Integration tests', () => {
         document: '09.748.165/0001-10',
         ie: null,
         groupId: group.id,
-        ownerId: owner.id,
+        resaleId: resale.id,
         companyIds: [company.id],
         invoiceType: ClientInvoiceType.CONTRACT,
         generateInvoice: true,

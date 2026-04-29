@@ -6,7 +6,7 @@ model Client {
   document            String   @unique
   ie                  String?
   groupId             Int
-  ownerId             Int
+  resaleId            Int
   attendanceId        Int?
   maintenanceTicketId Int?
   companyName         String
@@ -23,7 +23,7 @@ model Client {
   children Client[] @relation("ClientSubClients")
 
   group             ClientGroup              @relation(fields: [groupId], references: [id])
-  owner             ClientOwner              @relation(fields: [ownerId], references: [id])
+  resale            Resale                   @relation(fields: [resaleId], references: [id])
   attendance        ClientAttendance?        @relation(fields: [attendanceId], references: [id])
   maintenanceTicket ClientMaintenanceTicket? @relation(fields: [maintenanceTicketId], references: [id])
 
@@ -96,8 +96,6 @@ model ClientOwner {
   active    Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  clients Client[]
 
   @@map("client_owners")
 }

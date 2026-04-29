@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { FindClientGroupById } from 'src/app/client/client-group/application/usecases/find-client-group-by-id/find-client-group-by-id.service';
-import { FindClientOwnerById } from 'src/app/client/client-owner/application/usecases/find-client-owner-by-id/find-client-owner-by-id.service';
+import { FindResaleById } from 'src/app/resale/resale/application/usecases/find-resale-by-id/find-resale-by-id.service';
 import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
 import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum';
 import { FindCompanyById } from 'src/app/company/application/usecases/find-company-by-id/find-company-by-id.service';
@@ -19,7 +19,7 @@ export class EditClient {
     @Inject(TOKENS.ClientDao) private readonly clientDao: IClientDao,
     @Inject(TOKENS.ClientRepository) private readonly clientRepository: IClientRepository,
     private readonly findClientGroupById: FindClientGroupById,
-    private readonly findClientOwnerById: FindClientOwnerById,
+    private readonly findResaleById: FindResaleById,
     private readonly findCompanyById: FindCompanyById,
   ) {}
 
@@ -37,7 +37,7 @@ export class EditClient {
       ...data,
       id,
       groupId: data.groupId ?? client.group.id,
-      ownerId: data.ownerId ?? client.owner.id,
+      resaleId: data.resaleId ?? client.resale.id,
       companyIds,
       type: client.type as ClientType,
       invoiceType: client.invoiceType as ClientInvoiceType,
@@ -52,8 +52,8 @@ export class EditClient {
     if (data.groupId) {
       await this.findClientGroupById.execute(data.groupId, { onlyActive: true });
     }
-    if (data.ownerId) {
-      await this.findClientOwnerById.execute(data.ownerId!, { onlyActive: true });
+    if (data.resaleId) {
+      await this.findResaleById.execute(data.resaleId!, { onlyActive: true });
     }
     if (data.companyIds) {
       for (const companyId of data.companyIds) {

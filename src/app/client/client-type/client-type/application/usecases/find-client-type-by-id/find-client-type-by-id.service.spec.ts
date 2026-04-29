@@ -1,3 +1,4 @@
+import { buildMinimalResaleData, nextResaleFixtureId } from 'src/test/fixtures/minimal-resale';
 import { Test } from '@nestjs/testing';
 import { ClientAddressType } from 'src/app/client/client-address/domain/enums/client-address-type.enum';
 import { ClientTypeModule } from 'src/app/client/client-type/client-type/client-type.module';
@@ -14,9 +15,7 @@ describe('FindClientTypeById', () => {
     const group = await prisma.clientGroup.create({
       data: { name: `Grupo ${Date.now()}-${Math.random()}`, active: true },
     });
-    const owner = await prisma.clientOwner.create({
-      data: { name: `Owner ${Date.now()}-${Math.random()}`, active: true },
-    });
+    const resale = await prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) });
     const client = await prisma.client.create({
       data: {
         id: 1,
@@ -24,7 +23,7 @@ describe('FindClientTypeById', () => {
         document: `12345678${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}00199`,
         ie: null,
         groupId: group.id,
-        ownerId: owner.id,
+        resaleId: resale.id,
         companyName: 'Empresa Test',
         fantasyName: null,
         headquarters: 'SP',

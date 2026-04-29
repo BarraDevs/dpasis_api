@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { CreateClientAddress } from 'src/app/client/client-address/application/usecases/create-client-address/create-client-address.service';
 import { ClientAddressType } from 'src/app/client/client-address/domain/enums/client-address-type.enum';
 import { FindClientGroupById } from 'src/app/client/client-group/application/usecases/find-client-group-by-id/find-client-group-by-id.service';
-import { FindClientOwnerById } from 'src/app/client/client-owner/application/usecases/find-client-owner-by-id/find-client-owner-by-id.service';
+import { FindResaleById } from 'src/app/resale/resale/application/usecases/find-resale-by-id/find-resale-by-id.service';
 import { ClientCannotBeSelfParentError } from 'src/app/client/client/domain/errors/client-cannot-be-self-parent.error';
 import { ClientIdAlreadyTakenError } from 'src/app/client/client/domain/errors/client-id-already-taken.error';
 import { ClientNotFoundError } from 'src/app/client/client/domain/errors/client-not-found.error';
@@ -25,7 +25,7 @@ export class CreateClient {
     @Inject(TOKENS.ClientSequenceRepository) private readonly clientSequenceRepository: IClientSequenceRepository,
     private readonly createClientAddress: CreateClientAddress,
     private readonly findClientGroupById: FindClientGroupById,
-    private readonly findClientOwnerById: FindClientOwnerById,
+    private readonly findResaleById: FindResaleById,
     private readonly findCompanyById: FindCompanyById,
   ) {}
 
@@ -60,10 +60,10 @@ export class CreateClient {
       throw new DocumentAlreadyTakenError(normalizedDocument);
     }
 
-    // Verifica se o grupo e o proprietário existem E estão ativos
+    // Verifica se o grupo e a revenda existem E estão ativas
     // Lança um erro se não existirem ou estão inativos
     await this.findClientGroupById.execute(data.groupId, { onlyActive: true });
-    await this.findClientOwnerById.execute(data.ownerId, { onlyActive: true });
+    await this.findResaleById.execute(data.resaleId, { onlyActive: true });
 
     // Verifica se todas as empresas existem e estão ativas
     for (const companyId of data.companyIds) {
@@ -86,7 +86,7 @@ export class CreateClient {
       document: data.document,
       ie: data.ie,
       groupId: data.groupId,
-      ownerId: data.ownerId,
+      resaleId: data.resaleId,
       parentClientId: data.parentClientId ?? null,
       companyIds: data.companyIds,
       invoiceType: data.invoiceType,

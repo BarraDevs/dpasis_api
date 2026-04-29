@@ -1,3 +1,4 @@
+import { buildMinimalResaleData, nextResaleFixtureId } from 'src/test/fixtures/minimal-resale';
 import { Test } from '@nestjs/testing';
 import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
 import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum';
@@ -70,9 +71,9 @@ describe('DeleteClientGroup - Integration tests', () => {
 
   it('should throw ClientGroupInUseError when group has linked clients', async() => {
     // Arrange
-    const [group, owner] = await Promise.all([
+    const [group, resale] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-      prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+      prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
     ]);
 
     await prisma.client.create({
@@ -82,7 +83,7 @@ describe('DeleteClientGroup - Integration tests', () => {
         document: '09748165000110',
         ie: null,
         groupId: group.id,
-        ownerId: owner.id,
+        resaleId: resale.id,
         companyName: 'Empresa Test',
         fantasyName: null,
         headquarters: 'São Paulo',

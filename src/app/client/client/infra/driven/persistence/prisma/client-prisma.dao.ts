@@ -28,7 +28,7 @@ const ClientSelect = {
       name: true,
     },
   },
-  owner: {
+  resale: {
     select: {
       id: true,
       name: true,

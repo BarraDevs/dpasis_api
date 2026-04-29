@@ -1,3 +1,4 @@
+import { buildMinimalResaleData, nextResaleFixtureId } from 'src/test/fixtures/minimal-resale';
 import { Test } from '@nestjs/testing';
 import { ClientGroupDto } from 'src/app/client/client-group/application/dtos/client-group.dto';
 import { CreateClientGroupInputDto } from 'src/app/client/client-group/application/usecases/create-client-group/dtos/create-client-group.dto';
@@ -388,8 +389,8 @@ describe('ClientGroupDaoAdapterPrisma - Integration tests', () => {
       const group = await prisma.clientGroup.create({
         data: { name: 'Grupo Sem Clientes', active: true },
       });
-      const owner = await prisma.clientOwner.create({
-        data: { name: 'Owner', active: true },
+      const resale = await prisma.resale.create({
+        data: buildMinimalResaleData(nextResaleFixtureId()),
       });
       await prisma.client.create({
         data: {
@@ -398,7 +399,7 @@ describe('ClientGroupDaoAdapterPrisma - Integration tests', () => {
           document: '09748165000110',
           ie: null,
           groupId: group.id,
-          ownerId: owner.id,
+          resaleId: resale.id,
           companyName: 'Empresa',
           fantasyName: null,
           headquarters: 'SP',
@@ -424,8 +425,8 @@ describe('ClientGroupDaoAdapterPrisma - Integration tests', () => {
       const group = await prisma.clientGroup.create({
         data: { name: 'Grupo Com Clientes', active: true },
       });
-      const owner = await prisma.clientOwner.create({
-        data: { name: 'Owner', active: true },
+      const resale = await prisma.resale.create({
+        data: buildMinimalResaleData(nextResaleFixtureId()),
       });
       await prisma.client.createMany({
         data: [
@@ -435,7 +436,7 @@ describe('ClientGroupDaoAdapterPrisma - Integration tests', () => {
             document: '09748165000110',
             ie: null,
             groupId: group.id,
-            ownerId: owner.id,
+            resaleId: resale.id,
             companyName: 'Empresa 1',
             fantasyName: null,
             headquarters: 'SP',
@@ -449,7 +450,7 @@ describe('ClientGroupDaoAdapterPrisma - Integration tests', () => {
             document: '11111111000111',
             ie: null,
             groupId: group.id,
-            ownerId: owner.id,
+            resaleId: resale.id,
             companyName: 'Empresa 2',
             fantasyName: null,
             headquarters: 'RJ',

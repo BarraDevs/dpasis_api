@@ -12,7 +12,7 @@ function makeClientCreateProps(overrides?: Partial<ClientCreateProps>): ClientCr
     document: '09.748.165/0001-10',
     ie: null,
     groupId: 1,
-    ownerId: 1,
+    resaleId: 1,
     companyIds: [1],
     invoiceType: ClientInvoiceType.CONTRACT,
     generateInvoice: true,
@@ -32,7 +32,7 @@ function makeClientProps(overrides?: Partial<ClientProps>): ClientProps {
     document: '09.748.165/0001-10',
     ie: null,
     groupId: 1,
-    ownerId: 1,
+    resaleId: 1,
     parentClientId: null,
     isSubClient: false,
     companyIds: [1],
@@ -53,7 +53,7 @@ describe('ClientFactory', () => {
         document: '09.748.165/0001-10',
         ie: null,
         groupId: 1,
-        ownerId: 1,
+        resaleId: 1,
         companyIds: [1],
         invoiceType: ClientInvoiceType.CONTRACT,
         generateInvoice: true,
@@ -73,7 +73,7 @@ describe('ClientFactory', () => {
         document: '09748165000110',
         ie: null,
         groupId: 1,
-        ownerId: 1,
+        resaleId: 1,
         parentClientId: null,
         isSubClient: false,
         companyIds: [1],
@@ -242,11 +242,11 @@ describe('ClientFactory', () => {
       );
     });
 
-    describe('validation - ownerId', () => {
+    describe('validation - resaleId', () => {
       it.each([null, undefined, '', '   '])(
-        'should throw AppException when ownerId is empty (%s)',
-        (ownerId: unknown) => {
-          const props = makeClientCreateProps({ ownerId: ownerId as number });
+        'should throw AppException when resaleId is empty (%s)',
+        (resaleId: unknown) => {
+          const props = makeClientCreateProps({ resaleId: resaleId as number });
 
           expect(() => ClientFactory.create(props)).toThrow(NumberMustBePositiveAndInt);
         },

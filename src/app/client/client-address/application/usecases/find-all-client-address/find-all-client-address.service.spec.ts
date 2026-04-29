@@ -1,3 +1,4 @@
+import { buildMinimalResaleData, nextResaleFixtureId } from 'src/test/fixtures/minimal-resale';
 import { Test } from '@nestjs/testing';
 import { ClientAddressModule } from 'src/app/client/client-address/client-address.module';
 import { ClientAddressType } from 'src/app/client/client-address/domain/enums/client-address-type.enum';
@@ -24,9 +25,9 @@ describe('FindAllClientAddress', () => {
   beforeEach(async() => {
     await prisma.truncate();
 
-    const [group, owner] = await Promise.all([
+    const [group, resale] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-      prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+      prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
     ]);
 
     const client = await prisma.client.create({
@@ -36,7 +37,7 @@ describe('FindAllClientAddress', () => {
         document: '09748165000110',
         ie: null,
         groupId: group.id,
-        ownerId: owner.id,
+        resaleId: resale.id,
         companyName: 'Empresa Test',
         fantasyName: null,
         headquarters: 'São Paulo',
@@ -172,9 +173,9 @@ describe('FindAllClientAddress', () => {
   });
 
   it('should return only addresses for the given clientId', async() => {
-    const [group, owner] = await Promise.all([
+    const [group, resale] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo Outro ${Date.now()}`, active: true } }),
-      prisma.clientOwner.create({ data: { name: `Owner Outro ${Date.now()}`, active: true } }),
+      prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
     ]);
 
     const otherClient = await prisma.client.create({
@@ -184,7 +185,7 @@ describe('FindAllClientAddress', () => {
         document: '11111111000111',
         ie: null,
         groupId: group.id,
-        ownerId: owner.id,
+        resaleId: resale.id,
         companyName: 'Outra Empresa',
         fantasyName: null,
         headquarters: 'Rio de Janeiro',

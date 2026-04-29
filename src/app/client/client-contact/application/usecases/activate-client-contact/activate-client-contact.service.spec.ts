@@ -1,3 +1,4 @@
+import { buildMinimalResaleData, nextResaleFixtureId } from 'src/test/fixtures/minimal-resale';
 import { Test } from '@nestjs/testing';
 import { ClientContactModule } from 'src/app/client/client-contact/client-contact.module';
 import { ClientContactNotFoundError } from 'src/app/client/client-contact/domain/errors/client-contact-not-found.error';
@@ -9,9 +10,9 @@ describe('ActivateClientContact - Integration tests', () => {
   let prisma: PrismaService;
 
   const createContact = async(active = false) => {
-    const [group, owner, department] = await Promise.all([
+    const [group, resale, department] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-      prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+      prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
       prisma.clientDepartment.create({ data: { name: `Dept ${Date.now()}`, active: true } }),
     ]);
     const client = await prisma.client.create({
@@ -21,7 +22,7 @@ describe('ActivateClientContact - Integration tests', () => {
         document: `12345678${Date.now() % 100000}00199`,
         ie: null,
         groupId: group.id,
-        ownerId: owner.id,
+        resaleId: resale.id,
         companyName: 'Empresa Test',
         fantasyName: null,
         headquarters: 'SP',

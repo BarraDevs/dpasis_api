@@ -1,3 +1,4 @@
+import { buildMinimalResaleData, nextResaleFixtureId } from 'src/test/fixtures/minimal-resale';
 import { Test } from '@nestjs/testing';
 import { ClientAttachmentModule } from 'src/app/client/client-attachment/client-attachment.module';
 import { ClientAttachmentLinkSharedError } from 'src/app/client/client-attachment/domain/errors/client-attachment-link-shared.error';
@@ -13,9 +14,9 @@ describe('DeleteClientAttachment - Integration tests', () => {
   let uploadQueue: UploadFileQueueFakeAdapterProducer;
 
   const createClient = async() => {
-    const [group, owner] = await Promise.all([
+    const [group, resale] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-      prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+      prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
     ]);
     return prisma.client.create({
       data: {
@@ -24,7 +25,7 @@ describe('DeleteClientAttachment - Integration tests', () => {
         document: `12345678${Date.now() % 100000}00199`,
         ie: null,
         groupId: group.id,
-        ownerId: owner.id,
+        resaleId: resale.id,
         companyName: 'Empresa Test',
         fantasyName: null,
         headquarters: 'SP',

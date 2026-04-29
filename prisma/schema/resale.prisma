@@ -22,5 +22,7 @@ model Resale {
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
 
+  clients Client[]
+
   @@map("resales")
 }

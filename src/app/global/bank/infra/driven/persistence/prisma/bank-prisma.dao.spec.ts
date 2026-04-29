@@ -1,3 +1,4 @@
+import { buildMinimalResaleData, nextResaleFixtureId } from 'src/test/fixtures/minimal-resale';
 import { Test } from '@nestjs/testing';
 import { ClientAddressType } from 'src/app/client/client-address/domain/enums/client-address-type.enum';
 import { ClientInvoiceConfigDueDateType } from 'src/app/client/client-invoice-config/domain/enums/client-invoice-config-due-date-type.enum';
@@ -415,9 +416,9 @@ describe('BankDaoAdapterPrisma - Integration tests', () => {
         },
       });
 
-      const [group, owner] = await Promise.all([
+      const [group, resale] = await Promise.all([
         prisma.clientGroup.create({ data: { name: `G${suffix}`, active: true } }),
-        prisma.clientOwner.create({ data: { name: `O${suffix}`, active: true } }),
+        prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
       ]);
 
       const client = await prisma.client.create({
@@ -427,7 +428,7 @@ describe('BankDaoAdapterPrisma - Integration tests', () => {
           document: String(Date.now()).padStart(14, '0').slice(-14),
           ie: null,
           groupId: group.id,
-          ownerId: owner.id,
+          resaleId: resale.id,
           companyName: 'Co',
           fantasyName: null,
           headquarters: 'SP',

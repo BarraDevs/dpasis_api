@@ -1,3 +1,4 @@
+import { buildMinimalResaleData, nextResaleFixtureId } from 'src/test/fixtures/minimal-resale';
 import { Test } from '@nestjs/testing';
 import { ClientAttachmentDto } from 'src/app/client/client-attachment/application/dtos/client-attachment.dto';
 import { CreateClientAttachmentInputDto } from 'src/app/client/client-attachment/application/usecases/create-client-attachment/dtos/create-client-attachment.dto';
@@ -12,9 +13,9 @@ describe('ClientAttachmentDaoAdapterPrisma - Integration tests', () => {
   let prisma: PrismaService;
 
   const createClient = async(overrides?: { document?: string; companyName?: string }) => {
-    const [group, owner] = await Promise.all([
+    const [group, resale] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}-${Math.random()}`, active: true } }),
-      prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}-${Math.random()}`, active: true } }),
+      prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
     ]);
     return prisma.client.create({
       data: {
@@ -23,7 +24,7 @@ describe('ClientAttachmentDaoAdapterPrisma - Integration tests', () => {
         document: overrides?.document ?? `12345678${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}00199`,
         ie: null,
         groupId: group.id,
-        ownerId: owner.id,
+        resaleId: resale.id,
         companyName: overrides?.companyName ?? 'Empresa Test',
         fantasyName: null,
         headquarters: 'SP',
@@ -35,9 +36,9 @@ describe('ClientAttachmentDaoAdapterPrisma - Integration tests', () => {
   };
 
   const createTwoClients = async() => {
-    const [group, owner] = await Promise.all([
+    const [group, resale] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-      prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+      prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
     ]);
     const [client1, client2] = await Promise.all([
       prisma.client.create({
@@ -47,7 +48,7 @@ describe('ClientAttachmentDaoAdapterPrisma - Integration tests', () => {
           document: '11111111000111',
           ie: null,
           groupId: group.id,
-          ownerId: owner.id,
+          resaleId: resale.id,
           companyName: 'Empresa 1',
           fantasyName: null,
           headquarters: 'SP',
@@ -63,7 +64,7 @@ describe('ClientAttachmentDaoAdapterPrisma - Integration tests', () => {
           document: '22222222000122',
           ie: null,
           groupId: group.id,
-          ownerId: owner.id,
+          resaleId: resale.id,
           companyName: 'Empresa 2',
           fantasyName: null,
           headquarters: 'RJ',

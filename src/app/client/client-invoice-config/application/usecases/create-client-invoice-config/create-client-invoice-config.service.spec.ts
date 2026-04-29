@@ -1,3 +1,4 @@
+import { buildMinimalResaleData, nextResaleFixtureId } from 'src/test/fixtures/minimal-resale';
 import { Test } from '@nestjs/testing';
 import { ClientAddressType } from 'src/app/client/client-address/domain/enums/client-address-type.enum';
 import { ClientAddressNotFoundError } from 'src/app/client/client-address/domain/errors/client-address-not-found.error';
@@ -49,9 +50,9 @@ describe('CreateClientInvoiceConfig', () => {
   beforeEach(async() => {
     await prisma.truncate();
 
-    const [group, owner] = await Promise.all([
+    const [group, resale] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-      prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+      prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
     ]);
 
     const client = await prisma.client.create({
@@ -61,7 +62,7 @@ describe('CreateClientInvoiceConfig', () => {
         document: '09748165000110',
         ie: null,
         groupId: group.id,
-        ownerId: owner.id,
+        resaleId: resale.id,
         companyName: 'Empresa Test',
         fantasyName: null,
         headquarters: 'São Paulo',
@@ -192,9 +193,9 @@ describe('CreateClientInvoiceConfig', () => {
   });
 
   it('should throw ClientNotFoundError when client is inactive', async() => {
-    const [group2, owner2] = await Promise.all([
+    const [group2, resale2] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo2 ${Date.now()}`, active: true } }),
-      prisma.clientOwner.create({ data: { name: `Owner2 ${Date.now()}`, active: true } }),
+      prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
     ]);
     const inactiveClient = await prisma.client.create({
       data: {
@@ -203,7 +204,7 @@ describe('CreateClientInvoiceConfig', () => {
         document: '11111111000111',
         ie: null,
         groupId: group2.id,
-        ownerId: owner2.id,
+        resaleId: resale2.id,
         companyName: 'Cliente Inativo',
         fantasyName: null,
         headquarters: 'Rio',
@@ -236,9 +237,9 @@ describe('CreateClientInvoiceConfig', () => {
   });
 
   it('should throw ClientAddressNotFoundError when address does not belong to client', async() => {
-    const [group, owner] = await Promise.all([
+    const [group, resale] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo2 ${Date.now()}`, active: true } }),
-      prisma.clientOwner.create({ data: { name: `Owner2 ${Date.now()}`, active: true } }),
+      prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
     ]);
 
     const otherClient = await prisma.client.create({
@@ -248,7 +249,7 @@ describe('CreateClientInvoiceConfig', () => {
         document: '11111111000111',
         ie: null,
         groupId: group.id,
-        ownerId: owner.id,
+        resaleId: resale.id,
         companyName: 'Outra Empresa',
         fantasyName: null,
         headquarters: 'Rio',

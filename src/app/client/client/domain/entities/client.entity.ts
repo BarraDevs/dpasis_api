@@ -14,7 +14,7 @@ export type ClientCreateProps = {
   document: string;
   ie: string | null;
   groupId: number;
-  ownerId: number;
+  resaleId: number;
   parentClientId?: number | null;
   companyIds: number[];
   invoiceType: ClientInvoiceType;

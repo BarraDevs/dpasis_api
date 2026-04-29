@@ -1,6 +1,7 @@
+import { buildMinimalResaleData, nextResaleFixtureId } from 'src/test/fixtures/minimal-resale';
 import { Test } from '@nestjs/testing';
 import { ClientGroupNotFoundError } from 'src/app/client/client-group/domain/errors/client-group-not-found.error';
-import { ClientOwnerNotFoundError } from 'src/app/client/client-owner/domain/errors/client-owner-not-found.error';
+import { ResaleNotFoundError } from 'src/app/resale/resale/domain/errors/resale-not-found.error';
 import { ClientModule } from 'src/app/client/client/client.module';
 import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
 import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum';
@@ -42,9 +43,9 @@ describe('EditClient - Integration tests', () => {
   });
 
   it('should update client and persist in database', async() => {
-    const [group, owner] = await Promise.all([
+    const [group, resale] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-      prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+      prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
     ]);
 
     const client = await prisma.client.create({
@@ -53,7 +54,7 @@ describe('EditClient - Integration tests', () => {
         type: ClientType.PJ,
         document: '09748165000110',
         groupId: group.id,
-        ownerId: owner.id,
+        resaleId: resale.id,
         companyName: 'Empresa Original',
         headquarters: 'São Paulo',
         invoiceType: ClientInvoiceType.CONTRACT,
@@ -72,9 +73,9 @@ describe('EditClient - Integration tests', () => {
   });
 
   it('should return success message', async() => {
-    const [group, owner] = await Promise.all([
+    const [group, resale] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-      prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+      prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
     ]);
 
     const client = await prisma.client.create({
@@ -83,7 +84,7 @@ describe('EditClient - Integration tests', () => {
         type: ClientType.PJ,
         document: '09748165000110',
         groupId: group.id,
-        ownerId: owner.id,
+        resaleId: resale.id,
         companyName: 'Empresa',
         headquarters: 'SP',
         invoiceType: ClientInvoiceType.CONTRACT,
@@ -98,9 +99,9 @@ describe('EditClient - Integration tests', () => {
   });
 
   it('should throw DocumentAlreadyTakenError when document is taken by another client', async() => {
-    const [group, owner] = await Promise.all([
+    const [group, resale] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-      prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+      prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
     ]);
 
     await prisma.client.create({
@@ -109,7 +110,7 @@ describe('EditClient - Integration tests', () => {
         type: ClientType.PJ,
         document: '09748165000110',
         groupId: group.id,
-        ownerId: owner.id,
+        resaleId: resale.id,
         companyName: 'Empresa 1',
         headquarters: 'SP',
         invoiceType: ClientInvoiceType.CONTRACT,
@@ -124,7 +125,7 @@ describe('EditClient - Integration tests', () => {
         type: ClientType.PJ,
         document: '09748165000121',
         groupId: group.id,
-        ownerId: owner.id,
+        resaleId: resale.id,
         companyName: 'Empresa 2',
         headquarters: 'SP',
         invoiceType: ClientInvoiceType.CONTRACT,
@@ -138,9 +139,9 @@ describe('EditClient - Integration tests', () => {
   });
 
   it('should allow keeping same document when editing own client', async() => {
-    const [group, owner] = await Promise.all([
+    const [group, resale] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-      prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+      prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
     ]);
 
     const client = await prisma.client.create({
@@ -149,7 +150,7 @@ describe('EditClient - Integration tests', () => {
         type: ClientType.PJ,
         document: '09748165000110',
         groupId: group.id,
-        ownerId: owner.id,
+        resaleId: resale.id,
         companyName: 'Empresa',
         headquarters: 'SP',
         invoiceType: ClientInvoiceType.CONTRACT,
@@ -166,9 +167,9 @@ describe('EditClient - Integration tests', () => {
   });
 
   it('should throw ClientGroupNotFoundError when groupId is inactive', async() => {
-    const [group, owner] = await Promise.all([
+    const [group, resale] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-      prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+      prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
     ]);
     const inactiveGroup = await prisma.clientGroup.create({
       data: { name: `Grupo Inativo ${Date.now()}`, active: false },
@@ -179,7 +180,7 @@ describe('EditClient - Integration tests', () => {
         type: ClientType.PJ,
         document: '09748165000110',
         groupId: group.id,
-        ownerId: owner.id,
+        resaleId: resale.id,
         companyName: 'Empresa',
         headquarters: 'SP',
         invoiceType: ClientInvoiceType.CONTRACT,
@@ -194,9 +195,9 @@ describe('EditClient - Integration tests', () => {
   });
 
   it('should throw ClientGroupNotFoundError when groupId does not exist', async() => {
-    const [group, owner] = await Promise.all([
+    const [group, resale] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-      prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+      prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
     ]);
 
     const client = await prisma.client.create({
@@ -205,7 +206,7 @@ describe('EditClient - Integration tests', () => {
         type: ClientType.PJ,
         document: '09748165000110',
         groupId: group.id,
-        ownerId: owner.id,
+        resaleId: resale.id,
         companyName: 'Empresa',
         headquarters: 'SP',
         invoiceType: ClientInvoiceType.CONTRACT,
@@ -217,13 +218,13 @@ describe('EditClient - Integration tests', () => {
     await expect(sut.execute(client.id, { groupId: 99999 })).rejects.toThrow(ClientGroupNotFoundError);
   });
 
-  it('should throw ClientOwnerNotFoundError when ownerId is inactive', async() => {
-    const [group, owner] = await Promise.all([
+  it('should throw ResaleNotFoundError when resaleId is inactive', async() => {
+    const [group, resale] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-      prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+      prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
     ]);
-    const inactiveOwner = await prisma.clientOwner.create({
-      data: { name: `Owner Inativo ${Date.now()}`, active: false },
+    const inactiveResale = await prisma.resale.create({
+      data: { ...buildMinimalResaleData(nextResaleFixtureId()), active: false },
     });
     const client = await prisma.client.create({
       data: {
@@ -231,7 +232,7 @@ describe('EditClient - Integration tests', () => {
         type: ClientType.PJ,
         document: '09748165000110',
         groupId: group.id,
-        ownerId: owner.id,
+        resaleId: resale.id,
         companyName: 'Empresa',
         headquarters: 'SP',
         invoiceType: ClientInvoiceType.CONTRACT,
@@ -240,15 +241,15 @@ describe('EditClient - Integration tests', () => {
       },
     });
 
-    await expect(sut.execute(client.id, { ownerId: inactiveOwner.id })).rejects.toThrow(
-      ClientOwnerNotFoundError,
+    await expect(sut.execute(client.id, { resaleId: inactiveResale.id })).rejects.toThrow(
+      ResaleNotFoundError,
     );
   });
 
-  it('should throw ClientOwnerNotFoundError when ownerId does not exist', async() => {
-    const [group, owner] = await Promise.all([
+  it('should throw ResaleNotFoundError when resaleId does not exist', async() => {
+    const [group, resale] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-      prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+      prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
     ]);
 
     const client = await prisma.client.create({
@@ -257,7 +258,7 @@ describe('EditClient - Integration tests', () => {
         type: ClientType.PJ,
         document: '09748165000110',
         groupId: group.id,
-        ownerId: owner.id,
+        resaleId: resale.id,
         companyName: 'Empresa',
         headquarters: 'SP',
         invoiceType: ClientInvoiceType.CONTRACT,
@@ -266,13 +267,13 @@ describe('EditClient - Integration tests', () => {
       },
     });
 
-    await expect(sut.execute(client.id, { ownerId: 99999 })).rejects.toThrow(ClientOwnerNotFoundError);
+    await expect(sut.execute(client.id, { resaleId: 99999 })).rejects.toThrow(ResaleNotFoundError);
   });
 
   it('should throw CompanyNotFoundError when companyId is inactive', async() => {
-    const [group, owner] = await Promise.all([
+    const [group, resale] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-      prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+      prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
     ]);
     const inactiveCompany = await prisma.company.create({
       data: {
@@ -296,7 +297,7 @@ describe('EditClient - Integration tests', () => {
         type: ClientType.PJ,
         document: '09748165000110',
         groupId: group.id,
-        ownerId: owner.id,
+        resaleId: resale.id,
         companyName: 'Empresa',
         headquarters: 'SP',
         invoiceType: ClientInvoiceType.CONTRACT,
@@ -312,9 +313,9 @@ describe('EditClient - Integration tests', () => {
   });
 
   it('should throw CompanyNotFoundError when companyId does not exist', async() => {
-    const [group, owner] = await Promise.all([
+    const [group, resale] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-      prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+      prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
     ]);
 
     const company = await prisma.company.create({
@@ -340,7 +341,7 @@ describe('EditClient - Integration tests', () => {
         type: ClientType.PJ,
         document: '09748165000110',
         groupId: group.id,
-        ownerId: owner.id,
+        resaleId: resale.id,
         companyName: 'Empresa',
         headquarters: 'SP',
         invoiceType: ClientInvoiceType.CONTRACT,
@@ -355,9 +356,9 @@ describe('EditClient - Integration tests', () => {
 
   it('should update companyIds when provided', async() => {
     const ts = Date.now();
-    const [group, owner, company1, company2] = await Promise.all([
+    const [group, resale, company1, company2] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${ts}`, active: true } }),
-      prisma.clientOwner.create({ data: { name: `Owner ${ts}`, active: true } }),
+      prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
       prisma.company.create({
         data: {
           name: `Empresa1 ${ts}`,
@@ -398,7 +399,7 @@ describe('EditClient - Integration tests', () => {
         type: ClientType.PJ,
         document: '09748165000110',
         groupId: group.id,
-        ownerId: owner.id,
+        resaleId: resale.id,
         companyName: 'Empresa',
         headquarters: 'SP',
         invoiceType: ClientInvoiceType.CONTRACT,
@@ -419,9 +420,9 @@ describe('EditClient - Integration tests', () => {
   });
 
   it('should update multiple fields', async() => {
-    const [group, owner] = await Promise.all([
+    const [group, resale] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-      prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+      prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
     ]);
 
     const client = await prisma.client.create({
@@ -431,7 +432,7 @@ describe('EditClient - Integration tests', () => {
         document: '09748165000110',
         ie: null,
         groupId: group.id,
-        ownerId: owner.id,
+        resaleId: resale.id,
         companyName: 'Empresa',
         fantasyName: null,
         headquarters: 'SP',

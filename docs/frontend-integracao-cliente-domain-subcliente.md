@@ -66,7 +66,7 @@ Garantir que o modelo de leitura inclua pelo menos:
 | `parentClientId` | `number \| null` — ID do pai se for sub-cliente. |
 | `isSubClient` | `boolean` — derivado da presença do pai na criação. |
 | `domain` | `string \| null`. |
-| Demais campos já existentes | `group`, `owner`, `companies`, etc., sem mudança estrutural além dos acima. |
+| Demais campos já existentes | `group`, **`resale`** (revenda; substitui o antigo `owner`), `companies`, etc. Ver [frontend-integracao-cliente-resale.md](./frontend-integracao-cliente-resale.md). |
 
 Use esses campos para:
 

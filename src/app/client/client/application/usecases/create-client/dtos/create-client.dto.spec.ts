@@ -32,7 +32,7 @@ function makeValidInputDto(overrides: Partial<CreateClientInputDto> = {}): Creat
     document: '09.748.165/0001-10',
     ie: null,
     groupId: 1,
-    ownerId: 1,
+    resaleId: 1,
     companyIds: [1],
     companyName: 'Empresa LTDA',
     fantasyName: null,
@@ -218,31 +218,31 @@ describe('CreateClientInputDto', () => {
     });
   });
 
-  describe('ownerId field', () => {
-    it.each([undefined, null])('should throw if ownerId is empty (%s)', async(value: unknown) => {
-      const data = makeValidInputDto({ ownerId: value as number });
+  describe('resaleId field', () => {
+    it.each([undefined, null])('should throw if resaleId is empty (%s)', async(value: unknown) => {
+      const data = makeValidInputDto({ resaleId: value as number });
 
       expect.assertions(1);
       return target.transform(data, metadata).catch((error) => {
-        expectMessageToContain(error.getResponse().message, 'ownerId');
+        expectMessageToContain(error.getResponse().message, 'resaleId');
       });
     });
 
-    it.each([0, -1, 1.5])('should throw if ownerId is invalid (%s)', async(value: number) => {
-      const data = makeValidInputDto({ ownerId: value });
+    it.each([0, -1, 1.5])('should throw if resaleId is invalid (%s)', async(value: number) => {
+      const data = makeValidInputDto({ resaleId: value });
 
       expect.assertions(1);
       return target.transform(data, metadata).catch((error) => {
-        expectMessageToContain(error.getResponse().message, 'ownerId');
+        expectMessageToContain(error.getResponse().message, 'resaleId');
       });
     });
 
-    it('should accept valid ownerId', async() => {
-      const data = makeValidInputDto({ ownerId: 20 });
+    it('should accept valid resaleId', async() => {
+      const data = makeValidInputDto({ resaleId: 20 });
 
       const result = await target.transform(data, metadata);
 
-      expect(result.ownerId).toBe(20);
+      expect(result.resaleId).toBe(20);
     });
   });
 
@@ -508,7 +508,7 @@ describe('CreateClientInputDto', () => {
       expect(result.document).toBe('09.748.165/0001-10');
       expect(result.ie).toBeNull();
       expect(result.groupId).toBe(1);
-      expect(result.ownerId).toBe(1);
+      expect(result.resaleId).toBe(1);
       expect(result.companyIds).toEqual([1]);
       expect(result.companyName).toBe('Empresa LTDA');
       expect(result.fantasyName).toBeNull();

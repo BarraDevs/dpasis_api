@@ -20,7 +20,7 @@ export class ClientDto {
     id: number;
     name: string;
   };
-  owner: {
+  resale: {
     id: number;
     name: string;
   };

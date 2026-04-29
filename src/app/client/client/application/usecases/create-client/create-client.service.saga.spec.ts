@@ -1,3 +1,4 @@
+import { buildMinimalResaleData, nextResaleFixtureId } from 'src/test/fixtures/minimal-resale';
 import { Test } from '@nestjs/testing';
 import { CreateClientAddress } from 'src/app/client/client-address/application/usecases/create-client-address/create-client-address.service';
 import { ClientAddressType } from 'src/app/client/client-address/domain/enums/client-address-type.enum';
@@ -68,7 +69,7 @@ describe('CreateClient — saga (step 1: save client, step 2: create MAIN addres
         document: '09.748.165/0001-10',
         ie: null,
         groupId: 0,
-        ownerId: 0,
+        resaleId: 0,
         companyIds: [1],
         companyName: 'Empresa LTDA',
         fantasyName: null,
@@ -89,13 +90,13 @@ describe('CreateClient — saga (step 1: save client, step 2: create MAIN addres
     }
 
     it('should run step 1 then step 2 and leave client linked to MAIN address', async() => {
-      const [group, owner, company] = await Promise.all([
+      const [group, resale, company] = await Promise.all([
         prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-        prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+        prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
         createCompany(),
       ]);
 
-      const input = makeValidInput({ groupId: group.id, ownerId: owner.id, companyIds: [company.id] });
+      const input = makeValidInput({ groupId: group.id, resaleId: resale.id, companyIds: [company.id] });
 
       const result = await sut.execute(input);
 
@@ -182,7 +183,7 @@ describe('CreateClient — saga (step 1: save client, step 2: create MAIN addres
         document: '09.748.165/0001-10',
         ie: null,
         groupId: 0,
-        ownerId: 0,
+        resaleId: 0,
         companyIds: [1],
         companyName: 'Empresa LTDA',
         fantasyName: null,
@@ -205,13 +206,13 @@ describe('CreateClient — saga (step 1: save client, step 2: create MAIN addres
     it('should delete client and rethrow when step 2 throws a generic error', async() => {
       createClientAddressMock.execute.mockRejectedValue(new Error('step 2 failed'));
 
-      const [group, owner, company] = await Promise.all([
+      const [group, resale, company] = await Promise.all([
         prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-        prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+        prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
         createCompany(),
       ]);
 
-      const input = makeValidInput({ groupId: group.id, ownerId: owner.id, companyIds: [company.id] });
+      const input = makeValidInput({ groupId: group.id, resaleId: resale.id, companyIds: [company.id] });
 
       await expect(sut.execute(input)).rejects.toThrow('step 2 failed');
 
@@ -228,13 +229,13 @@ describe('CreateClient — saga (step 1: save client, step 2: create MAIN addres
       const domainError = new ClientAddressAlreadyExistsError(1, ClientAddressType.MAIN);
       createClientAddressMock.execute.mockRejectedValue(domainError);
 
-      const [group, owner, company] = await Promise.all([
+      const [group, resale, company] = await Promise.all([
         prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-        prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+        prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
         createCompany(),
       ]);
 
-      const input = makeValidInput({ groupId: group.id, ownerId: owner.id, companyIds: [company.id] });
+      const input = makeValidInput({ groupId: group.id, resaleId: resale.id, companyIds: [company.id] });
 
       await expect(sut.execute(input)).rejects.toThrow(ClientAddressAlreadyExistsError);
 
@@ -247,13 +248,13 @@ describe('CreateClient — saga (step 1: save client, step 2: create MAIN addres
     it('should invoke step 2 with new client id and MAIN type', async() => {
       createClientAddressMock.execute.mockResolvedValue({ id: 999 });
 
-      const [group, owner, company] = await Promise.all([
+      const [group, resale, company] = await Promise.all([
         prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-        prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+        prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
         createCompany(),
       ]);
 
-      const input = makeValidInput({ groupId: group.id, ownerId: owner.id, companyIds: [company.id] });
+      const input = makeValidInput({ groupId: group.id, resaleId: resale.id, companyIds: [company.id] });
 
       const result = await sut.execute(input);
 
