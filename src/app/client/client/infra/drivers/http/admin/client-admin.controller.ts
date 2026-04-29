@@ -19,6 +19,8 @@ import { GetClientSequenceOutputDto } from 'src/app/client/client/application/us
 import { GetClientSequence } from 'src/app/client/client/application/usecases/get-client-sequence/get-client-sequence.service';
 import { LinkClientAttendanceAndMaintenanceInputDto } from 'src/app/client/client/application/usecases/link-client-attendance-and-maintenance/dtos/link-client-attendance-and-maintenance.dto';
 import { LinkClientAttendanceAndMaintenance } from 'src/app/client/client/application/usecases/link-client-attendance-and-maintenance/link-client-attendance-and-maintenance.service';
+import { SetClientParentInputDto } from 'src/app/client/client/application/usecases/set-client-parent/dtos/set-client-parent.dto';
+import { SetClientParent } from 'src/app/client/client/application/usecases/set-client-parent/set-client-parent.service';
 import { SetClientNextIdInputDto } from 'src/app/client/client/application/usecases/set-client-next-id/dtos/set-client-next-id.dto';
 import { SetClientNextId } from 'src/app/client/client/application/usecases/set-client-next-id/set-client-next-id.service';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
@@ -36,6 +38,7 @@ export class ClientAdminController {
     private readonly findAllClient: FindAllClient,
     private readonly findClientById: FindClientById,
     private readonly findSubClients: FindSubClients,
+    private readonly setClientParent: SetClientParent,
     private readonly editClient: EditClient,
     private readonly getClientSequence: GetClientSequence,
     private readonly linkClientAttendanceAndMaintenance: LinkClientAttendanceAndMaintenance,
@@ -139,6 +142,20 @@ export class ClientAdminController {
   })
   public deactivate(@Param() params: Params): Promise<SuccessMessage> {
     return this.deactivateClient.execute(params.id);
+  }
+
+  @Patch(':id/parent')
+  @RequiredClaims(Claim.CLIENT_WRITE)
+  @Swagger({
+    tags: ['Clientes'],
+    summary: 'Definir ou remover o cliente titular (sub-cliente)',
+    description: 'Vincula o cliente a um titular novo, transfere entre titulares ou remove o vínculo (informe parentClientId null).',
+    applyBadRequest: true,
+    applyNotFound: true,
+    okResponse: SuccessMessage,
+  })
+  public setParent(@Param() params: Params, @Body() body: SetClientParentInputDto): Promise<SuccessMessage> {
+    return this.setClientParent.execute(params.id, body);
   }
 
   @Patch(':id/attendance-maintenance')

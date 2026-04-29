@@ -7,5 +7,6 @@ export interface IClientDao {
   findById(id: number): Promise<ClientDto | null>;
   findByDocument(document: string): Promise<ClientDto | null>;
   findMaxId(): Promise<number>;
+  countSubClients(clientId: number): Promise<number>;
   findSubClients(clientId: number, queries: FindSubClientsQueryDto): Promise<[ClientDto[], number]>;
 }

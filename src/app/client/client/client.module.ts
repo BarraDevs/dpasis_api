@@ -16,6 +16,7 @@ import { FindClientById } from './application/usecases/find-client-by-id/find-cl
 import { FindSubClients } from './application/usecases/find-sub-clients/find-sub-clients.service';
 import { GetClientSequence } from './application/usecases/get-client-sequence/get-client-sequence.service';
 import { LinkClientAttendanceAndMaintenance } from './application/usecases/link-client-attendance-and-maintenance/link-client-attendance-and-maintenance.service';
+import { SetClientParent } from './application/usecases/set-client-parent/set-client-parent.service';
 import { SetClientNextId } from './application/usecases/set-client-next-id/set-client-next-id.service';
 import { ClientAdminController } from './infra/drivers/http/admin/client-admin.controller';
 
@@ -41,6 +42,7 @@ import { ClientAdminController } from './infra/drivers/http/admin/client-admin.c
     FindAllClient,
     FindClientById,
     FindSubClients,
+    SetClientParent,
     GetClientSequence,
     LinkClientAttendanceAndMaintenance,
     SetClientNextId,

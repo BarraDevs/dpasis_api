@@ -105,6 +105,12 @@ export class ClientDaoAdapterPrisma implements IClientDao {
     return result._max.id ?? 0;
   }
 
+  public async countSubClients(clientId: number): Promise<number> {
+    return this.prisma.client.count({
+      where: { parentClientId: clientId },
+    });
+  }
+
   public async findSubClients(clientId: number, queries: FindSubClientsQueryDto): Promise<[ClientDto[], number]> {
     const pagination = this.prisma.paginationFactory(queries.page, queries.size);
 

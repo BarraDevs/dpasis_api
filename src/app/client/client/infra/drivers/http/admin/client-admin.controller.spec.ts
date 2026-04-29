@@ -17,6 +17,8 @@ import { GetClientSequenceOutputDto } from 'src/app/client/client/application/us
 import { GetClientSequence } from 'src/app/client/client/application/usecases/get-client-sequence/get-client-sequence.service';
 import { LinkClientAttendanceAndMaintenanceInputDto } from 'src/app/client/client/application/usecases/link-client-attendance-and-maintenance/dtos/link-client-attendance-and-maintenance.dto';
 import { LinkClientAttendanceAndMaintenance } from 'src/app/client/client/application/usecases/link-client-attendance-and-maintenance/link-client-attendance-and-maintenance.service';
+import { SetClientParentInputDto } from 'src/app/client/client/application/usecases/set-client-parent/dtos/set-client-parent.dto';
+import { SetClientParent } from 'src/app/client/client/application/usecases/set-client-parent/set-client-parent.service';
 import { SetClientNextIdInputDto } from 'src/app/client/client/application/usecases/set-client-next-id/dtos/set-client-next-id.dto';
 import { SetClientNextId } from 'src/app/client/client/application/usecases/set-client-next-id/set-client-next-id.service';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
@@ -33,6 +35,7 @@ describe('ClientAdminController - Unit tests', () => {
   let findClientByIdService: FindClientById;
   let findSubClientsService: FindSubClients;
   let editClientService: EditClient;
+  let setClientParentService: SetClientParent;
   let getClientSequenceService: GetClientSequence;
   let linkClientAttendanceAndMaintenanceService: LinkClientAttendanceAndMaintenance;
   let setClientNextIdService: SetClientNextId;
@@ -48,6 +51,7 @@ describe('ClientAdminController - Unit tests', () => {
         { provide: FindAllClient, useValue: createMock<FindAllClient>() },
         { provide: FindClientById, useValue: createMock<FindClientById>() },
         { provide: FindSubClients, useValue: createMock<FindSubClients>() },
+        { provide: SetClientParent, useValue: createMock<SetClientParent>() },
         { provide: EditClient, useValue: createMock<EditClient>() },
         { provide: GetClientSequence, useValue: createMock<GetClientSequence>() },
         { provide: LinkClientAttendanceAndMaintenance, useValue: createMock<LinkClientAttendanceAndMaintenance>() },
@@ -63,6 +67,7 @@ describe('ClientAdminController - Unit tests', () => {
     findClientByIdService = module.get(FindClientById);
     findSubClientsService = module.get(FindSubClients);
     editClientService = module.get(EditClient);
+    setClientParentService = module.get(SetClientParent);
     getClientSequenceService = module.get(GetClientSequence);
     linkClientAttendanceAndMaintenanceService = module.get(LinkClientAttendanceAndMaintenance);
     setClientNextIdService = module.get(SetClientNextId);
@@ -191,6 +196,20 @@ describe('ClientAdminController - Unit tests', () => {
       // Assert
       expect(result).toEqual(output);
       expect(deactivateSpy).toHaveBeenCalledWith(params.id);
+    });
+  });
+
+  describe('setParent', () => {
+    it('should call setClientParent.execute with params.id and body', async() => {
+      const params = createMock<Params>();
+      const body = createMock<SetClientParentInputDto>();
+      const output = createMock<SuccessMessage>();
+      const executeSpy = jest.spyOn(setClientParentService, 'execute').mockResolvedValue(output);
+
+      const result = await sut.setParent(params, body);
+
+      expect(result).toEqual(output);
+      expect(executeSpy).toHaveBeenCalledWith(params.id, body);
     });
   });
 

@@ -205,6 +205,71 @@ describe('ClientRepositoryAdapterPrisma - Integration tests', () => {
       expect(updated?.fantasyName).toBe('Nova Fantasia');
       expect(updated?.document).toBe('09748165000110');
     });
+
+    it('should persist parentClientId and isSubClient on edit', async() => {
+      const { group, resale, company } = await createClientGroupResaleAndCompany();
+
+      const parent = await prisma.client.create({
+        data: {
+          id: 80_001,
+          type: ClientType.PJ,
+          document: '28695096000179',
+          ie: null,
+          groupId: group.id,
+          resaleId: resale.id,
+          companyName: 'Cliente Pai',
+          fantasyName: null,
+          headquarters: 'São Paulo',
+          invoiceType: ClientInvoiceType.CONTRACT,
+          generateInvoice: true,
+          active: true,
+        },
+      });
+
+      const childEntity = ClientFactory.create({
+        id: 80_002,
+        type: ClientType.PJ,
+        document: '33000167000101',
+        ie: null,
+        groupId: group.id,
+        resaleId: resale.id,
+        companyIds: [company.id],
+        invoiceType: ClientInvoiceType.CONTRACT,
+        generateInvoice: true,
+        companyName: 'Cliente Filho',
+        fantasyName: null,
+        headquarters: 'São Paulo',
+        parentClientId: parent.id,
+      });
+
+      await sut.save(childEntity);
+
+      const detachEntity = ClientFactory.edit({
+        ...childEntity.props,
+        id: childEntity.props.id,
+        companyIds: childEntity.props.companyIds,
+        parentClientId: null,
+      });
+
+      await sut.edit(detachEntity);
+
+      const afterDetach = await prisma.client.findUniqueOrThrow({ where: { id: 80_002 } });
+      expect(afterDetach.parentClientId).toBeNull();
+      expect(afterDetach.isSubClient).toBe(false);
+
+      const reattach = ClientFactory.edit({
+        ...detachEntity.props,
+        id: 80_002,
+        companyIds: detachEntity.props.companyIds,
+        parentClientId: parent.id,
+      });
+
+      await sut.edit(reattach);
+
+      const afterReattach = await prisma.client.findUniqueOrThrow({ where: { id: 80_002 } });
+      expect(afterReattach.parentClientId).toBe(parent.id);
+      expect(afterReattach.isSubClient).toBe(true);
+    });
   });
 
   describe('findById', () => {

@@ -11,8 +11,9 @@ Este documento descreve o que o time de frontend deve ajustar na integração co
 | Área | O que mudou |
 |------|-------------|
 | **Criação (`POST /admin/client`)** | Novos campos opcionais `id`, `parentClientId`, `domain`; regras de validação para `domain`. |
-| **Edição (`PATCH /admin/client/:id`)** | `EditClientInputDto` é `PartialType` de `CreateClientInputDto` **exceto** `parentClientId` — **o vínculo pai não pode ser alterado** após o cadastro. |
-| **Leitura (`GET` listagem e por id)** | Resposta (`ClientDto`) passa a expor `parentClientId`, `isSubClient`, `domain` de forma consistente com o banco. |
+| **Edição (`PATCH /admin/client/:id`)** | `EditClientInputDto` é `PartialType` do create **exceto** `parentClientId` — a hierarquia **não** é alterada por este PATCH. Use o endpoint **`PATCH /admin/client/:id/parent`** para vincular, transferir ou remover o pai. |
+| **Hierarquia (`PATCH /admin/client/:id/parent`)** | Body obrigatório com `parentClientId: number \| null` — permite tornar cliente sub-cliente de um titular, transferir entre titulares ou remover vínculo (`null`). Mesma claim de escrita já usada em clientes (`CLIENT_WRITE`). |
+| **Leitura (`GET` listagem e por id)** | Resposta (`ClientDto`) expõe `parentClientId`, `isSubClient`, `domain`, `group`, `resale`, etc., de forma consistente com o banco. |
 | **Listagem** | Query `isSubClient` (opcional) para filtrar sub-clientes vs clientes raiz. |
 
 Atualize tipos TypeScript / contratos OpenAPI gerados a partir do Swagger para não haver divergência com o backend.
@@ -35,7 +36,7 @@ Atualize tipos TypeScript / contratos OpenAPI gerados a partir do Swagger para n
   - não pode ser igual ao próprio `id` informado (auto-pai);
   - o pai deve existir;
   - o pai **não** pode ser um sub-cliente (não é permitido encadear sub-cliente de sub-cliente).
-- **Edição:** não enviar em `PATCH` — o campo **não faz parte** do DTO de edição; o vínculo é fixo após a criação.
+- **Alterar o vínculo depois:** use **`PATCH /admin/client/:id/parent`** (não envie `parentClientId` no `PATCH /admin/client/:id` de edição geral).
 
 ### 2.3 `domain` (opcional)
 
@@ -49,11 +50,32 @@ Incluir no formulário de cadastro (e edição) apenas se o produto precisar des
 
 ## 3. Payload de edição (`PATCH /admin/client/:id`)
 
-- Todos os campos espelham **parcialmente** o create (`PartialType`), **exceto `parentClientId`**, que deve ser removido do tipo de request no frontend (ou ignorado se enviado — o backend não expõe esse campo no DTO de edição).
+- Campos (**parciais**) espelham o create (`PartialType`), **exceto `parentClientId`**, que deve ser omitido neste PATCH (usar apenas `PATCH …/:id/parent` para hierarquia).
 
 Campos relevantes que podem precisar de UI:
 
 - `domain` — opcional; respeitar `MaxLength` 128 ao validar no cliente antes do envio.
+
+---
+
+## 3.1 Vínculo com cliente titular (`PATCH /admin/client/:id/parent`)
+
+- **Autenticação / claims:** admin com `CLIENT_WRITE`, como nos demais PATCH de cliente.
+
+- **Body (JSON):** sempre incluir **`parentClientId`**:
+  - **número inteiro positivo** — novo cliente titular (`parent`) para associação ou transferência entre titulares;
+  - **`null`** — remover o vínculo (cliente volta a ser raiz para hierarquia; `isSubClient` será `false` nas leituras seguintes).
+
+- **Comportamentos usuais:**
+  - associar uma raiz a um titular (torná-la sub-cliente);
+  - transferir um sub-cliente já existente de um titular para outro;
+  - desvincular um sub-cliente.
+
+- **Regras (mensagens por `message` no JSON de erro quando aplicável):**
+  - novo titular deve existir; não pode ser o próprio `id`; não pode ser um sub-cliente;
+  - um cliente que **tem sub-clientes próprios** não pode receber um titular novo (mantém-se no máximo um nível de dependência).
+
+- **Idempotência:** se o valor enviado for igual ao `parentClientId` já persistido, a API pode responder mensagem informando que nada mudou — tratar como sucesso neutro para o fluxo da UI.
 
 ---
 
@@ -64,7 +86,7 @@ Garantir que o modelo de leitura inclua pelo menos:
 | Campo | Observação |
 |-------|------------|
 | `parentClientId` | `number \| null` — ID do pai se for sub-cliente. |
-| `isSubClient` | `boolean` — derivado da presença do pai na criação. |
+| `isSubClient` | `boolean` — `true` quando há `parentClientId` definido (criação ou `PATCH …/:id/parent`). |
 | `domain` | `string \| null`. |
 | Demais campos já existentes | `group`, **`resale`** (revenda; substitui o antigo `owner`), `companies`, etc. Ver [frontend-integracao-cliente-resale.md](./frontend-integracao-cliente-resale.md). |
 
@@ -96,11 +118,12 @@ Endpoint já existente — útil para telas de detalhe do cliente pai listando d
 ## 7. Checklist prático para o frontend
 
 1. Atualizar interfaces/tipos do **POST** com `id?`, `parentClientId?`, `domain?`.
-2. Atualizar interfaces do **PATCH** sem `parentClientId`; validar `domain` ≤ 128 caracteres no cliente.
-3. Atualizar modelo de **GET** (lista e detalhe) com `parentClientId`, `isSubClient`, `domain`.
-4. Ajustar formulários: seleção opcional de cliente pai na **criação**; ocultar ou bloquear alteração de pai na **edição**.
-5. Tratar erros de negócio (documento duplicado, ID já tomado, pai inválido, etc.) exibindo `message` retornada pela API.
-6. Regenerar cliente OpenAPI/Swagger ou Postman a partir do backend quando disponível, para evitar drift manual.
+2. Atualizar interfaces do **PATCH** `/admin/client/:id` sem `parentClientId`; validar `domain` ≤ 128 caracteres no cliente quando editado por esse endpoint.
+3. Adicionar chamada/UI para **`PATCH /admin/client/:id/parent`** com `{ parentClientId: number \| null }` sempre que precisarem alterar titular/sub-cliente **após** o cadastro.
+4. Atualizar modelo de **GET** (lista e detalhe) com `parentClientId`, `isSubClient`, `domain`.
+5. Ajustar formulários: titular opcional na **criação**; alteração de vínculo depois via `:id/parent` (edição “geral” continua sem `parentClientId`).
+6. Tratar erros de negócio (documento duplicado, ID já tomado, titular inválido, cliente com dependentes impedindo novo pai, etc.) exibindo `message` da API.
+7. Regenerar OpenAPI/Swagger ou Postman a partir do backend quando disponível, para evitar drift manual.
 
 ---
 

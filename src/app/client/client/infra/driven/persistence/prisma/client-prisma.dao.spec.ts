@@ -1127,4 +1127,87 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
       expect(inactive[0].active).toBe(false);
     });
   });
+
+  describe('countSubClients', () => {
+    it('should return 0 when client has no sub-clients', async() => {
+      const { group, resale } = await createClientGroupAndResale();
+
+      const row = await prisma.client.create({
+        data: {
+          id: 701,
+          type: ClientType.PJ,
+          document: '09748165000177',
+          groupId: group.id,
+          resaleId: resale.id,
+          companyName: 'Sem filhos',
+          headquarters: 'SP',
+          invoiceType: ClientInvoiceType.CONTRACT,
+          generateInvoice: true,
+          active: true,
+        },
+      });
+
+      const count = await sut.countSubClients(row.id);
+
+      expect(count).toBe(0);
+    });
+
+    it('should return number of clients with parentClientId matching', async() => {
+      const { group, resale } = await createClientGroupAndResale();
+
+      const parent = await prisma.client.create({
+        data: {
+          id: 702,
+          type: ClientType.PJ,
+          document: '09748165000188',
+          groupId: group.id,
+          resaleId: resale.id,
+          companyName: 'Pai para contagem',
+          headquarters: 'SP',
+          invoiceType: ClientInvoiceType.CONTRACT,
+          generateInvoice: true,
+          active: true,
+        },
+      });
+
+      await Promise.all([
+        prisma.client.create({
+          data: {
+            id: 703,
+            type: ClientType.PJ,
+            document: '09748165000199',
+            groupId: group.id,
+            resaleId: resale.id,
+            companyName: 'Sub Um',
+            headquarters: 'SP',
+            invoiceType: ClientInvoiceType.CONTRACT,
+            generateInvoice: true,
+            active: true,
+            parentClientId: parent.id,
+            isSubClient: true,
+          },
+        }),
+        prisma.client.create({
+          data: {
+            id: 704,
+            type: ClientType.PJ,
+            document: '09748165000200',
+            groupId: group.id,
+            resaleId: resale.id,
+            companyName: 'Sub Dois',
+            headquarters: 'SP',
+            invoiceType: ClientInvoiceType.CONTRACT,
+            generateInvoice: true,
+            active: true,
+            parentClientId: parent.id,
+            isSubClient: true,
+          },
+        }),
+      ]);
+
+      const count = await sut.countSubClients(parent.id);
+
+      expect(count).toBe(2);
+    });
+  });
 });
