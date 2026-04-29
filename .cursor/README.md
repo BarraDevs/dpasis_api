@@ -9,7 +9,8 @@ Esta pasta concentra a **memória arquitetural** do projeto para uso por agentes
 ├── README.md                       # Você está aqui
 ├── context.md                      # Passaporte arquitetural (resumo)
 ├── commands/
-│   └── nova-feature.md             # /nova-feature — pipeline completo de implementação
+│   ├── nova-feature.md             # /nova-feature — pipeline completo de implementação
+│   └── feature-checklist.md        # /feature-checklist — apenas a regra de checklist (RULES.md)
 ├── rules/
 │   └── RULES.md                    # 11 regras arquiteturais ABSOLUTAS
 └── skills/
@@ -79,9 +80,19 @@ Para forçar carregamento explícito numa nova sessão, abra com:
 | Filas com BullMQ | `skills/queue-bullmq/SKILL.md` |
 | Fluxo de auditoria (interceptor + audit_logs) | `skills/audit-flow/SKILL.md` |
 
-### 4) Para revisão de código (PR review)
+### 4) Slash command apenas checklist (`/feature-checklist`)
 
-Use o **checklist da Rule 11** (em `rules/RULES.md`) como guia de revisão de PR para features novas. Cobre arquitetura, persistência, autorização, testes e build.
+Para **revisar** um PR ou **validar** o que falta contra o checklist oficial de feature — sem formulário nem plano do `/nova-feature`:
+
+```
+/feature-checklist
+```
+
+Definição em `.cursor/commands/feature-checklist.md`. O agente deve ler **`rules/RULES.md`** e usar a seção **«Checklist para Nova Funcionalidade»** ou, como fallback estável, a **última `## Rule …` antes de `## Referências`** (o número da rule pode mudar).
+
+### 5) Para revisão de código (PR review)
+
+Use esse **checklist da última Rule** em `rules/RULES.md` como guia de revisão para features novas. Cobre arquitetura, persistência, autorização, testes e build.
 
 ## Anatomia de uma SKILL.md
 
