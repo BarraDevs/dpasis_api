@@ -18,7 +18,8 @@ Não assuma de memória qual é o número da rule; **leia o arquivo** sempre.
 ## Missão do agente
 
 - Para **implementação em andamento** ou **revisão**: percorra **cada item** do checklist na ordem em que aparece em `RULES.md`.
-- Para cada item, indique **cumprido**, **não aplicável (com justificativa breve)** ou **faltando / risco** — com referência a **arquivo ou trecho** quando possível.
+- Para cada item, registre na análise: **cumprido**, **não aplicável (com justificativa breve)** ou **faltando / pendente / risco** — com referência a **arquivo ou trecho** quando possível.
+- **Ao final**, consolide tudo na **tabela-resumo obrigatória** (vide secção seguinte): uma linha por etapa com **Situação** e **Justificativa** (obrigatória sempre que não for **Cumprida**).
 - Se o usuário trouxe contexto (branch, módulo, PR), **focalize** nesse escopo; caso contrário, pergunte qual feature ou PR revisar antes de disparar inferências vagas.
 
 ---
@@ -31,13 +32,29 @@ Não assuma de memória qual é o número da rule; **leia o arquivo** sempre.
 
 ---
 
-## Formatos de entrega úteis
+## Formato obrigatório de entrega
 
-**A) Revisão estruturada (padrão)**  
-Markdown com subtítulos espelhando os bullets do RULES.md e estado `[x]` / `[ ]` / N/A sob cada um.
+1. **Análise** (opcional mas recomendada): texto ou subtítulos espelhando os bullets do `RULES.md`, com estado e referências quando útil (`[x]` / `[ ]` / N/A ou equivalente).
 
-**B) Correção rápida**  
-Lista só dos itens **faltando** ou **bloqueadores de merge**, com caminho do arquivo ou próximo passo.
+2. **Resumo final (obrigatório): uma tabela** no **fim da resposta**, com **uma linha por item** do checklist copiado de `RULES.md` (mesma ordem).
+
+   | Coluna | Conteúdo |
+   |--------|----------|
+   | **Etapa** | Nome/descrição curta do item (ou o primeiro trecho destacável em negrito de cada bullet, para ficar legível na tabela). |
+   | **Situação** | Uma de: **Cumprida** \| **Não cumprido** \| **Não aplicável** \| **Pendente / risco**. |
+   | **Justificativa** | Para **Situação = Cumprida**: opcionalmente `—` ou referência rápida (ex.: arquivo). Para **qualquer situação que não seja Cumprida**: obrigatório — motivo **breve**, bloqueador, arquivo em falta ou porque é N/A.
+
+   Exemplo (estrutura, não texto fixo):
+
+   ```markdown
+   | Etapa | Situação | Justificativa |
+   | --- | --- | --- |
+   | Schema Prisma | Cumprida | `prisma/schema/foo.prisma` |
+   | `npm run lint` | Pendente | Ainda não executado neste branch |
+   ```
+
+**Correção rápida adjacente**  
+Mesmo usando a tabela, pode acrescentar abaixo dela apenas um parágrafo com **itens não cumpridos** que são **bloqueadores de merge** e o próximo passo.
 
 ---
 
