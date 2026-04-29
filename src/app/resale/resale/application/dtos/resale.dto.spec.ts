@@ -23,6 +23,7 @@ describe('ResaleDto', () => {
       receivesSupportEmail: false,
       servedByDpa: true,
       manufacturerReseller: false,
+      profilePictureUrl: null,
       active: true,
       createdAt: new Date('2026-01-01'),
       updatedAt: new Date('2026-01-02'),

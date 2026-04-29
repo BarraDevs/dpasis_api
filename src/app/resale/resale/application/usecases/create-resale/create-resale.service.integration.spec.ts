@@ -1,4 +1,5 @@
 import { Test } from '@nestjs/testing';
+import { UploadSingle } from 'src/app/upload-file/application/usecases/upload-single/upload-single.service';
 import { ResaleModule } from 'src/app/resale/resale/resale.module';
 import { DocumentAlreadyTakenError } from 'src/shared/errors/document-already-taken';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
@@ -9,6 +10,7 @@ import { CreateResale } from './create-resale.service';
 describe('CreateResale - Integration tests', () => {
   let sut: CreateResale;
   let prisma: PrismaService;
+  let uploadSingle: UploadSingle;
 
   beforeAll(async() => {
     const module = await Test.createTestingModule({
@@ -17,6 +19,7 @@ describe('CreateResale - Integration tests', () => {
 
     sut = module.get(CreateResale);
     prisma = module.get(PrismaService);
+    uploadSingle = module.get(UploadSingle);
   });
 
   beforeEach(async() => {
@@ -43,6 +46,7 @@ describe('CreateResale - Integration tests', () => {
     expect(row).not.toBeNull();
     expect(row?.name).toBe('Revenda Teste');
     expect(row?.document).toBe('09748165000110');
+    expect(row?.profilePictureUrl).toBeNull();
 
     const seq = await prisma.resaleSequence.findUniqueOrThrow({ where: { id: 1 } });
     expect(seq.nextId).toBe(2);
@@ -156,5 +160,32 @@ describe('CreateResale - Integration tests', () => {
         }),
       ),
     ).rejects.toThrow(DocumentAlreadyTakenError);
+  });
+
+  it('should persist profilePictureUrl after upload when file is provided', async() => {
+    const mockFile: Express.Multer.File = {
+      fieldname: 'file',
+      originalname: 'avatar.png',
+      encoding: '7bit',
+      mimetype: 'image/png',
+      buffer: Buffer.from('fake'),
+      size: 500,
+      destination: '',
+      filename: '',
+      path: '',
+      stream: undefined as any,
+    };
+
+    const expectedUrl = 'http://fake-url.com/profile.png';
+    const uploadSpy = jest.spyOn(uploadSingle, 'execute').mockResolvedValue({ url: expectedUrl });
+
+    const { id } = await sut.execute(makeCreateResaleInput(), mockFile);
+
+    expect(uploadSpy).toHaveBeenCalledWith(expect.objectContaining({ originalname: 'avatar.png' }), 'resales/1/profile-picture');
+
+    const row = await prisma.resale.findUnique({ where: { id } });
+    expect(row?.profilePictureUrl).toBe(expectedUrl);
+
+    uploadSpy.mockRestore();
   });
 });

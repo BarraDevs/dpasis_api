@@ -18,6 +18,7 @@ model Resale {
   receivesSupportEmail Boolean  @default(false)
   servedByDpa          Boolean  @default(false)
   manufacturerReseller Boolean  @default(false)
+  profilePictureUrl    String?  @db.Text
   active               Boolean  @default(true)
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt

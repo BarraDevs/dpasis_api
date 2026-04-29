@@ -55,6 +55,7 @@ export class ResaleRepositoryAdapterPrisma implements IResaleRepository {
       receivesSupportEmail: data.receivesSupportEmail,
       servedByDpa: data.servedByDpa,
       manufacturerReseller: data.manufacturerReseller,
+      profilePictureUrl: data.profilePictureUrl,
       active: data.active,
     });
   }

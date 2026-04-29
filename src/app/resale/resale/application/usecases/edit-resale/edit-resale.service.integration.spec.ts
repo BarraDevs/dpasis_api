@@ -1,7 +1,11 @@
 import { Test } from '@nestjs/testing';
+import { UploadSingle } from 'src/app/upload-file/application/usecases/upload-single/upload-single.service';
+import { UploadFileQueueFakeAdapterProducer } from 'src/app/upload-file/infra/driven/queue/fake/upload-file-queue-fake.producer';
 import { ResaleModule } from 'src/app/resale/resale/resale.module';
+import { TOKENS } from 'src/core/di/token';
 import { DocumentAlreadyTakenError } from 'src/shared/errors/document-already-taken';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
+import { JobName } from 'src/infra/queue/enums/job-name.enum';
 import { ResaleNotFoundError } from '../../../domain/errors/resale-not-found.error';
 import { makeCreateResaleInput, resetResaleIntegrationState } from '../resale-integration-test.helper';
 import { CreateResale } from '../create-resale/create-resale.service';
@@ -12,6 +16,8 @@ describe('EditResale - Integration tests', () => {
   let sut: EditResale;
   let createResale: CreateResale;
   let prisma: PrismaService;
+  let uploadSingle: UploadSingle;
+  let uploadQueue: UploadFileQueueFakeAdapterProducer;
 
   beforeAll(async() => {
     const module = await Test.createTestingModule({
@@ -21,10 +27,13 @@ describe('EditResale - Integration tests', () => {
     sut = module.get(EditResale);
     createResale = module.get(CreateResale);
     prisma = module.get(PrismaService);
+    uploadSingle = module.get(UploadSingle);
+    uploadQueue = module.get(TOKENS.UploadFileQueueProducer) as UploadFileQueueFakeAdapterProducer;
   });
 
   beforeEach(async() => {
     await resetResaleIntegrationState(prisma, 1);
+    uploadQueue.addedDeleteJobs.length = 0;
   });
 
   afterAll(async() => {
@@ -117,5 +126,88 @@ describe('EditResale - Integration tests', () => {
 
     await expect(sut.execute(idB, { name: 'B atualizado' })).resolves.toBeDefined();
     expect(idA).not.toBe(idB);
+  });
+
+  it('should persist profilePictureUrl after upload when file is provided', async() => {
+    const { id } = await createResale.execute(makeCreateResaleInput());
+
+    const mockFile: Express.Multer.File = {
+      fieldname: 'file',
+      originalname: 'avatar-edit.png',
+      encoding: '7bit',
+      mimetype: 'image/png',
+      buffer: Buffer.from('x'),
+      size: 100,
+      destination: '',
+      filename: '',
+      path: '',
+      stream: undefined as any,
+    };
+
+    const expectedUrl = 'http://fake-url.com/after-edit.png';
+    const uploadSpy = jest.spyOn(uploadSingle, 'execute').mockResolvedValue({ url: expectedUrl });
+
+    await sut.execute(id, { name: 'Revenda Teste' }, mockFile);
+
+    expect(uploadSpy).toHaveBeenCalledWith(expect.objectContaining({ originalname: 'avatar-edit.png' }), `resales/${id}/profile-picture`);
+
+    const row = await prisma.resale.findUniqueOrThrow({ where: { id } });
+    expect(row.profilePictureUrl).toBe(expectedUrl);
+
+    uploadSpy.mockRestore();
+  });
+
+  it('should enqueue delete of previous profile picture URL when uploading a replacement file', async() => {
+    const oldUrl = 'https://storage.example.com/resales/old.png';
+    await prisma.resale.create({
+      data: {
+        id: 42,
+        name: 'Revenda',
+        identifier: null,
+        zipCode: '01310100',
+        street: 'S',
+        neighborhood: 'N',
+        city: 'C',
+        state: 'SP',
+        licenseType: 'A1',
+        document: '28695096000179',
+        ie: null,
+        phone01: '11999999999',
+        phone02: null,
+        voucher: null,
+        email: null,
+        website: null,
+        receivesSupportEmail: false,
+        servedByDpa: false,
+        manufacturerReseller: false,
+        profilePictureUrl: oldUrl,
+        active: true,
+      },
+    });
+
+    const mockFile = {
+      fieldname: 'file',
+      originalname: 'replace.png',
+      encoding: '7bit',
+      mimetype: 'image/png',
+      buffer: Buffer.from(''),
+      size: 50,
+    } as Express.Multer.File;
+
+    const uploadSpy = jest.spyOn(uploadSingle, 'execute').mockResolvedValue({
+      url: 'https://storage.example.com/resales/new.png',
+    });
+
+    await sut.execute(42, { name: 'Revenda atualizada' }, mockFile);
+
+    expect(uploadSpy).toHaveBeenCalled();
+
+    expect(uploadQueue.addedDeleteJobs).toHaveLength(1);
+    expect(uploadQueue.addedDeleteJobs[0]).toEqual({
+      name: JobName.DeleteFile,
+      data: { fileUrl: oldUrl },
+    });
+
+    uploadSpy.mockRestore();
   });
 });

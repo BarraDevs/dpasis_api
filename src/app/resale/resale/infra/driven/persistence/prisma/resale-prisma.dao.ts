@@ -25,6 +25,7 @@ const ResaleSelect = {
   receivesSupportEmail: true,
   servedByDpa: true,
   manufacturerReseller: true,
+  profilePictureUrl: true,
   active: true,
   createdAt: true,
   updatedAt: true,

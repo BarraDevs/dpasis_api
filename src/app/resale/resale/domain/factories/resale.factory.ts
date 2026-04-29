@@ -26,6 +26,7 @@ export class ResaleFactory {
       receivesSupportEmail: new BooleanVo(props.receivesSupportEmail, 'receivesSupportEmail').value,
       servedByDpa: new BooleanVo(props.servedByDpa, 'servedByDpa').value,
       manufacturerReseller: new BooleanVo(props.manufacturerReseller, 'manufacturerReseller').value,
+      profilePictureUrl: new OptionalString(props.profilePictureUrl, 'profilePictureUrl').value,
     };
   }
 
@@ -75,6 +76,7 @@ export class ResaleFactory {
       receivesSupportEmail: props.receivesSupportEmail,
       servedByDpa: props.servedByDpa,
       manufacturerReseller: props.manufacturerReseller,
+      profilePictureUrl: props.profilePictureUrl ?? null,
       active: props.active,
     });
   }

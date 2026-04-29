@@ -18,6 +18,7 @@ export class ResaleDto {
   receivesSupportEmail: boolean;
   servedByDpa: boolean;
   manufacturerReseller: boolean;
+  profilePictureUrl: string | null;
   active: boolean;
   createdAt: Date;
   updatedAt: Date;

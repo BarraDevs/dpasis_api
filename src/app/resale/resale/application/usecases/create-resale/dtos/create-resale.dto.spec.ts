@@ -64,10 +64,12 @@ describe('CreateResaleInputDto', () => {
     expect(result.id).toBe(25);
   });
 
-  it('should reject string id (expects number at validation layer)', async() => {
+  it('should coerce string id from multipart/form-data', async() => {
     const data = { ...validBase(), id: '25' };
 
-    await expect(pipe.transform(data, bodyMetadata)).rejects.toBeDefined();
+    const result = await pipe.transform(data, bodyMetadata);
+
+    expect(result.id).toBe(25);
   });
 
   it('should reject when code is missing', async() => {

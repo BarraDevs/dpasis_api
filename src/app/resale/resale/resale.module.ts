@@ -10,11 +10,15 @@ import { FindResaleById } from './application/usecases/find-resale-by-id/find-re
 import { GetResaleSequence } from './application/usecases/get-resale-sequence/get-resale-sequence.service';
 import { SetResaleNextId } from './application/usecases/set-resale-next-id/set-resale-next-id.service';
 import { ResaleAdminController } from './infra/drivers/http/admin/resale-admin.controller';
+import { UploadFileQueueModule } from 'src/app/upload-file/application/queue/upload-file-queue.module';
+import { UploadFileModule } from 'src/app/upload-file/upload-file.module';
 
 @Module({
   imports: [
     ResalePersistenceModule,
     AuthenticationGuardsModule,
+    UploadFileModule,
+    UploadFileQueueModule.register(),
   ],
   controllers: [
     ResaleAdminController,

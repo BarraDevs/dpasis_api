@@ -22,6 +22,7 @@ function makeResaleProps(overrides?: Partial<ResaleProps>): ResaleProps {
     receivesSupportEmail: false,
     servedByDpa: false,
     manufacturerReseller: false,
+    profilePictureUrl: null,
     ...overrides,
   };
 }

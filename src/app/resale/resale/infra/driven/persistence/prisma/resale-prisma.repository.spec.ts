@@ -47,6 +47,7 @@ describe('ResaleRepositoryAdapterPrisma - Integration tests', () => {
       receivesSupportEmail: false,
       servedByDpa: false,
       manufacturerReseller: false,
+      profilePictureUrl: null,
     };
   }
 
@@ -162,6 +163,7 @@ describe('ResaleRepositoryAdapterPrisma - Integration tests', () => {
         servedByDpa: true,
         manufacturerReseller: true,
         active: false,
+        profilePictureUrl: null,
       });
 
       await sut.edit(entity);

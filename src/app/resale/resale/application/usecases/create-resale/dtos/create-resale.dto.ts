@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsEmail, IsInt, IsNotEmpty, IsNumber, IsOptional, IsPositive, IsString, ValidateIf } from 'class-validator';
+import { IsBoolean, IsEmail, IsInt, IsNotEmpty, IsOptional, IsPositive, IsString, ValidateIf } from 'class-validator';
 import { StringToBoolean } from 'src/infra/validators/class/decorators/string-boolean/string-boolean';
+import { StringToNumber } from 'src/infra/validators/class/decorators/string-number/string-number';
 import { Trim } from 'src/infra/validators/class/decorators/trim/trim';
 
 export class CreateResaleInputDto {
@@ -9,9 +10,9 @@ export class CreateResaleInputDto {
     description: 'ID opcional para alinhar com sistema externo ou legado; se omitido, o banco gera automaticamente.',
   })
   @IsOptional()
-  @IsNumber({}, { message: '$property deve ser um número' })
-  @IsPositive({ message: '$property deve ser um número positivo' })
   @IsInt({ message: '$property deve ser um número inteiro' })
+  @IsPositive({ message: '$property deve ser um número positivo' })
+  @StringToNumber()
   id?: number;
 
   @ApiProperty({ example: 'REV-001' })

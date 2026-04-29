@@ -24,6 +24,7 @@ function makeResaleCreateProps(overrides?: Partial<ResaleCreateProps>): ResaleCr
     receivesSupportEmail: false,
     servedByDpa: false,
     manufacturerReseller: false,
+    profilePictureUrl: null,
     ...overrides,
   };
 }
@@ -65,6 +66,7 @@ describe('ResaleFactory', () => {
         receivesSupportEmail: false,
         servedByDpa: false,
         manufacturerReseller: false,
+        profilePictureUrl: null,
       });
     });
 

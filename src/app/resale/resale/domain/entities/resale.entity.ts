@@ -17,6 +17,7 @@ export type ResaleCreateProps = {
   receivesSupportEmail: boolean;
   servedByDpa: boolean;
   manufacturerReseller: boolean;
+  profilePictureUrl: string | null;
 };
 
 export type ResaleProps = ResaleCreateProps & {

@@ -74,7 +74,7 @@ describe('ResaleAdminController - Unit tests', () => {
       const result = await sut.create(body);
 
       expect(result).toEqual(output);
-      expect(createSpy).toHaveBeenCalledWith(body);
+      expect(createSpy).toHaveBeenCalledWith(body, undefined);
     });
   });
 
@@ -165,7 +165,7 @@ describe('ResaleAdminController - Unit tests', () => {
       const result = await sut.update(params, body);
 
       expect(result).toEqual(output);
-      expect(updateSpy).toHaveBeenCalledWith(params.id, body);
+      expect(updateSpy).toHaveBeenCalledWith(params.id, body, undefined);
     });
   });
 });

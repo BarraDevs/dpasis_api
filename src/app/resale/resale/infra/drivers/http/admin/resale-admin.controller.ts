@@ -1,4 +1,16 @@
-import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UploadedFile,
+  UseInterceptors,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiConsumes } from '@nestjs/swagger';
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
 import { Claim } from 'src/app/authentication/domain/authorization/claim';
 import { RequiredClaims } from 'src/app/authentication/infra/decorators/required-claims.decorator';
@@ -17,6 +29,7 @@ import { GetResaleSequenceOutputDto } from 'src/app/resale/resale/application/us
 import { GetResaleSequence } from 'src/app/resale/resale/application/usecases/get-resale-sequence/get-resale-sequence.service';
 import { SetResaleNextIdInputDto } from 'src/app/resale/resale/application/usecases/set-resale-next-id/dtos/set-resale-next-id.dto';
 import { SetResaleNextId } from 'src/app/resale/resale/application/usecases/set-resale-next-id/set-resale-next-id.service';
+import { UploadSingleInputDto } from 'src/app/upload-file/application/usecases/upload-single/dtos/upload-single.dto';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
 import { Swagger } from 'src/infra/openapi/swagger';
 import { Params } from 'src/infra/validators/class/dtos/params/params.dto';
@@ -38,14 +51,20 @@ export class ResaleAdminController {
 
   @Post()
   @RequiredClaims(Claim.RESALE_WRITE)
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileInterceptor('file'))
   @Swagger({
     tags: ['Revendas'],
     summary: 'Criar nova revenda',
     applyBadRequest: true,
+    mergeRequestBody: [CreateResaleInputDto, UploadSingleInputDto],
     createdResponse: CreateResaleOutputDto,
   })
-  public create(@Body() body: CreateResaleInputDto): Promise<CreateResaleOutputDto> {
-    return this.createResale.execute(body);
+  public create(
+    @Body() body: CreateResaleInputDto,
+    @UploadedFile() file?: Express.Multer.File,
+  ): Promise<CreateResaleOutputDto> {
+    return this.createResale.execute(body, file);
   }
 
   @Get()
@@ -124,14 +143,21 @@ export class ResaleAdminController {
 
   @Patch(':id')
   @RequiredClaims(Claim.RESALE_WRITE)
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileInterceptor('file'))
   @Swagger({
     tags: ['Revendas'],
     summary: 'Editar revenda',
     applyBadRequest: true,
     applyNotFound: true,
+    mergeRequestBody: [EditResaleInputDto, UploadSingleInputDto],
     okResponse: SuccessMessage,
   })
-  public update(@Param() params: Params, @Body() body: EditResaleInputDto): Promise<SuccessMessage> {
-    return this.editResale.execute(params.id, body);
+  public update(
+    @Param() params: Params,
+    @Body() body: EditResaleInputDto,
+    @UploadedFile() file?: Express.Multer.File,
+  ): Promise<SuccessMessage> {
+    return this.editResale.execute(params.id, body, file);
   }
 }

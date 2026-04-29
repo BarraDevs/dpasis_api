@@ -1,5 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { UploadSingle } from 'src/app/upload-file/application/usecases/upload-single/upload-single.service';
 import { ResaleIdAlreadyTakenError } from 'src/app/resale/resale/domain/errors/resale-id-already-taken.error';
+import { ResaleProfilePictureFolder } from 'src/app/resale/resale/domain/value-objects/resale-profile-picture-folder.vo';
 import { ResaleFactory } from 'src/app/resale/resale/domain/factories/resale.factory';
 import { TOKENS } from 'src/core/di/token';
 import { DocumentAlreadyTakenError } from 'src/shared/errors/document-already-taken';
@@ -15,9 +17,10 @@ export class CreateResale {
     @Inject(TOKENS.ResaleDao) private readonly resaleDao: IResaleDao,
     @Inject(TOKENS.ResaleRepository) private readonly resaleRepository: IResaleRepository,
     @Inject(TOKENS.ResaleSequenceRepository) private readonly resaleSequenceRepository: IResaleSequenceRepository,
+    private readonly uploadSingle: UploadSingle,
   ) {}
 
-  public async execute(data: CreateResaleInputDto): Promise<CreateResaleOutputDto> {
+  public async execute(data: CreateResaleInputDto, file?: Express.Multer.File): Promise<CreateResaleOutputDto> {
     if (data.id != null) {
       const idAlreadyTaken = await this.resaleDao.findById(data.id);
       if (idAlreadyTaken) {
@@ -40,6 +43,14 @@ export class CreateResale {
       resaleId = await this.resaleSequenceRepository.getAndIncrement();
     }
 
+    let profilePictureUrl: string | null = null;
+
+    if (file) {
+      const folder = new ResaleProfilePictureFolder(resaleId);
+      const upload = await this.uploadSingle.execute(file, folder.value);
+      profilePictureUrl = upload.url;
+    }
+
     const entity = ResaleFactory.create({
       id: resaleId,
       name: data.name,
@@ -60,6 +71,7 @@ export class CreateResale {
       receivesSupportEmail: data.receivesSupportEmail ?? false,
       servedByDpa: data.servedByDpa ?? false,
       manufacturerReseller: data.manufacturerReseller ?? false,
+      profilePictureUrl,
     });
 
     const id = await this.resaleRepository.save(entity);

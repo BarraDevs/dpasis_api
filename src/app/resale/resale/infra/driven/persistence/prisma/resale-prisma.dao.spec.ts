@@ -47,6 +47,7 @@ describe('ResaleDaoAdapterPrisma - Integration tests', () => {
       receivesSupportEmail: false,
       servedByDpa: false,
       manufacturerReseller: false,
+      profilePictureUrl: null,
       active: true,
       ...overrides,
     };

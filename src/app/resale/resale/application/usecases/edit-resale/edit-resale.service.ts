@@ -1,6 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common';
+import type { IUploadFileQueueProducer } from 'src/app/upload-file/application/queue/upload-file-queue-producer.interface';
+import { UploadSingle } from 'src/app/upload-file/application/usecases/upload-single/upload-single.service';
 import { ResaleNotFoundError } from 'src/app/resale/resale/domain/errors/resale-not-found.error';
 import { ResaleFactory } from 'src/app/resale/resale/domain/factories/resale.factory';
+import { ResaleProfilePictureFolder } from 'src/app/resale/resale/domain/value-objects/resale-profile-picture-folder.vo';
 import { TOKENS } from 'src/core/di/token';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
 import { DocumentAlreadyTakenError } from 'src/shared/errors/document-already-taken';
@@ -14,12 +17,24 @@ export class EditResale {
   constructor(
     @Inject(TOKENS.ResaleDao) private readonly resaleDao: IResaleDao,
     @Inject(TOKENS.ResaleRepository) private readonly resaleRepository: IResaleRepository,
+    @Inject(TOKENS.UploadFileQueueProducer) private readonly uploadFileQueueProducer: IUploadFileQueueProducer,
+    private readonly uploadSingle: UploadSingle,
   ) {}
 
-  public async execute(id: number, data: EditResaleInputDto): Promise<SuccessMessage> {
+  public async execute(id: number, data: EditResaleInputDto, file?: Express.Multer.File): Promise<SuccessMessage> {
     const resale = await this.resaleDao.findById(id);
     if (!resale) {
       throw new ResaleNotFoundError();
+    }
+
+    const previousProfilePictureUrl = resale.profilePictureUrl;
+
+    let profilePictureUrl = previousProfilePictureUrl ?? null;
+
+    if (file) {
+      const folder = new ResaleProfilePictureFolder(id);
+      const result = await this.uploadSingle.execute(file, folder.value);
+      profilePictureUrl = result.url;
     }
 
     const resaleEntity = ResaleFactory.edit({
@@ -42,6 +57,7 @@ export class EditResale {
       receivesSupportEmail: data.receivesSupportEmail ?? resale.receivesSupportEmail,
       servedByDpa: data.servedByDpa ?? resale.servedByDpa,
       manufacturerReseller: data.manufacturerReseller ?? resale.manufacturerReseller,
+      profilePictureUrl,
       active: resale.active,
     });
 
@@ -54,6 +70,10 @@ export class EditResale {
     }
 
     await this.resaleRepository.edit(resaleEntity);
+
+    if (file && previousProfilePictureUrl) {
+      await this.uploadFileQueueProducer.addDeleteJob({ fileUrl: previousProfilePictureUrl });
+    }
 
     return { message: 'Edição realizada com sucesso' };
   }
