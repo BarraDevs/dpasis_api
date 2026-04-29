@@ -22,7 +22,41 @@ model Resale {
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
 
-  clients Client[]
+  clients  Client[]
+  contacts ResaleContact[]
 
   @@map("resales")
+}
+
+model ResaleDepartment {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  contacts ResaleContact[]
+
+  @@map("resale_departments")
+}
+
+model ResaleContact {
+  id           Int      @id @default(autoincrement())
+  resaleId     Int
+  departmentId Int
+  name         String
+  email        String
+  phone        String?
+  whatsapp     String?
+  observations String? @db.Text
+  receiveNF    Boolean
+  active       Boolean
+  createdAt    DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  resale     Resale           @relation(fields: [resaleId], references: [id])
+  department ResaleDepartment @relation(fields: [departmentId], references: [id])
+
+  @@unique([resaleId, email])
+  @@map("resale_contacts")
 }
