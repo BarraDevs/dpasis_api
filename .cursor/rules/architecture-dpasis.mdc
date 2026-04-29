@@ -1,3 +1,8 @@
+---
+description: Regras de arquitetura dpasis_api — Hexagonal, DDD-light, use cases, DAO/Repository, testes, erros, DTOs, gateways, filas BullMQ, checklist de feature
+alwaysApply: true
+---
+
 # Rules de Arquitetura — dpasis_api
 
 > Estas rules devem ser consultadas antes de qualquer geração de código novo.
