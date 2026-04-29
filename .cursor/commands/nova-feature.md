@@ -117,6 +117,7 @@ Carregue **as skills específicas** que cobrem cada passo do plano:
 | Gateways externos (se aplicável) | `.cursor/skills/gateway-adapters/SKILL.md` |
 | Filas / BullMQ (se aplicável) | `.cursor/skills/queue-bullmq/SKILL.md` |
 | Testes | `.cursor/skills/testing-strategy/SKILL.md` |
+| Doc integração frontend (após implementação) | `.cursor/skills/frontend-integration-docs/SKILL.md` |
 
 Leia **somente** as skills relacionadas aos passos que serão executados. Não consuma contexto com skills irrelevantes ao caso.
 
@@ -222,6 +223,7 @@ Quando terminar, apresente um resumo curto:
 **Use cases:** Create<X>, FindAll<X>, ... (total)
 **Rotas:** POST /admin/<x>, GET /admin/<x>, ... (total)
 **Testes:** P unit + Q integration
+**Doc integração frontend (Etapa 5):** `docs/frontend-integracao-<contexto>.md` — ou *N/A* se não houver contrato admin/HTTP novo ou alterado
 
 ### Para validar localmente
 1. `npm run db:migration` (se schema mudou)
@@ -242,6 +244,19 @@ Quando terminar, apresente um resumo curto:
 
 ---
 
+## ETAPA 5 — Documentação de integração frontend (OBRIGATÓRIO após a Etapa 4)
+
+Depois do resumo da Etapa 4 (`## Implementação concluída`), **sempre**:
+
+1. **Leia** `.cursor/skills/frontend-integration-docs/SKILL.md` na íntegra e mantenha-a em vigor até concluir este passo.
+2. **Execute o fluxo da skill**: escopo das mudanças de contrato → conferência no código (controllers, DTOs, Swagger, guards/claims) → redação → revisão (URLs e nomes de campos literais como na API).
+3. **Persista** um arquivo em `docs/` no formato `frontend-integracao-<contexto>.md`, alinhado ao tom e à estrutura dos guias existentes referenciados na própria skill (`docs/frontend-integracao-*.md`).
+4. Se a feature **não** alterar nem expor contrato HTTP relevante ao app admin (ex.: apenas worker interno, jobs, infra sem rota nova), registre isso **explicitamente** no final da Etapa 4 ou num parágrafo curto no próprio resumo — **sem** criar doc vazio só para cumprir formalidade.
+
+Se upload/multipart/S3 estiver envolvido, cruze com `.cursor/skills/upload-file-flow/SKILL.md` conforme a skill de frontend-integration-docs.
+
+---
+
 ## REGRAS DE OURO DESTE COMANDO
 
 1. **NÃO comece a codificar sem ler `.cursor/context.md`, `.cursor/rules/RULES.md` e `.cursor/skills/adding-new-feature/SKILL.md` primeiro.** Sem exceção.
@@ -250,3 +265,4 @@ Quando terminar, apresente um resumo curto:
 4. **Use exemplos reais do código** (FAQ para CRUD simples, Admin para DDD, Client para casos com sub-módulos). Quando precisar de inspiração, abra o módulo de referência e copie a estrutura.
 5. **Aguarde aprovação do plano antes de implementar.** Nunca pule da Etapa 1 para a Etapa 3.
 6. **Em caso de divergência:** RULES > código existente > skills > intuição. Se a skill estiver desatualizada vs o código, siga o código e mencione a divergência ao final para o usuário considerar atualizar a skill.
+7. **Não encerre o comando sem a Etapa 5** quando houver contrato admin/HTTP novo ou alterado: documentação em `docs/frontend-integracao-<contexto>.md` conforme `.cursor/skills/frontend-integration-docs/SKILL.md`.
