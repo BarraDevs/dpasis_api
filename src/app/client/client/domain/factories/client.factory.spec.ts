@@ -18,6 +18,7 @@ function makeClientCreateProps(overrides?: Partial<ClientCreateProps>): ClientCr
     generateInvoice: true,
     companyName: 'Empresa LTDA',
     fantasyName: null,
+    domain: null,
     headquarters: 'São Paulo',
     ...overrides,
   };
@@ -39,6 +40,7 @@ function makeClientProps(overrides?: Partial<ClientProps>): ClientProps {
     generateInvoice: true,
     companyName: 'Empresa LTDA',
     fantasyName: null,
+    domain: null,
     headquarters: 'São Paulo',
     ...overrides,
   };
@@ -57,6 +59,7 @@ describe('ClientFactory', () => {
         generateInvoice: true,
         companyName: 'Empresa LTDA',
         fantasyName: null,
+        domain: null,
         headquarters: 'São Paulo',
       });
 
@@ -78,6 +81,7 @@ describe('ClientFactory', () => {
         generateInvoice: true,
         companyName: 'Empresa LTDA',
         fantasyName: null,
+        domain: null,
         headquarters: 'São Paulo',
       });
     });
@@ -295,6 +299,49 @@ describe('ClientFactory', () => {
       });
     });
 
+    describe('validation - domain (optional)', () => {
+      it('should accept null domain', () => {
+        const props = makeClientCreateProps({ domain: null });
+
+        const client = ClientFactory.create(props);
+
+        expect(client.props.domain).toBeNull();
+      });
+
+      it('should treat empty string domain as null', () => {
+        const props = makeClientCreateProps({ domain: '' });
+
+        const client = ClientFactory.create(props);
+
+        expect(client.props.domain).toBeNull();
+      });
+
+      it('should convert whitespace-only domain to null', () => {
+        const props = makeClientCreateProps({ domain: '   ' });
+
+        const client = ClientFactory.create(props);
+
+        expect(client.props.domain).toBeNull();
+      });
+
+      it('should accept domain with up to 128 characters', () => {
+        const domain = `${'a'.repeat(127)}b`;
+        const props = makeClientCreateProps({ domain });
+
+        const client = ClientFactory.create(props);
+
+        expect(client.props.domain).toBe(domain);
+        expect(client.props.domain!.length).toBe(128);
+      });
+
+      it('should throw AppException when domain exceeds 128 characters', () => {
+        const props = makeClientCreateProps({ domain: 'z'.repeat(129) });
+
+        expect(() => ClientFactory.create(props)).toThrow(AppException);
+        expect(() => ClientFactory.create(props)).toThrow('O campo domain deve ter no máximo 128 caracteres');
+      });
+    });
+
     describe('validation - companyIds', () => {
       it('should throw when companyIds contains invalid id (0)', () => {
         const props = makeClientCreateProps({ companyIds: [0] });
@@ -327,6 +374,16 @@ describe('ClientFactory', () => {
           expect(() => ClientFactory.create(props)).toThrow('O campo headquarters não pode ser vazio');
         },
       );
+    });
+  });
+
+  describe('edit', () => {
+    it('should throw AppException when domain exceeds 128 characters', () => {
+      const props = makeClientProps();
+
+      expect(() =>
+        ClientFactory.edit({ ...props, domain: 'y'.repeat(129) }),
+      ).toThrow(AppException);
     });
   });
 
@@ -363,6 +420,20 @@ describe('ClientFactory', () => {
 
       expect(client.props.ie).toBe('987654321');
       expect(client.props.fantasyName).toBe('Fantasia Loaded');
+    });
+
+    it('should preserve domain when provided', () => {
+      const props = makeClientProps({ domain: 'cliente.persistido.dev' });
+
+      const client = ClientFactory.load(props);
+
+      expect(client.props.domain).toBe('cliente.persistido.dev');
+    });
+
+    it('should preserve null domain on load', () => {
+      const client = ClientFactory.load(makeClientProps({ domain: null }));
+
+      expect(client.props.domain).toBeNull();
     });
   });
 });

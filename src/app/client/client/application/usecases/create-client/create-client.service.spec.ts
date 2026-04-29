@@ -202,6 +202,26 @@ describe('CreateClient - Integration tests', () => {
       expect(saved?.fantasyName).toBe('Empresa');
     });
 
+    it('should persist domain when provided', async() => {
+      const [group, owner, company] = await Promise.all([
+        prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
+        prisma.clientOwner.create({ data: { name: `Owner ${Date.now()}`, active: true } }),
+        createCompany(),
+      ]);
+
+      const input = makeValidInput({
+        groupId: group.id,
+        ownerId: owner.id,
+        companyIds: [company.id],
+        domain: 'integracao.persist.dev',
+      });
+
+      const result = await sut.execute(input);
+
+      const saved = await prisma.client.findUnique({ where: { id: result.id } });
+      expect(saved?.domain).toBe('integracao.persist.dev');
+    });
+
     it('should create client with PF type and CPF document', async() => {
       const [group, owner, company] = await Promise.all([
         prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),

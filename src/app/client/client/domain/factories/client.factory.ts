@@ -1,3 +1,4 @@
+import { AppException } from 'src/core/filters/app.exception';
 import { BooleanVo } from 'src/shared/value-objects/boolean/boolean.vo';
 import { Document } from 'src/shared/value-objects/document/document.vo';
 import { Enum } from 'src/shared/value-objects/enum/enum.vo';
@@ -29,8 +30,18 @@ export class ClientFactory {
       headquarters: new NonEmptyString(props.headquarters, 'headquarters').value,
       ie: new OptionalString(props.ie, 'ie').value,
       fantasyName: new OptionalString(props.fantasyName, 'fantasyName').value,
+      domain: ClientFactory.validateDomain(props.domain),
       generateInvoice: new BooleanVo(props.generateInvoice, 'generateInvoice').value,
     };
+  }
+
+  private static validateDomain(domain: string | null | undefined): string | null {
+    const normalized = new OptionalString(domain, 'domain').value;
+    if (normalized !== null && normalized.length > 128) {
+      throw new AppException('O campo domain deve ter no máximo 128 caracteres.');
+    }
+
+    return normalized;
   }
 
   static create(props: ClientCreateProps & { id?: number }): Client {
@@ -75,6 +86,7 @@ export class ClientFactory {
       generateInvoice: props.generateInvoice,
       companyName: props.companyName,
       fantasyName: props.fantasyName,
+      domain: props.domain ?? null,
       headquarters: props.headquarters,
       active: props.active,
     });

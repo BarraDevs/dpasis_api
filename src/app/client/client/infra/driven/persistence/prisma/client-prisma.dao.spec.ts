@@ -89,6 +89,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
         companyName: 'Empresa LTDA',
         companies: [],
         fantasyName: 'Empresa',
+        domain: null,
         headquarters: 'São Paulo',
         invoiceType: ClientInvoiceType.CONTRACT,
         generateInvoice: true,
@@ -190,6 +191,98 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
       expect(byCompanyName[0].companyName).toBe('Empresa Premium LTDA');
       expect(byDocument).toHaveLength(1);
       expect(byDocument[0].document).toBe('33000167000101');
+    });
+
+    it('should filter by search in domain (case-insensitive)', async() => {
+      const { group, owner } = await createClientGroupAndOwner();
+
+      await prisma.client.create({
+        data: {
+          id: 401,
+          type: ClientType.PJ,
+          document: '09748165999141',
+          groupId: group.id,
+          ownerId: owner.id,
+          companyName: 'Corp Alpha',
+          fantasyName: null,
+          domain: 'portal.CLIENTE-domain.io',
+          headquarters: 'SP',
+          invoiceType: ClientInvoiceType.CONTRACT,
+          generateInvoice: true,
+          active: true,
+        },
+      });
+      await prisma.client.create({
+        data: {
+          id: 402,
+          type: ClientType.PJ,
+          document: '09748165999152',
+          groupId: group.id,
+          ownerId: owner.id,
+          companyName: 'Corp Beta',
+          fantasyName: null,
+          domain: 'outro-site.net',
+          headquarters: 'SP',
+          invoiceType: ClientInvoiceType.CONTRACT,
+          generateInvoice: true,
+          active: true,
+        },
+      });
+
+      const [byDomain] = await sut.findAll({ search: 'cliente-domain' });
+      expect(byDomain).toHaveLength(1);
+      expect(byDomain[0].id).toBe(401);
+      expect(byDomain[0].domain).toBe('portal.CLIENTE-domain.io');
+
+      const [caseInsensitive] = await sut.findAll({ search: 'OUTRO-site' });
+      expect(caseInsensitive).toHaveLength(1);
+      expect(caseInsensitive[0].id).toBe(402);
+    });
+
+    it('should apply active filter together with search on domain', async() => {
+      const { group, owner } = await createClientGroupAndOwner();
+
+      await prisma.client.create({
+        data: {
+          id: 960,
+          type: ClientType.PJ,
+          document: '09748165996001',
+          groupId: group.id,
+          ownerId: owner.id,
+          companyName: 'Inativa LTDA',
+          fantasyName: null,
+          domain: 'alpha-busca.cli.io',
+          headquarters: 'SP',
+          invoiceType: ClientInvoiceType.CONTRACT,
+          generateInvoice: true,
+          active: false,
+        },
+      });
+      await prisma.client.create({
+        data: {
+          id: 961,
+          type: ClientType.PJ,
+          document: '09748165996101',
+          groupId: group.id,
+          ownerId: owner.id,
+          companyName: 'Ativa LTDA',
+          fantasyName: null,
+          domain: 'beta-busca.cli.io',
+          headquarters: 'SP',
+          invoiceType: ClientInvoiceType.CONTRACT,
+          generateInvoice: true,
+          active: true,
+        },
+      });
+
+      const [inactiveSearch] = await sut.findAll({ search: 'alpha-busca.cli', active: false });
+      const [activeSearch] = await sut.findAll({ search: 'beta-busca.cli', active: true });
+
+      expect(inactiveSearch).toHaveLength(1);
+      expect(inactiveSearch[0].id).toBe(960);
+
+      expect(activeSearch).toHaveLength(1);
+      expect(activeSearch[0].id).toBe(961);
     });
 
     it('should return empty when search matches no client', async() => {
@@ -339,6 +432,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
         },
         companyName: 'Empresa Test',
         fantasyName: 'Fantasia',
+        domain: null,
         headquarters: 'São Paulo',
         invoiceType: ClientInvoiceType.CONTRACT,
         generateInvoice: true,
@@ -427,6 +521,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
         },
         companies: [],
         fantasyName: 'Fantasia',
+        domain: null,
         headquarters: 'São Paulo',
         invoiceType: ClientInvoiceType.CONTRACT,
         generateInvoice: true,
@@ -782,6 +877,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
         maintenanceTicketId: null,
         companyName: 'Sub-cliente',
         fantasyName: null,
+        domain: null,
         headquarters: 'RJ',
         invoiceType: ClientInvoiceType.INDIVIDUAL,
         generateInvoice: false,
@@ -899,6 +995,71 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
       expect(result).toHaveLength(1);
       expect(total).toBe(1);
       expect(result[0].companyName).toBe('Sub Premium');
+    });
+
+    it('should filter sub-clients by search in domain (case-insensitive)', async() => {
+      const { group, owner } = await createClientGroupAndOwner();
+
+      const parent = await prisma.client.create({
+        data: {
+          id: 970,
+          type: ClientType.PJ,
+          document: '09748165997010',
+          groupId: group.id,
+          ownerId: owner.id,
+          companyName: 'Empresa Pai',
+          headquarters: 'SP',
+          invoiceType: ClientInvoiceType.CONTRACT,
+          generateInvoice: true,
+          active: true,
+        },
+      });
+
+      await prisma.client.create({
+        data: {
+          id: 971,
+          type: ClientType.PJ,
+          document: '09748165997101',
+          groupId: group.id,
+          ownerId: owner.id,
+          companyName: 'Sub Genérico',
+          domain: 'sub.APP-teste.dev',
+          headquarters: 'SP',
+          invoiceType: ClientInvoiceType.CONTRACT,
+          generateInvoice: true,
+          active: true,
+          parentClientId: parent.id,
+          isSubClient: true,
+        },
+      });
+      await prisma.client.create({
+        data: {
+          id: 972,
+          type: ClientType.PJ,
+          document: '09748165997201',
+          groupId: group.id,
+          ownerId: owner.id,
+          companyName: 'Sub Outro',
+          domain: null,
+          headquarters: 'SP',
+          invoiceType: ClientInvoiceType.CONTRACT,
+          generateInvoice: true,
+          active: true,
+          parentClientId: parent.id,
+          isSubClient: true,
+        },
+      });
+
+      const [matched, total] = await sut.findSubClients(parent.id, { search: 'app-teste' });
+
+      expect(matched).toHaveLength(1);
+      expect(total).toBe(1);
+      expect(matched[0].domain).toBe('sub.APP-teste.dev');
+      expect(matched[0].id).toBe(971);
+
+      const [byUppercase] = await sut.findSubClients(parent.id, { search: 'APP-TESTE' });
+      expect(byUppercase).toHaveLength(1);
+      expect(byUppercase[0].id).toBe(971);
     });
 
     it('should filter sub-clients by active status', async() => {

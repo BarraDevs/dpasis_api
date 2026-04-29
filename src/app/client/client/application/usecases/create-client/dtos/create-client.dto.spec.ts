@@ -36,6 +36,7 @@ function makeValidInputDto(overrides: Partial<CreateClientInputDto> = {}): Creat
     companyIds: [1],
     companyName: 'Empresa LTDA',
     fantasyName: null,
+    domain: null,
     headquarters: 'São Paulo',
     invoiceType: ClientInvoiceType.CONTRACT,
     generateInvoice: true,
@@ -279,6 +280,61 @@ describe('CreateClientInputDto', () => {
       const result = await target.transform(data, metadata);
 
       expect(result.fantasyName).toBe('Empresa');
+    });
+  });
+
+  describe('domain field (optional)', () => {
+    it('should accept undefined domain', async() => {
+      const data = makeValidInputDto();
+      delete (data as { domain?: unknown }).domain;
+
+      const result = await target.transform(data, metadata);
+
+      expect(result.domain).toBeUndefined();
+    });
+
+    it('should accept null domain', async() => {
+      const data = makeValidInputDto({ domain: null });
+
+      const result = await target.transform(data, metadata);
+
+      expect(result.domain).toBeNull();
+    });
+
+    it('should trim domain when provided', async() => {
+      const data = makeValidInputDto({ domain: '  cliente.dev  ' });
+
+      const result = await target.transform(data, metadata);
+
+      expect(result.domain).toBe('cliente.dev');
+    });
+
+    it('should reject domain longer than 128 characters', async() => {
+      const data = makeValidInputDto({ domain: `${'x'.repeat(129)}` });
+
+      expect.assertions(1);
+      return target.transform(data, metadata).catch((error) => {
+        expectMessageToContain(error.getResponse().message, 'domain');
+      });
+    });
+
+    it('should accept domain with exactly 128 characters', async() => {
+      const domain = `${'m'.repeat(128)}`;
+      const data = makeValidInputDto({ domain });
+
+      const result = await target.transform(data, metadata);
+
+      expect(result.domain).toBe(domain);
+    });
+
+    it('should trim then validate max length', async() => {
+      const padded = `${'p'.repeat(127)}`;
+      const data = makeValidInputDto({ domain: `  ${padded}xx  ` });
+
+      expect.assertions(1);
+      return target.transform(data, metadata).catch((error) => {
+        expectMessageToContain(error.getResponse().message, 'domain');
+      });
     });
   });
 

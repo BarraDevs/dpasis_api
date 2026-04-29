@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional, OmitType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { ArrayMinSize, IsArray, IsBoolean, IsEnum, IsInt, IsNotEmpty, IsNumber, IsOptional, IsPositive, IsString, ValidateNested } from 'class-validator';
+import { ArrayMinSize, IsArray, IsBoolean, IsEnum, IsInt, IsNotEmpty, IsNumber, IsOptional, IsPositive, IsString, MaxLength, ValidateNested } from 'class-validator';
 import { CreateClientAddressInputDto } from 'src/app/client/client-address/application/usecases/create-client-address/dtos/create-client-address.dto';
 import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
 import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum';
@@ -78,6 +78,13 @@ export class CreateClientInputDto {
   @IsString({ message: '$property deve ser uma string' })
   @Trim()
   fantasyName: string | null;
+
+  @ApiPropertyOptional({ example: 'cliente.example.com', description: 'Domínio associado ao cliente (opcional).' })
+  @IsOptional()
+  @IsString({ message: '$property deve ser uma string' })
+  @Trim()
+  @MaxLength(128, { message: '$property deve ter no máximo 128 caracteres' })
+  domain?: string | null;
 
   @ApiProperty({ example: 'São Paulo' })
   @IsString({ message: '$property deve ser uma string' })

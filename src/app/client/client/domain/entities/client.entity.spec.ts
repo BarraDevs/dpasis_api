@@ -18,6 +18,7 @@ function makeClientProps(overrides?: Partial<ClientProps>): ClientProps {
     generateInvoice: true,
     companyName: 'Empresa LTDA',
     fantasyName: 'Empresa',
+    domain: null,
     headquarters: 'São Paulo',
     ...overrides,
   };
@@ -80,7 +81,16 @@ describe('Client', () => {
       expect(client.props.generateInvoice).toBe(true);
       expect(client.props.companyName).toBe('Custom Company');
       expect(client.props.fantasyName).toBe('Empresa');
+      expect(client.props.domain).toBeNull();
       expect(client.props.headquarters).toBe('São Paulo');
+    });
+
+    it('should expose domain when set', () => {
+      const client = Client._instantiate(
+        makeClientProps({ domain: 'tenant.app.dev' }),
+      );
+
+      expect(client.props.domain).toBe('tenant.app.dev');
     });
 
     it('should return a copy of props (immutability)', () => {
@@ -113,6 +123,7 @@ describe('Client', () => {
         'generateInvoice',
         'companyName',
         'fantasyName',
+        'domain',
         'headquarters',
       ]);
     });

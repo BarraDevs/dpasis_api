@@ -167,6 +167,7 @@ describe('FindClientById - Integration tests', () => {
       },
       companyName: 'Pessoa Física',
       fantasyName: null,
+      domain: null,
       headquarters: 'Rio de Janeiro',
       invoiceType: ClientInvoiceType.INDIVIDUAL,
       generateInvoice: false,

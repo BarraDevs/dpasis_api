@@ -93,6 +93,7 @@ export class CreateClient {
       generateInvoice: data.generateInvoice,
       companyName: data.companyName,
       fantasyName: data.fantasyName,
+      domain: data.domain ?? null,
       headquarters: data.headquarters,
     });
 

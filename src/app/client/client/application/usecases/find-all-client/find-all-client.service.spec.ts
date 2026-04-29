@@ -511,6 +511,7 @@ describe('FindAllClient - Integration tests', () => {
       },
       companyName: 'Empresa LTDA',
       fantasyName: 'Empresa',
+      domain: null,
       headquarters: 'São Paulo',
       invoiceType: ClientInvoiceType.CONTRACT,
       generateInvoice: true,

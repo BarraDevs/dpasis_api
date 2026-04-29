@@ -82,4 +82,29 @@ describe('EditClientInputDto', () => {
     expect(result.companyName).toBe('Empresa');
     expect(result.headquarters).toBe('SP');
   });
+
+  it('should accept partial update with domain', async() => {
+    const result = await target.transform({ domain: 'novo.domínio.br' }, metadata);
+
+    expect(result.domain).toBe('novo.domínio.br');
+  });
+
+  it('should accept null domain to clear optional field', async() => {
+    const result = await target.transform({ domain: null }, metadata);
+
+    expect(result.domain).toBeNull();
+  });
+
+  it('should trim domain when provided', async() => {
+    const result = await target.transform({ domain: '  app.io  ' }, metadata);
+
+    expect(result.domain).toBe('app.io');
+  });
+
+  it('should reject domain longer than 128 characters', async() => {
+    expect.assertions(1);
+    return target.transform({ domain: 'z'.repeat(129) }, metadata).catch((error) => {
+      expectMessageToContain(error.getResponse().message, 'domain');
+    });
+  });
 });

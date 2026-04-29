@@ -11,6 +11,7 @@ model Client {
   maintenanceTicketId Int?
   companyName         String
   fantasyName         String?
+  domain              String?
   headquarters        String
   invoiceType         String
   generateInvoice     Boolean

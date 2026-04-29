@@ -1,11 +1,12 @@
 import { ClientInvoiceType } from '../enums/client-invoice-type.enum';
 import { ClientType } from '../enums/client-type.enum';
 
-export type ClientProps = Omit<ClientCreateProps, 'parentClientId'> & {
+export type ClientProps = Omit<ClientCreateProps, 'parentClientId' | 'domain'> & {
   id: number;
   active: boolean;
   parentClientId: number | null;
   isSubClient: boolean;
+  domain: string | null;
 };
 
 export type ClientCreateProps = {
@@ -20,6 +21,7 @@ export type ClientCreateProps = {
   generateInvoice: boolean;
   companyName: string;
   fantasyName: string | null;
+  domain?: string | null;
   headquarters: string;
 };
 

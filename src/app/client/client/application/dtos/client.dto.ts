@@ -11,6 +11,7 @@ export class ClientDto {
   maintenanceTicketId: number | null;
   companyName: string;
   fantasyName: string | null;
+  domain: string | null;
   headquarters: string;
   invoiceType: string;
   generateInvoice: boolean;
