@@ -68,30 +68,72 @@ describe('CreateResale - Integration tests', () => {
   it('should persist optional flags as false when omitted', async() => {
     const input = makeCreateResaleInput();
     delete (input as { receivesSupportEmail?: boolean }).receivesSupportEmail;
-    delete (input as { servedByDpa?: boolean }).servedByDpa;
-    delete (input as { manufacturerReseller?: boolean }).manufacturerReseller;
+    delete (input as { servedByRoot?: boolean }).servedByRoot;
+    delete (input as { manufacturerResale?: boolean }).manufacturerResale;
+    delete (input as { indicatorResale?: boolean }).indicatorResale;
+    delete (input as { recurringResale?: boolean }).recurringResale;
 
     await sut.execute(input);
 
     const row = await prisma.resale.findFirst();
     expect(row?.receivesSupportEmail).toBe(false);
-    expect(row?.servedByDpa).toBe(false);
-    expect(row?.manufacturerReseller).toBe(false);
+    expect(row?.servedByRoot).toBe(false);
+    expect(row?.manufacturerResale).toBe(false);
+    expect(row?.indicatorResale).toBe(false);
+    expect(row?.recurringResale).toBe(false);
   });
 
   it('should persist true when optional boolean flags are provided', async() => {
     await sut.execute(
       makeCreateResaleInput({
         receivesSupportEmail: true,
-        servedByDpa: true,
-        manufacturerReseller: true,
+        servedByRoot: true,
+        manufacturerResale: true,
+        indicatorResale: true,
+        recurringResale: true,
       }),
     );
 
     const row = await prisma.resale.findFirst();
     expect(row?.receivesSupportEmail).toBe(true);
-    expect(row?.servedByDpa).toBe(true);
-    expect(row?.manufacturerReseller).toBe(true);
+    expect(row?.servedByRoot).toBe(true);
+    expect(row?.manufacturerResale).toBe(true);
+    expect(row?.indicatorResale).toBe(true);
+    expect(row?.recurringResale).toBe(true);
+  });
+
+  it('should persist extended optional fields when provided', async() => {
+    const validityIso = '2026-11-20T15:30:00.000Z';
+
+    const { id } = await sut.execute(
+      makeCreateResaleInput({
+        nickname: 'Loja Norte',
+        validityDate: validityIso,
+        accessEmail: 'painel@loja.com',
+        accessPassword: 'armazenado',
+        paymentDay: 7,
+        bonus: 42,
+        billingStartDay: 14,
+        servedByRoot: true,
+        manufacturerResale: true,
+        indicatorResale: false,
+        recurringResale: true,
+      }),
+    );
+
+    const row = await prisma.resale.findUniqueOrThrow({ where: { id } });
+
+    expect(row.nickname).toBe('Loja Norte');
+    expect(row.validityDate?.toISOString()).toBe(validityIso);
+    expect(row.accessEmail).toBe('painel@loja.com');
+    expect(row.accessPassword).toBe('armazenado');
+    expect(row.paymentDay).toBe(7);
+    expect(row.bonus).toBe(42);
+    expect(row.billingStartDay).toBe(14);
+    expect(row.servedByRoot).toBe(true);
+    expect(row.manufacturerResale).toBe(true);
+    expect(row.indicatorResale).toBe(false);
+    expect(row.recurringResale).toBe(true);
   });
 
   it('should create with explicit id and bump sequence to at least id + 1', async() => {

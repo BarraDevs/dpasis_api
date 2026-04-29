@@ -1,24 +1,37 @@
-# Integração frontend — revenda: foto de perfil e `multipart/form-data`
+# Integração frontend — revenda (`Resale`): `multipart/form-data`, foto de perfil e campos estendidos
 
-Este documento descreve as **mudanças nos endpoints administrativos de revenda (`Resale`)**: criação e edição passam a aceitar **`multipart/form-data`** (corpo + arquivo opcional), a leitura passa a expor **`profilePictureUrl`**, e a criação permite um **`id` explícito opcional** (alinhamento com legado / sistema externo), com as mesmas regras de sequência já usadas em outros agregados do projeto.
+Este documento reúne o contrato administrativo da revenda (**`POST`** / **`PATCH`** / **`GET`** em …/admin/resale`): uso de **`multipart/form-data`** (substituindo JSON nas mutações), upload opcional de **foto de perfil**, **`profilePictureUrl`** nas leituras, **`id` opcional** na criação, bem como os **campos opcionais adicionais**, **renomes de propriedades (breaking)** e validações aplicáveis.
 
-Recursos relacionados seguem nos guias [frontend-integracao-cliente-resale.md](./frontend-integracao-cliente-resale.md), [frontend-integracao-resale-department-contact.md](./frontend-integracao-resale-department-contact.md) e [frontend-integracao-cliente-domain-subcliente.md](./frontend-integracao-cliente-domain-subcliente.md).
+Recursos relacionados: [frontend-integracao-cliente-resale.md](./frontend-integracao-cliente-resale.md), [frontend-integracao-resale-department-contact.md](./frontend-integracao-resale-department-contact.md), [frontend-integracao-cliente-domain-subcliente.md](./frontend-integracao-cliente-domain-subcliente.md).
 
-**Base URL admin:** `POST` e `PATCH` em `…/admin/resale` (papel **ADMIN** + claims **`RESALE_WRITE`** na mutação; **`RESALE_READ`** nas leituras).
+**Base URL admin:** `POST` e `PATCH` em `…/admin/resale` (ADMIN + claims **`RESALE_WRITE`** nas mutações); **`GET`** `…/admin/resale` e `…/admin/resale/:id` (**`RESALE_READ`** nas leituras).
 
 ---
 
 ## 1. Resumo das mudanças
 
+### 1.1 Multipart e foto
+
 | Área | Antes | Depois |
 |------|-------|--------|
 | **`POST /admin/resale`** | Corpo JSON (`application/json`) | **`multipart/form-data`**: campos de texto/número/boolean como em formulário + part opcional **`file`** |
 | **`PATCH /admin/resale/:id`** | Corpo JSON | **`multipart/form-data`** com os mesmos padrões |
-| **`GET /admin/resale` e `GET /admin/resale/:id`** | `ResaleDto` sem URL de imagem | Inclusão de **`profilePictureUrl: string \| null`** |
-| **`POST /admin/resale` — identificador** | Apenas ID gerado pela sequência interna | Campo opcional **`id`** (inteiro positivo): se enviado, a revenda usa esse ID (desde que livre) e a sequência é ajustada; se omitido, o ID continua sendo o próximo da sequência |
-| **Foto** | Não suportada | Arquivo opcional no create; no edit, envio de novo arquivo **substitui** a foto anterior (o backend agenda exclusão do arquivo antigo no storage) |
+| **`GET /admin/resale` e `GET /admin/resale/:id`** | `ResaleDto` sem URL de imagem (e menos campos) | Inclusão de **`profilePictureUrl`** e dos **campos estendidos** abaixo (camelCase); ver Swagger |
+| **`POST /admin/resale` — identificador** | Apenas ID pela sequência interna | Campo opcional **`id`** (inteiro positivo): se enviado, a revenda usa esse ID se livre; a sequência é ajustada; se omitido, próximo da sequência |
+| **Foto** | Não suportada | **`file`** opcional no create; no edit, novo arquivo **substitui** a foto anterior (exclusão antiga enfileirada no storage) |
 
-**Breaking change principal para o frontend:** deixar de enviar JSON puro nesses dois métodos e passar a montar **`FormData`** (ou equivalente) com os campos escalares e, quando houver, o binário.
+**Breaking change principal (multipart):** deixar de enviar JSON puro em create/edit e passar a montar **`FormData`** com campos escalares e, quando houver, o binário.
+
+### 1.2 Campos novos e renomes
+
+| Área | Tipo | Detalhe |
+|------|------|---------|
+| **Novos campos (opcionais)** | Aditivo | `nickname`, `validityDate`, `accessEmail`, `accessPassword`, `paymentDay`, `bonus`, `billingStartDay`, `indicatorResale`, `recurringResale`. |
+| **Renomes (breaking)** | Nome HTTP | `servedByDpa` → **`servedByRoot`** · `manufacturerReseller` → **`manufacturerResale`**. Atualizar payloads e mocks. |
+| **Leitura** | Aditivo | Listagem e detalhe expõem todos esses campos em `ResaleDto`. |
+| **Auditoria (backend)** | — | Envio de **`accessPassword`** nas mutações é registrado em audit com valor mascarado (`****`). |
+
+Claims **sem alteração**: `RESALE_READ` / `RESALE_WRITE` (sem novo subject CASL).
 
 ---
 
@@ -26,46 +39,67 @@ Recursos relacionados seguem nos guias [frontend-integracao-cliente-resale.md](.
 
 ### 2.1 Nome da part do arquivo
 
-- **Campo do formulário:** `file` (mesmo padrão de outros uploads do projeto que combinam DTO + `UploadSingleInputDto`).
-- **Obrigatoriedade:** opcional no **create** e no **edit**. Sem arquivo, a revenda é criada/atualizada só com os demais campos; no edit, a foto existente **não é removida** se o PATCH não trouxer `file`.
+- **Campo do formulário:** `file` (padrão de uploads que combinam DTO + upload único).
+- **Obrigatoriedade:** opcional no **create** e no **edit**. Sem arquivo, apenas os outros campos; no edit, a foto existente **não é removida** se o PATCH não trouxer `file`.
 
-### 2.2 Demais campos
+### 2.2 Demais campos (formato)
 
-Todos os campos que antes iam no JSON passam a ser **campos de formulário** (strings). No backend, booleanos e números continuam aceitos via decorators **`StringToBoolean`** / **`StringToNumber`** — na prática, enviar como string (`"true"`, `"false"`, `"123"`) está alinhado ao restante da API admin.
+Campos antes em JSON viram **campos de formulário** (strings). Booleanos e inteiros seguem sendo aceitos com **`StringToBoolean`** / **`StringToNumber`** enviados como string (`"true"`, `"123"`), alinhado à API admin.
 
-Consulte o **Swagger** atualizado (tag **Revendas**) para a lista exata e exemplos; o decorator `mergeRequestBody` documenta `CreateResaleInputDto` + parte binária no create e `EditResaleInputDto` + binária no patch.
+Consulte o **Swagger** (tag **Revendas**); `mergeRequestBody` documenta `CreateResaleInputDto` + binário no create e `EditResaleInputDto` + binário no patch.
 
 ### 2.3 Criação — `POST /admin/resale`
 
 | Campo | Observação |
 |-------|------------|
-| `id` | Opcional. Inteiro positivo. Se já existir revenda com esse ID → erro de negócio (`ResaleIdAlreadyTakenError`). |
-| `code` | Continua **obrigatório** no DTO de criação (validação da API). |
+| `id` | Opcional. Inteiro positivo. ID já existente → `ResaleIdAlreadyTakenError`. |
+| `code` | Continua **obrigatório** no DTO de criação. |
 | `file` | Opcional. Imagem da foto de perfil. |
 
-**Resposta (201):** `{ id: number }` (inalterada em forma).
+**Resposta (201):** `{ id: number }`.
 
 ### 2.4 Edição — `PATCH /admin/resale/:id`
 
-O body é **`PartialType`** do create **exceto** `id` (o ID da revenda vem só da URL). Ou seja, **qualquer** campo do create pode ser omitido; apenas os enviados são aplicados sobre o registro atual, com a mesma semântica de merge que o backend já aplicava.
+Body **`PartialType`** do create **exceto** `id` (ID só na URL). Apenas campos enviados são aplicados.
 
 | Campo | Observação |
 |-------|------------|
-| `file` | Opcional. Se presente, substitui `profilePictureUrl`; URL antiga é enfileirada para exclusão no storage. |
+| `file` | Opcional. Se presente, substitui `profilePictureUrl`; URL antiga vai para exclusão assíncrona no storage. |
 
-**Resposta:** envelope `SuccessMessage` (`{ message: string }`), como nos demais PATCHs admin de revenda.
+**Resposta:** `SuccessMessage` (`{ message: string }`).
+
+### 2.5 Campos estendidos (create e PATCH parcial)
+
+Enviados como no restante do formulário (**strings** onde couber); coerção boolean/int no backend.
+
+| Campo (camelCase) | Tipo / observação |
+|-------------------|-------------------|
+| `nickname` | Opcional; trim; máx. **255** caracteres. |
+| `validityDate` | Opcional; ISO 8601, ex.: `2026-06-01T03:00:00.000Z`. |
+| `accessEmail` | E-mail opcional; **sem** unicidade obrigatória. |
+| `accessPassword` | Opcional; persistido conforme produto (**não** expor valor no cliente em logs); audit mascara. |
+| `paymentDay` | Inteiro opcional. |
+| `bonus` | Inteiro opcional. |
+| `billingStartDay` | Inteiro opcional; se enviado, entre **1** e **31** (dia do mês para início da cobrança). |
+| `servedByRoot` | Boolean opcional; substitui **`servedByDpa`**. Default `false` se omitido no create (demais flags similares). |
+| `manufacturerResale` | Boolean opcional; substitui **`manufacturerReseller`**. |
+| `indicatorResale` | Boolean opcional. Default `false` se omitido no create. |
+| `recurringResale` | Boolean opcional. Default `false` se omitido no create. |
+
+**Quebra de nome em payloads/respostas:** não usar mais `servedByDpa` / `manufacturerReseller`; usar `servedByRoot` / `manufacturerResale`.
 
 ---
 
 ## 3. Leitura — `ResaleDto`
 
-Incluir nos tipos do frontend:
+Incluir nos tipos do frontend, entre outros:
 
 | Campo | Tipo | Descrição |
 |-------|------|-----------|
-| `profilePictureUrl` | `string \| null` | URL pública (ou URL assinada, conforme configuração do gateway de upload) da foto de perfil; `null` se nunca houve upload. |
+| `profilePictureUrl` | `string \| null` | URL da foto de perfil; `null` se nunca houve upload. |
+| *(demais)* | — | Campos estendidos da secção 2.5 e demais colunas do agregado; fonte canónica: **Swagger** + listagem/detalhe. |
 
-Os demais campos de `ResaleDto` permanecem; use listagem e detalhe para exibir avatar, preview e links.
+Use listagem e detalhe para avatar, preview e todos os campos de formulário.
 
 ---
 
@@ -76,32 +110,38 @@ O use case **`UploadSingle`** aplica:
 | Regra | Valor |
 |-------|--------|
 | Tamanho máximo | **20 MB** |
-| MIME permitidos | `image/jpeg`, `image/jpg`, `image/png`, `image/webp`, `application/octet-stream` (caso iOS / cliente envie assim) |
+| MIME permitidos | `image/jpeg`, `image/jpg`, `image/png`, `image/webp`, `application/octet-stream` (ex.: iOS) |
 
-Em caso de rejeição, o backend responde com os erros de domínio já padronizados (`FileTooBigError`, `InvalidFileError`, etc.), tratados pelo filtro global — exibir a **`message`** ao usuário.
+Rejeições: `FileTooBigError`, `InvalidFileError`, etc. — exibir **`message`** da API.
 
-**Pasta no bucket (informacional):** `resales/{resaleId}/profile-picture` — útil só para debug; o frontend usa diretamente `profilePictureUrl` retornada pela API.
+**Pasta no bucket (informacional):** `resales/{resaleId}/profile-picture`; o frontend usa **`profilePictureUrl`** retornada pela API.
 
 ---
 
 ## 5. Autenticação e claims
-
-Sem alteração em relação ao módulo de revendas:
 
 | Operação | Claim típica |
 |----------|----------------|
 | `POST`, `PATCH` em `/admin/resale` | `RESALE_WRITE` |
 | `GET` | `RESALE_READ` |
 
-Headers de autenticação (JWT, etc.) seguem o padrão já utilizado no painel admin.
+Headers (JWT, etc.) como no painel admin.
 
 ---
 
-## 6. Checklist prático para o frontend
+## 6. Erros e UX
 
-1. **Create:** trocar `fetch`/`axios` de `Content-Type: application/json` + `JSON.stringify` por **`FormData`**, anexando cada campo escalar e, se houver imagem, a part **`file`** (nome do campo exatamente `file`).
-2. **Edit:** idem; enviar apenas campos alterados é válido (patch parcial); incluir `file` somente quando o usuário escolher nova imagem.
-3. **Tipos / OpenAPI:** regenerar cliente a partir do Swagger e incluir **`profilePictureUrl`** em `ResaleDto` (listagem e detalhe).
-4. **UI:** componente de upload (preview, limite 20 MB, formatos de imagem); tratamento de erro de MIME/tamanho.
-5. **Opcional — `id` na criação:** expor somente se o produto integrar com legado; validar mensagem quando ID já estiver em uso.
-6. **Testes E2E / mocks:** ajustar payloads para `multipart` e expectativas de resposta com `profilePictureUrl`.
+- **`ValidationPipe`**: mensagens em pt-BR (`$property`).
+- Regras de negócio já existentes: `409` por documento duplicado ou `id` explícito já usado (ver outros guias de revenda).
+
+---
+
+## 7. Checklist prático para o frontend
+
+1. **Create / Edit:** trocar JSON por **`FormData`**, part **`file`** com nome exatamente `file` quando houver imagem.
+2. **Edit:** patch parcial; incluir `file` só ao trocar imagem.
+3. **OpenAPI / tipos:** regenerar a partir do Swagger; incluir **`profilePictureUrl`** e **todos** os campos de `ResaleDto` (incl. secção 2.5 e renomes).
+4. **UI:** upload com preview; limite 20 MB e formatos de imagem.
+5. **Campos novos:** `billingStartDay` **1–31** quando informado; renomes **`servedByRoot`** / **`manufacturerResale`** em formulários e testes.
+6. **`id` na criação:** só se integrar legado; tratar erro quando ID já existir.
+7. **E2E / mocks:** payloads `multipart`; expectativas com `profilePictureUrl` + campos estendidos; sem `servedByDpa` / `manufacturerReseller`.

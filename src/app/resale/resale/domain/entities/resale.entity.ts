@@ -14,9 +14,18 @@ export type ResaleCreateProps = {
   voucher: string | null;
   email: string | null;
   website: string | null;
+  nickname: string | null;
+  validityDate: Date | null;
+  accessEmail: string | null;
+  accessPassword: string | null;
+  paymentDay: number | null;
+  bonus: number | null;
+  billingStartDay: number | null;
   receivesSupportEmail: boolean;
-  servedByDpa: boolean;
-  manufacturerReseller: boolean;
+  servedByRoot: boolean;
+  manufacturerResale: boolean;
+  indicatorResale: boolean;
+  recurringResale: boolean;
   profilePictureUrl: string | null;
 };
 

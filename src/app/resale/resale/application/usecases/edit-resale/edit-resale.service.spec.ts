@@ -22,9 +22,18 @@ function makeResaleDto(overrides: Partial<ResaleDto> = {}): ResaleDto {
     voucher: null,
     email: null,
     website: null,
+    nickname: null,
+    validityDate: null,
+    accessEmail: null,
+    accessPassword: null,
+    paymentDay: null,
+    bonus: null,
+    billingStartDay: null,
     receivesSupportEmail: false,
-    servedByDpa: false,
-    manufacturerReseller: false,
+    servedByRoot: false,
+    manufacturerResale: false,
+    indicatorResale: false,
+    recurringResale: false,
     profilePictureUrl: null,
     active: true,
     createdAt: new Date(),
@@ -123,5 +132,31 @@ describe('EditResale - Unit tests', () => {
     await sut.execute(99, {}, mockFile);
 
     expect(uploadFileQueueProducer.addDeleteJob).not.toHaveBeenCalled();
+  });
+
+  it('should merge extended fields into the edited entity', async() => {
+    resaleDao.findById.mockResolvedValue(
+      makeResaleDto({
+        nickname: 'Antigo',
+        paymentDay: 1,
+        billingStartDay: 5,
+        indicatorResale: false,
+      }),
+    );
+
+    await sut.execute(99, {
+      nickname: 'Atualizado',
+      paymentDay: 18,
+      billingStartDay: 25,
+      indicatorResale: true,
+      accessPassword: 'nova-senha',
+    });
+
+    const entity = resaleRepository.edit.mock.calls[0]?.[0];
+    expect(entity?.props.nickname).toBe('Atualizado');
+    expect(entity?.props.paymentDay).toBe(18);
+    expect(entity?.props.billingStartDay).toBe(25);
+    expect(entity?.props.indicatorResale).toBe(true);
+    expect(entity?.props.accessPassword).toBe('nova-senha');
   });
 });

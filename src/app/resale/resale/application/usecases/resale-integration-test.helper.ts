@@ -31,6 +31,13 @@ export function makeCreateResaleInput(overrides: Partial<CreateResaleInputDto> =
     voucher: null,
     email: null,
     website: null,
+    nickname: null,
+    validityDate: null,
+    accessEmail: null,
+    accessPassword: null,
+    paymentDay: null,
+    bonus: null,
+    billingStartDay: null,
     ...overrides,
   };
 }

@@ -70,4 +70,35 @@ describe('CreateResale - Unit tests', () => {
     const entity = resaleRepository.save.mock.calls[0]?.[0];
     expect(entity?.props.profilePictureUrl).toBe('https://cdn.example.com/r/1/photo.png');
   });
+
+  it('should pass extended optional fields to the entity persisted by the repository', async() => {
+    await sut.execute(
+      makeCreateResaleInput({
+        nickname: 'Centro',
+        validityDate: '2026-09-01T00:00:00.000Z',
+        accessEmail: 'acc@loja.com',
+        accessPassword: 'pwd',
+        paymentDay: 5,
+        bonus: 10,
+        billingStartDay: 20,
+        servedByRoot: true,
+        manufacturerResale: false,
+        indicatorResale: true,
+        recurringResale: false,
+      }),
+    );
+
+    const entity = resaleRepository.save.mock.calls[0]?.[0];
+    expect(entity?.props.nickname).toBe('Centro');
+    expect(entity?.props.validityDate).toEqual(new Date('2026-09-01T00:00:00.000Z'));
+    expect(entity?.props.accessEmail).toBe('acc@loja.com');
+    expect(entity?.props.accessPassword).toBe('pwd');
+    expect(entity?.props.paymentDay).toBe(5);
+    expect(entity?.props.bonus).toBe(10);
+    expect(entity?.props.billingStartDay).toBe(20);
+    expect(entity?.props.servedByRoot).toBe(true);
+    expect(entity?.props.manufacturerResale).toBe(false);
+    expect(entity?.props.indicatorResale).toBe(true);
+    expect(entity?.props.recurringResale).toBe(false);
+  });
 });

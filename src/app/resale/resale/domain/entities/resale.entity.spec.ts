@@ -19,9 +19,18 @@ function makeResaleProps(overrides?: Partial<ResaleProps>): ResaleProps {
     voucher: null,
     email: null,
     website: null,
+    nickname: null,
+    validityDate: null,
+    accessEmail: null,
+    accessPassword: null,
+    paymentDay: null,
+    bonus: null,
+    billingStartDay: null,
     receivesSupportEmail: false,
-    servedByDpa: false,
-    manufacturerReseller: false,
+    servedByRoot: false,
+    manufacturerResale: false,
+    indicatorResale: false,
+    recurringResale: false,
     profilePictureUrl: null,
     ...overrides,
   };
@@ -104,7 +113,7 @@ describe('Resale', () => {
         identifier: 'RN-99',
         active: false,
         receivesSupportEmail: true,
-        manufacturerReseller: true,
+        manufacturerResale: true,
       });
       const resale = Resale._instantiate(props);
 
@@ -114,7 +123,37 @@ describe('Resale', () => {
         identifier: 'RN-99',
         active: false,
         receivesSupportEmail: true,
-        manufacturerReseller: true,
+        manufacturerResale: true,
+      });
+    });
+
+    it('should expose extended resale fields (nickname, validity, access, billing flags)', () => {
+      const validity = new Date('2026-08-15T12:00:00.000Z');
+      const props = makeResaleProps({
+        nickname: 'Central SP',
+        validityDate: validity,
+        accessEmail: 'painel@revenda.com',
+        accessPassword: 'stored-secret',
+        paymentDay: 12,
+        bonus: 300,
+        billingStartDay: 20,
+        servedByRoot: true,
+        indicatorResale: true,
+        recurringResale: false,
+      });
+      const resale = Resale._instantiate(props);
+
+      expect(resale.props).toMatchObject({
+        nickname: 'Central SP',
+        validityDate: validity,
+        accessEmail: 'painel@revenda.com',
+        accessPassword: 'stored-secret',
+        paymentDay: 12,
+        bonus: 300,
+        billingStartDay: 20,
+        servedByRoot: true,
+        indicatorResale: true,
+        recurringResale: false,
       });
     });
   });

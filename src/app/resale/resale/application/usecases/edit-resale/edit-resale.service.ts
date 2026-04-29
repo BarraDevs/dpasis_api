@@ -54,9 +54,21 @@ export class EditResale {
       voucher: data.voucher !== undefined ? data.voucher : resale.voucher,
       email: data.email !== undefined ? data.email : resale.email,
       website: data.website !== undefined ? data.website : resale.website,
+      nickname: data.nickname !== undefined ? data.nickname : resale.nickname,
+      validityDate:
+        data.validityDate !== undefined
+          ? (data.validityDate ? new Date(data.validityDate) : null)
+          : resale.validityDate,
+      accessEmail: data.accessEmail !== undefined ? data.accessEmail : resale.accessEmail,
+      accessPassword: data.accessPassword !== undefined ? data.accessPassword : resale.accessPassword,
+      paymentDay: data.paymentDay !== undefined ? data.paymentDay : resale.paymentDay,
+      bonus: data.bonus !== undefined ? data.bonus : resale.bonus,
+      billingStartDay: data.billingStartDay !== undefined ? data.billingStartDay : resale.billingStartDay,
       receivesSupportEmail: data.receivesSupportEmail ?? resale.receivesSupportEmail,
-      servedByDpa: data.servedByDpa ?? resale.servedByDpa,
-      manufacturerReseller: data.manufacturerReseller ?? resale.manufacturerReseller,
+      servedByRoot: data.servedByRoot ?? resale.servedByRoot,
+      manufacturerResale: data.manufacturerResale ?? resale.manufacturerResale,
+      indicatorResale: data.indicatorResale ?? resale.indicatorResale,
+      recurringResale: data.recurringResale ?? resale.recurringResale,
       profilePictureUrl,
       active: resale.active,
     });

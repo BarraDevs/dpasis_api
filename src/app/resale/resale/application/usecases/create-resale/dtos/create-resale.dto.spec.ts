@@ -154,14 +154,89 @@ describe('CreateResaleInputDto', () => {
     const data = {
       ...validBase(),
       receivesSupportEmail: true,
-      servedByDpa: false,
-      manufacturerReseller: true,
+      servedByRoot: false,
+      manufacturerResale: true,
+      indicatorResale: false,
+      recurringResale: true,
     };
 
     const result = await pipe.transform(data, bodyMetadata);
 
     expect(result.receivesSupportEmail).toBe(true);
-    expect(result.servedByDpa).toBe(false);
-    expect(result.manufacturerReseller).toBe(true);
+    expect(result.servedByRoot).toBe(false);
+    expect(result.manufacturerResale).toBe(true);
+    expect(result.indicatorResale).toBe(false);
+    expect(result.recurringResale).toBe(true);
+  });
+
+  it('should accept extended optional fields with valid shapes', async() => {
+    const data = {
+      ...validBase(),
+      nickname: 'Revenda Sul',
+      validityDate: '2026-07-01T12:00:00.000Z',
+      accessEmail: 'painel@example.com',
+      accessPassword: 'segredo',
+      paymentDay: 15,
+      bonus: 200,
+      billingStartDay: 10,
+    };
+
+    const result = await pipe.transform(data, bodyMetadata);
+
+    expect(result.nickname).toBe('Revenda Sul');
+    expect(result.validityDate).toBe('2026-07-01T12:00:00.000Z');
+    expect(result.accessEmail).toBe('painel@example.com');
+    expect(result.accessPassword).toBe('segredo');
+    expect(result.paymentDay).toBe(15);
+    expect(result.bonus).toBe(200);
+    expect(result.billingStartDay).toBe(10);
+  });
+
+  it('should coerce paymentDay and bonus from multipart strings', async() => {
+    const data = {
+      ...validBase(),
+      paymentDay: '8',
+      bonus: '0',
+      billingStartDay: '31',
+    };
+
+    const result = await pipe.transform(data, bodyMetadata);
+
+    expect(result.paymentDay).toBe(8);
+    expect(result.bonus).toBe(0);
+    expect(result.billingStartDay).toBe(31);
+  });
+
+  it('should reject nickname longer than 255 characters', async() => {
+    const data = { ...validBase(), nickname: 'x'.repeat(256) };
+
+    await expect(pipe.transform(data, bodyMetadata)).rejects.toBeDefined();
+  });
+
+  it('should reject invalid validityDate when provided', async() => {
+    const data = { ...validBase(), validityDate: 'not-a-date' };
+
+    await expect(pipe.transform(data, bodyMetadata)).rejects.toBeDefined();
+  });
+
+  it('should reject invalid accessEmail when provided', async() => {
+    const data = { ...validBase(), accessEmail: 'sem-arroba' };
+
+    await expect(pipe.transform(data, bodyMetadata)).rejects.toBeDefined();
+  });
+
+  it('should reject accessPassword longer than 8192 characters', async() => {
+    const data = { ...validBase(), accessPassword: 'p'.repeat(8193) };
+
+    await expect(pipe.transform(data, bodyMetadata)).rejects.toBeDefined();
+  });
+
+  it.each([
+    [0, 'billingStartDay below range'],
+    [32, 'billingStartDay above range'],
+  ])('should reject billingStartDay=%s (%s)', async(day) => {
+    const data = { ...validBase(), billingStartDay: day };
+
+    await expect(pipe.transform(data, bodyMetadata)).rejects.toBeDefined();
   });
 });

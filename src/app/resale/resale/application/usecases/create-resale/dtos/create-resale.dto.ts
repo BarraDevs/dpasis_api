@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsEmail, IsInt, IsNotEmpty, IsOptional, IsPositive, IsString, ValidateIf } from 'class-validator';
+import { IsBoolean, IsDateString, IsEmail, IsInt, IsNotEmpty, IsOptional, IsPositive, IsString, Max, MaxLength, Min, ValidateIf } from 'class-validator';
 import { StringToBoolean } from 'src/infra/validators/class/decorators/string-boolean/string-boolean';
 import { StringToNumber } from 'src/infra/validators/class/decorators/string-number/string-number';
 import { Trim } from 'src/infra/validators/class/decorators/trim/trim';
@@ -113,6 +113,57 @@ export class CreateResaleInputDto {
   @Trim()
   website: string | null;
 
+  @ApiPropertyOptional({ example: 'Revenda Centro' })
+  @IsOptional()
+  @IsString({ message: '$property deve ser uma string' })
+  @Trim()
+  @MaxLength(255, { message: '$property deve ter no máximo 255 caracteres' })
+  nickname?: string | null;
+
+  @ApiPropertyOptional({ example: '2026-04-01T03:00:00.000Z' })
+  @IsOptional()
+  @ValidateIf((o) => o.validityDate != null && o.validityDate !== '')
+  @IsDateString({}, { message: '$property deve ser uma data válida no formato ISO 8601' })
+  validityDate?: string | null;
+
+  @ApiPropertyOptional({ example: 'acesso@revenda.com' })
+  @IsOptional()
+  @ValidateIf((o) => o.accessEmail != null && o.accessEmail !== '')
+  @IsEmail({}, { message: '$property deve ser um e-mail válido' })
+  @IsString()
+  @Trim()
+  accessEmail?: string | null;
+
+  @ApiPropertyOptional({ example: '****' })
+  @IsOptional()
+  @IsString({ message: '$property deve ser uma string' })
+  @Trim()
+  @MaxLength(8192, { message: '$property deve ter no máximo 8192 caracteres' })
+  accessPassword?: string | null;
+
+  @ApiPropertyOptional({ example: 15 })
+  @IsOptional()
+  @ValidateIf((_o, v) => v != null && v !== '')
+  @IsInt({ message: '$property deve ser um número inteiro' })
+  @StringToNumber()
+  paymentDay?: number | null;
+
+  @ApiPropertyOptional({ example: 100 })
+  @IsOptional()
+  @ValidateIf((_o, v) => v != null && v !== '')
+  @IsInt({ message: '$property deve ser um número inteiro' })
+  @StringToNumber()
+  bonus?: number | null;
+
+  @ApiPropertyOptional({ example: 10, description: 'Dia do mês (1–31) para início da cobrança.' })
+  @IsOptional()
+  @ValidateIf((_o, v) => v != null && v !== '')
+  @IsInt({ message: '$property deve ser um número inteiro' })
+  @Min(1, { message: '$property deve ser no mínimo 1' })
+  @Max(31, { message: '$property deve ser no máximo 31' })
+  @StringToNumber()
+  billingStartDay?: number | null;
+
   @ApiPropertyOptional({ example: false })
   @IsOptional()
   @IsBoolean({ message: '$property deve ser um booleano' })
@@ -123,13 +174,25 @@ export class CreateResaleInputDto {
   @IsOptional()
   @IsBoolean({ message: '$property deve ser um booleano' })
   @StringToBoolean()
-  servedByDpa?: boolean;
+  servedByRoot?: boolean;
 
   @ApiPropertyOptional({ example: false })
   @IsOptional()
   @IsBoolean({ message: '$property deve ser um booleano' })
   @StringToBoolean()
-  manufacturerReseller?: boolean;
+  manufacturerResale?: boolean;
+
+  @ApiPropertyOptional({ example: false })
+  @IsOptional()
+  @IsBoolean({ message: '$property deve ser um booleano' })
+  @StringToBoolean()
+  indicatorResale?: boolean;
+
+  @ApiPropertyOptional({ example: false })
+  @IsOptional()
+  @IsBoolean({ message: '$property deve ser um booleano' })
+  @StringToBoolean()
+  recurringResale?: boolean;
 }
 
 export class CreateResaleOutputDto {

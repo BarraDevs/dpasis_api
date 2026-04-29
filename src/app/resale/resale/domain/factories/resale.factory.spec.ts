@@ -21,9 +21,18 @@ function makeResaleCreateProps(overrides?: Partial<ResaleCreateProps>): ResaleCr
     voucher: null,
     email: null,
     website: null,
+    nickname: null,
+    validityDate: null,
+    accessEmail: null,
+    accessPassword: null,
+    paymentDay: null,
+    bonus: null,
+    billingStartDay: null,
     receivesSupportEmail: false,
-    servedByDpa: false,
-    manufacturerReseller: false,
+    servedByRoot: false,
+    manufacturerResale: false,
+    indicatorResale: false,
+    recurringResale: false,
     profilePictureUrl: null,
     ...overrides,
   };
@@ -63,9 +72,18 @@ describe('ResaleFactory', () => {
         voucher: null,
         email: null,
         website: null,
+        nickname: null,
+        validityDate: null,
+        accessEmail: null,
+        accessPassword: null,
+        paymentDay: null,
+        bonus: null,
+        billingStartDay: null,
         receivesSupportEmail: false,
-        servedByDpa: false,
-        manufacturerReseller: false,
+        servedByRoot: false,
+        manufacturerResale: false,
+        indicatorResale: false,
+        recurringResale: false,
         profilePictureUrl: null,
       });
     });
@@ -106,6 +124,7 @@ describe('ResaleFactory', () => {
           email: '  ',
           website: ' ',
           ie: '   ',
+          nickname: ' ',
         }),
       );
 
@@ -115,6 +134,7 @@ describe('ResaleFactory', () => {
       expect(resale.props.email).toBeNull();
       expect(resale.props.website).toBeNull();
       expect(resale.props.ie).toBeNull();
+      expect(resale.props.nickname).toBeNull();
     });
 
     it('should accept a valid CPF document', () => {
@@ -129,14 +149,53 @@ describe('ResaleFactory', () => {
       const resale = ResaleFactory.create(
         makeResaleCreateProps({
           receivesSupportEmail: true,
-          servedByDpa: true,
-          manufacturerReseller: true,
+          servedByRoot: true,
+          manufacturerResale: true,
+          indicatorResale: true,
+          recurringResale: true,
         }),
       );
 
       expect(resale.props.receivesSupportEmail).toBe(true);
-      expect(resale.props.servedByDpa).toBe(true);
-      expect(resale.props.manufacturerReseller).toBe(true);
+      expect(resale.props.servedByRoot).toBe(true);
+      expect(resale.props.manufacturerResale).toBe(true);
+      expect(resale.props.indicatorResale).toBe(true);
+      expect(resale.props.recurringResale).toBe(true);
+    });
+
+    it('should map extended scalars on create (trim é responsabilidade do DTO)', () => {
+      const validity = new Date('2026-03-10T00:00:00.000Z');
+      const resale = ResaleFactory.create(
+        makeResaleCreateProps({
+          nickname: 'Apelido Centro',
+          validityDate: validity,
+          accessEmail: 'acesso@test.com',
+          accessPassword: 'senha',
+          paymentDay: 5,
+          bonus: 99,
+          billingStartDay: 28,
+        }),
+      );
+
+      expect(resale.props.nickname).toBe('Apelido Centro');
+      expect(resale.props.validityDate).toEqual(validity);
+      expect(resale.props.accessEmail).toBe('acesso@test.com');
+      expect(resale.props.accessPassword).toBe('senha');
+      expect(resale.props.paymentDay).toBe(5);
+      expect(resale.props.bonus).toBe(99);
+      expect(resale.props.billingStartDay).toBe(28);
+    });
+
+    it('should treat blank accessEmail and accessPassword as null', () => {
+      const resale = ResaleFactory.create(
+        makeResaleCreateProps({
+          accessEmail: '   ',
+          accessPassword: '\t',
+        }),
+      );
+
+      expect(resale.props.accessEmail).toBeNull();
+      expect(resale.props.accessPassword).toBeNull();
     });
   });
 
@@ -155,6 +214,28 @@ describe('ResaleFactory', () => {
       expect(resale.props.active).toBe(false);
       expect(resale.props.name).toBe('  Revenda Editada  ');
       expect(resale.props.document).toBe('28695096000179');
+    });
+
+    it('should preserve extended fields on edit', () => {
+      const validity = new Date('2027-01-01T00:00:00.000Z');
+      const resale = ResaleFactory.edit(
+        makeResaleProps({
+          id: 3,
+          nickname: 'Patch',
+          validityDate: validity,
+          paymentDay: 20,
+          billingStartDay: 7,
+          indicatorResale: true,
+          recurringResale: true,
+        }),
+      );
+
+      expect(resale.props.nickname).toBe('Patch');
+      expect(resale.props.validityDate).toEqual(validity);
+      expect(resale.props.paymentDay).toBe(20);
+      expect(resale.props.billingStartDay).toBe(7);
+      expect(resale.props.indicatorResale).toBe(true);
+      expect(resale.props.recurringResale).toBe(true);
     });
 
     it('should throw when document is invalid', () => {

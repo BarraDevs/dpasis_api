@@ -6,7 +6,7 @@ import { TOKENS } from 'src/core/di/token';
 import type { IAuditLogDao } from '../../application/persistence/dao/audit-log-dao.interface';
 
 const MUTATING_METHODS = ['POST', 'PATCH', 'PUT', 'DELETE'];
-const SENSITIVE_FIELDS = ['password', 'passwordHash', 'token', 'secret'];
+const SENSITIVE_FIELDS = ['password', 'passwordHash', 'token', 'secret', 'accessPassword'];
 
 @Injectable()
 export class AuditInterceptor implements NestInterceptor {

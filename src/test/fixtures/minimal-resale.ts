@@ -22,8 +22,10 @@ export function buildMinimalResaleData(id: number): Prisma.ResaleCreateInput {
     email: null,
     website: null,
     receivesSupportEmail: false,
-    servedByDpa: false,
-    manufacturerReseller: false,
+    servedByRoot: false,
+    manufacturerResale: false,
+    indicatorResale: false,
+    recurringResale: false,
     active: true,
   };
 }

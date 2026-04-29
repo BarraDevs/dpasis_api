@@ -58,6 +58,32 @@ describe('EditResale - Integration tests', () => {
     expect(row.document).toBe('09748165000110');
   });
 
+  it('should persist patches to extended optional fields', async() => {
+    const { id } = await createResale.execute(makeCreateResaleInput());
+
+    await sut.execute(id, {
+      nickname: 'Apelido novo',
+      validityDate: '2028-05-01T00:00:00.000Z',
+      accessEmail: 'novo@loja.com',
+      paymentDay: 12,
+      bonus: 5,
+      billingStartDay: 21,
+      indicatorResale: true,
+      recurringResale: true,
+    });
+
+    const row = await prisma.resale.findUniqueOrThrow({ where: { id } });
+
+    expect(row.nickname).toBe('Apelido novo');
+    expect(row.validityDate?.toISOString()).toBe('2028-05-01T00:00:00.000Z');
+    expect(row.accessEmail).toBe('novo@loja.com');
+    expect(row.paymentDay).toBe(12);
+    expect(row.bonus).toBe(5);
+    expect(row.billingStartDay).toBe(21);
+    expect(row.indicatorResale).toBe(true);
+    expect(row.recurringResale).toBe(true);
+  });
+
   it('should update document when not taken by another resale', async() => {
     const { id } = await createResale.execute(makeCreateResaleInput());
 
@@ -177,9 +203,18 @@ describe('EditResale - Integration tests', () => {
         voucher: null,
         email: null,
         website: null,
+        nickname: null,
+        validityDate: null,
+        accessEmail: null,
+        accessPassword: null,
+        paymentDay: null,
+        bonus: null,
+        billingStartDay: null,
         receivesSupportEmail: false,
-        servedByDpa: false,
-        manufacturerReseller: false,
+        servedByRoot: false,
+        manufacturerResale: false,
+        indicatorResale: false,
+        recurringResale: false,
         profilePictureUrl: oldUrl,
         active: true,
       },

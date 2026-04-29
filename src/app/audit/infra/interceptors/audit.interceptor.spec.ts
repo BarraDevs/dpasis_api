@@ -181,7 +181,12 @@ describe('AuditInterceptor - Unit tests', () => {
     it('should sanitize sensitive fields in body', (done) => {
       const ctx = buildContext({
         method: 'POST',
-        body: { email: 'test@example.com', password: 'secret123', token: 'abc' },
+        body: {
+          email: 'test@example.com',
+          password: 'secret123',
+          token: 'abc',
+          accessPassword: 'do-not-log',
+        },
       });
       const next = createMock<CallHandler>();
       next.handle.mockReturnValue(of({}));
@@ -190,7 +195,12 @@ describe('AuditInterceptor - Unit tests', () => {
         complete: () => {
           expect(auditLogDao.save).toHaveBeenCalledWith(
             expect.objectContaining({
-              body: { email: 'test@example.com', password: '****', token: '****' },
+              body: {
+                email: 'test@example.com',
+                password: '****',
+                token: '****',
+                accessPassword: '****',
+              },
             }),
           );
           done();

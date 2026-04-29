@@ -44,9 +44,18 @@ describe('ResaleDaoAdapterPrisma - Integration tests', () => {
       voucher: null,
       email: 'contato@test.com',
       website: null,
+      nickname: null,
+      validityDate: null,
+      accessEmail: null,
+      accessPassword: null,
+      paymentDay: null,
+      bonus: null,
+      billingStartDay: null,
       receivesSupportEmail: false,
-      servedByDpa: false,
-      manufacturerReseller: false,
+      servedByRoot: false,
+      manufacturerResale: false,
+      indicatorResale: false,
+      recurringResale: false,
       profilePictureUrl: null,
       active: true,
       ...overrides,
@@ -140,6 +149,47 @@ describe('ResaleDaoAdapterPrisma - Integration tests', () => {
       expect(rows[0].identifier).toBe('Codigo-XPTO');
     });
 
+    it('should search by nickname (case-insensitive)', async() => {
+      await prisma.resale.createMany({
+        data: [
+          resaleRow({ id: 1, nickname: 'Nick Cento' }),
+          resaleRow({
+            id: 2,
+            name: 'Outra loja',
+            document: '28695096000179',
+            nickname: 'Outro',
+          }),
+        ],
+      });
+
+      const [rows, total] = await sut.findAll({ search: 'Nick' });
+
+      expect(total).toBe(1);
+      expect(rows[0].nickname).toBe('Nick Cento');
+    });
+
+    it('should search by accessEmail (case-insensitive)', async() => {
+      await prisma.resale.createMany({
+        data: [
+          resaleRow({
+            id: 1,
+            accessEmail: 'acesso@alfa.com',
+          }),
+          resaleRow({
+            id: 2,
+            name: 'Beta',
+            document: '28695096000179',
+            accessEmail: 'outro@beta.com',
+          }),
+        ],
+      });
+
+      const [rows, total] = await sut.findAll({ search: 'alfa.com' });
+
+      expect(total).toBe(1);
+      expect(rows[0].accessEmail).toBe('acesso@alfa.com');
+    });
+
     it('should paginate and order by id asc', async() => {
       await prisma.resale.createMany({
         data: [3, 1, 2].map((id) =>
@@ -168,16 +218,35 @@ describe('ResaleDaoAdapterPrisma - Integration tests', () => {
       expect(result).toBeNull();
     });
 
-    it('should return resale by id', async() => {
-      await prisma.resale.create({ data: resaleRow() });
+    it('should return resale by id including extended columns', async() => {
+      const validity = new Date('2026-02-01T00:00:00.000Z');
+      await prisma.resale.create({
+        data: resaleRow({
+          nickname: 'Nick DAO',
+          validityDate: validity,
+          accessEmail: 'dao@test.com',
+          accessPassword: 'secret-dao',
+          paymentDay: 3,
+          bonus: 100,
+          billingStartDay: 17,
+          indicatorResale: true,
+          recurringResale: false,
+        }),
+      });
 
       const result = await sut.findById(1);
 
       expect(result).not.toBeNull();
+      expect(result?.validityDate?.toISOString()).toBe(validity.toISOString());
       expect(result).toMatchObject({
-        id: 1,
-        name: 'Revenda Teste',
-        document: '09748165000110',
+        nickname: 'Nick DAO',
+        accessEmail: 'dao@test.com',
+        accessPassword: 'secret-dao',
+        paymentDay: 3,
+        bonus: 100,
+        billingStartDay: 17,
+        indicatorResale: true,
+        recurringResale: false,
       });
     });
   });

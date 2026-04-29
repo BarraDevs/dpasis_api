@@ -56,11 +56,40 @@ describe('EditResaleInputDto', () => {
 
   it('should coerce boolean strings for flags', async() => {
     const result = await pipe.transform(
-      { receivesSupportEmail: 'true', servedByDpa: 'false' },
+      { receivesSupportEmail: 'true', servedByRoot: 'false' },
       bodyMetadata,
     );
 
     expect(result.receivesSupportEmail).toBe(true);
-    expect(result.servedByDpa).toBe(false);
+    expect(result.servedByRoot).toBe(false);
+  });
+
+  it('should accept patch for extended resale fields', async() => {
+    const result = await pipe.transform(
+      {
+        nickname: ' Novo apelido ',
+        validityDate: '2026-12-01T00:00:00.000Z',
+        accessEmail: 'novo@revenda.com',
+        paymentDay: '3',
+        billingStartDay: '15',
+        indicatorResale: 'true',
+        recurringResale: 'false',
+      },
+      bodyMetadata,
+    );
+
+    expect(result.nickname).toBe('Novo apelido');
+    expect(result.validityDate).toBe('2026-12-01T00:00:00.000Z');
+    expect(result.accessEmail).toBe('novo@revenda.com');
+    expect(result.paymentDay).toBe(3);
+    expect(result.billingStartDay).toBe(15);
+    expect(result.indicatorResale).toBe(true);
+    expect(result.recurringResale).toBe(false);
+  });
+
+  it('should reject invalid billingStartDay on patch', async() => {
+    await expect(
+      pipe.transform({ billingStartDay: 0 }, bodyMetadata),
+    ).rejects.toBeDefined();
   });
 });
