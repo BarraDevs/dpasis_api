@@ -29,6 +29,7 @@ Esta pasta concentra a **memória arquitetural** do projeto para uso por agentes
     ├── prisma-conventions/SKILL.md
     ├── naming-conventions/SKILL.md
     ├── queue-bullmq/SKILL.md
+    ├── audit-flow/SKILL.md
     └── adding-new-feature/SKILL.md
 ```
 
@@ -76,6 +77,7 @@ Para forçar carregamento explícito numa nova sessão, abra com:
 | Schema Prisma e migrations | `skills/prisma-conventions/SKILL.md` |
 | Regras absolutas | `rules/RULES.md` (11 regras) |
 | Filas com BullMQ | `skills/queue-bullmq/SKILL.md` |
+| Fluxo de auditoria (interceptor + audit_logs) | `skills/audit-flow/SKILL.md` |
 
 ### 4) Para revisão de código (PR review)
 
@@ -131,7 +133,7 @@ Para edições pontuais, prefira atualizar a(s) skill(s) específica(s) afetadas
 | Tokens DI | `src/core/di/token.ts` | `dependency-injection` |
 | AppException | `src/core/filters/app.exception.ts` | `error-handling` |
 | HttpExceptionFilter | `src/core/filters/http-exception/http-exception.filter.ts` | `error-handling` |
-| AuditInterceptor | `src/app/audit/infra/interceptors/audit.interceptor.ts` | `architecture-overview` |
+| AuditInterceptor | `src/app/audit/infra/interceptors/audit.interceptor.ts` | `audit-flow` |
 | PrismaService | `src/infra/database/prisma/prisma.service.ts` | `prisma-conventions` |
 | ValidationPipe config | `src/infra/validators/class/config.ts` | `dto-and-validation` |
 | @Swagger decorator | `src/infra/openapi/swagger.ts` | `controllers-and-swagger` |
