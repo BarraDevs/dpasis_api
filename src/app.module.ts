@@ -10,6 +10,7 @@ import { GlobalModule } from './app/global/global.module';
 import { ResaleModuleModule } from './app/resale/resale-module.module';
 import { ServiceModuleModule } from './app/service/service-module.module';
 import { UploadFileModule } from './app/upload-file/upload-file.module';
+import { VoucherModule } from './app/voucher/voucher.module';
 import { CoreModule } from './core/core.module';
 import { InfraModule } from './infra/infra.module';
 
@@ -28,6 +29,7 @@ import { InfraModule } from './infra/infra.module';
     GlobalModule,
     ServiceModuleModule,
     UploadFileModule,
+    VoucherModule,
   ],
 })
 export class AppModule {}

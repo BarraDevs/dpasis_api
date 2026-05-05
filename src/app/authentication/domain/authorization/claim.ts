@@ -136,6 +136,9 @@ export const Claim = {
 
   SERVICE_CATALOG_READ: { subject: ClaimSubject.ServiceCatalog, action: ClaimAction.Read },
   SERVICE_CATALOG_WRITE: { subject: ClaimSubject.ServiceCatalog, action: ClaimAction.Write },
+
+  VOUCHER_READ: { subject: ClaimSubject.Voucher, action: ClaimAction.Read },
+  VOUCHER_WRITE: { subject: ClaimSubject.Voucher, action: ClaimAction.Write },
 } as const;
 
 // Define o tipo ClaimValue como qualquer um dos valores presentes no objeto Claim.

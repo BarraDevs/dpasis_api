@@ -34,6 +34,7 @@ export enum ClaimSubject {
   ResaleDepartment = 'resale-department',
   ServiceAttendanceValue = 'service-attendance-value',
   ServiceCatalog = 'service-catalog',
+  Voucher = 'voucher',
   Warranty = 'warranty',
 }
 
@@ -73,5 +74,6 @@ export const CLAIM_SUBJECT_LABELS: Record<ClaimSubject, string> = {
   [ClaimSubject.ResaleDepartment]: 'Departamentos de revenda',
   [ClaimSubject.ServiceAttendanceValue]: 'Valores de atendimento',
   [ClaimSubject.ServiceCatalog]: 'Catálogo de serviços',
+  [ClaimSubject.Voucher]: 'Vouchers de revenda',
   [ClaimSubject.Warranty]: 'Garantias',
 };

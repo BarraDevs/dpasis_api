@@ -23,8 +23,8 @@ model Resale {
   bonus                  Int?
   billingStartDay        Int?
   receivesSupportEmail   Boolean   @default(false)
-  servedByRoot           Boolean   @default(false) @map("served_by_dpa")
-  manufacturerResale     Boolean   @default(false) @map("manufacturer_reseller")
+  servedByRoot           Boolean   @default(false)
+  manufacturerResale     Boolean   @default(false)
   indicatorResale        Boolean   @default(false)
   recurringResale        Boolean   @default(false)
   profilePictureUrl      String?   @db.Text
