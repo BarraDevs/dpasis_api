@@ -2,7 +2,7 @@ import { Test } from '@nestjs/testing';
 import { ResaleModule } from 'src/app/resale/resale/resale.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { ResaleNotFoundError } from '../../../domain/errors/resale-not-found.error';
-import { makeCreateResaleInput, resetResaleIntegrationState } from '../resale-integration-test.helper';
+import { makeCreateResaleInput, resetResaleIntegrationState } from 'src/test/fixtures/minimal-resale';
 import { CreateResale } from '../create-resale/create-resale.service';
 import { DeactivateResale } from './deactivate-resale.service';
 

@@ -2,7 +2,7 @@ import { Test } from '@nestjs/testing';
 import { UploadSingle } from 'src/app/upload-file/application/usecases/upload-single/upload-single.service';
 import { TOKENS } from 'src/core/di/token';
 import { CreateResale } from './create-resale.service';
-import { makeCreateResaleInput } from '../resale-integration-test.helper';
+import { makeCreateResaleInput } from 'src/test/fixtures/minimal-resale';
 
 describe('CreateResale - Unit tests', () => {
   let sut: CreateResale;

@@ -1,7 +1,7 @@
 import { Test } from '@nestjs/testing';
 import { ResaleModule } from 'src/app/resale/resale/resale.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
-import { resetResaleIntegrationState } from '../resale-integration-test.helper';
+import { resetResaleIntegrationState } from 'src/test/fixtures/minimal-resale';
 import { GetResaleSequence } from './get-resale-sequence.service';
 
 describe('GetResaleSequence - Integration tests', () => {

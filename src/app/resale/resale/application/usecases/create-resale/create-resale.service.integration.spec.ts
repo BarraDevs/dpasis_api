@@ -4,7 +4,7 @@ import { ResaleModule } from 'src/app/resale/resale/resale.module';
 import { DocumentAlreadyTakenError } from 'src/shared/errors/document-already-taken';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { ResaleIdAlreadyTakenError } from '../../../domain/errors/resale-id-already-taken.error';
-import { makeCreateResaleInput, resetResaleIntegrationState } from '../resale-integration-test.helper';
+import { makeCreateResaleInput, resetResaleIntegrationState } from 'src/test/fixtures/minimal-resale';
 import { CreateResale } from './create-resale.service';
 
 describe('CreateResale - Integration tests', () => {

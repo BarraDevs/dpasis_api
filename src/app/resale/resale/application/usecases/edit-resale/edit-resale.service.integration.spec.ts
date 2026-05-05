@@ -7,7 +7,7 @@ import { DocumentAlreadyTakenError } from 'src/shared/errors/document-already-ta
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { JobName } from 'src/infra/queue/enums/job-name.enum';
 import { ResaleNotFoundError } from '../../../domain/errors/resale-not-found.error';
-import { makeCreateResaleInput, resetResaleIntegrationState } from '../resale-integration-test.helper';
+import { makeCreateResaleInput, resetResaleIntegrationState } from 'src/test/fixtures/minimal-resale';
 import { CreateResale } from '../create-resale/create-resale.service';
 import { EditResale } from './edit-resale.service';
 import { EditResaleInputDto } from './dtos/edit-resale.dto';

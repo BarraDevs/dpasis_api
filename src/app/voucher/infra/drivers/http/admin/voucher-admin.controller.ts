@@ -1,28 +1,28 @@
-import { Controller, Post } from '@nestjs/common';
+import { Body, Controller, Post } from '@nestjs/common';
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
 import { Claim } from 'src/app/authentication/domain/authorization/claim';
 import { RequiredClaims } from 'src/app/authentication/infra/decorators/required-claims.decorator';
 import { RequiredRoles } from 'src/app/authentication/infra/decorators/required-role.decorator';
-import { GenerateManufacturerVouchers } from 'src/app/voucher/application/usecases/generate-manufacturer-vouchers/generate-manufacturer-vouchers.service';
-import { GenerateManufacturerVouchersOutputDto } from 'src/app/voucher/application/usecases/generate-manufacturer-vouchers/dtos/generate-manufacturer-vouchers.dto';
+import { GenerateVoucherInputDto, GenerateVoucherOutputDto } from 'src/app/voucher/application/usecases/generate-voucher/dtos/generate-voucher.dto';
+import { GenerateVoucher } from 'src/app/voucher/application/usecases/generate-voucher/generate-voucher.service';
 import { Swagger } from 'src/infra/openapi/swagger';
 
 @Controller('admin/voucher')
 @RequiredRoles(AccountRole.ADMIN)
 export class VoucherAdminController {
   constructor(
-    private readonly generateManufacturerVouchers: GenerateManufacturerVouchers,
+    private readonly generateVoucher: GenerateVoucher,
   ) {}
 
-  @Post('generate')
+  @Post('generate-by-id')
   @RequiredClaims(Claim.VOUCHER_WRITE)
   @Swagger({
     tags: ['Vouchers'],
-    summary: 'Gerar vouchers para todas as revendas indicadoras ativas',
+    summary: 'Calcular voucher a partir do id (sequence)',
     applyBadRequest: true,
-    createdResponse: GenerateManufacturerVouchersOutputDto,
+    okResponse: GenerateVoucherOutputDto,
   })
-  public generate(): Promise<GenerateManufacturerVouchersOutputDto> {
-    return this.generateManufacturerVouchers.execute();
+  public generateById(@Body() body: GenerateVoucherInputDto): Promise<GenerateVoucherOutputDto> {
+    return this.generateVoucher.execute(body);
   }
 }

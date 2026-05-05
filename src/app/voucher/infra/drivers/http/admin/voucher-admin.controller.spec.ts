@@ -1,13 +1,13 @@
 import { createMock } from '@golevelup/ts-jest';
 import { Test } from '@nestjs/testing';
 import { AuthenticationGuardsModule } from 'src/app/authentication/application/guards/guards.module';
-import { GenerateManufacturerVouchers } from 'src/app/voucher/application/usecases/generate-manufacturer-vouchers/generate-manufacturer-vouchers.service';
-import { GenerateManufacturerVouchersOutputDto } from 'src/app/voucher/application/usecases/generate-manufacturer-vouchers/dtos/generate-manufacturer-vouchers.dto';
+import { GenerateVoucherInputDto } from 'src/app/voucher/application/usecases/generate-voucher/dtos/generate-voucher.dto';
+import { GenerateVoucher } from 'src/app/voucher/application/usecases/generate-voucher/generate-voucher.service';
 import { VoucherAdminController } from './voucher-admin.controller';
 
 describe('VoucherAdminController - Unit tests', () => {
   let sut: VoucherAdminController;
-  let generateManufacturerVouchers: GenerateManufacturerVouchers;
+  let generateVoucher: GenerateVoucher;
 
   beforeEach(async() => {
     const module = await Test.createTestingModule({
@@ -15,40 +15,34 @@ describe('VoucherAdminController - Unit tests', () => {
       controllers: [VoucherAdminController],
       providers: [
         {
-          provide: GenerateManufacturerVouchers,
-          useValue: createMock<GenerateManufacturerVouchers>(),
+          provide: GenerateVoucher,
+          useValue: createMock<GenerateVoucher>(),
         },
       ],
     }).compile();
 
     sut = module.get(VoucherAdminController);
-    generateManufacturerVouchers = module.get(GenerateManufacturerVouchers);
+    generateVoucher = module.get(GenerateVoucher);
   });
 
   it('should be defined', () => {
     expect(sut).toBeDefined();
   });
 
-  describe('generate', () => {
-    it('should call generateManufacturerVouchers.execute and return its result', async() => {
+  describe('generateById', () => {
+    it('should call generateVoucher.execute with body and return its result', async() => {
       // Arrange
-      const output: GenerateManufacturerVouchersOutputDto = {
-        generated: 2,
-        skipped: 1,
-        year: 2026,
-        message: '2 vouchers gerados com sucesso.',
-      };
-      const executeSpy = jest
-        .spyOn(generateManufacturerVouchers, 'execute')
-        .mockResolvedValue(output);
+      const body: GenerateVoucherInputDto = { id: 42 };
+      const output = { voucher: 'ABC123', year: 2026 };
+      const executeSpy = jest.spyOn(generateVoucher, 'execute').mockResolvedValue(output);
 
       // Act
-      const result = await sut.generate();
+      const result = await sut.generateById(body);
 
       // Assert
       expect(result).toEqual(output);
       expect(executeSpy).toHaveBeenCalledTimes(1);
-      expect(executeSpy).toHaveBeenCalledWith();
+      expect(executeSpy).toHaveBeenCalledWith(body);
     });
   });
 });
