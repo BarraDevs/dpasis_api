@@ -10,7 +10,8 @@ Esta pasta concentra a **memória arquitetural** do projeto para uso por agentes
 ├── context.md                      # Passaporte arquitetural (resumo)
 ├── commands/
 │   ├── nova-feature.md             # /nova-feature — pipeline completo de implementação
-│   └── feature-checklist.md        # /feature-checklist — apenas a regra de checklist (RULES.md)
+│   ├── feature-checklist.md        # /feature-checklist — apenas a regra de checklist (RULES.md)
+│   └── qa-tdd.md                   # /qa-tdd — TDD (red-green-refactor) + qa-test-generator
 ├── rules/
 │   └── RULES.md                    # 11 regras arquiteturais ABSOLUTAS
 └── skills/
@@ -26,6 +27,7 @@ Esta pasta concentra a **memória arquitetural** do projeto para uso por agentes
     ├── authentication-and-authorization/SKILL.md
     ├── controllers-and-swagger/SKILL.md
     ├── testing-strategy/SKILL.md
+    ├── qa-test-generator/SKILL.md
     ├── gateway-adapters/SKILL.md
     ├── prisma-conventions/SKILL.md
     ├── naming-conventions/SKILL.md
@@ -73,6 +75,7 @@ Para forçar carregamento explícito numa nova sessão, abra com:
 | Como modelar entidade rica | `skills/domain-modeling/SKILL.md` |
 | Como proteger uma rota | `skills/authentication-and-authorization/SKILL.md` |
 | Como fazer testes | `skills/testing-strategy/SKILL.md` |
+| TDD + QA (matriz, RED/GREEN, padrões do repo) | Comando `/qa-tdd` + `skills/qa-test-generator/SKILL.md` |
 | Como integrar serviço externo (S3, Redis, ViaCEP) | `skills/gateway-adapters/SKILL.md` |
 | Convenções de nome | `skills/naming-conventions/SKILL.md` |
 | Schema Prisma e migrations | `skills/prisma-conventions/SKILL.md` |
@@ -80,7 +83,17 @@ Para forçar carregamento explícito numa nova sessão, abra com:
 | Filas com BullMQ | `skills/queue-bullmq/SKILL.md` |
 | Fluxo de auditoria (interceptor + audit_logs) | `skills/audit-flow/SKILL.md` |
 
-### 4) Slash command apenas checklist (`/feature-checklist`)
+### 4) Slash command TDD + QA (`/qa-tdd`)
+
+Para **gerar ou estender testes** com **ciclo TDD** (RED → GREEN → REFACTOR, evidência de falha) **e** o fluxo de **QA sênior** do repositório (matriz de cenários, padrões `testing-strategy`, co-locação):
+
+```
+/qa-tdd
+```
+
+Definição em `.cursor/commands/qa-tdd.md`. Carrega `.cursor/skills/qa-test-generator/SKILL.md` + `testing-strategy`; se a skill **test-driven-development** (ex.: Superpowers) estiver instalada, o agente deve lê-la também. Resolve o conflito “matriz primeiro vs um teste por vez” tratando a matriz como **backlog** e cada item como incremento TDD.
+
+### 5) Slash command apenas checklist (`/feature-checklist`)
 
 Para **revisar** um PR ou **validar** o que falta contra o checklist oficial de feature — sem formulário nem plano do `/nova-feature`:
 
@@ -90,7 +103,7 @@ Para **revisar** um PR ou **validar** o que falta contra o checklist oficial de 
 
 Definição em `.cursor/commands/feature-checklist.md`. O agente deve ler **`rules/RULES.md`** e usar a seção **«Checklist para Nova Funcionalidade»** ou, como fallback estável, a **última `## Rule …` antes de `## Referências`** (o número da rule pode mudar).
 
-### 5) Para revisão de código (PR review)
+### 6) Para revisão de código (PR review)
 
 Use esse **checklist da última Rule** em `rules/RULES.md` como guia de revisão para features novas. Cobre arquitetura, persistência, autorização, testes e build.
 
