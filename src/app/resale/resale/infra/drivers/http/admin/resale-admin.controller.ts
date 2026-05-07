@@ -48,7 +48,7 @@ import { UploadSingleInputDto } from 'src/app/upload-file/application/usecases/u
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
 import { Swagger } from 'src/infra/openapi/swagger';
 import { getThrottleHalfLimit } from 'src/infra/throttle/throttle.runtime';
-import { ParamsHexId } from 'src/infra/validators/class/dtos/params/params-hex-id.dto';
+import { ParamsHexId } from 'src/infra/validators/class/dtos/params';
 import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
 
 @Controller('admin/resale')

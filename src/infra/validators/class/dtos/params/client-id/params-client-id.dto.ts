@@ -1,5 +1,5 @@
 import { IsInt, IsNotEmpty, IsNumber, IsPositive } from 'class-validator';
-import { StringToNumber } from '../../decorators/string-number/string-number';
+import { StringToNumber } from '../../../decorators/string-number/string-number';
 
 export class ParamsClientId {
   @IsNotEmpty({ message: '$property é obrigatório' })

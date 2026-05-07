@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
-import { IsUnsigned32HexString } from '../../decorators/unsigned-32-hex-string/is-unsigned-32-hex-string';
-import { Trim } from '../../decorators/trim/trim';
+import { IsUnsigned32HexString } from '../../../decorators/unsigned-32-hex-string/is-unsigned-32-hex-string';
+import { Trim } from '../../../decorators/trim/trim';
 
 export class ParamsHexId {
   @ApiProperty({
