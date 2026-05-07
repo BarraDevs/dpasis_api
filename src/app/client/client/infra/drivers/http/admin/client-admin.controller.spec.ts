@@ -19,6 +19,8 @@ import { LinkClientAttendanceAndMaintenanceInputDto } from 'src/app/client/clien
 import { LinkClientAttendanceAndMaintenance } from 'src/app/client/client/application/usecases/link-client-attendance-and-maintenance/link-client-attendance-and-maintenance.service';
 import { LookupClientDocumentAndCnpjInputDto, LookupClientDocumentAndCnpjOutputDto } from 'src/app/client/client/application/usecases/lookup-client-document-and-cnpj/dtos/lookup-client-document-and-cnpj.dto';
 import { LookupClientDocumentAndCnpj } from 'src/app/client/client/application/usecases/lookup-client-document-and-cnpj/lookup-client-document-and-cnpj.service';
+import { SearchClientInputDto } from 'src/app/client/client/application/usecases/search-client/dtos/search-client.dto';
+import { SearchClient } from 'src/app/client/client/application/usecases/search-client/search-client.service';
 import { SetClientParentInputDto } from 'src/app/client/client/application/usecases/set-client-parent/dtos/set-client-parent.dto';
 import { SetClientParent } from 'src/app/client/client/application/usecases/set-client-parent/set-client-parent.service';
 import { SetClientNextIdInputDto } from 'src/app/client/client/application/usecases/set-client-next-id/dtos/set-client-next-id.dto';
@@ -42,6 +44,7 @@ describe('ClientAdminController - Unit tests', () => {
   let linkClientAttendanceAndMaintenanceService: LinkClientAttendanceAndMaintenance;
   let setClientNextIdService: SetClientNextId;
   let lookupClientDocumentAndCnpjService: LookupClientDocumentAndCnpj;
+  let searchClientService: SearchClient;
 
   beforeEach(async() => {
     const module = await Test.createTestingModule({
@@ -60,6 +63,7 @@ describe('ClientAdminController - Unit tests', () => {
         { provide: LinkClientAttendanceAndMaintenance, useValue: createMock<LinkClientAttendanceAndMaintenance>() },
         { provide: SetClientNextId, useValue: createMock<SetClientNextId>() },
         { provide: LookupClientDocumentAndCnpj, useValue: createMock<LookupClientDocumentAndCnpj>() },
+        { provide: SearchClient, useValue: createMock<SearchClient>() },
       ],
     }).compile();
 
@@ -76,6 +80,7 @@ describe('ClientAdminController - Unit tests', () => {
     linkClientAttendanceAndMaintenanceService = module.get(LinkClientAttendanceAndMaintenance);
     setClientNextIdService = module.get(SetClientNextId);
     lookupClientDocumentAndCnpjService = module.get(LookupClientDocumentAndCnpj);
+    searchClientService = module.get(SearchClient);
   });
 
   it('should be defined', () => {
@@ -146,6 +151,19 @@ describe('ClientAdminController - Unit tests', () => {
       const executeSpy = jest.spyOn(lookupClientDocumentAndCnpjService, 'execute').mockResolvedValue(output);
 
       const result = await sut.lookupDocumentAndCnpj(body);
+
+      expect(result).toEqual(output);
+      expect(executeSpy).toHaveBeenCalledWith(body);
+    });
+  });
+
+  describe('search', () => {
+    it('should call searchClient.execute with body', async() => {
+      const body = createMock<SearchClientInputDto>();
+      const output = createMock<IPagination<ClientDto>>();
+      const executeSpy = jest.spyOn(searchClientService, 'execute').mockResolvedValue(output);
+
+      const result = await sut.search(body);
 
       expect(result).toEqual(output);
       expect(executeSpy).toHaveBeenCalledWith(body);

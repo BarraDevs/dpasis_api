@@ -1,8 +1,14 @@
-import { Module } from '@nestjs/common';
+import { Module, Provider } from '@nestjs/common';
+import { PrismaFilterCompilerService } from './filter-compiler/prisma-filter-compiler.service';
 import { PrismaService } from './prisma.service';
 
+const providers: Provider[] = [
+  PrismaService,
+  PrismaFilterCompilerService,
+];
+
 @Module({
-  providers: [PrismaService],
-  exports: [PrismaService],
+  providers: [...providers],
+  exports: [...providers],
 })
 export class PrismaModule {}

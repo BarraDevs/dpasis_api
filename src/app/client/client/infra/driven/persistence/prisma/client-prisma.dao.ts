@@ -3,7 +3,9 @@ import { Prisma } from '@prisma/client';
 import { ClientDto } from 'src/app/client/client/application/dtos/client.dto';
 import { IClientDao } from 'src/app/client/client/application/persistence/dao/client-dao.interface';
 import { FindAllClientQueryDto } from 'src/app/client/client/application/usecases/find-all-client/dtos/find-all-client.dto';
+import { SearchClientInputDto } from 'src/app/client/client/application/usecases/search-client/dtos/search-client.dto';
 import { FindSubClientsQueryDto } from 'src/app/client/client/application/usecases/find-sub-clients/dtos/find-sub-clients.dto';
+import { PrismaFilterCompilerService } from 'src/infra/database/prisma/filter-compiler/prisma-filter-compiler.service';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 
 const ClientSelect = {
@@ -46,7 +48,10 @@ const ClientSelect = {
 
 @Injectable()
 export class ClientDaoAdapterPrisma implements IClientDao {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly prismaFilterCompiler: PrismaFilterCompilerService,
+  ) {}
 
   public async findAll(queries: FindAllClientQueryDto): Promise<[ClientDto[], number]> {
     const pagination = this.prisma.paginationFactory(queries.page, queries.size);
@@ -72,6 +77,28 @@ export class ClientDaoAdapterPrisma implements IClientDao {
       conditions.push({ isSubClient: queries.isSubClient });
     }
 
+    const where: Prisma.ClientWhereInput = conditions.length > 0 ? { AND: conditions } : {};
+
+    return this.prisma.$transaction([
+      this.prisma.client.findMany({
+        where,
+        take: pagination.take,
+        skip: pagination.skip,
+        select: ClientSelect,
+        orderBy: { id: 'asc' },
+      }),
+      this.prisma.client.count({ where }),
+    ]);
+  }
+
+  public async search(input: SearchClientInputDto): Promise<[ClientDto[], number]> {
+    const pagination = this.prisma.paginationFactory(input.page, input.size);
+    const filterPlain =
+      input.filter != null
+        ? (JSON.parse(JSON.stringify(input.filter)) as Record<string, unknown>)
+        : undefined;
+    const filterConditions = this.prismaFilterCompiler.compileWhereFragments<Prisma.ClientWhereInput>(filterPlain);
+    const conditions: Prisma.ClientWhereInput[] = [...filterConditions];
     const where: Prisma.ClientWhereInput = conditions.length > 0 ? { AND: conditions } : {};
 
     return this.prisma.$transaction([

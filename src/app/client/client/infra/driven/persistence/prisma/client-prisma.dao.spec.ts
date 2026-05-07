@@ -3,7 +3,9 @@ import { Test } from '@nestjs/testing';
 import { ClientDto } from 'src/app/client/client/application/dtos/client.dto';
 import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
 import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum';
+import { SearchClientInputDto } from 'src/app/client/client/application/usecases/search-client/dtos/search-client.dto';
 import { ConfigModule } from 'src/core/config/config.module';
+import { PrismaFilterCompilerService } from 'src/infra/database/prisma/filter-compiler/prisma-filter-compiler.service';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { ClientDaoAdapterPrisma } from './client-prisma.dao';
 
@@ -14,7 +16,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
   beforeAll(async() => {
     const module = await Test.createTestingModule({
       imports: [ConfigModule],
-      providers: [ClientDaoAdapterPrisma, PrismaService],
+      providers: [ClientDaoAdapterPrisma, PrismaService, PrismaFilterCompilerService],
     }).compile();
 
     sut = module.get(ClientDaoAdapterPrisma);
@@ -1210,4 +1212,296 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
       expect(count).toBe(2);
     });
   });
+
+  describe('search', () => {
+    it('should return all clients when filter is empty', async() => {
+      const { group, resale } = await createClientGroupAndResale();
+      await prisma.client.create({
+        data: {
+          id: 9001,
+          type: ClientType.PJ,
+          document: '09748165000110',
+          groupId: group.id,
+          resaleId: resale.id,
+          companyName: 'Busca Vazia',
+          headquarters: 'SP',
+          invoiceType: ClientInvoiceType.CONTRACT,
+          generateInvoice: true,
+          active: true,
+        },
+      });
+
+      const input: SearchClientInputDto = { filter: {} };
+      const [clients, total] = await sut.search(input);
+
+      expect(total).toBe(1);
+      expect(clients).toHaveLength(1);
+      expect(clients[0].id).toBe(9001);
+    });
+
+    it('should filter by groupId in and active eq (AND)', async() => {
+      const { group, resale } = await createClientGroupAndResale();
+      const g2 = await prisma.clientGroup.create({ data: { name: `G2-${Date.now()}`, active: true } });
+      await prisma.client.createMany({
+        data: [
+          {
+            id: 9101,
+            type: ClientType.PJ,
+            document: '09748165000111',
+            groupId: group.id,
+            resaleId: resale.id,
+            companyName: 'A',
+            headquarters: 'SP',
+            invoiceType: ClientInvoiceType.CONTRACT,
+            generateInvoice: true,
+            active: true,
+          },
+          {
+            id: 9102,
+            type: ClientType.PJ,
+            document: '09748165000112',
+            groupId: g2.id,
+            resaleId: resale.id,
+            companyName: 'B',
+            headquarters: 'SP',
+            invoiceType: ClientInvoiceType.CONTRACT,
+            generateInvoice: true,
+            active: false,
+          },
+        ],
+      });
+
+      const input: SearchClientInputDto = { filter: { groupId: { in: [group.id] }, active: { eq: true } } };
+      const [clients, total] = await sut.search(input);
+
+      expect(total).toBe(1);
+      expect(clients[0].id).toBe(9101);
+    });
+
+    it('should filter fantasyName isNull', async() => {
+      const { group, resale } = await createClientGroupAndResale();
+      await prisma.client.createMany({
+        data: [
+          {
+            id: 9201,
+            type: ClientType.PJ,
+            document: '09748165000120',
+            groupId: group.id,
+            resaleId: resale.id,
+            companyName: 'Sem fantasia',
+            fantasyName: null,
+            headquarters: 'SP',
+            invoiceType: ClientInvoiceType.CONTRACT,
+            generateInvoice: true,
+            active: true,
+          },
+          {
+            id: 9202,
+            type: ClientType.PJ,
+            document: '09748165000121',
+            groupId: group.id,
+            resaleId: resale.id,
+            companyName: 'Com fantasia',
+            fantasyName: 'Fan',
+            headquarters: 'SP',
+            invoiceType: ClientInvoiceType.CONTRACT,
+            generateInvoice: true,
+            active: true,
+          },
+        ],
+      });
+
+      const input: SearchClientInputDto = { filter: { fantasyName: { isNull: true } } };
+      const [clients, total] = await sut.search(input);
+
+      expect(total).toBe(1);
+      expect(clients[0].id).toBe(9201);
+    });
+
+    it('should filter companyName contains case-insensitive', async() => {
+      const { group, resale } = await createClientGroupAndResale();
+      await prisma.client.createMany({
+        data: [
+          {
+            id: 9301,
+            type: ClientType.PJ,
+            document: '09748165000130',
+            groupId: group.id,
+            resaleId: resale.id,
+            companyName: 'ACME Brasil',
+            headquarters: 'SP',
+            invoiceType: ClientInvoiceType.CONTRACT,
+            generateInvoice: true,
+            active: true,
+          },
+          {
+            id: 9302,
+            type: ClientType.PJ,
+            document: '09748165000131',
+            groupId: group.id,
+            resaleId: resale.id,
+            companyName: 'Outra',
+            headquarters: 'SP',
+            invoiceType: ClientInvoiceType.CONTRACT,
+            generateInvoice: true,
+            active: true,
+          },
+        ],
+      });
+
+      const input: SearchClientInputDto = { filter: { companyName: { contains: 'acme' } } };
+      const [clients, total] = await sut.search(input);
+
+      expect(total).toBe(1);
+      expect(clients[0].id).toBe(9301);
+    });
+
+    it('should return all clients when filter is omitted', async() => {
+      const { group, resale } = await createClientGroupAndResale();
+      await prisma.client.create({
+        data: {
+          id: 9355,
+          type: ClientType.PJ,
+          document: '09748165803552',
+          groupId: group.id,
+          resaleId: resale.id,
+          companyName: 'Sem filtro objeto',
+          headquarters: 'SP',
+          invoiceType: ClientInvoiceType.CONTRACT,
+          generateInvoice: true,
+          active: true,
+        },
+      });
+
+      const input: SearchClientInputDto = {};
+      const [clients, total] = await sut.search(input);
+
+      expect(total).toBe(1);
+      expect(clients[0].id).toBe(9355);
+    });
+
+    it('should order clients by id ascending', async() => {
+      const { group, resale } = await createClientGroupAndResale();
+      await prisma.client.createMany({
+        data: [
+          {
+            id: 9512,
+            type: ClientType.PJ,
+            document: '09748165805121',
+            groupId: group.id,
+            resaleId: resale.id,
+            companyName: 'Ordem B',
+            headquarters: 'SP',
+            invoiceType: ClientInvoiceType.CONTRACT,
+            generateInvoice: true,
+            active: true,
+          },
+          {
+            id: 9511,
+            type: ClientType.PJ,
+            document: '09748165805112',
+            groupId: group.id,
+            resaleId: resale.id,
+            companyName: 'Ordem A',
+            headquarters: 'SP',
+            invoiceType: ClientInvoiceType.CONTRACT,
+            generateInvoice: true,
+            active: true,
+          },
+        ],
+      });
+
+      const input: SearchClientInputDto = { filter: { active: { eq: true } } };
+      const [clients] = await sut.search(input);
+
+      expect(clients).toHaveLength(2);
+      expect(clients[0].id).toBe(9511);
+      expect(clients[1].id).toBe(9512);
+    });
+
+    it('should filter by createdAt gte', async() => {
+      const { group, resale } = await createClientGroupAndResale();
+      const oldDate = new Date('2026-01-05T12:00:00.000Z');
+      const newDate = new Date('2026-06-01T12:00:00.000Z');
+      await prisma.client.createMany({
+        data: [
+          {
+            id: 9620,
+            type: ClientType.PJ,
+            document: '09748165806207',
+            groupId: group.id,
+            resaleId: resale.id,
+            companyName: 'Cliente velho',
+            headquarters: 'SP',
+            invoiceType: ClientInvoiceType.CONTRACT,
+            generateInvoice: true,
+            active: true,
+            createdAt: oldDate,
+          },
+          {
+            id: 9621,
+            type: ClientType.PJ,
+            document: '09748165806218',
+            groupId: group.id,
+            resaleId: resale.id,
+            companyName: 'Cliente novo',
+            headquarters: 'SP',
+            invoiceType: ClientInvoiceType.CONTRACT,
+            generateInvoice: true,
+            active: true,
+            createdAt: newDate,
+          },
+        ],
+      });
+
+      const input: SearchClientInputDto = {
+        filter: { createdAt: { gte: '2026-05-15T00:00:00.000Z' } },
+      };
+      const [clients, total] = await sut.search(input);
+
+      expect(total).toBe(1);
+      expect(clients[0].id).toBe(9621);
+      expect(clients[0].companyName).toBe('Cliente novo');
+    });
+
+    it('should filter by document eq', async() => {
+      const { group, resale } = await createClientGroupAndResale();
+      await prisma.client.createMany({
+        data: [
+          {
+            id: 9740,
+            type: ClientType.PJ,
+            document: '09748165807406',
+            groupId: group.id,
+            resaleId: resale.id,
+            companyName: 'Alfa Docs',
+            headquarters: 'SP',
+            invoiceType: ClientInvoiceType.CONTRACT,
+            generateInvoice: true,
+            active: true,
+          },
+          {
+            id: 9741,
+            type: ClientType.PJ,
+            document: '09748165807417',
+            groupId: group.id,
+            resaleId: resale.id,
+            companyName: 'Beta Docs',
+            headquarters: 'SP',
+            invoiceType: ClientInvoiceType.CONTRACT,
+            generateInvoice: true,
+            active: true,
+          },
+        ],
+      });
+
+      const input: SearchClientInputDto = { filter: { document: { eq: '09748165807417' } } };
+      const [clients, total] = await sut.search(input);
+
+      expect(total).toBe(1);
+      expect(clients[0].id).toBe(9741);
+      expect(clients[0].document).toBe('09748165807417');
+    });
+  });
 });
+

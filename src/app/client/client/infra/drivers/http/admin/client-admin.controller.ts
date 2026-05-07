@@ -12,6 +12,8 @@ import { EditClientInputDto } from 'src/app/client/client/application/usecases/e
 import { EditClient } from 'src/app/client/client/application/usecases/edit-client/edit-client.service';
 import { FindAllClientQueryDto } from 'src/app/client/client/application/usecases/find-all-client/dtos/find-all-client.dto';
 import { FindAllClient } from 'src/app/client/client/application/usecases/find-all-client/find-all-client.service';
+import { SearchClientInputDto } from 'src/app/client/client/application/usecases/search-client/dtos/search-client.dto';
+import { SearchClient } from 'src/app/client/client/application/usecases/search-client/search-client.service';
 import { FindClientById } from 'src/app/client/client/application/usecases/find-client-by-id/find-client-by-id.service';
 import { FindSubClientsQueryDto } from 'src/app/client/client/application/usecases/find-sub-clients/dtos/find-sub-clients.dto';
 import { FindSubClients } from 'src/app/client/client/application/usecases/find-sub-clients/find-sub-clients.service';
@@ -38,6 +40,7 @@ export class ClientAdminController {
     private readonly createClient: CreateClient,
     private readonly deactivateClient: DeactivateClient,
     private readonly findAllClient: FindAllClient,
+    private readonly searchClient: SearchClient,
     private readonly findClientById: FindClientById,
     private readonly findSubClients: FindSubClients,
     private readonly setClientParent: SetClientParent,
@@ -107,6 +110,19 @@ export class ClientAdminController {
   })
   public lookupDocumentAndCnpj(@Body() body: LookupClientDocumentAndCnpjInputDto): Promise<LookupClientDocumentAndCnpjOutputDto> {
     return this.lookupClientDocumentAndCnpj.execute(body);
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @Post('search')
+  @RequiredClaims(Claim.CLIENT_READ)
+  @Swagger({
+    tags: ['Clientes'],
+    summary: 'Listar clientes com filtros avançados (AND)',
+    applyBadRequest: true,
+    okPaginatedResponse: ClientDto,
+  })
+  public search(@Body() body: SearchClientInputDto): Promise<IPagination<ClientDto>> {
+    return this.searchClient.execute(body);
   }
 
   @Get(':id')
