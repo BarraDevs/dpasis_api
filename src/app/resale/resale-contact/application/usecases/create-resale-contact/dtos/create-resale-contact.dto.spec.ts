@@ -9,7 +9,7 @@ const metadata: ArgumentMetadata = {
 
 function makeValidInputDto(overrides: Partial<CreateResaleContactInputDto> = {}): CreateResaleContactInputDto {
   return {
-    resaleId: 1,
+    resaleId: '1',
     name: 'João Silva',
     departmentId: 1,
     email: 'joao@example.com',
@@ -31,8 +31,8 @@ describe('CreateResaleContactInputDto', () => {
   describe('name field', () => {
     it.each([undefined, null, '', '  '])(
       'should throw an error if name is empty (%s)',
-      async(value: any) => {
-        const data = makeValidInputDto({ name: value });
+      async(value: unknown) => {
+        const data = makeValidInputDto({ name: value as string });
 
         expect.assertions(1);
         return target.transform(data, metadata).catch((error) => {
@@ -62,8 +62,8 @@ describe('CreateResaleContactInputDto', () => {
   describe('email field', () => {
     it.each([undefined, null, '', '  '])(
       'should throw an error if email is empty (%s)',
-      async(value: any) => {
-        const data = makeValidInputDto({ email: value });
+      async(value: unknown) => {
+        const data = makeValidInputDto({ email: value as string });
 
         expect.assertions(1);
         return target.transform(data, metadata).catch((error) => {
@@ -97,7 +97,7 @@ describe('CreateResaleContactInputDto', () => {
   describe('all fields validation', () => {
     it('should pass if all required fields are valid', async() => {
       const data = makeValidInputDto({
-        resaleId: 1,
+        resaleId: '1',
         name: 'João Silva',
         departmentId: 1,
         email: 'joao@example.com',
@@ -107,7 +107,7 @@ describe('CreateResaleContactInputDto', () => {
       const result = await target.transform(data, metadata);
 
       expect(result).toBeInstanceOf(CreateResaleContactInputDto);
-      expect(result.resaleId).toBe(1);
+      expect(result.resaleId).toBe('1');
       expect(result.name).toBe('João Silva');
       expect(result.departmentId).toBe(1);
       expect(result.email).toBe('joao@example.com');
@@ -126,6 +126,12 @@ describe('CreateResaleContactInputDto', () => {
       expect(result.phone).toBe('11999999999');
       expect(result.whatsapp).toBe('11988887777');
       expect(result.observations).toBe('Observação');
+    });
+
+    it('should reject invalid resaleId hex', async() => {
+      const data = makeValidInputDto({ resaleId: 'ZZ' });
+
+      await expect(target.transform(data, metadata)).rejects.toBeDefined();
     });
   });
 });

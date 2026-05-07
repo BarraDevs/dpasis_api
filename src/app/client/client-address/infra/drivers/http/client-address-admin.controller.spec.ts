@@ -13,7 +13,7 @@ import { ActivateClientAddress } from 'src/app/client/client-address/application
 import { DeactivateClientAddress } from 'src/app/client/client-address/application/usecases/deactivate-client-address/deactivate-client-address.service';
 import { FindClientAddressById } from 'src/app/client/client-address/application/usecases/find-client-address-by-id/find-client-address-by-id.service';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
-import { Params } from 'src/infra/validators/class/dtos/params/params.dto';
+import { Params } from 'src/infra/validators/class/dtos/params';
 import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
 import { ClientAddressAdminController } from './client-address-admin.controller';
 

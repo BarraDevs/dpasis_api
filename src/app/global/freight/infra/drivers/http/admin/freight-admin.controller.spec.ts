@@ -12,7 +12,7 @@ import { FindAllFreight } from 'src/app/global/freight/application/usecases/find
 import { FindFreightById } from 'src/app/global/freight/application/usecases/find-freight-by-id/find-freight-by-id.service';
 import { UpdateFreightStatus } from 'src/app/global/freight/application/usecases/update-freight-status/update-freight-status.service';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
-import { Params } from 'src/infra/validators/class/dtos/params/params.dto';
+import { Params } from 'src/infra/validators/class/dtos/params';
 import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
 import { FreightAdminController } from './freight-admin.controller';
 

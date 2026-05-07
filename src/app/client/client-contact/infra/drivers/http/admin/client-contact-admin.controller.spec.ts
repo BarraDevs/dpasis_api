@@ -16,7 +16,7 @@ import { FindAllClientContactQueryDto } from 'src/app/client/client-contact/appl
 import { FindAllClientContact } from 'src/app/client/client-contact/application/usecases/find-all-client-contact/find-all-client-contact.service';
 import { FindClientContactById } from 'src/app/client/client-contact/application/usecases/find-client-contact-by-id/find-client-contact-by-id.service';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
-import { Params } from 'src/infra/validators/class/dtos/params/params.dto';
+import { Params } from 'src/infra/validators/class/dtos/params';
 import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
 import { ClientContactAdminController } from './client-contact-admin.controller';
 

@@ -12,7 +12,7 @@ import { FindAllFaq } from 'src/app/faq/application/usecases/find-all-faq/find-a
 import { FindFaqById } from 'src/app/faq/application/usecases/find-faq-by-id/find-faq-by-id.service';
 import { UpdateFaqStatus } from 'src/app/faq/application/usecases/update-faq-status/update-faq-status.service';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
-import { Params } from 'src/infra/validators/class/dtos/params/params.dto';
+import { Params } from 'src/infra/validators/class/dtos/params';
 import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
 import { FaqAdminController } from './faq-admin.controller';
 

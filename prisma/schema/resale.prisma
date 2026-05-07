@@ -8,7 +8,7 @@ model Resale {
   city                   String
   state                  String
   licenseType            String
-  document               String    @unique
+  document               String
   ie                     String?
   phone01                String
   phone02                String?

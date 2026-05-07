@@ -12,7 +12,7 @@ import { FindAllNbs } from 'src/app/global/taxation/nbs/application/usecases/fin
 import { FindNbsById } from 'src/app/global/taxation/nbs/application/usecases/find-nbs-by-id/find-nbs-by-id.service';
 import { UpdateNbsStatus } from 'src/app/global/taxation/nbs/application/usecases/update-nbs-status/update-nbs-status.service';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
-import { Params } from 'src/infra/validators/class/dtos/params/params.dto';
+import { Params } from 'src/infra/validators/class/dtos/params';
 import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
 import { NbsAdminController } from './nbs-admin.controller';
 

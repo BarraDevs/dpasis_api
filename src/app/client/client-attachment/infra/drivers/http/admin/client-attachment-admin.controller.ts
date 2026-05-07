@@ -32,7 +32,7 @@ import { UpdateClientAttachmentStatus } from 'src/app/client/client-attachment/a
 import { UploadSingleInputDto } from 'src/app/upload-file/application/usecases/upload-single/dtos/upload-single.dto';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
 import { Swagger } from 'src/infra/openapi/swagger';
-import { Params } from 'src/infra/validators/class/dtos/params/params.dto';
+import { Params } from 'src/infra/validators/class/dtos/params';
 import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
 
 @Controller('admin/client-attachment')

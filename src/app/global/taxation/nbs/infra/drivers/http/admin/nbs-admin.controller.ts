@@ -15,7 +15,7 @@ import { FindNbsById } from 'src/app/global/taxation/nbs/application/usecases/fi
 import { UpdateNbsStatus } from 'src/app/global/taxation/nbs/application/usecases/update-nbs-status/update-nbs-status.service';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
 import { Swagger } from 'src/infra/openapi/swagger';
-import { Params } from 'src/infra/validators/class/dtos/params/params.dto';
+import { Params } from 'src/infra/validators/class/dtos/params';
 import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
 
 @Controller('admin/nbs')

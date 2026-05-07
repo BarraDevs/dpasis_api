@@ -12,7 +12,7 @@ import { FindAllClientDriveType } from 'src/app/client/client-type/client-drive-
 import { FindClientDriveTypeById } from 'src/app/client/client-type/client-drive-type/application/usecases/find-client-drive-type-by-id/find-client-drive-type-by-id.service';
 import { UpdateClientDriveTypeStatus } from 'src/app/client/client-type/client-drive-type/application/usecases/update-client-drive-type-status/update-client-drive-type-status.service';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
-import { Params } from 'src/infra/validators/class/dtos/params/params.dto';
+import { Params } from 'src/infra/validators/class/dtos/params';
 import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
 import { ClientDriveTypeAdminController } from './client-drive-type-admin.controller';
 

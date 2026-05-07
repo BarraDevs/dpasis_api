@@ -12,7 +12,7 @@ import { FindAllCnae } from 'src/app/global/taxation/cnae/application/usecases/f
 import { FindCnaeById } from 'src/app/global/taxation/cnae/application/usecases/find-cnae-by-id/find-cnae-by-id.service';
 import { UpdateCnaeStatus } from 'src/app/global/taxation/cnae/application/usecases/update-cnae-status/update-cnae-status.service';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
-import { Params } from 'src/infra/validators/class/dtos/params/params.dto';
+import { Params } from 'src/infra/validators/class/dtos/params';
 import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
 import { CnaeAdminController } from './cnae-admin.controller';
 

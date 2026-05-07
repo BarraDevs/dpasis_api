@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { ResaleContactDto } from 'src/app/resale/resale-contact/application/dtos/resale-contact.dto';
 import { IResaleContactDao } from 'src/app/resale/resale-contact/application/persistence/dao/resale-contact-dao.interface';
-import { FindAllResaleContactQueryDto } from 'src/app/resale/resale-contact/application/usecases/find-all-resale-contact/dtos/find-all-resale-contact.dto';
+import { FindAllResaleContactExecuteQuery } from 'src/app/resale/resale-contact/application/usecases/find-all-resale-contact/dtos/find-all-resale-contact.dto';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 
 const ResaleContactSelect = {
@@ -30,7 +30,7 @@ export class ResaleContactDaoAdapterPrisma implements IResaleContactDao {
   constructor(private readonly prisma: PrismaService) {}
 
 
-  public async findAll(queries: FindAllResaleContactQueryDto): Promise<[ResaleContactDto[], number]> {
+  public async findAll(queries: FindAllResaleContactExecuteQuery): Promise<[ResaleContactDto[], number]> {
     const pagination = this.prisma.paginationFactory(queries.page, queries.size);
 
     const conditions: Prisma.ResaleContactWhereInput[] = [

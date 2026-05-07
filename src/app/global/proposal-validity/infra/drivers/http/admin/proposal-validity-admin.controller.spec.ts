@@ -12,7 +12,7 @@ import { FindAllProposalValidity } from 'src/app/global/proposal-validity/applic
 import { FindProposalValidityById } from 'src/app/global/proposal-validity/application/usecases/find-proposal-validity-by-id/find-proposal-validity-by-id.service';
 import { UpdateProposalValidityStatus } from 'src/app/global/proposal-validity/application/usecases/update-proposal-validity-status/update-proposal-validity-status.service';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
-import { Params } from 'src/infra/validators/class/dtos/params/params.dto';
+import { Params } from 'src/infra/validators/class/dtos/params';
 import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
 import { ProposalValidityAdminController } from './proposal-validity-admin.controller';
 

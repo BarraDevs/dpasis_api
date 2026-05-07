@@ -12,7 +12,7 @@ import { FindAllCompanyQueryDto } from 'src/app/company/application/usecases/fin
 import { FindAllCompany } from 'src/app/company/application/usecases/find-all-company/find-all-company.service';
 import { FindCompanyById } from 'src/app/company/application/usecases/find-company-by-id/find-company-by-id.service';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
-import { Params } from 'src/infra/validators/class/dtos/params/params.dto';
+import { Params } from 'src/infra/validators/class/dtos/params';
 import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
 import { CompanyAdminController } from './company-admin.controller';
 

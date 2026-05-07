@@ -21,7 +21,7 @@ import { FindAllClientItem } from 'src/app/client/client-item/application/usecas
 import { FindClientItemById } from 'src/app/client/client-item/application/usecases/find-client-item-by-id/find-client-item-by-id.service';
 import { ClientItemNotFoundError } from 'src/app/client/client-item/domain/errors/client-item-not-found.error';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
-import { Params } from 'src/infra/validators/class/dtos/params/params.dto';
+import { Params } from 'src/infra/validators/class/dtos/params';
 import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
 import { ClientItemAdminController } from './client-item-admin.controller';
 

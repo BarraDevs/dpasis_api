@@ -7,16 +7,18 @@ import {
   IsString,
   MaxLength,
 } from 'class-validator';
+import { IsUnsigned32HexString } from 'src/infra/validators/class/decorators/unsigned-32-hex-string/is-unsigned-32-hex-string';
 import { StringToBoolean } from 'src/infra/validators/class/decorators/string-boolean/string-boolean';
 import { StringToNumber } from 'src/infra/validators/class/decorators/string-number/string-number';
 import { Trim } from 'src/infra/validators/class/decorators/trim/trim';
 
 export class CreateResaleContactInputDto {
-  @ApiProperty({ example: 1 })
+  @ApiProperty({ example: '1', description: 'ID da revenda em hexadecimal (1 a 8 caracteres).' })
   @IsNotEmpty({ message: '$property é obrigatório' })
-  @StringToNumber()
+  @IsString({ message: '$property deve ser uma string' })
   @Trim()
-  resaleId: number;
+  @IsUnsigned32HexString()
+  resaleId: string;
 
   @ApiProperty({ example: 1 })
   @IsNotEmpty({ message: '$property é obrigatório' })
@@ -63,6 +65,10 @@ export class CreateResaleContactInputDto {
   @StringToBoolean()
   receiveNF: boolean;
 }
+
+export type CreateResaleContactExecuteInput = Omit<CreateResaleContactInputDto, 'resaleId'> & {
+  resaleId: number;
+};
 
 export class CreateResaleContactOutputDto {
   id: number;

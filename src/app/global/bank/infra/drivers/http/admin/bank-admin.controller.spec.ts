@@ -12,7 +12,7 @@ import { FindAllBank } from 'src/app/global/bank/application/usecases/find-all-b
 import { FindBankById } from 'src/app/global/bank/application/usecases/find-bank-by-id/find-bank-by-id.service';
 import { UpdateBankStatus } from 'src/app/global/bank/application/usecases/update-bank-status/update-bank-status.service';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
-import { Params } from 'src/infra/validators/class/dtos/params/params.dto';
+import { Params } from 'src/infra/validators/class/dtos/params';
 import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
 import { BankAdminController } from './bank-admin.controller';
 

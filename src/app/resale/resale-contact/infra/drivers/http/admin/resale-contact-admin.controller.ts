@@ -3,7 +3,6 @@ import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
 import { Claim } from 'src/app/authentication/domain/authorization/claim';
 import { RequiredClaims } from 'src/app/authentication/infra/decorators/required-claims.decorator';
 import { RequiredRoles } from 'src/app/authentication/infra/decorators/required-role.decorator';
-import { ResaleContactDto } from 'src/app/resale/resale-contact/application/dtos/resale-contact.dto';
 import { ActivateResaleContact } from 'src/app/resale/resale-contact/application/usecases/activate-resale-contact/activate-resale-contact.service';
 import { CreateResaleContact } from 'src/app/resale/resale-contact/application/usecases/create-resale-contact/create-resale-contact.service';
 import {
@@ -17,6 +16,13 @@ import { EditResaleContact } from 'src/app/resale/resale-contact/application/use
 import { FindAllResaleContactQueryDto } from 'src/app/resale/resale-contact/application/usecases/find-all-resale-contact/dtos/find-all-resale-contact.dto';
 import { FindAllResaleContact } from 'src/app/resale/resale-contact/application/usecases/find-all-resale-contact/find-all-resale-contact.service';
 import { FindResaleContactById } from 'src/app/resale/resale-contact/application/usecases/find-resale-contact-by-id/find-resale-contact-by-id.service';
+import { ResaleContactWireSwaggerDto } from 'src/app/resale/resale-contact/infra/drivers/http/dtos/resale-contact-wire.swagger.dto';
+import {
+  mapPaginationResaleContactWire,
+  mapResaleContactDtoWire,
+  parseResaleHexToDecimal,
+  ResaleContactWireDto,
+} from 'src/app/resale/resale/infra/drivers/http/resale-id-http.codec';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
 import { Swagger } from 'src/infra/openapi/swagger';
 import { Params } from 'src/infra/validators/class/dtos/params/params.dto';
@@ -43,10 +49,11 @@ export class ResaleContactAdminController {
     applyBadRequest: true,
     createdResponse: CreateResaleContactOutputDto,
   })
-  public create(
-    @Body() body: CreateResaleContactInputDto,
-  ): Promise<CreateResaleContactOutputDto> {
-    return this.createResaleContact.execute(body);
+  public create(@Body() body: CreateResaleContactInputDto): Promise<CreateResaleContactOutputDto> {
+    return this.createResaleContact.execute({
+      ...body,
+      resaleId: parseResaleHexToDecimal(body.resaleId),
+    });
   }
 
   @Get()
@@ -55,10 +62,17 @@ export class ResaleContactAdminController {
     tags: ['Revendas - Contatos'],
     summary: 'Listar contatos de revenda com paginação e filtros',
     applyBadRequest: true,
-    okPaginatedResponse: ResaleContactDto,
+    okPaginatedResponse: ResaleContactWireSwaggerDto,
   })
-  public findAll(@Query() queries: FindAllResaleContactQueryDto): Promise<IPagination<ResaleContactDto>> {
-    return this.findAllResaleContact.execute(queries);
+  public async findAll(
+    @Query() queries: FindAllResaleContactQueryDto,
+  ): Promise<IPagination<ResaleContactWireDto>> {
+    const { resaleId: resaleIdHex, ...rest } = queries;
+    const page = await this.findAllResaleContact.execute({
+      ...rest,
+      resaleId: parseResaleHexToDecimal(resaleIdHex),
+    });
+    return mapPaginationResaleContactWire(page);
   }
 
   @Get(':id')
@@ -68,10 +82,11 @@ export class ResaleContactAdminController {
     summary: 'Buscar contato de revenda por ID',
     applyBadRequest: true,
     applyNotFound: true,
-    okResponse: ResaleContactDto,
+    okResponse: ResaleContactWireSwaggerDto,
   })
-  public findOne(@Param() params: Params): Promise<ResaleContactDto> {
-    return this.findResaleContactById.execute(params.id);
+  public async findOne(@Param() params: Params): Promise<ResaleContactWireDto> {
+    const dto = await this.findResaleContactById.execute(params.id);
+    return mapResaleContactDtoWire(dto);
   }
 
   @Patch(':id/activate')

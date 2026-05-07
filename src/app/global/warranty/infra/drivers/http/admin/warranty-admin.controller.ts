@@ -15,7 +15,7 @@ import { FindWarrantyById } from 'src/app/global/warranty/application/usecases/f
 import { UpdateWarrantyStatus } from 'src/app/global/warranty/application/usecases/update-warranty-status/update-warranty-status.service';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
 import { Swagger } from 'src/infra/openapi/swagger';
-import { Params } from 'src/infra/validators/class/dtos/params/params.dto';
+import { Params } from 'src/infra/validators/class/dtos/params';
 import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
 
 @Controller('admin/warranty')

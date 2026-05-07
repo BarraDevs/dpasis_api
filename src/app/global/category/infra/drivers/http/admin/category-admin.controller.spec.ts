@@ -12,7 +12,7 @@ import { FindAllCategory } from 'src/app/global/category/application/usecases/fi
 import { FindCategoryById } from 'src/app/global/category/application/usecases/find-category-by-id/find-category-by-id.service';
 import { UpdateCategoryStatus } from 'src/app/global/category/application/usecases/update-category-status/update-category-status.service';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
-import { Params } from 'src/infra/validators/class/dtos/params/params.dto';
+import { Params } from 'src/infra/validators/class/dtos/params';
 import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
 import { CategoryAdminController } from './category-admin.controller';
 

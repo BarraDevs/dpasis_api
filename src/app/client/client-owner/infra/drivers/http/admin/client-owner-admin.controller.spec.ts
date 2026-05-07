@@ -12,7 +12,7 @@ import { FindAllClientOwner } from 'src/app/client/client-owner/application/usec
 import { FindClientOwnerById } from 'src/app/client/client-owner/application/usecases/find-client-owner-by-id/find-client-owner-by-id.service';
 import { UpdateClientOwnerStatus } from 'src/app/client/client-owner/application/usecases/update-client-owner-status/update-client-owner-status.service';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
-import { Params } from 'src/infra/validators/class/dtos/params/params.dto';
+import { Params } from 'src/infra/validators/class/dtos/params';
 import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
 import { ClientOwnerAdminController } from './client-owner-admin.controller';
 

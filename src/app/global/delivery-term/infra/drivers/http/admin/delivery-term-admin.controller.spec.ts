@@ -12,7 +12,7 @@ import { FindAllDeliveryTerm } from 'src/app/global/delivery-term/application/us
 import { FindDeliveryTermById } from 'src/app/global/delivery-term/application/usecases/find-delivery-term-by-id/find-delivery-term-by-id.service';
 import { UpdateDeliveryTermStatus } from 'src/app/global/delivery-term/application/usecases/update-delivery-term-status/update-delivery-term-status.service';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
-import { Params } from 'src/infra/validators/class/dtos/params/params.dto';
+import { Params } from 'src/infra/validators/class/dtos/params';
 import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
 import { DeliveryTermAdminController } from './delivery-term-admin.controller';
 

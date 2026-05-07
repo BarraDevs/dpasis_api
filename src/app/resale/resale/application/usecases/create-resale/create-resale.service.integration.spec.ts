@@ -167,7 +167,7 @@ describe('CreateResale - Integration tests', () => {
           document: '28.695.096/0001-79',
         }),
       ),
-    ).rejects.toThrow('O id 100 já está em uso.');
+    ).rejects.toThrow('O id 64 já está em uso.');
   });
 
   it('should throw DocumentAlreadyTakenError when document is already used (normalized)', async() => {

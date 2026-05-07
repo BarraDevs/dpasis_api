@@ -12,7 +12,7 @@ import { FindAllWarranty } from 'src/app/global/warranty/application/usecases/fi
 import { FindWarrantyById } from 'src/app/global/warranty/application/usecases/find-warranty-by-id/find-warranty-by-id.service';
 import { UpdateWarrantyStatus } from 'src/app/global/warranty/application/usecases/update-warranty-status/update-warranty-status.service';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
-import { Params } from 'src/infra/validators/class/dtos/params/params.dto';
+import { Params } from 'src/infra/validators/class/dtos/params';
 import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
 import { WarrantyAdminController } from './warranty-admin.controller';
 

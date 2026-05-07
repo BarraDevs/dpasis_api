@@ -12,7 +12,7 @@ import { FindAllClientAttendance } from 'src/app/client/client-attendance/applic
 import { FindClientAttendanceById } from 'src/app/client/client-attendance/application/usecases/find-client-attendance-by-id/find-client-attendance-by-id.service';
 import { UpdateClientAttendanceStatus } from 'src/app/client/client-attendance/application/usecases/update-client-attendance-status/update-client-attendance-status.service';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
-import { Params } from 'src/infra/validators/class/dtos/params/params.dto';
+import { Params } from 'src/infra/validators/class/dtos/params';
 import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
 import { ClientAttendanceAdminController } from './client-attendance-admin.controller';
 

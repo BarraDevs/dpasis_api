@@ -12,7 +12,7 @@ import { FindAllClientSystemType } from 'src/app/client/client-type/client-syste
 import { FindClientSystemTypeById } from 'src/app/client/client-type/client-system-type/application/usecases/find-client-system-type-by-id/find-client-system-type-by-id.service';
 import { UpdateClientSystemTypeStatus } from 'src/app/client/client-type/client-system-type/application/usecases/update-client-system-type-status/update-client-system-type-status.service';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
-import { Params } from 'src/infra/validators/class/dtos/params/params.dto';
+import { Params } from 'src/infra/validators/class/dtos/params';
 import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
 import { ClientSystemTypeAdminController } from './client-system-type-admin.controller';
 

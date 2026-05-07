@@ -16,7 +16,7 @@ import { FindAllResaleContactQueryDto } from 'src/app/resale/resale-contact/appl
 import { FindAllResaleContact } from 'src/app/resale/resale-contact/application/usecases/find-all-resale-contact/find-all-resale-contact.service';
 import { FindResaleContactById } from 'src/app/resale/resale-contact/application/usecases/find-resale-contact-by-id/find-resale-contact-by-id.service';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
-import { Params } from 'src/infra/validators/class/dtos/params/params.dto';
+import { Params } from 'src/infra/validators/class/dtos/params';
 import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
 import { ResaleContactAdminController } from './resale-contact-admin.controller';
 
@@ -60,41 +60,57 @@ describe('ResaleContactAdminController - Unit tests', () => {
   });
 
   describe('create', () => {
-    it('should call createResaleContact.execute with body', async() => {
+    it('should parse resaleId hex before execute', async() => {
       const body = createMock<CreateResaleContactInputDto>();
+      body.resaleId = '43';
       const output = createMock<CreateResaleContactOutputDto>();
       const createSpy = jest.spyOn(createResaleContactService, 'execute').mockResolvedValue(output);
 
       const result = await sut.create(body);
 
       expect(result).toEqual(output);
-      expect(createSpy).toHaveBeenCalledWith(body);
+      expect(createSpy).toHaveBeenCalledWith(expect.objectContaining({ resaleId: 67 }));
     });
   });
 
   describe('findAll', () => {
-    it('should call findAllResaleContact.execute with queries', async() => {
-      const queries = createMock<FindAllResaleContactQueryDto>();
-      const output = createMock<IPagination<ResaleContactDto>>();
+    it('should parse resaleId and map resaleId on rows to hex', async() => {
+      const queries = { resaleId: '43', page: 1, size: 10 } as FindAllResaleContactQueryDto;
+      const row = createMock<ResaleContactDto>();
+      row.resaleId = 67;
+      const output: IPagination<ResaleContactDto> = {
+        currentPage: 1,
+        itemsPerPage: 10,
+        totalItems: 1,
+        totalPages: 1,
+        data: [row],
+      };
       const findAllSpy = jest.spyOn(findAllResaleContactService, 'execute').mockResolvedValue(output);
 
       const result = await sut.findAll(queries);
 
-      expect(result).toEqual(output);
-      expect(findAllSpy).toHaveBeenCalledWith(queries);
+      expect(findAllSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          resaleId: 67,
+          page: 1,
+          size: 10,
+        }),
+      );
+      expect(result.data[0].resaleId).toBe('43');
     });
   });
 
   describe('findOne', () => {
-    it('should call findResaleContactById.execute with params.id', async() => {
+    it('should map resaleId in response to hex', async() => {
       const params = createMock<Params>();
       const output = createMock<ResaleContactDto>();
+      output.resaleId = 67;
       const findOneSpy = jest.spyOn(findResaleContactByIdService, 'execute').mockResolvedValue(output);
 
       const result = await sut.findOne(params);
 
-      expect(result).toEqual(output);
       expect(findOneSpy).toHaveBeenCalledWith(params.id);
+      expect(result.resaleId).toBe('43');
     });
   });
 

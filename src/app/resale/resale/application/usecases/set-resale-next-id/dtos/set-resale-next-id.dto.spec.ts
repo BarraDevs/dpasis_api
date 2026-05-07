@@ -1,6 +1,4 @@
 import { ArgumentMetadata, ValidationPipe } from '@nestjs/common';
-import { plainToInstance } from 'class-transformer';
-import { validate } from 'class-validator';
 import { pipeOptions } from 'src/infra/validators/class/config';
 import { SetResaleNextIdInputDto } from './set-resale-next-id.dto';
 
@@ -16,33 +14,34 @@ describe('SetResaleNextIdInputDto', () => {
     pipe = new ValidationPipe(pipeOptions);
   });
 
-  it('should accept positive integer nextId', async() => {
-    const result = await pipe.transform({ nextId: 100 }, bodyMetadata);
+  it('should accept valid hexadecimal nextId string', async() => {
+    const result = await pipe.transform({ nextId: '64' }, bodyMetadata);
 
     expect(result).toBeInstanceOf(SetResaleNextIdInputDto);
-    expect(result.nextId).toBe(100);
+    expect(result.nextId).toBe('64');
   });
 
-  it('should reject string nextId (expects number at validation layer)', async() => {
-    await expect(pipe.transform({ nextId: '500' }, bodyMetadata)).rejects.toBeDefined();
+  it('should accept nextId with 0x prefix', async() => {
+    const result = await pipe.transform({ nextId: '0x43' }, bodyMetadata);
+
+    expect(result.nextId).toBe('0x43');
   });
 
-  it('should reject zero', async() => {
-    await expect(pipe.transform({ nextId: 0 }, bodyMetadata)).rejects.toBeDefined();
+  it('should trim whitespace', async() => {
+    const result = await pipe.transform({ nextId: '  43  ' }, bodyMetadata);
+
+    expect(result.nextId).toBe('43');
   });
 
-  it('should reject negative values', async() => {
-    await expect(pipe.transform({ nextId: -1 }, bodyMetadata)).rejects.toBeDefined();
+  it('should reject plain decimal digit-only string that is not valid hex interpretation edge cases', async() => {
+    await expect(pipe.transform({ nextId: '' }, bodyMetadata)).rejects.toBeDefined();
   });
 
-  it('should reject non-integer numbers', async() => {
-    await expect(pipe.transform({ nextId: 1.2 }, bodyMetadata)).rejects.toBeDefined();
+  it('should reject invalid hex characters', async() => {
+    await expect(pipe.transform({ nextId: 'GG' }, bodyMetadata)).rejects.toBeDefined();
   });
 
-  it('should fail validate() on plain object without pipe (class-validator direct)', async() => {
-    const instance = plainToInstance(SetResaleNextIdInputDto, { nextId: 0 });
-    const errors = await validate(instance);
-
-    expect(errors.length).toBeGreaterThan(0);
+  it('should reject more than 8 hex digits', async() => {
+    await expect(pipe.transform({ nextId: '123456789' }, bodyMetadata)).rejects.toBeDefined();
   });
 });

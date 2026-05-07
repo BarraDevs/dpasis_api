@@ -15,7 +15,7 @@ import { FindClientMaintenanceTicketById } from 'src/app/client/client-maintenan
 import { UpdateClientMaintenanceTicketStatus } from 'src/app/client/client-maintenance-ticket/application/usecases/update-client-maintenance-ticket-status/update-client-maintenance-ticket-status.service';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
 import { Swagger } from 'src/infra/openapi/swagger';
-import { Params } from 'src/infra/validators/class/dtos/params/params.dto';
+import { Params } from 'src/infra/validators/class/dtos/params';
 import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
 
 @Controller('admin/client-maintenance-ticket')

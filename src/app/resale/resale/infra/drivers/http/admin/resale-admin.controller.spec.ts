@@ -19,7 +19,7 @@ import { GetResaleSequence } from 'src/app/resale/resale/application/usecases/ge
 import { SetResaleNextIdInputDto } from 'src/app/resale/resale/application/usecases/set-resale-next-id/dtos/set-resale-next-id.dto';
 import { SetResaleNextId } from 'src/app/resale/resale/application/usecases/set-resale-next-id/set-resale-next-id.service';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
-import { Params } from 'src/infra/validators/class/dtos/params/params.dto';
+import { ParamsHexId } from 'src/infra/validators/class/dtos/params';
 import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
 import { ResaleAdminController } from './resale-admin.controller';
 
@@ -66,98 +66,108 @@ describe('ResaleAdminController - Unit tests', () => {
   });
 
   describe('create', () => {
-    it('should call createResale.execute with body', async() => {
+    it('should map hex optional id and wire response id', async() => {
       const body = createMock<CreateResaleInputDto>();
-      const output = createMock<CreateResaleOutputDto>();
-      const createSpy = jest.spyOn(createResale, 'execute').mockResolvedValue(output);
+      body.id = '43';
+      const innerOutput: CreateResaleOutputDto = { id: 67 };
+      const createSpy = jest.spyOn(createResale, 'execute').mockResolvedValue(innerOutput);
 
       const result = await sut.create(body);
 
-      expect(result).toEqual(output);
-      expect(createSpy).toHaveBeenCalledWith(body, undefined);
+      expect(result).toEqual({ id: '43' });
+      expect(createSpy).toHaveBeenCalledWith(expect.objectContaining({ id: 67 }), undefined);
     });
   });
 
   describe('findAll', () => {
-    it('should call findAllResale.execute with queries', async() => {
+    it('should map resale ids in pagination data to hex', async() => {
       const queries = createMock<FindAllResaleQueryDto>();
-      const output = createMock<IPagination<ResaleDto>>();
+      const dto = createMock<ResaleDto>();
+      dto.id = 67;
+      const output: IPagination<ResaleDto> = {
+        currentPage: 1,
+        itemsPerPage: 10,
+        totalItems: 1,
+        totalPages: 1,
+        data: [dto],
+      };
       const findAllSpy = jest.spyOn(findAllResale, 'execute').mockResolvedValue(output);
 
       const result = await sut.findAll(queries);
 
-      expect(result).toEqual(output);
       expect(findAllSpy).toHaveBeenCalledWith(queries);
+      expect(result.data[0].id).toBe('43');
     });
   });
 
   describe('getSequence', () => {
-    it('should call getResaleSequence.execute with no arguments', async() => {
-      const output = createMock<GetResaleSequenceOutputDto>();
+    it('should map nextId to hexadecimal string', async() => {
+      const output: GetResaleSequenceOutputDto = { nextId: 67 };
       const getSequenceSpy = jest.spyOn(getResaleSequence, 'execute').mockResolvedValue(output);
 
       const result = await sut.getSequence();
 
-      expect(result).toEqual(output);
+      expect(result).toEqual({ nextId: '43' });
       expect(getSequenceSpy).toHaveBeenCalledWith();
     });
   });
 
   describe('setSequence', () => {
-    it('should call setResaleNextId.execute with body', async() => {
-      const body = createMock<SetResaleNextIdInputDto>();
+    it('should parse nextId from hex before execute', async() => {
+      const body = { nextId: '43' } as SetResaleNextIdInputDto;
       const output = createMock<SuccessMessage>();
       const setSequenceSpy = jest.spyOn(setResaleNextId, 'execute').mockResolvedValue(output);
 
       const result = await sut.setSequence(body);
 
       expect(result).toEqual(output);
-      expect(setSequenceSpy).toHaveBeenCalledWith(body);
+      expect(setSequenceSpy).toHaveBeenCalledWith({ nextId: 67 });
     });
   });
 
   describe('findOne', () => {
-    it('should call findResaleById.execute with params.id', async() => {
-      const params = createMock<Params>();
-      const output = createMock<ResaleDto>();
-      const findOneSpy = jest.spyOn(findResaleById, 'execute').mockResolvedValue(output);
+    it('should parse path id and map response', async() => {
+      const params = { id: '43' } as ParamsHexId;
+      const inner = createMock<ResaleDto>();
+      inner.id = 67;
+      const findOneSpy = jest.spyOn(findResaleById, 'execute').mockResolvedValue(inner);
 
       const result = await sut.findOne(params);
 
-      expect(result).toEqual(output);
-      expect(findOneSpy).toHaveBeenCalledWith(params.id);
+      expect(findOneSpy).toHaveBeenCalledWith(67);
+      expect(result.id).toBe('43');
     });
   });
 
   describe('activate', () => {
-    it('should call activateResale.execute with params.id', async() => {
-      const params = createMock<Params>();
+    it('should call activateResale.execute with decimal id', async() => {
+      const params = { id: '43' } as ParamsHexId;
       const output = createMock<SuccessMessage>();
       const activateSpy = jest.spyOn(activateResale, 'execute').mockResolvedValue(output);
 
       const result = await sut.activate(params);
 
       expect(result).toEqual(output);
-      expect(activateSpy).toHaveBeenCalledWith(params.id);
+      expect(activateSpy).toHaveBeenCalledWith(67);
     });
   });
 
   describe('deactivate', () => {
-    it('should call deactivateResale.execute with params.id', async() => {
-      const params = createMock<Params>();
+    it('should call deactivateResale.execute with decimal id', async() => {
+      const params = { id: '43' } as ParamsHexId;
       const output = createMock<SuccessMessage>();
       const deactivateSpy = jest.spyOn(deactivateResale, 'execute').mockResolvedValue(output);
 
       const result = await sut.deactivate(params);
 
       expect(result).toEqual(output);
-      expect(deactivateSpy).toHaveBeenCalledWith(params.id);
+      expect(deactivateSpy).toHaveBeenCalledWith(67);
     });
   });
 
   describe('update', () => {
-    it('should call editResale.execute with params.id and body', async() => {
-      const params = createMock<Params>();
+    it('should call editResale.execute with decimal id', async() => {
+      const params = { id: '43' } as ParamsHexId;
       const body = createMock<EditResaleInputDto>();
       const output = createMock<SuccessMessage>();
       const updateSpy = jest.spyOn(editResale, 'execute').mockResolvedValue(output);
@@ -165,7 +175,7 @@ describe('ResaleAdminController - Unit tests', () => {
       const result = await sut.update(params, body);
 
       expect(result).toEqual(output);
-      expect(updateSpy).toHaveBeenCalledWith(params.id, body, undefined);
+      expect(updateSpy).toHaveBeenCalledWith(67, body, undefined);
     });
   });
 });

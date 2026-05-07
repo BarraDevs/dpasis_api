@@ -3,7 +3,7 @@ import { Test } from '@nestjs/testing';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { ResaleContactModule } from '../../../resale-contact.module';
 import { ResaleContactDto } from '../../dtos/resale-contact.dto';
-import { FindAllResaleContactQueryDto } from './dtos/find-all-resale-contact.dto';
+import { FindAllResaleContactExecuteQuery } from './dtos/find-all-resale-contact.dto';
 import { FindAllResaleContact } from './find-all-resale-contact.service';
 
 describe('FindAllResaleContact - Integration tests', () => {
@@ -43,7 +43,7 @@ describe('FindAllResaleContact - Integration tests', () => {
   });
 
   it('should return empty results when no client contacts exist', async() => {
-    const query: FindAllResaleContactQueryDto = { resaleId };
+    const query: FindAllResaleContactExecuteQuery = { resaleId };
 
     const result = await sut.execute(query);
 

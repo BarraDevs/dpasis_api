@@ -4,7 +4,8 @@ import { TOKENS } from 'src/core/di/token';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
 import type { IResaleDao } from '../../persistence/dao/resale-dao.interface';
 import type { IResaleSequenceRepository } from '../../persistence/repository/resale-sequence-repository.interface';
-import { SetResaleNextIdInputDto } from './dtos/set-resale-next-id.dto';
+import { HexadecimalDecimal } from 'src/shared/value-objects/hexadecimal-decimal/hexadecimal-decimal.vo';
+import { SetResaleNextIdExecuteInputDto } from './dtos/set-resale-next-id.dto';
 
 @Injectable()
 export class SetResaleNextId {
@@ -13,13 +14,14 @@ export class SetResaleNextId {
     @Inject(TOKENS.ResaleSequenceRepository) private readonly resaleSequenceRepository: IResaleSequenceRepository,
   ) {}
 
-  public async execute(data: SetResaleNextIdInputDto): Promise<SuccessMessage> {
+  public async execute(data: SetResaleNextIdExecuteInputDto): Promise<SuccessMessage> {
     const maxId = await this.resaleDao.findMaxId();
     if (data.nextId <= maxId) {
       throw new ResaleSequenceInvalidNextIdError(data.nextId, maxId);
     }
 
     await this.resaleSequenceRepository.setNextId(data.nextId);
-    return { message: `Próximo ID de revenda definido para ${data.nextId}.` };
+    const nextHex = HexadecimalDecimal.fromDecimal(data.nextId).hex;
+    return { message: `Próximo ID de revenda definido para ${nextHex}.` };
   }
 }

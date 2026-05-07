@@ -23,7 +23,7 @@ import { IndopDto } from 'src/app/global/taxation/indop/application/dtos/indop.d
 import { NbsDto } from 'src/app/global/taxation/nbs/application/dtos/nbs.dto';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
 import { Swagger } from 'src/infra/openapi/swagger';
-import { Params } from 'src/infra/validators/class/dtos/params/params.dto';
+import { Params } from 'src/infra/validators/class/dtos/params';
 import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
 
 @Controller('admin/cnae-nbs-indop')

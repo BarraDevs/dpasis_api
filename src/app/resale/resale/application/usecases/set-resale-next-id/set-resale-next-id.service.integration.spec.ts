@@ -53,7 +53,7 @@ describe('SetResaleNextId - Integration tests', () => {
     await createResale.execute(makeCreateResaleInput({ id: 50, document: '09.748.165/0001-10' }));
 
     await expect(sut.execute({ nextId: 50 })).rejects.toThrow(ResaleSequenceInvalidNextIdError);
-    await expect(sut.execute({ nextId: 50 })).rejects.toThrow('O próximo ID 50 é inválido');
+    await expect(sut.execute({ nextId: 50 })).rejects.toThrow('O próximo ID 32 é inválido');
   });
 
   it('should throw when nextId is less than max existing id', async() => {

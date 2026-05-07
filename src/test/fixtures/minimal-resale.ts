@@ -1,5 +1,5 @@
 import { Prisma } from '@prisma/client';
-import { CreateResaleInputDto } from 'src/app/resale/resale/application/usecases/create-resale/dtos/create-resale.dto';
+import { CreateResaleExecuteInputDto } from 'src/app/resale/resale/application/usecases/create-resale/dtos/create-resale.dto';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 
 /**
@@ -54,7 +54,7 @@ export async function resetResaleIntegrationState(
 }
 
 /** Payload válido padrão para `CreateResale` em testes. */
-export function makeCreateResaleInput(overrides: Partial<CreateResaleInputDto> = {}): CreateResaleInputDto {
+export function makeCreateResaleInput(overrides: Partial<CreateResaleExecuteInputDto> = {}): CreateResaleExecuteInputDto {
   return {
     code: 'REV-001',
     name: 'Revenda Teste',

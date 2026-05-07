@@ -12,7 +12,7 @@ import { FindAllClientGroup } from 'src/app/client/client-group/application/usec
 import { FindClientGroupById } from 'src/app/client/client-group/application/usecases/find-client-group-by-id/find-client-group-by-id.service';
 import { UpdateClientGroupStatus } from 'src/app/client/client-group/application/usecases/update-client-group-status/update-client-group-status.service';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
-import { Params } from 'src/infra/validators/class/dtos/params/params.dto';
+import { Params } from 'src/infra/validators/class/dtos/params';
 import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
 import { ClientGroupAdminController } from './client-group-admin.controller';
 

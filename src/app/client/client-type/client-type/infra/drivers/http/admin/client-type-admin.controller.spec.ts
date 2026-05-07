@@ -14,7 +14,7 @@ import { FindAllClientType } from 'src/app/client/client-type/client-type/applic
 import { FindClientTypeById } from 'src/app/client/client-type/client-type/application/usecases/find-client-type-by-id/find-client-type-by-id.service';
 import { UpdateClientTypeStatus } from 'src/app/client/client-type/client-type/application/usecases/update-client-type-status/update-client-type-status.service';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
-import { Params } from 'src/infra/validators/class/dtos/params/params.dto';
+import { Params } from 'src/infra/validators/class/dtos/params';
 import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
 import { ClientTypeAdminController } from './client-type-admin.controller';
 

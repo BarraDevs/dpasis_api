@@ -13,7 +13,7 @@ import { FindAllServiceCatalogQueryDto } from 'src/app/service/service-catalog/a
 import { FindAllServiceCatalog } from 'src/app/service/service-catalog/application/usecases/find-all-service-catalog/find-all-service-catalog.service';
 import { FindServiceCatalogById } from 'src/app/service/service-catalog/application/usecases/find-service-catalog-by-id/find-service-catalog-by-id.service';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
-import { Params } from 'src/infra/validators/class/dtos/params/params.dto';
+import { Params } from 'src/infra/validators/class/dtos/params';
 import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
 import { ServiceCatalogAdminController } from './service-catalog-admin.controller';
 

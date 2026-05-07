@@ -12,7 +12,7 @@ import { FindAllClientDepartment } from 'src/app/client/client-department/applic
 import { FindClientDepartmentById } from 'src/app/client/client-department/application/usecases/find-client-department-by-id/find-client-department-by-id.service';
 import { UpdateClientDepartmentStatus } from 'src/app/client/client-department/application/usecases/update-client-department-status/update-client-department-status.service';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
-import { Params } from 'src/infra/validators/class/dtos/params/params.dto';
+import { Params } from 'src/infra/validators/class/dtos/params';
 import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
 import { ClientDepartmentAdminController } from './client-department-admin.controller';
 

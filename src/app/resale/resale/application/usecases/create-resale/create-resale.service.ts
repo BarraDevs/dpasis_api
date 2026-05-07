@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { UploadSingle } from 'src/app/upload-file/application/usecases/upload-single/upload-single.service';
+import { ResaleExplicitIdInvalidError } from 'src/app/resale/resale/domain/errors/resale-explicit-id-invalid.error';
 import { ResaleIdAlreadyTakenError } from 'src/app/resale/resale/domain/errors/resale-id-already-taken.error';
 import { ResaleProfilePictureFolder } from 'src/app/resale/resale/domain/value-objects/resale-profile-picture-folder.vo';
 import { ResaleFactory } from 'src/app/resale/resale/domain/factories/resale.factory';
@@ -9,7 +10,7 @@ import { Document as DocumentVo } from 'src/shared/value-objects/document/docume
 import type { IResaleDao } from '../../persistence/dao/resale-dao.interface';
 import type { IResaleRepository } from '../../persistence/repository/resale-repository.interface';
 import type { IResaleSequenceRepository } from '../../persistence/repository/resale-sequence-repository.interface';
-import { CreateResaleInputDto, CreateResaleOutputDto } from './dtos/create-resale.dto';
+import { CreateResaleExecuteInputDto, CreateResaleOutputDto } from './dtos/create-resale.dto';
 
 @Injectable()
 export class CreateResale {
@@ -20,7 +21,11 @@ export class CreateResale {
     private readonly uploadSingle: UploadSingle,
   ) {}
 
-  public async execute(data: CreateResaleInputDto, file?: Express.Multer.File): Promise<CreateResaleOutputDto> {
+  public async execute(data: CreateResaleExecuteInputDto, file?: Express.Multer.File): Promise<CreateResaleOutputDto> {
+    if (data.id != null && data.id < 1) {
+      throw new ResaleExplicitIdInvalidError();
+    }
+
     if (data.id != null) {
       const idAlreadyTaken = await this.resaleDao.findById(data.id);
       if (idAlreadyTaken) {

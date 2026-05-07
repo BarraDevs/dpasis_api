@@ -6,7 +6,10 @@ import { ResaleContactAlreadyExistsError } from '../../../domain/errors/resale-c
 import { ResaleContactFactory } from '../../../domain/factories/resale-contact.factory';
 import type { IResaleContactDao } from '../../persistence/dao/resale-contact-dao.interface';
 import type { IResaleContactRepository } from '../../persistence/repository/resale-contact-repository.interface';
-import { CreateResaleContactInputDto, CreateResaleContactOutputDto } from './dtos/create-resale-contact.dto';
+import {
+  CreateResaleContactExecuteInput,
+  CreateResaleContactOutputDto,
+} from './dtos/create-resale-contact.dto';
 
 @Injectable()
 export class CreateResaleContact {
@@ -17,7 +20,7 @@ export class CreateResaleContact {
     private readonly findResaleDepartmentById: FindResaleDepartmentById,
   ) {}
 
-  public async execute(data: CreateResaleContactInputDto): Promise<CreateResaleContactOutputDto> {
+  public async execute(data: CreateResaleContactExecuteInput): Promise<CreateResaleContactOutputDto> {
     const resale = await this.findResaleById.execute(data.resaleId, { onlyActive: true });
     const department = await this.findResaleDepartmentById.execute(data.departmentId, { onlyActive: true });
 

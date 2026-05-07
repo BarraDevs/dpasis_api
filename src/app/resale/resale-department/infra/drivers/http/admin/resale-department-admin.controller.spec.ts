@@ -12,7 +12,7 @@ import { FindAllResaleDepartment } from 'src/app/resale/resale-department/applic
 import { FindResaleDepartmentById } from 'src/app/resale/resale-department/application/usecases/find-resale-department-by-id/find-resale-department-by-id.service';
 import { UpdateResaleDepartmentStatus } from 'src/app/resale/resale-department/application/usecases/update-resale-department-status/update-resale-department-status.service';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
-import { Params } from 'src/infra/validators/class/dtos/params/params.dto';
+import { Params } from 'src/infra/validators/class/dtos/params';
 import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
 import { ResaleDepartmentAdminController } from './resale-department-admin.controller';
 

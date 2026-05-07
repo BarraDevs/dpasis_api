@@ -56,20 +56,20 @@ describe('CreateResaleInputDto', () => {
     expect(result.code).toBe('C-1');
   });
 
-  it('should accept optional positive integer id', async() => {
-    const data = { ...validBase(), id: 25 };
+  it('should accept optional positive integer id as hexadecimal string', async() => {
+    const data = { ...validBase(), id: '19' };
 
     const result = await pipe.transform(data, bodyMetadata);
 
-    expect(result.id).toBe(25);
+    expect(result.id).toBe('19');
   });
 
-  it('should coerce string id from multipart/form-data', async() => {
-    const data = { ...validBase(), id: '25' };
+  it('should coerce multipart optional id as hex string', async() => {
+    const data = { ...validBase(), id: '19' };
 
     const result = await pipe.transform(data, bodyMetadata);
 
-    expect(result.id).toBe(25);
+    expect(result.id).toBe('19');
   });
 
   it('should reject when code is missing', async() => {
@@ -91,20 +91,20 @@ describe('CreateResaleInputDto', () => {
     await expect(pipe.transform(data, bodyMetadata)).rejects.toBeDefined();
   });
 
-  it('should reject invalid optional id (zero)', async() => {
-    const data = { ...validBase(), id: 0 };
+  it('should reject optional id with more than 8 hexadecimal digits', async() => {
+    const data = { ...validBase(), id: '123456789' };
 
     await expect(pipe.transform(data, bodyMetadata)).rejects.toBeDefined();
   });
 
-  it('should reject invalid optional id (negative)', async() => {
-    const data = { ...validBase(), id: -3 };
+  it('should reject invalid optional hex id (negative sign)', async() => {
+    const data = { ...validBase(), id: '-1' };
 
     await expect(pipe.transform(data, bodyMetadata)).rejects.toBeDefined();
   });
 
-  it('should reject non-integer id', async() => {
-    const data = { ...validBase(), id: 1.5 };
+  it('should reject non-hex id string', async() => {
+    const data = { ...validBase(), id: '1.5' };
 
     await expect(pipe.transform(data, bodyMetadata)).rejects.toBeDefined();
   });

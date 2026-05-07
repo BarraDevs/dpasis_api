@@ -8,7 +8,7 @@ import { ResaleNotFoundError } from 'src/app/resale/resale/domain/errors/resale-
 import { ResaleContactModule } from '../../../resale-contact.module';
 import { ResaleContactAlreadyExistsError } from '../../../domain/errors/resale-contact-already-exists.error';
 import { CreateResaleContact } from './create-resale-contact.service';
-import { CreateResaleContactInputDto } from './dtos/create-resale-contact.dto';
+import { CreateResaleContactExecuteInput } from './dtos/create-resale-contact.dto';
 
 describe('CreateResaleContact - Integration tests', () => {
   let sut: CreateResaleContact;
@@ -47,7 +47,7 @@ describe('CreateResaleContact - Integration tests', () => {
   });
 
   it('should throw ResaleContactAlreadyExistsError when creating with duplicate email for same resale', async() => {
-    const input: CreateResaleContactInputDto = {
+    const input: CreateResaleContactExecuteInput = {
       resaleId,
       departmentId,
       name: 'João Silva',
@@ -65,7 +65,7 @@ describe('CreateResaleContact - Integration tests', () => {
   it('should allow same email for different resales', async() => {
     const resale2 = await prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) });
 
-    const input1: CreateResaleContactInputDto = {
+    const input1: CreateResaleContactExecuteInput = {
       resaleId,
       departmentId,
       name: 'João',
@@ -75,7 +75,7 @@ describe('CreateResaleContact - Integration tests', () => {
       observations: null,
       receiveNF: false,
     };
-    const input2: CreateResaleContactInputDto = {
+    const input2: CreateResaleContactExecuteInput = {
       resaleId: resale2.id,
       departmentId,
       name: 'João',
@@ -95,7 +95,7 @@ describe('CreateResaleContact - Integration tests', () => {
   });
 
   it('should throw InvalidEmailError when email is invalid', async() => {
-    const input: CreateResaleContactInputDto = {
+    const input: CreateResaleContactExecuteInput = {
       resaleId,
       departmentId,
       name: 'João',
@@ -110,7 +110,7 @@ describe('CreateResaleContact - Integration tests', () => {
   });
 
   it('should throw InvalidPhoneError when phone is invalid', async() => {
-    const input: CreateResaleContactInputDto = {
+    const input: CreateResaleContactExecuteInput = {
       resaleId,
       departmentId,
       name: 'João',
@@ -125,7 +125,7 @@ describe('CreateResaleContact - Integration tests', () => {
   });
 
   it('should throw InvalidPhoneError when whatsapp is invalid', async() => {
-    const input: CreateResaleContactInputDto = {
+    const input: CreateResaleContactExecuteInput = {
       resaleId,
       departmentId,
       name: 'João',
@@ -140,7 +140,7 @@ describe('CreateResaleContact - Integration tests', () => {
   });
 
   it('should throw ResaleNotFoundError when resale does not exist', async() => {
-    const input: CreateResaleContactInputDto = {
+    const input: CreateResaleContactExecuteInput = {
       resaleId: 99999,
       departmentId,
       name: 'João',
@@ -155,7 +155,7 @@ describe('CreateResaleContact - Integration tests', () => {
   });
 
   it('should throw ResaleDepartmentNotFoundError when department does not exist', async() => {
-    const input: CreateResaleContactInputDto = {
+    const input: CreateResaleContactExecuteInput = {
       resaleId,
       departmentId: 99999,
       name: 'João',
@@ -173,7 +173,7 @@ describe('CreateResaleContact - Integration tests', () => {
     const inactiveDept = await prisma.resaleDepartment.create({
       data: { name: `Inactive ${Date.now()}`, active: false },
     });
-    const input: CreateResaleContactInputDto = {
+    const input: CreateResaleContactExecuteInput = {
       resaleId,
       departmentId: inactiveDept.id,
       name: 'João',
@@ -193,7 +193,7 @@ describe('CreateResaleContact - Integration tests', () => {
       data: { ...inactiveResaleData, active: false },
     });
 
-    const input: CreateResaleContactInputDto = {
+    const input: CreateResaleContactExecuteInput = {
       resaleId: inactiveResale.id,
       departmentId,
       name: 'João',
@@ -208,7 +208,7 @@ describe('CreateResaleContact - Integration tests', () => {
   });
 
   it('should create resale contact and return id', async() => {
-    const input: CreateResaleContactInputDto = {
+    const input: CreateResaleContactExecuteInput = {
       resaleId,
       departmentId,
       name: 'João Silva',
@@ -232,7 +232,7 @@ describe('CreateResaleContact - Integration tests', () => {
   });
 
   it('should persist email in lowercase', async() => {
-    const input: CreateResaleContactInputDto = {
+    const input: CreateResaleContactExecuteInput = {
       resaleId,
       departmentId,
       name: 'João',
@@ -250,7 +250,7 @@ describe('CreateResaleContact - Integration tests', () => {
   });
 
   it('should validate email with VO before checking uniqueness', async() => {
-    const input: CreateResaleContactInputDto = {
+    const input: CreateResaleContactExecuteInput = {
       resaleId,
       departmentId,
       name: 'João',

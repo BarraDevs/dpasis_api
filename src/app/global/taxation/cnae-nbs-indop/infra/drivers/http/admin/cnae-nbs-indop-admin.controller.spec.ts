@@ -20,7 +20,7 @@ import { CnaeDto } from 'src/app/global/taxation/cnae/application/dtos/cnae.dto'
 import { IndopDto } from 'src/app/global/taxation/indop/application/dtos/indop.dto';
 import { NbsDto } from 'src/app/global/taxation/nbs/application/dtos/nbs.dto';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
-import { Params } from 'src/infra/validators/class/dtos/params/params.dto';
+import { Params } from 'src/infra/validators/class/dtos/params';
 import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
 import { CnaeNbsIndopAdminController } from './cnae-nbs-indop-admin.controller';
 

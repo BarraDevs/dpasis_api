@@ -12,7 +12,7 @@ import { FindAllIndop } from 'src/app/global/taxation/indop/application/usecases
 import { FindIndopById } from 'src/app/global/taxation/indop/application/usecases/find-indop-by-id/find-indop-by-id.service';
 import { UpdateIndopStatus } from 'src/app/global/taxation/indop/application/usecases/update-indop-status/update-indop-status.service';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
-import { Params } from 'src/infra/validators/class/dtos/params/params.dto';
+import { Params } from 'src/infra/validators/class/dtos/params';
 import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
 import { IndopAdminController } from './indop-admin.controller';
 

@@ -1,19 +1,21 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsDateString, IsEmail, IsInt, IsNotEmpty, IsOptional, IsPositive, IsString, Max, MaxLength, Min, ValidateIf } from 'class-validator';
+import { IsBoolean, IsDateString, IsEmail, IsInt, IsNotEmpty, IsOptional, IsString, Max, MaxLength, Min, ValidateIf } from 'class-validator';
+import { IsUnsigned32HexString } from 'src/infra/validators/class/decorators/unsigned-32-hex-string/is-unsigned-32-hex-string';
 import { StringToBoolean } from 'src/infra/validators/class/decorators/string-boolean/string-boolean';
 import { StringToNumber } from 'src/infra/validators/class/decorators/string-number/string-number';
 import { Trim } from 'src/infra/validators/class/decorators/trim/trim';
 
 export class CreateResaleInputDto {
   @ApiPropertyOptional({
-    example: 67,
-    description: 'ID opcional para alinhar com sistema externo ou legado; se omitido, o banco gera automaticamente.',
+    example: '43',
+    description:
+      'ID opcional para alinhar com sistema externo ou legado (hexadecimal, 1 a 8 caracteres); se omitido, o banco gera automaticamente.',
   })
   @IsOptional()
-  @IsInt({ message: '$property deve ser um número inteiro' })
-  @IsPositive({ message: '$property deve ser um número positivo' })
-  @StringToNumber()
-  id?: number;
+  @ValidateIf((_o, v) => v != null && v !== '')
+  @IsString({ message: '$property deve ser uma string' })
+  @IsUnsigned32HexString()
+  id?: string;
 
   @ApiProperty({ example: 'REV-001' })
   @IsString({ message: '$property deve ser uma string' })
@@ -194,6 +196,8 @@ export class CreateResaleInputDto {
   @StringToBoolean()
   recurringResale?: boolean;
 }
+
+export type CreateResaleExecuteInputDto = Omit<CreateResaleInputDto, 'id'> & { id?: number };
 
 export class CreateResaleOutputDto {
   id: number;

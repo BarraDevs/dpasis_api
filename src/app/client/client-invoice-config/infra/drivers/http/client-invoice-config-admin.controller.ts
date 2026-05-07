@@ -12,8 +12,7 @@ import { EditClientInvoiceConfig } from 'src/app/client/client-invoice-config/ap
 import { FindClientInvoiceConfigByClientId } from 'src/app/client/client-invoice-config/application/usecases/find-client-invoice-config-by-client-id/find-client-invoice-config-by-client-id.service';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
 import { Swagger } from 'src/infra/openapi/swagger';
-import { ParamsClientId } from 'src/infra/validators/class/dtos/params/params-client-id.dto';
-import { Params } from 'src/infra/validators/class/dtos/params/params.dto';
+import { Params, ParamsClientId } from 'src/infra/validators/class/dtos/params';
 
 @Controller('admin/client-invoice-config')
 @RequiredRoles(AccountRole.ADMIN)

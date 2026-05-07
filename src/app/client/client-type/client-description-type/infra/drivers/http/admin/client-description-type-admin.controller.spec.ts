@@ -12,7 +12,7 @@ import { FindAllClientDescriptionType } from 'src/app/client/client-type/client-
 import { FindClientDescriptionTypeById } from 'src/app/client/client-type/client-description-type/application/usecases/find-client-description-type-by-id/find-client-description-type-by-id.service';
 import { UpdateClientDescriptionTypeStatus } from 'src/app/client/client-type/client-description-type/application/usecases/update-client-description-type-status/update-client-description-type-status.service';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
-import { Params } from 'src/infra/validators/class/dtos/params/params.dto';
+import { Params } from 'src/infra/validators/class/dtos/params';
 import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
 import { ClientDescriptionTypeAdminController } from './client-description-type-admin.controller';
 
