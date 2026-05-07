@@ -8,7 +8,6 @@ import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum'
 import { ClientNotFoundError } from 'src/app/client/client/domain/errors/client-not-found.error';
 import { CompanyNotFoundError } from 'src/app/company/domain/errors/company-not-found.error';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
-import { DocumentAlreadyTakenError } from 'src/shared/errors/document-already-taken';
 import { EditClient } from './edit-client.service';
 
 describe('EditClient - Integration tests', () => {
@@ -98,7 +97,7 @@ describe('EditClient - Integration tests', () => {
     expect(result).toEqual({ message: 'Edição realizada com sucesso' });
   });
 
-  it('should throw DocumentAlreadyTakenError when document is taken by another client', async() => {
+  it('should allow setting document to match another client when duplicate documents are allowed', async() => {
     const [group, resale] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
       prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
@@ -134,8 +133,11 @@ describe('EditClient - Integration tests', () => {
       },
     });
 
-    await expect(sut.execute(client2.id, { document: '09748165000110' })).rejects.toThrow(DocumentAlreadyTakenError);
-    await expect(sut.execute(client2.id, { document: '09748165000110' })).rejects.toThrow('O documento 09748165000110 já está em uso.');
+    const result = await sut.execute(client2.id, { document: '09748165000110' });
+
+    expect(result).toEqual({ message: 'Edição realizada com sucesso' });
+    const updated = await prisma.client.findUnique({ where: { id: client2.id } });
+    expect(updated?.document).toBe('09748165000110');
   });
 
   it('should allow keeping same document when editing own client', async() => {

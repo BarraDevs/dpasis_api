@@ -10,8 +10,6 @@ import { ClientParentIsSubClientError } from 'src/app/client/client/domain/error
 import { ClientFactory } from 'src/app/client/client/domain/factories/client.factory';
 import { FindCompanyById } from 'src/app/company/application/usecases/find-company-by-id/find-company-by-id.service';
 import { TOKENS } from 'src/core/di/token';
-import { DocumentAlreadyTakenError } from 'src/shared/errors/document-already-taken';
-import { Document as DocumentVo } from 'src/shared/value-objects/document/document.vo';
 import type { IClientDao } from '../../persistence/dao/client-dao.interface';
 import type { IClientRepository } from '../../persistence/repository/client-repository.interface';
 import type { IClientSequenceRepository } from '../../persistence/repository/client-sequence-repository.interface';
@@ -51,13 +49,6 @@ export class CreateClient {
       if (parent.isSubClient) {
         throw new ClientParentIsSubClientError();
       }
-    }
-
-    // Verifica se o documento já está em uso
-    const normalizedDocument = new DocumentVo(data.document).value;
-    const documentAlreadyTaken = await this.clientDao.findByDocument(normalizedDocument);
-    if (documentAlreadyTaken) {
-      throw new DocumentAlreadyTakenError(normalizedDocument);
     }
 
     // Verifica se o grupo e a revenda existem E estão ativas

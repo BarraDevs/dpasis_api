@@ -17,6 +17,8 @@ import { GetClientSequenceOutputDto } from 'src/app/client/client/application/us
 import { GetClientSequence } from 'src/app/client/client/application/usecases/get-client-sequence/get-client-sequence.service';
 import { LinkClientAttendanceAndMaintenanceInputDto } from 'src/app/client/client/application/usecases/link-client-attendance-and-maintenance/dtos/link-client-attendance-and-maintenance.dto';
 import { LinkClientAttendanceAndMaintenance } from 'src/app/client/client/application/usecases/link-client-attendance-and-maintenance/link-client-attendance-and-maintenance.service';
+import { LookupClientDocumentAndCnpjInputDto, LookupClientDocumentAndCnpjOutputDto } from 'src/app/client/client/application/usecases/lookup-client-document-and-cnpj/dtos/lookup-client-document-and-cnpj.dto';
+import { LookupClientDocumentAndCnpj } from 'src/app/client/client/application/usecases/lookup-client-document-and-cnpj/lookup-client-document-and-cnpj.service';
 import { SetClientParentInputDto } from 'src/app/client/client/application/usecases/set-client-parent/dtos/set-client-parent.dto';
 import { SetClientParent } from 'src/app/client/client/application/usecases/set-client-parent/set-client-parent.service';
 import { SetClientNextIdInputDto } from 'src/app/client/client/application/usecases/set-client-next-id/dtos/set-client-next-id.dto';
@@ -39,6 +41,7 @@ describe('ClientAdminController - Unit tests', () => {
   let getClientSequenceService: GetClientSequence;
   let linkClientAttendanceAndMaintenanceService: LinkClientAttendanceAndMaintenance;
   let setClientNextIdService: SetClientNextId;
+  let lookupClientDocumentAndCnpjService: LookupClientDocumentAndCnpj;
 
   beforeEach(async() => {
     const module = await Test.createTestingModule({
@@ -56,6 +59,7 @@ describe('ClientAdminController - Unit tests', () => {
         { provide: GetClientSequence, useValue: createMock<GetClientSequence>() },
         { provide: LinkClientAttendanceAndMaintenance, useValue: createMock<LinkClientAttendanceAndMaintenance>() },
         { provide: SetClientNextId, useValue: createMock<SetClientNextId>() },
+        { provide: LookupClientDocumentAndCnpj, useValue: createMock<LookupClientDocumentAndCnpj>() },
       ],
     }).compile();
 
@@ -71,6 +75,7 @@ describe('ClientAdminController - Unit tests', () => {
     getClientSequenceService = module.get(GetClientSequence);
     linkClientAttendanceAndMaintenanceService = module.get(LinkClientAttendanceAndMaintenance);
     setClientNextIdService = module.get(SetClientNextId);
+    lookupClientDocumentAndCnpjService = module.get(LookupClientDocumentAndCnpj);
   });
 
   it('should be defined', () => {
@@ -131,6 +136,19 @@ describe('ClientAdminController - Unit tests', () => {
       // Assert
       expect(result).toEqual(output);
       expect(findAllSpy).toHaveBeenCalledWith(queries);
+    });
+  });
+
+  describe('lookupDocumentAndCnpj', () => {
+    it('should call lookupClientDocumentAndCnpj.execute with body', async() => {
+      const body = createMock<LookupClientDocumentAndCnpjInputDto>();
+      const output = createMock<LookupClientDocumentAndCnpjOutputDto>();
+      const executeSpy = jest.spyOn(lookupClientDocumentAndCnpjService, 'execute').mockResolvedValue(output);
+
+      const result = await sut.lookupDocumentAndCnpj(body);
+
+      expect(result).toEqual(output);
+      expect(executeSpy).toHaveBeenCalledWith(body);
     });
   });
 

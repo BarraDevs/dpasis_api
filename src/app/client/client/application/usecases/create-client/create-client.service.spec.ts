@@ -9,7 +9,6 @@ import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum'
 import { ClientIdAlreadyTakenError } from 'src/app/client/client/domain/errors/client-id-already-taken.error';
 import { CompanyNotFoundError } from 'src/app/company/domain/errors/company-not-found.error';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
-import { DocumentAlreadyTakenError } from 'src/shared/errors/document-already-taken';
 import { InvalidDocumentError } from 'src/shared/value-objects/document/document.error';
 import { CreateClient } from './create-client.service';
 import { CreateClientInputDto } from './dtos/create-client.dto';
@@ -315,31 +314,16 @@ describe('CreateClient - Integration tests', () => {
     });
   });
 
-  describe('document already taken', () => {
-    it('should throw DocumentAlreadyTakenError when document already exists', async() => {
+  describe('duplicate document allowed', () => {
+    it('should create two clients with the same normalized document', async() => {
       const [group, resale, company] = await Promise.all([
         prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
         prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
         createCompany(),
       ]);
 
-      const input = makeValidInput({ groupId: group.id, resaleId: resale.id, companyIds: [company.id] });
-
-      await sut.execute(input);
-
-      await expect(sut.execute(input)).rejects.toThrow(DocumentAlreadyTakenError);
-      await expect(sut.execute(input)).rejects.toThrow('O documento 09748165000110 já está em uso.');
-    });
-
-    it('should not persist client when document is already taken', async() => {
-      const [group, resale, company] = await Promise.all([
-        prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-        prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
-        createCompany(),
-      ]);
-
-      const input = makeValidInput({ groupId: group.id, resaleId: resale.id, companyIds: [company.id] });
-      await sut.execute(input);
+      const input1 = makeValidInput({ groupId: group.id, resaleId: resale.id, companyIds: [company.id] });
+      const { id: id1 } = await sut.execute(input1);
 
       const input2 = makeValidInput({
         groupId: group.id,
@@ -348,11 +332,11 @@ describe('CreateClient - Integration tests', () => {
         document: '09.748.165/0001-10',
         companyName: 'Outra Empresa',
       });
+      const { id: id2 } = await sut.execute(input2);
 
-      await expect(sut.execute(input2)).rejects.toThrow(DocumentAlreadyTakenError);
-
+      expect(id1).not.toBe(id2);
       const clients = await prisma.client.findMany({ where: { document: '09748165000110' } });
-      expect(clients).toHaveLength(1);
+      expect(clients).toHaveLength(2);
     });
   });
 

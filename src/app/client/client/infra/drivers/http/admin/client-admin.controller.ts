@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Patch, Post, Query } from '@nestjs/common';
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
 import { Claim } from 'src/app/authentication/domain/authorization/claim';
 import { RequiredClaims } from 'src/app/authentication/infra/decorators/required-claims.decorator';
@@ -19,6 +19,8 @@ import { GetClientSequenceOutputDto } from 'src/app/client/client/application/us
 import { GetClientSequence } from 'src/app/client/client/application/usecases/get-client-sequence/get-client-sequence.service';
 import { LinkClientAttendanceAndMaintenanceInputDto } from 'src/app/client/client/application/usecases/link-client-attendance-and-maintenance/dtos/link-client-attendance-and-maintenance.dto';
 import { LinkClientAttendanceAndMaintenance } from 'src/app/client/client/application/usecases/link-client-attendance-and-maintenance/link-client-attendance-and-maintenance.service';
+import { LookupClientDocumentAndCnpjInputDto, LookupClientDocumentAndCnpjOutputDto } from 'src/app/client/client/application/usecases/lookup-client-document-and-cnpj/dtos/lookup-client-document-and-cnpj.dto';
+import { LookupClientDocumentAndCnpj } from 'src/app/client/client/application/usecases/lookup-client-document-and-cnpj/lookup-client-document-and-cnpj.service';
 import { SetClientParentInputDto } from 'src/app/client/client/application/usecases/set-client-parent/dtos/set-client-parent.dto';
 import { SetClientParent } from 'src/app/client/client/application/usecases/set-client-parent/set-client-parent.service';
 import { SetClientNextIdInputDto } from 'src/app/client/client/application/usecases/set-client-next-id/dtos/set-client-next-id.dto';
@@ -43,6 +45,7 @@ export class ClientAdminController {
     private readonly getClientSequence: GetClientSequence,
     private readonly linkClientAttendanceAndMaintenance: LinkClientAttendanceAndMaintenance,
     private readonly setClientNextId: SetClientNextId,
+    private readonly lookupClientDocumentAndCnpj: LookupClientDocumentAndCnpj,
   ) {}
 
   @Post()
@@ -90,6 +93,20 @@ export class ClientAdminController {
   })
   public setSequence(@Body() body: SetClientNextIdInputDto): Promise<SuccessMessage> {
     return this.setClientNextId.execute(body);
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @Post('lookup-document-and-cnpj')
+  @RequiredClaims(Claim.CLIENT_READ)
+  @Swagger({
+    tags: ['Clientes'],
+    summary: 'Verificar documento em uso e consultar dados do CNPJ',
+    description: 'Retorna se o documento já está cadastrado em cliente e, em paralelo, dados da Receita para o CNPJ informado (ou mensagem de erro na consulta externa sem falhar a requisição).',
+    applyBadRequest: true,
+    okResponse: LookupClientDocumentAndCnpjOutputDto,
+  })
+  public lookupDocumentAndCnpj(@Body() body: LookupClientDocumentAndCnpjInputDto): Promise<LookupClientDocumentAndCnpjOutputDto> {
+    return this.lookupClientDocumentAndCnpj.execute(body);
   }
 
   @Get(':id')

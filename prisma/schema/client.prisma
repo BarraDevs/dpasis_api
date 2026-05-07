@@ -3,7 +3,7 @@ model Client {
   type                String
   parentClientId      Int?
   isSubClient         Boolean  @default(false)
-  document            String   @unique
+  document            String
   ie                  String?
   groupId             Int
   resaleId            Int

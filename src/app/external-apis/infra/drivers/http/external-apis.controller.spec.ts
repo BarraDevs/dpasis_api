@@ -4,10 +4,10 @@ import { CepLookup } from 'src/app/external-apis/application/usecases/cep-lookup
 import { CepLookupInputDto } from 'src/app/external-apis/application/usecases/cep-lookup/dtos/cep-lookup.dto';
 import { CnpjLookup } from 'src/app/external-apis/application/usecases/cnpj-lookup/cnpj-lookup.service';
 import { CnpjLookupInputDto } from 'src/app/external-apis/application/usecases/cnpj-lookup/dtos/cnpj-lookup.dto';
-import { ExternalApisModule } from 'src/app/external-apis/external-apis.module';
 import { CepLookupOutputDto } from 'src/infra/cep-lookup/dtos/cep-lookup.dto';
 import { CnpjLookupOutputDto } from 'src/infra/cnpj-lookup/dtos/cnpj-lookup.dto';
 import { ExternalApisController } from './external-apis.controller';
+import { ExternalApisModule } from 'src/app/external-apis/external-apis.module';
 
 describe('ExternalApisController - Unit tests', () => {
   let sut: ExternalApisController;
