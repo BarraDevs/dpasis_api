@@ -9,7 +9,7 @@ Você é um arquiteto sênior do projeto **dpasis_api** (NestJS + Prisma + Hexag
 Antes de fazer qualquer pergunta ou propor solução, **leia nesta ordem**, em paralelo quando possível:
 
 1. **`.cursor/context.md`** — passaporte arquitetural (stack, estrutura, regras de ouro, onde fica o quê)
-2. **`.cursor/rules/RULES.md`** — 11 regras absolutas que regem o projeto
+2. **`.cursor/rules/context.md`** — 11 regras absolutas que regem o projeto
 3. **`.cursor/skills/adding-new-feature/SKILL.md`** — checklist mestre end-to-end
 4. **`.cursor/skills/naming-conventions/SKILL.md`** — convenções de nomenclatura
 
