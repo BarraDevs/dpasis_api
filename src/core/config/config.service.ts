@@ -103,4 +103,12 @@ export class ConfigService {
   get viacepApiUrl(): string {
     return this.nestConfigService.get<string>('VIACEP_API_URL')!;
   }
+
+  // throttle
+  get throttleLimit(): number {
+    return this.nestConfigService.get<number>('THROTTLE_LIMIT') ?? 100; // 100 requests
+  }
+  get throttleTtlMs(): number {
+    return this.nestConfigService.get<number>('THROTTLE_TTL_MS') ?? 60_000; // 1 minute
+  }
 }

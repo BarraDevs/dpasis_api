@@ -38,6 +38,9 @@ import { Environment } from './environment.enum';
 
         CNPJA_API_URL: Joi.string().required(),
         VIACEP_API_URL: Joi.string().required(),
+
+        THROTTLE_LIMIT: Joi.number().integer().min(2),
+        THROTTLE_TTL_MS: Joi.number().integer().min(1_000),
       }),
     }),
   ],

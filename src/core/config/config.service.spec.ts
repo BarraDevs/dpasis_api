@@ -329,6 +329,32 @@ describe('ConfigService', () => {
     });
   });
 
+  describe('throttle properties', () => {
+    describe('throttleLimit', () => {
+      it('should return the THROTTLE_LIMIT value as number', () => {
+        const mockLimit = 100;
+        nestConfigService.get.mockReturnValue(mockLimit);
+
+        const result = sut.throttleLimit;
+
+        expect(nestConfigService.get).toHaveBeenCalledWith('THROTTLE_LIMIT');
+        expect(result).toBe(mockLimit);
+      });
+    });
+
+    describe('throttleTtlMs', () => {
+      it('should return the THROTTLE_TTL_MS value as number', () => {
+        const mockTtl = 60_000;
+        nestConfigService.get.mockReturnValue(mockTtl);
+
+        const result = sut.throttleTtlMs;
+
+        expect(nestConfigService.get).toHaveBeenCalledWith('THROTTLE_TTL_MS');
+        expect(result).toBe(mockTtl);
+      });
+    });
+  });
+
   describe('integration scenarios', () => {
     it('should call nestConfigService.get for each property access', () => {
       nestConfigService.get

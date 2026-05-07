@@ -10,6 +10,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { Throttle } from '@nestjs/throttler';
 import { ApiConsumes } from '@nestjs/swagger';
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
 import { Claim } from 'src/app/authentication/domain/authorization/claim';
@@ -46,6 +47,7 @@ import {
 import { UploadSingleInputDto } from 'src/app/upload-file/application/usecases/upload-single/dtos/upload-single.dto';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
 import { Swagger } from 'src/infra/openapi/swagger';
+import { getThrottleHalfLimit } from 'src/infra/throttle/throttle.runtime';
 import { ParamsHexId } from 'src/infra/validators/class/dtos/params/params-hex-id.dto';
 import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
 
@@ -108,6 +110,9 @@ export class ResaleAdminController {
   }
 
   @Patch('sequence')
+  @Throttle({
+    default: { limit: () => getThrottleHalfLimit() },
+  })
   @RequiredClaims(Claim.RESALE_WRITE)
   @Swagger({
     tags: ['Revendas'],
