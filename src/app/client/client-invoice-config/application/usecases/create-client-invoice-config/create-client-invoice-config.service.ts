@@ -34,6 +34,7 @@ export class CreateClientInvoiceConfig {
       emissionDay: data.emissionDay,
       dueDateType: data.dueDateType,
       dueDateDay: data.dueDateDay,
+      dueMonth: data.dueMonth,
       deadlineDays: data.deadlineDays,
       months: data.months ?? [],
       billingAddressId: billingAddress.id,

@@ -151,6 +151,8 @@ describe('EditClientInvoiceConfig - Integration tests', () => {
   it('should return success message', async() => {
     const data: EditClientInvoiceConfigInputDto = {
       message: 'Nova mensagem',
+      dueDateType: ClientInvoiceConfigDueDateType.DEADLINE,
+      deadlineDays: 30,
     };
 
     const result = await sut.execute(configId, data);
@@ -161,6 +163,8 @@ describe('EditClientInvoiceConfig - Integration tests', () => {
   it('should allow partial update (only some fields)', async() => {
     const data: EditClientInvoiceConfigInputDto = {
       generateNf: false,
+      dueDateType: ClientInvoiceConfigDueDateType.DEADLINE,
+      deadlineDays: 30,
     };
 
     await sut.execute(configId, data);
@@ -176,6 +180,8 @@ describe('EditClientInvoiceConfig - Integration tests', () => {
   it('should throw BankNotFoundError when bankId does not exist', async() => {
     const data: EditClientInvoiceConfigInputDto = {
       bankId: 99999,
+      dueDateType: ClientInvoiceConfigDueDateType.DEADLINE,
+      deadlineDays: 30,
     };
 
     await expect(sut.execute(configId, data)).rejects.toThrow(BankNotFoundError);
@@ -196,6 +202,8 @@ describe('EditClientInvoiceConfig - Integration tests', () => {
     });
     const data: EditClientInvoiceConfigInputDto = {
       bankId: inactiveBank.id,
+      dueDateType: ClientInvoiceConfigDueDateType.DEADLINE,
+      deadlineDays: 30,
     };
 
     await expect(sut.execute(configId, data)).rejects.toThrow(BankNotFoundError);
@@ -241,6 +249,8 @@ describe('EditClientInvoiceConfig - Integration tests', () => {
 
     const data: EditClientInvoiceConfigInputDto = {
       billingAddressId: otherAddress.id,
+      dueDateType: ClientInvoiceConfigDueDateType.DEADLINE,
+      deadlineDays: 30,
     };
 
     await expect(sut.execute(configId, data)).rejects.toThrow(ClientAddressNotFoundError);
@@ -263,6 +273,8 @@ describe('EditClientInvoiceConfig - Integration tests', () => {
     });
     const data: EditClientInvoiceConfigInputDto = {
       billingAddressId: inactiveAddress.id,
+      dueDateType: ClientInvoiceConfigDueDateType.DEADLINE,
+      deadlineDays: 30,
     };
 
     await expect(sut.execute(configId, data)).rejects.toThrow(ClientAddressNotFoundError);
@@ -286,6 +298,8 @@ describe('EditClientInvoiceConfig - Integration tests', () => {
 
     const data: EditClientInvoiceConfigInputDto = {
       billingAddressId: secondAddress.id,
+      dueDateType: ClientInvoiceConfigDueDateType.DEADLINE,
+      deadlineDays: 30,
     };
 
     await sut.execute(configId, data);

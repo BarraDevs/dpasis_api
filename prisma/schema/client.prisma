@@ -181,6 +181,7 @@ model ClientInvoiceConfig {
   emissionDay       Int
   dueDateType       String
   dueDateDay        Int?
+  dueMonth          Int?
   deadlineDays      Int?
   months            Int[]    @default([])
   billingAddressId  Int

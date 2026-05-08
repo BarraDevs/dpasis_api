@@ -15,8 +15,6 @@ import { ClientInvoiceConfigType } from 'src/app/client/client-invoice-config/do
 import { StringToNumber } from 'src/infra/validators/class/decorators/string-number/string-number';
 import { Trim } from 'src/infra/validators/class/decorators/trim/trim';
 import { BillingMonths } from 'src/shared/value-objects/billing-months/billing-months.vo';
-import { DueDateDay } from 'src/shared/value-objects/due-date-day/due-date-day.vo';
-import { EmissionDay } from 'src/shared/value-objects/emission-day/emission-day.vo';
 
 export class CreateClientInvoiceConfigInputDto {
   @ApiProperty({ example: 1 })
@@ -25,35 +23,42 @@ export class CreateClientInvoiceConfigInputDto {
   @IsInt()
   clientId: number;
 
-  @ApiProperty({ example: true })
-  @IsNotEmpty({ message: '$property é obrigatório' })
-  @IsBoolean()
-  generateNf: boolean;
-
   @ApiProperty({ example: Object.values(ClientInvoiceConfigType).join(', ') })
   @IsNotEmpty({ message: '$property é obrigatório' })
   @IsEnum(ClientInvoiceConfigType, { message: '$property inválido.' })
   type: ClientInvoiceConfigType;
-
-  @ApiProperty({ example: 1 })
-  @IsNotEmpty({ message: '$property é obrigatório' })
-  @StringToNumber()
-  @IsInt()
-  @Min(EmissionDay.MIN_DAY, { message: '$property deve ser entre 1 e 31' })
-  @Max(EmissionDay.MAX_DAY, { message: '$property deve ser entre 1 e 31' })
-  emissionDay: number;
 
   @ApiProperty({ example: Object.values(ClientInvoiceConfigDueDateType).join(', ') })
   @IsNotEmpty({ message: '$property é obrigatório' })
   @IsEnum(ClientInvoiceConfigDueDateType, { message: '$property inválido.' })
   dueDateType: ClientInvoiceConfigDueDateType;
 
+  @ApiProperty({ example: true })
+  @IsNotEmpty({ message: '$property é obrigatório' })
+  @IsBoolean()
+  generateNf: boolean;
+
+  @ApiProperty({ example: 1 })
+  @IsNotEmpty({ message: '$property é obrigatório' })
+  @StringToNumber()
+  @IsInt()
+  @Min(1, { message: '$property deve ser entre 1 e 31' })
+  @Max(31, { message: '$property deve ser entre 1 e 31' })
+  emissionDay: number;
+
   @ApiPropertyOptional({ example: 1 })
   @IsOptional()
   @StringToNumber()
   @IsInt()
-  @Min(DueDateDay.MIN_DAY, { message: '$property deve ser entre 1 e 31' })
-  @Max(DueDateDay.MAX_DAY, { message: '$property deve ser entre 1 e 31' })
+  @Min(1, { message: '$property deve ser maior que 0' })
+  dueMonth: number | null;
+
+  @ApiPropertyOptional({ example: 1 })
+  @IsOptional()
+  @StringToNumber()
+  @IsInt()
+  @Min(1, { message: '$property deve ser entre 1 e 31' })
+  @Max(31, { message: '$property deve ser entre 1 e 31' })
   dueDateDay: number | null;
 
   @ApiPropertyOptional({ example: 1 })

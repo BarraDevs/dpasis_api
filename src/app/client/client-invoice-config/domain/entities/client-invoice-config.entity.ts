@@ -12,6 +12,7 @@ export type ClientInvoiceConfigCreateProps = {
   emissionDay: number;
   dueDateType: ClientInvoiceConfigDueDateType;
   dueDateDay: number | null;
+  dueMonth: number | null;
   deadlineDays: number | null;
   months: number[];
   billingAddressId: number;
@@ -36,6 +37,7 @@ export class ClientInvoiceConfig {
       emissionDay: props.emissionDay,
       dueDateType: props.dueDateType,
       dueDateDay: props.dueDateDay,
+      dueMonth: props.dueMonth,
       deadlineDays: props.deadlineDays,
       months: props.months,
       billingAddressId: props.billingAddressId,

@@ -11,6 +11,7 @@ function makeClientInvoiceConfigProps(overrides?: Partial<ClientInvoiceConfigPro
     emissionDay: 5,
     dueDateType: ClientInvoiceConfigDueDateType.DUE_DATE,
     dueDateDay: 15,
+    dueMonth: 5,
     deadlineDays: null,
     months: [],
     billingAddressId: 1,

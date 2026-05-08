@@ -1,6 +1,6 @@
-import { InvalidEmissionDayError } from './emission-day.error';
+import { InvalidDayError } from './day.error';
 
-export class EmissionDay {
+export class Day {
   static readonly MIN_DAY = 1;
   static readonly MAX_DAY = 31;
 
@@ -9,10 +9,10 @@ export class EmissionDay {
   constructor(value: number) {
     if (
       !Number.isInteger(value) ||
-      value < EmissionDay.MIN_DAY ||
-      value > EmissionDay.MAX_DAY
+      value < Day.MIN_DAY ||
+      value > Day.MAX_DAY
     ) {
-      throw new InvalidEmissionDayError();
+      throw new InvalidDayError();
     }
     this._value = value;
   }

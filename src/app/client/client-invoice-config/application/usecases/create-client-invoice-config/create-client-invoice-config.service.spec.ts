@@ -20,9 +20,10 @@ function makeValidInput(overrides?: Record<string, unknown>) {
     type: ClientInvoiceConfigType.MONTHLY,
     emissionDay: 5,
     dueDateType: ClientInvoiceConfigDueDateType.DUE_DATE,
-    dueDateDay: 15,
+    dueDateDay: 25,
     deadlineDays: null,
     months: [] as number[],
+    dueMonth: 5,
     billingAddressId: 0,
     bankId: 0,
     autoProtestBoleto: false,
@@ -126,7 +127,8 @@ describe('CreateClientInvoiceConfig', () => {
     expect(saved?.type).toBe(ClientInvoiceConfigType.MONTHLY);
     expect(saved?.emissionDay).toBe(5);
     expect(saved?.dueDateType).toBe(ClientInvoiceConfigDueDateType.DUE_DATE);
-    expect(saved?.dueDateDay).toBe(15);
+    expect(saved?.dueDateDay).toBe(25);
+    expect(saved?.dueMonth).toBe(5);
     expect(saved?.billingAddressId).toBe(billingAddressId);
     expect(saved?.bankId).toBe(bankId);
   });

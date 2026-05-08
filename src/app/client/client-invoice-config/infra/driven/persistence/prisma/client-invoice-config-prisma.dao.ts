@@ -14,6 +14,7 @@ const ClientInvoiceConfigSelect = {
   emissionDay: true,
   dueDateType: true,
   dueDateDay: true,
+  dueMonth: true,
   deadlineDays: true,
   months: true,
   billingAddressId: true,
@@ -34,21 +35,9 @@ export class ClientInvoiceConfigDaoAdapterPrisma implements IClientInvoiceConfig
 
   private mapToDto(data: ClientInvoiceConfigData): ClientInvoiceConfigDto {
     return {
-      id: data.id,
-      clientId: data.clientId,
-      generateNf: data.generateNf,
+      ...data,
       type: data.type as ClientInvoiceConfigType,
-      emissionDay: data.emissionDay,
       dueDateType: data.dueDateType as ClientInvoiceConfigDueDateType,
-      dueDateDay: data.dueDateDay,
-      deadlineDays: data.deadlineDays,
-      months: data.months,
-      billingAddressId: data.billingAddressId,
-      bankId: data.bankId,
-      autoProtestBoleto: data.autoProtestBoleto,
-      message: data.message,
-      createdAt: data.createdAt,
-      updatedAt: data.updatedAt,
     };
   }
 

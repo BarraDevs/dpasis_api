@@ -9,6 +9,7 @@ export class ClientInvoiceConfigDto {
   emissionDay: number;
   dueDateType: ClientInvoiceConfigDueDateType;
   dueDateDay: number | null;
+  dueMonth: number | null;
   deadlineDays: number | null;
   months: number[];
   billingAddressId: number;
