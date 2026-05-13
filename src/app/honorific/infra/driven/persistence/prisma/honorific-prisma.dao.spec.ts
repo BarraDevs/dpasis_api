@@ -1,0 +1,127 @@
+import { Test } from '@nestjs/testing';
+import { CreateHonorificInputDto } from 'src/app/honorific/application/usecases/create-honorific/dtos/create-honorific.dto';
+import { EditHonorificInputDto } from 'src/app/honorific/application/usecases/edit-honorific/dtos/edit-honorific.dto';
+import { FindAllHonorificQueryDto } from 'src/app/honorific/application/usecases/find-all-honorific/dtos/find-all-honorific.dto';
+import { ConfigModule } from 'src/core/config/config.module';
+import { PrismaService } from 'src/infra/database/prisma/prisma.service';
+import { HonorificDaoAdapterPrisma } from './honorific-prisma.dao';
+
+describe('HonorificDaoAdapterPrisma - Integration tests', () => {
+  let sut: HonorificDaoAdapterPrisma;
+  let prisma: PrismaService;
+
+  beforeAll(async() => {
+    const module = await Test.createTestingModule({
+      imports: [ConfigModule],
+      providers: [HonorificDaoAdapterPrisma, PrismaService],
+    }).compile();
+
+    sut = module.get(HonorificDaoAdapterPrisma);
+    prisma = module.get(PrismaService);
+  });
+
+  beforeEach(async() => {
+    await prisma.truncate();
+  });
+
+  afterAll(async() => {
+    await prisma.truncate();
+    await prisma.$disconnect();
+  });
+
+  describe('findAll', () => {
+    it('should return empty when no rows', async() => {
+      const [rows, total] = await sut.findAll({});
+
+      expect(rows).toEqual([]);
+      expect(total).toBe(0);
+    });
+
+    it('should filter by search on name', async() => {
+      await prisma.honorific.createMany({ data: [{ name: 'Sr.' }, { name: 'Dra.' }] });
+
+      const [rows, total] = await sut.findAll({ search: 'dra' } as FindAllHonorificQueryDto);
+
+      expect(total).toBe(1);
+      expect(rows[0].name).toBe('Dra.');
+    });
+
+    it('should filter by active', async() => {
+      await prisma.honorific.createMany({
+        data: [
+          { name: 'A', active: true },
+          { name: 'B', active: false },
+        ],
+      });
+
+      const [rows, total] = await sut.findAll({ active: false } as FindAllHonorificQueryDto);
+
+      expect(total).toBe(1);
+      expect(rows[0].name).toBe('B');
+    });
+  });
+
+  describe('findByName', () => {
+    it('should match case-insensitively', async() => {
+      await prisma.honorific.create({ data: { name: 'Prof.' } });
+
+      const found = await sut.findByName('prof.');
+
+      expect(found).not.toBeNull();
+      expect(found?.name).toBe('Prof.');
+    });
+  });
+
+  describe('save / edit / delete / updateStatus', () => {
+    it('should save and return id', async() => {
+      const data: CreateHonorificInputDto = { name: 'Sr.' };
+
+      const id = await sut.save(data);
+
+      const row = await prisma.honorific.findUnique({ where: { id } });
+      expect(row?.name).toBe('Sr.');
+    });
+
+    it('should edit partial fields', async() => {
+      const { id } = await prisma.honorific.create({ data: { name: 'X' } });
+      const data: EditHonorificInputDto = { name: 'Y' };
+
+      await sut.edit(id, data);
+
+      const row = await prisma.honorific.findUnique({ where: { id } });
+      expect(row?.name).toBe('Y');
+    });
+
+    it('should delete', async() => {
+      const { id } = await prisma.honorific.create({ data: { name: 'Z' } });
+
+      await sut.delete(id);
+
+      expect(await prisma.honorific.findUnique({ where: { id } })).toBeNull();
+    });
+
+    it('should updateStatus', async() => {
+      const { id } = await prisma.honorific.create({ data: { name: 'W', active: true } });
+
+      await sut.updateStatus(id, false);
+
+      const row = await prisma.honorific.findUnique({ where: { id } });
+      expect(row?.active).toBe(false);
+    });
+  });
+
+  describe('findById', () => {
+    it('should return HonorificDto or null', async() => {
+      const created = await prisma.honorific.create({ data: { name: 'Q' } });
+
+      const found = await sut.findById(created.id);
+
+      expect(found).toMatchObject({
+        id: created.id,
+        name: 'Q',
+      });
+
+      expect(await sut.findById(999999)).toBeNull();
+    });
+  });
+});

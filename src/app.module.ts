@@ -7,6 +7,7 @@ import { CompanyModule } from './app/company/company.module';
 import { ExternalApisModule } from './app/external-apis/external-apis.module';
 import { FaqModule } from './app/faq/faq.module';
 import { GlobalModule } from './app/global/global.module';
+import { HonorificModule } from './app/honorific/honorific.module';
 import { ResaleModuleModule } from './app/resale/resale-module.module';
 import { ServiceModuleModule } from './app/service/service-module.module';
 import { UploadFileModule } from './app/upload-file/upload-file.module';
@@ -26,6 +27,7 @@ import { InfraModule } from './infra/infra.module';
     ResaleModuleModule,
     ExternalApisModule,
     FaqModule,
+    HonorificModule,
     GlobalModule,
     ServiceModuleModule,
     UploadFileModule,

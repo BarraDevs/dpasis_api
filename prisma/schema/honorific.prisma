@@ -1,0 +1,9 @@
+model Honorific {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique @db.VarChar(64)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("honorifics")
+}
