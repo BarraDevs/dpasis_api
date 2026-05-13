@@ -74,6 +74,7 @@ export class CreateResale {
       email: data.email ?? null,
       website: data.website ?? null,
       nickname: data.nickname ?? null,
+      socialName: data.socialName ?? null,
       validityDate: data.validityDate ? new Date(data.validityDate) : null,
       accessEmail: data.accessEmail ?? null,
       accessPassword: data.accessPassword ?? null,

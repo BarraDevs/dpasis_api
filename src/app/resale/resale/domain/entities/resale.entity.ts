@@ -15,6 +15,7 @@ export type ResaleCreateProps = {
   email: string | null;
   website: string | null;
   nickname: string | null;
+  socialName: string | null;
   validityDate: Date | null;
   accessEmail: string | null;
   accessPassword: string | null;

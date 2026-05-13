@@ -16,6 +16,7 @@ model Resale {
   email                  String?
   website                String?
   nickname               String?
+  socialName             String?
   validityDate           DateTime?
   accessEmail            String?
   accessPassword         String?   @db.Text

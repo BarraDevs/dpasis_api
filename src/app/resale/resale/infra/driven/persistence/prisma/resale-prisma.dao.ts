@@ -23,6 +23,7 @@ const ResaleSelect = {
   email: true,
   website: true,
   nickname: true,
+  socialName: true,
   validityDate: true,
   accessEmail: true,
   accessPassword: true,
@@ -57,6 +58,7 @@ export class ResaleDaoAdapterPrisma implements IResaleDao {
           { document: { contains: term, mode: 'insensitive' } },
           { identifier: { contains: term, mode: 'insensitive' } },
           { nickname: { contains: term, mode: 'insensitive' } },
+          { socialName: { contains: term, mode: 'insensitive' } },
           { accessEmail: { contains: term, mode: 'insensitive' } },
         ],
       });

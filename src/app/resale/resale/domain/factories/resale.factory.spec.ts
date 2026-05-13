@@ -22,6 +22,7 @@ function makeResaleCreateProps(overrides?: Partial<ResaleCreateProps>): ResaleCr
     email: null,
     website: null,
     nickname: null,
+    socialName: null,
     validityDate: null,
     accessEmail: null,
     accessPassword: null,
@@ -73,6 +74,7 @@ describe('ResaleFactory', () => {
         email: null,
         website: null,
         nickname: null,
+        socialName: null,
         validityDate: null,
         accessEmail: null,
         accessPassword: null,
@@ -125,6 +127,7 @@ describe('ResaleFactory', () => {
           website: ' ',
           ie: '   ',
           nickname: ' ',
+          socialName: ' ',
         }),
       );
 
@@ -135,6 +138,7 @@ describe('ResaleFactory', () => {
       expect(resale.props.website).toBeNull();
       expect(resale.props.ie).toBeNull();
       expect(resale.props.nickname).toBeNull();
+      expect(resale.props.socialName).toBeNull();
     });
 
     it('should accept a valid CPF document', () => {
@@ -168,6 +172,7 @@ describe('ResaleFactory', () => {
       const resale = ResaleFactory.create(
         makeResaleCreateProps({
           nickname: 'Apelido Centro',
+          socialName: 'Denominação social',
           validityDate: validity,
           accessEmail: 'acesso@test.com',
           accessPassword: 'senha',
@@ -178,6 +183,7 @@ describe('ResaleFactory', () => {
       );
 
       expect(resale.props.nickname).toBe('Apelido Centro');
+      expect(resale.props.socialName).toBe('Denominação social');
       expect(resale.props.validityDate).toEqual(validity);
       expect(resale.props.accessEmail).toBe('acesso@test.com');
       expect(resale.props.accessPassword).toBe('senha');
@@ -273,11 +279,13 @@ describe('ResaleFactory', () => {
         identifier: undefined as unknown as string | null,
         phone02: undefined as unknown as string | null,
         ie: undefined as unknown as string | null,
+        socialName: undefined as unknown as string | null,
       });
 
       expect(resale.props.identifier).toBeNull();
       expect(resale.props.phone02).toBeNull();
       expect(resale.props.ie).toBeNull();
+      expect(resale.props.socialName).toBeNull();
     });
 
     it('should preserve inactive state', () => {

@@ -108,6 +108,7 @@ describe('CreateResale - Integration tests', () => {
     const { id } = await sut.execute(
       makeCreateResaleInput({
         nickname: 'Loja Norte',
+        socialName: 'Instituto Alfa',
         validityDate: validityIso,
         accessEmail: 'painel@loja.com',
         accessPassword: 'armazenado',
@@ -124,6 +125,7 @@ describe('CreateResale - Integration tests', () => {
     const row = await prisma.resale.findUniqueOrThrow({ where: { id } });
 
     expect(row.nickname).toBe('Loja Norte');
+    expect(row.socialName).toBe('Instituto Alfa');
     expect(row.validityDate?.toISOString()).toBe(validityIso);
     expect(row.accessEmail).toBe('painel@loja.com');
     expect(row.accessPassword).toBe('armazenado');

@@ -122,6 +122,12 @@ export class CreateResaleInputDto {
   @MaxLength(255, { message: '$property deve ter no máximo 255 caracteres' })
   nickname?: string | null;
 
+  @ApiPropertyOptional({ example: 'Nome social constitucional', description: 'Nome social (opcional).' })
+  @IsOptional()
+  @IsString({ message: '$property deve ser uma string' })
+  @Trim()
+  socialName?: string | null;
+
   @ApiPropertyOptional({ example: '2026-04-01T03:00:00.000Z' })
   @IsOptional()
   @ValidateIf((o) => o.validityDate != null && o.validityDate !== '')

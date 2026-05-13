@@ -46,12 +46,13 @@ describe('EditResaleInputDto', () => {
 
   it('should accept explicit null for optional fields', async() => {
     const result = await pipe.transform(
-      { identifier: null, phone02: null },
+      { identifier: null, phone02: null, socialName: null },
       bodyMetadata,
     );
 
     expect(result.identifier).toBeNull();
     expect(result.phone02).toBeNull();
+    expect(result.socialName).toBeNull();
   });
 
   it('should coerce boolean strings for flags', async() => {
@@ -68,6 +69,7 @@ describe('EditResaleInputDto', () => {
     const result = await pipe.transform(
       {
         nickname: ' Novo apelido ',
+        socialName: ' Nome social ',
         validityDate: '2026-12-01T00:00:00.000Z',
         accessEmail: 'novo@revenda.com',
         paymentDay: '3',
@@ -79,6 +81,7 @@ describe('EditResaleInputDto', () => {
     );
 
     expect(result.nickname).toBe('Novo apelido');
+    expect(result.socialName).toBe('Nome social');
     expect(result.validityDate).toBe('2026-12-01T00:00:00.000Z');
     expect(result.accessEmail).toBe('novo@revenda.com');
     expect(result.paymentDay).toBe(3);

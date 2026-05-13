@@ -55,6 +55,7 @@ export class EditResale {
       email: data.email !== undefined ? data.email : resale.email,
       website: data.website !== undefined ? data.website : resale.website,
       nickname: data.nickname !== undefined ? data.nickname : resale.nickname,
+      socialName: data.socialName !== undefined ? data.socialName : resale.socialName,
       validityDate:
         data.validityDate !== undefined
           ? (data.validityDate ? new Date(data.validityDate) : null)

@@ -21,6 +21,7 @@ describe('ResaleDto', () => {
       email: null,
       website: null,
       nickname: 'Nick',
+      socialName: 'Social LTDA',
       validityDate: new Date('2026-06-01T00:00:00.000Z'),
       accessEmail: null,
       accessPassword: null,

@@ -53,6 +53,7 @@ export class ResaleRepositoryAdapterPrisma implements IResaleRepository {
       email: data.email,
       website: data.website,
       nickname: data.nickname,
+      socialName: data.socialName,
       validityDate: data.validityDate,
       accessEmail: data.accessEmail,
       accessPassword: data.accessPassword,

@@ -45,6 +45,7 @@ describe('ResaleDaoAdapterPrisma - Integration tests', () => {
       email: 'contato@test.com',
       website: null,
       nickname: null,
+      socialName: null,
       validityDate: null,
       accessEmail: null,
       accessPassword: null,
@@ -166,6 +167,25 @@ describe('ResaleDaoAdapterPrisma - Integration tests', () => {
 
       expect(total).toBe(1);
       expect(rows[0].nickname).toBe('Nick Cento');
+    });
+
+    it('should search by socialName (case-insensitive)', async() => {
+      await prisma.resale.createMany({
+        data: [
+          resaleRow({ id: 1, socialName: 'Revenda Instituto Alfa' }),
+          resaleRow({
+            id: 2,
+            name: 'Outra loja',
+            document: '28695096000179',
+            socialName: 'Outra denominação',
+          }),
+        ],
+      });
+
+      const [rows, total] = await sut.findAll({ search: 'Instituto' });
+
+      expect(total).toBe(1);
+      expect(rows[0].socialName).toBe('Revenda Instituto Alfa');
     });
 
     it('should search by accessEmail (case-insensitive)', async() => {

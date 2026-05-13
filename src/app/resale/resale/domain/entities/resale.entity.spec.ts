@@ -20,6 +20,7 @@ function makeResaleProps(overrides?: Partial<ResaleProps>): ResaleProps {
     email: null,
     website: null,
     nickname: null,
+    socialName: null,
     validityDate: null,
     accessEmail: null,
     accessPassword: null,
@@ -131,6 +132,7 @@ describe('Resale', () => {
       const validity = new Date('2026-08-15T12:00:00.000Z');
       const props = makeResaleProps({
         nickname: 'Central SP',
+        socialName: 'Nome social exibido',
         validityDate: validity,
         accessEmail: 'painel@revenda.com',
         accessPassword: 'stored-secret',
@@ -145,6 +147,7 @@ describe('Resale', () => {
 
       expect(resale.props).toMatchObject({
         nickname: 'Central SP',
+        socialName: 'Nome social exibido',
         validityDate: validity,
         accessEmail: 'painel@revenda.com',
         accessPassword: 'stored-secret',

@@ -139,6 +139,12 @@ describe('CreateResaleInputDto', () => {
     expect(result.email).toBe('');
   });
 
+  it('should accept null optional socialName', async() => {
+    const result = await pipe.transform({ ...validBase(), socialName: null }, bodyMetadata);
+
+    expect(result.socialName).toBeNull();
+  });
+
   it.each([
     ['true', true],
     ['false', false],
@@ -173,6 +179,7 @@ describe('CreateResaleInputDto', () => {
     const data = {
       ...validBase(),
       nickname: 'Revenda Sul',
+      socialName: ' Razão nome social ',
       validityDate: '2026-07-01T12:00:00.000Z',
       accessEmail: 'painel@example.com',
       accessPassword: 'segredo',
@@ -184,6 +191,7 @@ describe('CreateResaleInputDto', () => {
     const result = await pipe.transform(data, bodyMetadata);
 
     expect(result.nickname).toBe('Revenda Sul');
+    expect(result.socialName).toBe('Razão nome social');
     expect(result.validityDate).toBe('2026-07-01T12:00:00.000Z');
     expect(result.accessEmail).toBe('painel@example.com');
     expect(result.accessPassword).toBe('segredo');

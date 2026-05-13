@@ -73,6 +73,7 @@ export function makeCreateResaleInput(overrides: Partial<CreateResaleExecuteInpu
     email: null,
     website: null,
     nickname: null,
+    socialName: null,
     validityDate: null,
     accessEmail: null,
     accessPassword: null,

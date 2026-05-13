@@ -23,6 +23,7 @@ function makeResaleDto(overrides: Partial<ResaleDto> = {}): ResaleDto {
     email: null,
     website: null,
     nickname: null,
+    socialName: null,
     validityDate: null,
     accessEmail: null,
     accessPassword: null,
@@ -138,6 +139,7 @@ describe('EditResale - Unit tests', () => {
     resaleDao.findById.mockResolvedValue(
       makeResaleDto({
         nickname: 'Antigo',
+        socialName: 'Antigo nome social',
         paymentDay: 1,
         billingStartDay: 5,
         indicatorResale: false,
@@ -146,6 +148,7 @@ describe('EditResale - Unit tests', () => {
 
     await sut.execute(99, {
       nickname: 'Atualizado',
+      socialName: 'Novo nome social',
       paymentDay: 18,
       billingStartDay: 25,
       indicatorResale: true,
@@ -154,6 +157,7 @@ describe('EditResale - Unit tests', () => {
 
     const entity = resaleRepository.edit.mock.calls[0]?.[0];
     expect(entity?.props.nickname).toBe('Atualizado');
+    expect(entity?.props.socialName).toBe('Novo nome social');
     expect(entity?.props.paymentDay).toBe(18);
     expect(entity?.props.billingStartDay).toBe(25);
     expect(entity?.props.indicatorResale).toBe(true);

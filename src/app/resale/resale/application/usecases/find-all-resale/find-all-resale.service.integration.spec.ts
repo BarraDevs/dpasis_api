@@ -89,6 +89,18 @@ describe('FindAllResale - Integration tests', () => {
     expect(result.data[0].name).toBe('Revenda Norte');
   });
 
+  it('should search by socialName substring', async() => {
+    await createResale.execute(makeCreateResaleInput({ socialName: 'Revenda Centro Social' }));
+    await createResale.execute(
+      makeCreateResaleInput({ name: 'Outra', document: '28.695.096/0001-79' }),
+    );
+
+    const result = await sut.execute({ search: 'Centro Social' });
+
+    expect(result.totalItems).toBe(1);
+    expect(result.data[0].socialName).toBe('Revenda Centro Social');
+  });
+
   it('should paginate with page and size', async() => {
     await createResale.execute(makeCreateResaleInput({ name: 'R1' }));
     await createResale.execute(

@@ -63,6 +63,7 @@ describe('EditResale - Integration tests', () => {
 
     await sut.execute(id, {
       nickname: 'Apelido novo',
+      socialName: 'Nome social público',
       validityDate: '2028-05-01T00:00:00.000Z',
       accessEmail: 'novo@loja.com',
       paymentDay: 12,
@@ -75,6 +76,7 @@ describe('EditResale - Integration tests', () => {
     const row = await prisma.resale.findUniqueOrThrow({ where: { id } });
 
     expect(row.nickname).toBe('Apelido novo');
+    expect(row.socialName).toBe('Nome social público');
     expect(row.validityDate?.toISOString()).toBe('2028-05-01T00:00:00.000Z');
     expect(row.accessEmail).toBe('novo@loja.com');
     expect(row.paymentDay).toBe(12);
@@ -204,6 +206,7 @@ describe('EditResale - Integration tests', () => {
         email: null,
         website: null,
         nickname: null,
+        socialName: null,
         validityDate: null,
         accessEmail: null,
         accessPassword: null,

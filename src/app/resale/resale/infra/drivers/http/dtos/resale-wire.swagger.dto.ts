@@ -53,6 +53,12 @@ export class ResaleWireSwaggerDto {
   @ApiPropertyOptional({ nullable: true })
   nickname: string | null;
 
+  @ApiPropertyOptional({
+    nullable: true,
+    description: 'Nome social (opcional).',
+  })
+  socialName: string | null;
+
   @ApiPropertyOptional({ nullable: true, type: String, format: 'date-time' })
   validityDate: Date | null;
 

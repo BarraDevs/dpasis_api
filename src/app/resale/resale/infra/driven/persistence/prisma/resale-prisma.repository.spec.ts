@@ -45,6 +45,7 @@ describe('ResaleRepositoryAdapterPrisma - Integration tests', () => {
       email: null,
       website: null,
       nickname: null,
+      socialName: null,
       validityDate: null,
       accessEmail: null,
       accessPassword: null,
@@ -81,6 +82,7 @@ describe('ResaleRepositoryAdapterPrisma - Integration tests', () => {
         ...makeCreateProps(),
         id: 101,
         nickname: 'Nova loja',
+        socialName: 'Razão social persistida',
         validityDate: validity,
         accessEmail: 'save@test.com',
         accessPassword: 'senha-save',
@@ -97,6 +99,7 @@ describe('ResaleRepositoryAdapterPrisma - Integration tests', () => {
 
       const saved = await prisma.resale.findUnique({ where: { id: 101 } });
       expect(saved?.nickname).toBe('Nova loja');
+      expect(saved?.socialName).toBe('Razão social persistida');
       expect(saved?.validityDate?.toISOString()).toBe(validity.toISOString());
       expect(saved?.accessEmail).toBe('save@test.com');
       expect(saved?.accessPassword).toBe('senha-save');
@@ -136,6 +139,7 @@ describe('ResaleRepositoryAdapterPrisma - Integration tests', () => {
           email: 'r@test.com',
           website: null,
           nickname: 'RepoNick',
+          socialName: 'Nome da revenda LTDA',
           validityDate: validity,
           accessEmail: 'acesso@repo.com',
           accessPassword: 'pwd-db',
@@ -162,6 +166,7 @@ describe('ResaleRepositoryAdapterPrisma - Integration tests', () => {
         document: '28695096000179',
         active: false,
         nickname: 'RepoNick',
+        socialName: 'Nome da revenda LTDA',
         accessEmail: 'acesso@repo.com',
         accessPassword: 'pwd-db',
         paymentDay: 6,

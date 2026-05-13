@@ -75,6 +75,7 @@ describe('CreateResale - Unit tests', () => {
     await sut.execute(
       makeCreateResaleInput({
         nickname: 'Centro',
+        socialName: 'Nome oficial social',
         validityDate: '2026-09-01T00:00:00.000Z',
         accessEmail: 'acc@loja.com',
         accessPassword: 'pwd',
@@ -90,6 +91,7 @@ describe('CreateResale - Unit tests', () => {
 
     const entity = resaleRepository.save.mock.calls[0]?.[0];
     expect(entity?.props.nickname).toBe('Centro');
+    expect(entity?.props.socialName).toBe('Nome oficial social');
     expect(entity?.props.validityDate).toEqual(new Date('2026-09-01T00:00:00.000Z'));
     expect(entity?.props.accessEmail).toBe('acc@loja.com');
     expect(entity?.props.accessPassword).toBe('pwd');
