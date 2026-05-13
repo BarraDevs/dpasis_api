@@ -68,6 +68,9 @@ describe('ClientRepositoryAdapterPrisma - Integration tests', () => {
         resaleId: resale.id,
         companyIds: [company.id],
         invoiceType: ClientInvoiceType.CONTRACT,
+        parentClientId: null,
+        socialName: 'Social LTDA',
+        domain: 'empresa.com.br',
         generateInvoice: true,
         companyName: 'Empresa LTDA',
         fantasyName: 'Empresa',
@@ -90,6 +93,8 @@ describe('ClientRepositoryAdapterPrisma - Integration tests', () => {
       expect(saved?.resaleId).toBe(resale.id);
       expect(saved?.companyName).toBe('Empresa LTDA');
       expect(saved?.fantasyName).toBe('Empresa');
+      expect(saved?.socialName).toBe('Social LTDA');
+      expect(saved?.domain).toBe('empresa.com.br');
       expect(saved?.headquarters).toBe('São Paulo');
       expect(saved?.invoiceType).toBe(ClientInvoiceType.CONTRACT);
       expect(saved?.generateInvoice).toBe(true);
@@ -102,16 +107,19 @@ describe('ClientRepositoryAdapterPrisma - Integration tests', () => {
       const { group, resale, company } = await createClientGroupResaleAndCompany();
 
       const entity = ClientFactory.create({
+        parentClientId: null,
         type: ClientType.PF,
         document: '974.563.215-58',
-        ie: null,
         groupId: group.id,
         resaleId: resale.id,
         companyIds: [company.id],
         invoiceType: ClientInvoiceType.INDIVIDUAL,
         generateInvoice: false,
         companyName: 'Pessoa Física',
+        ie: null,
         fantasyName: null,
+        socialName: null,
+        domain: null,
         headquarters: 'Rio de Janeiro',
       });
 
@@ -122,11 +130,11 @@ describe('ClientRepositoryAdapterPrisma - Integration tests', () => {
       });
 
       expect(saved).not.toBeNull();
+      expect(saved?.parentClientId).toBeNull();
       expect(saved?.ie).toBeNull();
       expect(saved?.fantasyName).toBeNull();
-      expect(saved?.type).toBe(ClientType.PF);
-      expect(saved?.companyName).toBe('Pessoa Física');
-      expect(saved?.generateInvoice).toBe(false);
+      expect(saved?.socialName).toBeNull();
+      expect(saved?.domain).toBeNull();
     });
 
     it('should persist client with explicit id when entity has id > 0', async() => {
@@ -144,6 +152,9 @@ describe('ClientRepositoryAdapterPrisma - Integration tests', () => {
         generateInvoice: true,
         companyName: 'Empresa Id Explícito',
         fantasyName: null,
+        socialName: null,
+        domain: null,
+        parentClientId: null,
         headquarters: 'São Paulo',
         id: explicitId,
       });
@@ -174,6 +185,9 @@ describe('ClientRepositoryAdapterPrisma - Integration tests', () => {
         resaleId: resale.id,
         companyIds: [company.id],
         invoiceType: ClientInvoiceType.CONTRACT,
+        socialName: null,
+        domain: null,
+        parentClientId: null,
         generateInvoice: true,
         companyName: 'Nome Original',
         fantasyName: null,
@@ -193,6 +207,7 @@ describe('ClientRepositoryAdapterPrisma - Integration tests', () => {
         companyIds: [company.id],
         companyName: 'Nome Atualizado',
         fantasyName: 'Nova Fantasia',
+        socialName: 'Nome social atualizado',
       });
 
       await sut.edit(entityToEdit);
@@ -203,6 +218,7 @@ describe('ClientRepositoryAdapterPrisma - Integration tests', () => {
 
       expect(updated?.companyName).toBe('Nome Atualizado');
       expect(updated?.fantasyName).toBe('Nova Fantasia');
+      expect(updated?.socialName).toBe('Nome social atualizado');
       expect(updated?.document).toBe('09748165000110');
     });
 
@@ -238,6 +254,8 @@ describe('ClientRepositoryAdapterPrisma - Integration tests', () => {
         generateInvoice: true,
         companyName: 'Cliente Filho',
         fantasyName: null,
+        socialName: null,
+        domain: null,
         headquarters: 'São Paulo',
         parentClientId: parent.id,
       });
@@ -285,6 +303,9 @@ describe('ClientRepositoryAdapterPrisma - Integration tests', () => {
       const entity = ClientFactory.create({
         type: ClientType.PJ,
         document: '09.748.165/0001-10',
+        socialName: null,
+        domain: null,
+        parentClientId: null,
         ie: null,
         groupId: group.id,
         resaleId: resale.id,
@@ -309,6 +330,7 @@ describe('ClientRepositoryAdapterPrisma - Integration tests', () => {
       expect(found?.props.id).toBe(saved!.id);
       expect(found?.props.companyName).toBe('Empresa');
       expect(found?.props.document).toBe('09748165000110');
+      expect(found?.props.socialName).toBeNull();
     });
   });
 
@@ -320,6 +342,9 @@ describe('ClientRepositoryAdapterPrisma - Integration tests', () => {
         type: ClientType.PJ,
         document: '09.748.165/0001-10',
         ie: null,
+        socialName: null,
+        domain: null,
+        parentClientId: null,
         groupId: group.id,
         resaleId: resale.id,
         companyIds: [company.id],
@@ -359,6 +384,9 @@ describe('ClientRepositoryAdapterPrisma - Integration tests', () => {
         type: ClientType.PJ,
         document: '09.748.165/0001-10',
         ie: null,
+        socialName: null,
+        domain: null,
+        parentClientId: null,
         groupId: group.id,
         resaleId: resale.id,
         companyIds: [company.id],

@@ -75,9 +75,12 @@ describe('CreateClient - Integration tests', () => {
       companyIds: [1],
       companyName: 'Empresa LTDA',
       fantasyName: null,
+      socialName: null,
+      domain: null,
       headquarters: 'São Paulo',
       invoiceType: ClientInvoiceType.CONTRACT,
       generateInvoice: true,
+      parentClientId: null,
       address: {
         zipCode: '12345-678',
         street: 'Rua das Laranjeiras',
@@ -189,6 +192,7 @@ describe('CreateClient - Integration tests', () => {
         companyIds: [company.id],
         ie: '123456789',
         fantasyName: 'Empresa',
+        socialName: 'Razão integrada LTDA',
       });
 
       const result = await sut.execute(input);
@@ -200,6 +204,7 @@ describe('CreateClient - Integration tests', () => {
       });
       expect(saved?.ie).toBe('123456789');
       expect(saved?.fantasyName).toBe('Empresa');
+      expect(saved?.socialName).toBe('Razão integrada LTDA');
     });
 
     it('should persist domain when provided', async() => {

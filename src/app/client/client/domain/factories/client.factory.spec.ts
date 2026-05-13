@@ -14,10 +14,12 @@ function makeClientCreateProps(overrides?: Partial<ClientCreateProps>): ClientCr
     groupId: 1,
     resaleId: 1,
     companyIds: [1],
+    parentClientId: null,
     invoiceType: ClientInvoiceType.CONTRACT,
     generateInvoice: true,
     companyName: 'Empresa LTDA',
     fantasyName: null,
+    socialName: null,
     domain: null,
     headquarters: 'São Paulo',
     ...overrides,
@@ -40,6 +42,7 @@ function makeClientProps(overrides?: Partial<ClientProps>): ClientProps {
     generateInvoice: true,
     companyName: 'Empresa LTDA',
     fantasyName: null,
+    socialName: null,
     domain: null,
     headquarters: 'São Paulo',
     ...overrides,
@@ -81,6 +84,7 @@ describe('ClientFactory', () => {
         generateInvoice: true,
         companyName: 'Empresa LTDA',
         fantasyName: null,
+        socialName: null,
         domain: null,
         headquarters: 'São Paulo',
       });
@@ -299,6 +303,40 @@ describe('ClientFactory', () => {
       });
     });
 
+    describe('validation - socialName (optional)', () => {
+      it('should accept null socialName', () => {
+        const props = makeClientCreateProps({ socialName: null });
+
+        const client = ClientFactory.create(props);
+
+        expect(client.props.socialName).toBeNull();
+      });
+
+      it('should treat empty string socialName as null (optional)', () => {
+        const props = makeClientCreateProps({ socialName: '' });
+
+        const client = ClientFactory.create(props);
+
+        expect(client.props.socialName).toBeNull();
+      });
+
+      it('should convert whitespace-only socialName to null', () => {
+        const props = makeClientCreateProps({ socialName: '   ' });
+
+        const client = ClientFactory.create(props);
+
+        expect(client.props.socialName).toBeNull();
+      });
+
+      it('should accept valid socialName when provided', () => {
+        const props = makeClientCreateProps({ socialName: 'Razão Social Registrada' });
+
+        const client = ClientFactory.create(props);
+
+        expect(client.props.socialName).toBe('Razão Social Registrada');
+      });
+    });
+
     describe('validation - domain (optional)', () => {
       it('should accept null domain', () => {
         const props = makeClientCreateProps({ domain: null });
@@ -410,16 +448,18 @@ describe('ClientFactory', () => {
       expect(client.props.document).toBe('97456321558');
     });
 
-    it('should preserve optional fields ie and fantasyName', () => {
+    it('should preserve optional fields ie, fantasyName and socialName', () => {
       const props = makeClientProps({
         ie: '987654321',
         fantasyName: 'Fantasia Loaded',
+        socialName: 'Nome social carregado',
       });
 
       const client = ClientFactory.load(props);
 
       expect(client.props.ie).toBe('987654321');
       expect(client.props.fantasyName).toBe('Fantasia Loaded');
+      expect(client.props.socialName).toBe('Nome social carregado');
     });
 
     it('should preserve domain when provided', () => {

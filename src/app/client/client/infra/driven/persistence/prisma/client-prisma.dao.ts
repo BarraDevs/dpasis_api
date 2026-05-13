@@ -19,6 +19,7 @@ const ClientSelect = {
   maintenanceTicketId: true,
   companyName: true,
   fantasyName: true,
+  socialName: true,
   domain: true,
   headquarters: true,
   invoiceType: true,
@@ -63,6 +64,7 @@ export class ClientDaoAdapterPrisma implements IClientDao {
         OR: [
           { companyName: { contains: queries.search.trim(), mode: 'insensitive' } },
           { fantasyName: { contains: queries.search.trim(), mode: 'insensitive' } },
+          { socialName: { contains: queries.search.trim(), mode: 'insensitive' } },
           { domain: { contains: queries.search.trim(), mode: 'insensitive' } },
           { document: { contains: queries.search.trim(), mode: 'insensitive' } },
         ],
@@ -148,6 +150,7 @@ export class ClientDaoAdapterPrisma implements IClientDao {
         OR: [
           { companyName: { contains: queries.search.trim(), mode: 'insensitive' } },
           { fantasyName: { contains: queries.search.trim(), mode: 'insensitive' } },
+          { socialName: { contains: queries.search.trim(), mode: 'insensitive' } },
           { domain: { contains: queries.search.trim(), mode: 'insensitive' } },
           { document: { contains: queries.search.trim(), mode: 'insensitive' } },
         ],

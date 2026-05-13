@@ -29,6 +29,7 @@ export class ClientSeed {
         resale: { connect: { id: firstResale.id } },
         companyName: 'Cliente Exemplo Ltda',
         fantasyName: 'Cliente Exemplo',
+        socialName: 'Cliente Exemplo Ltda.',
         headquarters: 'Matriz',
         invoiceType: ClientInvoiceType.CONTRACT,
         generateInvoice: true,

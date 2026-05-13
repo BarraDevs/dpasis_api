@@ -28,6 +28,7 @@ function makeValidAddress(): CreateClientInputDto['address'] {
 
 function makeValidInputDto(overrides: Partial<CreateClientInputDto> = {}): CreateClientInputDto {
   return {
+    parentClientId: null,
     type: ClientType.PJ,
     document: '09.748.165/0001-10',
     ie: null,
@@ -36,6 +37,7 @@ function makeValidInputDto(overrides: Partial<CreateClientInputDto> = {}): Creat
     companyIds: [1],
     companyName: 'Empresa LTDA',
     fantasyName: null,
+    socialName: null,
     domain: null,
     headquarters: 'São Paulo',
     invoiceType: ClientInvoiceType.CONTRACT,
@@ -283,6 +285,33 @@ describe('CreateClientInputDto', () => {
     });
   });
 
+  describe('socialName field (optional)', () => {
+    it('should accept null socialName', async() => {
+      const data = makeValidInputDto({ socialName: null });
+
+      const result = await target.transform(data, metadata);
+
+      expect(result.socialName).toBeNull();
+    });
+
+    it('should accept undefined socialName', async() => {
+      const data = makeValidInputDto();
+      delete (data as { socialName?: unknown }).socialName;
+
+      const result = await target.transform(data, metadata);
+
+      expect(result.socialName).toBeUndefined();
+    });
+
+    it('should trim socialName when provided', async() => {
+      const data = makeValidInputDto({ socialName: '  Nome social  ' });
+
+      const result = await target.transform(data, metadata);
+
+      expect(result.socialName).toBe('Nome social');
+    });
+  });
+
   describe('domain field (optional)', () => {
     it('should accept undefined domain', async() => {
       const data = makeValidInputDto();
@@ -512,6 +541,7 @@ describe('CreateClientInputDto', () => {
       expect(result.companyIds).toEqual([1]);
       expect(result.companyName).toBe('Empresa LTDA');
       expect(result.fantasyName).toBeNull();
+      expect(result.socialName).toBeNull();
       expect(result.headquarters).toBe('São Paulo');
       expect(result.invoiceType).toBe(ClientInvoiceType.CONTRACT);
       expect(result.generateInvoice).toBe(true);
@@ -522,6 +552,7 @@ describe('CreateClientInputDto', () => {
       const data = makeValidInputDto({
         ie: '123456789',
         fantasyName: 'Empresa',
+        socialName: 'Razão social',
         address: {
           ...makeValidAddress(),
           complement: 'Apto 202',
@@ -532,6 +563,7 @@ describe('CreateClientInputDto', () => {
 
       expect(result.ie).toBe('123456789');
       expect(result.fantasyName).toBe('Empresa');
+      expect(result.socialName).toBe('Razão social');
       expect(result.address.complement).toBe('Apto 202');
     });
   });

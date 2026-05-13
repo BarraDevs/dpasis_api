@@ -23,7 +23,7 @@ export class CreateAdmin {
       name: data.name,
       email: data.email,
       document: data.document,
-      profilePicture: data.profilePicture ?? null,
+      profilePicture: data.profilePicture,
       claims,
     });
 

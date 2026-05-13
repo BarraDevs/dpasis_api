@@ -78,13 +78,14 @@ export class CreateClient {
       ie: data.ie,
       groupId: data.groupId,
       resaleId: data.resaleId,
-      parentClientId: data.parentClientId ?? null,
+      parentClientId: data.parentClientId,
       companyIds: data.companyIds,
       invoiceType: data.invoiceType,
       generateInvoice: data.generateInvoice,
       companyName: data.companyName,
       fantasyName: data.fantasyName,
-      domain: data.domain ?? null,
+      socialName: data.socialName,
+      domain: data.domain,
       headquarters: data.headquarters,
     });
 

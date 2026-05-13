@@ -26,7 +26,7 @@ export class CreateClientInputDto {
   @IsNumber({}, { message: '$property deve ser um número' })
   @IsPositive({ message: '$property deve ser um número positivo' })
   @IsInt({ message: '$property deve ser um número inteiro' })
-  parentClientId?: number;
+  parentClientId: number | null;
 
   @ApiProperty({ example: Object.values(ClientType).join(', ') })
   @IsEnum(ClientType, { message: '$property inválido.' })
@@ -79,12 +79,18 @@ export class CreateClientInputDto {
   @Trim()
   fantasyName: string | null;
 
+  @ApiPropertyOptional({ example: 'Razão social constitucional', description: 'Nome social (opcional).' })
+  @IsOptional()
+  @IsString({ message: '$property deve ser uma string' })
+  @Trim()
+  socialName: string | null;
+
   @ApiPropertyOptional({ example: 'cliente.example.com', description: 'Domínio associado ao cliente (opcional).' })
   @IsOptional()
   @IsString({ message: '$property deve ser uma string' })
   @Trim()
   @MaxLength(128, { message: '$property deve ter no máximo 128 caracteres' })
-  domain?: string | null;
+  domain: string | null;
 
   @ApiProperty({ example: 'São Paulo' })
   @IsString({ message: '$property deve ser uma string' })

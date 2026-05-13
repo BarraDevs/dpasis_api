@@ -84,6 +84,12 @@ export class ClientSearchFilterDto {
   @IsOptional()
   @ValidateNested()
   @Type(() => StringFilterDto)
+  socialName?: StringFilterDto;
+
+  @ApiPropertyOptional({ type: StringFilterDto })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => StringFilterDto)
   domain?: StringFilterDto;
 
   @ApiPropertyOptional({ type: StringFilterDto })

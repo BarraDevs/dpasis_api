@@ -57,7 +57,7 @@ Cada propriedade de `filter` é um objeto de operadores. **Vários campos em `fi
 
 #### Campos texto (`StringFilterDto`)
 
-`type`, `document`, `ie`, `companyName`, `fantasyName`, `domain`, `headquarters`, `invoiceType`
+`type`, `document`, `ie`, `companyName`, `fantasyName`, `socialName`, `domain`, `headquarters`, `invoiceType`
 
 | Operador | Tipo | Notas |
 |----------|------|--------|

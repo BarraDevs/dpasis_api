@@ -66,7 +66,8 @@ export class SetClientParent {
       generateInvoice: client.generateInvoice,
       companyName: client.companyName,
       fantasyName: client.fantasyName,
-      domain: client.domain ?? null,
+      socialName: client.socialName,
+      domain: client.domain,
       headquarters: client.headquarters,
       active: client.active,
     });

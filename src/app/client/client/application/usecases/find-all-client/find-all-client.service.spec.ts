@@ -259,6 +259,50 @@ describe('FindAllClient - Integration tests', () => {
     expect(result.data[0].fantasyName).toBe('Premium Corp');
   });
 
+  it('should filter by search in socialName (case-insensitive)', async() => {
+    const [group, resale] = await Promise.all([
+      prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
+      prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
+    ]);
+
+    await prisma.client.createMany({
+      data: [
+        {
+          id: 5_010,
+          type: ClientType.PJ,
+          document: '09748165000130',
+          groupId: group.id,
+          resaleId: resale.id,
+          companyName: 'Empresa A',
+          socialName: 'Instituto Alfa Beta',
+          headquarters: 'SP',
+          invoiceType: ClientInvoiceType.CONTRACT,
+          generateInvoice: true,
+          active: true,
+        },
+        {
+          id: 5_011,
+          type: ClientType.PJ,
+          document: '09748165000131',
+          groupId: group.id,
+          resaleId: resale.id,
+          companyName: 'Empresa B',
+          socialName: 'Outra denominação',
+          headquarters: 'SP',
+          invoiceType: ClientInvoiceType.CONTRACT,
+          generateInvoice: true,
+          active: true,
+        },
+      ],
+    });
+
+    const result = await sut.execute({ search: 'alfa beta' });
+
+    expect(result.data).toHaveLength(1);
+    expect(result.totalItems).toBe(1);
+    expect(result.data[0].socialName).toBe('Instituto Alfa Beta');
+  });
+
   it('should filter by search in document (case-insensitive)', async() => {
     const [group, resale] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
@@ -512,6 +556,7 @@ describe('FindAllClient - Integration tests', () => {
       },
       companyName: 'Empresa LTDA',
       fantasyName: 'Empresa',
+      socialName: null,
       domain: null,
       headquarters: 'São Paulo',
       invoiceType: ClientInvoiceType.CONTRACT,

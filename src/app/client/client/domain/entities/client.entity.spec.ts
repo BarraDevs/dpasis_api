@@ -18,6 +18,7 @@ function makeClientProps(overrides?: Partial<ClientProps>): ClientProps {
     generateInvoice: true,
     companyName: 'Empresa LTDA',
     fantasyName: 'Empresa',
+    socialName: null,
     domain: null,
     headquarters: 'São Paulo',
     ...overrides,
@@ -81,6 +82,7 @@ describe('Client', () => {
       expect(client.props.generateInvoice).toBe(true);
       expect(client.props.companyName).toBe('Custom Company');
       expect(client.props.fantasyName).toBe('Empresa');
+      expect(client.props.socialName).toBeNull();
       expect(client.props.domain).toBeNull();
       expect(client.props.headquarters).toBe('São Paulo');
     });
@@ -123,6 +125,7 @@ describe('Client', () => {
         'generateInvoice',
         'companyName',
         'fantasyName',
+        'socialName',
         'domain',
         'headquarters',
       ]);
