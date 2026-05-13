@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsDateString, IsEmail, IsInt, IsNotEmpty, IsOptional, IsString, Max, MaxLength, Min, ValidateIf } from 'class-validator';
+import { IsBoolean, IsDateString, IsEmail, IsEnum, IsInt, IsNotEmpty, IsOptional, IsString, Max, MaxLength, Min, ValidateIf } from 'class-validator';
+import { ResaleType } from 'src/app/resale/resale/domain/enums/resale-type.enum';
 import { IsUnsigned32HexString } from 'src/infra/validators/class/decorators/unsigned-32-hex-string/is-unsigned-32-hex-string';
 import { StringToBoolean } from 'src/infra/validators/class/decorators/string-boolean/string-boolean';
 import { StringToNumber } from 'src/infra/validators/class/decorators/string-number/string-number';
@@ -16,6 +17,12 @@ export class CreateResaleInputDto {
   @IsString({ message: '$property deve ser uma string' })
   @IsUnsigned32HexString()
   id?: string;
+
+  @ApiProperty({ example: Object.values(ResaleType).join(', ') })
+  @IsEnum(ResaleType, { message: '$property inválido.' })
+  @IsString({ message: '$property deve ser uma string' })
+  @Trim()
+  type: ResaleType;
 
   @ApiProperty({ example: 'REV-001' })
   @IsString({ message: '$property deve ser uma string' })

@@ -1,9 +1,13 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ResaleType } from 'src/app/resale/resale/domain/enums/resale-type.enum';
 
 /** Contrato OpenAPI: mesmo shape que ResaleDto, com `id` em hexadecimal na wire. */
 export class ResaleWireSwaggerDto {
   @ApiProperty({ example: '43', description: 'ID da revenda em hexadecimal.' })
   id: string;
+
+  @ApiProperty({ enum: ResaleType, example: ResaleType.PJ })
+  type: ResaleType;
 
   @ApiProperty()
   name: string;

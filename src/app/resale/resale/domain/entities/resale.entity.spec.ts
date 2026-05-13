@@ -1,9 +1,11 @@
 import { Resale, ResaleProps } from './resale.entity';
+import { ResaleType } from '../enums/resale-type.enum';
 
 function makeResaleProps(overrides?: Partial<ResaleProps>): ResaleProps {
   return {
     id: 1,
     active: true,
+    type: ResaleType.PJ,
     name: 'Revenda Exemplo',
     identifier: null,
     zipCode: '01310-100',

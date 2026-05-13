@@ -29,6 +29,7 @@ describe('ResaleDaoAdapterPrisma - Integration tests', () => {
   function resaleRow(overrides: Record<string, unknown> = {}) {
     return {
       id: 1,
+      type: 'PJ',
       name: 'Revenda Teste',
       identifier: 'REV-1',
       zipCode: '01310100',
@@ -80,6 +81,7 @@ describe('ResaleDaoAdapterPrisma - Integration tests', () => {
       expect(total).toBe(1);
       expect(rows[0]).toMatchObject({
         id: 1,
+        type: 'PJ',
         name: 'Revenda Teste',
         identifier: 'REV-1',
         document: '09748165000110',

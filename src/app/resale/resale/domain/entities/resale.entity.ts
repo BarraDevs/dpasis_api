@@ -1,4 +1,7 @@
+import { ResaleType } from '../enums/resale-type.enum';
+
 export type ResaleCreateProps = {
+  type: ResaleType;
   name: string;
   identifier: string | null;
   zipCode: string;

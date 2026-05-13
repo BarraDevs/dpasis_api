@@ -1,4 +1,5 @@
 import { ArgumentMetadata, ValidationPipe } from '@nestjs/common';
+import { ResaleType } from 'src/app/resale/resale/domain/enums/resale-type.enum';
 import { pipeOptions } from 'src/infra/validators/class/config';
 import { CreateResaleInputDto } from './create-resale.dto';
 
@@ -17,6 +18,7 @@ describe('CreateResaleInputDto', () => {
   function validBase() {
     return {
       code: 'REV-001',
+      type: ResaleType.PJ,
       name: 'Revenda',
       identifier: null,
       zipCode: '01310-100',
@@ -89,6 +91,36 @@ describe('CreateResaleInputDto', () => {
     const data = { ...validBase(), name: '' };
 
     await expect(pipe.transform(data, bodyMetadata)).rejects.toBeDefined();
+  });
+
+  describe('type field', () => {
+    it.each([undefined, null, '', '  '])('should reject when type is empty (%s)', async(value: unknown) => {
+      const data = { ...validBase(), type: value };
+
+      await expect(pipe.transform(data, bodyMetadata)).rejects.toBeDefined();
+    });
+
+    it('should reject invalid type', async() => {
+      const data = { ...validBase(), type: 'INVALID' };
+
+      await expect(pipe.transform(data, bodyMetadata)).rejects.toBeDefined();
+    });
+
+    it.each([ResaleType.PF, ResaleType.PJ])('should accept valid type (%s)', async(type: ResaleType) => {
+      const data = { ...validBase(), type };
+
+      const result = await pipe.transform(data, bodyMetadata);
+
+      expect(result.type).toBe(type);
+    });
+
+    it('should trim string type', async() => {
+      const data = { ...validBase(), type: `  ${ResaleType.PJ}  ` as ResaleType };
+
+      const result = await pipe.transform(data, bodyMetadata);
+
+      expect(result.type).toBe(ResaleType.PJ);
+    });
   });
 
   it('should reject optional id with more than 8 hexadecimal digits', async() => {

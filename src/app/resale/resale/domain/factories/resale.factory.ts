@@ -1,13 +1,16 @@
 import { BooleanVo } from 'src/shared/value-objects/boolean/boolean.vo';
 import { Document } from 'src/shared/value-objects/document/document.vo';
+import { Enum } from 'src/shared/value-objects/enum/enum.vo';
 import { NonEmptyString } from 'src/shared/value-objects/non-empty-string/non-empty-string.vo';
 import { OptionalString } from 'src/shared/value-objects/optional-string/optional-string.vo';
 import { PositiveInt } from 'src/shared/value-objects/positive-int/positive-int.vo';
 import { Resale, ResaleCreateProps, ResaleProps } from '../entities/resale.entity';
+import { ResaleType } from '../enums/resale-type.enum';
 
 export class ResaleFactory {
   private static validateCreateProps(props: ResaleCreateProps): Omit<ResaleProps, 'id' | 'active'> {
     return {
+      type: new Enum(props.type, ResaleType, 'type').value,
       name: new NonEmptyString(props.name, 'name').value,
       identifier: new OptionalString(props.identifier, 'identifier').value,
       zipCode: new NonEmptyString(props.zipCode, 'zipCode').value,
@@ -68,6 +71,7 @@ export class ResaleFactory {
   static load(props: ResaleProps): Resale {
     return Resale._instantiate({
       id: props.id,
+      type: props.type as ResaleType,
       name: props.name,
       identifier: props.identifier ?? null,
       zipCode: props.zipCode,

@@ -1,5 +1,6 @@
 export class ResaleDto {
   id: number;
+  type: string;
   name: string;
   identifier: string | null;
   zipCode: string;

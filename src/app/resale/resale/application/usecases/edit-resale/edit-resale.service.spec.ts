@@ -1,12 +1,12 @@
 import { Test } from '@nestjs/testing';
 import { ResaleDto } from 'src/app/resale/resale/application/dtos/resale.dto';
+import { ResaleType } from 'src/app/resale/resale/domain/enums/resale-type.enum';
 import { UploadSingle } from 'src/app/upload-file/application/usecases/upload-single/upload-single.service';
 import { TOKENS } from 'src/core/di/token';
-import { EditResale } from './edit-resale.service';
-
-function makeResaleDto(overrides: Partial<ResaleDto> = {}): ResaleDto {
+import { EditResale } from './edit-resale.service';function makeResaleDto(overrides: Partial<ResaleDto> = {}): ResaleDto {
   return {
     id: 99,
+    type: ResaleType.PJ,
     name: 'Revenda',
     identifier: null,
     zipCode: '01310-100',

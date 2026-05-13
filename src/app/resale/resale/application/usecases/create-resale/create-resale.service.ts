@@ -58,6 +58,7 @@ export class CreateResale {
 
     const entity = ResaleFactory.create({
       id: resaleId,
+      type: data.type,
       name: data.name,
       identifier: data.identifier ?? null,
       zipCode: data.zipCode,

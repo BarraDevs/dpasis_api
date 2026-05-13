@@ -190,6 +190,7 @@ describe('EditResale - Integration tests', () => {
     await prisma.resale.create({
       data: {
         id: 42,
+        type: 'PJ',
         name: 'Revenda',
         identifier: null,
         zipCode: '01310100',

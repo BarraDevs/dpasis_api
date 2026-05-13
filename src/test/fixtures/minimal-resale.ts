@@ -1,5 +1,6 @@
 import { Prisma } from '@prisma/client';
 import { CreateResaleExecuteInputDto } from 'src/app/resale/resale/application/usecases/create-resale/dtos/create-resale.dto';
+import { ResaleType } from 'src/app/resale/resale/domain/enums/resale-type.enum';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 
 /**
@@ -8,6 +9,7 @@ import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 export function buildMinimalResaleData(id: number): Prisma.ResaleCreateInput {
   return {
     id,
+    type: 'PJ',
     name: `Revenda ${id}`,
     identifier: null,
     zipCode: '01310100',
@@ -57,6 +59,7 @@ export async function resetResaleIntegrationState(
 export function makeCreateResaleInput(overrides: Partial<CreateResaleExecuteInputDto> = {}): CreateResaleExecuteInputDto {
   return {
     code: 'REV-001',
+    type: ResaleType.PJ,
     name: 'Revenda Teste',
     identifier: null,
     zipCode: '01310-100',

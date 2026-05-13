@@ -1,4 +1,5 @@
 import { ArgumentMetadata, ValidationPipe } from '@nestjs/common';
+import { ResaleType } from 'src/app/resale/resale/domain/enums/resale-type.enum';
 import { pipeOptions } from 'src/infra/validators/class/config';
 import { EditResaleInputDto } from './edit-resale.dto';
 
@@ -94,5 +95,15 @@ describe('EditResaleInputDto', () => {
     await expect(
       pipe.transform({ billingStartDay: 0 }, bodyMetadata),
     ).rejects.toBeDefined();
+  });
+
+  it('should accept PF type patch', async() => {
+    const result = await pipe.transform({ type: ResaleType.PF }, bodyMetadata);
+
+    expect(result.type).toBe(ResaleType.PF);
+  });
+
+  it('should reject invalid type on patch', async() => {
+    await expect(pipe.transform({ type: 'BAD' }, bodyMetadata)).rejects.toBeDefined();
   });
 });

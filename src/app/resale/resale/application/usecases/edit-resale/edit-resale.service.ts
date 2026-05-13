@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import type { IUploadFileQueueProducer } from 'src/app/upload-file/application/queue/upload-file-queue-producer.interface';
 import { UploadSingle } from 'src/app/upload-file/application/usecases/upload-single/upload-single.service';
+import { ResaleType } from 'src/app/resale/resale/domain/enums/resale-type.enum';
 import { ResaleNotFoundError } from 'src/app/resale/resale/domain/errors/resale-not-found.error';
 import { ResaleFactory } from 'src/app/resale/resale/domain/factories/resale.factory';
 import { ResaleProfilePictureFolder } from 'src/app/resale/resale/domain/value-objects/resale-profile-picture-folder.vo';
@@ -39,6 +40,7 @@ export class EditResale {
 
     const resaleEntity = ResaleFactory.edit({
       id,
+      type: data.type !== undefined ? data.type : (resale.type as ResaleType),
       name: data.name ?? resale.name,
       identifier: data.identifier !== undefined ? data.identifier : resale.identifier,
       zipCode: data.zipCode ?? resale.zipCode,

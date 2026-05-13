@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { IResaleRepository } from 'src/app/resale/resale/application/persistence/repository/resale-repository.interface';
 import { Resale } from 'src/app/resale/resale/domain/entities/resale.entity';
+import { ResaleType } from 'src/app/resale/resale/domain/enums/resale-type.enum';
 import { ResaleFactory } from 'src/app/resale/resale/domain/factories/resale.factory';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 
@@ -37,6 +38,7 @@ export class ResaleRepositoryAdapterPrisma implements IResaleRepository {
 
     return ResaleFactory.load({
       id: data.id,
+      type: data.type as ResaleType,
       name: data.name,
       identifier: data.identifier,
       zipCode: data.zipCode,

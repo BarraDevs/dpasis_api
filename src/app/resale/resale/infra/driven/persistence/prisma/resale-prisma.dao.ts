@@ -7,6 +7,7 @@ import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 
 const ResaleSelect = {
   id: true,
+  type: true,
   name: true,
   identifier: true,
   zipCode: true,

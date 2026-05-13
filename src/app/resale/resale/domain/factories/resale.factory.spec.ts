@@ -2,10 +2,12 @@ import { AppException } from 'src/core/filters/app.exception';
 import { InvalidDocumentError } from 'src/shared/value-objects/document/document.error';
 import { NumberMustBePositiveAndInt } from 'src/shared/value-objects/positive-int/positive-int.error';
 import { ResaleCreateProps, ResaleProps } from '../entities/resale.entity';
+import { ResaleType } from '../enums/resale-type.enum';
 import { ResaleFactory } from './resale.factory';
 
 function makeResaleCreateProps(overrides?: Partial<ResaleCreateProps>): ResaleCreateProps {
   return {
+    type: ResaleType.PJ,
     name: 'Revenda Exemplo',
     identifier: null,
     zipCode: '01310-100',
@@ -58,6 +60,7 @@ describe('ResaleFactory', () => {
       expect(resale.props).toEqual<ResaleProps>({
         id: 0,
         active: true,
+        type: ResaleType.PJ,
         name: 'Revenda Exemplo',
         identifier: null,
         zipCode: '01310-100',
@@ -104,6 +107,55 @@ describe('ResaleFactory', () => {
     it('should throw when document is invalid', () => {
       const props = makeResaleCreateProps({ document: '123' });
       expect(() => ResaleFactory.create(props)).toThrow(InvalidDocumentError);
+    });
+
+    describe('validation - type', () => {
+      it.each([null, undefined, ''])(
+        'should throw AppException when type is empty (%s)',
+        (type: unknown) => {
+          const props = makeResaleCreateProps({ type: type as ResaleType });
+
+          expect(() => ResaleFactory.create(props)).toThrow(AppException);
+          expect(() => ResaleFactory.create(props)).toThrow('O campo type não pode ser vazio');
+        },
+      );
+
+      it('should throw AppException when type is whitespace-only', () => {
+        const props = makeResaleCreateProps({ type: '   ' as ResaleType });
+
+        expect(() => ResaleFactory.create(props)).toThrow(AppException);
+        expect(() => ResaleFactory.create(props)).toThrow(
+          'O campo type não é válido. Valores válidos: PF, PJ',
+        );
+      });
+
+      it('should throw AppException when type is invalid', () => {
+        const props = makeResaleCreateProps({ type: 'INVALID' as ResaleType });
+
+        expect(() => ResaleFactory.create(props)).toThrow(AppException);
+        expect(() => ResaleFactory.create(props)).toThrow('O campo type não é válido');
+      });
+
+      it.each([ResaleType.PF, ResaleType.PJ])(
+        'should accept valid type (%s)',
+        (type: ResaleType) => {
+          const resale = ResaleFactory.create(makeResaleCreateProps({ type }));
+
+          expect(resale.props.type).toBe(type);
+        },
+      );
+
+      it('should create with PF type and CPF document', () => {
+        const resale = ResaleFactory.create(
+          makeResaleCreateProps({
+            type: ResaleType.PF,
+            document: '974.563.215-58',
+          }),
+        );
+
+        expect(resale.props.type).toBe(ResaleType.PF);
+        expect(resale.props.document).toBe('97456321558');
+      });
     });
 
     it('should throw when name is empty', () => {

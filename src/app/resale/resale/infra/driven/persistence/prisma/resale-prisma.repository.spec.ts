@@ -1,5 +1,6 @@
 import { Test } from '@nestjs/testing';
 import { ResaleFactory } from 'src/app/resale/resale/domain/factories/resale.factory';
+import { ResaleType } from 'src/app/resale/resale/domain/enums/resale-type.enum';
 import { ConfigModule } from 'src/core/config/config.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { ResaleRepositoryAdapterPrisma } from './resale-prisma.repository';
@@ -29,6 +30,7 @@ describe('ResaleRepositoryAdapterPrisma - Integration tests', () => {
 
   function makeCreateProps() {
     return {
+      type: ResaleType.PJ,
       name: 'Revenda Exemplo',
       identifier: null,
       zipCode: '01310-100',
@@ -73,6 +75,7 @@ describe('ResaleRepositoryAdapterPrisma - Integration tests', () => {
       expect(saved).not.toBeNull();
       expect(saved?.name).toBe('Revenda Exemplo');
       expect(saved?.document).toBe('09748165000110');
+      expect(saved?.type).toBe('PJ');
       expect(saved?.active).toBe(true);
     });
 
@@ -123,6 +126,7 @@ describe('ResaleRepositoryAdapterPrisma - Integration tests', () => {
       await prisma.resale.create({
         data: {
           id: 50,
+          type: 'PJ',
           name: 'Revenda DB',
           identifier: 'R-50',
           zipCode: '01310100',
@@ -161,6 +165,7 @@ describe('ResaleRepositoryAdapterPrisma - Integration tests', () => {
       expect(result?.props.validityDate?.toISOString()).toBe(validity.toISOString());
       expect(result?.props).toMatchObject({
         id: 50,
+        type: 'PJ',
         name: 'Revenda DB',
         identifier: 'R-50',
         document: '28695096000179',
@@ -185,6 +190,7 @@ describe('ResaleRepositoryAdapterPrisma - Integration tests', () => {
       await prisma.resale.create({
         data: {
           id: 7,
+          type: 'PJ',
           name: 'Antigo',
           identifier: null,
           zipCode: '01310100',
@@ -256,6 +262,7 @@ describe('ResaleRepositoryAdapterPrisma - Integration tests', () => {
       await prisma.resale.create({
         data: {
           id: 71,
+          type: 'PJ',
           name: 'Base',
           identifier: null,
           zipCode: '01310100',
@@ -328,6 +335,7 @@ describe('ResaleRepositoryAdapterPrisma - Integration tests', () => {
       await prisma.resale.create({
         data: {
           id: 88,
+          type: 'PJ',
           name: 'Remover',
           identifier: null,
           zipCode: '01310100',

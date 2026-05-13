@@ -1,5 +1,6 @@
 model Resale {
   id                     Int       @id
+  type                   String
   name                   String
   identifier             String?
   zipCode                String

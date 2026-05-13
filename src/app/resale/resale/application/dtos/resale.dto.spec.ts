@@ -5,6 +5,7 @@ describe('ResaleDto', () => {
   it('should map plain object to instance with all fields', () => {
     const plain = {
       id: 1,
+      type: 'PJ',
       name: 'R',
       identifier: 'I',
       zipCode: 'Z',
