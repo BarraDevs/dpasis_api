@@ -62,27 +62,31 @@ export class ClientDaoAdapterPrisma implements IClientDao {
 
   public async findAll(queries: FindAllClientQueryDto): Promise<[ClientDto[], number]> {
     const pagination = this.prisma.paginationFactory(queries.page, queries.size);
-
     const conditions: Prisma.ClientWhereInput[] = [];
-
-    if (queries.search?.trim()) {
-      conditions.push({
-        OR: [
-          { companyName: { contains: queries.search.trim(), mode: 'insensitive' } },
-          { fantasyName: { contains: queries.search.trim(), mode: 'insensitive' } },
-          { socialName: { contains: queries.search.trim(), mode: 'insensitive' } },
-          { domain: { contains: queries.search.trim(), mode: 'insensitive' } },
-          { document: { contains: queries.search.trim(), mode: 'insensitive' } },
-        ],
-      });
-    }
 
     if (queries.active != null && queries.active !== undefined) {
       conditions.push({ active: queries.active });
     }
-
-    if (queries.isSubClient != null && queries.isSubClient !== undefined) {
-      conditions.push({ isSubClient: queries.isSubClient });
+    if (queries.companyName?.trim()) {
+      conditions.push({ companyName: { contains: queries.companyName.trim(), mode: 'insensitive' } });
+    }
+    if (queries.fantasyName?.trim()) {
+      conditions.push({ fantasyName: { contains: queries.fantasyName.trim(), mode: 'insensitive' } });
+    }
+    if (queries.socialName?.trim()) {
+      conditions.push({ socialName: { contains: queries.socialName.trim(), mode: 'insensitive' } });
+    }
+    if (queries.document?.trim()) {
+      conditions.push({ document: { contains: queries.document.trim(), mode: 'insensitive' } });
+    }
+    if (queries.headquarters?.trim()) {
+      conditions.push({ headquarters: { contains: queries.headquarters.trim(), mode: 'insensitive' } });
+    }
+    if (queries.domain?.trim()) {
+      conditions.push({ domain: { contains: queries.domain.trim(), mode: 'insensitive' } });
+    }
+    if (queries.ie?.trim()) {
+      conditions.push({ ie: { contains: queries.ie.trim(), mode: 'insensitive' } });
     }
 
     const where: Prisma.ClientWhereInput = conditions.length > 0 ? { AND: conditions } : {};

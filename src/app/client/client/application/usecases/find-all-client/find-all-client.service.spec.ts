@@ -1,11 +1,21 @@
-import { buildMinimalResaleData, nextResaleFixtureId } from 'src/test/fixtures/minimal-resale';
 import { Test } from '@nestjs/testing';
 import { ClientModule } from 'src/app/client/client/client.module';
 import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
 import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
+import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
+import { buildMinimalResaleData, nextResaleFixtureId } from 'src/test/fixtures/minimal-resale';
 import { ClientDto } from '../../dtos/client.dto';
+import { FindAllClientQueryDto } from './dtos/find-all-client.dto';
 import { FindAllClient } from './find-all-client.service';
+
+function makeFindAllQuery(overrides: Partial<FindAllClientQueryDto> = {}): FindAllClientQueryDto {
+  return {
+    page: 1,
+    size: 10,
+    ...overrides,
+  } as FindAllClientQueryDto;
+}
 
 describe('FindAllClient - Integration tests', () => {
   let sut: FindAllClient;
@@ -29,543 +39,680 @@ describe('FindAllClient - Integration tests', () => {
     await prisma.$disconnect();
   });
 
+  async function createClientGroupAndResale() {
+    const [group, resale] = await Promise.all([
+      prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}-${Math.random().toString(36).slice(2)}`, active: true } }),
+      prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
+    ]);
+    return { group, resale };
+  }
+
   it('should be defined', () => {
     expect(sut).toBeDefined();
   });
 
-  it('should return empty pagination when no clients exist', async() => {
-    const result = await sut.execute({});
+  describe('pagination', () => {
+    it('should return a slice of rows ordered by id ascending', async() => {
+      // Arrange
+      const { group, resale } = await createClientGroupAndResale();
+      const baseId = 41_000;
+      for (let i = 0; i < 5; i += 1) {
+        await prisma.client.create({
+          data: {
+            id: baseId + i,
+            type: ClientType.PJ,
+            document: `${baseId + i}`.padStart(14, '0'),
+            groupId: group.id,
+            resaleId: resale.id,
+            companyName: `Pag ${i}`,
+            headquarters: 'SP',
+            invoiceType: ClientInvoiceType.CONTRACT,
+            generateInvoice: true,
+            active: true,
+          },
+        });
+      }
 
-    expect(result.data).toEqual([]);
-    expect(result.totalItems).toBe(0);
-    expect(result.totalPages).toBe(0);
-    expect(result.currentPage).toBe(1);
-    expect(result.itemsPerPage).toBe(0);
-  });
+      // Act
+      const page1 = await sut.execute(makeFindAllQuery({ page: 1, size: 2 }));
+      const page2 = await sut.execute(makeFindAllQuery({ page: 2, size: 2 }));
+      const page3 = await sut.execute(makeFindAllQuery({ page: 3, size: 2 }));
 
-  it('should return clients with default pagination', async() => {
-    const [group, resale] = await Promise.all([
-      prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-      prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
-    ]);
-
-    await prisma.client.createMany({
-      data: [
-        {
-          id: 1,
-          type: ClientType.PJ,
-          document: '09748165000110',
-          groupId: group.id,
-          resaleId: resale.id,
-          companyName: 'Empresa 1',
-          headquarters: 'SP',
-          invoiceType: ClientInvoiceType.CONTRACT,
-          generateInvoice: true,
-          active: true,
-        },
-        {
-          id: 2,
-          type: ClientType.PJ,
-          document: '09748165000121',
-          groupId: group.id,
-          resaleId: resale.id,
-          companyName: 'Empresa 2',
-          headquarters: 'SP',
-          invoiceType: ClientInvoiceType.CONTRACT,
-          generateInvoice: true,
-          active: true,
-        },
-      ],
+      // Assert
+      expect(page1.totalItems).toBe(5);
+      expect(page1.totalPages).toBe(3);
+      expect(page1.data.map((r) => r.id)).toEqual([baseId, baseId + 1]);
+      expect(page2.data.map((r) => r.id)).toEqual([baseId + 2, baseId + 3]);
+      expect(page3.data.map((r) => r.id)).toEqual([baseId + 4]);
     });
 
-    const result = await sut.execute({});
+    it('should use Pagination defaults when page and size are omitted', async() => {
+      // Arrange
+      const { group, resale } = await createClientGroupAndResale();
+      const baseId = 42_000;
+      for (let i = 0; i < 3; i += 1) {
+        await prisma.client.create({
+          data: {
+            id: baseId + i,
+            type: ClientType.PJ,
+            document: `D${baseId + i}`.padStart(14, '0'),
+            groupId: group.id,
+            resaleId: resale.id,
+            companyName: `All ${i}`,
+            headquarters: 'SP',
+            invoiceType: ClientInvoiceType.CONTRACT,
+            generateInvoice: true,
+            active: true,
+          },
+        });
+      }
 
-    expect(result.data).toHaveLength(2);
-    expect(result.totalItems).toBe(2);
-    expect(result.currentPage).toBe(1);
-  });
+      const queries = makeFindAllQuery();
+      delete (queries as Partial<FindAllClientQueryDto>).page;
+      delete (queries as Partial<FindAllClientQueryDto>).size;
 
-  it('should paginate results correctly', async() => {
-    const [group, resale] = await Promise.all([
-      prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-      prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
-    ]);
+      // Act
+      const result = await sut.execute(queries);
 
-    await prisma.client.createMany({
-      data: Array.from({ length: 25 }, (_, i) => ({
-        id: i + 1,
-        type: ClientType.PJ,
-        document: `097481650001${String(i).padStart(2, '0')}`,
-        groupId: group.id,
-        resaleId: resale.id,
-        companyName: `Empresa ${i + 1}`,
-        headquarters: 'SP',
-        invoiceType: ClientInvoiceType.CONTRACT,
-        generateInvoice: true,
-        active: true,
-      })),
+      // Assert
+      expect(result.totalItems).toBe(3);
+      expect(result.currentPage).toBe(1);
+      expect(result.itemsPerPage).toBe(3);
+      expect(result.totalPages).toBe(1);
+      expect(result.data).toHaveLength(3);
+      expect(result.data.map((r) => r.id)).toEqual([baseId, baseId + 1, baseId + 2]);
     });
 
-    const result = await sut.execute({ page: 1, size: 10 });
+    it('should return empty data with totalItems 0 when no client exists', async() => {
+      // Act
+      const result = await sut.execute(makeFindAllQuery({ page: 1, size: 20 }));
 
-    expect(result.data).toHaveLength(10);
-    expect(result.totalItems).toBe(25);
-    expect(result.totalPages).toBe(3);
-    expect(result.currentPage).toBe(1);
-    expect(result.itemsPerPage).toBe(10);
-  });
-
-  it('should return correct page when requesting page 2', async() => {
-    const [group, resale] = await Promise.all([
-      prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-      prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
-    ]);
-
-    await prisma.client.createMany({
-      data: Array.from({ length: 25 }, (_, i) => ({
-        id: i + 1,
-        type: ClientType.PJ,
-        document: `097481650001${String(i).padStart(2, '0')}`,
-        groupId: group.id,
-        resaleId: resale.id,
-        companyName: `Empresa ${i + 1}`,
-        headquarters: 'SP',
-        invoiceType: ClientInvoiceType.CONTRACT,
-        generateInvoice: true,
-        active: true,
-      })),
+      // Assert
+      expect(result).toEqual<IPagination<ClientDto>>({
+        currentPage: 1,
+        itemsPerPage: 20,
+        totalItems: 0,
+        totalPages: 0,
+        data: [],
+      });
     });
 
-    const result = await sut.execute({ page: 2, size: 10 });
+    it.each([
+      { totalRows: 25, size: 10, expectedPages: 3 },
+      { totalRows: 24, size: 10, expectedPages: 3 },
+      { totalRows: 20, size: 10, expectedPages: 2 },
+      { totalRows: 1, size: 10, expectedPages: 1 },
+    ])('should expose totalPages $expectedPages for $totalRows row(s) with size $size', async({ totalRows, size, expectedPages }) => {
+      // Arrange
+      const { group, resale } = await createClientGroupAndResale();
+      const baseId = 50_000 + totalRows;
+      for (let i = 0; i < totalRows; i += 1) {
+        await prisma.client.create({
+          data: {
+            id: baseId + i,
+            type: ClientType.PJ,
+            document: `R${baseId + i}`.padStart(14, '0'),
+            groupId: group.id,
+            resaleId: resale.id,
+            companyName: `Row ${i}`,
+            headquarters: 'SP',
+            invoiceType: ClientInvoiceType.CONTRACT,
+            generateInvoice: true,
+            active: true,
+          },
+        });
+      }
 
-    expect(result.data).toHaveLength(10);
-    expect(result.currentPage).toBe(2);
-    expect(result.totalItems).toBe(25);
-    expect(result.totalPages).toBe(3);
-  });
+      // Act
+      const result = await sut.execute(makeFindAllQuery({ page: 1, size }));
 
-  it('should return last page with remaining items', async() => {
-    const [group, resale] = await Promise.all([
-      prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-      prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
-    ]);
-
-    await prisma.client.createMany({
-      data: Array.from({ length: 25 }, (_, i) => ({
-        id: i + 1,
-        type: ClientType.PJ,
-        document: `097481650001${String(i).padStart(2, '0')}`,
-        groupId: group.id,
-        resaleId: resale.id,
-        companyName: `Empresa ${i + 1}`,
-        headquarters: 'SP',
-        invoiceType: ClientInvoiceType.CONTRACT,
-        generateInvoice: true,
-        active: true,
-      })),
+      // Assert
+      expect(result.totalItems).toBe(totalRows);
+      expect(result.totalPages).toBe(expectedPages);
     });
 
-    const result = await sut.execute({ page: 3, size: 10 });
+    it('should paginate within a filtered subset', async() => {
+      // Arrange
+      const { group, resale } = await createClientGroupAndResale();
+      const baseId = 43_000;
+      for (let i = 0; i < 5; i += 1) {
+        await prisma.client.create({
+          data: {
+            id: baseId + i,
+            type: ClientType.PJ,
+            document: `F${baseId + i}`.padStart(14, '0'),
+            groupId: group.id,
+            resaleId: resale.id,
+            companyName: i < 3 ? 'Match Filter Co' : 'Other Name',
+            headquarters: 'SP',
+            invoiceType: ClientInvoiceType.CONTRACT,
+            generateInvoice: true,
+            active: true,
+          },
+        });
+      }
 
-    expect(result.data).toHaveLength(5);
-    expect(result.currentPage).toBe(3);
-    expect(result.totalItems).toBe(25);
-    expect(result.totalPages).toBe(3);
+      // Act
+      const page1 = await sut.execute(makeFindAllQuery({ page: 1, size: 2, companyName: 'Match' }));
+      const page2 = await sut.execute(makeFindAllQuery({ page: 2, size: 2, companyName: 'Match' }));
+
+      // Assert
+      expect(page1.totalItems).toBe(3);
+      expect(page1.totalPages).toBe(2);
+      expect(page1.data).toHaveLength(2);
+      expect(page2.data).toHaveLength(1);
+      expect(page1.data.every((r) => r.companyName?.includes('Match'))).toBe(true);
+      expect(page2.data.every((r) => r.companyName?.includes('Match'))).toBe(true);
+    });
   });
 
-  it('should filter by search in companyName (case-insensitive)', async() => {
-    const [group, resale] = await Promise.all([
-      prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-      prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
-    ]);
+  describe('filters — isolated', () => {
+    it('should filter by companyName (case-insensitive, partial)', async() => {
+      const { group, resale } = await createClientGroupAndResale();
+      await prisma.client.create({
+        data: {
+          id: 60_001,
+          type: ClientType.PJ,
+          document: '60100000000001',
+          groupId: group.id,
+          resaleId: resale.id,
+          companyName: 'Zebra Alpha Indústria',
+          headquarters: 'SP',
+          invoiceType: ClientInvoiceType.CONTRACT,
+          generateInvoice: true,
+          active: true,
+        },
+      });
+      await prisma.client.create({
+        data: {
+          id: 60_002,
+          type: ClientType.PJ,
+          document: '60200000000002',
+          groupId: group.id,
+          resaleId: resale.id,
+          companyName: 'Beta Sem Relação',
+          headquarters: 'SP',
+          invoiceType: ClientInvoiceType.CONTRACT,
+          generateInvoice: true,
+          active: true,
+        },
+      });
 
-    await prisma.client.createMany({
-      data: [
-        {
-          id: 3,
-          type: ClientType.PJ,
-          document: '09748165000110',
-          groupId: group.id,
-          resaleId: resale.id,
-          companyName: 'Empresa Premium LTDA',
-          headquarters: 'SP',
-          invoiceType: ClientInvoiceType.CONTRACT,
-          generateInvoice: true,
-          active: true,
-        },
-        {
-          id: 4,
-          type: ClientType.PJ,
-          document: '09748165000121',
-          groupId: group.id,
-          resaleId: resale.id,
-          companyName: 'Empresa Básica',
-          headquarters: 'SP',
-          invoiceType: ClientInvoiceType.CONTRACT,
-          generateInvoice: true,
-          active: true,
-        },
-      ],
+      const result = await sut.execute(makeFindAllQuery({ companyName: 'alpha' }));
+
+      expect(result.totalItems).toBe(1);
+      expect(result.data[0]?.id).toBe(60_001);
     });
 
-    const result = await sut.execute({ search: 'premium' });
-
-    expect(result.data).toHaveLength(1);
-    expect(result.totalItems).toBe(1);
-    expect(result.data[0].companyName).toBe('Empresa Premium LTDA');
-  });
-
-  it('should filter by search in fantasyName (case-insensitive)', async() => {
-    const [group, resale] = await Promise.all([
-      prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-      prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
-    ]);
-
-    await prisma.client.createMany({
-      data: [
-        {
-          id: 5,
+    it('should filter by fantasyName', async() => {
+      const { group, resale } = await createClientGroupAndResale();
+      await prisma.client.create({
+        data: {
+          id: 60_101,
           type: ClientType.PJ,
-          document: '09748165000110',
+          document: '61100000000001',
           groupId: group.id,
           resaleId: resale.id,
-          companyName: 'Empresa 1',
-          fantasyName: 'Premium Corp',
+          companyName: 'A',
+          fantasyName: 'Nome Fantasia Delta',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
           generateInvoice: true,
           active: true,
         },
-        {
-          id: 6,
+      });
+      await prisma.client.create({
+        data: {
+          id: 60_102,
           type: ClientType.PJ,
-          document: '09748165000121',
+          document: '61200000000002',
           groupId: group.id,
           resaleId: resale.id,
-          companyName: 'Empresa 2',
-          fantasyName: 'Básica',
+          companyName: 'B',
+          fantasyName: 'Outro',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
           generateInvoice: true,
           active: true,
         },
-      ],
+      });
+
+      const result = await sut.execute(makeFindAllQuery({ fantasyName: 'delta' }));
+
+      expect(result.totalItems).toBe(1);
+      expect(result.data[0]?.id).toBe(60_101);
     });
 
-    const result = await sut.execute({ search: 'PREMIUM' });
-
-    expect(result.data).toHaveLength(1);
-    expect(result.totalItems).toBe(1);
-    expect(result.data[0].fantasyName).toBe('Premium Corp');
-  });
-
-  it('should filter by search in socialName (case-insensitive)', async() => {
-    const [group, resale] = await Promise.all([
-      prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-      prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
-    ]);
-
-    await prisma.client.createMany({
-      data: [
-        {
-          id: 5_010,
+    it('should filter by socialName', async() => {
+      const { group, resale } = await createClientGroupAndResale();
+      await prisma.client.create({
+        data: {
+          id: 60_201,
           type: ClientType.PJ,
-          document: '09748165000130',
+          document: '62100000000001',
           groupId: group.id,
           resaleId: resale.id,
-          companyName: 'Empresa A',
-          socialName: 'Instituto Alfa Beta',
+          companyName: 'C',
+          socialName: 'Social Ômega',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
           generateInvoice: true,
           active: true,
         },
-        {
-          id: 5_011,
+      });
+      await prisma.client.create({
+        data: {
+          id: 60_202,
           type: ClientType.PJ,
-          document: '09748165000131',
+          document: '62200000000002',
           groupId: group.id,
           resaleId: resale.id,
-          companyName: 'Empresa B',
-          socialName: 'Outra denominação',
+          companyName: 'D',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
           generateInvoice: true,
           active: true,
         },
-      ],
+      });
+
+      const result = await sut.execute(makeFindAllQuery({ socialName: 'ômega' }));
+
+      expect(result.totalItems).toBe(1);
+      expect(result.data[0]?.id).toBe(60_201);
     });
 
-    const result = await sut.execute({ search: 'alfa beta' });
-
-    expect(result.data).toHaveLength(1);
-    expect(result.totalItems).toBe(1);
-    expect(result.data[0].socialName).toBe('Instituto Alfa Beta');
-  });
-
-  it('should filter by search in document (case-insensitive)', async() => {
-    const [group, resale] = await Promise.all([
-      prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-      prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
-    ]);
-
-    await prisma.client.createMany({
-      data: [
-        {
-          id: 7,
+    it('should filter by document (partial)', async() => {
+      const { group, resale } = await createClientGroupAndResale();
+      await prisma.client.create({
+        data: {
+          id: 60_301,
           type: ClientType.PJ,
-          document: '09748165000110',
+          document: '11.222.333/0001-99',
           groupId: group.id,
           resaleId: resale.id,
-          companyName: 'Empresa 1',
+          companyName: 'E',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
           generateInvoice: true,
           active: true,
         },
-        {
-          id: 8,
+      });
+      await prisma.client.create({
+        data: {
+          id: 60_302,
           type: ClientType.PJ,
-          document: '33000167000101',
+          document: '99888777666555',
           groupId: group.id,
           resaleId: resale.id,
-          companyName: 'Empresa 2',
+          companyName: 'F',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
           generateInvoice: true,
           active: true,
         },
-      ],
+      });
+
+      const result = await sut.execute(makeFindAllQuery({ document: '222.333' }));
+
+      expect(result.totalItems).toBe(1);
+      expect(result.data[0]?.id).toBe(60_301);
     });
 
-    const result = await sut.execute({ search: '33000167' });
-
-    expect(result.data).toHaveLength(1);
-    expect(result.totalItems).toBe(1);
-    expect(result.data[0].document).toBe('33000167000101');
-  });
-
-  it('should return empty when search matches no client', async() => {
-    const [group, resale] = await Promise.all([
-      prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-      prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
-    ]);
-
-    await prisma.client.create({
-      data: {
-        id: 1,
-        type: ClientType.PJ,
-        document: '09748165000110',
-        groupId: group.id,
-        resaleId: resale.id,
-        companyName: 'Empresa Test',
-        headquarters: 'SP',
-        invoiceType: ClientInvoiceType.CONTRACT,
-        generateInvoice: true,
-        active: true,
-      },
-    });
-
-    const result = await sut.execute({ search: 'Inexistente' });
-
-    expect(result.data).toEqual([]);
-    expect(result.totalItems).toBe(0);
-  });
-
-  it('should combine search and active filters', async() => {
-    const [group, resale] = await Promise.all([
-      prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-      prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
-    ]);
-
-    await prisma.client.createMany({
-      data: [
-        {
-          id: 9,
+    it('should filter by headquarters', async() => {
+      const { group, resale } = await createClientGroupAndResale();
+      await prisma.client.create({
+        data: {
+          id: 60_401,
           type: ClientType.PJ,
-          document: '09748165000110',
+          document: '64100000000001',
           groupId: group.id,
           resaleId: resale.id,
-          companyName: 'Tech Solutions',
+          companyName: 'G',
+          headquarters: 'Matriz SÃO PAULO Centro',
+          invoiceType: ClientInvoiceType.CONTRACT,
+          generateInvoice: true,
+          active: true,
+        },
+      });
+      await prisma.client.create({
+        data: {
+          id: 60_402,
+          type: ClientType.PJ,
+          document: '64200000000002',
+          groupId: group.id,
+          resaleId: resale.id,
+          companyName: 'H',
+          headquarters: 'Filial Rio',
+          invoiceType: ClientInvoiceType.CONTRACT,
+          generateInvoice: true,
+          active: true,
+        },
+      });
+
+      const result = await sut.execute(makeFindAllQuery({ headquarters: 'são paulo' }));
+
+      expect(result.totalItems).toBe(1);
+      expect(result.data[0]?.id).toBe(60_401);
+    });
+
+    it('should filter by domain', async() => {
+      const { group, resale } = await createClientGroupAndResale();
+      await prisma.client.create({
+        data: {
+          id: 60_501,
+          type: ClientType.PJ,
+          document: '65100000000001',
+          groupId: group.id,
+          resaleId: resale.id,
+          companyName: 'I',
+          domain: 'Cliente.EXEMPLO.org',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
           generateInvoice: true,
           active: true,
         },
-        {
-          id: 10,
+      });
+      await prisma.client.create({
+        data: {
+          id: 60_502,
           type: ClientType.PJ,
-          document: '09748165000121',
+          document: '65200000000002',
           groupId: group.id,
           resaleId: resale.id,
-          companyName: 'Tech Inativo',
+          companyName: 'J',
+          domain: 'outro.com',
+          headquarters: 'SP',
+          invoiceType: ClientInvoiceType.CONTRACT,
+          generateInvoice: true,
+          active: true,
+        },
+      });
+
+      const result = await sut.execute(makeFindAllQuery({ domain: 'exemplo' }));
+
+      expect(result.totalItems).toBe(1);
+      expect(result.data[0]?.id).toBe(60_501);
+    });
+
+    it('should filter by ie', async() => {
+      const { group, resale } = await createClientGroupAndResale();
+      await prisma.client.create({
+        data: {
+          id: 60_601,
+          type: ClientType.PJ,
+          document: '66100000000001',
+          ie: 'IE-ESP-2024',
+          groupId: group.id,
+          resaleId: resale.id,
+          companyName: 'K',
+          headquarters: 'SP',
+          invoiceType: ClientInvoiceType.CONTRACT,
+          generateInvoice: true,
+          active: true,
+        },
+      });
+      await prisma.client.create({
+        data: {
+          id: 60_602,
+          type: ClientType.PJ,
+          document: '66200000000002',
+          ie: '999',
+          groupId: group.id,
+          resaleId: resale.id,
+          companyName: 'L',
+          headquarters: 'SP',
+          invoiceType: ClientInvoiceType.CONTRACT,
+          generateInvoice: true,
+          active: true,
+        },
+      });
+
+      const result = await sut.execute(makeFindAllQuery({ ie: 'esp-20' }));
+
+      expect(result.totalItems).toBe(1);
+      expect(result.data[0]?.id).toBe(60_601);
+    });
+
+    it('should filter by active', async() => {
+      const { group, resale } = await createClientGroupAndResale();
+      await prisma.client.create({
+        data: {
+          id: 60_701,
+          type: ClientType.PJ,
+          document: '67100000000001',
+          groupId: group.id,
+          resaleId: resale.id,
+          companyName: 'Ativo',
+          headquarters: 'SP',
+          invoiceType: ClientInvoiceType.CONTRACT,
+          generateInvoice: true,
+          active: true,
+        },
+      });
+      await prisma.client.create({
+        data: {
+          id: 60_702,
+          type: ClientType.PJ,
+          document: '67200000000002',
+          groupId: group.id,
+          resaleId: resale.id,
+          companyName: 'Inativo',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
           generateInvoice: true,
           active: false,
         },
-      ],
+      });
+
+      const result = await sut.execute(makeFindAllQuery({ active: false }));
+
+      expect(result.totalItems).toBe(1);
+      expect(result.data[0]?.id).toBe(60_702);
     });
-
-    const result = await sut.execute({ search: 'Tech', active: true });
-
-    expect(result.data).toHaveLength(1);
-    expect(result.totalItems).toBe(1);
-    expect(result.data[0].companyName).toBe('Tech Solutions');
-    expect(result.data[0].active).toBe(true);
   });
 
-  it('should filter by active when active is true', async() => {
-    const [group, resale] = await Promise.all([
-      prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-      prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
-    ]);
-
-    await prisma.client.createMany({
-      data: [
-        {
-          id: 11,
+  describe('filters — combinations (AND)', () => {
+    it('should require both companyName and fantasyName to match', async() => {
+      const { group, resale } = await createClientGroupAndResale();
+      await prisma.client.create({
+        data: {
+          id: 61_001,
           type: ClientType.PJ,
-          document: '09748165000110',
+          document: '68100000000001',
           groupId: group.id,
           resaleId: resale.id,
-          companyName: 'Empresa 1',
+          companyName: 'Combo Alfa Ltda',
+          fantasyName: 'Marca Gamma',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
           generateInvoice: true,
           active: true,
         },
-        {
-          id: 12,
+      });
+      await prisma.client.create({
+        data: {
+          id: 61_002,
           type: ClientType.PJ,
-          document: '09748165000121',
+          document: '68200000000002',
           groupId: group.id,
           resaleId: resale.id,
-          companyName: 'Empresa 2',
+          companyName: 'Combo Alfa Outro',
+          fantasyName: 'Marca Delta',
           headquarters: 'SP',
+          invoiceType: ClientInvoiceType.CONTRACT,
+          generateInvoice: true,
+          active: true,
+        },
+      });
+
+      const result = await sut.execute(
+        makeFindAllQuery({ companyName: 'Combo Alfa', fantasyName: 'Marca Gamma' }),
+      );
+
+      expect(result.totalItems).toBe(1);
+      expect(result.data[0]?.id).toBe(61_001);
+    });
+
+    it('should combine document, ie, and domain', async() => {
+      const { group, resale } = await createClientGroupAndResale();
+      await prisma.client.create({
+        data: {
+          id: 61_101,
+          type: ClientType.PJ,
+          document: '99.888.777/0001-11',
+          ie: 'SP-IE-555',
+          groupId: group.id,
+          resaleId: resale.id,
+          companyName: 'M',
+          domain: 'unico.dev.br',
+          headquarters: 'SP',
+          invoiceType: ClientInvoiceType.CONTRACT,
+          generateInvoice: true,
+          active: true,
+        },
+      });
+      await prisma.client.create({
+        data: {
+          id: 61_102,
+          type: ClientType.PJ,
+          document: '99.888.777/0001-22',
+          ie: 'RJ-IE-555',
+          groupId: group.id,
+          resaleId: resale.id,
+          companyName: 'N',
+          domain: 'unico.dev.br',
+          headquarters: 'SP',
+          invoiceType: ClientInvoiceType.CONTRACT,
+          generateInvoice: true,
+          active: true,
+        },
+      });
+
+      const result = await sut.execute(
+        makeFindAllQuery({ document: '888.777', ie: 'SP-IE', domain: 'unico' }),
+      );
+
+      expect(result.totalItems).toBe(1);
+      expect(result.data[0]?.id).toBe(61_101);
+    });
+
+    it('should combine socialName, headquarters, and active', async() => {
+      const { group, resale } = await createClientGroupAndResale();
+      await prisma.client.create({
+        data: {
+          id: 61_201,
+          type: ClientType.PJ,
+          document: '69100000000001',
+          groupId: group.id,
+          resaleId: resale.id,
+          companyName: 'O',
+          socialName: 'Sol Nascente',
+          headquarters: 'Filial Norte Especial',
+          invoiceType: ClientInvoiceType.CONTRACT,
+          generateInvoice: true,
+          active: true,
+        },
+      });
+      await prisma.client.create({
+        data: {
+          id: 61_202,
+          type: ClientType.PJ,
+          document: '69200000000002',
+          groupId: group.id,
+          resaleId: resale.id,
+          companyName: 'P',
+          socialName: 'Sol Nascente',
+          headquarters: 'Filial Sul',
+          invoiceType: ClientInvoiceType.CONTRACT,
+          generateInvoice: true,
+          active: true,
+        },
+      });
+      await prisma.client.create({
+        data: {
+          id: 61_203,
+          type: ClientType.PJ,
+          document: '69300000000003',
+          groupId: group.id,
+          resaleId: resale.id,
+          companyName: 'Q',
+          socialName: 'Sol Nascente',
+          headquarters: 'Filial Norte Especial',
           invoiceType: ClientInvoiceType.CONTRACT,
           generateInvoice: true,
           active: false,
         },
-        {
-          id: 13,
+      });
+
+      const result = await sut.execute(
+        makeFindAllQuery({
+          socialName: 'nascente',
+          headquarters: 'Norte Especial',
+          active: true,
+        }),
+      );
+
+      expect(result.totalItems).toBe(1);
+      expect(result.data[0]?.id).toBe(61_201);
+    });
+
+    it('should apply every filter plus pagination at once', async() => {
+      const { group, resale } = await createClientGroupAndResale();
+      await prisma.client.create({
+        data: {
+          id: 62_001,
           type: ClientType.PJ,
-          document: '09748165000132',
+          document: '70100000000001',
+          ie: 'FULL-1',
           groupId: group.id,
           resaleId: resale.id,
-          companyName: 'Empresa 3',
-          headquarters: 'SP',
+          companyName: 'Full Match Alpha',
+          fantasyName: 'Fant Full',
+          socialName: 'Soc Full',
+          domain: 'full-match.example',
+          headquarters: 'HQ Full SP',
           invoiceType: ClientInvoiceType.CONTRACT,
           generateInvoice: true,
           active: true,
         },
-      ],
-    });
-
-    const result = await sut.execute({ active: true });
-
-    expect(result.data).toHaveLength(2);
-    expect(result.totalItems).toBe(2);
-    expect(result.data.every((c) => c.active)).toBe(true);
-  });
-
-  it('should filter by active when active is false', async() => {
-    const [group, resale] = await Promise.all([
-      prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-      prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
-    ]);
-
-    await prisma.client.createMany({
-      data: [
-        {
-          id: 14,
+      });
+      await prisma.client.create({
+        data: {
+          id: 62_002,
           type: ClientType.PJ,
-          document: '09748165000110',
+          document: '70200000000002',
+          ie: 'FULL-1',
           groupId: group.id,
           resaleId: resale.id,
-          companyName: 'Empresa 1',
-          headquarters: 'SP',
+          companyName: 'Full Match Alpha',
+          fantasyName: 'Fant Full',
+          socialName: 'Soc Full',
+          domain: 'full-match.example',
+          headquarters: 'HQ Full RJ',
           invoiceType: ClientInvoiceType.CONTRACT,
           generateInvoice: true,
           active: true,
         },
-        {
-          id: 15,
-          type: ClientType.PJ,
-          document: '09748165000121',
-          groupId: group.id,
-          resaleId: resale.id,
-          companyName: 'Empresa 2',
-          headquarters: 'SP',
-          invoiceType: ClientInvoiceType.CONTRACT,
-          generateInvoice: true,
-          active: false,
-        },
-      ],
-    });
+      });
 
-    const result = await sut.execute({ active: false });
+      const result = await sut.execute(
+        makeFindAllQuery({
+          page: 1,
+          size: 1,
+          companyName: 'Full Match',
+          fantasyName: 'Fant Full',
+          socialName: 'Soc Full',
+          document: '70100000000001',
+          headquarters: 'HQ Full SP',
+          domain: 'full-match',
+          ie: 'FULL-1',
+          active: true,
+        }),
+      );
 
-    expect(result.data).toHaveLength(1);
-    expect(result.totalItems).toBe(1);
-    expect(result.data[0].active).toBe(false);
-  });
-
-  it('should return client data with all fields', async() => {
-    const [group, resale] = await Promise.all([
-      prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
-      prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
-    ]);
-
-    const client = await prisma.client.create({
-      data: {
-        id: 2,
-        type: ClientType.PJ,
-        document: '09748165000110',
-        ie: '123456789',
-        groupId: group.id,
-        resaleId: resale.id,
-        companyName: 'Empresa LTDA',
-        fantasyName: 'Empresa',
-        headquarters: 'São Paulo',
-        invoiceType: ClientInvoiceType.CONTRACT,
-        generateInvoice: true,
-        active: true,
-      },
-    });
-
-    const result = await sut.execute({});
-
-    expect(result.data).toHaveLength(1);
-    expect(result.data[0]).toEqual<ClientDto>({
-      id: client.id,
-      type: ClientType.PJ,
-      document: '09748165000110',
-      ie: '123456789',
-      parentClientId: null,
-      isSubClient: false,
-      attendanceId: null,
-      maintenanceTicketId: null,
-      honorific: null,
-      group: {
-        id: group.id,
-        name: group.name,
-      },
-      resale: {
-        id: resale.id,
-        name: resale.name,
-      },
-      companyName: 'Empresa LTDA',
-      fantasyName: 'Empresa',
-      socialName: null,
-      domain: null,
-      headquarters: 'São Paulo',
-      invoiceType: ClientInvoiceType.CONTRACT,
-      generateInvoice: true,
-      active: true,
-      companies: [],
-      createdAt: client.createdAt,
-      updatedAt: client.updatedAt,
+      expect(result.totalItems).toBe(1);
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0]?.id).toBe(62_001);
     });
   });
 });
