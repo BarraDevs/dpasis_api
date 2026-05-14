@@ -15,6 +15,7 @@ function makeClientCreateProps(overrides?: Partial<ClientCreateProps>): ClientCr
     resaleId: 1,
     companyIds: [1],
     parentClientId: null,
+    honorificId: null,
     invoiceType: ClientInvoiceType.CONTRACT,
     generateInvoice: true,
     companyName: 'Empresa LTDA',
@@ -37,6 +38,7 @@ function makeClientProps(overrides?: Partial<ClientProps>): ClientProps {
     resaleId: 1,
     parentClientId: null,
     isSubClient: false,
+    honorificId: null,
     companyIds: [1],
     invoiceType: ClientInvoiceType.CONTRACT,
     generateInvoice: true,
@@ -79,6 +81,7 @@ describe('ClientFactory', () => {
         resaleId: 1,
         parentClientId: null,
         isSubClient: false,
+        honorificId: null,
         companyIds: [1],
         invoiceType: ClientInvoiceType.CONTRACT,
         generateInvoice: true,
@@ -412,6 +415,20 @@ describe('ClientFactory', () => {
           expect(() => ClientFactory.create(props)).toThrow('O campo headquarters não pode ser vazio');
         },
       );
+    });
+
+    describe('validation - honorificId', () => {
+      it('should set honorificId to null when omitted', () => {
+        const client = ClientFactory.create(makeClientCreateProps());
+
+        expect(client.props.honorificId).toBeNull();
+      });
+
+      it.each([-5])('should reject invalid honorificId (%s)', (honorificId: number | null | undefined) => {
+        const props = makeClientCreateProps({ honorificId });
+
+        expect(() => ClientFactory.create(props)).toThrow(NumberMustBePositiveAndInt);
+      });
     });
   });
 

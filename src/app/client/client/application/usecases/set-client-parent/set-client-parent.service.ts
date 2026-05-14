@@ -70,6 +70,7 @@ export class SetClientParent {
       domain: client.domain,
       headquarters: client.headquarters,
       active: client.active,
+      honorificId: client.honorific?.id ?? null,
     });
 
     await this.clientRepository.edit(entity);

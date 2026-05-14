@@ -60,6 +60,17 @@ export class CreateClientInputDto {
   @IsInt({ message: '$property deve ser um número inteiro' })
   resaleId: number;
 
+  @ApiPropertyOptional({
+    example: 1,
+    description: 'ID do pronome de tratamento (Honorific). Opcional.',
+    nullable: true,
+  })
+  @IsOptional()
+  @IsNumber({}, { message: '$property deve ser um número' })
+  @IsPositive({ message: '$property deve ser um número positivo' })
+  @IsInt({ message: '$property deve ser um número inteiro' })
+  honorificId?: number | null;
+
   @ApiProperty({ example: [1], description: 'IDs das empresas associadas ao cliente (obrigatório pelo menos 1)' })
   @IsArray({ message: '$property deve ser um array' })
   @ArrayMinSize(1, { message: '$property deve ter pelo menos 1 empresa' })

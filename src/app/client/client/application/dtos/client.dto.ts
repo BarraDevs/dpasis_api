@@ -17,6 +17,11 @@ export class ClientDto {
   invoiceType: string;
   generateInvoice: boolean;
   active: boolean;
+  honorific: {
+    id: number;
+    name: string;
+    active: boolean;
+  } | null;
   group: {
     id: number;
     name: string;

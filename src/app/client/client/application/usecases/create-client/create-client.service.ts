@@ -9,6 +9,7 @@ import { ClientNotFoundError } from 'src/app/client/client/domain/errors/client-
 import { ClientParentIsSubClientError } from 'src/app/client/client/domain/errors/client-parent-is-sub-client.error';
 import { ClientFactory } from 'src/app/client/client/domain/factories/client.factory';
 import { FindCompanyById } from 'src/app/company/application/usecases/find-company-by-id/find-company-by-id.service';
+import { FindHonorificById } from 'src/app/honorific/application/usecases/find-honorific-by-id/find-honorific-by-id.service';
 import { TOKENS } from 'src/core/di/token';
 import type { IClientDao } from '../../persistence/dao/client-dao.interface';
 import type { IClientRepository } from '../../persistence/repository/client-repository.interface';
@@ -25,6 +26,7 @@ export class CreateClient {
     private readonly findClientGroupById: FindClientGroupById,
     private readonly findResaleById: FindResaleById,
     private readonly findCompanyById: FindCompanyById,
+    private readonly findHonorificById: FindHonorificById,
   ) {}
 
   public async execute(data: CreateClientInputDto): Promise<CreateClientOutputDto> {
@@ -61,6 +63,10 @@ export class CreateClient {
       await this.findCompanyById.execute(companyId, { onlyActive: true });
     }
 
+    if (data.honorificId != null) {
+      await this.findHonorificById.execute(data.honorificId, { onlyActive: true });
+    }
+
     // Todas as validações passaram — agora consome/reserva o ID
     let clientId: number;
     if (data.id != null) {
@@ -87,6 +93,7 @@ export class CreateClient {
       socialName: data.socialName,
       domain: data.domain,
       headquarters: data.headquarters,
+      honorificId: data.honorificId ?? null,
     });
 
     // saga step 1: create client

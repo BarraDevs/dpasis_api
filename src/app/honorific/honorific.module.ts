@@ -25,5 +25,8 @@ import { HonorificAdminController } from './infra/drivers/http/admin/honorific-a
     FindHonorificById,
     UpdateHonorificStatus,
   ],
+  exports: [
+    FindHonorificById,
+  ],
 })
 export class HonorificModule {}

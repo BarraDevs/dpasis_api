@@ -14,6 +14,7 @@ export type ClientCreateProps = {
   groupId: number;
   resaleId: number;
   parentClientId: number | null;
+  honorificId: number | null;
   companyIds: number[];
   invoiceType: ClientInvoiceType;
   generateInvoice: boolean;

@@ -5,5 +5,7 @@ model Honorific {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  clients Client[]
+
   @@map("honorifics")
 }

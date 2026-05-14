@@ -42,4 +42,22 @@ describe('FindHonorificById - Integration tests', () => {
   it('should throw when missing', async() => {
     await expect(sut.execute(99999)).rejects.toThrow(HonorificNotFoundError);
   });
+
+  it('should throw when inactive and onlyActive is true', async() => {
+    const row = await prisma.honorific.create({
+      data: { name: `Inact-${Date.now()}`, active: false },
+    });
+
+    await expect(sut.execute(row.id, { onlyActive: true })).rejects.toThrow(HonorificNotFoundError);
+  });
+
+  it('should return inactive row when onlyActive is not requested', async() => {
+    const row = await prisma.honorific.create({
+      data: { name: `Silent-${Date.now()}`, active: false },
+    });
+
+    const result = await sut.execute(row.id);
+
+    expect(result.active).toBe(false);
+  });
 });

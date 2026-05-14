@@ -41,4 +41,11 @@ describe('FindHonorificById - Unit tests', () => {
 
     await expect(sut.execute(1)).resolves.toEqual(dto);
   });
+
+  it('should throw HonorificNotFoundError when onlyActive and record inactive', async() => {
+    const dto = createMock<HonorificDto>({ id: 2, active: false });
+    jest.spyOn(honorificDao, 'findById').mockResolvedValue(dto);
+
+    await expect(sut.execute(2, { onlyActive: true })).rejects.toThrow(HonorificNotFoundError);
+  });
 });

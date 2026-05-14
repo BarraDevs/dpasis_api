@@ -20,6 +20,7 @@ function minimalClientDto(overrides: Partial<ClientDto> = {}): ClientDto {
     isSubClient: false,
     attendanceId: null,
     maintenanceTicketId: null,
+    honorific: null,
     companyName: 'Empresa',
     fantasyName: null,
     socialName: null,

@@ -248,6 +248,42 @@ describe('CreateClientInputDto', () => {
     });
   });
 
+  describe('honorificId field (optional)', () => {
+    it('should accept undefined honorificId', async() => {
+      const data = makeValidInputDto();
+      delete (data as { honorificId?: unknown }).honorificId;
+
+      const result = await target.transform(data, metadata);
+
+      expect(result.honorificId).toBeUndefined();
+    });
+
+    it('should accept valid honorificId', async() => {
+      const data = makeValidInputDto({ honorificId: 3 });
+
+      const result = await target.transform(data, metadata);
+
+      expect(result.honorificId).toBe(3);
+    });
+
+    it('should accept null honorificId', async() => {
+      const data = makeValidInputDto({ honorificId: null });
+
+      const result = await target.transform(data, metadata);
+
+      expect(result.honorificId).toBeNull();
+    });
+
+    it.each([0, -1, 1.5])('should throw if honorificId is invalid (%s)', async(value: number) => {
+      const data = makeValidInputDto({ honorificId: value });
+
+      expect.assertions(1);
+      return target.transform(data, metadata).catch((error) => {
+        expectMessageToContain(error.getResponse().message, 'honorificId');
+      });
+    });
+  });
+
   describe('companyName field', () => {
     it.each([undefined, null, '', '  '])('should throw if companyName is empty (%s)', async(value: unknown) => {
       const data = makeValidInputDto({ companyName: value as string });

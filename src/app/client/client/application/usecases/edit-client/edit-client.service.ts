@@ -4,6 +4,7 @@ import { FindResaleById } from 'src/app/resale/resale/application/usecases/find-
 import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
 import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum';
 import { FindCompanyById } from 'src/app/company/application/usecases/find-company-by-id/find-company-by-id.service';
+import { FindHonorificById } from 'src/app/honorific/application/usecases/find-honorific-by-id/find-honorific-by-id.service';
 import { TOKENS } from 'src/core/di/token';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
 import { ClientNotFoundError } from '../../../domain/errors/client-not-found.error';
@@ -20,6 +21,7 @@ export class EditClient {
     private readonly findClientGroupById: FindClientGroupById,
     private readonly findResaleById: FindResaleById,
     private readonly findCompanyById: FindCompanyById,
+    private readonly findHonorificById: FindHonorificById,
   ) {}
 
   public async execute(id: number, data: EditClientInputDto): Promise<SuccessMessage> {
@@ -31,12 +33,16 @@ export class EditClient {
     const companyIds =
       data.companyIds !== undefined ? data.companyIds : (client.companies ?? []).map((c) => c.id);
 
+    const honorificId =
+      data.honorificId !== undefined ? data.honorificId : (client.honorific?.id ?? null);
+
     const clientEntity = ClientFactory.edit({
       ...client,
       ...data,
       id,
       groupId: data.groupId ?? client.group.id,
       resaleId: data.resaleId ?? client.resale.id,
+      honorificId,
       companyIds,
       type: client.type as ClientType,
       invoiceType: client.invoiceType as ClientInvoiceType,
@@ -52,6 +58,10 @@ export class EditClient {
       for (const companyId of data.companyIds) {
         await this.findCompanyById.execute(companyId, { onlyActive: true });
       }
+    }
+
+    if (data.honorificId !== undefined && data.honorificId != null) {
+      await this.findHonorificById.execute(data.honorificId, { onlyActive: true });
     }
 
     await this.clientRepository.edit(clientEntity);

@@ -17,6 +17,13 @@ const ClientSelect = {
   isSubClient: true,
   attendanceId: true,
   maintenanceTicketId: true,
+  honorific: {
+    select: {
+      id: true,
+      name: true,
+      active: true,
+    },
+  },
   companyName: true,
   fantasyName: true,
   socialName: true,

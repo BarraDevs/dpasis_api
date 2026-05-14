@@ -11,4 +11,5 @@ export interface IHonorificDao {
   edit(id: number, data: EditHonorificInputDto): Promise<void>;
   delete(id: number): Promise<void>;
   updateStatus(id: number, active: boolean): Promise<void>;
+  countClientsById(id: number): Promise<number>;
 }

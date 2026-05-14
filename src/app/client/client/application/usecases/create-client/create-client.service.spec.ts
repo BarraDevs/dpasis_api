@@ -8,6 +8,7 @@ import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-inv
 import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum';
 import { ClientIdAlreadyTakenError } from 'src/app/client/client/domain/errors/client-id-already-taken.error';
 import { CompanyNotFoundError } from 'src/app/company/domain/errors/company-not-found.error';
+import { HonorificNotFoundError } from 'src/app/honorific/domain/errors/honorific-not-found.error';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { InvalidDocumentError } from 'src/shared/value-objects/document/document.error';
 import { CreateClient } from './create-client.service';
@@ -227,6 +228,29 @@ describe('CreateClient - Integration tests', () => {
       expect(saved?.domain).toBe('integracao.persist.dev');
     });
 
+    it('should persist honorificId when honorific exists and active', async() => {
+      const honorific = await prisma.honorific.create({
+        data: { name: `Trat-${Date.now()}`, active: true },
+      });
+      const [group, resale, company] = await Promise.all([
+        prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
+        prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
+        createCompany(),
+      ]);
+
+      const input = makeValidInput({
+        groupId: group.id,
+        resaleId: resale.id,
+        companyIds: [company.id],
+        honorificId: honorific.id,
+      });
+
+      const result = await sut.execute(input);
+
+      const saved = await prisma.client.findUnique({ where: { id: result.id } });
+      expect(saved?.honorificId).toBe(honorific.id);
+    });
+
     it('should create client with PF type and CPF document', async() => {
       const [group, resale, company] = await Promise.all([
         prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
@@ -342,6 +366,45 @@ describe('CreateClient - Integration tests', () => {
       expect(id1).not.toBe(id2);
       const clients = await prisma.client.findMany({ where: { document: '09748165000110' } });
       expect(clients).toHaveLength(2);
+    });
+  });
+
+  describe('honorific validation', () => {
+    it('should throw HonorificNotFoundError when honorific inactive', async() => {
+      const honorific = await prisma.honorific.create({
+        data: { name: `Inativo-${Date.now()}`, active: false },
+      });
+      const [group, resale, company] = await Promise.all([
+        prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
+        prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
+        createCompany(),
+      ]);
+
+      const input = makeValidInput({
+        groupId: group.id,
+        resaleId: resale.id,
+        companyIds: [company.id],
+        honorificId: honorific.id,
+      });
+
+      await expect(sut.execute(input)).rejects.toThrow(HonorificNotFoundError);
+    });
+
+    it('should throw HonorificNotFoundError when honorific does not exist', async() => {
+      const [group, resale, company] = await Promise.all([
+        prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
+        prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
+        createCompany(),
+      ]);
+
+      const input = makeValidInput({
+        groupId: group.id,
+        resaleId: resale.id,
+        companyIds: [company.id],
+        honorificId: 888_888,
+      });
+
+      await expect(sut.execute(input)).rejects.toThrow(HonorificNotFoundError);
     });
   });
 

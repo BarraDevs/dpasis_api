@@ -33,9 +33,10 @@ describe('ClientRepositoryAdapterPrisma - Integration tests', () => {
 
   async function createClientGroupResaleAndCompany() {
     const suffix = String(Date.now()).slice(-4);
-    const [group, resale, company] = await Promise.all([
+    const [group, resale, honorific, company] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
       prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
+      prisma.honorific.create({ data: { name: `Sr. ${Date.now()}`, active: true } }),
       prisma.company.create({
         data: {
           name: `Empresa ${Date.now()}`,
@@ -53,12 +54,12 @@ describe('ClientRepositoryAdapterPrisma - Integration tests', () => {
         },
       }),
     ]);
-    return { group, resale, company };
+    return { group, resale, honorific, company };
   }
 
   describe('save', () => {
     it('should persist client in clients table with correct data', async() => {
-      const { group, resale, company } = await createClientGroupResaleAndCompany();
+      const { group, resale, honorific, company } = await createClientGroupResaleAndCompany();
 
       const entity = ClientFactory.create({
         type: ClientType.PJ,
@@ -66,6 +67,7 @@ describe('ClientRepositoryAdapterPrisma - Integration tests', () => {
         ie: '123456789',
         groupId: group.id,
         resaleId: resale.id,
+        honorificId: honorific.id,
         companyIds: [company.id],
         invoiceType: ClientInvoiceType.CONTRACT,
         parentClientId: null,
@@ -89,6 +91,7 @@ describe('ClientRepositoryAdapterPrisma - Integration tests', () => {
       expect(saved?.type).toBe(ClientType.PJ);
       expect(saved?.document).toBe('09748165000110');
       expect(saved?.ie).toBe('123456789');
+      expect(saved?.honorificId).toBe(honorific.id);
       expect(saved?.groupId).toBe(group.id);
       expect(saved?.resaleId).toBe(resale.id);
       expect(saved?.companyName).toBe('Empresa LTDA');
@@ -116,6 +119,7 @@ describe('ClientRepositoryAdapterPrisma - Integration tests', () => {
         invoiceType: ClientInvoiceType.INDIVIDUAL,
         generateInvoice: false,
         companyName: 'Pessoa Física',
+        honorificId: null,
         ie: null,
         fantasyName: null,
         socialName: null,
@@ -131,6 +135,7 @@ describe('ClientRepositoryAdapterPrisma - Integration tests', () => {
 
       expect(saved).not.toBeNull();
       expect(saved?.parentClientId).toBeNull();
+      expect(saved?.honorificId).toBeNull();
       expect(saved?.ie).toBeNull();
       expect(saved?.fantasyName).toBeNull();
       expect(saved?.socialName).toBeNull();
@@ -148,6 +153,7 @@ describe('ClientRepositoryAdapterPrisma - Integration tests', () => {
         groupId: group.id,
         resaleId: resale.id,
         companyIds: [company.id],
+        honorificId: null,
         invoiceType: ClientInvoiceType.CONTRACT,
         generateInvoice: true,
         companyName: 'Empresa Id Explícito',
@@ -185,6 +191,7 @@ describe('ClientRepositoryAdapterPrisma - Integration tests', () => {
         resaleId: resale.id,
         companyIds: [company.id],
         invoiceType: ClientInvoiceType.CONTRACT,
+        honorificId: null,
         socialName: null,
         domain: null,
         parentClientId: null,
@@ -251,6 +258,7 @@ describe('ClientRepositoryAdapterPrisma - Integration tests', () => {
         resaleId: resale.id,
         companyIds: [company.id],
         invoiceType: ClientInvoiceType.CONTRACT,
+        honorificId: null,
         generateInvoice: true,
         companyName: 'Cliente Filho',
         fantasyName: null,
@@ -310,6 +318,7 @@ describe('ClientRepositoryAdapterPrisma - Integration tests', () => {
         groupId: group.id,
         resaleId: resale.id,
         companyIds: [company.id],
+        honorificId: null,
         invoiceType: ClientInvoiceType.CONTRACT,
         generateInvoice: true,
         companyName: 'Empresa',
@@ -345,6 +354,7 @@ describe('ClientRepositoryAdapterPrisma - Integration tests', () => {
         socialName: null,
         domain: null,
         parentClientId: null,
+        honorificId: null,
         groupId: group.id,
         resaleId: resale.id,
         companyIds: [company.id],
@@ -387,6 +397,7 @@ describe('ClientRepositoryAdapterPrisma - Integration tests', () => {
         socialName: null,
         domain: null,
         parentClientId: null,
+        honorificId: null,
         groupId: group.id,
         resaleId: resale.id,
         companyIds: [company.id],
