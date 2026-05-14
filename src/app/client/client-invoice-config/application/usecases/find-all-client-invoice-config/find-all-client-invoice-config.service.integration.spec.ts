@@ -49,6 +49,7 @@ async function createClientWithConfig(
     message: string | null;
     deadlineDays?: number | null;
     dueMonth?: number | null;
+    generateNf?: boolean;
   },
 ): Promise<void> {
   const client = await prisma.client.create({
@@ -86,7 +87,7 @@ async function createClientWithConfig(
   await prisma.clientInvoiceConfig.create({
     data: {
       clientId: client.id,
-      generateNf: true,
+      generateNf: opts.generateNf ?? true,
       type: ClientInvoiceConfigType.MONTHLY,
       emissionDay: 5,
       dueDateType: opts.dueDateType,
@@ -190,6 +191,34 @@ describe('FindAllClientInvoiceConfig - Integration tests', () => {
 
     expect(result.totalItems).toBe(1);
     expect(result.data[0].dueDateDay).toBe(15);
+  });
+
+  it('should filter by generateNf', async() => {
+    const base = await seedBase(prisma);
+    await createClientWithConfig(prisma, base, {
+      clientId: 1,
+      document: '09748165000110',
+      dueDateDay: 10,
+      dueDateType: ClientInvoiceConfigDueDateType.DUE_DATE,
+      message: 'Com NF',
+      generateNf: true,
+    });
+    await createClientWithConfig(prisma, base, {
+      clientId: 2,
+      document: '09748165000121',
+      dueDateDay: 10,
+      dueDateType: ClientInvoiceConfigDueDateType.DUE_DATE,
+      message: 'Sem NF',
+      generateNf: false,
+    });
+
+    const onlyWithoutNf = await sut.execute({ generateNf: false });
+    const onlyWithNf = await sut.execute({ generateNf: true });
+
+    expect(onlyWithoutNf.totalItems).toBe(1);
+    expect(onlyWithoutNf.data[0].generateNf).toBe(false);
+    expect(onlyWithNf.totalItems).toBe(1);
+    expect(onlyWithNf.data[0].generateNf).toBe(true);
   });
 
   it('should filter by search on message', async() => {

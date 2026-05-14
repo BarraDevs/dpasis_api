@@ -1,5 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsInt, IsOptional, Max, Min } from 'class-validator';
+import { IsBoolean, IsInt, IsOptional, Max, Min } from 'class-validator';
+import { StringToBoolean } from 'src/infra/validators/class/decorators/string-boolean/string-boolean';
 import { StringToNumber } from 'src/infra/validators/class/decorators/string-number/string-number';
 import { Queries } from 'src/infra/validators/class/dtos/queries/queries.dto';
 
@@ -11,4 +12,10 @@ export class FindAllClientInvoiceConfigQueryDto extends Queries {
   @Min(1, { message: '$property deve ser entre 1 e 31' })
   @Max(31, { message: '$property deve ser entre 1 e 31' })
   dueDateDay?: number;
+
+  @ApiPropertyOptional({ example: true })
+  @IsOptional()
+  @StringToBoolean()
+  @IsBoolean({ message: '$property deve ser um booleano' })
+  generateNf?: boolean;
 }

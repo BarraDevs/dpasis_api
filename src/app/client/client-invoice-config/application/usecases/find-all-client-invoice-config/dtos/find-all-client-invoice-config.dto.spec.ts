@@ -78,6 +78,44 @@ describe('FindAllClientInvoiceConfigQueryDto', () => {
     );
   });
 
+  describe('generateNf field', () => {
+    it('should be optional', async() => {
+      const data = makeValidQueryDto({});
+
+      const result = await target.transform(data, metadata);
+
+      expect(result.generateNf).toBeUndefined();
+    });
+
+    it('should accept true and false', async() => {
+      const trueResult = await target.transform(makeValidQueryDto({ generateNf: true }), metadata);
+      const falseResult = await target.transform(makeValidQueryDto({ generateNf: false }), metadata);
+
+      expect(trueResult.generateNf).toBe(true);
+      expect(falseResult.generateNf).toBe(false);
+    });
+
+    it.each([
+      ['true', true],
+      ['false', false],
+    ])('should transform string %s to boolean', async(str, expected) => {
+      const data = { ...makeValidQueryDto(), generateNf: str as any };
+
+      const result = await target.transform(data, metadata);
+
+      expect(result.generateNf).toBe(expected);
+    });
+
+    it('should throw if generateNf is not a boolean', async() => {
+      const data = { ...makeValidQueryDto(), generateNf: 'maybe' as any };
+
+      expect.assertions(1);
+      await target.transform(data, metadata).catch((error) => {
+        expect(error.getResponse().message).toContain('generateNf deve ser um booleano');
+      });
+    });
+  });
+
   describe('pagination fields (from Queries)', () => {
     it('should accept page and size', async() => {
       const data = makeValidQueryDto({ page: 2, size: 20 });

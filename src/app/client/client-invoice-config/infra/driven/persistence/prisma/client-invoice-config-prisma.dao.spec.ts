@@ -265,6 +265,82 @@ describe('ClientInvoiceConfigDaoAdapterPrisma - Integration tests', () => {
       expect(rows[0].dueDateDay).toBe(12);
     });
 
+    it('should filter by generateNf', async() => {
+      await prisma.clientInvoiceConfig.create({
+        data: {
+          clientId,
+          generateNf: true,
+          type: ClientInvoiceConfigType.MONTHLY,
+          emissionDay: 5,
+          dueDateType: ClientInvoiceConfigDueDateType.DUE_DATE,
+          dueDateDay: 10,
+          deadlineDays: null,
+          months: [],
+          billingAddressId,
+          bankId,
+          autoProtestBoleto: false,
+          message: null,
+        },
+      });
+
+      const client2 = await prisma.client.create({
+        data: {
+          id: 2,
+          type: ClientType.PJ,
+          document: '09748165000121',
+          ie: null,
+          groupId: (await prisma.client.findUniqueOrThrow({ where: { id: clientId } })).groupId,
+          resaleId: (await prisma.client.findUniqueOrThrow({ where: { id: clientId } })).resaleId,
+          companyName: 'Empresa 2',
+          fantasyName: null,
+          headquarters: 'São Paulo',
+          invoiceType: ClientInvoiceType.CONTRACT,
+          generateInvoice: true,
+          active: true,
+        },
+      });
+
+      const address2 = await prisma.clientAddress.create({
+        data: {
+          clientId: client2.id,
+          type: ClientAddressType.BILLING,
+          zipCode: '12345-678',
+          street: 'Rua 2',
+          number: '2',
+          complement: null,
+          neighborhood: 'Centro',
+          city: 'São Paulo',
+          state: 'SP',
+          active: true,
+        },
+      });
+
+      await prisma.clientInvoiceConfig.create({
+        data: {
+          clientId: client2.id,
+          generateNf: false,
+          type: ClientInvoiceConfigType.MONTHLY,
+          emissionDay: 5,
+          dueDateType: ClientInvoiceConfigDueDateType.DUE_DATE,
+          dueDateDay: 10,
+          deadlineDays: null,
+          months: [],
+          billingAddressId: address2.id,
+          bankId,
+          autoProtestBoleto: false,
+          message: null,
+        },
+      });
+
+      const [onlyFalse, totalFalse] = await sut.findAll({ generateNf: false });
+      const [onlyTrue, totalTrue] = await sut.findAll({ generateNf: true });
+
+      expect(totalFalse).toBe(1);
+      expect(onlyFalse[0].generateNf).toBe(false);
+      expect(totalTrue).toBe(1);
+      expect(onlyTrue[0].generateNf).toBe(true);
+    });
+
     it('should search message case-insensitively', async() => {
       await prisma.clientInvoiceConfig.create({
         data: {

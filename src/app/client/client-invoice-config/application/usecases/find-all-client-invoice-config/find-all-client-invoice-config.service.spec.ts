@@ -87,4 +87,17 @@ describe('FindAllClientInvoiceConfig - Unit tests', () => {
     // Assert
     expect(findAllSpy).toHaveBeenCalledWith(query);
   });
+
+  it('should pass generateNf filter to dao', async() => {
+    // Arrange
+    const query: FindAllClientInvoiceConfigQueryDto = { page: 1, size: 20, generateNf: false };
+    jest.spyOn(clientInvoiceConfigDao, 'findAll').mockResolvedValue([[], 0]);
+    const findAllSpy = jest.spyOn(clientInvoiceConfigDao, 'findAll');
+
+    // Act
+    await sut.execute(query);
+
+    // Assert
+    expect(findAllSpy).toHaveBeenCalledWith(query);
+  });
 });

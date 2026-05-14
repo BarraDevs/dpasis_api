@@ -49,6 +49,10 @@ export class ClientInvoiceConfigDaoAdapterPrisma implements IClientInvoiceConfig
       conditions.push({ dueDateDay: queries.dueDateDay });
     }
 
+    if (queries.generateNf != null) {
+      conditions.push({ generateNf: queries.generateNf });
+    }
+
     const where: Prisma.ClientInvoiceConfigWhereInput = conditions.length > 0 ? { AND: conditions } : {};
 
     const [rows, total] = await this.prisma.$transaction([

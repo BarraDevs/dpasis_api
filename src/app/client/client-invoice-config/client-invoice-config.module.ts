@@ -29,6 +29,8 @@ import { ClientInvoiceConfigAdminController } from './infra/drivers/http/client-
     FindClientInvoiceConfigByClientId,
     DeleteClientInvoiceConfig,
   ],
-  exports: [],
+  exports: [
+    FindAllClientInvoiceConfig,
+  ],
 })
 export class ClientInvoiceConfigModule {}
