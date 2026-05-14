@@ -2,6 +2,7 @@ import { buildMinimalResaleData, nextResaleFixtureId } from 'src/test/fixtures/m
 import { Test } from '@nestjs/testing';
 import { ClientAddressType } from 'src/app/client/client-address/domain/enums/client-address-type.enum';
 import { ClientInvoiceConfigDto } from 'src/app/client/client-invoice-config/application/dtos/client-invoice-config.dto';
+import { FindAllClientInvoiceConfigQueryDto } from 'src/app/client/client-invoice-config/application/usecases/find-all-client-invoice-config/dtos/find-all-client-invoice-config.dto';
 import { ClientInvoiceConfigDueDateType } from 'src/app/client/client-invoice-config/domain/enums/client-invoice-config-due-date-type.enum';
 import { ClientInvoiceConfigType } from 'src/app/client/client-invoice-config/domain/enums/client-invoice-config-type.enum';
 import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
@@ -178,6 +179,114 @@ describe('ClientInvoiceConfigDaoAdapterPrisma - Integration tests', () => {
         createdAt: created.createdAt,
         updatedAt: created.updatedAt,
       });
+    });
+  });
+
+  describe('findAll', () => {
+    it('should return empty when no configs exist', async() => {
+      const [rows, total] = await sut.findAll({});
+
+      expect(rows).toEqual([]);
+      expect(total).toBe(0);
+    });
+
+    it('should filter by dueDateDay', async() => {
+      await prisma.clientInvoiceConfig.create({
+        data: {
+          clientId,
+          generateNf: true,
+          type: ClientInvoiceConfigType.MONTHLY,
+          emissionDay: 5,
+          dueDateType: ClientInvoiceConfigDueDateType.DUE_DATE,
+          dueDateDay: 12,
+          deadlineDays: null,
+          months: [],
+          billingAddressId,
+          bankId,
+          autoProtestBoleto: false,
+          message: null,
+        },
+      });
+
+      const client2 = await prisma.client.create({
+        data: {
+          id: 2,
+          type: ClientType.PJ,
+          document: '09748165000121',
+          ie: null,
+          groupId: (await prisma.client.findUniqueOrThrow({ where: { id: clientId } })).groupId,
+          resaleId: (await prisma.client.findUniqueOrThrow({ where: { id: clientId } })).resaleId,
+          companyName: 'Empresa 2',
+          fantasyName: null,
+          headquarters: 'São Paulo',
+          invoiceType: ClientInvoiceType.CONTRACT,
+          generateInvoice: true,
+          active: true,
+        },
+      });
+
+      const address2 = await prisma.clientAddress.create({
+        data: {
+          clientId: client2.id,
+          type: ClientAddressType.BILLING,
+          zipCode: '12345-678',
+          street: 'Rua 2',
+          number: '2',
+          complement: null,
+          neighborhood: 'Centro',
+          city: 'São Paulo',
+          state: 'SP',
+          active: true,
+        },
+      });
+
+      await prisma.clientInvoiceConfig.create({
+        data: {
+          clientId: client2.id,
+          generateNf: true,
+          type: ClientInvoiceConfigType.MONTHLY,
+          emissionDay: 5,
+          dueDateType: ClientInvoiceConfigDueDateType.DUE_DATE,
+          dueDateDay: 28,
+          deadlineDays: null,
+          months: [],
+          billingAddressId: address2.id,
+          bankId,
+          autoProtestBoleto: false,
+          message: null,
+        },
+      });
+
+      const query: FindAllClientInvoiceConfigQueryDto = { dueDateDay: 12 };
+      const [rows, total] = await sut.findAll(query);
+
+      expect(total).toBe(1);
+      expect(rows).toHaveLength(1);
+      expect(rows[0].dueDateDay).toBe(12);
+    });
+
+    it('should search message case-insensitively', async() => {
+      await prisma.clientInvoiceConfig.create({
+        data: {
+          clientId,
+          generateNf: true,
+          type: ClientInvoiceConfigType.MONTHLY,
+          emissionDay: 5,
+          dueDateType: ClientInvoiceConfigDueDateType.DUE_DATE,
+          dueDateDay: 10,
+          deadlineDays: null,
+          months: [],
+          billingAddressId,
+          bankId,
+          autoProtestBoleto: false,
+          message: 'Texto BOLETO especial',
+        },
+      });
+
+      const [rows, total] = await sut.findAll({ search: 'boleto' });
+
+      expect(total).toBe(1);
+      expect(rows[0].message).toContain('BOLETO');
     });
   });
 

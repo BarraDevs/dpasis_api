@@ -7,6 +7,7 @@ import { ClientInvoiceConfigPersistenceModule } from './application/persistence/
 import { CreateClientInvoiceConfig } from './application/usecases/create-client-invoice-config/create-client-invoice-config.service';
 import { DeleteClientInvoiceConfig } from './application/usecases/delete-client-invoice-config/delete-client-invoice-config.service';
 import { EditClientInvoiceConfig } from './application/usecases/edit-client-invoice-config/edit-client-invoice-config.service';
+import { FindAllClientInvoiceConfig } from './application/usecases/find-all-client-invoice-config/find-all-client-invoice-config.service';
 import { FindClientInvoiceConfigByClientId } from './application/usecases/find-client-invoice-config-by-client-id/find-client-invoice-config-by-client-id.service';
 import { ClientInvoiceConfigAdminController } from './infra/drivers/http/client-invoice-config-admin.controller';
 
@@ -24,6 +25,7 @@ import { ClientInvoiceConfigAdminController } from './infra/drivers/http/client-
   providers: [
     CreateClientInvoiceConfig,
     EditClientInvoiceConfig,
+    FindAllClientInvoiceConfig,
     FindClientInvoiceConfigByClientId,
     DeleteClientInvoiceConfig,
   ],
