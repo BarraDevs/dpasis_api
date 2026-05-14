@@ -21,7 +21,6 @@ const ClientSelect = {
     select: {
       id: true,
       name: true,
-      active: true,
     },
   },
   companyName: true,

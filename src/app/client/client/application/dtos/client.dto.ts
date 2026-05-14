@@ -20,7 +20,6 @@ export class ClientDto {
   honorific: {
     id: number;
     name: string;
-    active: boolean;
   } | null;
   group: {
     id: number;
