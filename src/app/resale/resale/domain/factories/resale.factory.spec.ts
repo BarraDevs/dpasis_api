@@ -37,6 +37,7 @@ function makeResaleCreateProps(overrides?: Partial<ResaleCreateProps>): ResaleCr
     indicatorResale: false,
     recurringResale: false,
     profilePictureUrl: null,
+    honorificId: null,
     ...overrides,
   };
 }
@@ -90,6 +91,7 @@ describe('ResaleFactory', () => {
         indicatorResale: false,
         recurringResale: false,
         profilePictureUrl: null,
+        honorificId: null,
       });
     });
 
@@ -254,6 +256,20 @@ describe('ResaleFactory', () => {
 
       expect(resale.props.accessEmail).toBeNull();
       expect(resale.props.accessPassword).toBeNull();
+    });
+
+    describe('validation - honorificId', () => {
+      it('should set honorificId to null when omitted', () => {
+        const resale = ResaleFactory.create(makeResaleCreateProps());
+
+        expect(resale.props.honorificId).toBeNull();
+      });
+
+      it.each([-5, -12.9])('should reject invalid honorificId (%s)', (honorificId: number) => {
+        const props = makeResaleCreateProps({ honorificId });
+
+        expect(() => ResaleFactory.create(props)).toThrow(NumberMustBePositiveAndInt);
+      });
     });
   });
 

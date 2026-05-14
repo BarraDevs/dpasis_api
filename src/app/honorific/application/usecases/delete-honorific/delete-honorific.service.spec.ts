@@ -40,6 +40,7 @@ describe('DeleteHonorific - Unit tests', () => {
   it('should call delete after findById', async() => {
     jest.spyOn(honorificDao, 'findById').mockResolvedValue(createMock<HonorificDto>());
     jest.spyOn(honorificDao, 'countClientsById').mockResolvedValue(0);
+    jest.spyOn(honorificDao, 'countResalesById').mockResolvedValue(0);
     const deleteSpy = jest.spyOn(honorificDao, 'delete').mockResolvedValue();
 
     await sut.execute(3);
@@ -50,6 +51,7 @@ describe('DeleteHonorific - Unit tests', () => {
   it('should return success message', async() => {
     jest.spyOn(honorificDao, 'findById').mockResolvedValue(createMock<HonorificDto>());
     jest.spyOn(honorificDao, 'countClientsById').mockResolvedValue(0);
+    jest.spyOn(honorificDao, 'countResalesById').mockResolvedValue(0);
     jest.spyOn(honorificDao, 'delete').mockResolvedValue();
 
     const result = await sut.execute(1);
@@ -60,6 +62,14 @@ describe('DeleteHonorific - Unit tests', () => {
   it('should throw HonorificInUseError when clients reference honorific', async() => {
     jest.spyOn(honorificDao, 'findById').mockResolvedValue(createMock<HonorificDto>());
     jest.spyOn(honorificDao, 'countClientsById').mockResolvedValue(1);
+
+    await expect(sut.execute(5)).rejects.toThrow(HonorificInUseError);
+  });
+
+  it('should throw HonorificInUseError when resales reference honorific', async() => {
+    jest.spyOn(honorificDao, 'findById').mockResolvedValue(createMock<HonorificDto>());
+    jest.spyOn(honorificDao, 'countClientsById').mockResolvedValue(0);
+    jest.spyOn(honorificDao, 'countResalesById').mockResolvedValue(1);
 
     await expect(sut.execute(5)).rejects.toThrow(HonorificInUseError);
   });

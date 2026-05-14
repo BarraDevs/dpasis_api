@@ -1,5 +1,6 @@
 import { buildMinimalResaleData, nextResaleFixtureId } from 'src/test/fixtures/minimal-resale';
 import { Test } from '@nestjs/testing';
+import { Prisma } from '@prisma/client';
 import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
 import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum';
 import { HonorificInUseError } from 'src/app/honorific/domain/errors/honorific-in-use.error';
@@ -67,6 +68,21 @@ describe('DeleteHonorific - Integration tests', () => {
         generateInvoice: true,
         active: true,
       },
+    });
+
+    await expect(sut.execute(honorific.id)).rejects.toThrow(HonorificInUseError);
+  });
+
+  it('should throw HonorificInUseError when resale references honorific', async() => {
+    const honorific = await prisma.honorific.create({
+      data: { name: `Rev-${Date.now()}` },
+    });
+
+    await prisma.resale.create({
+      data: {
+        ...buildMinimalResaleData(nextResaleFixtureId()),
+        honorificId: honorific.id,
+      } as Prisma.ResaleUncheckedCreateInput,
     });
 
     await expect(sut.execute(honorific.id)).rejects.toThrow(HonorificInUseError);

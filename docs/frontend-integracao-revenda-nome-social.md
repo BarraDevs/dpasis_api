@@ -8,7 +8,8 @@ Foi adicionado ao modelo de **revenda** o campo opcional **`socialName`** (nome 
 
 **Relacionado:**
 
-- [IDs de revenda em hexadecimal](./frontend-integracao-revenda-hex-id.md)
+- Identificadores de revenda em **hexadecimal** nas rotas: exemplos e contrato no OpenAPI (`/swagger`), tag **Revendas**.
+- [Pronome de tratamento na revenda](./frontend-integracao-revenda-honorific.md)
 - Analogia ao cliente: [Campo `socialName` no cliente](./frontend-integracao-cliente-nome-social.md)
 
 ## Base URL admin

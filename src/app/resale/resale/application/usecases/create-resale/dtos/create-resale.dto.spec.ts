@@ -279,4 +279,37 @@ describe('CreateResaleInputDto', () => {
 
     await expect(pipe.transform(data, bodyMetadata)).rejects.toBeDefined();
   });
+
+  describe('honorificId field (optional)', () => {
+    it('should accept undefined honorificId', async() => {
+      const data = { ...validBase() };
+      delete (data as { honorificId?: unknown }).honorificId;
+
+      const result = await pipe.transform(data, bodyMetadata);
+
+      expect(result.honorificId).toBeUndefined();
+    });
+
+    it('should accept valid honorificId', async() => {
+      const data = { ...validBase(), honorificId: 3 };
+
+      const result = await pipe.transform(data, bodyMetadata);
+
+      expect(result.honorificId).toBe(3);
+    });
+
+    it('should accept null honorificId', async() => {
+      const data = { ...validBase(), honorificId: null };
+
+      const result = await pipe.transform(data, bodyMetadata);
+
+      expect(result.honorificId).toBeNull();
+    });
+
+    it.each([0, -1, 1.5])('should throw if honorificId is invalid (%s)', async(value: number) => {
+      const data = { ...validBase(), honorificId: value };
+
+      await expect(pipe.transform(data, bodyMetadata)).rejects.toBeDefined();
+    });
+  });
 });

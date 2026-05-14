@@ -86,6 +86,7 @@ describe('ResaleDaoAdapterPrisma - Integration tests', () => {
         identifier: 'REV-1',
         document: '09748165000110',
         active: true,
+        honorific: null,
       });
       expect(rows[0].createdAt).toBeInstanceOf(Date);
       expect(rows[0].updatedAt).toBeInstanceOf(Date);
@@ -269,7 +270,19 @@ describe('ResaleDaoAdapterPrisma - Integration tests', () => {
         billingStartDay: 17,
         indicatorResale: true,
         recurringResale: false,
+        honorific: null,
       });
+    });
+
+    it('should return nested honorific when linked', async() => {
+      const honorific = await prisma.honorific.create({ data: { name: 'Dr.' } });
+      await prisma.resale.create({
+        data: resaleRow({ honorificId: honorific.id }),
+      });
+
+      const result = await sut.findById(1);
+
+      expect(result?.honorific).toEqual({ id: honorific.id, name: 'Dr.' });
     });
   });
 

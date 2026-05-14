@@ -99,6 +99,13 @@ export class ResaleWireSwaggerDto {
   @ApiPropertyOptional({ nullable: true })
   profilePictureUrl: string | null;
 
+  @ApiPropertyOptional({
+    nullable: true,
+    description: 'Pronome de tratamento vinculado (Honorific).',
+    example: { id: 1, name: 'Sr.' },
+  })
+  honorific: { id: number; name: string } | null;
+
   @ApiProperty()
   active: boolean;
 

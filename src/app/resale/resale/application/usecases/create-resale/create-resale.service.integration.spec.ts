@@ -1,4 +1,5 @@
 import { Test } from '@nestjs/testing';
+import { HonorificNotFoundError } from 'src/app/honorific/domain/errors/honorific-not-found.error';
 import { UploadSingle } from 'src/app/upload-file/application/usecases/upload-single/upload-single.service';
 import { ResaleModule } from 'src/app/resale/resale/resale.module';
 import { DocumentAlreadyTakenError } from 'src/shared/errors/document-already-taken';
@@ -231,5 +232,22 @@ describe('CreateResale - Integration tests', () => {
     expect(row?.profilePictureUrl).toBe(expectedUrl);
 
     uploadSpy.mockRestore();
+  });
+
+  it('should persist honorificId when honorific exists and active', async() => {
+    const honorific = await prisma.honorific.create({ data: { name: `Cr-${Date.now()}`, active: true } });
+
+    const { id } = await sut.execute(makeCreateResaleInput({ honorificId: honorific.id }));
+
+    const row = await prisma.resale.findUnique({ where: { id } });
+    expect(row?.honorificId).toBe(honorific.id);
+  });
+
+  it('should reject inactive honorific on create', async() => {
+    const honorific = await prisma.honorific.create({ data: { name: `Cr2-${Date.now()}`, active: false } });
+
+    await expect(sut.execute(makeCreateResaleInput({ honorificId: honorific.id }))).rejects.toThrow(
+      HonorificNotFoundError,
+    );
   });
 });

@@ -2,9 +2,12 @@
 
 ## Introdução
 
-Foi adicionado um catálogo isolado de **pronomes de tratamento** (ex.: Sr., Sra., Dr., Dra.), com CRUD administrativo e alternância de status ativo/inativo. **Clientes** podem referenciar um pronome opcional via `honorificId`; enquanto houver cliente vinculado, o pronome **não** pode ser excluído (HTTP 409).
+Foi adicionado um catálogo isolado de **pronomes de tratamento** (ex.: Sr., Sra., Dr., Dra.), com CRUD administrativo e alternância de status ativo/inativo. **Clientes** e **revendas** podem referenciar um pronome opcional via `honorificId` na escrita; enquanto houver **algum** cliente ou revenda vinculados, o pronome **não** pode ser excluído (HTTP 409).
 
-**Relacionado:** [Cliente × pronome de tratamento](./frontend-integracao-cliente-honorific.md) — campo `honorificId` no cliente e impacto em `DELETE` do catálogo.
+**Relacionado:**
+
+- [Cliente × pronome de tratamento](./frontend-integracao-cliente-honorific.md) — payload e objeto `honorific` nas respostas
+- [Revenda × pronome de tratamento](./frontend-integracao-revenda-honorific.md) — mesmo padrão para `POST`/`PATCH` admin e leituras
 
 **Referência OpenAPI:** Swagger em `/swagger`, tag **Pronomes de tratamento**.
 
@@ -84,11 +87,11 @@ Respostas de erro seguem o filtro global: corpo com `message` em português.
 | Validação de entrada | 400 | Mensagens de `class-validator` com `$property` |
 | Registro inexistente | 404 | `Pronome de tratamento não encontrado na base de dados.` |
 | Nome já usado (inclui mesma grafia com caixa diferente na regra de aplicação) | 409 | `Já existe um pronome de tratamento com o nome: …` |
-| Pronome referenciado por um ou mais clientes | 409 | `Este pronome de tratamento está associado a um ou mais clientes e não pode ser excluído.` |
+| Pronome referenciado por cliente(s) ou revenda(s) | 409 | `Este pronome de tratamento está associado a um ou mais clientes ou revendas e não pode ser excluído.` |
 
 ## Checklist para o frontend
 
 1. Garantir que o perfil admin tenha `HONORIFIC_READ` / `HONORIFIC_WRITE` (reseed ou inclusão manual em `account_claims` se necessário em ambientes antigos).
 2. Mapear tipos a partir do Swagger (`Honorific`, paginação, `SuccessMessage`).
 3. Na listagem, usar `search` e `active` conforme UX (filtro de ativos).
-4. Tratar **409** ao salvar nome duplicado, **409** ao excluir pronome ainda vinculado a cliente, e **404** ao abrir/editar ID inválido.
+4. Tratar **409** ao salvar nome duplicado, **409** ao excluir pronome ainda vinculado a **cliente ou revenda**, e **404** ao abrir/editar ID inválido.

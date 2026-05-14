@@ -1,4 +1,5 @@
 import { Test } from '@nestjs/testing';
+import { FindHonorificById } from 'src/app/honorific/application/usecases/find-honorific-by-id/find-honorific-by-id.service';
 import { UploadSingle } from 'src/app/upload-file/application/usecases/upload-single/upload-single.service';
 import { TOKENS } from 'src/core/di/token';
 import { CreateResale } from './create-resale.service';
@@ -20,6 +21,9 @@ describe('CreateResale - Unit tests', () => {
   const uploadSingle = {
     execute: jest.fn(),
   };
+  const findHonorificById = {
+    execute: jest.fn(),
+  };
 
   beforeEach(async() => {
     jest.clearAllMocks();
@@ -31,6 +35,7 @@ describe('CreateResale - Unit tests', () => {
         { provide: TOKENS.ResaleRepository, useValue: resaleRepository },
         { provide: TOKENS.ResaleSequenceRepository, useValue: resaleSequenceRepository },
         { provide: UploadSingle, useValue: uploadSingle },
+        { provide: FindHonorificById, useValue: findHonorificById },
       ],
     }).compile();
 
@@ -102,5 +107,13 @@ describe('CreateResale - Unit tests', () => {
     expect(entity?.props.manufacturerResale).toBe(false);
     expect(entity?.props.indicatorResale).toBe(true);
     expect(entity?.props.recurringResale).toBe(false);
+  });
+
+  it('should resolve active honorific when honorificId is provided', async() => {
+    await sut.execute(makeCreateResaleInput({ honorificId: 5 }));
+
+    expect(findHonorificById.execute).toHaveBeenCalledWith(5, { onlyActive: true });
+    const entity = resaleRepository.save.mock.calls[0]?.[0];
+    expect(entity?.props.honorificId).toBe(5);
   });
 });

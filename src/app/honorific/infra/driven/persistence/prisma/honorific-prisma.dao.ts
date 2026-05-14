@@ -97,4 +97,10 @@ export class HonorificDaoAdapterPrisma implements IHonorificDao {
       where: { honorificId: id },
     });
   }
+
+  public async countResalesById(id: number): Promise<number> {
+    return this.prisma.resale.count({
+      where: { honorificId: id },
+    });
+  }
 }

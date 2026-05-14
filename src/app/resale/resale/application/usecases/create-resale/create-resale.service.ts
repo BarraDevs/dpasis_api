@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { FindHonorificById } from 'src/app/honorific/application/usecases/find-honorific-by-id/find-honorific-by-id.service';
 import { UploadSingle } from 'src/app/upload-file/application/usecases/upload-single/upload-single.service';
 import { ResaleExplicitIdInvalidError } from 'src/app/resale/resale/domain/errors/resale-explicit-id-invalid.error';
 import { ResaleIdAlreadyTakenError } from 'src/app/resale/resale/domain/errors/resale-id-already-taken.error';
@@ -19,6 +20,7 @@ export class CreateResale {
     @Inject(TOKENS.ResaleRepository) private readonly resaleRepository: IResaleRepository,
     @Inject(TOKENS.ResaleSequenceRepository) private readonly resaleSequenceRepository: IResaleSequenceRepository,
     private readonly uploadSingle: UploadSingle,
+    private readonly findHonorificById: FindHonorificById,
   ) {}
 
   public async execute(data: CreateResaleExecuteInputDto, file?: Express.Multer.File): Promise<CreateResaleOutputDto> {
@@ -37,6 +39,10 @@ export class CreateResale {
     const documentAlreadyTaken = await this.resaleDao.findByDocument(normalizedDocument);
     if (documentAlreadyTaken) {
       throw new DocumentAlreadyTakenError(normalizedDocument);
+    }
+
+    if (data.honorificId != null) {
+      await this.findHonorificById.execute(data.honorificId, { onlyActive: true });
     }
 
     let resaleId: number;
@@ -88,6 +94,7 @@ export class CreateResale {
       indicatorResale: data.indicatorResale ?? false,
       recurringResale: data.recurringResale ?? false,
       profilePictureUrl,
+      honorificId: data.honorificId ?? null,
     });
 
     const id = await this.resaleRepository.save(entity);

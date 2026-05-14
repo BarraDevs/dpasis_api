@@ -1,4 +1,5 @@
 import { Test } from '@nestjs/testing';
+import { HonorificNotFoundError } from 'src/app/honorific/domain/errors/honorific-not-found.error';
 import { UploadSingle } from 'src/app/upload-file/application/usecases/upload-single/upload-single.service';
 import { UploadFileQueueFakeAdapterProducer } from 'src/app/upload-file/infra/driven/queue/fake/upload-file-queue-fake.producer';
 import { ResaleModule } from 'src/app/resale/resale/resale.module';
@@ -248,5 +249,32 @@ describe('EditResale - Integration tests', () => {
     });
 
     uploadSpy.mockRestore();
+  });
+
+  it('should persist honorificId when honorific is active', async() => {
+    const honorific = await prisma.honorific.create({ data: { name: `Ed-${Date.now()}`, active: true } });
+    const { id } = await createResale.execute(makeCreateResaleInput());
+
+    await sut.execute(id, { honorificId: honorific.id });
+
+    const row = await prisma.resale.findUnique({ where: { id } });
+    expect(row?.honorificId).toBe(honorific.id);
+  });
+
+  it('should clear honorificId when patched with null', async() => {
+    const honorific = await prisma.honorific.create({ data: { name: `Ed2-${Date.now()}`, active: true } });
+    const { id } = await createResale.execute(makeCreateResaleInput({ honorificId: honorific.id }));
+
+    await sut.execute(id, { honorificId: null });
+
+    const row = await prisma.resale.findUnique({ where: { id } });
+    expect(row?.honorificId).toBeNull();
+  });
+
+  it('should throw HonorificNotFoundError when assigning inactive honorific', async() => {
+    const honorific = await prisma.honorific.create({ data: { name: `Ed3-${Date.now()}`, active: false } });
+    const { id } = await createResale.execute(makeCreateResaleInput());
+
+    await expect(sut.execute(id, { honorificId: honorific.id })).rejects.toThrow(HonorificNotFoundError);
   });
 });

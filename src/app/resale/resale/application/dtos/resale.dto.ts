@@ -31,6 +31,10 @@ export class ResaleDto {
   recurringResale: boolean;
   profilePictureUrl: string | null;
   active: boolean;
+  honorific: {
+    id: number;
+    name: string;
+  } | null;
   createdAt: Date;
   updatedAt: Date;
 }

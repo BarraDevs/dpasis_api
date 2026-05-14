@@ -43,6 +43,7 @@ describe('FindResaleById - Integration tests', () => {
     expect(result.name).toBe('Revenda Teste');
     expect(result.document).toBe('09748165000110');
     expect(result.active).toBe(true);
+    expect(result.honorific).toBeNull();
     expect(result.createdAt).toBeInstanceOf(Date);
   });
 

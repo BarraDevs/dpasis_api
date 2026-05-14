@@ -6,6 +6,7 @@ model Honorific {
   updatedAt DateTime @updatedAt
 
   clients Client[]
+  resales Resale[]
 
   @@map("honorifics")
 }

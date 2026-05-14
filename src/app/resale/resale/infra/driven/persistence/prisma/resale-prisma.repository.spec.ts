@@ -112,6 +112,21 @@ describe('ResaleRepositoryAdapterPrisma - Integration tests', () => {
       expect(saved?.indicatorResale).toBe(true);
       expect(saved?.recurringResale).toBe(true);
     });
+
+    it('should persist honorificId on save', async() => {
+      const honorific = await prisma.honorific.create({ data: { name: 'Prof.' } });
+      const entity = ResaleFactory.create({
+        ...makeCreateProps(),
+        id: 102,
+        honorificId: honorific.id,
+      });
+
+      const id = await sut.save(entity);
+
+      expect(id).toBe(102);
+      const saved = await prisma.resale.findUnique({ where: { id: 102 } });
+      expect(saved?.honorificId).toBe(honorific.id);
+    });
   });
 
   describe('findById', () => {
@@ -181,6 +196,7 @@ describe('ResaleRepositoryAdapterPrisma - Integration tests', () => {
         servedByRoot: true,
         indicatorResale: true,
         recurringResale: false,
+        honorificId: null,
       });
     });
   });

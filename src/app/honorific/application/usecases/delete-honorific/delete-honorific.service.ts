@@ -20,6 +20,7 @@ export class DeleteHonorific {
 
     const inUse = await hasAnyPositiveReference([
       () => this.honorificDao.countClientsById(id),
+      () => this.honorificDao.countResalesById(id),
     ]);
     if (inUse) {
       throw new HonorificInUseError();

@@ -11,6 +11,7 @@ O campo aparece no corpo `**POST`** (criação) e opcionalmente no `**PATCH**` (
 **Relacionado:**
 
 - [Nome social na revenda](./frontend-integracao-revenda-nome-social.md)
+- [Pronome de tratamento na revenda](./frontend-integracao-revenda-honorific.md)
 
 ## Base URL admin
 

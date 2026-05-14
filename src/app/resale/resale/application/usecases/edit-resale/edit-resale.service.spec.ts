@@ -1,9 +1,12 @@
 import { Test } from '@nestjs/testing';
+import { FindHonorificById } from 'src/app/honorific/application/usecases/find-honorific-by-id/find-honorific-by-id.service';
 import { ResaleDto } from 'src/app/resale/resale/application/dtos/resale.dto';
 import { ResaleType } from 'src/app/resale/resale/domain/enums/resale-type.enum';
 import { UploadSingle } from 'src/app/upload-file/application/usecases/upload-single/upload-single.service';
 import { TOKENS } from 'src/core/di/token';
-import { EditResale } from './edit-resale.service';function makeResaleDto(overrides: Partial<ResaleDto> = {}): ResaleDto {
+import { EditResale } from './edit-resale.service';
+
+function makeResaleDto(overrides: Partial<ResaleDto> = {}): ResaleDto {
   return {
     id: 99,
     type: ResaleType.PJ,
@@ -36,6 +39,7 @@ import { EditResale } from './edit-resale.service';function makeResaleDto(overri
     indicatorResale: false,
     recurringResale: false,
     profilePictureUrl: null,
+    honorific: null,
     active: true,
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -68,6 +72,10 @@ describe('EditResale - Unit tests', () => {
     size: 200,
   } as Express.Multer.File;
 
+  const findHonorificById = {
+    execute: jest.fn(),
+  };
+
   beforeEach(async() => {
     jest.clearAllMocks();
 
@@ -78,6 +86,7 @@ describe('EditResale - Unit tests', () => {
         { provide: TOKENS.ResaleRepository, useValue: resaleRepository },
         { provide: TOKENS.UploadFileQueueProducer, useValue: uploadFileQueueProducer },
         { provide: UploadSingle, useValue: uploadSingle },
+        { provide: FindHonorificById, useValue: findHonorificById },
       ],
     }).compile();
 

@@ -31,6 +31,8 @@ export type ResaleCreateProps = {
   indicatorResale: boolean;
   recurringResale: boolean;
   profilePictureUrl: string | null;
+  /** Ausente ou null: sem pronome de tratamento. */
+  honorificId?: number | null;
 };
 
 export type ResaleProps = ResaleCreateProps & {

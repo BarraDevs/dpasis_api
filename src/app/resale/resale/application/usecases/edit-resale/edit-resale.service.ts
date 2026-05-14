@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { FindHonorificById } from 'src/app/honorific/application/usecases/find-honorific-by-id/find-honorific-by-id.service';
 import type { IUploadFileQueueProducer } from 'src/app/upload-file/application/queue/upload-file-queue-producer.interface';
 import { UploadSingle } from 'src/app/upload-file/application/usecases/upload-single/upload-single.service';
 import { ResaleType } from 'src/app/resale/resale/domain/enums/resale-type.enum';
@@ -20,6 +21,7 @@ export class EditResale {
     @Inject(TOKENS.ResaleRepository) private readonly resaleRepository: IResaleRepository,
     @Inject(TOKENS.UploadFileQueueProducer) private readonly uploadFileQueueProducer: IUploadFileQueueProducer,
     private readonly uploadSingle: UploadSingle,
+    private readonly findHonorificById: FindHonorificById,
   ) {}
 
   public async execute(id: number, data: EditResaleInputDto, file?: Express.Multer.File): Promise<SuccessMessage> {
@@ -37,6 +39,9 @@ export class EditResale {
       const result = await this.uploadSingle.execute(file, folder.value);
       profilePictureUrl = result.url;
     }
+
+    const honorificId =
+      data.honorificId !== undefined ? data.honorificId : (resale.honorific?.id ?? null);
 
     const resaleEntity = ResaleFactory.edit({
       id,
@@ -73,6 +78,7 @@ export class EditResale {
       indicatorResale: data.indicatorResale ?? resale.indicatorResale,
       recurringResale: data.recurringResale ?? resale.recurringResale,
       profilePictureUrl,
+      honorificId,
       active: resale.active,
     });
 
@@ -82,6 +88,10 @@ export class EditResale {
       if (documentAlreadyTaken && documentAlreadyTaken.id !== id) {
         throw new DocumentAlreadyTakenError(normalizedDocument);
       }
+    }
+
+    if (data.honorificId !== undefined && data.honorificId != null) {
+      await this.findHonorificById.execute(data.honorificId, { onlyActive: true });
     }
 
     await this.resaleRepository.edit(resaleEntity);

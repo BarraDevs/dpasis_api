@@ -40,6 +40,7 @@ export class ResaleFactory {
       indicatorResale: new BooleanVo(props.indicatorResale, 'indicatorResale').value,
       recurringResale: new BooleanVo(props.recurringResale, 'recurringResale').value,
       profilePictureUrl: new OptionalString(props.profilePictureUrl, 'profilePictureUrl').value,
+      honorificId: props.honorificId ? new PositiveInt(props.honorificId, 'honorificId').value : null,
     };
   }
 
@@ -101,6 +102,7 @@ export class ResaleFactory {
       indicatorResale: props.indicatorResale,
       recurringResale: props.recurringResale,
       profilePictureUrl: props.profilePictureUrl ?? null,
+      honorificId: props.honorificId ?? null,
       active: props.active,
     });
   }

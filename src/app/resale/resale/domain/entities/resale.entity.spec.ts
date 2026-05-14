@@ -35,6 +35,7 @@ function makeResaleProps(overrides?: Partial<ResaleProps>): ResaleProps {
     indicatorResale: false,
     recurringResale: false,
     profilePictureUrl: null,
+    honorificId: null,
     ...overrides,
   };
 }
@@ -127,6 +128,7 @@ describe('Resale', () => {
         active: false,
         receivesSupportEmail: true,
         manufacturerResale: true,
+        honorificId: null,
       });
     });
 

@@ -30,12 +30,14 @@ model Resale {
   indicatorResale        Boolean   @default(false)
   recurringResale        Boolean   @default(false)
   profilePictureUrl      String?   @db.Text
+  honorificId            Int?
   active                 Boolean   @default(true)
   createdAt              DateTime  @default(now())
   updatedAt              DateTime  @updatedAt
 
-  clients  Client[]
-  contacts ResaleContact[]
+  honorific Honorific? @relation(fields: [honorificId], references: [id], onDelete: Restrict)
+  clients   Client[]
+  contacts  ResaleContact[]
 
   @@map("resales")
 }

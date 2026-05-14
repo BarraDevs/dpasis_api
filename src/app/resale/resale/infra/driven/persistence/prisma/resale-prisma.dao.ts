@@ -38,6 +38,12 @@ const ResaleSelect = {
   recurringResale: true,
   profilePictureUrl: true,
   active: true,
+  honorific: {
+    select: {
+      id: true,
+      name: true,
+    },
+  },
   createdAt: true,
   updatedAt: true,
 } satisfies Prisma.ResaleSelect;

@@ -12,4 +12,5 @@ export interface IHonorificDao {
   delete(id: number): Promise<void>;
   updateStatus(id: number, active: boolean): Promise<void>;
   countClientsById(id: number): Promise<number>;
+  countResalesById(id: number): Promise<number>;
 }

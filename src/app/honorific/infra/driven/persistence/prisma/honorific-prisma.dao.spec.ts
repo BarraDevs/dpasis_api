@@ -1,4 +1,5 @@
 import { Test } from '@nestjs/testing';
+import { Prisma } from '@prisma/client';
 import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
 import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum';
 import { CreateHonorificInputDto } from 'src/app/honorific/application/usecases/create-honorific/dtos/create-honorific.dto';
@@ -182,6 +183,43 @@ describe('HonorificDaoAdapterPrisma - Integration tests', () => {
       ]);
 
       const count = await sut.countClientsById(honorific.id);
+
+      expect(count).toBe(2);
+    });
+  });
+
+  describe('countResalesById', () => {
+    it('should return zero when no resale uses honorific', async() => {
+      const honorific = await prisma.honorific.create({
+        data: { name: `Rcnt-${Date.now()}` },
+      });
+
+      const count = await sut.countResalesById(honorific.id);
+
+      expect(count).toBe(0);
+    });
+
+    it('should return number of resales linked to honorific', async() => {
+      const honorific = await prisma.honorific.create({
+        data: { name: `Rcnt2-${Date.now()}` },
+      });
+
+      await Promise.all([
+        prisma.resale.create({
+          data: {
+            ...buildMinimalResaleData(nextResaleFixtureId()),
+            honorificId: honorific.id,
+          } as Prisma.ResaleUncheckedCreateInput,
+        }),
+        prisma.resale.create({
+          data: {
+            ...buildMinimalResaleData(nextResaleFixtureId()),
+            honorificId: honorific.id,
+          } as Prisma.ResaleUncheckedCreateInput,
+        }),
+      ]);
+
+      const count = await sut.countResalesById(honorific.id);
 
       expect(count).toBe(2);
     });

@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AuthenticationGuardsModule } from '../../authentication/application/guards/guards.module';
+import { HonorificModule } from 'src/app/honorific/honorific.module';
 import { ResalePersistenceModule } from './application/persistence/resale-persistence.module';
 import { ActivateResale } from './application/usecases/activate-resale/activate-resale.service';
 import { CreateResale } from './application/usecases/create-resale/create-resale.service';
@@ -16,6 +17,7 @@ import { UploadFileModule } from 'src/app/upload-file/upload-file.module';
 @Module({
   imports: [
     ResalePersistenceModule,
+    HonorificModule,
     AuthenticationGuardsModule,
     UploadFileModule,
     UploadFileQueueModule.register(),

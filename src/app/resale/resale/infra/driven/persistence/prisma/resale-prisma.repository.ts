@@ -68,6 +68,7 @@ export class ResaleRepositoryAdapterPrisma implements IResaleRepository {
       indicatorResale: data.indicatorResale,
       recurringResale: data.recurringResale,
       profilePictureUrl: data.profilePictureUrl,
+      honorificId: data.honorificId ?? null,
       active: data.active,
     });
   }

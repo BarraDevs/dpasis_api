@@ -35,6 +35,7 @@ describe('ResaleDto', () => {
       indicatorResale: true,
       recurringResale: false,
       profilePictureUrl: null,
+      honorific: null,
       active: true,
       createdAt: new Date('2026-01-01'),
       updatedAt: new Date('2026-01-02'),
