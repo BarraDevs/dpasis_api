@@ -17,6 +17,43 @@ describe('ClientInvoiceConfigDaoAdapterPrisma - Integration tests', () => {
   let clientId: number;
   let billingAddressId: number;
   let bankId: number;
+  let clientRow: Awaited<ReturnType<PrismaService['client']['create']>>;
+  let addressRow: Awaited<ReturnType<PrismaService['clientAddress']['create']>>;
+  let bankRow: Awaited<ReturnType<PrismaService['bank']['create']>>;
+
+  function expectedBillingAddressDto(): ClientInvoiceConfigDto['billingAddress'] {
+    return {
+      id: addressRow.id,
+      clientId: clientRow.id,
+      type: ClientAddressType.BILLING,
+      zipCode: '12345-678',
+      street: 'Rua Teste',
+      number: '123',
+      complement: null,
+      neighborhood: 'Centro',
+      city: 'São Paulo',
+      state: 'SP',
+      active: true,
+      createdAt: addressRow.createdAt,
+      updatedAt: addressRow.updatedAt,
+    };
+  }
+
+  function expectedBankDto(): ClientInvoiceConfigDto['bank'] {
+    return {
+      id: bankRow.id,
+      drawer: 'Test Drawer',
+      wallet: '123',
+      account: '12345',
+      agency: '0001',
+      bankCode: '001',
+      bankName: 'Test Bank',
+      paymentLocation: null,
+      active: true,
+      createdAt: bankRow.createdAt,
+      updatedAt: bankRow.updatedAt,
+    };
+  }
 
   beforeAll(async() => {
     const module = await Test.createTestingModule({
@@ -36,7 +73,7 @@ describe('ClientInvoiceConfigDaoAdapterPrisma - Integration tests', () => {
       prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
     ]);
 
-    const client = await prisma.client.create({
+    clientRow = await prisma.client.create({
       data: {
         id: 1,
         type: ClientType.PJ,
@@ -53,9 +90,9 @@ describe('ClientInvoiceConfigDaoAdapterPrisma - Integration tests', () => {
       },
     });
 
-    const address = await prisma.clientAddress.create({
+    addressRow = await prisma.clientAddress.create({
       data: {
-        clientId: client.id,
+        clientId: clientRow.id,
         type: ClientAddressType.BILLING,
         zipCode: '12345-678',
         street: 'Rua Teste',
@@ -68,7 +105,7 @@ describe('ClientInvoiceConfigDaoAdapterPrisma - Integration tests', () => {
       },
     });
 
-    const bank = await prisma.bank.create({
+    bankRow = await prisma.bank.create({
       data: {
         drawer: 'Test Drawer',
         wallet: '123',
@@ -81,9 +118,9 @@ describe('ClientInvoiceConfigDaoAdapterPrisma - Integration tests', () => {
       },
     });
 
-    clientId = client.id;
-    billingAddressId = address.id;
-    bankId = bank.id;
+    clientId = clientRow.id;
+    billingAddressId = addressRow.id;
+    bankId = bankRow.id;
   });
 
   afterAll(async() => {
@@ -130,8 +167,8 @@ describe('ClientInvoiceConfigDaoAdapterPrisma - Integration tests', () => {
         deadlineDays: null,
         months: [1, 2, 3],
         dueMonth: null,
-        billingAddressId,
-        bankId,
+        billingAddress: expectedBillingAddressDto(),
+        bank: expectedBankDto(),
         autoProtestBoleto: false,
         message: 'Mensagem DAO',
         createdAt: created.createdAt,
@@ -172,8 +209,8 @@ describe('ClientInvoiceConfigDaoAdapterPrisma - Integration tests', () => {
         deadlineDays: 25,
         dueMonth: 12,
         months: [6, 12],
-        billingAddressId,
-        bankId,
+        billingAddress: expectedBillingAddressDto(),
+        bank: expectedBankDto(),
         autoProtestBoleto: true,
         message: null,
         createdAt: created.createdAt,
@@ -405,8 +442,8 @@ describe('ClientInvoiceConfigDaoAdapterPrisma - Integration tests', () => {
         dueMonth: null,
         deadlineDays: null,
         months: [],
-        billingAddressId,
-        bankId,
+        billingAddress: expectedBillingAddressDto(),
+        bank: expectedBankDto(),
         autoProtestBoleto: true,
         message: 'Config por clientId',
         createdAt: created.createdAt,

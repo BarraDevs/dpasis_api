@@ -5,27 +5,25 @@ import { ClientInvoiceConfigFactory } from 'src/app/client/client-invoice-config
 import { FindBankById } from 'src/app/global/bank/application/usecases/find-bank-by-id/find-bank-by-id.service';
 import { TOKENS } from 'src/core/di/token';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
-import type { IClientInvoiceConfigDao } from '../../persistence/dao/client-invoice-config-dao.interface';
 import type { IClientInvoiceConfigRepository } from '../../persistence/repository/client-invoice-config-repository.interface';
 import { EditClientInvoiceConfigInputDto } from './dtos/edit-client-invoice-config.dto';
 
 @Injectable()
 export class EditClientInvoiceConfig {
   constructor(
-    @Inject(TOKENS.ClientInvoiceConfigDao) private readonly clientInvoiceConfigDao: IClientInvoiceConfigDao,
     @Inject(TOKENS.ClientInvoiceConfigRepository) private readonly clientInvoiceConfigRepository: IClientInvoiceConfigRepository,
     private readonly findClientAddressByIdAndClientId: FindClientAddressByIdAndClientId,
     private readonly findBankById: FindBankById,
   ) {}
 
   public async execute(id: number, data: EditClientInvoiceConfigInputDto): Promise<SuccessMessage> {
-    const existing = await this.clientInvoiceConfigDao.findById(id);
-    if (!existing) {
+    const loaded = await this.clientInvoiceConfigRepository.findById(id);
+    if (!loaded) {
       throw new ClientInvoiceConfigNotFoundError();
     }
 
     const entity = ClientInvoiceConfigFactory.edit({
-      ...existing,
+      ...loaded.props,
       ...data,
     });
 
@@ -33,7 +31,7 @@ export class EditClientInvoiceConfig {
       await this.findBankById.execute(data.bankId, { onlyActive: true });
     }
     if (data.billingAddressId != null) {
-      await this.findClientAddressByIdAndClientId.execute(data.billingAddressId, existing.clientId, { onlyActive: true });
+      await this.findClientAddressByIdAndClientId.execute(data.billingAddressId, loaded.props.clientId, { onlyActive: true });
     }
 
     await this.clientInvoiceConfigRepository.edit(entity);

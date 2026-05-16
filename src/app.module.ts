@@ -14,6 +14,7 @@ import { UploadFileModule } from './app/upload-file/upload-file.module';
 import { VoucherModule } from './app/voucher/voucher.module';
 import { CoreModule } from './core/core.module';
 import { InfraModule } from './infra/infra.module';
+import { TaxInvoiceModule } from './app/tax-invoice/tax-invoice.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { InfraModule } from './infra/infra.module';
     HonorificModule,
     GlobalModule,
     ServiceModuleModule,
+    TaxInvoiceModule,
     UploadFileModule,
     VoucherModule,
   ],

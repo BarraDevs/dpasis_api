@@ -369,6 +369,96 @@ describe('ClientItemDaoAdapterPrisma - Integration tests', () => {
       expect(items[0].cnaeNbsIndop.nbs.id).toBe(nbs1.id);
       expect(items[0].cnaeNbsIndop.indop.id).toBe(indop1.id);
     });
+
+    it('should filter by active true', async() => {
+      await prisma.clientItem.createMany({
+        data: [
+          {
+            clientId,
+            description: 'Item ativo',
+            quantity: 1,
+            unitValueInCents: 10000,
+            cnaeNbsIndopId,
+            active: true,
+          },
+          {
+            clientId,
+            description: 'Item inativo',
+            quantity: 1,
+            unitValueInCents: 5000,
+            cnaeNbsIndopId,
+            active: false,
+          },
+        ],
+      });
+
+      const [items, total] = await sut.findAll({ clientId, active: true });
+
+      expect(total).toBe(1);
+      expect(items).toHaveLength(1);
+      expect(items[0].description).toBe('Item ativo');
+      expect(items[0].active).toBe(true);
+    });
+
+    it('should filter by active false', async() => {
+      await prisma.clientItem.createMany({
+        data: [
+          {
+            clientId,
+            description: 'Item ativo',
+            quantity: 1,
+            unitValueInCents: 10000,
+            cnaeNbsIndopId,
+            active: true,
+          },
+          {
+            clientId,
+            description: 'Item inativo',
+            quantity: 1,
+            unitValueInCents: 5000,
+            cnaeNbsIndopId,
+            active: false,
+          },
+        ],
+      });
+
+      const [items, total] = await sut.findAll({ clientId, active: false });
+
+      expect(total).toBe(1);
+      expect(items).toHaveLength(1);
+      expect(items[0].description).toBe('Item inativo');
+      expect(items[0].active).toBe(false);
+    });
+
+    it('should not apply active filter when active is omitted', async() => {
+      await prisma.clientItem.createMany({
+        data: [
+          {
+            clientId,
+            description: 'Item ativo',
+            quantity: 1,
+            unitValueInCents: 10000,
+            cnaeNbsIndopId,
+            active: true,
+          },
+          {
+            clientId,
+            description: 'Item inativo',
+            quantity: 1,
+            unitValueInCents: 5000,
+            cnaeNbsIndopId,
+            active: false,
+          },
+        ],
+      });
+
+      const [items, total] = await sut.findAll({ clientId });
+
+      expect(total).toBe(2);
+      expect(items).toHaveLength(2);
+      const descriptions = items.map(i => i.description).sort();
+      expect(descriptions).toEqual(['Item ativo', 'Item inativo']);
+    });
   });
 
   describe('findById', () => {

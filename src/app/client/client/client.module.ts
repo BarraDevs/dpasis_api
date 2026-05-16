@@ -61,6 +61,7 @@ import { CnpjLookup } from 'src/app/external-apis/application/usecases/cnpj-look
   ],
   exports: [
     FindClientById,
+    SearchClient,
   ],
 })
 export class ClientModule {}

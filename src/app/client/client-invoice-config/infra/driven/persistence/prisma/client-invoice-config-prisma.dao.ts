@@ -7,6 +7,36 @@ import { ClientInvoiceConfigDueDateType } from 'src/app/client/client-invoice-co
 import { ClientInvoiceConfigType } from 'src/app/client/client-invoice-config/domain/enums/client-invoice-config-type.enum';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 
+const ClientInvoiceConfigBillingAddressSelect = {
+  id: true,
+  clientId: true,
+  type: true,
+  zipCode: true,
+  street: true,
+  number: true,
+  complement: true,
+  neighborhood: true,
+  city: true,
+  state: true,
+  active: true,
+  createdAt: true,
+  updatedAt: true,
+} satisfies Prisma.ClientAddressSelect;
+
+const ClientInvoiceConfigBankSelect = {
+  id: true,
+  drawer: true,
+  wallet: true,
+  account: true,
+  agency: true,
+  bankCode: true,
+  bankName: true,
+  paymentLocation: true,
+  active: true,
+  createdAt: true,
+  updatedAt: true,
+} satisfies Prisma.BankSelect;
+
 const ClientInvoiceConfigSelect = {
   id: true,
   clientId: true,
@@ -18,8 +48,12 @@ const ClientInvoiceConfigSelect = {
   dueMonth: true,
   deadlineDays: true,
   months: true,
-  billingAddressId: true,
-  bankId: true,
+  billingAddress: {
+    select: ClientInvoiceConfigBillingAddressSelect,
+  },
+  bank: {
+    select: ClientInvoiceConfigBankSelect,
+  },
   autoProtestBoleto: true,
   message: true,
   createdAt: true,
@@ -71,9 +105,22 @@ export class ClientInvoiceConfigDaoAdapterPrisma implements IClientInvoiceConfig
 
   private mapToDto(data: ClientInvoiceConfigData): ClientInvoiceConfigDto {
     return {
-      ...data,
+      id: data.id,
+      clientId: data.clientId,
+      generateNf: data.generateNf,
       type: data.type as ClientInvoiceConfigType,
+      emissionDay: data.emissionDay,
       dueDateType: data.dueDateType as ClientInvoiceConfigDueDateType,
+      dueDateDay: data.dueDateDay,
+      dueMonth: data.dueMonth,
+      deadlineDays: data.deadlineDays,
+      months: data.months,
+      billingAddress: { ...data.billingAddress },
+      bank: data.bank,
+      autoProtestBoleto: data.autoProtestBoleto,
+      message: data.message,
+      createdAt: data.createdAt,
+      updatedAt: data.updatedAt,
     };
   }
 

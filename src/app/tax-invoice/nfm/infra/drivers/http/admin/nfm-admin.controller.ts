@@ -1,0 +1,85 @@
+import { Controller, Get } from '@nestjs/common';
+import { NfmDto } from 'src/app/tax-invoice/nfm/application/dtos/nfm.dto';
+import { FindElegibleClients } from 'src/app/tax-invoice/nfm/application/usecases/find-elegible-clients/find-elegible-clients.service';
+import { Swagger } from 'src/infra/openapi/swagger';
+
+@Controller('admin/nfm')
+export class NfmAdminController {
+  constructor(
+    private readonly findElegibleClients: FindElegibleClients,
+    // private readonly createNfmService: CreateNfm,
+    // private readonly findAllNfmService: FindAllNfm,
+    // private readonly findNfmByIdService: FindNfmById,
+    // private readonly editNfmService: EditNfm,
+    // private readonly deleteNfmService: DeleteNfm,
+  ) {}
+
+  @Get()
+  @Swagger({
+    tags: ['NFM'],
+    summary: 'Listar clientes elegíveis para emissão de NF-e',
+    applyBadRequest: true,
+    okResponse: NfmDto,
+  })
+  public findNfms(): Promise<NfmDto[]> {
+    return this.findElegibleClients.execute();
+  }
+
+  // @Post()
+  // @Swagger({
+  //   tags: ['TAG_AQUI'],
+  //   summary: 'Rota para criar NOME_AQUI',
+  //   applyBadRequest: true,
+  //   createdResponse: CreateNfmOutputDto,
+  // })
+  // public create(@Body() body: CreateNfmInputDto): Promise<CreateNfmOutputDto> {
+  //   return this.createNfmService.execute(body);
+  // }
+
+//  @Get()
+//  @Swagger({
+//    tags: ['TAG_AQUI'],
+//    summary: 'Rota para listar NOME_AQUI',
+//    applyBadRequest: true,
+//    okPaginatedResponse: NfmDto,
+//  })
+//  public findAll(@Query() queries: FindAllNfmQueryDto): Promise<IPagination<NfmDto>> {
+//    return this.findAllNfmService.execute(queries);
+//  }
+//
+//  @Get(':id')
+//  @Swagger({
+//    tags: ['TAG_AQUI'],
+//    summary: 'Rota para buscar NOME_AQUI por ID',
+//    applyBadRequest: true,
+//    applyNotFound: true,
+//    okResponse: NfmDto,
+//  })
+//  public findOne(@Param() params: Params): Promise<NfmDto> {
+//    return this.findNfmByIdService.execute(params.id);
+//  }
+//
+//  @Patch(':id')
+//  @Swagger({
+//    tags: ['TAG_AQUI'],
+//    summary: 'Rota para editar NOME_AQUI',
+//    applyBadRequest: true,
+//    applyNotFound: true,
+//    okResponse: SuccessMessage,
+//  })
+//  public update(@Param() params: Params, @Body() body: EditNfmInputDto): Promise<SuccessMessage> {
+//    return this.editNfmService.execute(params.id, body);
+//  }
+//
+//  @Delete(':id')
+//  @Swagger({
+//    tags: ['TAG_AQUI'],
+//    summary: 'Rota para deletar NOME_AQUI',
+//    applyBadRequest: true,
+//    applyNotFound: true,
+//    okResponse: SuccessMessage,
+//  })
+//  public remove(@Param() params: Params): Promise<SuccessMessage> {
+//    return this.deleteNfmService.execute(params.id);
+//  }
+}

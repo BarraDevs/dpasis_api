@@ -77,6 +77,9 @@ export class ClientItemDaoAdapterPrisma implements IClientItemDao {
       { clientId: { equals: queries.clientId } },
     ];
 
+    if (queries.active != null) {
+      conditions.push({ active: { equals: queries.active } });
+    }
     if (queries.cnaeId != null) {
       conditions.push({
         cnaeNbsIndop: { cnaeId: { equals: queries.cnaeId } },

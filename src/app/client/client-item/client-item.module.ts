@@ -36,6 +36,7 @@ import { ClientItemAdminController } from './infra/drivers/http/admin/client-ite
     FindClientItemById,
   ],
   exports: [
+    FindAllClientItem,
     FindClientItemById,
   ],
 })

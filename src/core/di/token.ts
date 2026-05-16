@@ -72,6 +72,8 @@ const TOKENS = {
   WarrantyDao: Symbol.for('WarrantyDao'),
   ProposalValidityDao: Symbol.for('ProposalValidityDao'),
 
+  NfmDao: Symbol.for('NfmDao'),
+
   ServiceCatalogDao: Symbol.for('ServiceCatalogDao'),
   ServiceCatalogRepository: Symbol.for('ServiceCatalogRepository'),
 

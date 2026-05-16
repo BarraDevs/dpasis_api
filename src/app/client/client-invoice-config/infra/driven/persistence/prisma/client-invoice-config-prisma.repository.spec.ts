@@ -1,7 +1,6 @@
 import { buildMinimalResaleData, nextResaleFixtureId } from 'src/test/fixtures/minimal-resale';
 import { Test } from '@nestjs/testing';
 import { ClientAddressType } from 'src/app/client/client-address/domain/enums/client-address-type.enum';
-import { ClientInvoiceConfigDto } from 'src/app/client/client-invoice-config/application/dtos/client-invoice-config.dto';
 import { ClientInvoiceConfigProps } from 'src/app/client/client-invoice-config/domain/entities/client-invoice-config.entity';
 import { ClientInvoiceConfigDueDateType } from 'src/app/client/client-invoice-config/domain/enums/client-invoice-config-due-date-type.enum';
 import { ClientInvoiceConfigType } from 'src/app/client/client-invoice-config/domain/enums/client-invoice-config-type.enum';
@@ -117,7 +116,7 @@ describe('ClientInvoiceConfigRepositoryAdapterPrisma - Integration tests', () =>
 
       const saved = await prisma.clientInvoiceConfig.findUnique({ where: { id } });
       expect(saved).not.toBeNull();
-      expect(saved).toEqual<ClientInvoiceConfigDto>({
+      expect(saved).toEqual({
         id: expect.any(Number),
         clientId,
         generateNf: true,
@@ -158,7 +157,7 @@ describe('ClientInvoiceConfigRepositoryAdapterPrisma - Integration tests', () =>
 
       const saved = await prisma.clientInvoiceConfig.findUnique({ where: { id } });
       expect(saved).not.toBeNull();
-      expect(saved).toEqual<ClientInvoiceConfigDto>({
+      expect(saved).toEqual({
         id: expect.any(Number),
         clientId,
         generateNf: false,
@@ -218,7 +217,7 @@ describe('ClientInvoiceConfigRepositoryAdapterPrisma - Integration tests', () =>
 
       const saved = await prisma.clientInvoiceConfig.findUnique({ where: { id } });
       expect(saved).not.toBeNull();
-      expect(saved).toEqual<ClientInvoiceConfigDto>({
+      expect(saved).toEqual({
         id,
         clientId,
         generateNf: false,
