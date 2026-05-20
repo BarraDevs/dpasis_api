@@ -3,7 +3,6 @@ import { ClientAddressModule } from './client-address/client-address.module';
 import { ClientAttachmentModule } from './client-attachment/client-attachment.module';
 import { ClientAttendanceModule } from './client-attendance/client-attendance.module';
 import { ClientContactModule } from './client-contact/client-contact.module';
-import { ClientDepartmentModule } from './client-department/client-department.module';
 import { ClientDiscountModule } from './client-discount/client-discount.module';
 import { ClientGroupModule } from './client-group/client-group.module';
 import { ClientInvoiceConfigModule } from './client-invoice-config/client-invoice-config.module';
@@ -19,7 +18,6 @@ const modules = [
   ClientAttachmentModule,
   ClientAttendanceModule,
   ClientContactModule,
-  ClientDepartmentModule,
   ClientDiscountModule,
   ClientGroupModule,
   ClientInvoiceConfigModule,

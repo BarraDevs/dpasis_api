@@ -25,7 +25,7 @@ describe('ResaleContactDaoAdapterPrisma - Integration tests', () => {
     await prisma.truncate();
 
     const resale = await prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) });
-    const department = await prisma.resaleDepartment.create({
+    const department = await prisma.department.create({
       data: { name: `Dept ${Date.now()}`, active: true },
     });
 
@@ -117,7 +117,7 @@ describe('ResaleContactDaoAdapterPrisma - Integration tests', () => {
     });
 
     it('should filter by departmentId', async() => {
-      const dept2 = await prisma.resaleDepartment.create({
+      const dept2 = await prisma.department.create({
         data: { name: `Dept2 ${Date.now()}`, active: true },
       });
       await prisma.resaleContact.create({

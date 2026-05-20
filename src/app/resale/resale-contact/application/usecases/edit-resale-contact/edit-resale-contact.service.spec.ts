@@ -1,6 +1,6 @@
 import { buildMinimalResaleData, nextResaleFixtureId } from 'src/test/fixtures/minimal-resale';
 import { Test } from '@nestjs/testing';
-import { ResaleDepartmentNotFoundError } from 'src/app/resale/resale-department/domain/errors/resale-department-not-found.error';
+import { DepartmentNotFoundError } from 'src/app/global/department/domain/errors/department-not-found.error';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { InvalidEmailError } from 'src/shared/value-objects/email/email.error';
 import { InvalidPhoneError } from 'src/shared/value-objects/phone/phone.error';
@@ -29,7 +29,7 @@ describe('EditResaleContact - Integration tests', () => {
     await prisma.truncate();
 
     const resale = await prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) });
-    const department = await prisma.resaleDepartment.create({
+    const department = await prisma.department.create({
       data: { name: `Dept ${Date.now()}`, active: true },
     });
 
@@ -208,7 +208,7 @@ describe('EditResaleContact - Integration tests', () => {
     await expect(sut.execute(resaleContact.id, data)).rejects.toThrow(InvalidPhoneError);
   });
 
-  it('should throw ResaleDepartmentNotFoundError when department does not exist', async() => {
+  it('should throw DepartmentNotFoundError when department does not exist', async() => {
     const resaleContact = await prisma.resaleContact.create({
       data: {
         resaleId,
@@ -227,12 +227,12 @@ describe('EditResaleContact - Integration tests', () => {
     };
 
     await expect(sut.execute(resaleContact.id, data)).rejects.toThrow(
-      ResaleDepartmentNotFoundError,
+      DepartmentNotFoundError,
     );
   });
 
-  it('should throw ResaleDepartmentNotFoundError when department is inactive', async() => {
-    const inactiveDept = await prisma.resaleDepartment.create({
+  it('should throw DepartmentNotFoundError when department is inactive', async() => {
+    const inactiveDept = await prisma.department.create({
       data: { name: `Inactive ${Date.now()}`, active: false },
     });
     const resaleContact = await prisma.resaleContact.create({
@@ -253,7 +253,7 @@ describe('EditResaleContact - Integration tests', () => {
     };
 
     await expect(sut.execute(resaleContact.id, data)).rejects.toThrow(
-      ResaleDepartmentNotFoundError,
+      DepartmentNotFoundError,
     );
   });
 });

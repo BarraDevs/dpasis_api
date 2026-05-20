@@ -28,7 +28,7 @@ describe('DeleteClientContact - Integration tests', () => {
     const [group, resale, department] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
       prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
-      prisma.clientDepartment.create({ data: { name: `Dept ${Date.now()}`, active: true } }),
+      prisma.department.create({ data: { name: `Dept ${Date.now()}`, active: true } }),
     ]);
 
     const client = await prisma.client.create({

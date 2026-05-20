@@ -9,7 +9,7 @@ export class ClientContactSeed {
 
     const [clients, departments] = await Promise.all([
       prisma.client.findMany({ select: { id: true } }),
-      prisma.clientDepartment.findMany({ select: { id: true, name: true } }),
+      prisma.department.findMany({ select: { id: true, name: true } }),
     ]);
 
     if (clients.length === 0 || departments.length === 0) {

@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AuthenticationGuardsModule } from 'src/app/authentication/application/guards/guards.module';
-import { ClientDepartmentModule } from 'src/app/client/client-department/client-department.module';
+import { DepartmentModule } from 'src/app/global/department/department.module';
 import { ClientModule } from 'src/app/client/client/client.module';
 import { ClientContactPersistenceModule } from './application/persistence/client-contact-persistence.module';
 import { ActivateClientContact } from './application/usecases/activate-client-contact/activate-client-contact.service';
@@ -16,7 +16,7 @@ import { ClientContactAdminController } from './infra/drivers/http/admin/client-
   imports: [
     ClientContactPersistenceModule,
     ClientModule,
-    ClientDepartmentModule,
+    DepartmentModule,
     AuthenticationGuardsModule,
   ],
   controllers: [

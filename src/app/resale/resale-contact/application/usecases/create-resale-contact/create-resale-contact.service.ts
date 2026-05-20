@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { FindResaleDepartmentById } from 'src/app/resale/resale-department/application/usecases/find-resale-department-by-id/find-resale-department-by-id.service';
+import { FindDepartmentById } from 'src/app/global/department/application/usecases/find-department-by-id/find-department-by-id.service';
 import { FindResaleById } from 'src/app/resale/resale/application/usecases/find-resale-by-id/find-resale-by-id.service';
 import { TOKENS } from 'src/core/di/token';
 import { ResaleContactAlreadyExistsError } from '../../../domain/errors/resale-contact-already-exists.error';
@@ -17,12 +17,12 @@ export class CreateResaleContact {
     @Inject(TOKENS.ResaleContactRepository) private readonly resaleContactRepository: IResaleContactRepository,
     @Inject(TOKENS.ResaleContactDao) private readonly resaleContactDao: IResaleContactDao,
     private readonly findResaleById: FindResaleById,
-    private readonly findResaleDepartmentById: FindResaleDepartmentById,
+    private readonly findDepartmentById: FindDepartmentById,
   ) {}
 
   public async execute(data: CreateResaleContactExecuteInput): Promise<CreateResaleContactOutputDto> {
     const resale = await this.findResaleById.execute(data.resaleId, { onlyActive: true });
-    const department = await this.findResaleDepartmentById.execute(data.departmentId, { onlyActive: true });
+    const department = await this.findDepartmentById.execute(data.departmentId, { onlyActive: true });
 
     const entity = ResaleContactFactory.create({
       resaleId: resale.id,

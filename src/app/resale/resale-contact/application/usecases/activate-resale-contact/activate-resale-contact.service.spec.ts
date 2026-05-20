@@ -11,7 +11,7 @@ describe('ActivateResaleContact - Integration tests', () => {
 
   const createContact = async(active = false) => {
     const resale = await prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) });
-    const department = await prisma.resaleDepartment.create({
+    const department = await prisma.department.create({
       data: { name: `Dept ${Date.now()}`, active: true },
     });
     return prisma.resaleContact.create({

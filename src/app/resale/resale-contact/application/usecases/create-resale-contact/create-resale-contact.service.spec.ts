@@ -3,7 +3,7 @@ import { Test } from '@nestjs/testing';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { InvalidEmailError } from 'src/shared/value-objects/email/email.error';
 import { InvalidPhoneError } from 'src/shared/value-objects/phone/phone.error';
-import { ResaleDepartmentNotFoundError } from 'src/app/resale/resale-department/domain/errors/resale-department-not-found.error';
+import { DepartmentNotFoundError } from 'src/app/global/department/domain/errors/department-not-found.error';
 import { ResaleNotFoundError } from 'src/app/resale/resale/domain/errors/resale-not-found.error';
 import { ResaleContactModule } from '../../../resale-contact.module';
 import { ResaleContactAlreadyExistsError } from '../../../domain/errors/resale-contact-already-exists.error';
@@ -29,7 +29,7 @@ describe('CreateResaleContact - Integration tests', () => {
     await prisma.truncate();
 
     const resale = await prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) });
-    const department = await prisma.resaleDepartment.create({
+    const department = await prisma.department.create({
       data: { name: `Dept ${Date.now()}`, active: true },
     });
 
@@ -154,7 +154,7 @@ describe('CreateResaleContact - Integration tests', () => {
     await expect(sut.execute(input)).rejects.toThrow(ResaleNotFoundError);
   });
 
-  it('should throw ResaleDepartmentNotFoundError when department does not exist', async() => {
+  it('should throw DepartmentNotFoundError when department does not exist', async() => {
     const input: CreateResaleContactExecuteInput = {
       resaleId,
       departmentId: 99999,
@@ -166,11 +166,11 @@ describe('CreateResaleContact - Integration tests', () => {
       receiveNF: false,
     };
 
-    await expect(sut.execute(input)).rejects.toThrow(ResaleDepartmentNotFoundError);
+    await expect(sut.execute(input)).rejects.toThrow(DepartmentNotFoundError);
   });
 
-  it('should throw ResaleDepartmentNotFoundError when department is inactive', async() => {
-    const inactiveDept = await prisma.resaleDepartment.create({
+  it('should throw DepartmentNotFoundError when department is inactive', async() => {
+    const inactiveDept = await prisma.department.create({
       data: { name: `Inactive ${Date.now()}`, active: false },
     });
     const input: CreateResaleContactExecuteInput = {
@@ -184,7 +184,7 @@ describe('CreateResaleContact - Integration tests', () => {
       receiveNF: false,
     };
 
-    await expect(sut.execute(input)).rejects.toThrow(ResaleDepartmentNotFoundError);
+    await expect(sut.execute(input)).rejects.toThrow(DepartmentNotFoundError);
   });
 
   it('should throw ResaleNotFoundError when resale is inactive', async() => {

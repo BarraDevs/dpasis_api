@@ -1,57 +1,45 @@
 model Resale {
-  id                     Int       @id
-  type                   String
-  name                   String
-  identifier             String?
-  zipCode                String
-  street                 String
-  neighborhood           String
-  city                   String
-  state                  String
-  licenseType            String
-  document               String
-  ie                     String?
-  phone01                String
-  phone02                String?
-  voucher                String?
-  email                  String?
-  website                String?
-  nickname               String?
-  socialName             String?
-  validityDate           DateTime?
-  accessEmail            String?
-  accessPassword         String?   @db.Text
-  paymentDay             Int?
-  bonus                  Int?
-  billingStartDay        Int?
-  receivesSupportEmail   Boolean   @default(false)
-  servedByRoot           Boolean   @default(false)
-  manufacturerResale     Boolean   @default(false)
-  indicatorResale        Boolean   @default(false)
-  recurringResale        Boolean   @default(false)
-  profilePictureUrl      String?   @db.Text
-  honorificId            Int?
-  active                 Boolean   @default(true)
-  createdAt              DateTime  @default(now())
-  updatedAt              DateTime  @updatedAt
+  id                   Int       @id
+  type                 String
+  name                 String
+  identifier           String?
+  zipCode              String
+  street               String
+  neighborhood         String
+  city                 String
+  state                String
+  licenseType          String
+  document             String
+  ie                   String?
+  phone01              String
+  phone02              String?
+  voucher              String?
+  email                String?
+  website              String?
+  nickname             String?
+  socialName           String?
+  validityDate         DateTime?
+  accessEmail          String?
+  accessPassword       String?   @db.Text
+  paymentDay           Int?
+  bonus                Int?
+  billingStartDay      Int?
+  receivesSupportEmail Boolean   @default(false)
+  servedByRoot         Boolean   @default(false)
+  manufacturerResale   Boolean   @default(false)
+  indicatorResale      Boolean   @default(false)
+  recurringResale      Boolean   @default(false)
+  profilePictureUrl    String?   @db.Text
+  honorificId          Int?
+  active               Boolean   @default(true)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
 
-  honorific Honorific? @relation(fields: [honorificId], references: [id], onDelete: Restrict)
+  honorific Honorific?      @relation(fields: [honorificId], references: [id], onDelete: Restrict)
   clients   Client[]
   contacts  ResaleContact[]
 
   @@map("resales")
-}
-
-model ResaleDepartment {
-  id        Int      @id @default(autoincrement())
-  name      String   @unique
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  contacts ResaleContact[]
-
-  @@map("resale_departments")
 }
 
 model ResaleContact {
@@ -62,14 +50,14 @@ model ResaleContact {
   email        String
   phone        String?
   whatsapp     String?
-  observations String? @db.Text
+  observations String?  @db.Text
   receiveNF    Boolean
   active       Boolean
   createdAt    DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  updatedAt    DateTime @updatedAt
 
-  resale     Resale           @relation(fields: [resaleId], references: [id])
-  department ResaleDepartment @relation(fields: [departmentId], references: [id])
+  resale     Resale     @relation(fields: [resaleId], references: [id])
+  department Department @relation(fields: [departmentId], references: [id])
 
   @@unique([resaleId, email])
   @@map("resale_contacts")

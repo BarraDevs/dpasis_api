@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { FindClientDepartmentById } from 'src/app/client/client-department/application/usecases/find-client-department-by-id/find-client-department-by-id.service';
+import { FindDepartmentById } from 'src/app/global/department/application/usecases/find-department-by-id/find-department-by-id.service';
 import { TOKENS } from 'src/core/di/token';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
 import { ClientContactAlreadyExistsError } from '../../../domain/errors/client-contact-already-exists.error';
@@ -14,7 +14,7 @@ export class EditClientContact {
   constructor(
     @Inject(TOKENS.ClientContactRepository) private readonly clientContactRepository: IClientContactRepository,
     @Inject(TOKENS.ClientContactDao) private readonly clientContactDao: IClientContactDao,
-    private readonly findClientDepartmentById: FindClientDepartmentById,
+    private readonly findDepartmentById: FindDepartmentById,
   ) {}
 
   public async execute(id: number, data: EditClientContactInputDto): Promise<SuccessMessage> {
@@ -24,7 +24,7 @@ export class EditClientContact {
     }
 
     if (data.departmentId) {
-      await this.findClientDepartmentById.execute(data.departmentId, { onlyActive: true });
+      await this.findDepartmentById.execute(data.departmentId, { onlyActive: true });
     }
 
     const updated = ClientContactFactory.edit(clientContact, {

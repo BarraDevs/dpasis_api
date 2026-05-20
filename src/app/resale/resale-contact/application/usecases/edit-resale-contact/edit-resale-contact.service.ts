@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { FindResaleDepartmentById } from 'src/app/resale/resale-department/application/usecases/find-resale-department-by-id/find-resale-department-by-id.service';
+import { FindDepartmentById } from 'src/app/global/department/application/usecases/find-department-by-id/find-department-by-id.service';
 import { TOKENS } from 'src/core/di/token';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
 import { ResaleContactAlreadyExistsError } from '../../../domain/errors/resale-contact-already-exists.error';
@@ -14,7 +14,7 @@ export class EditResaleContact {
   constructor(
     @Inject(TOKENS.ResaleContactRepository) private readonly resaleContactRepository: IResaleContactRepository,
     @Inject(TOKENS.ResaleContactDao) private readonly resaleContactDao: IResaleContactDao,
-    private readonly findResaleDepartmentById: FindResaleDepartmentById,
+    private readonly findDepartmentById: FindDepartmentById,
   ) {}
 
   public async execute(id: number, data: EditResaleContactInputDto): Promise<SuccessMessage> {
@@ -24,7 +24,7 @@ export class EditResaleContact {
     }
 
     if (data.departmentId) {
-      await this.findResaleDepartmentById.execute(data.departmentId, { onlyActive: true });
+      await this.findDepartmentById.execute(data.departmentId, { onlyActive: true });
     }
 
     const updated = ResaleContactFactory.edit(resaleContact, {

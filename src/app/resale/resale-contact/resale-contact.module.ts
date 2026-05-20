@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AuthenticationGuardsModule } from 'src/app/authentication/application/guards/guards.module';
-import { ResaleDepartmentModule } from 'src/app/resale/resale-department/resale-department.module';
+import { DepartmentModule } from 'src/app/global/department/department.module';
 import { ResaleModule } from 'src/app/resale/resale/resale.module';
 import { ResaleContactPersistenceModule } from './application/persistence/resale-contact-persistence.module';
 import { ActivateResaleContact } from './application/usecases/activate-resale-contact/activate-resale-contact.service';
@@ -16,7 +16,7 @@ import { ResaleContactAdminController } from './infra/drivers/http/admin/resale-
   imports: [
     ResaleContactPersistenceModule,
     ResaleModule,
-    ResaleDepartmentModule,
+    DepartmentModule,
     AuthenticationGuardsModule,
   ],
   controllers: [

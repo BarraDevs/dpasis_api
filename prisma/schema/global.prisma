@@ -24,6 +24,19 @@ model Category {
   @@map("categories")
 }
 
+model Department {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  clientContacts ClientContact[]
+  resaleContacts ResaleContact[]
+
+  @@map("departments")
+}
+
 model DeliveryTerm {
   id        Int      @id @default(autoincrement())
   name      String   @unique

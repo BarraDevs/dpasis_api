@@ -103,18 +103,6 @@ model ClientOwner {
   @@map("client_owners")
 }
 
-model ClientDepartment {
-  id        Int      @id @default(autoincrement())
-  name      String   @unique
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  contacts ClientContact[]
-
-  @@map("client_departments")
-}
-
 model ClientContact {
   id           Int      @id @default(autoincrement())
   clientId     Int
@@ -129,8 +117,8 @@ model ClientContact {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  client     Client           @relation(fields: [clientId], references: [id])
-  department ClientDepartment @relation(fields: [departmentId], references: [id])
+  client     Client     @relation(fields: [clientId], references: [id])
+  department Department @relation(fields: [departmentId], references: [id])
 
   @@unique([clientId, email])
   @@map("client_contacts")

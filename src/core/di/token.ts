@@ -24,9 +24,6 @@ const TOKENS = {
   ClientContactDao: Symbol.for('ClientContactDao'),
   ClientContactRepository: Symbol.for('ClientContactRepository'),
 
-  ClientDepartmentDao: Symbol.for('ClientDepartmentDao'),
-
-  ResaleDepartmentDao: Symbol.for('ResaleDepartmentDao'),
   ResaleContactDao: Symbol.for('ResaleContactDao'),
   ResaleContactRepository: Symbol.for('ResaleContactRepository'),
 
@@ -67,8 +64,9 @@ const TOKENS = {
   BilledDao: Symbol.for('BilledDao'),
   BilledRepository: Symbol.for('BilledRepository'),
   CategoryDao: Symbol.for('CategoryDao'),
-  FreightDao: Symbol.for('FreightDao'),
+  DepartmentDao: Symbol.for('DepartmentDao'),
   DeliveryTermDao: Symbol.for('DeliveryTermDao'),
+  FreightDao: Symbol.for('FreightDao'),
   WarrantyDao: Symbol.for('WarrantyDao'),
   ProposalValidityDao: Symbol.for('ProposalValidityDao'),
 

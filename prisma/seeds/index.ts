@@ -23,7 +23,7 @@ async function main() {
   // await CnaeNbsIndopSeed.seed(prisma);
   // await ClientGroupSeed.seed(prisma);
   // await ClientOwnerSeed.seed(prisma);
-  // await ClientDepartmentSeed.seed(prisma);
+  // await DepartmentSeed.seed(prisma);
   // await ClientAttendanceSeed.seed(prisma);
   // await ClientMaintenanceTicketSeed.seed(prisma);
   // await ClientSystemTypeSeed.seed(prisma);

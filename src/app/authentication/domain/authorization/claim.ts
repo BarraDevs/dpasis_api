@@ -44,6 +44,9 @@ export const Claim = {
   CATEGORY_READ: { subject: ClaimSubject.Category, action: ClaimAction.Read },
   CATEGORY_WRITE: { subject: ClaimSubject.Category, action: ClaimAction.Write },
 
+  DEPARTMENT_READ: { subject: ClaimSubject.Department, action: ClaimAction.Read },
+  DEPARTMENT_WRITE: { subject: ClaimSubject.Department, action: ClaimAction.Write },
+
   DELIVERY_TERM_READ: { subject: ClaimSubject.DeliveryTerm, action: ClaimAction.Read },
   DELIVERY_TERM_WRITE: { subject: ClaimSubject.DeliveryTerm, action: ClaimAction.Write },
 
@@ -80,9 +83,6 @@ export const Claim = {
   RESALE_CONTACT_READ: { subject: ClaimSubject.ResaleContact, action: ClaimAction.Read },
   RESALE_CONTACT_WRITE: { subject: ClaimSubject.ResaleContact, action: ClaimAction.Write },
 
-  RESALE_DEPARTMENT_READ: { subject: ClaimSubject.ResaleDepartment, action: ClaimAction.Read },
-  RESALE_DEPARTMENT_WRITE: { subject: ClaimSubject.ResaleDepartment, action: ClaimAction.Write },
-
   CLIENT_ADDRESS_READ: { subject: ClaimSubject.ClientAddress, action: ClaimAction.Read },
   CLIENT_ADDRESS_WRITE: { subject: ClaimSubject.ClientAddress, action: ClaimAction.Write },
 
@@ -94,9 +94,6 @@ export const Claim = {
 
   CLIENT_CONTACT_READ: { subject: ClaimSubject.ClientContact, action: ClaimAction.Read },
   CLIENT_CONTACT_WRITE: { subject: ClaimSubject.ClientContact, action: ClaimAction.Write },
-
-  CLIENT_DEPARTMENT_READ: { subject: ClaimSubject.ClientDepartment, action: ClaimAction.Read },
-  CLIENT_DEPARTMENT_WRITE: { subject: ClaimSubject.ClientDepartment, action: ClaimAction.Write },
 
   CLIENT_DESCRIPTION_TYPE_READ: { subject: ClaimSubject.ClientDescriptionType, action: ClaimAction.Read },
   CLIENT_DESCRIPTION_TYPE_WRITE: { subject: ClaimSubject.ClientDescriptionType, action: ClaimAction.Write },

@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { BankModule } from './bank/bank.module';
 import { BilledModule } from './billed/billed.module';
 import { CategoryModule } from './category/category.module';
+import { DepartmentModule } from './department/department.module';
 import { DeliveryTermModule } from './delivery-term/delivery-term.module';
 import { FreightModule } from './freight/freight.module';
 import { ProposalValidityModule } from './proposal-validity/proposal-validity.module';
@@ -12,6 +13,7 @@ const modules = [
   BankModule,
   BilledModule,
   CategoryModule,
+  DepartmentModule,
   DeliveryTermModule,
   FreightModule,
   ProposalValidityModule,

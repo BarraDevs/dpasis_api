@@ -1,6 +1,6 @@
 import { buildMinimalResaleData, nextResaleFixtureId } from 'src/test/fixtures/minimal-resale';
 import { Test } from '@nestjs/testing';
-import { ClientDepartmentNotFoundError } from 'src/app/client/client-department/domain/errors/client-department-not-found.error';
+import { DepartmentNotFoundError } from 'src/app/global/department/domain/errors/department-not-found.error';
 import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
 import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum';
 import { ClientNotFoundError } from 'src/app/client/client/domain/errors/client-not-found.error';
@@ -33,7 +33,7 @@ describe('CreateClientContact - Integration tests', () => {
     const [group, resale, department] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
       prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
-      prisma.clientDepartment.create({ data: { name: `Dept ${Date.now()}`, active: true } }),
+      prisma.department.create({ data: { name: `Dept ${Date.now()}`, active: true } }),
     ]);
 
     const client = await prisma.client.create({
@@ -193,7 +193,7 @@ describe('CreateClientContact - Integration tests', () => {
     await expect(sut.execute(input)).rejects.toThrow(ClientNotFoundError);
   });
 
-  it('should throw ClientDepartmentNotFoundError when department does not exist', async() => {
+  it('should throw DepartmentNotFoundError when department does not exist', async() => {
     const input: CreateClientContactInputDto = {
       clientId,
       departmentId: 99999,
@@ -205,11 +205,11 @@ describe('CreateClientContact - Integration tests', () => {
       receiveNF: false,
     };
 
-    await expect(sut.execute(input)).rejects.toThrow(ClientDepartmentNotFoundError);
+    await expect(sut.execute(input)).rejects.toThrow(DepartmentNotFoundError);
   });
 
-  it('should throw ClientDepartmentNotFoundError when department is inactive', async() => {
-    const inactiveDept = await prisma.clientDepartment.create({
+  it('should throw DepartmentNotFoundError when department is inactive', async() => {
+    const inactiveDept = await prisma.department.create({
       data: { name: `Inactive ${Date.now()}`, active: false },
     });
     const input: CreateClientContactInputDto = {
@@ -223,7 +223,7 @@ describe('CreateClientContact - Integration tests', () => {
       receiveNF: false,
     };
 
-    await expect(sut.execute(input)).rejects.toThrow(ClientDepartmentNotFoundError);
+    await expect(sut.execute(input)).rejects.toThrow(DepartmentNotFoundError);
   });
 
   it('should throw ClientNotFoundError when client is inactive', async() => {
