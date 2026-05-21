@@ -5,6 +5,7 @@ import { IsUnsigned32HexString } from 'src/infra/validators/class/decorators/uns
 import { StringToBoolean } from 'src/infra/validators/class/decorators/string-boolean/string-boolean';
 import { StringToNumber } from 'src/infra/validators/class/decorators/string-number/string-number';
 import { Trim } from 'src/infra/validators/class/decorators/trim/trim';
+import { Transform } from 'class-transformer';
 
 export class CreateResaleInputDto {
   @ApiPropertyOptional({
@@ -96,10 +97,12 @@ export class CreateResaleInputDto {
     nullable: true,
   })
   @IsOptional()
+  @ValidateIf((_o, v) => v != null && v !== '')
   @IsNumber({}, { message: '$property deve ser um número' })
   @IsPositive({ message: '$property deve ser um número positivo' })
   @IsInt({ message: '$property deve ser um número inteiro' })
   @StringToNumber()
+  @Transform(({ value }) => value === '' ? null : Number(value))
   honorificId?: number | null;
 
   @ApiProperty({ example: '11999999999' })
@@ -173,6 +176,7 @@ export class CreateResaleInputDto {
   @ValidateIf((_o, v) => v != null && v !== '')
   @IsInt({ message: '$property deve ser um número inteiro' })
   @StringToNumber()
+  @Transform(({ value }) => value === '' ? null : Number(value))
   paymentDay?: number | null;
 
   @ApiPropertyOptional({ example: 100 })
@@ -180,6 +184,7 @@ export class CreateResaleInputDto {
   @ValidateIf((_o, v) => v != null && v !== '')
   @IsInt({ message: '$property deve ser um número inteiro' })
   @StringToNumber()
+  @Transform(({ value }) => value === '' ? null : Number(value))
   bonus?: number | null;
 
   @ApiPropertyOptional({ example: 10, description: 'Dia do mês (1–31) para início da cobrança.' })
@@ -189,6 +194,7 @@ export class CreateResaleInputDto {
   @Min(1, { message: '$property deve ser no mínimo 1' })
   @Max(31, { message: '$property deve ser no máximo 31' })
   @StringToNumber()
+  @Transform(({ value }) => value === '' ? null : Number(value))
   billingStartDay?: number | null;
 
   @ApiPropertyOptional({ example: false })

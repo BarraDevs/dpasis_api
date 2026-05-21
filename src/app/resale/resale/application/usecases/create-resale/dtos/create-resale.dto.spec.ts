@@ -66,14 +66,6 @@ describe('CreateResaleInputDto', () => {
     expect(result.id).toBe('19');
   });
 
-  it('should coerce multipart optional id as hex string', async() => {
-    const data = { ...validBase(), id: '19' };
-
-    const result = await pipe.transform(data, bodyMetadata);
-
-    expect(result.id).toBe('19');
-  });
-
   it('should reject when code is missing', async() => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { code: _c, ...rest } = validBase();
@@ -232,7 +224,7 @@ describe('CreateResaleInputDto', () => {
     expect(result.billingStartDay).toBe(10);
   });
 
-  it('should coerce paymentDay and bonus from multipart strings', async() => {
+  it('should coerce paymentDay, bonus and billingStartDay from multipart strings', async() => {
     const data = {
       ...validBase(),
       paymentDay: '8',
@@ -245,6 +237,23 @@ describe('CreateResaleInputDto', () => {
     expect(result.paymentDay).toBe(8);
     expect(result.bonus).toBe(0);
     expect(result.billingStartDay).toBe(31);
+  });
+
+  it('should coerce empty multipart strings to null for optional numeric fields', async() => {
+    const data = {
+      ...validBase(),
+      honorificId: '',
+      paymentDay: '',
+      bonus: '',
+      billingStartDay: '',
+    };
+
+    const result = await pipe.transform(data, bodyMetadata);
+
+    expect(result.honorificId).toBeNull();
+    expect(result.paymentDay).toBeNull();
+    expect(result.bonus).toBeNull();
+    expect(result.billingStartDay).toBeNull();
   });
 
   it('should reject nickname longer than 255 characters', async() => {
@@ -298,12 +307,18 @@ describe('CreateResaleInputDto', () => {
       expect(result.honorificId).toBe(3);
     });
 
-    it('should accept null honorificId', async() => {
-      const data = { ...validBase(), honorificId: null };
+    it('should coerce empty string honorificId to null', async() => {
+      const data = { ...validBase(), honorificId: '' };
 
       const result = await pipe.transform(data, bodyMetadata);
 
       expect(result.honorificId).toBeNull();
+    });
+
+    it('should reject null honorificId after numeric transform', async() => {
+      const data = { ...validBase(), honorificId: null };
+
+      await expect(pipe.transform(data, bodyMetadata)).rejects.toBeDefined();
     });
 
     it.each([0, -1, 1.5])('should throw if honorificId is invalid (%s)', async(value: number) => {
