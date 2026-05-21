@@ -99,6 +99,7 @@ export class CreateResaleInputDto {
   @IsNumber({}, { message: '$property deve ser um número' })
   @IsPositive({ message: '$property deve ser um número positivo' })
   @IsInt({ message: '$property deve ser um número inteiro' })
+  @StringToNumber()
   honorificId?: number | null;
 
   @ApiProperty({ example: '11999999999' })

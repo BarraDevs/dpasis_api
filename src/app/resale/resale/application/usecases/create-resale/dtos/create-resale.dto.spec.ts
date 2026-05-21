@@ -311,5 +311,13 @@ describe('CreateResaleInputDto', () => {
 
       await expect(pipe.transform(data, bodyMetadata)).rejects.toBeDefined();
     });
+
+    it('should coerce honorificId from multipart string', async() => {
+      const data = { ...validBase(), honorificId: '3' };
+
+      const result = await pipe.transform(data, bodyMetadata);
+
+      expect(result.honorificId).toBe(3);
+    });
   });
 });
