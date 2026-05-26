@@ -106,6 +106,38 @@ describe('ClientRepositoryAdapterPrisma - Integration tests', () => {
       expect(saved?.updatedAt).toBeInstanceOf(Date);
     });
 
+    it('should persist explicit createdAt when provided on entity', async() => {
+      const { group, resale, honorific, company } = await createClientGroupResaleAndCompany();
+      const createdAt = new Date('2020-03-15T00:00:00.000Z');
+
+      const entity = ClientFactory.create({
+        type: ClientType.PJ,
+        document: '09.748.165/0001-10',
+        ie: '123456789',
+        groupId: group.id,
+        resaleId: resale.id,
+        honorificId: honorific.id,
+        companyIds: [company.id],
+        invoiceType: ClientInvoiceType.CONTRACT,
+        parentClientId: null,
+        socialName: 'Social LTDA',
+        domain: 'empresa.com.br',
+        generateInvoice: true,
+        companyName: 'Empresa LTDA',
+        fantasyName: 'Empresa',
+        headquarters: 'São Paulo',
+        createdAt,
+      });
+
+      await sut.save(entity);
+
+      const saved = await prisma.client.findFirst({
+        where: { document: '09748165000110' },
+      });
+
+      expect(saved?.createdAt).toEqual(createdAt);
+    });
+
     it('should persist client with optional fields as null', async() => {
       const { group, resale, company } = await createClientGroupResaleAndCompany();
 

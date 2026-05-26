@@ -53,6 +53,15 @@ describe('CreateResale - Integration tests', () => {
     expect(seq.nextId).toBe(2);
   });
 
+  it('should persist custom createdAt when provided on create', async() => {
+    const { id } = await sut.execute(
+      makeCreateResaleInput({ createdAt: '2020-03-15' }),
+    );
+
+    const row = await prisma.resale.findUnique({ where: { id } });
+    expect(row?.createdAt).toEqual(new Date('2020-03-15T00:00:00.000Z'));
+  });
+
   it('should use consecutive sequence ids for multiple creates without explicit id', async() => {
     const first = await sut.execute(makeCreateResaleInput({ document: '09.748.165/0001-10' }));
     const second = await sut.execute(

@@ -136,6 +136,26 @@ describe('CreateClient - Integration tests', () => {
       expect(seq?.nextId).toBe(2);
     });
 
+    it('should persist custom createdAt when provided on create', async() => {
+      const [group, resale, company] = await Promise.all([
+        prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
+        prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
+        createCompany(),
+      ]);
+
+      const input = makeValidInput({
+        groupId: group.id,
+        resaleId: resale.id,
+        companyIds: [company.id],
+        createdAt: '2020-03-15',
+      });
+
+      const result = await sut.execute(input);
+
+      const saved = await prisma.client.findUnique({ where: { id: result.id } });
+      expect(saved?.createdAt).toEqual(new Date('2020-03-15T00:00:00.000Z'));
+    });
+
     it('should allocate id from client sequence when id is omitted (getAndIncrement)', async() => {
       await resetClientSequence(9000);
 

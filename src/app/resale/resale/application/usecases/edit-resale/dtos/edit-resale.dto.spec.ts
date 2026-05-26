@@ -106,4 +106,14 @@ describe('EditResaleInputDto', () => {
   it('should reject invalid type on patch', async() => {
     await expect(pipe.transform({ type: 'BAD' }, bodyMetadata)).rejects.toBeDefined();
   });
+
+  it('should strip createdAt from edit payload', async() => {
+    const result = await pipe.transform(
+      { createdAt: '2020-03-15', name: 'Nova Revenda' },
+      bodyMetadata,
+    );
+
+    expect(result.createdAt).toBeUndefined();
+    expect(result.name).toBe('Nova Revenda');
+  });
 });

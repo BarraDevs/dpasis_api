@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional, OmitType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { ArrayMinSize, IsArray, IsBoolean, IsEnum, IsInt, IsNotEmpty, IsNumber, IsOptional, IsPositive, IsString, MaxLength, ValidateNested } from 'class-validator';
+import { ArrayMinSize, IsArray, IsBoolean, IsDateString, IsEnum, IsInt, IsNotEmpty, IsNumber, IsOptional, IsPositive, IsString, Matches, MaxLength, ValidateNested } from 'class-validator';
 import { CreateClientAddressInputDto } from 'src/app/client/client-address/application/usecases/create-client-address/dtos/create-client-address.dto';
 import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
 import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum';
@@ -27,6 +27,20 @@ export class CreateClientInputDto {
   @IsPositive({ message: '$property deve ser um número positivo' })
   @IsInt({ message: '$property deve ser um número inteiro' })
   parentClientId: number | null;
+
+  @ApiPropertyOptional({
+    example: '2020-03-15',
+    description:
+      'Data de cadastro legada (yyyy-mm-dd, início do dia UTC). Opcional; se omitida, usa a data/hora atual. Não pode ser alterada após o cadastro.',
+  })
+  @IsOptional()
+  @IsString({ message: '$property deve ser uma string' })
+  @Trim()
+  @Matches(/^\d{4}-\d{2}-\d{2}$/, {
+    message: '$property deve estar no formato yyyy-mm-dd',
+  })
+  @IsDateString({}, { message: '$property deve ser uma data válida' })
+  createdAt?: string;
 
   @ApiProperty({ example: Object.values(ClientType).join(', ') })
   @IsEnum(ClientType, { message: '$property inválido.' })

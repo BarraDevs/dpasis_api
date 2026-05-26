@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsDateString, IsEmail, IsEnum, IsInt, IsNotEmpty, IsNumber, IsOptional, IsPositive, IsString, Max, MaxLength, Min, ValidateIf } from 'class-validator';
+import { IsBoolean, IsDateString, IsEmail, IsEnum, IsInt, IsNotEmpty, IsNumber, IsOptional, IsPositive, IsString, Matches, Max, MaxLength, Min, ValidateIf } from 'class-validator';
 import { ResaleType } from 'src/app/resale/resale/domain/enums/resale-type.enum';
 import { IsUnsigned32HexString } from 'src/infra/validators/class/decorators/unsigned-32-hex-string/is-unsigned-32-hex-string';
 import { StringToBoolean } from 'src/infra/validators/class/decorators/string-boolean/string-boolean';
@@ -18,6 +18,20 @@ export class CreateResaleInputDto {
   @IsString({ message: '$property deve ser uma string' })
   @IsUnsigned32HexString()
   id?: string;
+
+  @ApiPropertyOptional({
+    example: '2020-03-15',
+    description:
+      'Data de cadastro legada (yyyy-mm-dd, início do dia UTC). Opcional; se omitida, usa a data/hora atual. Não pode ser alterada após o cadastro.',
+  })
+  @IsOptional()
+  @IsString({ message: '$property deve ser uma string' })
+  @Trim()
+  @Matches(/^\d{4}-\d{2}-\d{2}$/, {
+    message: '$property deve estar no formato yyyy-mm-dd',
+  })
+  @IsDateString({}, { message: '$property deve ser uma data válida' })
+  createdAt?: string;
 
   @ApiProperty({ example: Object.values(ResaleType).join(', ') })
   @IsEnum(ResaleType, { message: '$property inválido.' })

@@ -45,7 +45,7 @@ export class ResaleFactory {
   }
 
   static create(props: ResaleCreateProps & { id?: number }): Resale {
-    const { id: explicitId, ...createProps } = props;
+    const { id: explicitId, createdAt, ...createProps } = props;
     const validatedProps = this.validateCreateProps(createProps);
 
     const id = explicitId !== undefined && explicitId !== null
@@ -56,6 +56,7 @@ export class ResaleFactory {
       ...validatedProps,
       id,
       active: true,
+      ...(createdAt !== undefined ? { createdAt } : {}),
     });
   }
 
@@ -104,6 +105,7 @@ export class ResaleFactory {
       profilePictureUrl: props.profilePictureUrl ?? null,
       honorificId: props.honorificId ?? null,
       active: props.active,
+      ...(props.createdAt !== undefined ? { createdAt: props.createdAt } : {}),
     });
   }
 }

@@ -562,6 +562,37 @@ describe('CreateClientInputDto', () => {
     });
   });
 
+  describe('createdAt field (optional)', () => {
+    it('should accept undefined createdAt', async() => {
+      const data = { ...makeValidInputDto() };
+      delete (data as { createdAt?: unknown }).createdAt;
+
+      const result = await target.transform(data, metadata);
+
+      expect(result.createdAt).toBeUndefined();
+    });
+
+    it('should accept valid yyyy-mm-dd createdAt', async() => {
+      const result = await target.transform(
+        makeValidInputDto({ createdAt: '2020-03-15' }),
+        metadata,
+      );
+
+      expect(result.createdAt).toBe('2020-03-15');
+    });
+
+    it.each(['03/15/2020', '2020-3-5', '2020-03-15T10:00:00.000Z'])(
+      'should throw if createdAt format is invalid (%s)',
+      async(value: string) => {
+        expect.assertions(1);
+        return target.transform(makeValidInputDto({ createdAt: value }), metadata).catch((error) => {
+          expectMessageToContain(error.getResponse().message, 'createdAt');
+        });
+      },
+    );
+
+  });
+
   describe('all fields validation', () => {
     it('should pass if all fields are valid', async() => {
       const data = makeValidInputDto();

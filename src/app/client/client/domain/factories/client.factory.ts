@@ -47,7 +47,7 @@ export class ClientFactory {
   }
 
   static create(props: ClientCreateProps & { id?: number }): Client {
-    const { id: explicitId, ...createProps } = props;
+    const { id: explicitId, createdAt, ...createProps } = props;
     const validatedProps = this.validateCreateProps(createProps);
 
     const id = explicitId !== undefined && explicitId !== null
@@ -59,6 +59,7 @@ export class ClientFactory {
       id,
       active: true,
       isSubClient: validatedProps.parentClientId != null,
+      ...(createdAt !== undefined ? { createdAt } : {}),
     });
   }
 
@@ -93,6 +94,7 @@ export class ClientFactory {
       domain: props.domain ?? null,
       headquarters: props.headquarters,
       active: props.active,
+      ...(props.createdAt !== undefined ? { createdAt: props.createdAt } : {}),
     });
   }
 }

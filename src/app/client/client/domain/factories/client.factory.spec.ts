@@ -93,6 +93,19 @@ describe('ClientFactory', () => {
       });
     });
 
+    it('should create a client without createdAt when omitted', () => {
+      const client = ClientFactory.create(makeClientCreateProps());
+
+      expect(client.props.createdAt).toBeUndefined();
+    });
+
+    it('should create a client with explicit createdAt when provided', () => {
+      const createdAt = new Date('2020-03-15T00:00:00.000Z');
+      const client = ClientFactory.create(makeClientCreateProps({ createdAt }));
+
+      expect(client.props.createdAt).toEqual(createdAt);
+    });
+
     it('should create a client with explicit id when provided', () => {
       const props = makeClientCreateProps();
 
@@ -491,6 +504,13 @@ describe('ClientFactory', () => {
       const client = ClientFactory.load(makeClientProps({ domain: null }));
 
       expect(client.props.domain).toBeNull();
+    });
+
+    it('should preserve createdAt when provided', () => {
+      const createdAt = new Date('2020-03-15T00:00:00.000Z');
+      const client = ClientFactory.load(makeClientProps({ createdAt }));
+
+      expect(client.props.createdAt).toEqual(createdAt);
     });
   });
 });

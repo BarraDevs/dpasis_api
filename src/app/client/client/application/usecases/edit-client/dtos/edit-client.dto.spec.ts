@@ -107,4 +107,14 @@ describe('EditClientInputDto', () => {
       expectMessageToContain(error.getResponse().message, 'domain');
     });
   });
+
+  it('should strip createdAt from edit payload', async() => {
+    const result = await target.transform(
+      { createdAt: '2020-03-15', companyName: 'Nova Empresa' },
+      metadata,
+    );
+
+    expect(result.createdAt).toBeUndefined();
+    expect(result.companyName).toBe('Nova Empresa');
+  });
 });

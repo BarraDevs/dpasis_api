@@ -23,6 +23,7 @@ export type ClientCreateProps = {
   socialName: string | null;
   domain: string | null;
   headquarters: string;
+  createdAt?: Date;
 };
 
 export class Client {

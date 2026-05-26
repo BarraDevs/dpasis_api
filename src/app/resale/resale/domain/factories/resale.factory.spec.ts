@@ -95,6 +95,19 @@ describe('ResaleFactory', () => {
       });
     });
 
+    it('should create a resale without createdAt when omitted', () => {
+      const resale = ResaleFactory.create(makeResaleCreateProps());
+
+      expect(resale.props.createdAt).toBeUndefined();
+    });
+
+    it('should create a resale with explicit createdAt when provided', () => {
+      const createdAt = new Date('2020-03-15T00:00:00.000Z');
+      const resale = ResaleFactory.create(makeResaleCreateProps({ createdAt }));
+
+      expect(resale.props.createdAt).toEqual(createdAt);
+    });
+
     it('should create a resale with explicit id when provided', () => {
       const props = makeResaleCreateProps();
       const resale = ResaleFactory.create({ ...props, id: 42_000 });
@@ -361,6 +374,13 @@ describe('ResaleFactory', () => {
 
       expect(resale.props.active).toBe(false);
       expect(resale.isActive()).toBe(false);
+    });
+
+    it('should preserve createdAt when provided', () => {
+      const createdAt = new Date('2020-03-15T00:00:00.000Z');
+      const resale = ResaleFactory.load(makeResaleProps({ createdAt }));
+
+      expect(resale.props.createdAt).toEqual(createdAt);
     });
   });
 });

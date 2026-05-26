@@ -33,6 +33,7 @@ export type ResaleCreateProps = {
   profilePictureUrl: string | null;
   /** Ausente ou null: sem pronome de tratamento. */
   honorificId?: number | null;
+  createdAt?: Date;
 };
 
 export type ResaleProps = ResaleCreateProps & {

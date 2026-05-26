@@ -6,6 +6,7 @@ import { ResaleIdAlreadyTakenError } from 'src/app/resale/resale/domain/errors/r
 import { ResaleProfilePictureFolder } from 'src/app/resale/resale/domain/value-objects/resale-profile-picture-folder.vo';
 import { ResaleFactory } from 'src/app/resale/resale/domain/factories/resale.factory';
 import { TOKENS } from 'src/core/di/token';
+import { UtcCalendarDate } from 'src/shared/value-objects/utc-calendar-date/utc-calendar-date.vo';
 import { DocumentAlreadyTakenError } from 'src/shared/errors/document-already-taken';
 import { Document as DocumentVo } from 'src/shared/value-objects/document/document.vo';
 import type { IResaleDao } from '../../persistence/dao/resale-dao.interface';
@@ -95,6 +96,9 @@ export class CreateResale {
       recurringResale: data.recurringResale ?? false,
       profilePictureUrl,
       honorificId: data.honorificId ?? null,
+      ...(data.createdAt != null
+        ? { createdAt: new UtcCalendarDate(data.createdAt, 'createdAt').value }
+        : {}),
     });
 
     const id = await this.resaleRepository.save(entity);

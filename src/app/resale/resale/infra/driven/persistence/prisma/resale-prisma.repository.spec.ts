@@ -79,6 +79,20 @@ describe('ResaleRepositoryAdapterPrisma - Integration tests', () => {
       expect(saved?.active).toBe(true);
     });
 
+    it('should persist explicit createdAt when provided on entity', async() => {
+      const createdAt = new Date('2020-03-15T00:00:00.000Z');
+      const entity = ResaleFactory.create({
+        ...makeCreateProps(),
+        id: 199,
+        createdAt,
+      });
+
+      await sut.save(entity);
+
+      const saved = await prisma.resale.findUnique({ where: { id: 199 } });
+      expect(saved?.createdAt).toEqual(createdAt);
+    });
+
     it('should persist extended optional columns on save', async() => {
       const validity = new Date('2027-03-01T00:00:00.000Z');
       const entity = ResaleFactory.create({

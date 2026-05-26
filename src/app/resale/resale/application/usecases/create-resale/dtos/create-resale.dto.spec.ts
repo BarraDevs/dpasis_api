@@ -335,4 +335,32 @@ describe('CreateResaleInputDto', () => {
       expect(result.honorificId).toBe(3);
     });
   });
+
+  describe('createdAt field (optional)', () => {
+    it('should accept undefined createdAt', async() => {
+      const data = { ...validBase() };
+
+      const result = await pipe.transform(data, bodyMetadata);
+
+      expect(result.createdAt).toBeUndefined();
+    });
+
+    it('should accept valid yyyy-mm-dd createdAt', async() => {
+      const result = await pipe.transform(
+        { ...validBase(), createdAt: '2020-03-15' },
+        bodyMetadata,
+      );
+
+      expect(result.createdAt).toBe('2020-03-15');
+    });
+
+    it.each(['03/15/2020', '2020-3-5', '2020-03-15T10:00:00.000Z'])(
+      'should reject invalid createdAt format (%s)',
+      async(value: string) => {
+        await expect(
+          pipe.transform({ ...validBase(), createdAt: value }, bodyMetadata),
+        ).rejects.toBeDefined();
+      },
+    );
+  });
 });

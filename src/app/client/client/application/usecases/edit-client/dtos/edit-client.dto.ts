@@ -2,6 +2,6 @@ import { OmitType, PartialType } from '@nestjs/swagger';
 import { CreateClientInputDto } from '../../create-client/dtos/create-client.dto';
 
 export class EditClientInputDto extends PartialType(
-  OmitType(CreateClientInputDto, ['parentClientId'] as const),
+  OmitType(CreateClientInputDto, ['parentClientId', 'createdAt'] as const),
   { skipNullProperties: false }
 ) {}

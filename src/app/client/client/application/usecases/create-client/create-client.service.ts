@@ -11,6 +11,7 @@ import { ClientFactory } from 'src/app/client/client/domain/factories/client.fac
 import { FindCompanyById } from 'src/app/company/application/usecases/find-company-by-id/find-company-by-id.service';
 import { FindHonorificById } from 'src/app/honorific/application/usecases/find-honorific-by-id/find-honorific-by-id.service';
 import { TOKENS } from 'src/core/di/token';
+import { UtcCalendarDate } from 'src/shared/value-objects/utc-calendar-date/utc-calendar-date.vo';
 import type { IClientDao } from '../../persistence/dao/client-dao.interface';
 import type { IClientRepository } from '../../persistence/repository/client-repository.interface';
 import type { IClientSequenceRepository } from '../../persistence/repository/client-sequence-repository.interface';
@@ -94,6 +95,9 @@ export class CreateClient {
       domain: data.domain,
       headquarters: data.headquarters,
       honorificId: data.honorificId ?? null,
+      ...(data.createdAt != null
+        ? { createdAt: new UtcCalendarDate(data.createdAt, 'createdAt').value }
+        : {}),
     });
 
     // saga step 1: create client
