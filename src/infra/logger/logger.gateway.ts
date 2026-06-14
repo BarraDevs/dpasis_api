@@ -12,6 +12,7 @@ export enum LogContext {
   CEP_LOOKUP = 'cep-lookup',
   CNPJ_LOOKUP = 'cnpj-lookup',
   TAX_INVOICE_GENERATION = 'tax-invoice-generation',
+  NF_GENERATION = 'nf-generation',
 }
 
 type LogContextDataMap = {
@@ -23,6 +24,7 @@ type LogContextDataMap = {
   [LogContext.CEP_LOOKUP]: CepLookupData
   [LogContext.CNPJ_LOOKUP]: CnpjLookupData
   [LogContext.TAX_INVOICE_GENERATION]: TaxInvoiceGenerationData
+  [LogContext.NF_GENERATION]: NfGenerationData
 }
 
 type CommomData = {
@@ -79,6 +81,16 @@ type CnpjLookupData = CommomData & {
 type TaxInvoiceGenerationData = CommomData & {
   action: string;
   externalId?: number;
+  format?: string;
+  page?: number;
+  limit?: number;
+  processCode?: number;
+}
+
+type NfGenerationData = CommomData & {
+  action: string;
+  externalId?: number;
+  accessKey?: string;
   format?: string;
   page?: number;
   limit?: number;

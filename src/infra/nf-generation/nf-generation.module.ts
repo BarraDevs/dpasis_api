@@ -3,28 +3,28 @@ import { DynamicModule, Module } from '@nestjs/common';
 import { ConfigModule } from 'src/core/config/config.module';
 import { Environment } from 'src/core/config/environment.enum';
 import { TOKENS } from 'src/core/di/token';
-import { TaxInvoiceGenerationFakeAdapterGateway } from './adapters/fake/tax-invoice-generation-fake.gateway';
-import { TaxInvoiceGenerationNfemailAdapterGateway } from './adapters/nfemail/tax-invoice-generation-nfemail.gateway';
+import { NfGenerationFakeAdapterGateway } from './adapters/fake/nf-generation-fake.gateway';
+import { NfGenerationNfemailAdapterGateway } from './adapters/nfemail/nf-generation-nfemail.gateway';
 
 @Module({})
-export class TaxInvoiceGenerationModule {
+export class NfGenerationModule {
   static register(): DynamicModule {
     const isTest = process.env.NODE_ENV === Environment.Test;
 
     return {
-      module: TaxInvoiceGenerationModule,
+      module: NfGenerationModule,
       imports: [
         ConfigModule,
         HttpModule,
       ],
       providers: [
         {
-          provide: TOKENS.TaxInvoiceGenerationGateway,
-          useClass: isTest ? TaxInvoiceGenerationFakeAdapterGateway : TaxInvoiceGenerationNfemailAdapterGateway,
+          provide: TOKENS.NfGenerationGateway,
+          useClass: isTest ? NfGenerationFakeAdapterGateway : NfGenerationNfemailAdapterGateway,
         },
       ],
       exports: [
-        TOKENS.TaxInvoiceGenerationGateway,
+        TOKENS.NfGenerationGateway,
       ],
     };
   }

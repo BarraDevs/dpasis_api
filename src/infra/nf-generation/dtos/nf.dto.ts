@@ -1,4 +1,4 @@
-export class TaxInvoiceDto {
+export class NfDto {
   externalId: number;
   rowId: number;
   number: number | null;

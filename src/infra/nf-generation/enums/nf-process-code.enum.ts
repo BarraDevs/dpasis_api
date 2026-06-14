@@ -1,4 +1,4 @@
-export enum TaxInvoiceProcessCode {
+export enum NfProcessCode {
   DRAFT = -1,
   VALIDATED = -2,
   PREPARING_SIGNATURE = 0,

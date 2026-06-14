@@ -5,6 +5,7 @@ const TOKENS = {
   CepLookupGateway: Symbol.for('CepLookupGateway'),
   CnpjLookupGateway: Symbol.for('CnpjLookupGateway'),
   TaxInvoiceGenerationGateway: Symbol.for('TaxInvoiceGenerationGateway'),
+  NfGenerationGateway: Symbol.for('NfGenerationGateway'),
   LoggerGateway: Symbol.for('LoggerGateway'),
 
   UploadFileGateway: Symbol.for('UploadFileGateway'),
