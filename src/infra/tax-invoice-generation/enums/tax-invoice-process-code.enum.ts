@@ -1,4 +1,3 @@
-// https://www.nfemail.com.br/ManualAPI/GETapiNotasFiscaisId.htm
 export enum TaxInvoiceProcessCode {
   DRAFT = -1,
   VALIDATED = -2,
