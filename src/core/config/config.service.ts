@@ -104,6 +104,17 @@ export class ConfigService {
     return this.nestConfigService.get<string>('VIACEP_API_URL')!;
   }
 
+  // nfemail
+  get nfemailApiUrl(): string {
+    return this.nestConfigService.get<string>('NFEMAIL_API_URL')!;
+  }
+  get nfemailCnpj(): string {
+    return this.nestConfigService.get<string>('NFEMAIL_CNPJ')!;
+  }
+  get nfemailApiKey(): string {
+    return this.nestConfigService.get<string>('NFEMAIL_API_KEY')!;
+  }
+
   // throttle
   get throttleLimit(): number {
     return this.nestConfigService.get<number>('THROTTLE_LIMIT') ?? 100; // 100 requests

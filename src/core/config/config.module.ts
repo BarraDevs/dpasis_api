@@ -39,6 +39,10 @@ import { Environment } from './environment.enum';
         CNPJA_API_URL: Joi.string().required(),
         VIACEP_API_URL: Joi.string().required(),
 
+        NFEMAIL_API_URL: Joi.string().required(),
+        NFEMAIL_CNPJ: Joi.string().required(),
+        NFEMAIL_API_KEY: Joi.string().required(),
+
         THROTTLE_LIMIT: Joi.number().integer().min(2),
         THROTTLE_TTL_MS: Joi.number().integer().min(1_000),
       }),

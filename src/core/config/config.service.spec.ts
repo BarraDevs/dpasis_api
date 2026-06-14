@@ -327,6 +327,42 @@ describe('ConfigService', () => {
         expect(result).toBe(mockUrl);
       });
     });
+
+    describe('nfemailApiUrl', () => {
+      it('should return the NFEMAIL_API_URL value', () => {
+        const mockUrl = 'https://api.nfemail.com.br';
+        nestConfigService.get.mockReturnValue(mockUrl);
+
+        const result = sut.nfemailApiUrl;
+
+        expect(nestConfigService.get).toHaveBeenCalledWith('NFEMAIL_API_URL');
+        expect(result).toBe(mockUrl);
+      });
+    });
+
+    describe('nfemailCnpj', () => {
+      it('should return the NFEMAIL_CNPJ value', () => {
+        const mockCnpj = '12345678000199';
+        nestConfigService.get.mockReturnValue(mockCnpj);
+
+        const result = sut.nfemailCnpj;
+
+        expect(nestConfigService.get).toHaveBeenCalledWith('NFEMAIL_CNPJ');
+        expect(result).toBe(mockCnpj);
+      });
+    });
+
+    describe('nfemailApiKey', () => {
+      it('should return the NFEMAIL_API_KEY value', () => {
+        const mockApiKey = 'secret-key';
+        nestConfigService.get.mockReturnValue(mockApiKey);
+
+        const result = sut.nfemailApiKey;
+
+        expect(nestConfigService.get).toHaveBeenCalledWith('NFEMAIL_API_KEY');
+        expect(result).toBe(mockApiKey);
+      });
+    });
   });
 
   describe('throttle properties', () => {
