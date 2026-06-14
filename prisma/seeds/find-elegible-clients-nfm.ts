@@ -8,14 +8,26 @@ import { ClientSequenceSeed } from './client-sequence';
 import { ResaleSequenceSeed } from './resale-sequence';
 
 /**
- * Cliente fixo para exercitar `FindElegibleClients` (NFM) e testar `GET /nfm` no Postman.
- * - `dueDateDay` = dia do mês de hoje (mesma regra que `new Date().getDate()` no use case).
- * - `emissionDay` = quando possível, ajustado para manter ao menos 15 dias até o vencimento (regra do domínio).
- * - Contrato + fatura + NF + ativo + itens ativos.
- * - `clientId` fixo: 9_500_001 — documento CNPJ de seed (`88.888.888/0001-88`).
+ * Cenários fixos para exercitar `FindElegibleClients` / `SaveElegibleNfms` e `GET|POST /admin/nfm`.
  *
- * Se mudar o dia do calendário e a lista vier vazia, rode o seed de novo (`npm run db:seed`)
- * para atualizar `dueDateDay`. Use o mesmo fuso do servidor da API.
+ * - `dueDateDay` dos elegíveis = dia do mês de hoje (`new Date().getDate()`), igual ao use case.
+ * - `emissionDay` ajustado para manter `dueDateDay - emissionDay >= 15` quando possível.
+ * - IDs na faixa `9_500_0xx` e CNPJs `88.888.888/000x-xx` só para seed.
+ *
+ * Se mudar o dia do calendário e a lista vier vazia, rode o seed de novo (`npm run db:seed`).
+ * Use o mesmo fuso do servidor da API.
+ *
+ * | clientId  | Elegível? | Motivo (quando não)                    |
+ * |-----------|-----------|----------------------------------------|
+ * | 9_500_001 | sim       | —                                      |
+ * | 9_500_002 | sim       | — (2º elegível, múltiplos no POST)      |
+ * | 9_500_003 | não       | `dueDateDay` ≠ hoje                    |
+ * | 9_500_004 | não       | `generateNf: false`                    |
+ * | 9_500_005 | não       | cliente `active: false`                |
+ * | 9_500_006 | não       | `generateInvoice: false`               |
+ * | 9_500_007 | não       | `invoiceType` Avulso (não Contrato)    |
+ * | 9_500_008 | não       | sem itens no cliente                   |
+ * | 9_500_009 | não       | só itens `active: false`               |
  *
  * Uso junto do seed principal (`index.ts`) ou isolado:
  *
@@ -23,49 +35,204 @@ import { ResaleSequenceSeed } from './resale-sequence';
  * dotenv -e .env.development -- ts-node prisma/seeds/find-elegible-clients-nfm.ts
  * ```
  */
-const SEED_CLIENT_ID = 9_500_001;
-const SEED_CLIENT_DOCUMENT = '88.888.888/0001-88';
+export const SEED_NFM_ELEGIBLE_CLIENT_IDS = [9_500_001, 9_500_002] as const;
+
 const SEED_GROUP_NAME = '__seed_nfm_elegivel_client_group';
 const SEED_BANK_CODE = '__SEED_NFM__';
 const SEED_BANK_AGENCY = '0001';
 const SEED_BANK_ACCOUNT = '00000-0';
 
+type SeedClientItemsMode = 'active' | 'inactive' | 'none';
+
+type SeedClientProfile = {
+  id: number;
+  document: string;
+  companyName: string;
+  fantasyName: string;
+  eligible: boolean;
+  filterNote: string;
+  invoiceType?: ClientInvoiceType;
+  generateInvoice?: boolean;
+  active?: boolean;
+  generateNf?: boolean;
+  dueDateDay?: number;
+  items?: SeedClientItemsMode;
+};
+
+const SEED_CLIENT_PROFILES: SeedClientProfile[] = [
+  {
+    id: 9_500_001,
+    document: '88.888.888/0001-88',
+    companyName: 'Cliente seed NFM elegível #1',
+    fantasyName: 'NFM Elegível 1',
+    eligible: true,
+    filterNote: 'contrato + fatura + NF + ativo + vencimento hoje + itens ativos',
+    items: 'active',
+  },
+  {
+    id: 9_500_002,
+    document: '88.888.888/0002-68',
+    companyName: 'Cliente seed NFM elegível #2',
+    fantasyName: 'NFM Elegível 2',
+    eligible: true,
+    filterNote: 'mesmo critério do #1 (testar lista com mais de um)',
+    items: 'active',
+  },
+  {
+    id: 9_500_003,
+    document: '88.888.888/0003-49',
+    companyName: 'Cliente seed NFM — vencimento outro dia',
+    fantasyName: 'NFM dueDate outro dia',
+    eligible: false,
+    filterNote: 'dueDateDay ≠ hoje',
+    items: 'active',
+  },
+  {
+    id: 9_500_004,
+    document: '88.888.888/0004-20',
+    companyName: 'Cliente seed NFM — sem gerar NF',
+    fantasyName: 'NFM generateNf false',
+    eligible: false,
+    filterNote: 'generateNf: false',
+    generateNf: false,
+    items: 'active',
+  },
+  {
+    id: 9_500_005,
+    document: '88.888.888/0005-00',
+    companyName: 'Cliente seed NFM — inativo',
+    fantasyName: 'NFM cliente inativo',
+    eligible: false,
+    filterNote: 'cliente active: false',
+    active: false,
+    items: 'active',
+  },
+  {
+    id: 9_500_006,
+    document: '88.888.888/0006-91',
+    companyName: 'Cliente seed NFM — sem gerar fatura',
+    fantasyName: 'NFM generateInvoice false',
+    eligible: false,
+    filterNote: 'generateInvoice: false',
+    generateInvoice: false,
+    items: 'active',
+  },
+  {
+    id: 9_500_007,
+    document: '88.888.888/0007-72',
+    companyName: 'Cliente seed NFM — avulso',
+    fantasyName: 'NFM tipo Avulso',
+    eligible: false,
+    filterNote: 'invoiceType Avulso (não Contrato)',
+    invoiceType: ClientInvoiceType.INDIVIDUAL,
+    items: 'active',
+  },
+  {
+    id: 9_500_008,
+    document: '88.888.888/0008-53',
+    companyName: 'Cliente seed NFM — sem itens',
+    fantasyName: 'NFM sem itens',
+    eligible: false,
+    filterNote: 'config ok, sem itens ativos',
+    items: 'none',
+  },
+  {
+    id: 9_500_009,
+    document: '88.888.888/0009-34',
+    companyName: 'Cliente seed NFM — itens inativos',
+    fantasyName: 'NFM itens inativos',
+    eligible: false,
+    filterNote: 'itens cadastrados com active: false',
+    items: 'inactive',
+  },
+];
+
+type SeedDeps = {
+  groupId: number;
+  resaleId: number;
+  bankId: number;
+  cnaeNbsIndopId: number;
+  todayDueDay: number;
+  emissionDay: number;
+  notTodayDueDay: number;
+};
+
 export class FindElegibleClientsNfmSeed {
   static async seed(prisma: PrismaClient): Promise<void> {
     const todayDueDay = new Date().getDate();
+    const notTodayDueDay = todayDueDay >= 28 ? 1 : todayDueDay + 1;
     /** Mantém `dueDateDay - emissionDay >= 15` quando `todayDueDay >= 16` (alinhado ao VO de vencimento). */
     const emissionDay = todayDueDay >= 16 ? todayDueDay - 15 : 1;
 
-    const groupId = await this.ensureClientGroup(prisma);
-    const resaleId = await this.ensureResale(prisma);
-    const bankId = await this.ensureBank(prisma);
-    const cnaeNbsIndopId = await this.ensureCnaeNbsIndop(prisma);
+    const deps: SeedDeps = {
+      groupId: await this.ensureClientGroup(prisma),
+      resaleId: await this.ensureResale(prisma),
+      bankId: await this.ensureBank(prisma),
+      cnaeNbsIndopId: await this.ensureCnaeNbsIndop(prisma),
+      todayDueDay,
+      emissionDay,
+      notTodayDueDay,
+    };
+
+    for (const profile of SEED_CLIENT_PROFILES) {
+      await this.upsertSeedClient(prisma, deps, profile);
+    }
+
+    await ClientSequenceSeed.seed(prisma);
+    await ResaleSequenceSeed.seed(prisma);
+
+    const eligibleIds = SEED_CLIENT_PROFILES.filter(p => p.eligible).map(p => p.id);
+    const skipped = SEED_CLIENT_PROFILES.filter(p => !p.eligible);
+
+    console.log(
+      `[FindElegibleClientsNfmSeed] Pronto — dueDateDay=${todayDueDay} (hoje).`,
+    );
+    console.log(
+      `[FindElegibleClientsNfmSeed] Elegíveis (esperado em GET /admin/nfm): ${eligibleIds.join(', ')}`,
+    );
+    console.log(
+      `[FindElegibleClientsNfmSeed] Não elegíveis (${skipped.length}):`,
+    );
+    for (const profile of skipped) {
+      console.log(`  - clientId=${profile.id}: ${profile.filterNote}`);
+    }
+  }
+
+  private static async upsertSeedClient(
+    prisma: PrismaClient,
+    deps: SeedDeps,
+    profile: SeedClientProfile,
+  ): Promise<void> {
+    const dueDateDay = profile.dueDateDay
+      ?? (profile.id === 9_500_003 ? deps.notTodayDueDay : deps.todayDueDay);
 
     const clientData: Prisma.ClientCreateInput = {
-      id: SEED_CLIENT_ID,
+      id: profile.id,
       type: ClientType.PJ,
-      document: SEED_CLIENT_DOCUMENT,
+      document: profile.document,
       ie: null,
-      group: { connect: { id: groupId } },
-      resale: { connect: { id: resaleId } },
-      companyName: 'Cliente seed NFM elegível',
-      fantasyName: 'NFM Elegível',
+      group: { connect: { id: deps.groupId } },
+      resale: { connect: { id: deps.resaleId } },
+      companyName: profile.companyName,
+      fantasyName: profile.fantasyName,
       headquarters: 'Matriz',
-      invoiceType: ClientInvoiceType.CONTRACT,
-      generateInvoice: true,
-      active: true,
+      invoiceType: profile.invoiceType ?? ClientInvoiceType.CONTRACT,
+      generateInvoice: profile.generateInvoice ?? true,
+      active: profile.active ?? true,
     };
 
     await prisma.client.upsert({
-      where: { id: SEED_CLIENT_ID },
+      where: { id: profile.id },
       create: clientData,
       update: {
-        invoiceType: ClientInvoiceType.CONTRACT,
-        generateInvoice: true,
-        active: true,
-        document: SEED_CLIENT_DOCUMENT,
-        group: { connect: { id: groupId } },
-        resale: { connect: { id: resaleId } },
+        document: profile.document,
+        companyName: profile.companyName,
+        fantasyName: profile.fantasyName,
+        invoiceType: profile.invoiceType ?? ClientInvoiceType.CONTRACT,
+        generateInvoice: profile.generateInvoice ?? true,
+        active: profile.active ?? true,
+        group: { connect: { id: deps.groupId } },
+        resale: { connect: { id: deps.resaleId } },
       },
     });
 
@@ -73,17 +240,17 @@ export class FindElegibleClientsNfmSeed {
       where: {
         // eslint-disable-next-line camelcase
         clientId_type: {
-          clientId: SEED_CLIENT_ID,
+          clientId: profile.id,
           type: ClientAddressType.BILLING,
         },
       },
       create: {
-        clientId: SEED_CLIENT_ID,
+        clientId: profile.id,
         type: ClientAddressType.BILLING,
         zipCode: '01310-100',
         street: 'Av. Paulista',
-        number: '1000',
-        complement: 'Seed NFM',
+        number: String(profile.id).slice(-4),
+        complement: `Seed NFM ${profile.id}`,
         neighborhood: 'Bela Vista',
         city: 'São Paulo',
         state: 'SP',
@@ -93,59 +260,59 @@ export class FindElegibleClientsNfmSeed {
     });
 
     await prisma.clientInvoiceConfig.upsert({
-      where: { clientId: SEED_CLIENT_ID },
+      where: { clientId: profile.id },
       create: {
-        clientId: SEED_CLIENT_ID,
-        generateNf: true,
+        clientId: profile.id,
+        generateNf: profile.generateNf ?? true,
         type: ClientInvoiceConfigType.MONTHLY,
-        emissionDay,
+        emissionDay: deps.emissionDay,
         dueDateType: ClientInvoiceConfigDueDateType.DUE_DATE,
-        dueDateDay: todayDueDay,
+        dueDateDay,
         dueMonth: null,
         deadlineDays: null,
         months: [],
         billingAddressId: billingAddress.id,
-        bankId,
+        bankId: deps.bankId,
         autoProtestBoleto: false,
-        message: 'Configuração de teste — FindElegibleClients (NFM)',
+        message: `Seed NFM — ${profile.filterNote}`,
       },
       update: {
-        generateNf: true,
-        emissionDay,
-        dueDateDay: todayDueDay,
+        generateNf: profile.generateNf ?? true,
+        emissionDay: deps.emissionDay,
+        dueDateDay,
         billingAddressId: billingAddress.id,
-        bankId,
+        bankId: deps.bankId,
       },
     });
 
-    await prisma.clientItem.deleteMany({ where: { clientId: SEED_CLIENT_ID } });
+    await prisma.clientItem.deleteMany({ where: { clientId: profile.id } });
+
+    const itemsMode = profile.items ?? 'active';
+    if (itemsMode === 'none') {
+      return;
+    }
+
+    const itemActive = itemsMode === 'active';
     await prisma.clientItem.createMany({
       data: [
         {
-          clientId: SEED_CLIENT_ID,
-          description: 'Item seed NFM — serviço mensal',
+          clientId: profile.id,
+          description: `Item seed NFM — serviço (${profile.fantasyName})`,
           quantity: 1,
           unitValueInCents: 10000,
-          cnaeNbsIndopId,
-          active: true,
+          cnaeNbsIndopId: deps.cnaeNbsIndopId,
+          active: itemActive,
         },
         {
-          clientId: SEED_CLIENT_ID,
-          description: 'Item seed NFM — manutenção',
+          clientId: profile.id,
+          description: `Item seed NFM — manutenção (${profile.fantasyName})`,
           quantity: 2,
           unitValueInCents: 5000,
-          cnaeNbsIndopId,
-          active: true,
+          cnaeNbsIndopId: deps.cnaeNbsIndopId,
+          active: itemActive,
         },
       ],
     });
-
-    await ClientSequenceSeed.seed(prisma);
-    await ResaleSequenceSeed.seed(prisma);
-
-    console.log(
-      `[FindElegibleClientsNfmSeed] Pronto — clientId=${SEED_CLIENT_ID}, dueDateDay=${todayDueDay} (hoje).`,
-    );
   }
 
   private static async ensureClientGroup(prisma: PrismaClient): Promise<number> {

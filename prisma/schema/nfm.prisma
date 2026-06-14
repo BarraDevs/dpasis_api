@@ -1,0 +1,16 @@
+model Nfm {
+  id                Int      @id @default(autoincrement())
+  clientId          Int
+  clientDocument    String
+  companyName       String
+  status            String
+  referenceMonth    Int
+  referenceYear     Int
+  totalValueInCents Int
+  data              Json
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([clientId, referenceMonth, referenceYear])
+  @@map("nfms")
+}

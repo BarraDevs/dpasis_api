@@ -1,12 +1,15 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Post } from '@nestjs/common';
 import { NfmDto } from 'src/app/tax-invoice/nfm/application/dtos/nfm.dto';
 import { FindElegibleClients } from 'src/app/tax-invoice/nfm/application/usecases/find-elegible-clients/find-elegible-clients.service';
+import { SaveElegibleNfms } from 'src/app/tax-invoice/nfm/application/usecases/save-elegible-nfms/save-elegible-nfms.service';
+import { SaveElegibleNfmsOutputDto } from 'src/app/tax-invoice/nfm/application/usecases/save-elegible-nfms/dtos/save-elegible-nfms.dto';
 import { Swagger } from 'src/infra/openapi/swagger';
 
 @Controller('admin/nfm')
 export class NfmAdminController {
   constructor(
     private readonly findElegibleClients: FindElegibleClients,
+    private readonly saveElegibleNfmsService: SaveElegibleNfms,
     // private readonly createNfmService: CreateNfm,
     // private readonly findAllNfmService: FindAllNfm,
     // private readonly findNfmByIdService: FindNfmById,
@@ -23,6 +26,17 @@ export class NfmAdminController {
   })
   public findNfms(): Promise<NfmDto[]> {
     return this.findElegibleClients.execute();
+  }
+
+  @Post()
+  @Swagger({
+    tags: ['NFM'],
+    summary: 'Salvar NFMs elegíveis no banco de dados',
+    applyBadRequest: true,
+    createdResponse: SaveElegibleNfmsOutputDto,
+  })
+  public saveElegibleNfms(): Promise<SaveElegibleNfmsOutputDto> {
+    return this.saveElegibleNfmsService.execute();
   }
 
   // @Post()
