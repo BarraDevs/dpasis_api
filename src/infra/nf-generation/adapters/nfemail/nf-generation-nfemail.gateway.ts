@@ -5,32 +5,19 @@ import { TOKENS } from 'src/core/di/token';
 import { LogContext, type ILoggerGateway } from 'src/infra/logger/logger.gateway';
 import { ExternalApiError } from 'src/shared/errors/external-api.error';
 import { CancelNfInputDto } from '../../dtos/cancel-nf.dto';
-import { IssueCorrectionLetterInputDto } from '../../dtos/correction-letter.dto';
-import { FindAllNfInvalidationsInputDto, FindAllNfInvalidationsOutputDto } from '../../dtos/find-all-invalidations.dto';
-import { FindAllNfInputDto, FindAllNfOutputDto } from '../../dtos/find-all-nf.dto';
-import { InvalidateNfNumbersInputDto, InvalidateNfNumbersOutputDto } from '../../dtos/invalidate-numbers.dto';
+import { FindAllNfInputDto } from '../../dtos/find-all-nf.dto';
 import { IssueNfInputDto, IssueNfOutputDto } from '../../dtos/issue-nf.dto';
 import { NfFileDto } from '../../dtos/nf-file.dto';
 import { NfDto } from '../../dtos/nf.dto';
 import { NfIssueFormat } from '../../enums/nf-issue-format.enum';
 import { INfGenerationGateway } from '../../nf-generation.gateway';
-import { NfemailFindAllInvalidationsResponseDto, NfemailFindAllResponseDto, NfemailInvalidationResultDto, NfemailTaxInvoiceDto } from './dtos/nfemail.dto';
-import {
-  extractNfemailInvalidations,
-  extractNfemailPagination,
-  extractNfemailTaxInvoices,
-  mapNfemailInvalidation,
-  mapNfemailInvalidationResult,
-  mapNfemailIssueResponse,
-  mapNfemailToNf,
-} from './mappers/nfemail-nf.mapper';
+import { NfemailFindAllQueryDto, NfemailFindAllResponseDto, NfemailTaxInvoiceDto } from './dtos/nfemail.dto';
 
 @Injectable()
 export class NfGenerationNfemailAdapterGateway implements INfGenerationGateway {
   private static readonly MAX_LIMIT = 30;
   private static readonly ACCESS_KEY_LENGTH = 44;
   private static readonly MIN_CANCEL_REASON_LENGTH = 15;
-  private static readonly MAX_CORRECTION_REASON_LENGTH = 1000;
 
   constructor(
     @Inject(TOKENS.LoggerGateway) private readonly logger: ILoggerGateway,
@@ -38,7 +25,8 @@ export class NfGenerationNfemailAdapterGateway implements INfGenerationGateway {
     private readonly httpService: HttpService,
   ) {}
 
-  public async findAll(query: FindAllNfInputDto): Promise<FindAllNfOutputDto> {
+  // -------- NOTAS FISCAIS --------
+  public async findAll(query: FindAllNfInputDto): Promise<NfDto[]> {
     const page = query.page ?? 1;
     const limit = query.limit ?? 10;
 
@@ -47,7 +35,16 @@ export class NfGenerationNfemailAdapterGateway implements INfGenerationGateway {
     }
 
     try {
-      const params: Record<string, number> = { page, limit };
+      const params: NfemailFindAllQueryDto = { page, limit };
+      if (query.orderNumber !== undefined) {
+        params.pedido = query.orderNumber;
+      }
+      if (query.nfeNumber !== undefined) {
+        params.numero = query.nfeNumber;
+      }
+      if (query.recipientDocument !== undefined) {
+        params.cpfcnpj = query.recipientDocument;
+      }
       if (query.processCode !== undefined) {
         params.status = query.processCode;
       }
@@ -60,23 +57,13 @@ export class NfGenerationNfemailAdapterGateway implements INfGenerationGateway {
         },
       );
 
-      const rows = (result.data?.ListaNotaFiscal ?? []).map(mapNfemailToNf);
-      const pagination = extractNfemailPagination(result.data, page, limit, rows.length);
-
-      return {
-        rows,
-        page: pagination.page,
-        limit: pagination.limit,
-        total: pagination.total,
-      };
+      return (result.data?.ListaNotaFiscal ?? []).map(this.mapNfemailToNf);
     }
     catch (error) {
       this.logger.error(LogContext.NF_GENERATION, {
         adapter: 'nfemail',
         action: 'findAll',
-        page,
-        limit,
-        processCode: query.processCode,
+        query,
         error,
       });
       throw new ExternalApiError(error?.message ?? 'Erro ao listar notas fiscais');
@@ -84,53 +71,29 @@ export class NfGenerationNfemailAdapterGateway implements INfGenerationGateway {
   }
 
   public async findById(externalId: number): Promise<NfDto> {
-    return this.findSingleNf({ id: externalId }, 'findById', { externalId });
-  }
-
-  public async findByNumber(invoiceNumber: number): Promise<NfDto> {
-    return this.findSingleNf({ numero: invoiceNumber }, 'findByNumber');
-  }
-
-  public async findByOrderCode(orderCode: string): Promise<NfDto> {
-    if (!orderCode?.trim()) {
-      throw new ExternalApiError('Código do pedido é obrigatório');
-    }
-
-    return this.findSingleNf({ pedido: orderCode.trim() }, 'findByOrderCode');
-  }
-
-  public async findByDocument(document: string): Promise<NfDto[]> {
-    const normalizedDocument = document.replace(/\D/g, '');
-    if (!normalizedDocument) {
-      throw new ExternalApiError('CPF/CNPJ é obrigatório');
-    }
-
     try {
-      const result = await this.httpService.axiosRef.get<unknown>(
+      const result = await this.httpService.axiosRef.get<NfemailTaxInvoiceDto>(
         `${this.configService.nfemailApiUrl}/api/NotasFiscais`,
         {
           ...this.getAuthConfig(),
-          params: { cpfcnpj: normalizedDocument },
+          params: { id: externalId },
         },
       );
 
-      const rows = extractNfemailTaxInvoices(result.data).map(mapNfemailToNf);
-      if (!rows.length) {
-        throw new ExternalApiError('Nota fiscal não encontrada');
-      }
-
-      return rows;
+      return this.mapNfemailToNf(result.data);
     }
     catch (error) {
       this.logger.error(LogContext.NF_GENERATION, {
         adapter: 'nfemail',
-        action: 'findByDocument',
+        action: 'findById',
+        externalId,
         error,
       });
-      throw new ExternalApiError(error?.message ?? 'Erro ao buscar nota fiscal por documento');
+      throw new ExternalApiError(error?.message ?? 'Erro ao buscar nota fiscal');
     }
   }
 
+  // TODO: revisar ainda
   public async issue(input: IssueNfInputDto): Promise<IssueNfOutputDto> {
     if (!input.content?.trim()) {
       throw new ExternalApiError('Conteúdo da nota fiscal é obrigatório');
@@ -146,7 +109,7 @@ export class NfGenerationNfemailAdapterGateway implements INfGenerationGateway {
         },
       });
 
-      const externalId = mapNfemailIssueResponse(result.data);
+      const externalId = this.mapNfemailIssueResponse(result.data);
       if (externalId === null) {
         throw new ExternalApiError('Resposta inválida da API de emissão de nota fiscal');
       }
@@ -159,7 +122,7 @@ export class NfGenerationNfemailAdapterGateway implements INfGenerationGateway {
         && 'cod_nfemail' in (result.data as object)
         && 'cod_processo' in (result.data as object)
       ) {
-        output.nf = mapNfemailToNf(result.data as NfemailTaxInvoiceDto);
+        output.nf = this.mapNfemailToNf(result.data as NfemailTaxInvoiceDto);
       }
 
       return output;
@@ -175,6 +138,7 @@ export class NfGenerationNfemailAdapterGateway implements INfGenerationGateway {
     }
   }
 
+  // TODO: revisar ainda
   public async cancel(input: CancelNfInputDto): Promise<void> {
     if (!input.reason?.trim() || input.reason.trim().length < NfGenerationNfemailAdapterGateway.MIN_CANCEL_REASON_LENGTH) {
       throw new ExternalApiError('Motivo do cancelamento deve ter no mínimo 15 caracteres');
@@ -203,6 +167,7 @@ export class NfGenerationNfemailAdapterGateway implements INfGenerationGateway {
     }
   }
 
+  // -------- DANFE --------
   public async getDanfe(accessKey: string): Promise<NfFileDto> {
     const normalizedAccessKey = this.normalizeAccessKey(accessKey);
 
@@ -238,6 +203,7 @@ export class NfGenerationNfemailAdapterGateway implements INfGenerationGateway {
     }
   }
 
+  // -------- XML --------
   public async getXml(accessKey: string): Promise<NfFileDto> {
     const normalizedAccessKey = this.normalizeAccessKey(accessKey);
 
@@ -271,195 +237,11 @@ export class NfGenerationNfemailAdapterGateway implements INfGenerationGateway {
     }
   }
 
-  public async issueCorrectionLetter(input: IssueCorrectionLetterInputDto): Promise<void> {
-    const normalizedAccessKey = this.normalizeAccessKey(input.accessKey);
-    const reason = input.reason?.trim() ?? '';
-
-    if (reason.length < NfGenerationNfemailAdapterGateway.MIN_CANCEL_REASON_LENGTH) {
-      throw new ExternalApiError('Motivo da carta de correção deve ter no mínimo 15 caracteres');
-    }
-
-    if (reason.length > NfGenerationNfemailAdapterGateway.MAX_CORRECTION_REASON_LENGTH) {
-      throw new ExternalApiError('Motivo da carta de correção deve ter no máximo 1000 caracteres');
-    }
-
-    try {
-      await this.httpService.axiosRef.post(
-        `${this.configService.nfemailApiUrl}/api/NFeCorrigidas`,
-        null,
-        {
-          ...this.getAuthConfig(),
-          params: {
-            chave: normalizedAccessKey,
-            sequencia: input.sequence,
-            motivo: reason,
-          },
-        },
-      );
-    }
-    catch (error) {
-      this.logger.error(LogContext.NF_GENERATION, {
-        adapter: 'nfemail',
-        action: 'issueCorrectionLetter',
-        accessKey: normalizedAccessKey,
-        error,
-      });
-      throw new ExternalApiError(error?.message ?? 'Erro ao emitir carta de correção');
-    }
-  }
-
-  public async getCorrectionLetterXml(accessKey: string): Promise<NfFileDto> {
-    const normalizedAccessKey = this.normalizeAccessKey(accessKey);
-
-    try {
-      const result = await this.httpService.axiosRef.get<string>(
-        `${this.configService.nfemailApiUrl}/api/NFeCorrigidas`,
-        {
-          ...this.getAuthConfig(),
-          params: { chave: normalizedAccessKey },
-        },
-      );
-
-      if (!result.data?.trim()) {
-        throw new ExternalApiError('XML da carta de correção não encontrado');
-      }
-
-      return {
-        content: result.data,
-        mimeType: 'application/xml',
-        fileName: `CCe-${normalizedAccessKey}.xml`,
-      };
-    }
-    catch (error) {
-      this.logger.error(LogContext.NF_GENERATION, {
-        adapter: 'nfemail',
-        action: 'getCorrectionLetterXml',
-        accessKey: normalizedAccessKey,
-        error,
-      });
-      throw new ExternalApiError(error?.message ?? 'Erro ao baixar XML da carta de correção');
-    }
-  }
-
-  public async invalidateNumbers(input: InvalidateNfNumbersInputDto): Promise<InvalidateNfNumbersOutputDto> {
-    const reason = input.reason?.trim() ?? '';
-
-    if (reason.length < NfGenerationNfemailAdapterGateway.MIN_CANCEL_REASON_LENGTH) {
-      throw new ExternalApiError('Motivo da inutilização deve ter no mínimo 15 caracteres');
-    }
-
-    try {
-      const result = await this.httpService.axiosRef.post<NfemailInvalidationResultDto>(
-        `${this.configService.nfemailApiUrl}/api/Inutilizadas`,
-        null,
-        {
-          ...this.getAuthConfig(),
-          params: {
-            ambiente: input.environment,
-            ano: input.year,
-            serie: input.series,
-            numInicial: input.startNumber,
-            numFinal: input.endNumber,
-            motivo: reason,
-          },
-        },
-      );
-
-      if (!result.data || typeof result.data.cod_retorno !== 'number') {
-        throw new ExternalApiError('Resposta inválida da API de inutilização');
-      }
-
-      return mapNfemailInvalidationResult(result.data);
-    }
-    catch (error) {
-      this.logger.error(LogContext.NF_GENERATION, {
-        adapter: 'nfemail',
-        action: 'invalidateNumbers',
-        error,
-      });
-      throw new ExternalApiError(error?.message ?? 'Erro ao inutilizar numeração');
-    }
-  }
-
-  public async findAllInvalidations(query: FindAllNfInvalidationsInputDto): Promise<FindAllNfInvalidationsOutputDto> {
-    const page = query.page ?? 1;
-    const limit = query.limit ?? 10;
-
-    if (limit > NfGenerationNfemailAdapterGateway.MAX_LIMIT) {
-      throw new ExternalApiError(`Limite máximo de ${NfGenerationNfemailAdapterGateway.MAX_LIMIT} registros por página`);
-    }
-
-    try {
-      const result = await this.httpService.axiosRef.get<NfemailFindAllInvalidationsResponseDto>(
-        `${this.configService.nfemailApiUrl}/api/Inutilizadas`,
-        {
-          ...this.getAuthConfig(),
-          params: {
-            ano: query.year,
-            page,
-            limit,
-          },
-        },
-      );
-
-      const rows = extractNfemailInvalidations(result.data).map(mapNfemailInvalidation);
-      const pagination = extractNfemailPagination(result.data, page, limit, rows.length);
-
-      return {
-        rows,
-        page: pagination.page,
-        limit: pagination.limit,
-        total: pagination.total,
-      };
-    }
-    catch (error) {
-      this.logger.error(LogContext.NF_GENERATION, {
-        adapter: 'nfemail',
-        action: 'findAllInvalidations',
-        page,
-        limit,
-        error,
-      });
-      throw new ExternalApiError(error?.message ?? 'Erro ao listar inutilizações');
-    }
-  }
-
-  private async findSingleNf(
-    params: Record<string, string | number>,
-    action: string,
-    logContext: { externalId?: number } = {},
-  ): Promise<NfDto> {
-    try {
-      const result = await this.httpService.axiosRef.get<unknown>(
-        `${this.configService.nfemailApiUrl}/api/NotasFiscais`,
-        {
-          ...this.getAuthConfig(),
-          params,
-        },
-      );
-
-      const rows = extractNfemailTaxInvoices(result.data);
-      if (!rows.length || !rows[0]?.cod_nfemail) {
-        throw new ExternalApiError('Nota fiscal não encontrada');
-      }
-
-      return mapNfemailToNf(rows[0]);
-    }
-    catch (error) {
-      this.logger.error(LogContext.NF_GENERATION, {
-        adapter: 'nfemail',
-        action,
-        ...logContext,
-        error,
-      });
-      throw new ExternalApiError(error?.message ?? 'Erro ao buscar nota fiscal');
-    }
-  }
-
+  // -------- AUXILIARES --------
   private normalizeAccessKey(accessKey: string): string {
     const normalizedAccessKey = accessKey.replace(/\D/g, '');
     if (normalizedAccessKey.length !== NfGenerationNfemailAdapterGateway.ACCESS_KEY_LENGTH) {
-      throw new ExternalApiError('Chave de acesso deve conter 44 dígitos');
+      throw new ExternalApiError(`Chave de acesso deve conter ${NfGenerationNfemailAdapterGateway.ACCESS_KEY_LENGTH} dígitos`);
     }
 
     return normalizedAccessKey;
@@ -488,5 +270,76 @@ export class NfGenerationNfemailAdapterGateway implements INfGenerationGateway {
         password: this.configService.nfemailApiKey,
       },
     };
+  }
+
+  private mapNfemailToNf(data: NfemailTaxInvoiceDto): NfDto {
+    return {
+      rowId: data.row_id,
+      orderNumber: data.ped_numero ?? null,
+      externalId: data.cod_nfemail,
+      recipientDocument: data.num_cnpj ?? '',
+      recipientFantasyName: data.nom_fantasia ?? '',
+      recipientCompanyName: data.nom_razaosocial ?? '',
+      processCode: data.cod_processo,
+      processDescription: data.dsc_processo ?? '',
+      nfeNumber: data.nfe_numero ?? null,
+      nfeKey: data.nfe_chave?.trim() || null,
+      totalValue: data.val_total ?? '',
+      emissionDate: data.dat_emissao ?? '',
+      authorizationDate: data.dat_autorizacao ?? '',
+      cancellationCode: data.cod_cancelamento ?? '',
+      cancellationDescription: data.dsc_cancelamento ?? '',
+      cancellationReason: data.mot_cancelamento ?? '',
+    };
+  }
+
+  private mapNfemailIssueResponse(data: unknown): number | null {
+    if (typeof data === 'number' && Number.isFinite(data)) {
+      return data;
+    }
+
+    if (typeof data === 'string' && data.trim()) {
+      const parsed = Number(data.trim());
+      if (Number.isFinite(parsed)) {
+        return parsed;
+      }
+    }
+
+    if (data && typeof data === 'object') {
+      const record = data as Record<string, unknown>;
+      const candidates = [
+        record.cod_nfemail,
+        record.CodNfemail,
+        record.id,
+        record.Id,
+      ];
+
+      for (const candidate of candidates) {
+        if (typeof candidate === 'number' && Number.isFinite(candidate)) {
+          return candidate;
+        }
+        if (typeof candidate === 'string' && candidate.trim()) {
+          const parsed = Number(candidate.trim());
+          if (Number.isFinite(parsed)) {
+            return parsed;
+          }
+        }
+      }
+
+      if ('cod_nfemail' in record) {
+        const externalId = record.cod_nfemail;
+        if (typeof externalId === 'number' && Number.isFinite(externalId)) {
+          return externalId;
+        }
+        if (typeof externalId === 'string' && externalId.trim()) {
+          const parsed = Number(externalId.trim());
+          if (Number.isFinite(parsed)) {
+            return parsed;
+          }
+        }
+      }
+    }
+
+    return null;
   }
 }

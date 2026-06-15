@@ -11,7 +11,6 @@ export enum LogContext {
   UPLOAD_FILE = 'upload-file',
   CEP_LOOKUP = 'cep-lookup',
   CNPJ_LOOKUP = 'cnpj-lookup',
-  TAX_INVOICE_GENERATION = 'tax-invoice-generation',
   NF_GENERATION = 'nf-generation',
 }
 
@@ -23,7 +22,6 @@ type LogContextDataMap = {
   [LogContext.UPLOAD_FILE]: UploadFileData
   [LogContext.CEP_LOOKUP]: CepLookupData
   [LogContext.CNPJ_LOOKUP]: CnpjLookupData
-  [LogContext.TAX_INVOICE_GENERATION]: TaxInvoiceGenerationData
   [LogContext.NF_GENERATION]: NfGenerationData
 }
 
@@ -78,21 +76,10 @@ type CnpjLookupData = CommomData & {
   cnpj: string;
 }
 
-type TaxInvoiceGenerationData = CommomData & {
-  action: string;
-  externalId?: number;
-  format?: string;
-  page?: number;
-  limit?: number;
-  processCode?: number;
-}
-
 type NfGenerationData = CommomData & {
   action: string;
   externalId?: number;
   accessKey?: string;
   format?: string;
-  page?: number;
-  limit?: number;
-  processCode?: number;
+  query?: any;
 }

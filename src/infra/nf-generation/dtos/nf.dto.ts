@@ -1,12 +1,18 @@
 export class NfDto {
-  externalId: number;
   rowId: number;
-  number: number | null;
-  orderCode: number | null;
+  orderNumber: string | null;
+  externalId: number;
   recipientDocument: string;
-  fantasyName: string;
-  companyName: string;
+  recipientFantasyName: string;
+  recipientCompanyName: string;
   processCode: number;
   processDescription: string;
-  accessKey: string | null;
+  nfeNumber: number | null;
+  nfeKey: string | null;
+  totalValue: string;
+  emissionDate: string;
+  authorizationDate: string;
+  cancellationCode: string;
+  cancellationDescription: string;
+  cancellationReason: string;
 }

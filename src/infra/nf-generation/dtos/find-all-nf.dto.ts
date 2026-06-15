@@ -1,14 +1,10 @@
-import { NfDto } from './nf.dto';
+import { NfProcessCode } from '../enums/nf-process-code.enum';
 
 export class FindAllNfInputDto {
   page?: number;
   limit?: number;
-  processCode?: number;
-}
-
-export class FindAllNfOutputDto {
-  rows: NfDto[];
-  page: number;
-  limit: number;
-  total: number;
+  orderNumber?: string;
+  nfeNumber?: number;
+  recipientDocument?: string;
+  processCode?: NfProcessCode;
 }
