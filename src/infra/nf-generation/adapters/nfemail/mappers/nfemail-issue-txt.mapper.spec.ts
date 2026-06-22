@@ -43,10 +43,10 @@ describe('nfemail-issue-txt.mapper - Unit tests', () => {
     // fields[0]=B, [1]=cUF, [2]=cNF, [3]=natOp, [4]=mod, [5]=serie, [6]=nNF,
     // [7]=dhEmi, [8]=dhSaiEnt, [9]=tpNF, [10]=idDest, [11]=cMunFG,
     // [12]=tpImp, [13]=tpEmis, [14]=cDV, [15]=tpAmb, [16]=finNFe, ...
-    expect(fields[12]).toBe('1');   // tpImp
-    expect(fields[15]).toBe('2');   // tpAmb = homologação
-    expect(fields[16]).toBe('1');   // finNFe = normal
-    expect(fields[18]).toBe('9');   // indPres = 9 (não presencial outros)
+    expect(fields[12]).toBe('1'); // tpImp
+    expect(fields[15]).toBe('2'); // tpAmb = homologação
+    expect(fields[16]).toBe('1'); // finNFe = normal
+    expect(fields[18]).toBe('9'); // indPres = 9 (não presencial outros)
   });
 
   it('should emit B25c line for indIntermed', () => {
@@ -72,9 +72,9 @@ describe('nfemail-issue-txt.mapper - Unit tests', () => {
     // W37|vDif|vDevTrib|vIBSUF|  W42|vDif|vDevTrib|vIBSMun|
     // W50|vDif|vDevTrib|vCBS|vCredPres|vCredPresCondSus|  W60|vNFTot|
     expect(result).toContain('W34|1.00|');
-    expect(result).toContain('W36|0.00|0.00|0.00|');       // ibsTotalValue=0|ibsCredPres=0|ibsCredPresCondSus=0
-    expect(result).toContain('W37|0.00|0.00|0.00|');       // ibsStateDiff=0|ibsStateDevTrib=0|ibsStateValue=0
-    expect(result).toContain('W42|0.00|0.00|0.00|');       // ibsCityDiff=0|ibsCityDevTrib=0|ibsCityValue=0
+    expect(result).toContain('W36|0.00|0.00|0.00|'); // ibsTotalValue=0|ibsCredPres=0|ibsCredPresCondSus=0
+    expect(result).toContain('W37|0.00|0.00|0.00|'); // ibsStateDiff=0|ibsStateDevTrib=0|ibsStateValue=0
+    expect(result).toContain('W42|0.00|0.00|0.00|'); // ibsCityDiff=0|ibsCityDevTrib=0|ibsCityValue=0
     expect(result).toContain('W50|0.00|0.00|0.10|0.00|0.00|'); // cbsDiff=0|cbsDevTrib=0|vCBS=0.10|cbsCredPres=0|...
     expect(result).toContain('W60|1.00|');
   });

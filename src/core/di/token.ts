@@ -51,6 +51,9 @@ const TOKENS = {
   ClientInvoiceConfigDao: Symbol.for('ClientInvoiceConfigDao'),
   ClientInvoiceConfigRepository: Symbol.for('ClientInvoiceConfigRepository'),
 
+  CarrierDao: Symbol.for('CarrierDao'),
+  CarrierRepository: Symbol.for('CarrierRepository'),
+
   CompanyDao: Symbol.for('CompanyDao'),
   CompanyRepository: Symbol.for('CompanyRepository'),
 

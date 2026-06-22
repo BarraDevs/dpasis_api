@@ -3,6 +3,7 @@ import { AdminModule } from './app/admin/admin.module';
 import { AuditModule } from './app/audit/audit.module';
 import { AuthenticationModule } from './app/authentication/authentication.module';
 import { ClientModuleModule } from './app/client/client-module.module';
+import { CarrierModule } from './app/carrier/carrier.module';
 import { CompanyModule } from './app/company/company.module';
 import { ExternalApisModule } from './app/external-apis/external-apis.module';
 import { FaqModule } from './app/faq/faq.module';
@@ -24,6 +25,7 @@ import { TaxInvoiceModule } from './app/tax-invoice/tax-invoice.module';
     AuthenticationModule,
     AuditModule,
     AdminModule,
+    CarrierModule,
     CompanyModule,
     ClientModuleModule,
     ResaleModuleModule,

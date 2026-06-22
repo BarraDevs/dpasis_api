@@ -142,28 +142,28 @@ export function buildNfemailIssueTxt(input: IssueNfInputDto): string {
   content += NfPipeLine.create('A', '4.00', '').value;
   content += NfPipeLine.create(
     'B',
-    stateCode,                 // cUF
-    controlNumber,             // cNF
+    stateCode, // cUF
+    controlNumber, // cNF
     new NfSanitizedText(input.fiscal.naturezaOperacao).value, // natOp
-    '55',                      // mod
-    input.fiscal.series,       // serie
-    nfeNumber,                 // nNF
-    emissionDateTime,          // dhEmi
-    '',                        // dhSaiEnt
+    '55', // mod
+    input.fiscal.series, // serie
+    nfeNumber, // nNF
+    emissionDateTime, // dhEmi
+    '', // dhSaiEnt
     input.fiscal.operationType, // tpNF
-    '1',                       // idDest (1=operação interna)
-    emitterCityCode,           // cMunFG
-    '1',                       // tpImp (1=retrato DANFE)
-    '1',                       // tpEmis (1=emissão normal)
-    '',                        // cDV (NFeMail calcula ao transmitir)
-    input.fiscal.environment,  // tpAmb (1=produção, 2=homologação)
-    input.fiscal.finalidade,   // finNFe
-    '0',                       // indFinal (0=não consumidor final)
+    '1', // idDest (1=operação interna)
+    emitterCityCode, // cMunFG
+    '1', // tpImp (1=retrato DANFE)
+    '1', // tpEmis (1=emissão normal)
+    '', // cDV (NFeMail calcula ao transmitir)
+    input.fiscal.environment, // tpAmb (1=produção, 2=homologação)
+    input.fiscal.finalidade, // finNFe
+    '0', // indFinal (0=não consumidor final)
     input.fiscal.presenceIndicator, // indPres
-    '0',                       // procEmi (0=software do contribuinte)
-    '4.00_b012',               // verProc
-    '',                        // dhCont
-    '',                        // xJust
+    '0', // procEmi (0=software do contribuinte)
+    '4.00_b012', // verProc
+    '', // dhCont
+    '', // xJust
   ).value;
   content += NfPipeLine.create('B25c', input.fiscal.intermediaryIndicator).value;
 
@@ -231,29 +231,29 @@ export function buildNfemailIssueTxt(input: IssueNfInputDto): string {
   content += NfPipeLine.create('W34', DecimalMoney.fromDecimal(totals.ibsCbs.baseValue).value).value;
   content += NfPipeLine.create(
     'W36',
-    DecimalMoney.fromDecimal(totals.ibsCbs.ibsTotalValue).value,       // vIBS
-    DecimalMoney.fromDecimal(totals.ibsCbs.ibsCredPres).value,         // vCredPres
-    DecimalMoney.fromDecimal(totals.ibsCbs.ibsCredPresCondSus).value,  // vCredPresCondSus
+    DecimalMoney.fromDecimal(totals.ibsCbs.ibsTotalValue).value, // vIBS
+    DecimalMoney.fromDecimal(totals.ibsCbs.ibsCredPres).value, // vCredPres
+    DecimalMoney.fromDecimal(totals.ibsCbs.ibsCredPresCondSus).value, // vCredPresCondSus
   ).value;
   content += NfPipeLine.create(
     'W37',
-    DecimalMoney.fromDecimal(totals.ibsCbs.ibsStateDiff).value,        // vDif UF
-    DecimalMoney.fromDecimal(totals.ibsCbs.ibsStateDevTrib).value,     // vDevTrib UF
-    DecimalMoney.fromDecimal(totals.ibsCbs.ibsStateValue).value,       // vIBSUF
+    DecimalMoney.fromDecimal(totals.ibsCbs.ibsStateDiff).value, // vDif UF
+    DecimalMoney.fromDecimal(totals.ibsCbs.ibsStateDevTrib).value, // vDevTrib UF
+    DecimalMoney.fromDecimal(totals.ibsCbs.ibsStateValue).value, // vIBSUF
   ).value;
   content += NfPipeLine.create(
     'W42',
-    DecimalMoney.fromDecimal(totals.ibsCbs.ibsCityDiff).value,         // vDif Mun
-    DecimalMoney.fromDecimal(totals.ibsCbs.ibsCityDevTrib).value,      // vDevTrib Mun
-    DecimalMoney.fromDecimal(totals.ibsCbs.ibsCityValue).value,        // vIBSMun
+    DecimalMoney.fromDecimal(totals.ibsCbs.ibsCityDiff).value, // vDif Mun
+    DecimalMoney.fromDecimal(totals.ibsCbs.ibsCityDevTrib).value, // vDevTrib Mun
+    DecimalMoney.fromDecimal(totals.ibsCbs.ibsCityValue).value, // vIBSMun
   ).value;
   content += NfPipeLine.create(
     'W50',
-    DecimalMoney.fromDecimal(totals.ibsCbs.cbsDiff).value,             // vDif CBS
-    DecimalMoney.fromDecimal(totals.ibsCbs.cbsDevTrib).value,          // vDevTrib CBS
-    DecimalMoney.fromDecimal(totals.ibsCbs.cbsValue).value,            // vCBS
-    DecimalMoney.fromDecimal(totals.ibsCbs.cbsCredPres).value,         // vCredPres
-    DecimalMoney.fromDecimal(totals.ibsCbs.cbsCredPresCondSus).value,  // vCredPresCondSus
+    DecimalMoney.fromDecimal(totals.ibsCbs.cbsDiff).value, // vDif CBS
+    DecimalMoney.fromDecimal(totals.ibsCbs.cbsDevTrib).value, // vDevTrib CBS
+    DecimalMoney.fromDecimal(totals.ibsCbs.cbsValue).value, // vCBS
+    DecimalMoney.fromDecimal(totals.ibsCbs.cbsCredPres).value, // vCredPres
+    DecimalMoney.fromDecimal(totals.ibsCbs.cbsCredPresCondSus).value, // vCredPresCondSus
   ).value;
   content += NfPipeLine.create('W60', DecimalMoney.fromDecimal(totals.ibsCbs.nfTotalValue).value).value;
   content += NfPipeLine.create('X', input.fiscal.freightMode).value;

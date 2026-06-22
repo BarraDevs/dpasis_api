@@ -71,6 +71,9 @@ export const Claim = {
   NBS_READ: { subject: ClaimSubject.Nbs, action: ClaimAction.Read },
   NBS_WRITE: { subject: ClaimSubject.Nbs, action: ClaimAction.Write },
 
+  CARRIER_READ: { subject: ClaimSubject.Carrier, action: ClaimAction.Read },
+  CARRIER_WRITE: { subject: ClaimSubject.Carrier, action: ClaimAction.Write },
+
   COMPANY_READ: { subject: ClaimSubject.Company, action: ClaimAction.Read },
   COMPANY_WRITE: { subject: ClaimSubject.Company, action: ClaimAction.Write },
 

@@ -1,0 +1,22 @@
+model Carrier {
+  id             Int     @id @default(autoincrement())
+  name           String
+  fantasyName    String
+  representative String
+  document       String  @unique
+  contact        String
+  active         Boolean
+
+  zipCode      String
+  street       String
+  number       String
+  complement   String?
+  neighborhood String
+  city         String
+  state        String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("carriers")
+}
