@@ -14,6 +14,7 @@ import { UploadFileModule } from './app/upload-file/upload-file.module';
 import { VoucherModule } from './app/voucher/voucher.module';
 import { CoreModule } from './core/core.module';
 import { InfraModule } from './infra/infra.module';
+import { NfGenerationTestModule } from './app/nf-generation-test/nf-generation-test.module';
 import { TaxInvoiceModule } from './app/tax-invoice/tax-invoice.module';
 
 @Module({
@@ -32,6 +33,7 @@ import { TaxInvoiceModule } from './app/tax-invoice/tax-invoice.module';
     GlobalModule,
     ServiceModuleModule,
     TaxInvoiceModule,
+    NfGenerationTestModule,
     UploadFileModule,
     VoucherModule,
   ],

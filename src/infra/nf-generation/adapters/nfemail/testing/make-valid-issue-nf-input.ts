@@ -1,0 +1,100 @@
+import { IssueNfInputDto } from '../../../dtos/issue-nf.dto';
+import { NfEnvironment } from '../../../enums/nf-environment.enum';
+import { NfIssueFormat } from '../../../enums/nf-issue-format.enum';
+import { NfPartyType } from '../../../enums/nf-party-type.enum';
+
+export function makeValidIssueNfInput(overrides: Partial<IssueNfInputDto> = {}): IssueNfInputDto {
+  return {
+    format: NfIssueFormat.SEFAZ_TXT,
+    orderNumber: 'PED-123',
+    emitter: {
+      document: '28695096000179',
+      type: NfPartyType.PJ,
+      ie: '78714867',
+      companyName: 'ENNOVART',
+      fantasyName: 'ENNOVART',
+      email: 'emitente@empresa.com.br',
+      phone: '21999999999',
+      crt: 3,
+      address: {
+        zipCode: '22410000',
+        street: 'RUA X',
+        number: '10',
+        complement: '',
+        neighborhood: 'CENTRO',
+        city: 'Rio de Janeiro',
+        state: 'RJ',
+        cityCode: '3304557',
+        countryCode: '1058',
+      },
+    },
+    recipient: {
+      document: '82067053094',
+      type: NfPartyType.PF,
+      companyName: 'Felipe',
+      address: {
+        zipCode: '22411000',
+        street: 'Rua x',
+        number: '10',
+        complement: '',
+        neighborhood: 'Ipanema',
+        city: 'Rio de Janeiro',
+        state: 'RJ',
+        cityCode: '3304557',
+        countryCode: '1058',
+      },
+    },
+    items: [
+      {
+        description: 'teste',
+        quantity: 1,
+        unitValueInCents: 100,
+        taxation: {
+          cnaeCode: '6201500',
+          nbsCode: '123456789',
+          indopCode: '1',
+        },
+        fiscal: {
+          cfop: '5102',
+          ncm: '84439199',
+          cstIcms: '102',
+          cstPis: '07',
+          cstCofins: '07',
+          icmsRate: 18,
+          icmsBase: 1,
+          icmsValue: 0.18,
+          origin: 0,
+        },
+        ibsCbs: {
+          cst: '000',
+          cClassTrib: '000001',
+          baseValue: 1,
+          ibsStateRate: 0.1,
+          ibsStateValue: 0,
+          ibsCityRate: 0,
+          ibsCityValue: 0,
+          ibsTotalValue: 0,
+          cbsRate: 0.9,
+          cbsValue: 0.1,
+          itemTotalValue: 1,
+        },
+      },
+    ],
+    fiscal: {
+      environment: NfEnvironment.HOMOLOGATION,
+      series: 1,
+      nfeNumber: 1,
+      naturezaOperacao: 'VENDA',
+      operationType: 1,
+      finalidade: 1,
+      presenceIndicator: 9,
+      intermediaryIndicator: 0,
+      paymentMethod: '99',
+      paymentValue: 1,
+      freightMode: 9,
+      additionalInfo: 'Nota de teste',
+      orderReference: 'PED-123',
+    },
+    ...overrides,
+  };
+}

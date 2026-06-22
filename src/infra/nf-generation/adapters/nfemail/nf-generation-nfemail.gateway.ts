@@ -12,6 +12,8 @@ import { NfDto } from '../../dtos/nf.dto';
 import { NfIssueFormat } from '../../enums/nf-issue-format.enum';
 import { INfGenerationGateway } from '../../nf-generation.gateway';
 import { NfemailFindAllQueryDto, NfemailFindAllResponseDto, NfemailTaxInvoiceDto } from './dtos/nfemail.dto';
+import { buildNfemailIssueContent } from './mappers/nfemail-issue-content.mapper';
+import { validateIssueNfInput } from './mappers/nfemail-issue-input.validator';
 
 @Injectable()
 export class NfGenerationNfemailAdapterGateway implements INfGenerationGateway {
@@ -93,39 +95,22 @@ export class NfGenerationNfemailAdapterGateway implements INfGenerationGateway {
     }
   }
 
-  // TODO: revisar ainda
   public async issue(input: IssueNfInputDto): Promise<IssueNfOutputDto> {
-    if (!input.content?.trim()) {
-      throw new ExternalApiError('Conteúdo da nota fiscal é obrigatório');
-    }
+    validateIssueNfInput(input);
 
-    const { url, body } = this.getIssueRequest(input);
+    const content = buildNfemailIssueContent(input);
+    const { url, body } = this.getIssueRequest(input.format, content);
 
     try {
-      const result = await this.httpService.axiosRef.post<unknown>(url, body, {
+      const result = await this.httpService.axiosRef.post<number>(url, body, {
         ...this.getAuthConfig(),
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
       });
+      console.log({ result: result.data });
 
-      const externalId = this.mapNfemailIssueResponse(result.data);
-      if (externalId === null) {
-        throw new ExternalApiError('Resposta inválida da API de emissão de nota fiscal');
-      }
-
-      const output: IssueNfOutputDto = { externalId };
-
-      if (
-        result.data
-        && typeof result.data === 'object'
-        && 'cod_nfemail' in (result.data as object)
-        && 'cod_processo' in (result.data as object)
-      ) {
-        output.nf = this.mapNfemailToNf(result.data as NfemailTaxInvoiceDto);
-      }
-
-      return output;
+      return { externalId: await this.resolveIssueExternalId(input, Number(result.data)) };
     }
     catch (error) {
       this.logger.error(LogContext.NF_GENERATION, {
@@ -238,6 +223,34 @@ export class NfGenerationNfemailAdapterGateway implements INfGenerationGateway {
   }
 
   // -------- AUXILIARES --------
+  private async resolveIssueExternalId(input: IssueNfInputDto, postResponse: number): Promise<number> {
+    if (Number.isInteger(postResponse) && postResponse > 0) {
+      return postResponse;
+    }
+
+    // NFeMail pode retornar cod_processo (ex.: 0 = preparando assinatura) em vez de cod_nfemail.
+    if (!Number.isInteger(postResponse)) {
+      throw new ExternalApiError('NFeMail retornou resposta inválida ao emitir a nota fiscal');
+    }
+
+    const orderNumber = input.orderNumber?.trim() || input.fiscal.orderReference?.trim();
+    if (!orderNumber) {
+      throw new ExternalApiError(
+        'NFeMail aceitou a nota, mas não retornou o código interno. Informe orderNumber ou fiscal.orderReference para consulta.',
+      );
+    }
+
+    const notes = await this.findAll({ orderNumber, page: 1, limit: 1 });
+    const externalId = notes[0]?.externalId;
+    if (!externalId || externalId <= 0) {
+      throw new ExternalApiError(
+        'NFeMail não retornou o código interno da nota fiscal. Verifique o pedido no painel NFeMail.',
+      );
+    }
+
+    return externalId;
+  }
+
   private normalizeAccessKey(accessKey: string): string {
     const normalizedAccessKey = accessKey.replace(/\D/g, '');
     if (normalizedAccessKey.length !== NfGenerationNfemailAdapterGateway.ACCESS_KEY_LENGTH) {
@@ -247,19 +260,19 @@ export class NfGenerationNfemailAdapterGateway implements INfGenerationGateway {
     return normalizedAccessKey;
   }
 
-  private getIssueRequest(input: IssueNfInputDto): { url: string; body: string } {
+  private getIssueRequest(format: NfIssueFormat, content: string): { url: string; body: string } {
     const baseUrl = this.configService.nfemailApiUrl;
 
-    if (input.format === NfIssueFormat.RPS_XML) {
+    if (format === NfIssueFormat.RPS_XML) {
       return {
         url: `${baseUrl}/api/ArquivoXML`,
-        body: `sXML=${encodeURIComponent(input.content)}`,
+        body: `sXML=${encodeURIComponent(content)}`,
       };
     }
 
     return {
       url: `${baseUrl}/api/NotasFiscais`,
-      body: `sTXT=${encodeURIComponent(input.content)}`,
+      body: `sTXT=${encodeURIComponent(content)}`,
     };
   }
 
@@ -293,53 +306,4 @@ export class NfGenerationNfemailAdapterGateway implements INfGenerationGateway {
     };
   }
 
-  private mapNfemailIssueResponse(data: unknown): number | null {
-    if (typeof data === 'number' && Number.isFinite(data)) {
-      return data;
-    }
-
-    if (typeof data === 'string' && data.trim()) {
-      const parsed = Number(data.trim());
-      if (Number.isFinite(parsed)) {
-        return parsed;
-      }
-    }
-
-    if (data && typeof data === 'object') {
-      const record = data as Record<string, unknown>;
-      const candidates = [
-        record.cod_nfemail,
-        record.CodNfemail,
-        record.id,
-        record.Id,
-      ];
-
-      for (const candidate of candidates) {
-        if (typeof candidate === 'number' && Number.isFinite(candidate)) {
-          return candidate;
-        }
-        if (typeof candidate === 'string' && candidate.trim()) {
-          const parsed = Number(candidate.trim());
-          if (Number.isFinite(parsed)) {
-            return parsed;
-          }
-        }
-      }
-
-      if ('cod_nfemail' in record) {
-        const externalId = record.cod_nfemail;
-        if (typeof externalId === 'number' && Number.isFinite(externalId)) {
-          return externalId;
-        }
-        if (typeof externalId === 'string' && externalId.trim()) {
-          const parsed = Number(externalId.trim());
-          if (Number.isFinite(parsed)) {
-            return parsed;
-          }
-        }
-      }
-    }
-
-    return null;
-  }
 }
