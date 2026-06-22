@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
 import { Claim } from 'src/app/authentication/domain/authorization/claim';
 import { RequiredClaims } from 'src/app/authentication/infra/decorators/required-claims.decorator';
@@ -8,6 +8,7 @@ import { ActivateCarrier } from 'src/app/carrier/application/usecases/activate-c
 import { CreateCarrier } from 'src/app/carrier/application/usecases/create-carrier/create-carrier.service';
 import { CreateCarrierInputDto, CreateCarrierOutputDto } from 'src/app/carrier/application/usecases/create-carrier/dtos/create-carrier.dto';
 import { DeactivateCarrier } from 'src/app/carrier/application/usecases/deactivate-carrier/deactivate-carrier.service';
+import { DeleteCarrier } from 'src/app/carrier/application/usecases/delete-carrier/delete-carrier.service';
 import { EditCarrierInputDto } from 'src/app/carrier/application/usecases/edit-carrier/dtos/edit-carrier.dto';
 import { EditCarrier } from 'src/app/carrier/application/usecases/edit-carrier/edit-carrier.service';
 import { FindAllCarrierQueryDto } from 'src/app/carrier/application/usecases/find-all-carrier/dtos/find-all-carrier.dto';
@@ -25,6 +26,7 @@ export class CarrierAdminController {
     private readonly activateCarrier: ActivateCarrier,
     private readonly createCarrier: CreateCarrier,
     private readonly deactivateCarrier: DeactivateCarrier,
+    private readonly deleteCarrier: DeleteCarrier,
     private readonly findAllCarrier: FindAllCarrier,
     private readonly findCarrierById: FindCarrierById,
     private readonly editCarrier: EditCarrier,
@@ -104,5 +106,18 @@ export class CarrierAdminController {
   })
   public update(@Param() params: Params, @Body() body: EditCarrierInputDto): Promise<SuccessMessage> {
     return this.editCarrier.execute(params.id, body);
+  }
+
+  @Delete(':id')
+  @RequiredClaims(Claim.CARRIER_WRITE)
+  @Swagger({
+    tags: ['Transportadoras'],
+    summary: 'Excluir transportadora',
+    applyBadRequest: true,
+    applyNotFound: true,
+    okResponse: SuccessMessage,
+  })
+  public remove(@Param() params: Params): Promise<SuccessMessage> {
+    return this.deleteCarrier.execute(params.id);
   }
 }

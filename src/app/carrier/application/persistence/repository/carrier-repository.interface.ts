@@ -4,4 +4,5 @@ export interface ICarrierRepository {
   save(entity: Carrier): Promise<number>;
   edit(entity: Carrier): Promise<void>;
   findById(id: number): Promise<Carrier | null>;
+  delete(id: number): Promise<void>;
 }

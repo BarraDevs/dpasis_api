@@ -117,4 +117,28 @@ describe('CarrierRepositoryAdapterPrisma - Integration tests', () => {
       expect(result?.props.name).toBe('Transportadora LTDA');
     });
   });
+
+  describe('delete', () => {
+    it('should remove carrier from database', async() => {
+      const id = await sut.save(CarrierFactory.create({
+        name: 'Transportadora LTDA',
+        fantasyName: 'Transportadora',
+        representative: 'João Silva',
+        document: '09.748.165/0001-10',
+        contact: 'João Silva - (11) 99999-9999',
+        zipCode: '01310100',
+        street: 'Av Paulista',
+        number: '1000',
+        complement: null,
+        neighborhood: 'Bela Vista',
+        city: 'São Paulo',
+        state: 'SP',
+      }));
+
+      await sut.delete(id);
+
+      const deleted = await prisma.carrier.findUnique({ where: { id } });
+      expect(deleted).toBeNull();
+    });
+  });
 });

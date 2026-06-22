@@ -6,6 +6,7 @@ import { ActivateCarrier } from 'src/app/carrier/application/usecases/activate-c
 import { CreateCarrier } from 'src/app/carrier/application/usecases/create-carrier/create-carrier.service';
 import { CreateCarrierInputDto, CreateCarrierOutputDto } from 'src/app/carrier/application/usecases/create-carrier/dtos/create-carrier.dto';
 import { DeactivateCarrier } from 'src/app/carrier/application/usecases/deactivate-carrier/deactivate-carrier.service';
+import { DeleteCarrier } from 'src/app/carrier/application/usecases/delete-carrier/delete-carrier.service';
 import { EditCarrierInputDto } from 'src/app/carrier/application/usecases/edit-carrier/dtos/edit-carrier.dto';
 import { EditCarrier } from 'src/app/carrier/application/usecases/edit-carrier/edit-carrier.service';
 import { FindAllCarrierQueryDto } from 'src/app/carrier/application/usecases/find-all-carrier/dtos/find-all-carrier.dto';
@@ -21,6 +22,7 @@ describe('CarrierAdminController - Unit tests', () => {
   let activateCarrierService: ActivateCarrier;
   let createCarrierService: CreateCarrier;
   let deactivateCarrierService: DeactivateCarrier;
+  let deleteCarrierService: DeleteCarrier;
   let findAllCarrierService: FindAllCarrier;
   let findCarrierByIdService: FindCarrierById;
   let editCarrierService: EditCarrier;
@@ -33,6 +35,7 @@ describe('CarrierAdminController - Unit tests', () => {
         { provide: ActivateCarrier, useValue: createMock<ActivateCarrier>() },
         { provide: CreateCarrier, useValue: createMock<CreateCarrier>() },
         { provide: DeactivateCarrier, useValue: createMock<DeactivateCarrier>() },
+        { provide: DeleteCarrier, useValue: createMock<DeleteCarrier>() },
         { provide: FindAllCarrier, useValue: createMock<FindAllCarrier>() },
         { provide: FindCarrierById, useValue: createMock<FindCarrierById>() },
         { provide: EditCarrier, useValue: createMock<EditCarrier>() },
@@ -43,6 +46,7 @@ describe('CarrierAdminController - Unit tests', () => {
     activateCarrierService = module.get(ActivateCarrier);
     createCarrierService = module.get(CreateCarrier);
     deactivateCarrierService = module.get(DeactivateCarrier);
+    deleteCarrierService = module.get(DeleteCarrier);
     findAllCarrierService = module.get(FindAllCarrier);
     findCarrierByIdService = module.get(FindCarrierById);
     editCarrierService = module.get(EditCarrier);
@@ -128,6 +132,19 @@ describe('CarrierAdminController - Unit tests', () => {
 
       expect(result).toEqual(output);
       expect(updateSpy).toHaveBeenCalledWith(params.id, body);
+    });
+  });
+
+  describe('remove', () => {
+    it('should call deleteCarrier.execute with params.id', async() => {
+      const params = createMock<Params>();
+      const output = createMock<SuccessMessage>();
+      const removeSpy = jest.spyOn(deleteCarrierService, 'execute').mockResolvedValue(output);
+
+      const result = await sut.remove(params);
+
+      expect(result).toEqual(output);
+      expect(removeSpy).toHaveBeenCalledWith(params.id);
     });
   });
 });

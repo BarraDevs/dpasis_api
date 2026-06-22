@@ -4,6 +4,7 @@ import { CarrierPersistenceModule } from './application/persistence/carrier-pers
 import { ActivateCarrier } from './application/usecases/activate-carrier/activate-carrier.service';
 import { CreateCarrier } from './application/usecases/create-carrier/create-carrier.service';
 import { DeactivateCarrier } from './application/usecases/deactivate-carrier/deactivate-carrier.service';
+import { DeleteCarrier } from './application/usecases/delete-carrier/delete-carrier.service';
 import { EditCarrier } from './application/usecases/edit-carrier/edit-carrier.service';
 import { FindAllCarrier } from './application/usecases/find-all-carrier/find-all-carrier.service';
 import { FindCarrierById } from './application/usecases/find-carrier-by-id/find-carrier-by-id.service';
@@ -21,6 +22,7 @@ import { CarrierAdminController } from './infra/drivers/http/admin/carrier-admin
     ActivateCarrier,
     CreateCarrier,
     DeactivateCarrier,
+    DeleteCarrier,
     EditCarrier,
     FindAllCarrier,
     FindCarrierById,

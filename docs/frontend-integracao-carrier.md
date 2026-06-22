@@ -21,8 +21,9 @@ Novo recurso **Transportadoras** para cadastro de empresas transportadoras (raz�
 | `PATCH` | `/admin/carrier/:id/activate` | `CARRIER_WRITE` | `{ message: string }` |
 | `PATCH` | `/admin/carrier/:id/deactivate` | `CARRIER_WRITE` | `{ message: string }` |
 | `PATCH` | `/admin/carrier/:id` | `CARRIER_WRITE` | `{ message: string }` — body parcial |
+| `DELETE` | `/admin/carrier/:id` | `CARRIER_WRITE` | `{ message: string }` |
 
-Não há endpoint de exclusão; use **desativar** para inativar o registro.
+Exclusão é **física** (remove o registro). Para apenas inativar, use `PATCH …/deactivate`.
 
 ### Query em `GET /admin/carrier`
 
@@ -114,7 +115,7 @@ Admins existentes **não** recebem as claims automaticamente; conceder `carrier`
 
 1. Criar tela de listagem consumindo `GET /admin/carrier` com paginação, busca e filtro `active`.
 2. Formulário de criação/edição com todos os campos obrigatórios; `complement` opcional.
-3. Ações **Ativar** / **Desativar** via `PATCH …/activate` e `PATCH …/deactivate` (não há `DELETE`).
+3. Ações **Ativar** / **Desativar** via `PATCH …/activate` e `PATCH …/deactivate`; **Excluir** via `DELETE /admin/carrier/:id` (com confirmação na UI).
 4. Mapear permissões `CARRIER_READ` / `CARRIER_WRITE` na navegação e botões.
 5. Tratar 409 ao salvar documento duplicado e exibir `message` da API.
 6. Regenerar tipos a partir do Swagger (`/swagger`) após deploy.

@@ -39,4 +39,10 @@ export class CarrierRepositoryAdapterPrisma implements ICarrierRepository {
       complement: data.complement ?? null,
     });
   }
+
+  public async delete(id: number): Promise<void> {
+    await this.prisma.carrier.delete({
+      where: { id },
+    });
+  }
 }
