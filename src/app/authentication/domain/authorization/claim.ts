@@ -86,6 +86,9 @@ export const Claim = {
   RESALE_CONTACT_READ: { subject: ClaimSubject.ResaleContact, action: ClaimAction.Read },
   RESALE_CONTACT_WRITE: { subject: ClaimSubject.ResaleContact, action: ClaimAction.Write },
 
+  SELLER_READ: { subject: ClaimSubject.Seller, action: ClaimAction.Read },
+  SELLER_WRITE: { subject: ClaimSubject.Seller, action: ClaimAction.Write },
+
   CLIENT_ADDRESS_READ: { subject: ClaimSubject.ClientAddress, action: ClaimAction.Read },
   CLIENT_ADDRESS_WRITE: { subject: ClaimSubject.ClientAddress, action: ClaimAction.Write },
 

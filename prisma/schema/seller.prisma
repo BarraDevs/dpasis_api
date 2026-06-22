@@ -1,0 +1,23 @@
+model Seller {
+  id                Int      @id @default(autoincrement())
+  name              String
+  phone             String
+  nickname          String?
+  whatsapp          String
+  email             String   @unique
+  commission        Float
+  profilePictureUrl String?  @db.Text
+  observation       String?  @db.Text
+  zipCode           String
+  street            String
+  number            String
+  complement        String?
+  neighborhood      String
+  city              String
+  state             String
+  active            Boolean
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("sellers")
+}

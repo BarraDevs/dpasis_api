@@ -57,6 +57,9 @@ const TOKENS = {
   CompanyDao: Symbol.for('CompanyDao'),
   CompanyRepository: Symbol.for('CompanyRepository'),
 
+  SellerDao: Symbol.for('SellerDao'),
+  SellerRepository: Symbol.for('SellerRepository'),
+
   AdminDao: Symbol.for('AdminDao'),
   AdminRepository: Symbol.for('AdminRepository'),
 

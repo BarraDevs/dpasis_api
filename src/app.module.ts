@@ -10,6 +10,7 @@ import { FaqModule } from './app/faq/faq.module';
 import { GlobalModule } from './app/global/global.module';
 import { HonorificModule } from './app/honorific/honorific.module';
 import { ResaleModuleModule } from './app/resale/resale-module.module';
+import { SellerModule } from './app/seller/seller.module';
 import { ServiceModuleModule } from './app/service/service-module.module';
 import { UploadFileModule } from './app/upload-file/upload-file.module';
 import { VoucherModule } from './app/voucher/voucher.module';
@@ -29,6 +30,7 @@ import { TaxInvoiceModule } from './app/tax-invoice/tax-invoice.module';
     CompanyModule,
     ClientModuleModule,
     ResaleModuleModule,
+    SellerModule,
     ExternalApisModule,
     FaqModule,
     HonorificModule,
