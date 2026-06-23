@@ -77,6 +77,9 @@ export const Claim = {
   COMPANY_READ: { subject: ClaimSubject.Company, action: ClaimAction.Read },
   COMPANY_WRITE: { subject: ClaimSubject.Company, action: ClaimAction.Write },
 
+  PROVIDER_READ: { subject: ClaimSubject.Provider, action: ClaimAction.Read },
+  PROVIDER_WRITE: { subject: ClaimSubject.Provider, action: ClaimAction.Write },
+
   CLIENT_READ: { subject: ClaimSubject.Client, action: ClaimAction.Read },
   CLIENT_WRITE: { subject: ClaimSubject.Client, action: ClaimAction.Write },
 

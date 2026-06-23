@@ -1,0 +1,26 @@
+model Provider {
+  id           Int     @id @default(autoincrement())
+  name         String
+  type         String
+  valueInCents Int
+  document     String  @unique
+  ie           String?
+  paymentDate  Int?
+  deadline     Int?
+  fantasyName  String
+  email        String  @unique
+  website      String
+  zipCode      String
+  street       String
+  number       String
+  complement   String?
+  neighborhood String
+  city         String
+  state        String
+  active       Boolean
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("providers")
+}
