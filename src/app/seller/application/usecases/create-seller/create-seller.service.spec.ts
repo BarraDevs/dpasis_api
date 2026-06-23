@@ -1,99 +1,124 @@
+import { createMock } from '@golevelup/ts-jest';
 import { Test } from '@nestjs/testing';
-import { PrismaService } from 'src/infra/database/prisma/prisma.service';
+import { UploadSingle } from 'src/app/upload-file/application/usecases/upload-single/upload-single.service';
+import { TOKENS } from 'src/core/di/token';
 import { EmailAlreadyTakenError } from 'src/shared/errors/email-already-taken';
-import { InvalidCommissionError } from 'src/shared/value-objects/commission/commision.vo.error';
-import { SellerModule } from '../../../seller.module';
+import type { ISellerDao } from '../../persistence/dao/seller-dao.interface';
+import type { ISellerRepository } from '../../persistence/repository/seller-repository.interface';
 import { CreateSeller } from './create-seller.service';
-import { CreateSellerInputDto } from './dtos/create-seller.dto';
+import { CreateSellerInputDto, CreateSellerOutputDto } from './dtos/create-seller.dto';
 
-describe('CreateSeller - Integration tests', () => {
+const mockFile = {
+  fieldname: 'file',
+  originalname: 'photo.png',
+  encoding: '7bit',
+  mimetype: 'image/png',
+  buffer: Buffer.from(''),
+  size: 200,
+} as Express.Multer.File;
+
+function makeValidCreateSellerInput(overrides: Partial<CreateSellerInputDto> = {}): CreateSellerInputDto {
+  return {
+    name: 'João Silva',
+    phone: '1133334444',
+    nickname: 'João',
+    whatsapp: '11999998888',
+    email: 'joao@vendedor.com',
+    commission: 10.5,
+    observation: null,
+    zipCode: '01310100',
+    street: 'Av Paulista',
+    number: '1000',
+    complement: null,
+    neighborhood: 'Bela Vista',
+    city: 'São Paulo',
+    state: 'SP',
+    ...overrides,
+  };
+}
+
+describe('CreateSeller - Unit tests', () => {
   let sut: CreateSeller;
-  let prisma: PrismaService;
+  let sellerDao: ISellerDao;
+  let sellerRepository: ISellerRepository;
+  let uploadSingle: UploadSingle;
 
-  beforeAll(async() => {
+  beforeEach(async() => {
     const module = await Test.createTestingModule({
-      imports: [SellerModule],
+      providers: [
+        CreateSeller,
+        { provide: TOKENS.SellerDao, useValue: createMock<ISellerDao>() },
+        { provide: TOKENS.SellerRepository, useValue: createMock<ISellerRepository>() },
+        { provide: UploadSingle, useValue: createMock<UploadSingle>() },
+      ],
     }).compile();
 
     sut = module.get(CreateSeller);
-    prisma = module.get(PrismaService);
+    sellerDao = module.get(TOKENS.SellerDao);
+    sellerRepository = module.get(TOKENS.SellerRepository);
+    uploadSingle = module.get(UploadSingle);
   });
-
-  beforeEach(async() => {
-    await prisma.truncate();
-  });
-
-  afterAll(async() => {
-    await prisma.truncate();
-    await prisma.$disconnect();
-  });
-
-  function makeValidInput(overrides: Partial<CreateSellerInputDto> = {}): CreateSellerInputDto {
-    return {
-      name: 'João Silva',
-      phone: '1133334444',
-      nickname: 'João',
-      whatsapp: '11999998888',
-      email: 'joao@vendedor.com',
-      commission: 10.5,
-      profilePictureUrl: null,
-      observation: null,
-      zipCode: '01310100',
-      street: 'Av Paulista',
-      number: '1000',
-      complement: null,
-      neighborhood: 'Bela Vista',
-      city: 'São Paulo',
-      state: 'SP',
-      ...overrides,
-    };
-  }
 
   it('should be defined', () => {
     expect(sut).toBeDefined();
   });
 
-  describe('success path', () => {
-    it('should create seller and persist in database', async() => {
-      const input = makeValidInput();
+  it('should save entity and return id when file is omitted', async() => {
+    // Arrange
+    const input = makeValidCreateSellerInput();
+    jest.spyOn(sellerDao, 'findByEmail').mockResolvedValue(null);
+    jest.spyOn(sellerRepository, 'save').mockResolvedValue(42);
+    const editSpy = jest.spyOn(sellerRepository, 'edit');
 
-      const result = await sut.execute(input);
+    // Act
+    const result = await sut.execute(input);
 
-      expect(result).toHaveProperty('id');
-      expect(typeof result.id).toBe('number');
-      expect(result.id).toBeGreaterThan(0);
-
-      const saved = await prisma.seller.findFirst({
-        where: { email: 'joao@vendedor.com' },
-      });
-      expect(saved).not.toBeNull();
-      expect(saved?.name).toBe('João Silva');
-      expect(saved?.active).toBe(true);
-      expect(saved?.commission).toBe(10.5);
-    });
+    // Assert
+    expect(sellerRepository.save).toHaveBeenCalledTimes(1);
+    expect(uploadSingle.execute).not.toHaveBeenCalled();
+    expect(editSpy).not.toHaveBeenCalled();
+    expect(result).toEqual<CreateSellerOutputDto>({ id: 42 });
   });
 
-  describe('email already taken', () => {
-    it('should throw EmailAlreadyTakenError when email already exists', async() => {
-      const input = makeValidInput();
+  it('should upload profile picture and edit seller when file is provided', async() => {
+    // Arrange
+    const input = makeValidCreateSellerInput();
+    const newUrl = 'https://cdn.example.com/sellers/7/new.png';
+    jest.spyOn(sellerDao, 'findByEmail').mockResolvedValue(null);
+    jest.spyOn(sellerRepository, 'save').mockResolvedValue(7);
+    jest.spyOn(uploadSingle, 'execute').mockResolvedValue({ url: newUrl });
+    const editSpy = jest.spyOn(sellerRepository, 'edit');
 
-      await sut.execute(input);
+    // Act
+    await sut.execute(input, mockFile);
 
-      await expect(sut.execute(input)).rejects.toThrow(EmailAlreadyTakenError);
-    });
+    // Assert
+    expect(uploadSingle.execute).toHaveBeenCalledWith(mockFile, 'sellers/7/profile-picture');
+    expect(editSpy).toHaveBeenCalledTimes(1);
+    expect(editSpy.mock.calls[0]?.[0].props.profilePictureUrl).toBe(newUrl);
   });
 
-  describe('validation (factory)', () => {
-    it('should throw when commission is invalid', async() => {
-      const input = makeValidInput({ commission: 150 });
+  it('should throw EmailAlreadyTakenError when email already exists', async() => {
+    // Arrange
+    const input = makeValidCreateSellerInput();
+    jest.spyOn(sellerDao, 'findByEmail').mockResolvedValue({ id: 99 });
+    const saveSpy = jest.spyOn(sellerRepository, 'save');
 
-      await expect(sut.execute(input)).rejects.toThrow(InvalidCommissionError);
-    });
+    // Act & Assert
+    await expect(sut.execute(input)).rejects.toThrow(EmailAlreadyTakenError);
+    expect(saveSpy).not.toHaveBeenCalled();
+  });
 
-    it('should throw when name is empty', async() => {
-      const input = makeValidInput({ name: '' });
+  it('should check email before saving', async() => {
+    // Arrange
+    const input = makeValidCreateSellerInput();
+    const findByEmailSpy = jest.spyOn(sellerDao, 'findByEmail').mockResolvedValue(null);
+    jest.spyOn(sellerRepository, 'save').mockResolvedValue(1);
 
-      await expect(sut.execute(input)).rejects.toThrow('O campo name não pode ser vazio');
-    });
+    // Act
+    await sut.execute(input);
+
+    // Assert
+    expect(findByEmailSpy).toHaveBeenCalledWith(input.email);
   });
 });

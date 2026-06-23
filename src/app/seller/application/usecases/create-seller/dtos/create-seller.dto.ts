@@ -1,5 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 import { IsEmail, IsNotEmpty, IsNumber, IsOptional, IsString, Max, Min } from 'class-validator';
+import { StringToNumber } from 'src/infra/validators/class/decorators/string-number/string-number';
 import { Trim } from 'src/infra/validators/class/decorators/trim/trim';
 
 export class CreateSellerInputDto {
@@ -19,7 +21,7 @@ export class CreateSellerInputDto {
   @IsOptional()
   @IsString({ message: '$property deve ser uma string' })
   @Trim()
-  nickname: string | null;
+  nickname?: string | null;
 
   @ApiProperty({ example: '11999998888' })
   @IsString({ message: '$property deve ser uma string' })
@@ -37,19 +39,15 @@ export class CreateSellerInputDto {
   @IsNumber({}, { message: '$property deve ser um número' })
   @Min(0, { message: '$property deve ser no mínimo 0' })
   @Max(100, { message: '$property deve ser no máximo 100' })
+  @StringToNumber()
+  @Transform(({ value }) => value === '' ? null : Number(value))
   commission: number;
-
-  @ApiPropertyOptional({ example: 'https://example.com/foto.jpg' })
-  @IsOptional()
-  @IsString({ message: '$property deve ser uma string' })
-  @Trim()
-  profilePictureUrl: string | null;
 
   @ApiPropertyOptional({ example: 'Observações sobre o vendedor' })
   @IsOptional()
   @IsString({ message: '$property deve ser uma string' })
   @Trim()
-  observation: string | null;
+  observation?: string | null;
 
   @ApiProperty({ example: '01310100' })
   @IsString({ message: '$property deve ser uma string' })
@@ -73,7 +71,7 @@ export class CreateSellerInputDto {
   @IsOptional()
   @IsString({ message: '$property deve ser uma string' })
   @Trim()
-  complement: string | null;
+  complement?: string | null;
 
   @ApiProperty({ example: 'Bela Vista' })
   @IsString({ message: '$property deve ser uma string' })

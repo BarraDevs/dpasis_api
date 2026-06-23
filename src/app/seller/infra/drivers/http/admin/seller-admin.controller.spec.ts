@@ -57,15 +57,16 @@ describe('SellerAdminController - Unit tests', () => {
   });
 
   describe('create', () => {
-    it('should call createSeller.execute with body', async() => {
+    it('should call createSeller.execute with body and file', async() => {
       const body = createMock<CreateSellerInputDto>();
+      const file = createMock<Express.Multer.File>();
       const output = createMock<CreateSellerOutputDto>();
       const createSpy = jest.spyOn(createSellerService, 'execute').mockResolvedValue(output);
 
-      const result = await sut.create(body);
+      const result = await sut.create(body, file);
 
       expect(result).toEqual(output);
-      expect(createSpy).toHaveBeenCalledWith(body);
+      expect(createSpy).toHaveBeenCalledWith(body, file);
     });
   });
 
@@ -122,16 +123,17 @@ describe('SellerAdminController - Unit tests', () => {
   });
 
   describe('update', () => {
-    it('should call editSeller.execute with params.id and body', async() => {
+    it('should call editSeller.execute with params.id, body and file', async() => {
       const params = createMock<Params>();
       const body = createMock<EditSellerInputDto>();
+      const file = createMock<Express.Multer.File>();
       const output = createMock<SuccessMessage>();
       const updateSpy = jest.spyOn(editSellerService, 'execute').mockResolvedValue(output);
 
-      const result = await sut.update(params, body);
+      const result = await sut.update(params, body, file);
 
       expect(result).toEqual(output);
-      expect(updateSpy).toHaveBeenCalledWith(params.id, body);
+      expect(updateSpy).toHaveBeenCalledWith(params.id, body, file);
     });
   });
 

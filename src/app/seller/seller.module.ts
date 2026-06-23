@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AuthenticationGuardsModule } from 'src/app/authentication/application/guards/guards.module';
+import { UploadFileQueueModule } from 'src/app/upload-file/application/queue/upload-file-queue.module';
+import { UploadFileModule } from 'src/app/upload-file/upload-file.module';
 import { SellerPersistenceModule } from './application/persistence/seller-persistence.module';
 import { ActivateSeller } from './application/usecases/activate-seller/activate-seller.service';
 import { CreateSeller } from './application/usecases/create-seller/create-seller.service';
@@ -14,6 +16,8 @@ import { SellerAdminController } from './infra/drivers/http/admin/seller-admin.c
   imports: [
     SellerPersistenceModule,
     AuthenticationGuardsModule,
+    UploadFileModule,
+    UploadFileQueueModule.register(),
   ],
   controllers: [
     SellerAdminController,

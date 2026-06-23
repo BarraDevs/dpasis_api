@@ -20,7 +20,6 @@ function makeValidInputDto(overrides: Partial<CreateSellerInputDto> = {}): Creat
     whatsapp: '11999998888',
     email: 'joao@vendedor.com',
     commission: 10.5,
-    profilePictureUrl: null,
     observation: null,
     zipCode: '01310100',
     street: 'Av Paulista',
@@ -49,9 +48,35 @@ describe('CreateSellerInputDto', () => {
         expectMessageToContain(error.getResponse().message, 'name');
       });
     });
+
+    it('should trim whitespace', async() => {
+      const result = await target.transform(makeValidInputDto({ name: '  João Silva  ' }), metadata);
+
+      expect(result.name).toBe('João Silva');
+    });
+  });
+
+  describe('phone field', () => {
+    it.each([undefined, null, '', '  '])('should throw if phone is empty (%s)', async(value: unknown) => {
+      const data = makeValidInputDto({ phone: value as string });
+
+      expect.assertions(1);
+      return target.transform(data, metadata).catch((error) => {
+        expectMessageToContain(error.getResponse().message, 'phone');
+      });
+    });
   });
 
   describe('email field', () => {
+    it.each([undefined, null, '', '  '])('should throw if email is empty (%s)', async(value: unknown) => {
+      const data = makeValidInputDto({ email: value as string });
+
+      expect.assertions(1);
+      return target.transform(data, metadata).catch((error) => {
+        expectMessageToContain(error.getResponse().message, 'email');
+      });
+    });
+
     it('should throw if email is invalid', async() => {
       const data = makeValidInputDto({ email: 'invalid' });
 
@@ -60,9 +85,38 @@ describe('CreateSellerInputDto', () => {
         expectMessageToContain(error.getResponse().message, 'email');
       });
     });
+
+    it('should trim whitespace', async() => {
+      const result = await target.transform(
+        makeValidInputDto({ email: '  joao@vendedor.com  ' }),
+        metadata,
+      );
+
+      expect(result.email).toBe('joao@vendedor.com');
+    });
   });
 
   describe('commission field', () => {
+    it('should coerce commission from multipart string', async() => {
+      const data = { ...makeValidInputDto(), commission: '15.5' as unknown as number };
+
+      const result = await target.transform(data, metadata);
+
+      expect(result.commission).toBe(15.5);
+    });
+
+    it('should accept commission at boundary 0', async() => {
+      const result = await target.transform(makeValidInputDto({ commission: 0 }), metadata);
+
+      expect(result.commission).toBe(0);
+    });
+
+    it('should accept commission at boundary 100', async() => {
+      const result = await target.transform(makeValidInputDto({ commission: 100 }), metadata);
+
+      expect(result.commission).toBe(100);
+    });
+
     it('should throw if commission is above 100', async() => {
       const data = makeValidInputDto({ commission: 101 });
 

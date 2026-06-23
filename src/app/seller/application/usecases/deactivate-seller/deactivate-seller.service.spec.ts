@@ -1,64 +1,55 @@
+import { createMock } from '@golevelup/ts-jest';
 import { Test } from '@nestjs/testing';
-import { PrismaService } from 'src/infra/database/prisma/prisma.service';
-import { SellerNotFoundError } from '../../../domain/errors/seller-not-found.error';
-import { SellerModule } from '../../../seller.module';
-import { CreateSeller } from '../create-seller/create-seller.service';
+import { Seller } from 'src/app/seller/domain/entities/seller.entity';
+import { SellerNotFoundError } from 'src/app/seller/domain/errors/seller-not-found.error';
+import { TOKENS } from 'src/core/di/token';
+import { SuccessMessage } from 'src/core/dtos/success-message.dto';
+import type { ISellerRepository } from '../../persistence/repository/seller-repository.interface';
 import { DeactivateSeller } from './deactivate-seller.service';
 
-describe('DeactivateSeller - Integration tests', () => {
+describe('DeactivateSeller - Unit tests', () => {
   let sut: DeactivateSeller;
-  let createSeller: CreateSeller;
-  let prisma: PrismaService;
+  let sellerRepository: ISellerRepository;
 
-  beforeAll(async() => {
+  beforeEach(async() => {
     const module = await Test.createTestingModule({
-      imports: [SellerModule],
+      providers: [
+        DeactivateSeller,
+        { provide: TOKENS.SellerRepository, useValue: createMock<ISellerRepository>() },
+      ],
     }).compile();
 
     sut = module.get(DeactivateSeller);
-    createSeller = module.get(CreateSeller);
-    prisma = module.get(PrismaService);
-  });
-
-  beforeEach(async() => {
-    await prisma.truncate();
-  });
-
-  afterAll(async() => {
-    await prisma.truncate();
-    await prisma.$disconnect();
+    sellerRepository = module.get(TOKENS.SellerRepository);
   });
 
   it('should be defined', () => {
     expect(sut).toBeDefined();
   });
 
-  it('should deactivate seller', async() => {
-    const { id } = await createSeller.execute({
-      name: 'João Silva',
-      phone: '1133334444',
-      nickname: null,
-      whatsapp: '11999998888',
-      email: 'joao@vendedor.com',
-      commission: 10,
-      profilePictureUrl: null,
-      observation: null,
-      zipCode: '01310100',
-      street: 'Av Paulista',
-      number: '1000',
-      complement: null,
-      neighborhood: 'Bela Vista',
-      city: 'São Paulo',
-      state: 'SP',
-    });
+  it('should throw SellerNotFoundError when seller does not exist', async() => {
+    // Arrange
+    jest.spyOn(sellerRepository, 'findById').mockResolvedValue(null);
+    const editSpy = jest.spyOn(sellerRepository, 'edit');
 
-    await sut.execute(id);
-
-    const updated = await prisma.seller.findUnique({ where: { id } });
-    expect(updated?.active).toBe(false);
+    // Act & Assert
+    await expect(sut.execute(1)).rejects.toThrow(SellerNotFoundError);
+    expect(editSpy).not.toHaveBeenCalled();
   });
 
-  it('should throw SellerNotFoundError when seller does not exist', async() => {
-    await expect(sut.execute(999)).rejects.toThrow(SellerNotFoundError);
+  it('should deactivate seller and persist changes', async() => {
+    // Arrange
+    const seller = createMock<Seller>();
+    jest.spyOn(sellerRepository, 'findById').mockResolvedValue(seller);
+    const deactivateSpy = jest.spyOn(seller, 'deactivate');
+    const editSpy = jest.spyOn(sellerRepository, 'edit');
+
+    // Act
+    const result = await sut.execute(1);
+
+    // Assert
+    expect(deactivateSpy).toHaveBeenCalled();
+    expect(editSpy).toHaveBeenCalledWith(seller);
+    expect(result).toEqual<SuccessMessage>({ message: 'Vendedor desativado com sucesso' });
   });
 });

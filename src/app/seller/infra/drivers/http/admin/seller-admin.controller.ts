@@ -1,4 +1,17 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UploadedFile,
+  UseInterceptors,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiConsumes } from '@nestjs/swagger';
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
 import { Claim } from 'src/app/authentication/domain/authorization/claim';
 import { RequiredClaims } from 'src/app/authentication/infra/decorators/required-claims.decorator';
@@ -14,6 +27,7 @@ import { EditSeller } from 'src/app/seller/application/usecases/edit-seller/edit
 import { FindAllSellerQueryDto } from 'src/app/seller/application/usecases/find-all-seller/dtos/find-all-seller.dto';
 import { FindAllSeller } from 'src/app/seller/application/usecases/find-all-seller/find-all-seller.service';
 import { FindSellerById } from 'src/app/seller/application/usecases/find-seller-by-id/find-seller-by-id.service';
+import { UploadSingleInputDto } from 'src/app/upload-file/application/usecases/upload-single/dtos/upload-single.dto';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
 import { Swagger } from 'src/infra/openapi/swagger';
 import { Params } from 'src/infra/validators/class/dtos/params';
@@ -34,14 +48,20 @@ export class SellerAdminController {
 
   @Post()
   @RequiredClaims(Claim.SELLER_WRITE)
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileInterceptor('file'))
   @Swagger({
     tags: ['Vendedores'],
     summary: 'Criar novo vendedor',
     applyBadRequest: true,
+    mergeRequestBody: [CreateSellerInputDto, UploadSingleInputDto],
     createdResponse: CreateSellerOutputDto,
   })
-  public create(@Body() body: CreateSellerInputDto): Promise<CreateSellerOutputDto> {
-    return this.createSeller.execute(body);
+  public create(
+    @Body() body: CreateSellerInputDto,
+    @UploadedFile() file?: Express.Multer.File,
+  ): Promise<CreateSellerOutputDto> {
+    return this.createSeller.execute(body, file);
   }
 
   @Get()
@@ -97,15 +117,22 @@ export class SellerAdminController {
 
   @Patch(':id')
   @RequiredClaims(Claim.SELLER_WRITE)
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileInterceptor('file'))
   @Swagger({
     tags: ['Vendedores'],
     summary: 'Editar vendedor',
     applyBadRequest: true,
     applyNotFound: true,
+    mergeRequestBody: [EditSellerInputDto, UploadSingleInputDto],
     okResponse: SuccessMessage,
   })
-  public update(@Param() params: Params, @Body() body: EditSellerInputDto): Promise<SuccessMessage> {
-    return this.editSeller.execute(params.id, body);
+  public update(
+    @Param() params: Params,
+    @Body() body: EditSellerInputDto,
+    @UploadedFile() file?: Express.Multer.File,
+  ): Promise<SuccessMessage> {
+    return this.editSeller.execute(params.id, body, file);
   }
 
   @Delete(':id')
