@@ -9,7 +9,7 @@ import { ExternalApisModule } from './app/external-apis/external-apis.module';
 import { FaqModule } from './app/global/faq/faq.module';
 import { GlobalModule } from './app/global/global.module';
 import { HonorificModule } from './app/global/honorific/honorific.module';
-import { ProviderModule } from './app/provider/provider.module';
+import { ProviderModuleModule } from './app/provider/provider-module.module';
 import { ResaleModuleModule } from './app/resale/resale-module.module';
 import { SellerModule } from './app/seller/seller.module';
 import { ServiceModuleModule } from './app/service/service-module.module';
@@ -29,13 +29,13 @@ import { TaxInvoiceModule } from './app/tax-invoice/tax-invoice.module';
     AdminModule,
     CarrierModule,
     CompanyModule,
-    ProviderModule,
     ClientModuleModule,
     ResaleModuleModule,
     SellerModule,
     ExternalApisModule,
     FaqModule,
     HonorificModule,
+    ProviderModuleModule,
     GlobalModule,
     ServiceModuleModule,
     TaxInvoiceModule,
