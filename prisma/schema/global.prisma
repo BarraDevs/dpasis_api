@@ -49,6 +49,17 @@ model DeliveryTerm {
   @@map("delivery_terms")
 }
 
+model Faq {
+  id        Int      @id @default(autoincrement())
+  question  String   @db.Text
+  answer    String   @db.Text
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("faqs")
+}
+
 model Freight {
   id        Int      @id @default(autoincrement())
   name      String   @unique
@@ -59,6 +70,19 @@ model Freight {
   services Service[]
 
   @@map("freights")
+}
+
+model Honorific {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique @db.VarChar(64)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  clients Client[]
+  resales Resale[]
+
+  @@map("honorifics")
 }
 
 model ProposalValidity {

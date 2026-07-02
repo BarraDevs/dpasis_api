@@ -4,7 +4,7 @@ import { FindResaleById } from 'src/app/resale/resale/application/usecases/find-
 import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
 import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum';
 import { FindCompanyById } from 'src/app/company/application/usecases/find-company-by-id/find-company-by-id.service';
-import { FindHonorificById } from 'src/app/honorific/application/usecases/find-honorific-by-id/find-honorific-by-id.service';
+import { FindHonorificById } from 'src/app/global/honorific/application/usecases/find-honorific-by-id/find-honorific-by-id.service';
 import { TOKENS } from 'src/core/di/token';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
 import { ClientNotFoundError } from '../../../domain/errors/client-not-found.error';

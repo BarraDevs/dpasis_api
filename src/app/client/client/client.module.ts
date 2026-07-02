@@ -6,7 +6,7 @@ import { ClientAttendanceModule } from '../client-attendance/client-attendance.m
 import { ClientGroupModule } from '../client-group/client-group.module';
 import { ClientMaintenanceTicketModule } from '../client-maintenance-ticket/client-maintenance-ticket.module';
 import { ResaleModule } from 'src/app/resale/resale/resale.module';
-import { HonorificModule } from 'src/app/honorific/honorific.module';
+import { HonorificModule } from 'src/app/global/honorific/honorific.module';
 import { ClientPersistenceModule } from './application/persistence/client-persistence.module';
 import { ActivateClient } from './application/usecases/activate-client/activate-client.service';
 import { CreateClient } from './application/usecases/create-client/create-client.service';

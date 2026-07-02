@@ -1,5 +1,5 @@
 import { Test } from '@nestjs/testing';
-import { FindHonorificById } from 'src/app/honorific/application/usecases/find-honorific-by-id/find-honorific-by-id.service';
+import { FindHonorificById } from 'src/app/global/honorific/application/usecases/find-honorific-by-id/find-honorific-by-id.service';
 import { UploadSingle } from 'src/app/upload-file/application/usecases/upload-single/upload-single.service';
 import { TOKENS } from 'src/core/di/token';
 import { CreateResale } from './create-resale.service';

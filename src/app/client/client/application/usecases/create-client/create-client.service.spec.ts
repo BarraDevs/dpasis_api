@@ -8,7 +8,7 @@ import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-inv
 import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum';
 import { ClientIdAlreadyTakenError } from 'src/app/client/client/domain/errors/client-id-already-taken.error';
 import { CompanyNotFoundError } from 'src/app/company/domain/errors/company-not-found.error';
-import { HonorificNotFoundError } from 'src/app/honorific/domain/errors/honorific-not-found.error';
+import { HonorificNotFoundError } from 'src/app/global/honorific/domain/errors/honorific-not-found.error';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { InvalidDocumentError } from 'src/shared/value-objects/document/document.error';
 import { CreateClient } from './create-client.service';

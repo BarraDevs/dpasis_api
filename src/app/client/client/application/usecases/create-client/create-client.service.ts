@@ -9,7 +9,7 @@ import { ClientNotFoundError } from 'src/app/client/client/domain/errors/client-
 import { ClientParentIsSubClientError } from 'src/app/client/client/domain/errors/client-parent-is-sub-client.error';
 import { ClientFactory } from 'src/app/client/client/domain/factories/client.factory';
 import { FindCompanyById } from 'src/app/company/application/usecases/find-company-by-id/find-company-by-id.service';
-import { FindHonorificById } from 'src/app/honorific/application/usecases/find-honorific-by-id/find-honorific-by-id.service';
+import { FindHonorificById } from 'src/app/global/honorific/application/usecases/find-honorific-by-id/find-honorific-by-id.service';
 import { TOKENS } from 'src/core/di/token';
 import { UtcCalendarDate } from 'src/shared/value-objects/utc-calendar-date/utc-calendar-date.vo';
 import type { IClientDao } from '../../persistence/dao/client-dao.interface';

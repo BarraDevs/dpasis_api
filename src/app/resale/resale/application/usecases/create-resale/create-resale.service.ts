@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { FindHonorificById } from 'src/app/honorific/application/usecases/find-honorific-by-id/find-honorific-by-id.service';
+import { FindHonorificById } from 'src/app/global/honorific/application/usecases/find-honorific-by-id/find-honorific-by-id.service';
 import { UploadSingle } from 'src/app/upload-file/application/usecases/upload-single/upload-single.service';
 import { ResaleExplicitIdInvalidError } from 'src/app/resale/resale/domain/errors/resale-explicit-id-invalid.error';
 import { ResaleIdAlreadyTakenError } from 'src/app/resale/resale/domain/errors/resale-id-already-taken.error';

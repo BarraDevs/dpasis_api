@@ -1,5 +1,5 @@
 import { Test } from '@nestjs/testing';
-import { HonorificNotFoundError } from 'src/app/honorific/domain/errors/honorific-not-found.error';
+import { HonorificNotFoundError } from 'src/app/global/honorific/domain/errors/honorific-not-found.error';
 import { UploadSingle } from 'src/app/upload-file/application/usecases/upload-single/upload-single.service';
 import { ResaleModule } from 'src/app/resale/resale/resale.module';
 import { DocumentAlreadyTakenError } from 'src/shared/errors/document-already-taken';

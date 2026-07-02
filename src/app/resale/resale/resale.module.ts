@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AuthenticationGuardsModule } from '../../authentication/application/guards/guards.module';
-import { HonorificModule } from 'src/app/honorific/honorific.module';
+import { HonorificModule } from 'src/app/global/honorific/honorific.module';
 import { ResalePersistenceModule } from './application/persistence/resale-persistence.module';
 import { ActivateResale } from './application/usecases/activate-resale/activate-resale.service';
 import { CreateResale } from './application/usecases/create-resale/create-resale.service';
