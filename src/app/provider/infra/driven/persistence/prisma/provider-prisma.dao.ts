@@ -3,18 +3,13 @@ import { Prisma } from '@prisma/client';
 import { ProviderDto } from 'src/app/provider/application/dtos/provider.dto';
 import { IProviderDao } from 'src/app/provider/application/persistence/dao/provider-dao.interface';
 import { FindAllProviderQueryDto } from 'src/app/provider/application/usecases/find-all-provider/dtos/find-all-provider.dto';
-import { ProviderType } from 'src/app/provider/domain/enums/provider-type.enum';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 
 const ProviderSelect = {
   id: true,
   name: true,
-  type: true,
-  valueInCents: true,
   document: true,
   ie: true,
-  paymentDate: true,
-  deadline: true,
   fantasyName: true,
   email: true,
   website: true,
@@ -103,10 +98,7 @@ export class ProviderDaoAdapterPrisma implements IProviderDao {
   private toDto(row: Prisma.ProviderGetPayload<{ select: typeof ProviderSelect }>): ProviderDto {
     return {
       ...row,
-      type: row.type as ProviderType,
       ie: row.ie ?? null,
-      paymentDate: row.paymentDate ?? null,
-      deadline: row.deadline ?? null,
       complement: row.complement ?? null,
     };
   }

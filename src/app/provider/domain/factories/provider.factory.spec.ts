@@ -1,17 +1,11 @@
-import { InvalidProviderTypeFieldsError } from '../errors/invalid-provider-type-fields.error';
 import { ProviderCreateProps, ProviderProps } from '../entities/provider.entity';
-import { ProviderType } from '../enums/provider-type.enum';
 import { ProviderFactory } from './provider.factory';
 
 function makeProviderCreateProps(overrides?: Partial<ProviderCreateProps>): ProviderCreateProps {
   return {
     name: 'Prestador LTDA',
-    type: ProviderType.ONE_OFF,
-    valueInCents: 150000,
     document: '09.748.165/0001-10',
     ie: null,
-    paymentDate: null,
-    deadline: 30,
     fantasyName: 'Prestador',
     email: 'contato@prestador.com',
     website: 'https://prestador.com',
@@ -37,49 +31,23 @@ function makeProviderProps(overrides?: Partial<ProviderProps>): ProviderProps {
 
 describe('ProviderFactory - Unit tests', () => {
   describe('create', () => {
-    it('should create provider with ONE_OFF type and deadline', () => {
+    it('should create provider with valid props', () => {
       const provider = ProviderFactory.create(makeProviderCreateProps());
 
       expect(provider.props.id).toBe(0);
       expect(provider.props.active).toBe(true);
-      expect(provider.props.type).toBe(ProviderType.ONE_OFF);
-      expect(provider.props.deadline).toBe(30);
-      expect(provider.props.paymentDate).toBeNull();
       expect(provider.props.document).toBe('09748165000110');
       expect(provider.props.email).toBe('contato@prestador.com');
     });
 
-    it('should create provider with RECURRING type and paymentDate', () => {
+    it('should create provider with optional fields filled', () => {
       const provider = ProviderFactory.create(makeProviderCreateProps({
-        type: ProviderType.RECURRING,
-        paymentDate: 15,
-        deadline: null,
+        ie: '123456789',
+        complement: 'Sala 1',
       }));
 
-      expect(provider.props.type).toBe(ProviderType.RECURRING);
-      expect(provider.props.paymentDate).toBe(15);
-      expect(provider.props.deadline).toBeNull();
-    });
-
-    it('should throw when ONE_OFF without deadline', () => {
-      expect(() => ProviderFactory.create(makeProviderCreateProps({ deadline: null })))
-        .toThrow(InvalidProviderTypeFieldsError);
-    });
-
-    it('should throw when RECURRING without paymentDate', () => {
-      expect(() => ProviderFactory.create(makeProviderCreateProps({
-        type: ProviderType.RECURRING,
-        paymentDate: null,
-        deadline: null,
-      }))).toThrow(InvalidProviderTypeFieldsError);
-    });
-
-    it('should throw when paymentDate is greater than 31', () => {
-      expect(() => ProviderFactory.create(makeProviderCreateProps({
-        type: ProviderType.RECURRING,
-        paymentDate: 32,
-        deadline: null,
-      }))).toThrow(InvalidProviderTypeFieldsError);
+      expect(provider.props.ie).toBe('123456789');
+      expect(provider.props.complement).toBe('Sala 1');
     });
   });
 

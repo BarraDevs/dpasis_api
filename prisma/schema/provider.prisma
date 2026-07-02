@@ -1,13 +1,9 @@
 model Provider {
   id           Int     @id @default(autoincrement())
   name         String
-  type         String
-  valueInCents Int
+  fantasyName  String
   document     String  @unique
   ie           String?
-  paymentDate  Int?
-  deadline     Int?
-  fantasyName  String
   email        String  @unique
   website      String
   zipCode      String

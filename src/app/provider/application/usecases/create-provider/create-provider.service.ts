@@ -15,11 +15,7 @@ export class CreateProvider {
   ) {}
 
   public async execute(data: CreateProviderInputDto): Promise<CreateProviderOutputDto> {
-    const entity = ProviderFactory.create({
-      ...data,
-      paymentDate: data.paymentDate ?? null,
-      deadline: data.deadline ?? null,
-    });
+    const entity = ProviderFactory.create(data);
 
     const documentAlreadyTaken = await this.providerDao.findByDocument(entity.props.document);
     if (documentAlreadyTaken) {

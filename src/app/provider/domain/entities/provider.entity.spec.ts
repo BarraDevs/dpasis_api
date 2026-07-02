@@ -1,16 +1,11 @@
-import { ProviderType } from '../enums/provider-type.enum';
 import { Provider, ProviderProps } from './provider.entity';
 
 function makeProviderProps(overrides?: Partial<ProviderProps>): ProviderProps {
   return {
     id: 1,
     name: 'Prestador LTDA',
-    type: ProviderType.ONE_OFF,
-    valueInCents: 150000,
     document: '09748165000110',
     ie: null,
-    paymentDate: null,
-    deadline: 30,
     fantasyName: 'Prestador',
     email: 'contato@prestador.com',
     website: 'https://prestador.com',

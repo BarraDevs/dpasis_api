@@ -25,8 +25,6 @@ export class EditProvider {
     const providerEntity = ProviderFactory.edit({
       ...provider,
       ...data,
-      paymentDate: data.paymentDate !== undefined ? data.paymentDate ?? null : provider.paymentDate,
-      deadline: data.deadline !== undefined ? data.deadline ?? null : provider.deadline,
       id,
       active: provider.active,
     });

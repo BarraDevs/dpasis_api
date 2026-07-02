@@ -1,9 +1,25 @@
 import { Test } from '@nestjs/testing';
-import { ProviderType } from 'src/app/provider/domain/enums/provider-type.enum';
 import { ProviderNotFoundError } from 'src/app/provider/domain/errors/provider-not-found.error';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { ProviderModule } from '../../../provider.module';
 import { DeactivateProvider } from './deactivate-provider.service';
+
+const providerPrismaData = {
+  name: 'Prestador LTDA',
+  document: '09748165000110',
+  ie: null,
+  fantasyName: 'Prestador',
+  email: 'contato@prestador.com',
+  website: 'https://prestador.com',
+  zipCode: '01310100',
+  street: 'Av Paulista',
+  number: '1000',
+  complement: null,
+  neighborhood: 'Bela Vista',
+  city: 'São Paulo',
+  state: 'SP',
+  active: true,
+};
 
 describe('DeactivateProvider - Integration tests', () => {
   let sut: DeactivateProvider;
@@ -36,28 +52,7 @@ describe('DeactivateProvider - Integration tests', () => {
   });
 
   it('should deactivate provider in database', async() => {
-    const provider = await prisma.provider.create({
-      data: {
-        name: 'Prestador LTDA',
-        type: ProviderType.ONE_OFF,
-        valueInCents: 150000,
-        document: '09748165000110',
-        ie: null,
-        paymentDate: null,
-        deadline: 30,
-        fantasyName: 'Prestador',
-        email: 'contato@prestador.com',
-        website: 'https://prestador.com',
-        zipCode: '01310100',
-        street: 'Av Paulista',
-        number: '1000',
-        complement: null,
-        neighborhood: 'Bela Vista',
-        city: 'São Paulo',
-        state: 'SP',
-        active: true,
-      },
-    });
+    const provider = await prisma.provider.create({ data: providerPrismaData });
 
     await sut.execute(provider.id);
 
@@ -66,28 +61,7 @@ describe('DeactivateProvider - Integration tests', () => {
   });
 
   it('should return success message', async() => {
-    const provider = await prisma.provider.create({
-      data: {
-        name: 'Prestador LTDA',
-        type: ProviderType.ONE_OFF,
-        valueInCents: 150000,
-        document: '09748165000110',
-        ie: null,
-        paymentDate: null,
-        deadline: 30,
-        fantasyName: 'Prestador',
-        email: 'contato@prestador.com',
-        website: 'https://prestador.com',
-        zipCode: '01310100',
-        street: 'Av Paulista',
-        number: '1000',
-        complement: null,
-        neighborhood: 'Bela Vista',
-        city: 'São Paulo',
-        state: 'SP',
-        active: true,
-      },
-    });
+    const provider = await prisma.provider.create({ data: providerPrismaData });
 
     const result = await sut.execute(provider.id);
 

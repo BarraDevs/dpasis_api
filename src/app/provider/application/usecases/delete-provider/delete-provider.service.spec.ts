@@ -1,6 +1,5 @@
 import { createMock } from '@golevelup/ts-jest';
 import { Test } from '@nestjs/testing';
-import { ProviderType } from 'src/app/provider/domain/enums/provider-type.enum';
 import { Provider } from 'src/app/provider/domain/entities/provider.entity';
 import { ProviderNotFoundError } from 'src/app/provider/domain/errors/provider-not-found.error';
 import { ProviderFactory } from 'src/app/provider/domain/factories/provider.factory';
@@ -44,12 +43,8 @@ describe('DeleteProvider - Unit tests', () => {
   it('should call repository.delete with correct id', async() => {
     const provider = ProviderFactory.create({
       name: 'Prestador LTDA',
-      type: ProviderType.ONE_OFF,
-      valueInCents: 150000,
       document: '09.748.165/0001-10',
       ie: null,
-      paymentDate: null,
-      deadline: 30,
       fantasyName: 'Prestador',
       email: 'contato@prestador.com',
       website: 'https://prestador.com',
@@ -113,11 +108,8 @@ describe('DeleteProvider - Integration tests', () => {
   it('should delete provider from database', async() => {
     const { id } = await createProvider.execute({
       name: 'Prestador LTDA',
-      type: ProviderType.ONE_OFF,
-      valueInCents: 150000,
       document: '09.748.165/0001-10',
       ie: null,
-      deadline: 30,
       fantasyName: 'Prestador',
       email: 'contato@prestador.com',
       website: 'https://prestador.com',

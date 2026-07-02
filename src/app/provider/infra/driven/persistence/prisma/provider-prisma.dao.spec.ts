@@ -1,6 +1,5 @@
 import { Test } from '@nestjs/testing';
 import { ProviderDto } from 'src/app/provider/application/dtos/provider.dto';
-import { ProviderType } from 'src/app/provider/domain/enums/provider-type.enum';
 import { ConfigModule } from 'src/core/config/config.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { ProviderDaoAdapterPrisma } from './provider-prisma.dao';
@@ -32,12 +31,8 @@ describe('ProviderDaoAdapterPrisma - Integration tests', () => {
     return prisma.provider.create({
       data: {
         name: 'Prestador LTDA',
-        type: ProviderType.ONE_OFF,
-        valueInCents: 150000,
         document: '09748165000110',
         ie: null,
-        paymentDate: null,
-        deadline: 30,
         fantasyName: 'Prestador',
         email: 'contato@prestador.com',
         website: 'https://prestador.com',
@@ -72,7 +67,6 @@ describe('ProviderDaoAdapterPrisma - Integration tests', () => {
       expect(providers[0]).toMatchObject<Partial<ProviderDto>>({
         id: created.id,
         name: 'Prestador LTDA',
-        type: ProviderType.ONE_OFF,
         document: '09748165000110',
         email: 'contato@prestador.com',
         active: true,

@@ -1,9 +1,8 @@
 import { Test } from '@nestjs/testing';
-import { ProviderType } from 'src/app/provider/domain/enums/provider-type.enum';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { DocumentAlreadyTakenError } from 'src/shared/errors/document-already-taken';
 import { EmailAlreadyTakenError } from 'src/shared/errors/email-already-taken';
-import { InvalidProviderTypeFieldsError } from '../../../domain/errors/invalid-provider-type-fields.error';
+import { InvalidDocumentError } from 'src/shared/value-objects/document/document.error';
 import { ProviderModule } from '../../../provider.module';
 import { CreateProvider } from './create-provider.service';
 import { CreateProviderInputDto } from './dtos/create-provider.dto';
@@ -30,14 +29,11 @@ describe('CreateProvider - Integration tests', () => {
     await prisma.$disconnect();
   });
 
-  function makeValidOneOffInput(overrides: Partial<CreateProviderInputDto> = {}): CreateProviderInputDto {
+  function makeValidInput(overrides: Partial<CreateProviderInputDto> = {}): CreateProviderInputDto {
     return {
       name: 'Prestador LTDA',
-      type: ProviderType.ONE_OFF,
-      valueInCents: 150000,
       document: '09.748.165/0001-10',
       ie: null,
-      deadline: 30,
       fantasyName: 'Prestador',
       email: 'contato@prestador.com',
       website: 'https://prestador.com',
@@ -56,8 +52,8 @@ describe('CreateProvider - Integration tests', () => {
     expect(sut).toBeDefined();
   });
 
-  it('should create ONE_OFF provider and persist in database', async() => {
-    const input = makeValidOneOffInput();
+  it('should create provider and persist in database', async() => {
+    const input = makeValidInput();
 
     const result = await sut.execute(input);
 
@@ -67,41 +63,42 @@ describe('CreateProvider - Integration tests', () => {
       where: { document: '09748165000110' },
     });
     expect(saved).not.toBeNull();
-    expect(saved?.type).toBe(ProviderType.ONE_OFF);
-    expect(saved?.deadline).toBe(30);
-    expect(saved?.paymentDate).toBeNull();
+    expect(saved?.name).toBe('Prestador LTDA');
+    expect(saved?.fantasyName).toBe('Prestador');
+    expect(saved?.document).toBe('09748165000110');
     expect(saved?.active).toBe(true);
+    expect(saved?.email).toBe('contato@prestador.com');
   });
 
-  it('should create RECURRING provider with paymentDate', async() => {
-    const input = makeValidOneOffInput({
-      type: ProviderType.RECURRING,
-      document: '33.000.167/0001-01',
-      email: 'recorrente@prestador.com',
-      paymentDate: 15,
-      deadline: undefined,
+  it('should create provider with optional fields filled', async() => {
+    const input = makeValidInput({
+      ie: '123456789',
+      complement: 'Sala 1',
     });
 
     const result = await sut.execute(input);
 
-    const saved = await prisma.provider.findUnique({ where: { id: result.id } });
-    expect(saved?.type).toBe(ProviderType.RECURRING);
-    expect(saved?.paymentDate).toBe(15);
-    expect(saved?.deadline).toBeNull();
+    expect(result).toHaveProperty('id');
+
+    const saved = await prisma.provider.findFirst({
+      where: { document: '09748165000110' },
+    });
+    expect(saved?.ie).toBe('123456789');
+    expect(saved?.complement).toBe('Sala 1');
   });
 
   it('should throw DocumentAlreadyTakenError when document already exists', async() => {
-    const input = makeValidOneOffInput();
+    const input = makeValidInput();
     await sut.execute(input);
 
     await expect(sut.execute(input)).rejects.toThrow(DocumentAlreadyTakenError);
   });
 
   it('should throw EmailAlreadyTakenError when email already exists', async() => {
-    const input = makeValidOneOffInput();
+    const input = makeValidInput();
     await sut.execute(input);
 
-    const input2 = makeValidOneOffInput({
+    const input2 = makeValidInput({
       document: '33.000.167/0001-01',
       email: 'contato@prestador.com',
     });
@@ -109,9 +106,9 @@ describe('CreateProvider - Integration tests', () => {
     await expect(sut.execute(input2)).rejects.toThrow(EmailAlreadyTakenError);
   });
 
-  it('should throw when ONE_OFF without deadline', async() => {
-    const input = makeValidOneOffInput({ deadline: undefined });
+  it('should throw when document has invalid format', async() => {
+    const input = makeValidInput({ document: '123' });
 
-    await expect(sut.execute(input)).rejects.toThrow(InvalidProviderTypeFieldsError);
+    await expect(sut.execute(input)).rejects.toThrow(InvalidDocumentError);
   });
 });

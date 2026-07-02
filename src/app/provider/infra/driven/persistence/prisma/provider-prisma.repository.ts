@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { IProviderRepository } from 'src/app/provider/application/persistence/repository/provider-repository.interface';
 import { Provider } from 'src/app/provider/domain/entities/provider.entity';
 import { ProviderFactory } from 'src/app/provider/domain/factories/provider.factory';
-import { ProviderType } from 'src/app/provider/domain/enums/provider-type.enum';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 
 @Injectable()
@@ -37,10 +36,7 @@ export class ProviderRepositoryAdapterPrisma implements IProviderRepository {
 
     return ProviderFactory.load({
       ...data,
-      type: data.type as ProviderType,
       ie: data.ie ?? null,
-      paymentDate: data.paymentDate ?? null,
-      deadline: data.deadline ?? null,
       complement: data.complement ?? null,
     });
   }

@@ -1,14 +1,8 @@
-import { ProviderType } from '../../domain/enums/provider-type.enum';
-
 export class ProviderDto {
   id: number;
   name: string;
-  type: ProviderType;
-  valueInCents: number;
   document: string;
   ie: string | null;
-  paymentDate: number | null;
-  deadline: number | null;
   fantasyName: string;
   email: string;
   website: string;

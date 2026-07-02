@@ -101,7 +101,7 @@ export class NfGenerationNfemailAdapterGateway implements INfGenerationGateway {
     const content = buildNfemailIssueContent(input);
     const { url, body } = this.getIssueRequest(input.format, content);
 
-    console.log({ url, body });
+    console.log({ url, content, body });
     try {
       const result = await this.httpService.axiosRef.post<number>(url, body, {
         ...this.getAuthConfig(),

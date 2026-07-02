@@ -1,6 +1,5 @@
 import { Test } from '@nestjs/testing';
 import { ProviderFactory } from 'src/app/provider/domain/factories/provider.factory';
-import { ProviderType } from 'src/app/provider/domain/enums/provider-type.enum';
 import { ConfigModule } from 'src/core/config/config.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { ProviderRepositoryAdapterPrisma } from './provider-prisma.repository';
@@ -31,12 +30,8 @@ describe('ProviderRepositoryAdapterPrisma - Integration tests', () => {
   function makeCreateProps() {
     return {
       name: 'Prestador LTDA',
-      type: ProviderType.ONE_OFF,
-      valueInCents: 150000,
       document: '09.748.165/0001-10',
       ie: null,
-      paymentDate: null,
-      deadline: 30,
       fantasyName: 'Prestador',
       email: 'contato@prestador.com',
       website: 'https://prestador.com',
@@ -65,7 +60,6 @@ describe('ProviderRepositoryAdapterPrisma - Integration tests', () => {
       expect(saved).not.toBeNull();
       expect(saved?.id).toBe(id);
       expect(saved?.active).toBe(true);
-      expect(saved?.deadline).toBe(30);
     });
   });
 

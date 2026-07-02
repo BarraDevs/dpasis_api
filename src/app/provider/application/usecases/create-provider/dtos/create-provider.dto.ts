@@ -1,18 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-  IsEmail,
-  IsEnum,
-  IsInt,
-  IsNotEmpty,
-  IsOptional,
-  IsPositive,
-  IsString,
-  Max,
-  Min,
-  ValidateIf,
-} from 'class-validator';
-import { ProviderType } from 'src/app/provider/domain/enums/provider-type.enum';
-import { StringToNumber } from 'src/infra/validators/class/decorators/string-number/string-number';
+import { IsEmail, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { Trim } from 'src/infra/validators/class/decorators/trim/trim';
 
 export class CreateProviderInputDto {
@@ -21,16 +8,6 @@ export class CreateProviderInputDto {
   @IsNotEmpty({ message: '$property é obrigatório' })
   @Trim()
   name: string;
-
-  @ApiProperty({ example: ProviderType.ONE_OFF, enum: ProviderType })
-  @IsEnum(ProviderType, { message: '$property inválido.' })
-  type: ProviderType;
-
-  @ApiProperty({ example: 150000 })
-  @StringToNumber()
-  @IsInt({ message: '$property deve ser um número inteiro' })
-  @Min(0, { message: '$property deve ser maior ou igual a zero' })
-  valueInCents: number;
 
   @ApiProperty({ example: '09.748.165/0001-10' })
   @IsString({ message: '$property deve ser uma string' })
@@ -43,29 +20,6 @@ export class CreateProviderInputDto {
   @IsString({ message: '$property deve ser uma string' })
   @Trim()
   ie: string | null;
-
-  @ApiPropertyOptional({
-    example: 15,
-    description: 'Dia do mês (1–31). Obrigatório quando type = RECURRING.',
-  })
-  @ValidateIf((o: CreateProviderInputDto) => o.type === ProviderType.RECURRING)
-  @IsNotEmpty({ message: '$property é obrigatório quando type é RECURRING' })
-  @StringToNumber()
-  @IsInt({ message: '$property deve ser um número inteiro' })
-  @Min(1, { message: '$property deve ser entre 1 e 31' })
-  @Max(31, { message: '$property deve ser entre 1 e 31' })
-  paymentDate?: number;
-
-  @ApiPropertyOptional({
-    example: 30,
-    description: 'Quantidade de dias (> 0). Obrigatório quando type = ONE_OFF.',
-  })
-  @ValidateIf((o: CreateProviderInputDto) => o.type === ProviderType.ONE_OFF)
-  @IsNotEmpty({ message: '$property é obrigatório quando type é ONE_OFF' })
-  @StringToNumber()
-  @IsInt({ message: '$property deve ser um número inteiro' })
-  @IsPositive({ message: '$property deve ser um número positivo' })
-  deadline?: number;
 
   @ApiProperty({ example: 'Prestador' })
   @IsString({ message: '$property deve ser uma string' })
