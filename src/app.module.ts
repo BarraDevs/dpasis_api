@@ -6,7 +6,7 @@ import { ClientModuleModule } from './app/client/client-module.module';
 import { CarrierModule } from './app/carrier/carrier.module';
 import { CompanyModule } from './app/company/company.module';
 import { ExternalApisModule } from './app/external-apis/external-apis.module';
-import { FaqModule } from './app/faq/faq.module';
+import { FaqModule } from './app/global/faq/faq.module';
 import { GlobalModule } from './app/global/global.module';
 import { HonorificModule } from './app/honorific/honorific.module';
 import { ProviderModule } from './app/provider/provider.module';
