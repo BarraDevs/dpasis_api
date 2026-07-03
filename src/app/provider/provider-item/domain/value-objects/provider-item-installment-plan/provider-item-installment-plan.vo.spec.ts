@@ -311,6 +311,69 @@ describe('ProviderItemInstallmentPlan - Unit tests', () => {
     expect(result[0].valueInCents).toBe(300);
   });
 
+  it('should preserve paid installment slot numbers when only middle installment is paid', () => {
+    // Arrange
+    const input = {
+      totalValueInCents: 30000,
+      installmentsCount: 3,
+      scheduleType: ProviderItemScheduleType.INTERVAL_DAYS,
+      intervalDays: 30,
+      dueDay: null,
+      firstDueDate: new Date('2026-07-10'),
+      paidInstallments: [
+        {
+          id: 2,
+          number: 2,
+          valueInCents: 10000,
+          dueDate: new Date('2026-08-09'),
+          status: ProviderItemInstallmentStatus.PAID,
+        },
+      ],
+    };
+
+    // Act
+    const result = sut.generate(input);
+
+    // Assert
+    expect(result.map((item) => item.number)).toEqual([1, 2, 3]);
+    expect(result.find((item) => item.number === 2)?.status).toBe(ProviderItemInstallmentStatus.PAID);
+    expect(result.find((item) => item.number === 2)?.valueInCents).toBe(10000);
+    expect(result.filter((item) => item.status === ProviderItemInstallmentStatus.PENDING).map((item) => item.number)).toEqual([1, 3]);
+    expect(result.filter((item) => item.status === ProviderItemInstallmentStatus.PENDING).reduce((sum, item) => sum + item.valueInCents, 0)).toBe(20000);
+    expect(result.find((item) => item.number === 1)?.dueDate.toISOString().split('T')[0]).toBe('2026-07-10');
+    expect(result.find((item) => item.number === 3)?.dueDate.toISOString().split('T')[0]).toBe('2026-09-08');
+  });
+
+  it('should preserve paid installment slot numbers when only last installment is paid', () => {
+    // Arrange
+    const input = {
+      totalValueInCents: 30000,
+      installmentsCount: 3,
+      scheduleType: ProviderItemScheduleType.INTERVAL_DAYS,
+      intervalDays: 30,
+      dueDay: null,
+      firstDueDate: new Date('2026-07-10'),
+      paidInstallments: [
+        {
+          id: 3,
+          number: 3,
+          valueInCents: 10000,
+          dueDate: new Date('2026-09-08'),
+          status: ProviderItemInstallmentStatus.PAID,
+        },
+      ],
+    };
+
+    // Act
+    const result = sut.generate(input);
+
+    // Assert
+    expect(result.map((item) => item.number)).toEqual([1, 2, 3]);
+    expect(result.find((item) => item.number === 3)?.status).toBe(ProviderItemInstallmentStatus.PAID);
+    expect(result.filter((item) => item.status === ProviderItemInstallmentStatus.PENDING).map((item) => item.number)).toEqual([1, 2]);
+    expect(result.filter((item) => item.status === ProviderItemInstallmentStatus.PENDING).reduce((sum, item) => sum + item.valueInCents, 0)).toBe(20000);
+  });
+
   it('should allocate remaining cent to single pending installment', () => {
     // Arrange
     const input = {

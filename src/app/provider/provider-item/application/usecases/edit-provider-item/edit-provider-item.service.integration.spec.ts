@@ -7,6 +7,7 @@ import { ProviderItemNotFoundError } from '../../../domain/errors/provider-item-
 import { ProviderItemModule } from '../../../provider-item.module';
 import { CreateProviderItem } from '../create-provider-item/create-provider-item.service';
 import { CreateProviderItemInputDto } from '../create-provider-item/dtos/create-provider-item.dto';
+import { PayProviderItemInstallment } from '../pay-provider-item-installment/pay-provider-item-installment.service';
 import { EditProviderItem } from './edit-provider-item.service';
 
 const baseBankData = {
@@ -40,6 +41,7 @@ const baseProviderData = {
 describe('EditProviderItem - Integration tests', () => {
   let sut: EditProviderItem;
   let createProviderItem: CreateProviderItem;
+  let payProviderItemInstallment: PayProviderItemInstallment;
   let prisma: PrismaService;
 
   beforeAll(async() => {
@@ -49,6 +51,7 @@ describe('EditProviderItem - Integration tests', () => {
 
     sut = module.get(EditProviderItem);
     createProviderItem = module.get(CreateProviderItem);
+    payProviderItemInstallment = module.get(PayProviderItemInstallment);
     prisma = module.get(PrismaService);
   });
 
@@ -151,5 +154,46 @@ describe('EditProviderItem - Integration tests', () => {
     await expect(sut.execute(itemId, { installmentsCount: 1 })).rejects.toThrow(
       ProviderItemInstallmentsCountBelowPaidCountError,
     );
+  });
+
+  it('should edit item when middle installment is paid before earlier ones', async() => {
+    // Arrange
+    const bank = await prisma.bank.create({ data: baseBankData });
+    const provider = await prisma.provider.create({ data: baseProviderData });
+    const created = await createProviderItem.execute({
+      providerId: provider.id,
+      description: 'Serviço',
+      totalValueInCents: 30000,
+      installmentsCount: 3,
+      scheduleType: ProviderItemScheduleType.INTERVAL_DAYS,
+      intervalDays: 30,
+      dueDay: null,
+      firstDueDate: '2026-07-10',
+      bankId: bank.id,
+    });
+
+    const secondInstallment = await prisma.providerItemInstallment.findFirst({
+      where: { providerItemId: created.id, number: 2 },
+    });
+
+    await payProviderItemInstallment.execute(created.id, secondInstallment!.id);
+
+    // Act
+    await sut.execute(created.id, { totalValueInCents: 40000 });
+
+    // Assert
+    const updated = await prisma.providerItemInstallment.findMany({
+      where: { providerItemId: created.id },
+      orderBy: { number: 'asc' },
+    });
+
+    expect(updated).toHaveLength(3);
+    expect(updated[1].id).toBe(secondInstallment!.id);
+    expect(updated[1].status).toBe(ProviderItemInstallmentStatus.PAID);
+    expect(updated[0].status).toBe(ProviderItemInstallmentStatus.PENDING);
+    expect(updated[0].number).toBe(1);
+    expect(updated[2].status).toBe(ProviderItemInstallmentStatus.PENDING);
+    expect(updated[2].number).toBe(3);
+    expect(updated.reduce((sum, item) => sum + item.valueInCents, 0)).toBe(40000);
   });
 });

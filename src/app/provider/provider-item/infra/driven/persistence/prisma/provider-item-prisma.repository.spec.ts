@@ -142,6 +142,7 @@ describe('ProviderItemRepositoryAdapterPrisma - Integration tests', () => {
       const existing = await sut.findById(id);
       const updated = ProviderItemFactory.edit({
         ...existing!.props,
+        id: existing!.props.id!,
         description: 'Descrição atualizada',
         totalValueInCents: 45000,
       });
@@ -174,6 +175,7 @@ describe('ProviderItemRepositoryAdapterPrisma - Integration tests', () => {
       );
       const updated = ProviderItemFactory.edit({
         ...existing!.props,
+        id: existing!.props.id!,
         totalValueInCents: 40000,
         paidInstallments,
       });
@@ -191,6 +193,50 @@ describe('ProviderItemRepositoryAdapterPrisma - Integration tests', () => {
       expect(updatedInstallments[0].id).toBe(installments[0].id);
       expect(updatedInstallments[0].status).toBe(ProviderItemInstallmentStatus.PAID);
       expect(updatedInstallments.slice(1).every((item) => item.status === ProviderItemInstallmentStatus.PENDING)).toBe(true);
+      expect(updatedInstallments.reduce((sum, item) => sum + item.valueInCents, 0)).toBe(40000);
+    });
+
+    it('should keep paid middle installment and recreate pending ones in original slots', async() => {
+      // Arrange
+      const id = await sut.save(ProviderItemFactory.create(makeValidCreateProps(providerId, bankId)));
+      const installments = await prisma.providerItemInstallment.findMany({
+        where: { providerItemId: id },
+        orderBy: { number: 'asc' },
+      });
+
+      await prisma.providerItemInstallment.update({
+        where: { id: installments[1].id },
+        data: { status: ProviderItemInstallmentStatus.PAID },
+      });
+
+      const existing = await sut.findById(id);
+      const paidInstallments = existing!.props.installments.filter(
+        (item) => item.status === ProviderItemInstallmentStatus.PAID,
+      );
+      const updated = ProviderItemFactory.edit({
+        ...existing!.props,
+        id: existing!.props.id!,
+        totalValueInCents: 40000,
+        paidInstallments,
+      });
+
+      // Act
+      await sut.edit(updated);
+
+      // Assert
+      const updatedInstallments = await prisma.providerItemInstallment.findMany({
+        where: { providerItemId: id },
+        orderBy: { number: 'asc' },
+      });
+
+      expect(updatedInstallments).toHaveLength(3);
+      expect(updatedInstallments[1].id).toBe(installments[1].id);
+      expect(updatedInstallments[1].number).toBe(2);
+      expect(updatedInstallments[1].status).toBe(ProviderItemInstallmentStatus.PAID);
+      expect(updatedInstallments[0].status).toBe(ProviderItemInstallmentStatus.PENDING);
+      expect(updatedInstallments[0].number).toBe(1);
+      expect(updatedInstallments[2].status).toBe(ProviderItemInstallmentStatus.PENDING);
+      expect(updatedInstallments[2].number).toBe(3);
       expect(updatedInstallments.reduce((sum, item) => sum + item.valueInCents, 0)).toBe(40000);
     });
   });

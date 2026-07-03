@@ -40,6 +40,10 @@ export class ProviderItemInstallmentPlan {
     const remainingValue = input.totalValueInCents - paidTotal;
     const pendingValues = this.splitValueInCents(remainingValue, pendingCount);
 
+    const paidNumbers = new Set(paidInstallments.map((installment) => installment.number));
+    const pendingNumbers = Array.from({ length: input.installmentsCount }, (_, index) => index + 1)
+      .filter((number) => !paidNumbers.has(number));
+
     const paidDrafts: InstallmentPlanDraft[] = paidInstallments.map((installment) => ({
       number: installment.number,
       valueInCents: installment.valueInCents,
@@ -47,18 +51,14 @@ export class ProviderItemInstallmentPlan {
       status: ProviderItemInstallmentStatus.PAID,
     }));
 
-    const pendingDrafts: InstallmentPlanDraft[] = Array.from({ length: pendingCount }, (_, index) => {
-      const number = paidCount + index + 1;
+    const pendingDrafts: InstallmentPlanDraft[] = pendingNumbers.map((number, index) => ({
+      number,
+      valueInCents: pendingValues[index],
+      dueDate: this.calculateDueDate(input, number),
+      status: ProviderItemInstallmentStatus.PENDING,
+    }));
 
-      return {
-        number,
-        valueInCents: pendingValues[index],
-        dueDate: this.calculateDueDate(input, number),
-        status: ProviderItemInstallmentStatus.PENDING,
-      };
-    });
-
-    return [...paidDrafts, ...pendingDrafts];
+    return [...paidDrafts, ...pendingDrafts].sort((a, b) => a.number - b.number);
   }
 
   private static splitValueInCents(total: number, count: number): number[] {
