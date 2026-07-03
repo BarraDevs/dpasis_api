@@ -18,5 +18,7 @@ model Provider {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  items ProviderItem[]
+
   @@map("providers")
 }

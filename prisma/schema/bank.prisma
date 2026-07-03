@@ -12,6 +12,7 @@ model Bank {
   updatedAt       DateTime @updatedAt
 
   invoiceConfigs ClientInvoiceConfig[]
+  providerItems  ProviderItem[]
 
   @@unique([bankCode, agency, account])
   @@map("banks")

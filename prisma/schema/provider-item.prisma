@@ -1,0 +1,37 @@
+model ProviderItem {
+  id                Int      @id @default(autoincrement())
+  providerId        Int
+  description       String   @db.Text
+  totalValueInCents Int
+  installmentsCount Int
+  scheduleType      String
+  intervalDays      Int?
+  dueDay            Int?
+  firstDueDate      DateTime @db.Date
+  bankId            Int
+  active            Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  provider     Provider                  @relation(fields: [providerId], references: [id])
+  bank         Bank                      @relation(fields: [bankId], references: [id])
+  installments ProviderItemInstallment[]
+
+  @@map("provider_items")
+}
+
+model ProviderItemInstallment {
+  id             Int      @id @default(autoincrement())
+  providerItemId Int
+  number         Int
+  valueInCents   Int
+  dueDate        DateTime @db.Date
+  status         String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  providerItem ProviderItem @relation(fields: [providerItemId], references: [id], onDelete: Cascade)
+
+  @@unique([providerItemId, number])
+  @@map("provider_item_installments")
+}
