@@ -1,0 +1,101 @@
+import { IssueNfInputDto } from '../../../dtos/issue-nf.dto';
+import { NfEnvironment } from '../../../enums/nf-environment.enum';
+import { NfIssueFormat } from '../../../enums/nf-issue-format.enum';
+import { NfPartyType } from '../../../enums/nf-party-type.enum';
+
+export function makeValidIssueNfseInput(overrides: Partial<IssueNfInputDto> = {}): IssueNfInputDto {
+  return {
+    format: NfIssueFormat.RPS_XML,
+    orderNumber: 'PED-NFSE-001',
+    emitter: {
+      document: '06313908000131',
+      type: NfPartyType.PJ,
+      ie: '',
+      companyName: 'SUA RAZAO SOCIAL',
+      fantasyName: 'SUA FANTASIA',
+      crt: 1,
+      municipalRegistration: '12345678',
+      address: {
+        zipCode: '22410000',
+        street: 'Rua Exemplo',
+        number: '10',
+        neighborhood: 'Centro',
+        city: 'Rio de Janeiro',
+        state: 'RJ',
+        cityCode: '3304557',
+        countryCode: '1058',
+      },
+    },
+    recipient: {
+      document: '13709683000100',
+      type: NfPartyType.PJ,
+      companyName: 'NF-E EMITIDA EM AMBIENTE DE HOMOLOGACAO - SEM VALOR FISCAL',
+      address: {
+        zipCode: '20091901',
+        street: 'Rua Visconde de Inhauma',
+        number: '134',
+        neighborhood: 'Centro',
+        city: 'Rio de Janeiro',
+        state: 'RJ',
+        cityCode: '3304557',
+        countryCode: '1058',
+      },
+    },
+    items: [
+      {
+        description: 'Servico de consultoria em TI',
+        quantity: 1,
+        unitValueInCents: 100,
+        taxation: {
+          cnaeCode: '6201500',
+          nbsCode: '123456789',
+          indopCode: '1',
+          serviceListItem: '01.04',
+        },
+        fiscal: {
+          cfop: '5101',
+          ncm: '84439199',
+          cstIcms: '102',
+          cstPis: '07',
+          cstCofins: '07',
+          icmsRate: 0,
+          icmsBase: 0,
+          icmsValue: 0,
+          origin: 0,
+        },
+        ibsCbs: {
+          cst: '000',
+          cClassTrib: '000001',
+          baseValue: 1,
+          ibsStateRate: 0.1,
+          ibsStateValue: 0,
+          ibsCityRate: 0,
+          ibsCityValue: 0,
+          ibsTotalValue: 0,
+          cbsRate: 0.9,
+          cbsValue: 0.1,
+          itemTotalValue: 1,
+        },
+      },
+    ],
+    fiscal: {
+      environment: NfEnvironment.HOMOLOGATION,
+      series: 1,
+      nfeNumber: 1,
+      naturezaOperacao: 'PRESTACAO DE SERVICO',
+      operationType: 1,
+      finalidade: 1,
+      presenceIndicator: 9,
+      intermediaryIndicator: 0,
+      paymentMethod: '99',
+      paymentValue: 1,
+      freightMode: 9,
+      orderReference: 'PED-NFSE-001',
+      issRate: 5,
+      issWithheld: 2,
+      issExigibility: 1,
+      fiscalIncentive: 2,
+    },
+    ...overrides,
+  };
+}

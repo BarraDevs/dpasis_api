@@ -11,4 +11,5 @@ export class IssueNfPartyDto {
   phone?: string | null;
   address: IssueNfAddressDto;
   crt?: number | null;
+  municipalRegistration?: string | null;
 }

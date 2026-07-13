@@ -125,6 +125,12 @@ export class IssueNfPartyTestDto {
   @IsOptional()
   @IsInt({ message: '$property deve ser um número inteiro' })
   crt?: number;
+
+  @ApiPropertyOptional({ example: '12345678', description: 'Inscrição municipal (obrigatória para NFS-e)' })
+  @IsOptional()
+  @IsString({ message: '$property deve ser um texto' })
+  @Trim()
+  municipalRegistration?: string;
 }
 
 export class IssueNfItemTaxationTestDto {
@@ -145,6 +151,12 @@ export class IssueNfItemTaxationTestDto {
   @IsNotEmpty({ message: '$property é obrigatório' })
   @Trim()
   indopCode: string;
+
+  @ApiPropertyOptional({ example: '01.04', description: 'Item da lista de serviço LC 116 (obrigatório para NFS-e)' })
+  @IsOptional()
+  @IsString({ message: '$property deve ser um texto' })
+  @Trim()
+  serviceListItem?: string;
 }
 
 export class IssueNfItemFiscalTestDto {
@@ -341,11 +353,42 @@ export class IssueNfFiscalComplementTestDto {
   @IsString({ message: '$property deve ser um texto' })
   @Trim()
   orderReference?: string;
+
+  @ApiPropertyOptional({ example: '010701', description: 'Código de tributação municipal (NFS-e)' })
+  @IsOptional()
+  @IsString({ message: '$property deve ser um texto' })
+  @Trim()
+  municipalTaxCode?: string;
+
+  @ApiPropertyOptional({ example: 5, description: 'Alíquota ISS em percentual (NFS-e)' })
+  @IsOptional()
+  @IsNumber({}, { message: '$property deve ser um número' })
+  issRate?: number;
+
+  @ApiPropertyOptional({ example: 2, description: 'ISS retido: 1=Sim, 2=Não (NFS-e)' })
+  @IsOptional()
+  @IsInt({ message: '$property deve ser um número inteiro' })
+  issWithheld?: number;
+
+  @ApiPropertyOptional({ example: 1, description: 'Optante Simples Nacional: 1=Sim, 2=Não (NFS-e)' })
+  @IsOptional()
+  @IsInt({ message: '$property deve ser um número inteiro' })
+  simpleNationalOptant?: number;
+
+  @ApiPropertyOptional({ example: 2, description: 'Incentivo fiscal: 1=Sim, 2=Não (NFS-e)' })
+  @IsOptional()
+  @IsInt({ message: '$property deve ser um número inteiro' })
+  fiscalIncentive?: number;
+
+  @ApiPropertyOptional({ example: 1, description: 'Exigibilidade ISS: 1-7 conforme ABRASF (NFS-e)' })
+  @IsOptional()
+  @IsInt({ message: '$property deve ser um número inteiro' })
+  issExigibility?: number;
 }
 
 export class IssueNfTestInputDto {
   @ApiProperty({ enum: NfIssueFormat, example: NfIssueFormat.SEFAZ_TXT })
-  @IsEnum(NfIssueFormat, { message: '$property deve ser SEFAZ_TXT ou RPS_XML' })
+  @IsEnum(NfIssueFormat, { message: '$property deve ser SEFAZ_TXT, NFE_XML ou RPS_XML' })
   format: NfIssueFormat;
 
   @ApiPropertyOptional({ example: 'PED-123' })

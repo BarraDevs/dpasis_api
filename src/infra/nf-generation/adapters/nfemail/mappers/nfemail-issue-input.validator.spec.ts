@@ -1,6 +1,8 @@
 import { ExternalApiError } from 'src/shared/errors/external-api.error';
 import { IssueNfInputDto } from '../../../dtos/issue-nf.dto';
+import { NfIssueFormat } from '../../../enums/nf-issue-format.enum';
 import { makeValidIssueNfInput } from '../testing/make-valid-issue-nf-input';
+import { makeValidIssueNfseInput } from '../testing/make-valid-issue-nfse-input';
 import { validateIssueNfInput } from './nfemail-issue-input.validator';
 
 describe('nfemail-issue-input.validator - Unit tests', () => {
@@ -101,5 +103,67 @@ describe('nfemail-issue-input.validator - Unit tests', () => {
 
     // Act & Assert
     expect(() => validateIssueNfInput(input)).toThrow('Item 2: dados fiscais são obrigatórios');
+  });
+
+  it('should not throw when NFS-e input is valid', () => {
+    // Arrange
+    const input = makeValidIssueNfseInput();
+
+    // Act & Assert
+    expect(() => validateIssueNfInput(input)).not.toThrow();
+  });
+
+  it('should throw when NFS-e emitter municipal registration is missing', () => {
+    // Arrange
+    const input = makeValidIssueNfseInput({
+      emitter: {
+        ...makeValidIssueNfseInput().emitter,
+        municipalRegistration: '',
+      },
+    });
+
+    // Act & Assert
+    expect(() => validateIssueNfInput(input)).toThrow('Emitente: inscrição municipal é obrigatória para NFS-e');
+  });
+
+  it('should throw when NFS-e service list item is missing', () => {
+    // Arrange
+    const baseItem = makeValidIssueNfseInput().items[0];
+    const input = makeValidIssueNfseInput({
+      items: [{
+        ...baseItem,
+        taxation: {
+          ...baseItem.taxation,
+          serviceListItem: '',
+        },
+      }],
+    });
+
+    // Act & Assert
+    expect(() => validateIssueNfInput(input)).toThrow('Item 1: item da lista de serviço (LC 116) é obrigatório para NFS-e');
+  });
+
+  it('should not require item fiscal data for NFS-e', () => {
+    // Arrange
+    const baseItem = makeValidIssueNfseInput().items[0];
+    const input = {
+      ...makeValidIssueNfseInput(),
+      items: [{ ...baseItem, fiscal: undefined, ibsCbs: undefined }],
+    } as unknown as IssueNfInputDto;
+
+    // Act & Assert
+    expect(() => validateIssueNfInput(input)).not.toThrow();
+  });
+
+  it('should require item fiscal data for NF-e XML', () => {
+    // Arrange
+    const baseItem = makeValidIssueNfInput().items[0];
+    const input = {
+      ...makeValidIssueNfInput({ format: NfIssueFormat.NFE_XML }),
+      items: [{ ...baseItem, fiscal: undefined }],
+    } as unknown as IssueNfInputDto;
+
+    // Act & Assert
+    expect(() => validateIssueNfInput(input)).toThrow('Item 1: dados fiscais são obrigatórios');
   });
 });
