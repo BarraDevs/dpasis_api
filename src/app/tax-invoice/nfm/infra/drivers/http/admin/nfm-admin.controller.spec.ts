@@ -2,13 +2,17 @@ import { createMock } from '@golevelup/ts-jest';
 import { Test } from '@nestjs/testing';
 import { AuthenticationGuardsModule } from 'src/app/authentication/application/guards/guards.module';
 import { NfmDto } from 'src/app/tax-invoice/nfm/application/dtos/nfm.dto';
+import { FindAllNfms } from 'src/app/tax-invoice/nfm/application/usecases/find-all-nfms/find-all-nfms.service';
+import { FindAllNfmsQueryDto } from 'src/app/tax-invoice/nfm/application/usecases/find-all-nfms/dtos/find-all-nfms.dto';
 import { FindElegibleClients } from 'src/app/tax-invoice/nfm/application/usecases/find-elegible-clients/find-elegible-clients.service';
 import { SaveElegibleNfmsOutputDto } from 'src/app/tax-invoice/nfm/application/usecases/save-elegible-nfms/dtos/save-elegible-nfms.dto';
 import { SaveElegibleNfms } from 'src/app/tax-invoice/nfm/application/usecases/save-elegible-nfms/save-elegible-nfms.service';
+import { NfDto } from 'src/infra/nf-generation/dtos/nf.dto';
 import { NfmAdminController } from './nfm-admin.controller';
 
 describe('NfmAdminController - Unit tests', () => {
   let sut: NfmAdminController;
+  let findAllNfms: FindAllNfms;
   let findElegibleClients: FindElegibleClients;
   let saveElegibleNfms: SaveElegibleNfms;
 
@@ -17,18 +21,36 @@ describe('NfmAdminController - Unit tests', () => {
       imports: [AuthenticationGuardsModule],
       controllers: [NfmAdminController],
       providers: [
+        { provide: FindAllNfms, useValue: createMock<FindAllNfms>() },
         { provide: FindElegibleClients, useValue: createMock<FindElegibleClients>() },
         { provide: SaveElegibleNfms, useValue: createMock<SaveElegibleNfms>() },
       ],
     }).compile();
 
     sut = module.get(NfmAdminController);
+    findAllNfms = module.get(FindAllNfms);
     findElegibleClients = module.get(FindElegibleClients);
     saveElegibleNfms = module.get(SaveElegibleNfms);
   });
 
   it('should be defined', () => {
     expect(sut).toBeDefined();
+  });
+
+  describe('findAllInvoices', () => {
+    it('should call findAllNfms.execute with queries', async() => {
+      // Arrange
+      const queries = createMock<FindAllNfmsQueryDto>({ page: 1, limit: 10 });
+      const output = [createMock<NfDto>()];
+      const findAllSpy = jest.spyOn(findAllNfms, 'execute').mockResolvedValue(output);
+
+      // Act
+      const result = await sut.findAllInvoices(queries);
+
+      // Assert
+      expect(result).toEqual(output);
+      expect(findAllSpy).toHaveBeenCalledWith(queries);
+    });
   });
 
   describe('findNfms', () => {

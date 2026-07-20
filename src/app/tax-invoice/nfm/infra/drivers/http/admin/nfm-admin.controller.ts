@@ -1,13 +1,17 @@
-import { Controller, Get, Post } from '@nestjs/common';
+import { Controller, Get, Post, Query } from '@nestjs/common';
 import { NfmDto } from 'src/app/tax-invoice/nfm/application/dtos/nfm.dto';
+import { FindAllNfms } from 'src/app/tax-invoice/nfm/application/usecases/find-all-nfms/find-all-nfms.service';
+import { FindAllNfmsQueryDto } from 'src/app/tax-invoice/nfm/application/usecases/find-all-nfms/dtos/find-all-nfms.dto';
 import { FindElegibleClients } from 'src/app/tax-invoice/nfm/application/usecases/find-elegible-clients/find-elegible-clients.service';
 import { SaveElegibleNfms } from 'src/app/tax-invoice/nfm/application/usecases/save-elegible-nfms/save-elegible-nfms.service';
 import { SaveElegibleNfmsOutputDto } from 'src/app/tax-invoice/nfm/application/usecases/save-elegible-nfms/dtos/save-elegible-nfms.dto';
+import { NfDto } from 'src/infra/nf-generation/dtos/nf.dto';
 import { Swagger } from 'src/infra/openapi/swagger';
 
 @Controller('admin/nfm')
 export class NfmAdminController {
   constructor(
+    private readonly findAllNfms: FindAllNfms,
     private readonly findElegibleClients: FindElegibleClients,
     private readonly saveElegibleNfmsService: SaveElegibleNfms,
     // private readonly createNfmService: CreateNfm,
@@ -26,6 +30,18 @@ export class NfmAdminController {
   })
   public findNfms(): Promise<NfmDto[]> {
     return this.findElegibleClients.execute();
+  }
+
+  @Get('invoices')
+  @Swagger({
+    tags: ['NFM'],
+    summary: 'Listar notas fiscais emitidas (NFeMail)',
+    applyBadRequest: true,
+    applyServiceUnavailable: true,
+    okResponse: [NfDto],
+  })
+  public findAllInvoices(@Query() queries: FindAllNfmsQueryDto): Promise<NfDto[]> {
+    return this.findAllNfms.execute(queries);
   }
 
   @Post()
