@@ -6,10 +6,17 @@ const TOKENS = {
   CnpjLookupGateway: Symbol.for('CnpjLookupGateway'),
   TaxInvoiceGenerationGateway: Symbol.for('TaxInvoiceGenerationGateway'),
   NfGenerationGateway: Symbol.for('NfGenerationGateway'),
+  NfsGenerationGateway: Symbol.for('NfsGenerationGateway'),
   LoggerGateway: Symbol.for('LoggerGateway'),
 
   UploadFileGateway: Symbol.for('UploadFileGateway'),
   UploadFileQueueProducer: Symbol.for('UploadFileQueueProducer'),
+
+  NfseDao: Symbol.for('NfseDao'),
+  NfseRepository: Symbol.for('NfseRepository'),
+  NfseRpsSequenceRepository: Symbol.for('NfseRpsSequenceRepository'),
+  NfsProviderConfigDao: Symbol.for('NfsProviderConfigDao'),
+  NfseQueueProducer: Symbol.for('NfseQueueProducer'),
 
   AccountDao: Symbol.for('AccountDao'),
   FaqDao: Symbol.for('FaqDao'),

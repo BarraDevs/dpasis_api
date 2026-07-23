@@ -1,0 +1,27 @@
+model Nfse {
+  id               Int       @id @default(autoincrement())
+  companyId        Int
+  clientId         Int
+  rpsNumber        Int
+  rpsSeries        String
+  status           String
+  batchProtocol    String?
+  nfseNumber       String?
+  verificationCode String?
+  issuedAt         DateTime?
+  errorMessage     String?
+  data             Json
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@unique([companyId, rpsSeries, rpsNumber])
+  @@map("nfses")
+}
+
+model NfseRpsSequence {
+  companyId Int      @id @map("company_id")
+  nextId    Int      @default(1) @map("next_id")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("nfse_rps_sequences")
+}

@@ -23,6 +23,10 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
       // Audit logs (sem dependências)
       await tx.auditLog.deleteMany();
       await tx.nfm.deleteMany();
+      // Nfs-e (referencia Company/Client por id solto, sem FK — apagar antes por hygiene)
+      await tx.nfse.deleteMany();
+      await tx.nfseRpsSequence.deleteMany();
+      await tx.nfsProviderConfig.deleteMany(); // referencia Company (FK)
       // 0. ClientInvoiceConfig (referencia Client, ClientAddress, Bank)
       await tx.clientInvoiceConfig.deleteMany();
       // 0.1 ClientDiscount (referencia Client)

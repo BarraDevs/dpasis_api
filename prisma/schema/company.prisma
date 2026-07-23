@@ -26,5 +26,7 @@ model Company {
   clients  Client[]
   services Service[]
 
+  nfsProviderConfig NfsProviderConfig?
+
   @@map("companies")
 }

@@ -12,6 +12,7 @@ export enum LogContext {
   CEP_LOOKUP = 'cep-lookup',
   CNPJ_LOOKUP = 'cnpj-lookup',
   NF_GENERATION = 'nf-generation',
+  NFS_GENERATION = 'nfs-generation',
 }
 
 type LogContextDataMap = {
@@ -23,6 +24,7 @@ type LogContextDataMap = {
   [LogContext.CEP_LOOKUP]: CepLookupData
   [LogContext.CNPJ_LOOKUP]: CnpjLookupData
   [LogContext.NF_GENERATION]: NfGenerationData
+  [LogContext.NFS_GENERATION]: NfsGenerationData
 }
 
 type CommomData = {
@@ -82,4 +84,11 @@ type NfGenerationData = CommomData & {
   accessKey?: string;
   format?: string;
   query?: any;
+}
+
+type NfsGenerationData = CommomData & {
+  action: string;
+  batchProtocol?: string;
+  batchNumber?: number;
+  errorMessage?: string;
 }

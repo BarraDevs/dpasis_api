@@ -1,0 +1,7 @@
+export enum NfseStatus {
+  PENDING = 'PENDING',
+  SUBMITTED = 'SUBMITTED',
+  PROCESSING = 'PROCESSING',
+  ISSUED = 'ISSUED',
+  FAILED = 'FAILED',
+}

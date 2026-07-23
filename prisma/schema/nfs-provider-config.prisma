@@ -1,0 +1,18 @@
+model NfsProviderConfig {
+  id                     Int      @id @default(autoincrement())
+  companyId              Int      @unique
+  vendor                 String
+  municipalRegistration  String
+  municipalCodeIbge      String
+  serieRps               String
+  environment            String
+  certFilePath           String
+  certPasswordEnvVar     String
+  vendorConfig           Json
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  company Company @relation(fields: [companyId], references: [id])
+
+  @@map("nfs_provider_configs")
+}
