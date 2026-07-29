@@ -64,20 +64,9 @@ export class NfseDaoAdapterPrisma implements INfseDao {
 
   private mapToDto(row: Prisma.NfseGetPayload<{ select: typeof NfseSelect }>): NfseDto {
     return {
-      id: row.id,
-      companyId: row.companyId,
-      clientId: row.clientId,
-      rpsNumber: row.rpsNumber,
-      rpsSeries: row.rpsSeries,
+      ...row,
       status: row.status as NfseStatus,
-      batchProtocol: row.batchProtocol,
-      nfseNumber: row.nfseNumber,
-      verificationCode: row.verificationCode,
-      issuedAt: row.issuedAt,
-      errorMessage: row.errorMessage,
       data: row.data as Record<string, unknown>,
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
     };
   }
 }

@@ -1,16 +1,16 @@
 import { createMock } from '@golevelup/ts-jest';
 import { HttpService } from '@nestjs/axios';
-import type { ILoggerGateway } from 'src/infra/logger/logger.gateway';
+import { LogContext, type ILoggerGateway } from 'src/infra/logger/logger.gateway';
 import { ExternalApiError } from 'src/shared/errors/external-api.error';
 import { NfsProviderConfigError } from 'src/shared/errors/nfs-provider-config.error';
 import { NfsBatchSituation } from '../../dtos/nfs-batch-status.dto';
 import { NfsProviderEnvironment } from '../../dtos/nfs-provider-credentials.dto';
-import { buildGissConsultarLoteRpsXml, parseGissConsultarLoteRpsResponse } from './mappers/giss-batch-status.mapper';
-import { buildGissIssueBatchXml, parseGissRecepcionarLoteRpsResponse } from './mappers/giss-issue-batch.mapper';
+import { GissBatchStatusMapper } from './mappers/giss-batch-status.mapper';
+import { GissIssueBatchMapper } from './mappers/giss-issue-batch.mapper';
 import { NfsGenerationGissAdapterGateway } from './nfs-generation-giss.gateway';
-import { loadGissCertMaterial } from './signing/giss-pfx-loader';
-import { signGissElementById } from './signing/giss-xml-signer';
-import { postGissSoapRequest } from './soap/giss-soap-client';
+import { GissPfxLoader } from './signing/giss-pfx-loader';
+import { GissXmlSigner } from './signing/giss-xml-signer';
+import { GissSoapClient } from './soap/giss-soap-client';
 
 jest.mock('./mappers/giss-issue-batch.mapper');
 jest.mock('./mappers/giss-batch-status.mapper');
@@ -18,19 +18,28 @@ jest.mock('./signing/giss-pfx-loader');
 jest.mock('./signing/giss-xml-signer');
 jest.mock('./soap/giss-soap-client');
 
-const mockedBuildIssueBatch = buildGissIssueBatchXml as jest.Mock;
-const mockedParseIssueBatch = parseGissRecepcionarLoteRpsResponse as jest.Mock;
-const mockedBuildConsultar = buildGissConsultarLoteRpsXml as jest.Mock;
-const mockedParseConsultar = parseGissConsultarLoteRpsResponse as jest.Mock;
-const mockedLoadCert = loadGissCertMaterial as jest.Mock;
-const mockedSign = signGissElementById as jest.Mock;
-const mockedPostSoap = postGissSoapRequest as jest.Mock;
+const mockedBuildIssueBatch = GissIssueBatchMapper.buildIssueBatchXml as jest.Mock;
+const mockedParseIssueBatch = GissIssueBatchMapper.parseRecepcionarLoteRpsResponse as jest.Mock;
+const mockedBuildConsultar = GissBatchStatusMapper.buildConsultarLoteRpsXml as jest.Mock;
+const mockedParseConsultar = GissBatchStatusMapper.parseConsultarLoteRpsResponse as jest.Mock;
+const mockedLoadCert = GissPfxLoader.load as jest.Mock;
+const mockedSign = GissXmlSigner.signElementById as jest.Mock;
+const mockedSignWholeDocument = GissXmlSigner.signWholeDocument as jest.Mock;
+const mockedPostSoap = GissSoapClient.postSoapRequest as jest.Mock;
+
+const certMaterial = { certPem: 'cert', keyPem: 'key' };
 
 const provider = {
   certFilePath: '/certs/x.pfx',
   certPasswordEnvVar: 'X_PASS',
   environment: NfsProviderEnvironment.Demonstration,
   vendorConfig: { municipioSlug: 'demonstracao' },
+};
+
+const batchStatusInput = {
+  batchProtocol: 'PROTO-123',
+  providerDocument: '12345678000199',
+  provider,
 };
 
 describe('NfsGenerationGissAdapterGateway - Unit tests', () => {
@@ -43,7 +52,7 @@ describe('NfsGenerationGissAdapterGateway - Unit tests', () => {
     httpService = createMock<HttpService>();
     logger = createMock<ILoggerGateway>();
     sut = new NfsGenerationGissAdapterGateway(logger, httpService);
-    mockedLoadCert.mockReturnValue({ certPem: 'cert', keyPem: 'key' });
+    mockedLoadCert.mockReturnValue(certMaterial);
   });
 
   it('should be defined', () => {
@@ -58,6 +67,44 @@ describe('NfsGenerationGissAdapterGateway - Unit tests', () => {
         provider: { ...provider, vendorConfig: {} },
         rpsList: [],
       })).rejects.toThrow(NfsProviderConfigError);
+      await expect(sut.issueBatch({
+        batchNumber: 1,
+        provider: { ...provider, vendorConfig: {} },
+        rpsList: [],
+      })).rejects.toThrow('municipioSlug');
+    });
+
+    it('should throw NfsProviderConfigError when municipioSlug is empty', async() => {
+      // Act & Assert
+      await expect(sut.issueBatch({
+        batchNumber: 1,
+        provider: { ...provider, vendorConfig: { municipioSlug: '' } },
+        rpsList: [],
+      })).rejects.toThrow(NfsProviderConfigError);
+    });
+
+    it('should throw NfsProviderConfigError when municipioSlug is not a string', async() => {
+      // Act & Assert
+      await expect(sut.issueBatch({
+        batchNumber: 1,
+        provider: { ...provider, vendorConfig: { municipioSlug: 123 as unknown as string } },
+        rpsList: [],
+      })).rejects.toThrow(NfsProviderConfigError);
+    });
+
+    it('should load the certificate before building the batch XML', async() => {
+      // Arrange
+      mockedBuildIssueBatch.mockReturnValue({ xml: '<xml/>', loteId: 'lote1', rpsIds: ['rps1'] });
+      mockedSign.mockReturnValue('<signed-xml/>');
+      mockedPostSoap.mockResolvedValue('<response/>');
+      mockedParseIssueBatch.mockReturnValue({ batchProtocol: 'PROTO-123' });
+
+      // Act
+      await sut.issueBatch({ batchNumber: 1, provider, rpsList: [] });
+
+      // Assert
+      expect(mockedLoadCert).toHaveBeenCalledWith('/certs/x.pfx', 'X_PASS');
+      expect(mockedLoadCert.mock.invocationCallOrder[0]).toBeLessThan(mockedBuildIssueBatch.mock.invocationCallOrder[0]);
     });
 
     it('should build, sign, post and parse the batch on success', async() => {
@@ -71,10 +118,27 @@ describe('NfsGenerationGissAdapterGateway - Unit tests', () => {
       const result = await sut.issueBatch({ batchNumber: 1, provider, rpsList: [] });
 
       // Assert
-      expect(mockedSign).toHaveBeenCalledWith('<xml/>', 'rps1', { certPem: 'cert', keyPem: 'key' });
-      expect(mockedSign).toHaveBeenCalledWith('<signed-xml/>', 'lote1', { certPem: 'cert', keyPem: 'key' });
-      expect(mockedPostSoap).toHaveBeenCalledWith(httpService, 'demonstracao', 'RecepcionarLoteRps', '<signed-xml/>', { certPem: 'cert', keyPem: 'key' });
+      expect(mockedSign).toHaveBeenCalledWith('<xml/>', 'rps1', certMaterial);
+      expect(mockedSign).toHaveBeenCalledWith('<signed-xml/>', 'lote1', certMaterial);
+      expect(mockedPostSoap).toHaveBeenCalledWith(httpService, 'demonstracao', 'RecepcionarLoteRps', '<signed-xml/>', certMaterial);
       expect(result).toEqual({ batchProtocol: 'PROTO-123' });
+    });
+
+    it('should sign each RPS individually before signing the batch when multiple RPS are present', async() => {
+      // Arrange
+      mockedBuildIssueBatch.mockReturnValue({ xml: '<xml/>', loteId: 'lote1', rpsIds: ['rps1', 'rps2'] });
+      mockedSign.mockImplementation((xml: string, id: string) => `${xml}-${id}`);
+      mockedPostSoap.mockResolvedValue('<response/>');
+      mockedParseIssueBatch.mockReturnValue({ batchProtocol: 'PROTO-123' });
+
+      // Act
+      await sut.issueBatch({ batchNumber: 1, provider, rpsList: [] });
+
+      // Assert
+      expect(mockedSign).toHaveBeenNthCalledWith(1, '<xml/>', 'rps1', certMaterial);
+      expect(mockedSign).toHaveBeenNthCalledWith(2, '<xml/>-rps1', 'rps2', certMaterial);
+      expect(mockedSign).toHaveBeenNthCalledWith(3, '<xml/>-rps1-rps2', 'lote1', certMaterial);
+      expect(mockedPostSoap).toHaveBeenCalledWith(httpService, 'demonstracao', 'RecepcionarLoteRps', '<xml/>-rps1-rps2-lote1', certMaterial);
     });
 
     it('should wrap unexpected errors as ExternalApiError and log them', async() => {
@@ -85,7 +149,23 @@ describe('NfsGenerationGissAdapterGateway - Unit tests', () => {
 
       // Act & Assert
       await expect(sut.issueBatch({ batchNumber: 1, provider, rpsList: [] })).rejects.toThrow(ExternalApiError);
-      expect(logger.error).toHaveBeenCalled();
+      await expect(sut.issueBatch({ batchNumber: 1, provider, rpsList: [] })).rejects.toThrow('timeout');
+      expect(logger.error).toHaveBeenCalledWith(LogContext.NFS_GENERATION, expect.objectContaining({
+        adapter: 'giss',
+        action: 'issueBatch',
+        batchNumber: 1,
+        errorMessage: 'timeout',
+      }));
+    });
+
+    it('should use the default ExternalApiError message when the caught error has no message', async() => {
+      // Arrange
+      mockedBuildIssueBatch.mockReturnValue({ xml: '<xml/>', loteId: 'lote1', rpsIds: ['rps1'] });
+      mockedSign.mockReturnValue('<signed-xml/>');
+      mockedPostSoap.mockRejectedValue({});
+
+      // Act & Assert
+      await expect(sut.issueBatch({ batchNumber: 1, provider, rpsList: [] })).rejects.toThrow('Erro ao enviar lote de RPS ao Giss');
     });
 
     it('should let NfsProviderConfigError from the cert loader propagate without wrapping', async() => {
@@ -101,27 +181,93 @@ describe('NfsGenerationGissAdapterGateway - Unit tests', () => {
   });
 
   describe('getBatchStatus', () => {
-    it('should build, post and parse the status query', async() => {
+    it('should throw NfsProviderConfigError when vendorConfig has no municipioSlug', async() => {
+      // Act & Assert
+      await expect(sut.getBatchStatus({
+        ...batchStatusInput,
+        provider: { ...provider, vendorConfig: {} },
+      })).rejects.toThrow(NfsProviderConfigError);
+      await expect(sut.getBatchStatus({
+        ...batchStatusInput,
+        provider: { ...provider, vendorConfig: {} },
+      })).rejects.toThrow('municipioSlug');
+    });
+
+    it('should throw NfsProviderConfigError when municipioSlug is empty', async() => {
+      // Act & Assert
+      await expect(sut.getBatchStatus({
+        ...batchStatusInput,
+        provider: { ...provider, vendorConfig: { municipioSlug: '' } },
+      })).rejects.toThrow(NfsProviderConfigError);
+    });
+
+    it('should load the certificate before building the consulta XML', async() => {
       // Arrange
       mockedBuildConsultar.mockReturnValue('<consulta/>');
+      mockedSignWholeDocument.mockReturnValue('<consulta-assinada/>');
       mockedPostSoap.mockResolvedValue('<response/>');
       mockedParseConsultar.mockReturnValue({ situation: NfsBatchSituation.Success, issuedNotes: [] });
 
       // Act
-      const result = await sut.getBatchStatus({ batchProtocol: 'PROTO-123', providerDocument: '12345678000199', provider });
+      await sut.getBatchStatus(batchStatusInput);
 
       // Assert
-      expect(mockedPostSoap).toHaveBeenCalledWith(httpService, 'demonstracao', 'ConsultarLoteRps', '<consulta/>', { certPem: 'cert', keyPem: 'key' });
+      expect(mockedLoadCert).toHaveBeenCalledWith('/certs/x.pfx', 'X_PASS');
+      expect(mockedLoadCert.mock.invocationCallOrder[0]).toBeLessThan(mockedBuildConsultar.mock.invocationCallOrder[0]);
+    });
+
+    it('should build, sign, post and parse the status query', async() => {
+      // Arrange
+      mockedBuildConsultar.mockReturnValue('<consulta/>');
+      mockedSignWholeDocument.mockReturnValue('<consulta-assinada/>');
+      mockedPostSoap.mockResolvedValue('<response/>');
+      mockedParseConsultar.mockReturnValue({ situation: NfsBatchSituation.Success, issuedNotes: [] });
+
+      // Act
+      const result = await sut.getBatchStatus(batchStatusInput);
+
+      // Assert
+      expect(mockedSignWholeDocument).toHaveBeenCalledWith('<consulta/>', certMaterial);
+      expect(mockedPostSoap).toHaveBeenCalledWith(httpService, 'demonstracao', 'ConsultarLoteRps', '<consulta-assinada/>', certMaterial);
       expect(result.situation).toBe(NfsBatchSituation.Success);
     });
 
-    it('should wrap unexpected errors as ExternalApiError', async() => {
+    it('should wrap unexpected errors as ExternalApiError and log them', async() => {
       // Arrange
       mockedBuildConsultar.mockReturnValue('<consulta/>');
+      mockedSignWholeDocument.mockReturnValue('<consulta-assinada/>');
       mockedPostSoap.mockRejectedValue(new Error('boom'));
 
       // Act & Assert
-      await expect(sut.getBatchStatus({ batchProtocol: 'PROTO-123', providerDocument: '12345678000199', provider })).rejects.toThrow(ExternalApiError);
+      await expect(sut.getBatchStatus(batchStatusInput)).rejects.toThrow(ExternalApiError);
+      await expect(sut.getBatchStatus(batchStatusInput)).rejects.toThrow('boom');
+      expect(logger.error).toHaveBeenCalledWith(LogContext.NFS_GENERATION, expect.objectContaining({
+        adapter: 'giss',
+        action: 'getBatchStatus',
+        batchProtocol: 'PROTO-123',
+        errorMessage: 'boom',
+      }));
+    });
+
+    it('should use the default ExternalApiError message when the caught error has no message', async() => {
+      // Arrange
+      mockedBuildConsultar.mockReturnValue('<consulta/>');
+      mockedSignWholeDocument.mockReturnValue('<consulta-assinada/>');
+      mockedPostSoap.mockRejectedValue({});
+
+      // Act & Assert
+      await expect(sut.getBatchStatus(batchStatusInput)).rejects.toThrow('Erro ao consultar status do lote no Giss');
+    });
+
+    it('should let NfsProviderConfigError from the cert loader propagate without wrapping', async() => {
+      // Arrange
+      mockedLoadCert.mockImplementation(() => {
+        throw new NfsProviderConfigError('senha incorreta');
+      });
+
+      // Act & Assert
+      await expect(sut.getBatchStatus(batchStatusInput)).rejects.toThrow(NfsProviderConfigError);
+      expect(logger.error).not.toHaveBeenCalled();
     });
   });
 });

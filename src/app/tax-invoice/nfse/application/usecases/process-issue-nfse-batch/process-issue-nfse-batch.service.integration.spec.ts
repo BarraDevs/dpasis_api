@@ -1,0 +1,191 @@
+import { Test } from '@nestjs/testing';
+import { ConfigModule } from 'src/core/config/config.module';
+import { TOKENS } from 'src/core/di/token';
+import { PrismaService } from 'src/infra/database/prisma/prisma.service';
+import { LoggerModule } from 'src/infra/logger/logger.module';
+import { NfsProviderEnvironment } from 'src/infra/nfs-generation/dtos/nfs-provider-credentials.dto';
+import { NfseQueueFakeAdapterProducer } from '../../../infra/driven/queue/fake/nfse-queue-fake.producer';
+import { NfseStatus } from '../../../domain/enums/nfse-status.enum';
+import { NfseNotFoundError } from '../../../domain/errors/nfse-not-found.error';
+import { NfsProviderNotConfiguredError } from '../../../domain/errors/nfs-provider-not-configured.error';
+import { NfseQueueModule } from '../../queue/nfse-queue.module';
+import { NfseIssueSnapshot } from '../issue-nfse/issue-nfse.service';
+import { ProcessIssueNfseBatch } from './process-issue-nfse-batch.service';
+
+function makeSnapshot(): NfseIssueSnapshot {
+  return {
+    input: {
+      companyId: 1,
+      clientId: 1,
+      simpleNationalOptant: false,
+      fiscalIncentive: false,
+      service: {
+        serviceListItemCode: '01.07',
+        nbsCode: '1.1501.30.00',
+        indopCode: '050101',
+        description: 'Desenvolvimento de sistema',
+        serviceMunicipalCodeIbge: '3529401',
+        issExigibility: 1,
+        issWithheld: true,
+        issRetentionResponsible: 1,
+        issValue: 50,
+        servicesValue: 1000,
+        cClassTrib: '000001',
+        ibsCbsCst: '000',
+      },
+    },
+    providerDocument: '12345678000199',
+    providerMunicipalRegistration: '12345',
+    clientDocument: '98765432000188',
+    clientCompanyName: 'Cliente LTDA',
+    takerAddress: {
+      street: 'Av. Paulista',
+      number: '500',
+      complement: 'Sala 301',
+      neighborhood: 'Bela Vista',
+      cityCodeIbge: '3550308',
+      state: 'SP',
+      zipCode: '01310-100',
+    },
+  };
+}
+
+async function seedCompany(prisma: PrismaService) {
+  return prisma.company.create({
+    data: {
+      name: 'Empresa Teste',
+      fantasyName: 'Empresa Teste',
+      document: `${Date.now()}${Math.floor(Math.random() * 1000)}`.slice(0, 14),
+      active: true,
+      zipCode: '01310100',
+      street: 'Av Paulista',
+      number: '100',
+      neighborhood: 'Bela Vista',
+      city: 'São Paulo',
+      state: 'SP',
+      phone01: '11999999999',
+      email01: `empresa-${Date.now()}@test.com`,
+    },
+  });
+}
+
+async function seedProviderConfig(prisma: PrismaService, companyId: number) {
+  await prisma.nfsProviderConfig.create({
+    data: {
+      companyId,
+      vendor: 'giss',
+      municipalRegistration: '12345',
+      municipalCodeIbge: '3529401',
+      serieRps: 'NFSE',
+      environment: NfsProviderEnvironment.Demonstration,
+      certFilePath: '/certs/x.pfx',
+      certPasswordEnvVar: 'X_PASS',
+      vendorConfig: { municipioSlug: 'demonstracao' },
+    },
+  });
+}
+
+async function seedNfse(
+  prisma: PrismaService,
+  companyId: number,
+  overrides: {
+    status?: NfseStatus;
+    rpsNumber?: number;
+    batchProtocol?: string | null;
+  } = {},
+) {
+  return prisma.nfse.create({
+    data: {
+      companyId,
+      clientId: 1,
+      rpsNumber: overrides.rpsNumber ?? Date.now() % 100_000,
+      rpsSeries: 'NFSE',
+      status: overrides.status ?? NfseStatus.PENDING,
+      batchProtocol: overrides.batchProtocol ?? null,
+      data: makeSnapshot() as unknown as object,
+    },
+  });
+}
+
+describe('ProcessIssueNfseBatch - Integration tests', () => {
+  let sut: ProcessIssueNfseBatch;
+  let prisma: PrismaService;
+  let queueProducer: NfseQueueFakeAdapterProducer;
+
+  beforeAll(async() => {
+    const module = await Test.createTestingModule({
+      imports: [
+        ConfigModule,
+        LoggerModule,
+        NfseQueueModule.register(),
+      ],
+    }).compile();
+
+    sut = module.get(ProcessIssueNfseBatch);
+    prisma = module.get(PrismaService);
+    queueProducer = module.get(TOKENS.NfseQueueProducer);
+  });
+
+  beforeEach(async() => {
+    await prisma.truncate();
+    queueProducer.addedPollBatchJobs.length = 0;
+  });
+
+  afterAll(async() => {
+    await prisma.truncate();
+    await prisma.$disconnect();
+  });
+
+  it('should be defined', () => {
+    expect(sut).toBeDefined();
+  });
+
+  it('should throw NfseNotFoundError when the nfse does not exist', async() => {
+    // Act & Assert
+    await expect(sut.execute({ nfseId: 999_999 })).rejects.toThrow(NfseNotFoundError);
+  });
+
+  it('should be a no-op when the nfse is already ISSUED', async() => {
+    // Arrange
+    const company = await seedCompany(prisma);
+    await seedProviderConfig(prisma, company.id);
+    const nfse = await seedNfse(prisma, company.id, {
+      status: NfseStatus.ISSUED,
+      batchProtocol: 'existing-protocol',
+    });
+
+    // Act
+    await sut.execute({ nfseId: nfse.id });
+
+    // Assert
+    const saved = await prisma.nfse.findUnique({ where: { id: nfse.id } });
+    expect(saved?.status).toBe(NfseStatus.ISSUED);
+    expect(saved?.batchProtocol).toBe('existing-protocol');
+    expect(queueProducer.addedPollBatchJobs).toHaveLength(0);
+  });
+
+  it('should throw NfsProviderNotConfiguredError when the company has no provider config', async() => {
+    // Arrange
+    const company = await seedCompany(prisma);
+    const nfse = await seedNfse(prisma, company.id);
+
+    // Act & Assert
+    await expect(sut.execute({ nfseId: nfse.id })).rejects.toThrow(NfsProviderNotConfiguredError);
+  });
+
+  it('should persist FAILED status when the nfs generation gateway rejects the batch', async() => {
+    // Arrange
+    const company = await seedCompany(prisma);
+    await seedProviderConfig(prisma, company.id);
+    const nfse = await seedNfse(prisma, company.id);
+
+    // Act
+    await sut.execute({ nfseId: nfse.id });
+
+    // Assert
+    const saved = await prisma.nfse.findUnique({ where: { id: nfse.id } });
+    expect(saved?.status).toBe(NfseStatus.FAILED);
+    expect(saved?.errorMessage).toBe('Method not implemented.');
+    expect(queueProducer.addedPollBatchJobs).toHaveLength(0);
+  });
+});

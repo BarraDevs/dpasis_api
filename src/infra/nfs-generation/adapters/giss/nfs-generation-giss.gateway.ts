@@ -8,11 +8,11 @@ import { GetNfsBatchStatusInputDto, NfsBatchStatusDto } from '../../dtos/nfs-bat
 import { IssueNfsBatchInputDto, IssueNfsBatchOutputDto } from '../../dtos/issue-nfs-batch.dto';
 import { NfsProviderCredentialsDto } from '../../dtos/nfs-provider-credentials.dto';
 import { INfsGenerationGateway } from '../../nfs-generation.gateway';
-import { buildGissConsultarLoteRpsXml, parseGissConsultarLoteRpsResponse } from './mappers/giss-batch-status.mapper';
-import { buildGissIssueBatchXml, parseGissRecepcionarLoteRpsResponse } from './mappers/giss-issue-batch.mapper';
-import { loadGissCertMaterial } from './signing/giss-pfx-loader';
-import { signGissElementById } from './signing/giss-xml-signer';
-import { GissOperation, postGissSoapRequest } from './soap/giss-soap-client';
+import { GissBatchStatusMapper } from './mappers/giss-batch-status.mapper';
+import { GissIssueBatchMapper } from './mappers/giss-issue-batch.mapper';
+import { GissPfxLoader } from './signing/giss-pfx-loader';
+import { GissXmlSigner } from './signing/giss-xml-signer';
+import { GissOperation, GissSoapClient } from './soap/giss-soap-client';
 
 @Injectable()
 export class NfsGenerationGissAdapterGateway implements INfsGenerationGateway {
@@ -23,18 +23,18 @@ export class NfsGenerationGissAdapterGateway implements INfsGenerationGateway {
 
   public async issueBatch(input: IssueNfsBatchInputDto): Promise<IssueNfsBatchOutputDto> {
     const municipioSlug = this.getMunicipioSlug(input.provider);
-    const certMaterial = loadGissCertMaterial(input.provider.certFilePath, input.provider.certPasswordEnvVar);
+    const certMaterial = GissPfxLoader.load(input.provider.certFilePath, input.provider.certPasswordEnvVar);
 
     try {
-      const { xml, loteId, rpsIds } = buildGissIssueBatchXml(input);
+      const { xml, loteId, rpsIds } = GissIssueBatchMapper.buildIssueBatchXml(input);
       // O Giss exige assinatura em dois níveis: cada RPS individual (referenciado pelo próprio Id — sem
       // isso dá E174 "RPS não assinado") e o lote inteiro por último, também referenciado pelo próprio Id
       // (sem isso dá E173 "Lote de RPS não assinado", inclusive na checagem síncrona — testado ao vivo
       // contra produção; a variante com URI vazia/sem Id no lote regrediu pra E173, foi revertida).
-      const rpsSignedXml = rpsIds.reduce((currentXml, rpsId) => signGissElementById(currentXml, rpsId, certMaterial), xml);
-      const signedXml = signGissElementById(rpsSignedXml, loteId, certMaterial);
+      const rpsSignedXml = rpsIds.reduce((currentXml, rpsId) => GissXmlSigner.signElementById(currentXml, rpsId, certMaterial), xml);
+      const signedXml = GissXmlSigner.signElementById(rpsSignedXml, loteId, certMaterial);
 
-      const responseXml = await postGissSoapRequest(
+      const responseXml = await GissSoapClient.postSoapRequest(
         this.httpService,
         municipioSlug,
         GissOperation.RecepcionarLoteRps,
@@ -42,7 +42,7 @@ export class NfsGenerationGissAdapterGateway implements INfsGenerationGateway {
         certMaterial,
       );
 
-      return parseGissRecepcionarLoteRpsResponse(responseXml);
+      return GissIssueBatchMapper.parseRecepcionarLoteRpsResponse(responseXml);
     }
     catch (error: any) {
       if (error instanceof NfsProviderConfigError) {
@@ -61,20 +61,23 @@ export class NfsGenerationGissAdapterGateway implements INfsGenerationGateway {
 
   public async getBatchStatus(input: GetNfsBatchStatusInputDto): Promise<NfsBatchStatusDto> {
     const municipioSlug = this.getMunicipioSlug(input.provider);
-    const certMaterial = loadGissCertMaterial(input.provider.certFilePath, input.provider.certPasswordEnvVar);
+    const certMaterial = GissPfxLoader.load(input.provider.certFilePath, input.provider.certPasswordEnvVar);
 
     try {
-      const xml = buildGissConsultarLoteRpsXml(input);
+      const xml = GissBatchStatusMapper.buildConsultarLoteRpsXml(input);
+      // ConsultarLoteRpsEnvio não tem atributo Id no XSD (diferente de tcLoteRps), então a assinatura só
+      // pode ser sobre o documento inteiro (URI="" / enveloped) — ver GissXmlSigner.signWholeDocument.
+      const signedXml = GissXmlSigner.signWholeDocument(xml, certMaterial);
 
-      const responseXml = await postGissSoapRequest(
+      const responseXml = await GissSoapClient.postSoapRequest(
         this.httpService,
         municipioSlug,
         GissOperation.ConsultarLoteRps,
-        xml,
+        signedXml,
         certMaterial,
       );
 
-      return parseGissConsultarLoteRpsResponse(responseXml);
+      return GissBatchStatusMapper.parseConsultarLoteRpsResponse(responseXml);
     }
     catch (error: any) {
       if (error instanceof NfsProviderConfigError) {

@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import * as forge from 'node-forge';
 import { NfsProviderConfigError } from 'src/shared/errors/nfs-provider-config.error';
-import { loadGissCertMaterial } from './giss-pfx-loader';
+import { GissPfxLoader } from './giss-pfx-loader';
 
 const PASSWORD_ENV_VAR = 'TEST_GISS_CERT_PASSWORD';
 const PASSWORD = 'super-secret';
@@ -25,7 +25,7 @@ function buildTestPfx(): Buffer {
   return Buffer.from(p12Der, 'binary');
 }
 
-describe('loadGissCertMaterial - Unit tests', () => {
+describe('GissPfxLoader.load - Unit tests', () => {
   let dir: string;
   let pfxPath: string;
 
@@ -41,9 +41,13 @@ describe('loadGissCertMaterial - Unit tests', () => {
     rmSync(dir, { recursive: true, force: true });
   });
 
+  it('should be defined', () => {
+    expect(GissPfxLoader).toBeDefined();
+  });
+
   it('should load cert and private key PEM from a valid .pfx', () => {
     // Act
-    const result = loadGissCertMaterial(pfxPath, PASSWORD_ENV_VAR);
+    const result = GissPfxLoader.load(pfxPath, PASSWORD_ENV_VAR);
 
     // Assert
     expect(result.certPem).toContain('BEGIN CERTIFICATE');
@@ -53,12 +57,14 @@ describe('loadGissCertMaterial - Unit tests', () => {
 
   it('should throw NfsProviderConfigError when the password env var is not set', () => {
     // Act & Assert
-    expect(() => loadGissCertMaterial(pfxPath, 'UNSET_ENV_VAR')).toThrow(NfsProviderConfigError);
+    expect(() => GissPfxLoader.load(pfxPath, 'UNSET_ENV_VAR')).toThrow(NfsProviderConfigError);
+    expect(() => GissPfxLoader.load(pfxPath, 'UNSET_ENV_VAR')).toThrow('Variável de ambiente "UNSET_ENV_VAR" com a senha do certificado não está definida');
   });
 
   it('should throw NfsProviderConfigError when the file does not exist', () => {
     // Act & Assert
-    expect(() => loadGissCertMaterial(join(dir, 'missing.pfx'), PASSWORD_ENV_VAR)).toThrow(NfsProviderConfigError);
+    expect(() => GissPfxLoader.load(join(dir, 'missing.pfx'), PASSWORD_ENV_VAR)).toThrow(NfsProviderConfigError);
+    expect(() => GissPfxLoader.load(join(dir, 'missing.pfx'), PASSWORD_ENV_VAR)).toThrow('Certificado digital não encontrado em');
   });
 
   it('should throw NfsProviderConfigError when the password is wrong', () => {
@@ -66,8 +72,19 @@ describe('loadGissCertMaterial - Unit tests', () => {
     process.env.TEST_WRONG_PASSWORD = 'wrong-password';
 
     // Act & Assert
-    expect(() => loadGissCertMaterial(pfxPath, 'TEST_WRONG_PASSWORD')).toThrow(NfsProviderConfigError);
+    expect(() => GissPfxLoader.load(pfxPath, 'TEST_WRONG_PASSWORD')).toThrow(NfsProviderConfigError);
+    expect(() => GissPfxLoader.load(pfxPath, 'TEST_WRONG_PASSWORD')).toThrow('senha incorreta ou arquivo corrompido');
 
     delete process.env.TEST_WRONG_PASSWORD;
+  });
+
+  it('should throw NfsProviderConfigError when the file is corrupted', () => {
+    // Arrange
+    const corruptedPath = join(dir, 'corrupted.pfx');
+    writeFileSync(corruptedPath, 'not-a-pfx-file');
+
+    // Act & Assert
+    expect(() => GissPfxLoader.load(corruptedPath, PASSWORD_ENV_VAR)).toThrow(NfsProviderConfigError);
+    expect(() => GissPfxLoader.load(corruptedPath, PASSWORD_ENV_VAR)).toThrow('senha incorreta ou arquivo corrompido');
   });
 });

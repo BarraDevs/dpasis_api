@@ -20,10 +20,27 @@ export class IssueNfseServiceInputDto {
   @Trim()
   serviceListItemCode: string;
 
-  @ApiProperty({ example: '112731375' })
+  @ApiProperty({ example: '1.1501.30.00' })
   @IsString({ message: '$property deve ser uma string' })
   @Trim()
   nbsCode: string;
+
+  @ApiProperty({ example: '050101', description: 'Código indicador da operação (IBS/CBS)' })
+  @IsString({ message: '$property deve ser uma string' })
+  @Trim()
+  indopCode: string;
+
+  @ApiPropertyOptional({ example: '000001', description: 'Código de classificação tributária IBS/CBS' })
+  @IsOptional()
+  @IsString({ message: '$property deve ser uma string' })
+  @Trim()
+  cClassTrib?: string;
+
+  @ApiPropertyOptional({ example: '000', description: 'CST IBS/CBS' })
+  @IsOptional()
+  @IsString({ message: '$property deve ser uma string' })
+  @Trim()
+  ibsCbsCst?: string;
 
   @ApiProperty({ example: 'Desenvolvimento de sistema sob encomenda' })
   @IsString({ message: '$property deve ser uma string' })
@@ -70,6 +87,11 @@ export class IssueNfseServiceInputDto {
   @IsOptional()
   @IsNumber({}, { message: '$property deve ser um número' })
   issRate?: number;
+
+  @ApiPropertyOptional({ example: 1, description: '1=Tomador 2=Intermediário — quando ISS retido' })
+  @IsOptional()
+  @IsIn([1, 2], { message: '$property deve ser 1 (tomador) ou 2 (intermediário)' })
+  issRetentionResponsible?: 1 | 2;
 }
 
 export class IssueNfseInputDto {

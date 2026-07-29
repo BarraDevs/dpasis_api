@@ -20,8 +20,8 @@ export class ProcessIssueNfseBatch {
   private static readonly FIRST_POLL_DELAY_MS = 30_000;
 
   constructor(
-    @Inject(TOKENS.LoggerGateway) private readonly logger: ILoggerGateway,
     @Inject(TOKENS.NfseDao) private readonly nfseDao: INfseDao,
+    @Inject(TOKENS.LoggerGateway) private readonly logger: ILoggerGateway,
     @Inject(TOKENS.NfsProviderConfigDao) private readonly providerConfigDao: INfsProviderConfigDao,
     @Inject(TOKENS.NfsGenerationGateway) private readonly nfsGenerationGateway: INfsGenerationGateway,
     @Inject(TOKENS.NfseQueueProducer) private readonly queueProducer: INfseQueueProducer,
@@ -70,8 +70,19 @@ export class ProcessIssueNfseBatch {
               municipalRegistration: snapshot.providerMunicipalRegistration,
             },
             taker: {
-              identification: { document: snapshot.clientDocument },
               companyName: snapshot.clientCompanyName,
+              identification: {
+                document: snapshot.clientDocument,
+              },
+              address: snapshot.takerAddress ? {
+                street: snapshot.takerAddress.street,
+                number: snapshot.takerAddress.number,
+                complement: snapshot.takerAddress.complement ?? undefined,
+                neighborhood: snapshot.takerAddress.neighborhood,
+                cityCodeIbge: snapshot.takerAddress.cityCodeIbge,
+                state: snapshot.takerAddress.state,
+                zipCode: snapshot.takerAddress.zipCode.replace(/\D/g, ''),
+              } : undefined,
             },
             service: {
               serviceListItemCode: snapshot.input.service.serviceListItemCode,
@@ -85,6 +96,12 @@ export class ProcessIssueNfseBatch {
               municipalTaxCode: snapshot.input.service.municipalTaxCode,
               issValue: snapshot.input.service.issValue,
               issRate: snapshot.input.service.issRate,
+              issRetentionResponsible: snapshot.input.service.issRetentionResponsible,
+              ibsCbs: {
+                indopCode: snapshot.input.service.indopCode,
+                cst: snapshot.input.service.ibsCbsCst ?? '000',
+                cClassTrib: snapshot.input.service.cClassTrib ?? '000001',
+              },
             },
             simpleNationalOptant: snapshot.input.simpleNationalOptant,
             fiscalIncentive: snapshot.input.fiscalIncentive,

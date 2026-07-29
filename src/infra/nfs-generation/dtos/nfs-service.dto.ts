@@ -1,3 +1,5 @@
+import { NfsIbsCbsDto } from './nfs-ibs-cbs.dto';
+
 export enum NfsIssExigibility {
   Payable = 1,
   NonIncidence = 2,
@@ -15,6 +17,8 @@ export class NfsServiceDto {
   serviceMunicipalCodeIbge: string; // município da prestação
   issExigibility: NfsIssExigibility;
   issWithheld: boolean;
+  ibsCbs: NfsIbsCbsDto;
+  issRetentionResponsible?: 1 | 2;
   cnaeCode?: string;
   municipalTaxCode?: string;
 

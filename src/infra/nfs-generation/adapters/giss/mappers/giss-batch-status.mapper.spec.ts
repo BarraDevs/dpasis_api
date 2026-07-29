@@ -1,10 +1,14 @@
 import { NfsBatchSituation } from '../../../dtos/nfs-batch-status.dto';
-import { buildGissConsultarLoteRpsXml, parseGissConsultarLoteRpsResponse } from './giss-batch-status.mapper';
+import { GissBatchStatusMapper } from './giss-batch-status.mapper';
 
-describe('buildGissConsultarLoteRpsXml - Unit tests', () => {
+describe('GissBatchStatusMapper.buildConsultarLoteRpsXml - Unit tests', () => {
+  it('should be defined', () => {
+    expect(GissBatchStatusMapper).toBeDefined();
+  });
+
   it('should build a ConsultarLoteRpsEnvio XML with Prestador and Protocolo', () => {
     // Arrange & Act
-    const xml = buildGissConsultarLoteRpsXml({
+    const xml = GissBatchStatusMapper.buildConsultarLoteRpsXml({
       batchProtocol: 'PROTO-123',
       providerDocument: '12345678000199',
       provider: { certFilePath: '', certPasswordEnvVar: '', environment: 'DEMONSTRATION' as any, vendorConfig: {} },
@@ -14,9 +18,35 @@ describe('buildGissConsultarLoteRpsXml - Unit tests', () => {
     expect(xml).toContain('<p1:Cnpj>12345678000199</p1:Cnpj>');
     expect(xml).toContain('<p:Protocolo>PROTO-123</p:Protocolo>');
   });
+
+  it('should use Cpf tag for 11-digit provider document', () => {
+    // Arrange & Act
+    const xml = GissBatchStatusMapper.buildConsultarLoteRpsXml({
+      batchProtocol: 'PROTO-456',
+      providerDocument: '12345678901',
+      provider: { certFilePath: '', certPasswordEnvVar: '', environment: 'DEMONSTRATION' as any, vendorConfig: {} },
+    });
+
+    // Assert
+    expect(xml).toContain('<p1:Cpf>12345678901</p1:Cpf>');
+    expect(xml).toContain('<p:Protocolo>PROTO-456</p:Protocolo>');
+    expect(xml).toContain('xmlns:p="http://www.giss.com.br/consultar-lote-rps-envio-v2_04.xsd"');
+    expect(xml).toContain('xmlns:p1="http://www.giss.com.br/tipos-v2_04.xsd"');
+  });
 });
 
-describe('parseGissConsultarLoteRpsResponse - Unit tests', () => {
+describe('GissBatchStatusMapper.parseConsultarLoteRpsResponse - Unit tests', () => {
+  it('should parse a NOT_RECEIVED (situação 1) response', () => {
+    // Arrange
+    const xml = '<ConsultarLoteRpsResposta><Situacao>1</Situacao></ConsultarLoteRpsResposta>';
+
+    // Act
+    const result = GissBatchStatusMapper.parseConsultarLoteRpsResponse(xml);
+
+    // Assert
+    expect(result).toEqual({ situation: NfsBatchSituation.NotReceived, issuedNotes: undefined, errors: undefined });
+  });
+
   it('should parse a PENDING (situação 2) response', () => {
     // Arrange
     const xml = `<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
@@ -28,7 +58,7 @@ describe('parseGissConsultarLoteRpsResponse - Unit tests', () => {
     </soap:Envelope>`;
 
     // Act
-    const result = parseGissConsultarLoteRpsResponse(xml);
+    const result = GissBatchStatusMapper.parseConsultarLoteRpsResponse(xml);
 
     // Assert
     expect(result).toEqual({ situation: NfsBatchSituation.Pending, issuedNotes: undefined, errors: undefined });
@@ -66,7 +96,7 @@ describe('parseGissConsultarLoteRpsResponse - Unit tests', () => {
     </soap:Envelope>`;
 
     // Act
-    const result = parseGissConsultarLoteRpsResponse(xml);
+    const result = GissBatchStatusMapper.parseConsultarLoteRpsResponse(xml);
 
     // Assert
     expect(result.situation).toBe(NfsBatchSituation.Success);
@@ -77,6 +107,52 @@ describe('parseGissConsultarLoteRpsResponse - Unit tests', () => {
       verificationCode: 'ABC123',
       issueDate: '2026-07-20T10:00:00',
     }]);
+  });
+
+  it('should parse multiple issued notes', () => {
+    // Arrange
+    const xml = `<ConsultarLoteRpsResposta>
+      <Situacao>4</Situacao>
+      <ListaNfse>
+        <CompNfse>
+          <Nfse>
+            <InfNfse>
+              <Numero>1000</Numero>
+              <CodigoVerificacao>ABC</CodigoVerificacao>
+              <DataEmissao>2026-07-20T10:00:00</DataEmissao>
+              <DeclaracaoPrestacaoServico>
+                <InfDeclaracaoPrestacaoServico>
+                  <Rps><IdentificacaoRps><Numero>7</Numero><Serie>NFSE</Serie></IdentificacaoRps></Rps>
+                </InfDeclaracaoPrestacaoServico>
+              </DeclaracaoPrestacaoServico>
+            </InfNfse>
+          </Nfse>
+        </CompNfse>
+        <CompNfse>
+          <Nfse>
+            <InfNfse>
+              <Numero>1001</Numero>
+              <CodigoVerificacao>DEF</CodigoVerificacao>
+              <DataEmissao>2026-07-20T11:00:00</DataEmissao>
+              <DeclaracaoPrestacaoServico>
+                <InfDeclaracaoPrestacaoServico>
+                  <Rps><IdentificacaoRps><Numero>8</Numero><Serie>NFSE</Serie></IdentificacaoRps></Rps>
+                </InfDeclaracaoPrestacaoServico>
+              </DeclaracaoPrestacaoServico>
+            </InfNfse>
+          </Nfse>
+        </CompNfse>
+      </ListaNfse>
+    </ConsultarLoteRpsResposta>`;
+
+    // Act
+    const result = GissBatchStatusMapper.parseConsultarLoteRpsResponse(xml);
+
+    // Assert
+    expect(result.issuedNotes).toEqual([
+      { rpsNumber: 7, rpsSeries: 'NFSE', nfseNumber: '1000', verificationCode: 'ABC', issueDate: '2026-07-20T10:00:00' },
+      { rpsNumber: 8, rpsSeries: 'NFSE', nfseNumber: '1001', verificationCode: 'DEF', issueDate: '2026-07-20T11:00:00' },
+    ]);
   });
 
   it('should parse an ERROR (situação 3) response with lote-level messages', () => {
@@ -97,7 +173,7 @@ describe('parseGissConsultarLoteRpsResponse - Unit tests', () => {
     </soap:Envelope>`;
 
     // Act
-    const result = parseGissConsultarLoteRpsResponse(xml);
+    const result = GissBatchStatusMapper.parseConsultarLoteRpsResponse(xml);
 
     // Assert
     expect(result.situation).toBe(NfsBatchSituation.Error);
@@ -109,12 +185,55 @@ describe('parseGissConsultarLoteRpsResponse - Unit tests', () => {
     }]);
   });
 
+  it('should parse ListaMensagemRetorno errors without RPS identification', () => {
+    // Arrange
+    const xml = `<ConsultarLoteRpsResposta>
+      <Situacao>3</Situacao>
+      <ListaMensagemRetorno>
+        <MensagemRetorno>
+          <Codigo>E99</Codigo>
+          <Mensagem>Erro geral do lote</Mensagem>
+        </MensagemRetorno>
+      </ListaMensagemRetorno>
+    </ConsultarLoteRpsResposta>`;
+
+    // Act
+    const result = GissBatchStatusMapper.parseConsultarLoteRpsResponse(xml);
+
+    // Assert
+    expect(result.errors).toEqual([{
+      code: 'E99',
+      message: 'Erro geral do lote',
+      rpsNumber: undefined,
+      rpsSeries: undefined,
+    }]);
+  });
+
+  it('should parse a direct ConsultarLoteRpsResposta without SOAP envelope', () => {
+    // Arrange
+    const xml = '<ConsultarLoteRpsResposta><Situacao>2</Situacao></ConsultarLoteRpsResposta>';
+
+    // Act
+    const result = GissBatchStatusMapper.parseConsultarLoteRpsResponse(xml);
+
+    // Assert
+    expect(result.situation).toBe(NfsBatchSituation.Pending);
+  });
+
   it('should throw when the situação code is unknown', () => {
     // Arrange
     const xml = '<ConsultarLoteRpsResposta><Situacao>9</Situacao></ConsultarLoteRpsResposta>';
 
     // Act & Assert
-    expect(() => parseGissConsultarLoteRpsResponse(xml)).toThrow('Situação de lote desconhecida');
+    expect(() => GissBatchStatusMapper.parseConsultarLoteRpsResponse(xml)).toThrow('Situação de lote desconhecida');
+  });
+
+  it('should throw when situação is empty', () => {
+    // Arrange
+    const xml = '<ConsultarLoteRpsResposta><Situacao></Situacao></ConsultarLoteRpsResposta>';
+
+    // Act & Assert
+    expect(() => GissBatchStatusMapper.parseConsultarLoteRpsResponse(xml)).toThrow('Situação de lote desconhecida');
   });
 
   it('should throw when the expected response element is missing', () => {
@@ -122,6 +241,6 @@ describe('parseGissConsultarLoteRpsResponse - Unit tests', () => {
     const xml = '<foo></foo>';
 
     // Act & Assert
-    expect(() => parseGissConsultarLoteRpsResponse(xml)).toThrow('ConsultarLoteRpsResposta não encontrado');
+    expect(() => GissBatchStatusMapper.parseConsultarLoteRpsResponse(xml)).toThrow('ConsultarLoteRpsResposta não encontrado');
   });
 });
