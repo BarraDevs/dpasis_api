@@ -1,3 +1,5 @@
+import { BullBoardModule } from '@bull-board/nestjs';
+import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
 import { BullModule } from '@nestjs/bullmq';
 import { DynamicModule, Module } from '@nestjs/common';
 import { Environment } from 'src/core/config/environment.enum';
@@ -28,17 +30,23 @@ export class ClientAddressQueueModule {
               removeOnFail: false,
             },
           }),
+          BullBoardModule.forFeature({
+            name: QueueName.ClientAddress,
+            adapter: BullMQAdapter,
+          }),
         ]),
         ClientAddressPersistenceModule,
         CepLookupModule.register(),
       ],
       providers: [
-        ProcessResolveClientAddressIbgeCode,
         {
           provide: TOKENS.ClientAddressQueueProducer,
           useClass: isTest ? ClientAddressQueueFakeAdapterProducer : ClientAddressQueueBullmqAdapterProducer,
         },
-        ...(isTest ? [] : [ClientAddressBullmqConsumer]),
+        ...(isTest ? [] : [
+          ClientAddressBullmqConsumer,
+          ProcessResolveClientAddressIbgeCode,
+        ]),
       ],
       exports: [
         TOKENS.ClientAddressQueueProducer,

@@ -1,3 +1,5 @@
+import { BullBoardModule } from '@bull-board/nestjs';
+import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
 import { BullModule } from '@nestjs/bullmq';
 import { DynamicModule, Module } from '@nestjs/common';
 import { Environment } from 'src/core/config/environment.enum';
@@ -23,6 +25,10 @@ export class UploadFileQueueModule {
               removeOnComplete: true,
               removeOnFail: true,
             },
+          }),
+          BullBoardModule.forFeature({
+            name: QueueName.UploadFile,
+            adapter: BullMQAdapter,
           }),
         ]),
         UploadFileInfraModule.register(),

@@ -1,5 +1,8 @@
+import { BullBoardModule } from '@bull-board/nestjs';
+import { ExpressAdapter } from '@bull-board/express';
 import { BullModule } from '@nestjs/bullmq';
 import { DynamicModule, Global, Module } from '@nestjs/common';
+import basicAuth from 'express-basic-auth';
 import { ConfigModule } from 'src/core/config/config.module';
 import { ConfigService } from 'src/core/config/config.service';
 import { Environment } from 'src/core/config/environment.enum';
@@ -34,6 +37,20 @@ export class QueueModule {
               },
             };
           },
+        }),
+        BullBoardModule.forRootAsync({
+          imports: [ConfigModule],
+          inject: [ConfigService],
+          useFactory: (config: ConfigService) => ({
+            route: '/admin/queues',
+            adapter: ExpressAdapter,
+            middleware: basicAuth({
+              challenge: true,
+              users: {
+                [config.queueDashboardUsername]: config.queueDashboardPassword,
+              },
+            }),
+          }),
         }),
       ],
     };

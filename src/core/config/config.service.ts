@@ -94,6 +94,14 @@ export class ConfigService {
     return 1;
   }
 
+  // queue dashboard
+  get queueDashboardUsername(): string {
+    return this.nestConfigService.get<string>('QUEUE_DASHBOARD_USERNAME')!;
+  }
+  get queueDashboardPassword(): string {
+    return this.nestConfigService.get<string>('QUEUE_DASHBOARD_PASSWORD')!;
+  }
+
   // cnpja
   get cnpjaApiUrl(): string {
     return this.nestConfigService.get<string>('CNPJA_API_URL')!;

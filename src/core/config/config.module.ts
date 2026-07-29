@@ -36,6 +36,9 @@ import { Environment } from './environment.enum';
 
         REDIS_URL: Joi.string().required(),
 
+        QUEUE_DASHBOARD_USERNAME: Joi.string().required(),
+        QUEUE_DASHBOARD_PASSWORD: Joi.string().required(),
+
         CNPJA_API_URL: Joi.string().required(),
         VIACEP_API_URL: Joi.string().required(),
 

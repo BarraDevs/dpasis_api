@@ -1,3 +1,5 @@
+import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
+import { BullBoardModule } from '@bull-board/nestjs';
 import { BullModule } from '@nestjs/bullmq';
 import { DynamicModule, Module } from '@nestjs/common';
 import { Environment } from 'src/core/config/environment.enum';
@@ -27,18 +29,24 @@ export class NfseQueueModule {
               removeOnFail: true,
             },
           }),
+          BullBoardModule.forFeature({
+            name: QueueName.Nfse,
+            adapter: BullMQAdapter,
+          }),
         ]),
         NfsePersistenceModule,
         NfsGenerationModule.register(),
       ],
       providers: [
-        ProcessIssueNfseBatch,
-        ProcessPollNfseBatch,
         {
           provide: TOKENS.NfseQueueProducer,
           useClass: isTest ? NfseQueueFakeAdapterProducer : NfseQueueBullmqAdapterProducer,
         },
-        ...(isTest ? [] : [NfseBullmqConsumer]),
+        ...(isTest ? [] : [
+          NfseBullmqConsumer,
+          ProcessIssueNfseBatch,
+          ProcessPollNfseBatch,
+        ]),
       ],
       exports: [
         TOKENS.NfseQueueProducer,
