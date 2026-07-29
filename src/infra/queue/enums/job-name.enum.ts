@@ -3,4 +3,5 @@ export enum JobName {
   DeleteFile = 'delete-file',
   IssueNfseBatch = 'issue-nfse-batch',
   PollNfseBatch = 'poll-nfse-batch',
+  ResolveClientAddressIbgeCode = 'resolve-client-address-ibge-code',
 }

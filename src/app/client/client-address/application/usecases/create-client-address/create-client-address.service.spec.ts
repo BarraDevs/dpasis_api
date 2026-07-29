@@ -6,6 +6,8 @@ import { ClientAddressAlreadyExistsError } from 'src/app/client/client-address/d
 import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
 import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum';
 import { ClientNotFoundError } from 'src/app/client/client/domain/errors/client-not-found.error';
+import { ClientAddressQueueFakeAdapterProducer } from 'src/app/client/client-address/infra/driven/queue/fake/client-address-queue-fake.producer';
+import { TOKENS } from 'src/core/di/token';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { CreateClientAddress } from './create-client-address.service';
 
@@ -25,9 +27,10 @@ function makeValidInput(overrides?: Record<string, unknown>) {
   };
 }
 
-describe('CreateClientAddress', () => {
+describe('CreateClientAddress - Integration tests', () => {
   let sut: CreateClientAddress;
   let prisma: PrismaService;
+  let queueProducer: ClientAddressQueueFakeAdapterProducer;
   let clientId: number;
 
   beforeAll(async() => {
@@ -37,10 +40,12 @@ describe('CreateClientAddress', () => {
 
     sut = module.get(CreateClientAddress);
     prisma = module.get(PrismaService);
+    queueProducer = module.get(TOKENS.ClientAddressQueueProducer);
   });
 
   beforeEach(async() => {
     await prisma.truncate();
+    queueProducer.addedResolveIbgeCodeJobs.length = 0;
 
     const [group, resale] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
@@ -70,6 +75,10 @@ describe('CreateClientAddress', () => {
   afterAll(async() => {
     await prisma.truncate();
     await prisma.$disconnect();
+  });
+
+  it('should be defined', () => {
+    expect(sut).toBeDefined();
   });
 
   it('should create address and return id', async() => {
@@ -123,7 +132,7 @@ describe('CreateClientAddress', () => {
   });
 
   it('should throw ClientNotFoundError when client is inactive', async() => {
-    const input = makeValidInput({ clientId: 99999 });
+    const input = makeValidInput({ clientId });
 
     await prisma.client.update({ where: { id: clientId }, data: { active: false } });
 
@@ -191,5 +200,37 @@ describe('CreateClientAddress', () => {
     expect(addresses).toHaveLength(2);
     expect(addresses[0].type).toBe(ClientAddressType.MAIN);
     expect(addresses[1].type).toBe(ClientAddressType.BILLING);
+  });
+
+  it('should enqueue resolve-ibge-code job when cityCodeIbge is null', async() => {
+    const input = makeValidInput({ clientId, cityCodeIbge: null });
+
+    const result = await sut.execute(input);
+
+    expect(queueProducer.addedResolveIbgeCodeJobs).toHaveLength(1);
+    expect(queueProducer.addedResolveIbgeCodeJobs[0].data).toEqual({
+      clientAddressId: result.id,
+      zipCode: '12345-678',
+    });
+  });
+
+  it('should enqueue resolve-ibge-code job when cityCodeIbge is omitted', async() => {
+    const input = { ...makeValidInput({ clientId }) };
+
+    const result = await sut.execute({ ...input, cityCodeIbge: undefined as any });
+
+    expect(queueProducer.addedResolveIbgeCodeJobs).toHaveLength(1);
+    expect(queueProducer.addedResolveIbgeCodeJobs[0].data).toEqual({
+      clientAddressId: result.id,
+      zipCode: '12345-678',
+    });
+  });
+
+  it('should not enqueue resolve-ibge-code job when cityCodeIbge is provided', async() => {
+    const input = makeValidInput({ clientId });
+
+    await sut.execute(input);
+
+    expect(queueProducer.addedResolveIbgeCodeJobs).toHaveLength(0);
   });
 });

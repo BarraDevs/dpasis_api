@@ -5,4 +5,5 @@ export class CepLookupOutputDto {
   neighborhood: string;
   city: string;
   state: string;
+  cityCodeIbge: string | null;
 }

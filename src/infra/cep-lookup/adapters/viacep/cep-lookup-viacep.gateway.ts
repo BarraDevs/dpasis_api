@@ -44,6 +44,7 @@ export class CepLookupViacepAdapterGateway implements ICepLookupGateway {
         neighborhood: result.data.bairro ?? '',
         city: result.data.localidade ?? '',
         state: result.data.uf ?? '',
+        cityCodeIbge: result.data.ibge || null,
       };
     }
     catch (error) {

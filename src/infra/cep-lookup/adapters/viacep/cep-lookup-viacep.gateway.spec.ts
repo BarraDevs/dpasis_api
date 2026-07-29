@@ -101,6 +101,7 @@ describe('CepLookupViacepAdapterGateway', () => {
           bairro: 'Sé',
           localidade: 'São Paulo',
           uf: 'SP',
+          ibge: '3550308',
         });
 
         httpService.axiosRef.get = jest.fn().mockResolvedValue({ data: mockResponse });
@@ -114,6 +115,7 @@ describe('CepLookupViacepAdapterGateway', () => {
           neighborhood: 'Sé',
           city: 'São Paulo',
           state: 'SP',
+          cityCodeIbge: '3550308',
         });
         expect(httpService.axiosRef.get).toHaveBeenCalledWith(`${API_URL}/${CEP}/json/`);
       });
@@ -177,6 +179,7 @@ describe('CepLookupViacepAdapterGateway', () => {
           bairro: undefined,
           localidade: undefined,
           uf: undefined,
+          ibge: undefined,
         });
 
         httpService.axiosRef.get = jest.fn().mockResolvedValue({ data: mockResponse });
@@ -190,6 +193,7 @@ describe('CepLookupViacepAdapterGateway', () => {
           neighborhood: '',
           city: '',
           state: '',
+          cityCodeIbge: null,
         });
       });
     });

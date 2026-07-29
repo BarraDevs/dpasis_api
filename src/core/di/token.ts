@@ -49,6 +49,7 @@ const TOKENS = {
 
   ClientAddressDao: Symbol.for('ClientAddressDao'),
   ClientAddressRepository: Symbol.for('ClientAddressRepository'),
+  ClientAddressQueueProducer: Symbol.for('ClientAddressQueueProducer'),
 
   ClientItemDao: Symbol.for('ClientItemDao'),
   ClientItemRepository: Symbol.for('ClientItemRepository'),

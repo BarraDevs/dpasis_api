@@ -12,6 +12,7 @@ export class CepLookupFakeAdapterGateway implements ICepLookupGateway {
       neighborhood: cep,
       city: cep,
       state: cep,
+      cityCodeIbge: cep,
     };
   }
 }

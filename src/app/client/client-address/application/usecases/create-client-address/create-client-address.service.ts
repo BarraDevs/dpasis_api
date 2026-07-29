@@ -5,6 +5,7 @@ import { FindClientById } from 'src/app/client/client/application/usecases/find-
 import { TOKENS } from 'src/core/di/token';
 import type { IClientAddressDao } from '../../persistence/dao/client-address-dao.interface';
 import type { IClientAddressRepository } from '../../persistence/repository/client-address-repository.interface';
+import type { IClientAddressQueueProducer } from '../../queue/client-address-queue-producer.interface';
 import { CreateClientAddressInputDto, CreateClientAddressOutputDto } from './dtos/create-client-address.dto';
 
 @Injectable()
@@ -12,6 +13,7 @@ export class CreateClientAddress {
   constructor(
     @Inject(TOKENS.ClientAddressDao) private readonly clientAddressDao: IClientAddressDao,
     @Inject(TOKENS.ClientAddressRepository) private readonly clientAddressRepository: IClientAddressRepository,
+    @Inject(TOKENS.ClientAddressQueueProducer) private readonly clientAddressQueueProducer: IClientAddressQueueProducer,
     private readonly findClientById: FindClientById,
   ) {}
 
@@ -37,6 +39,13 @@ export class CreateClientAddress {
     }
 
     const id = await this.clientAddressRepository.save(entity);
+
+    if (!entity.props.cityCodeIbge) {
+      await this.clientAddressQueueProducer.addResolveIbgeCodeJob({
+        clientAddressId: id,
+        zipCode: entity.props.zipCode,
+      });
+    }
 
     return { id };
   }

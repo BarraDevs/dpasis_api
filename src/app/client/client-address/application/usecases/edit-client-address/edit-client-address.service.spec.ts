@@ -3,14 +3,17 @@ import { Test } from '@nestjs/testing';
 import { ClientAddressModule } from 'src/app/client/client-address/client-address.module';
 import { ClientAddressType } from 'src/app/client/client-address/domain/enums/client-address-type.enum';
 import { ClientAddressNotFoundError } from 'src/app/client/client-address/domain/errors/client-address-not-found.error';
+import { ClientAddressQueueFakeAdapterProducer } from 'src/app/client/client-address/infra/driven/queue/fake/client-address-queue-fake.producer';
 import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
 import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum';
+import { TOKENS } from 'src/core/di/token';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { EditClientAddress } from './edit-client-address.service';
 
-describe('EditClientAddress', () => {
+describe('EditClientAddress - Integration tests', () => {
   let sut: EditClientAddress;
   let prisma: PrismaService;
+  let queueProducer: ClientAddressQueueFakeAdapterProducer;
   let clientId: number;
 
   beforeAll(async() => {
@@ -20,10 +23,12 @@ describe('EditClientAddress', () => {
 
     sut = module.get(EditClientAddress);
     prisma = module.get(PrismaService);
+    queueProducer = module.get(TOKENS.ClientAddressQueueProducer);
   });
 
   beforeEach(async() => {
     await prisma.truncate();
+    queueProducer.addedResolveIbgeCodeJobs.length = 0;
 
     const [group, resale] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
@@ -53,6 +58,10 @@ describe('EditClientAddress', () => {
   afterAll(async() => {
     await prisma.truncate();
     await prisma.$disconnect();
+  });
+
+  it('should be defined', () => {
+    expect(sut).toBeDefined();
   });
 
   it('should throw ClientAddressNotFoundError when address does not exist', async() => {
@@ -230,5 +239,105 @@ describe('EditClientAddress', () => {
     });
     expect(unchanged?.street).toBe('Rua Principal');
     expect(unchanged?.zipCode).toBe('12345-678');
+  });
+
+  it('should enqueue resolve-ibge-code job when edited cityCodeIbge is null', async() => {
+    const created = await prisma.clientAddress.create({
+      data: {
+        clientId,
+        type: ClientAddressType.MAIN,
+        zipCode: '12345-678',
+        street: 'Rua Teste',
+        number: '1',
+        complement: null,
+        neighborhood: 'Centro',
+        city: 'São Paulo',
+        cityCodeIbge: '3550308',
+        state: 'SP',
+        active: true,
+      },
+    });
+
+    await sut.execute(created.id, { cityCodeIbge: null });
+
+    expect(queueProducer.addedResolveIbgeCodeJobs).toHaveLength(1);
+    expect(queueProducer.addedResolveIbgeCodeJobs[0].data).toEqual({
+      clientAddressId: created.id,
+      zipCode: '12345-678',
+    });
+  });
+
+  it('should not enqueue resolve-ibge-code job when resulting cityCodeIbge is present', async() => {
+    const created = await prisma.clientAddress.create({
+      data: {
+        clientId,
+        type: ClientAddressType.MAIN,
+        zipCode: '12345-678',
+        street: 'Rua Teste',
+        number: '1',
+        complement: null,
+        neighborhood: 'Centro',
+        city: 'São Paulo',
+        cityCodeIbge: '3550308',
+        state: 'SP',
+        active: true,
+      },
+    });
+
+    await sut.execute(created.id, { street: 'Rua Editada' });
+
+    expect(queueProducer.addedResolveIbgeCodeJobs).toHaveLength(0);
+  });
+
+  it('should enqueue resolve-ibge-code job with updated zipCode when cityCodeIbge is null', async() => {
+    const created = await prisma.clientAddress.create({
+      data: {
+        clientId,
+        type: ClientAddressType.MAIN,
+        zipCode: '12345-678',
+        street: 'Rua Teste',
+        number: '1',
+        complement: null,
+        neighborhood: 'Centro',
+        city: 'São Paulo',
+        cityCodeIbge: null,
+        state: 'SP',
+        active: true,
+      },
+    });
+
+    await sut.execute(created.id, { zipCode: '98765-432' });
+
+    expect(queueProducer.addedResolveIbgeCodeJobs).toHaveLength(1);
+    expect(queueProducer.addedResolveIbgeCodeJobs[0].data).toEqual({
+      clientAddressId: created.id,
+      zipCode: '98765-432',
+    });
+  });
+
+  it('should re-enqueue resolve-ibge-code job on unrelated edit when stored cityCodeIbge is already null', async() => {
+    const created = await prisma.clientAddress.create({
+      data: {
+        clientId,
+        type: ClientAddressType.MAIN,
+        zipCode: '12345-678',
+        street: 'Rua Teste',
+        number: '1',
+        complement: null,
+        neighborhood: 'Centro',
+        city: 'São Paulo',
+        cityCodeIbge: null,
+        state: 'SP',
+        active: true,
+      },
+    });
+
+    await sut.execute(created.id, { street: 'Rua Editada' });
+
+    expect(queueProducer.addedResolveIbgeCodeJobs).toHaveLength(1);
+    expect(queueProducer.addedResolveIbgeCodeJobs[0].data).toEqual({
+      clientAddressId: created.id,
+      zipCode: '12345-678',
+    });
   });
 });
