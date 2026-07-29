@@ -20,6 +20,7 @@ export class ClientAddressFactory {
       complement: props.complement,
       neighborhood: props.neighborhood,
       city: props.city,
+      cityCodeIbge: props.cityCodeIbge,
       state: props.state,
       active: props.active,
     });

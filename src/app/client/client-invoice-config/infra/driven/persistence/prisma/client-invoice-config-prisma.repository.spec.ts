@@ -63,6 +63,7 @@ describe('ClientInvoiceConfigRepositoryAdapterPrisma - Integration tests', () =>
         complement: null,
         neighborhood: 'Centro',
         city: 'São Paulo',
+        cityCodeIbge: '3550308',
         state: 'SP',
         active: true,
       },

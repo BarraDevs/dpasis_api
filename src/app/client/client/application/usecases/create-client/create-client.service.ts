@@ -114,6 +114,7 @@ export class CreateClient {
         complement: data.address.complement,
         neighborhood: data.address.neighborhood,
         city: data.address.city,
+        cityCodeIbge: data.address.cityCodeIbge,
         state: data.address.state,
       });
     }

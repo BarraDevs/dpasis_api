@@ -253,6 +253,7 @@ export class FindElegibleClientsNfmSeed {
         complement: `Seed NFM ${profile.id}`,
         neighborhood: 'Bela Vista',
         city: 'São Paulo',
+        cityCodeIbge: '3550308',
         state: 'SP',
         active: true,
       },

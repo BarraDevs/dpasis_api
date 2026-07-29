@@ -98,6 +98,7 @@ describe('FindClientAddressByIdAndClientId', () => {
         complement: null,
         neighborhood: 'Centro',
         city: 'Rio de Janeiro',
+        cityCodeIbge: '3304557',
         state: 'RJ',
         active: true,
       },
@@ -117,6 +118,7 @@ describe('FindClientAddressByIdAndClientId', () => {
         complement: 'Apto 101',
         neighborhood: 'Centro',
         city: 'São Paulo',
+        cityCodeIbge: '3550308',
         state: 'SP',
         active: true,
       },
@@ -134,6 +136,7 @@ describe('FindClientAddressByIdAndClientId', () => {
       complement: 'Apto 101',
       neighborhood: 'Centro',
       city: 'São Paulo',
+      cityCodeIbge: '3550308',
       state: 'SP',
       active: true,
       createdAt: created.createdAt,
@@ -141,7 +144,7 @@ describe('FindClientAddressByIdAndClientId', () => {
     });
   });
 
-  it('should return address with null complement', async() => {
+  it('should return address with null complement and cityCodeIbge', async() => {
     const created = await prisma.clientAddress.create({
       data: {
         clientId,
@@ -152,6 +155,7 @@ describe('FindClientAddressByIdAndClientId', () => {
         complement: null,
         neighborhood: 'Jardins',
         city: 'Rio de Janeiro',
+        cityCodeIbge: null,
         state: 'RJ',
         active: true,
       },
@@ -160,6 +164,7 @@ describe('FindClientAddressByIdAndClientId', () => {
     const result = await sut.execute(created.id, clientId);
 
     expect(result.complement).toBeNull();
+    expect(result.cityCodeIbge).toBeNull();
     expect(result.street).toBe('Av. Principal');
     expect(result.type).toBe(ClientAddressType.BILLING);
   });
@@ -175,6 +180,7 @@ describe('FindClientAddressByIdAndClientId', () => {
         complement: null,
         neighborhood: 'Bairro',
         city: 'São Paulo',
+        cityCodeIbge: '3550308',
         state: 'SP',
         active: false,
       },
@@ -197,6 +203,7 @@ describe('FindClientAddressByIdAndClientId', () => {
         complement: null,
         neighborhood: 'Centro',
         city: 'São Paulo',
+        cityCodeIbge: '3550308',
         state: 'SP',
         active: true,
       },

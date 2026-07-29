@@ -129,6 +129,7 @@ describe('FindClientTypeById', () => {
         id: clientAddress.id,
         type: ClientAddressType.MAIN,
         city: 'São Paulo',
+        cityCodeIbge: null,
         state: 'SP',
       },
       createdAt: clientType.createdAt,

@@ -72,6 +72,7 @@ describe('FindClientAddressById', () => {
         complement: 'Apto 101',
         neighborhood: 'Centro',
         city: 'São Paulo',
+        cityCodeIbge: '3550308',
         state: 'SP',
         active: true,
       },
@@ -89,6 +90,7 @@ describe('FindClientAddressById', () => {
       complement: 'Apto 101',
       neighborhood: 'Centro',
       city: 'São Paulo',
+      cityCodeIbge: '3550308',
       state: 'SP',
       active: true,
       createdAt: created.createdAt,
@@ -96,7 +98,7 @@ describe('FindClientAddressById', () => {
     });
   });
 
-  it('should return address with null complement', async() => {
+  it('should return address with null complement and cityCodeIbge', async() => {
     const created = await prisma.clientAddress.create({
       data: {
         clientId,
@@ -107,6 +109,7 @@ describe('FindClientAddressById', () => {
         complement: null,
         neighborhood: 'Jardins',
         city: 'Rio de Janeiro',
+        cityCodeIbge: null,
         state: 'RJ',
         active: true,
       },
@@ -115,6 +118,7 @@ describe('FindClientAddressById', () => {
     const result = await sut.execute(created.id);
 
     expect(result.complement).toBeNull();
+    expect(result.cityCodeIbge).toBeNull();
     expect(result.street).toBe('Av. Principal');
     expect(result.type).toBe(ClientAddressType.BILLING);
   });

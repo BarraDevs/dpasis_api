@@ -8,6 +8,7 @@ export class ClientAddressDto {
   complement: string | null;
   neighborhood: string;
   city: string;
+  cityCodeIbge: string | null;
   state: string;
   active: boolean;
   createdAt: Date;

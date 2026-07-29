@@ -40,6 +40,7 @@ describe('DeactivateClientAddress - Integration tests', () => {
         number: '123',
         neighborhood: 'Centro',
         city: 'São Paulo',
+        cityCodeIbge: '3550308',
         state: 'SP',
         active,
       },

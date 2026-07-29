@@ -54,6 +54,7 @@ function makeNfmDto(overrides: Partial<NfmDto> = {}): NfmDto {
         complement: null,
         neighborhood: 'Centro',
         city: 'São Paulo',
+        cityCodeIbge: '3550308',
         state: 'SP',
         active: true,
         createdAt: new Date(),

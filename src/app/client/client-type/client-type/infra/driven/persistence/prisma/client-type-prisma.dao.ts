@@ -37,6 +37,7 @@ const ClientTypeSelect = {
       id: true,
       type: true,
       city: true,
+      cityCodeIbge: true,
       state: true,
     },
   },

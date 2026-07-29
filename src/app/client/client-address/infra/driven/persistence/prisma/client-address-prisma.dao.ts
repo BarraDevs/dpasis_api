@@ -16,6 +16,7 @@ const ClientAddressSelect = {
   complement: true,
   neighborhood: true,
   city: true,
+  cityCodeIbge: true,
   state: true,
   active: true,
   createdAt: true,

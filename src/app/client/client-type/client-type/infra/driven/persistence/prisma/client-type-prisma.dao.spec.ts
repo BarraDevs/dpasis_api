@@ -280,6 +280,7 @@ describe('ClientTypeDaoAdapterPrisma', () => {
         id: clientAddress.id,
         type: ClientAddressType.MAIN,
         city: 'São Paulo',
+        cityCodeIbge: null,
         state: 'SP',
       });
     });
@@ -310,6 +311,7 @@ describe('ClientTypeDaoAdapterPrisma', () => {
           id: clientAddress.id,
           type: ClientAddressType.MAIN,
           city: 'São Paulo',
+          cityCodeIbge: null,
           state: 'SP',
         },
         createdAt: created.createdAt,

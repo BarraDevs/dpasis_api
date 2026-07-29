@@ -10,6 +10,7 @@ import { EditClientAddress } from './application/usecases/edit-client-address/ed
 import { FindAllClientAddress } from './application/usecases/find-all-client-address/find-all-client-address.service';
 import { FindClientAddressByIdAndClientId } from './application/usecases/find-client-address-by-id-and-client-id/find-client-address-by-id-and-client-id.service';
 import { FindClientAddressById } from './application/usecases/find-client-address-by-id/find-client-address-by-id.service';
+import { FindClientAddressByClientIdAndType } from './application/usecases/find-client-address-by-client-id-and-type/find-client-address-by-client-id-and-type.service';
 import { ClientAddressAdminController } from './infra/drivers/http/client-address-admin.controller';
 
 @Module({
@@ -28,6 +29,7 @@ import { ClientAddressAdminController } from './infra/drivers/http/client-addres
     FindAllClientAddress,
     FindClientAddressById,
     FindClientAddressByIdAndClientId,
+    FindClientAddressByClientIdAndType,
     ActivateClientAddress,
     DeactivateClientAddress,
   ],
@@ -35,6 +37,7 @@ import { ClientAddressAdminController } from './infra/drivers/http/client-addres
     CreateClientAddress,
     FindClientAddressById,
     FindClientAddressByIdAndClientId,
+    FindClientAddressByClientIdAndType,
   ],
 })
 export class ClientAddressModule {}

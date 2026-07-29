@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
 import { ClientAddressType } from 'src/app/client/client-address/domain/enums/client-address-type.enum';
 import { StringToNumber } from 'src/infra/validators/class/decorators/string-number/string-number';
 import { Trim } from 'src/infra/validators/class/decorators/trim/trim';
@@ -51,6 +51,13 @@ export class CreateClientAddressInputDto {
   @IsString({ message: '$property deve ser uma string' })
   @Trim()
   city: string;
+
+  @ApiPropertyOptional({ example: '3550308' })
+  @IsOptional()
+  @IsString({ message: '$property deve ser uma string' })
+  @Trim()
+  @MaxLength(7, { message: '$property deve ter no máximo 7 caracteres' })
+  cityCodeIbge: string | null;
 
   @ApiProperty({ example: 'SP' })
   @IsNotEmpty({ message: '$property é obrigatório' })

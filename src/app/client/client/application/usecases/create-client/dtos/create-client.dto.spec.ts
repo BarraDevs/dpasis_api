@@ -22,6 +22,7 @@ function makeValidAddress(): CreateClientInputDto['address'] {
     complement: null,
     neighborhood: 'Centro',
     city: 'São Paulo',
+    cityCodeIbge: '3550308',
     state: 'SP',
   };
 }
@@ -537,6 +538,7 @@ describe('CreateClientInputDto', () => {
           complement: null,
           neighborhood: '  Centro  ',
           city: '  São Paulo  ',
+          cityCodeIbge: '3550308',
           state: '  SP  ',
         },
       });

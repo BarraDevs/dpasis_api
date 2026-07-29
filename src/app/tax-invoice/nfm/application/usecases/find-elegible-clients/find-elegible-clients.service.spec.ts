@@ -61,6 +61,7 @@ function makeInvoiceConfigDto(overrides: Partial<ClientInvoiceConfigDto> = {}): 
     complement: null,
     neighborhood: 'Centro',
     city: 'São Paulo',
+    cityCodeIbge: '3550308',
     state: 'SP',
     active: true,
     createdAt: baseDate,

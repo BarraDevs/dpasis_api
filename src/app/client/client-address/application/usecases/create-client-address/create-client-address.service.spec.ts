@@ -19,6 +19,7 @@ function makeValidInput(overrides?: Record<string, unknown>) {
     complement: null,
     neighborhood: 'Centro',
     city: 'São Paulo',
+    cityCodeIbge: '3550308',
     state: 'SP',
     ...overrides,
   };

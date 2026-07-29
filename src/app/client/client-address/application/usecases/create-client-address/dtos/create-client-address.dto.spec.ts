@@ -18,6 +18,7 @@ function makeValidData(overrides?: Partial<CreateClientAddressInputDto>) {
     complement: null,
     neighborhood: 'Centro',
     city: 'São Paulo',
+    cityCodeIbge: '3550308',
     state: 'SP',
     ...overrides,
   };
@@ -190,6 +191,49 @@ describe('CreateClientAddressInputDto', () => {
         });
       },
     );
+  });
+
+  describe('cityCodeIbge (optional)', () => {
+    it('should accept null cityCodeIbge', async() => {
+      const data = makeValidData({ cityCodeIbge: null });
+
+      const result = await target.transform(data, metadata);
+
+      expect(result.cityCodeIbge).toBeNull();
+    });
+
+    it('should accept undefined cityCodeIbge', async() => {
+      const { cityCodeIbge: _, ...data } = makeValidData();
+
+      const result = await target.transform(data, metadata);
+
+      expect(result.cityCodeIbge).toBeUndefined();
+    });
+
+    it('should accept string cityCodeIbge', async() => {
+      const data = makeValidData({ cityCodeIbge: '3550308' });
+
+      const result = await target.transform(data, metadata);
+
+      expect(result.cityCodeIbge).toBe('3550308');
+    });
+
+    it('should trim cityCodeIbge', async() => {
+      const data = makeValidData({ cityCodeIbge: '  3550308  ' });
+
+      const result = await target.transform(data, metadata);
+
+      expect(result.cityCodeIbge).toBe('3550308');
+    });
+
+    it('should throw an error if cityCodeIbge exceeds max length', async() => {
+      const data = makeValidData({ cityCodeIbge: '12345678' });
+
+      expect.assertions(1);
+      return target.transform(data, metadata).catch((error) => {
+        expect(error.getResponse().message).toContain('cityCodeIbge deve ter no máximo 7 caracteres');
+      });
+    });
   });
 
   describe('state', () => {

@@ -134,6 +134,7 @@ model ClientAddress {
   complement   String?
   neighborhood String
   city         String
+  cityCodeIbge String?  @db.VarChar(7)
   state        String
   active       Boolean
   createdAt    DateTime @default(now())

@@ -86,6 +86,7 @@ describe('CreateClient — saga (step 1: save client, step 2: create MAIN addres
           complement: null,
           neighborhood: 'Centro',
           city: 'São Paulo',
+          cityCodeIbge: '3550308',
           state: 'SP',
         },
         ...overrides,
@@ -203,6 +204,7 @@ describe('CreateClient — saga (step 1: save client, step 2: create MAIN addres
           complement: null,
           neighborhood: 'Centro',
           city: 'São Paulo',
+          cityCodeIbge: '3550308',
           state: 'SP',
         },
         ...overrides,
@@ -274,6 +276,7 @@ describe('CreateClient — saga (step 1: save client, step 2: create MAIN addres
         complement: input.address.complement,
         neighborhood: input.address.neighborhood,
         city: input.address.city,
+        cityCodeIbge: input.address.cityCodeIbge,
         state: input.address.state,
       });
     });

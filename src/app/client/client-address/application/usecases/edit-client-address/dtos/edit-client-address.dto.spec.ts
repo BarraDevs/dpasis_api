@@ -167,6 +167,7 @@ describe('EditClientAddressInputDto', () => {
       complement: 'Sala 10',
       neighborhood: 'Centro',
       city: 'Rio de Janeiro',
+      cityCodeIbge: '3304557',
       state: 'RJ',
     };
 

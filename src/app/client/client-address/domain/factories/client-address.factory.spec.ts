@@ -16,6 +16,7 @@ function makeClientAddressCreateProps(overrides?: Partial<ClientAddressCreatePro
     complement: 'Apto 123',
     neighborhood: 'Bairro Teste',
     city: 'Cidade Teste',
+    cityCodeIbge: '3550308',
     state: 'SP',
     ...overrides,
   };
@@ -32,6 +33,7 @@ function makeClientAddressProps(overrides?: Partial<ClientAddressProps>): Client
     complement: 'Apto 123',
     neighborhood: 'Bairro Teste',
     city: 'Cidade Teste',
+    cityCodeIbge: '3550308',
     state: 'SP',
     active: true,
     ...overrides,
@@ -68,6 +70,7 @@ describe('ClientAddressFactory', () => {
         complement: 'Sala 10',
         neighborhood: 'Centro',
         city: 'Rio de Janeiro',
+        cityCodeIbge: '3304557',
         state: 'RJ',
       });
 
@@ -83,6 +86,7 @@ describe('ClientAddressFactory', () => {
         complement: 'Sala 10',
         neighborhood: 'Centro',
         city: 'Rio de Janeiro',
+        cityCodeIbge: '3304557',
         state: 'RJ',
         active: true,
       });
@@ -132,6 +136,7 @@ describe('ClientAddressFactory', () => {
         complement: null,
         neighborhood: 'Novo Bairro',
         city: 'Nova Cidade',
+        cityCodeIbge: '3550308',
         state: 'MG',
         active: false,
       });
@@ -154,6 +159,7 @@ describe('ClientAddressFactory', () => {
         complement: 'Apto 123',
         neighborhood: 'Bairro Teste',
         city: 'Cidade Teste',
+        cityCodeIbge: '3550308',
         state: 'SP',
         active: true,
       });
@@ -185,6 +191,7 @@ describe('ClientAddressFactory', () => {
         complement: null,
         neighborhood: 'Bairro Load',
         city: 'Cidade Load',
+        cityCodeIbge: '3550308',
         state: 'BA',
         active: false,
       });
@@ -201,6 +208,7 @@ describe('ClientAddressFactory', () => {
         complement: null,
         neighborhood: 'Bairro Load',
         city: 'Cidade Load',
+        cityCodeIbge: '3550308',
         state: 'BA',
         active: false,
       });

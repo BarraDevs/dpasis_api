@@ -19,6 +19,7 @@ export class ClientTypeDto {
     id: number;
     type: string;
     city: string;
+    cityCodeIbge: string | null;
     state: string;
   };
   createdAt: Date;

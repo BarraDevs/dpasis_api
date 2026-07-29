@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ClientAddressModule } from 'src/app/client/client-address/client-address.module';
 import { ClientModule } from 'src/app/client/client/client.module';
 import { CompanyModule } from 'src/app/company/company.module';
 import { NfsePersistenceModule } from './application/persistence/nfse-persistence.module';
@@ -10,6 +11,7 @@ import { NfseAdminController } from './infra/drivers/http/admin/nfse-admin.contr
 @Module({
   imports: [
     ClientModule,
+    ClientAddressModule,
     CompanyModule,
     NfsePersistenceModule,
     NfseQueueModule.register(),

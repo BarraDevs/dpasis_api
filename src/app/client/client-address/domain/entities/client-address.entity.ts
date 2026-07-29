@@ -14,6 +14,7 @@ export type ClientAddressCreateProps = {
   complement: string | null;
   neighborhood: string;
   city: string;
+  cityCodeIbge: string | null;
   state: string;
 };
 

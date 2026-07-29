@@ -23,6 +23,7 @@ const sampleCnpjPayload = {
     complement: null,
     neighborhood: 'Bairro',
     city: 'São Paulo',
+    cityCodeIbge: '3550308',
     state: 'SP',
   },
 };
@@ -68,6 +69,7 @@ describe('LookupClientDocumentAndCnpj - Unit tests', () => {
         complement: null,
         neighborhood: 'Bairro',
         city: 'São Paulo',
+        cityCodeIbge: '3550308',
         state: 'SP',
       },
     });

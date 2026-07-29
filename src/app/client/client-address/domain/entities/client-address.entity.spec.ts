@@ -12,6 +12,7 @@ function makeClientAddressProps(overrides?: Partial<ClientAddressProps>): Client
     complement: 'Apto 123',
     neighborhood: 'Bairro Teste',
     city: 'Cidade Teste',
+    cityCodeIbge: '3550308',
     state: 'SP',
     active: true,
     ...overrides,
@@ -65,6 +66,7 @@ describe('ClientAddress Entity', () => {
         complement: 'Sala 10',
         neighborhood: 'Centro',
         city: 'Rio de Janeiro',
+        cityCodeIbge: '3304557',
         state: 'RJ',
         active: true,
       });
@@ -81,6 +83,7 @@ describe('ClientAddress Entity', () => {
         complement: 'Sala 10',
         neighborhood: 'Centro',
         city: 'Rio de Janeiro',
+        cityCodeIbge: '3304557',
         state: 'RJ',
         active: true,
       });
@@ -111,6 +114,7 @@ describe('ClientAddress Entity', () => {
         'complement',
         'neighborhood',
         'city',
+        'cityCodeIbge',
         'state',
         'active',
       ]);

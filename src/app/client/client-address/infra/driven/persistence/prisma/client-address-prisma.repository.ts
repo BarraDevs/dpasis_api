@@ -20,6 +20,7 @@ export class ClientAddressRepositoryAdapterPrisma implements IClientAddressRepos
         complement: entity.props.complement,
         neighborhood: entity.props.neighborhood,
         city: entity.props.city,
+        cityCodeIbge: entity.props.cityCodeIbge,
         state: entity.props.state,
         active: entity.props.active,
       },
@@ -41,6 +42,7 @@ export class ClientAddressRepositoryAdapterPrisma implements IClientAddressRepos
         complement: entity.props.complement,
         neighborhood: entity.props.neighborhood,
         city: entity.props.city,
+        cityCodeIbge: entity.props.cityCodeIbge,
         state: entity.props.state,
         active: entity.props.active,
       },
@@ -63,6 +65,7 @@ export class ClientAddressRepositoryAdapterPrisma implements IClientAddressRepos
       complement: data.complement,
       neighborhood: data.neighborhood,
       city: data.city,
+      cityCodeIbge: data.cityCodeIbge,
       state: data.state,
       active: data.active,
     });

@@ -27,6 +27,7 @@ export class CreateClientAddress {
       complement: data.complement,
       neighborhood: data.neighborhood,
       city: data.city,
+      cityCodeIbge: data.cityCodeIbge,
       state: data.state,
     });
 

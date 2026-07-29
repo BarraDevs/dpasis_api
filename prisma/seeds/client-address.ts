@@ -16,10 +16,10 @@ export class ClientAddressSeed {
     }
 
     const addressData = [
-      { type: ClientAddressType.BILLING, zipCode: '01310-100', street: 'Avenida Paulista', number: '500', complement: 'Sala 301', neighborhood: 'Bela Vista', city: 'São Paulo', state: 'SP' },
-      { type: ClientAddressType.CORRESPONDENCE, zipCode: '01310-100', street: 'Avenida Paulista', number: '500', complement: 'Sala 301', neighborhood: 'Bela Vista', city: 'São Paulo', state: 'SP' },
-      { type: ClientAddressType.MAIN, zipCode: '04543-907', street: 'Av. Eng. Luís Carlos Berrini', number: '1000', neighborhood: 'Itaim Bibi', city: 'São Paulo', state: 'SP' },
-      { type: ClientAddressType.SUPPORT, zipCode: '30130-100', street: 'Av. Afonso Pena', number: '200', neighborhood: 'Centro', city: 'Belo Horizonte', state: 'MG' },
+      { type: ClientAddressType.BILLING, zipCode: '01310-100', street: 'Avenida Paulista', number: '500', complement: 'Sala 301', neighborhood: 'Bela Vista', city: 'São Paulo', cityCodeIbge: '3550308', state: 'SP' },
+      { type: ClientAddressType.CORRESPONDENCE, zipCode: '01310-100', street: 'Avenida Paulista', number: '500', complement: 'Sala 301', neighborhood: 'Bela Vista', city: 'São Paulo', cityCodeIbge: '3550308', state: 'SP' },
+      { type: ClientAddressType.MAIN, zipCode: '04543-907', street: 'Av. Eng. Luís Carlos Berrini', number: '1000', neighborhood: 'Itaim Bibi', city: 'São Paulo', cityCodeIbge: '3550308', state: 'SP' },
+      { type: ClientAddressType.SUPPORT, zipCode: '30130-100', street: 'Av. Afonso Pena', number: '200', neighborhood: 'Centro', city: 'Belo Horizonte', cityCodeIbge: '3106200', state: 'MG' },
     ];
 
     for (let i = 0; i < Math.min(clients.length, addressData.length); i++) {

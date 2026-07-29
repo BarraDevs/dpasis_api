@@ -108,6 +108,7 @@ async function createClientWithConfig(
       complement: null,
       neighborhood: 'Bela Vista',
       city: 'São Paulo',
+      cityCodeIbge: '3550308',
       state: 'SP',
       active: true,
     },

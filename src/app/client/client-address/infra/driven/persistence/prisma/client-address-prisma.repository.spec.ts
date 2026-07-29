@@ -69,6 +69,7 @@ describe('ClientAddressRepositoryAdapterPrisma - Integration tests', () => {
         complement: 'Apto 101',
         neighborhood: 'Centro',
         city: 'São Paulo',
+        cityCodeIbge: '3550308',
         state: 'SP',
       });
 
@@ -102,6 +103,7 @@ describe('ClientAddressRepositoryAdapterPrisma - Integration tests', () => {
         complement: null,
         neighborhood: 'Jardins',
         city: 'Rio de Janeiro',
+        cityCodeIbge: '3304557',
         state: 'RJ',
       });
 
@@ -126,6 +128,7 @@ describe('ClientAddressRepositoryAdapterPrisma - Integration tests', () => {
         complement: 'Apto 101',
         neighborhood: 'Centro',
         city: 'São Paulo',
+        cityCodeIbge: '3550308',
         state: 'SP',
       });
 
@@ -147,6 +150,7 @@ describe('ClientAddressRepositoryAdapterPrisma - Integration tests', () => {
         complement: null,
         neighborhood: 'Centro',
         city: 'São Paulo',
+        cityCodeIbge: '3550308',
         state: 'SP',
       });
 
@@ -167,6 +171,7 @@ describe('ClientAddressRepositoryAdapterPrisma - Integration tests', () => {
         complement: 'Sala 5',
         neighborhood: 'Centro',
         city: 'São Paulo',
+        cityCodeIbge: '3550308',
         state: 'SP',
         active: true,
       });
@@ -200,6 +205,7 @@ describe('ClientAddressRepositoryAdapterPrisma - Integration tests', () => {
         complement: 'Apto 1',
         neighborhood: 'Centro',
         city: 'São Paulo',
+        cityCodeIbge: '3550308',
         state: 'SP',
       });
 
@@ -232,6 +238,7 @@ describe('ClientAddressRepositoryAdapterPrisma - Integration tests', () => {
         complement: null,
         neighborhood: 'Centro',
         city: 'São Paulo',
+        cityCodeIbge: '3550308',
         state: 'SP',
       });
 
@@ -258,6 +265,7 @@ describe('ClientAddressRepositoryAdapterPrisma - Integration tests', () => {
           complement: null,
           neighborhood: 'Centro',
           city: 'São Paulo',
+          cityCodeIbge: '3550308',
           state: 'SP',
           active: true,
         },
@@ -310,6 +318,7 @@ describe('ClientAddressRepositoryAdapterPrisma - Integration tests', () => {
         complement: null,
         neighborhood: 'Centro',
         city: 'São Paulo',
+        cityCodeIbge: '3550308',
         state: 'SP',
       });
 

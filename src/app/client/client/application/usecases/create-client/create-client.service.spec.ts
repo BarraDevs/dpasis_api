@@ -89,6 +89,7 @@ describe('CreateClient - Integration tests', () => {
         complement: null,
         neighborhood: 'Centro',
         city: 'São Paulo',
+        cityCodeIbge: '3550308',
         state: 'SP',
       },
       ...overrides,
