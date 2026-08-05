@@ -28,6 +28,8 @@ function makeNfseDto(overrides: Partial<NfseDto> = {}): NfseDto {
     verificationCode: null,
     issuedAt: null,
     errorMessage: null,
+    canceledAt: null,
+    cancelReasonCode: null,
     data: { providerDocument: '12345678000199' },
     createdAt: new Date(),
     updatedAt: new Date(),

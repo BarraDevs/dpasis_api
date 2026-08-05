@@ -71,6 +71,8 @@ function makeNfseDto(overrides: Partial<NfseDto> = {}): NfseDto {
     verificationCode: null,
     issuedAt: null,
     errorMessage: null,
+    canceledAt: null,
+    cancelReasonCode: null,
     data: snapshot as unknown as Record<string, unknown>,
     createdAt: new Date(),
     updatedAt: new Date(),

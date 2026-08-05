@@ -6,6 +6,7 @@ import { NfsProviderConfigError } from 'src/shared/errors/nfs-provider-config.er
 import { NfsBatchSituation } from '../../dtos/nfs-batch-status.dto';
 import { NfsProviderEnvironment } from '../../dtos/nfs-provider-credentials.dto';
 import { GissBatchStatusMapper } from './mappers/giss-batch-status.mapper';
+import { GissCancelNfseMapper } from './mappers/giss-cancel-nfse.mapper';
 import { GissIssueBatchMapper } from './mappers/giss-issue-batch.mapper';
 import { NfsGenerationGissAdapterGateway } from './nfs-generation-giss.gateway';
 import { GissPfxLoader } from './signing/giss-pfx-loader';
@@ -14,6 +15,7 @@ import { GissSoapClient } from './soap/giss-soap-client';
 
 jest.mock('./mappers/giss-issue-batch.mapper');
 jest.mock('./mappers/giss-batch-status.mapper');
+jest.mock('./mappers/giss-cancel-nfse.mapper');
 jest.mock('./signing/giss-pfx-loader');
 jest.mock('./signing/giss-xml-signer');
 jest.mock('./soap/giss-soap-client');
@@ -22,6 +24,8 @@ const mockedBuildIssueBatch = GissIssueBatchMapper.buildIssueBatchXml as jest.Mo
 const mockedParseIssueBatch = GissIssueBatchMapper.parseRecepcionarLoteRpsResponse as jest.Mock;
 const mockedBuildConsultar = GissBatchStatusMapper.buildConsultarLoteRpsXml as jest.Mock;
 const mockedParseConsultar = GissBatchStatusMapper.parseConsultarLoteRpsResponse as jest.Mock;
+const mockedBuildCancelar = GissCancelNfseMapper.buildCancelarNfseXml as jest.Mock;
+const mockedParseCancelar = GissCancelNfseMapper.parseCancelarNfseResponse as jest.Mock;
 const mockedLoadCert = GissPfxLoader.load as jest.Mock;
 const mockedSign = GissXmlSigner.signElementById as jest.Mock;
 const mockedSignWholeDocument = GissXmlSigner.signWholeDocument as jest.Mock;
@@ -39,6 +43,14 @@ const provider = {
 const batchStatusInput = {
   batchProtocol: 'PROTO-123',
   providerDocument: '12345678000199',
+  provider,
+};
+
+const cancelNfseInput = {
+  nfseNumber: '12345',
+  providerDocument: '12345678000199',
+  providerMunicipalCodeIbge: '3550308',
+  cancelReasonCode: 1,
   provider,
 };
 
@@ -267,6 +279,98 @@ describe('NfsGenerationGissAdapterGateway - Unit tests', () => {
 
       // Act & Assert
       await expect(sut.getBatchStatus(batchStatusInput)).rejects.toThrow(NfsProviderConfigError);
+      expect(logger.error).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('cancelNfse', () => {
+    it('should throw NfsProviderConfigError when vendorConfig has no municipioSlug', async() => {
+      // Act & Assert
+      await expect(sut.cancelNfse({
+        ...cancelNfseInput,
+        provider: { ...provider, vendorConfig: {} },
+      })).rejects.toThrow(NfsProviderConfigError);
+      await expect(sut.cancelNfse({
+        ...cancelNfseInput,
+        provider: { ...provider, vendorConfig: {} },
+      })).rejects.toThrow('municipioSlug');
+    });
+
+    it('should throw NfsProviderConfigError when municipioSlug is empty', async() => {
+      // Act & Assert
+      await expect(sut.cancelNfse({
+        ...cancelNfseInput,
+        provider: { ...provider, vendorConfig: { municipioSlug: '' } },
+      })).rejects.toThrow(NfsProviderConfigError);
+    });
+
+    it('should load the certificate before building the cancel XML', async() => {
+      // Arrange
+      mockedBuildCancelar.mockReturnValue({ xml: '<cancel/>', infId: 'cancelamento1' });
+      mockedSign.mockReturnValue('<cancel-assinado/>');
+      mockedPostSoap.mockResolvedValue('<response/>');
+      mockedParseCancelar.mockReturnValue({ confirmedAt: '2026-07-29T12:00:00' });
+
+      // Act
+      await sut.cancelNfse(cancelNfseInput);
+
+      // Assert
+      expect(mockedLoadCert).toHaveBeenCalledWith('/certs/x.pfx', 'X_PASS');
+      expect(mockedLoadCert.mock.invocationCallOrder[0]).toBeLessThan(mockedBuildCancelar.mock.invocationCallOrder[0]);
+    });
+
+    it('should build, sign, post and parse the cancel request on success', async() => {
+      // Arrange
+      mockedBuildCancelar.mockReturnValue({ xml: '<cancel/>', infId: 'cancelamento1' });
+      mockedSign.mockReturnValue('<cancel-assinado/>');
+      mockedPostSoap.mockResolvedValue('<response/>');
+      mockedParseCancelar.mockReturnValue({ confirmedAt: '2026-07-29T12:00:00' });
+
+      // Act
+      const result = await sut.cancelNfse(cancelNfseInput);
+
+      // Assert
+      expect(mockedBuildCancelar).toHaveBeenCalledWith(cancelNfseInput);
+      expect(mockedSign).toHaveBeenCalledWith('<cancel/>', 'cancelamento1', certMaterial);
+      expect(mockedPostSoap).toHaveBeenCalledWith(httpService, 'demonstracao', 'CancelarNfse', '<cancel-assinado/>', certMaterial);
+      expect(result).toEqual({ confirmedAt: '2026-07-29T12:00:00' });
+    });
+
+    it('should wrap unexpected errors as ExternalApiError and log them', async() => {
+      // Arrange
+      mockedBuildCancelar.mockReturnValue({ xml: '<cancel/>', infId: 'cancelamento1' });
+      mockedSign.mockReturnValue('<cancel-assinado/>');
+      mockedPostSoap.mockRejectedValue(new Error('rejeitado'));
+
+      // Act & Assert
+      await expect(sut.cancelNfse(cancelNfseInput)).rejects.toThrow(ExternalApiError);
+      await expect(sut.cancelNfse(cancelNfseInput)).rejects.toThrow('rejeitado');
+      expect(logger.error).toHaveBeenCalledWith(LogContext.NFS_GENERATION, expect.objectContaining({
+        adapter: 'giss',
+        action: 'cancelNfse',
+        nfseNumber: '12345',
+        errorMessage: 'rejeitado',
+      }));
+    });
+
+    it('should use the default ExternalApiError message when the caught error has no message', async() => {
+      // Arrange
+      mockedBuildCancelar.mockReturnValue({ xml: '<cancel/>', infId: 'cancelamento1' });
+      mockedSign.mockReturnValue('<cancel-assinado/>');
+      mockedPostSoap.mockRejectedValue({});
+
+      // Act & Assert
+      await expect(sut.cancelNfse(cancelNfseInput)).rejects.toThrow('Erro ao cancelar NFS-e no Giss');
+    });
+
+    it('should let NfsProviderConfigError from the cert loader propagate without wrapping', async() => {
+      // Arrange
+      mockedLoadCert.mockImplementation(() => {
+        throw new NfsProviderConfigError('senha incorreta');
+      });
+
+      // Act & Assert
+      await expect(sut.cancelNfse(cancelNfseInput)).rejects.toThrow(NfsProviderConfigError);
       expect(logger.error).not.toHaveBeenCalled();
     });
   });

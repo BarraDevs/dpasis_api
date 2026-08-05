@@ -4,4 +4,5 @@ export enum NfseStatus {
   PROCESSING = 'PROCESSING',
   ISSUED = 'ISSUED',
   FAILED = 'FAILED',
+  CANCELED = 'CANCELED',
 }

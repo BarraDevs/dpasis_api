@@ -1,4 +1,5 @@
 import { NfseAlreadyIssuedError } from '../errors/nfse-already-issued.error';
+import { NfseNotIssuedError } from '../errors/nfse-not-issued.error';
 import { NfseStatus } from '../enums/nfse-status.enum';
 
 export type NfseProps = NfseCreateProps & {
@@ -9,6 +10,8 @@ export type NfseProps = NfseCreateProps & {
   verificationCode: string | null;
   issuedAt: Date | null;
   errorMessage: string | null;
+  canceledAt: Date | null;
+  cancelReasonCode: number | null;
 };
 
 export type NfseCreateProps = {
@@ -59,9 +62,22 @@ export class Nfse {
     this._props.errorMessage = errorMessage;
   }
 
+  public markCanceled(canceledAt: Date, cancelReasonCode: number): void {
+    this.ensureIssued();
+    this._props.status = NfseStatus.CANCELED;
+    this._props.canceledAt = canceledAt;
+    this._props.cancelReasonCode = cancelReasonCode;
+  }
+
   private ensureNotIssued(): void {
     if (this._props.status === NfseStatus.ISSUED) {
       throw new NfseAlreadyIssuedError();
+    }
+  }
+
+  private ensureIssued(): void {
+    if (this._props.status !== NfseStatus.ISSUED) {
+      throw new NfseNotIssuedError();
     }
   }
 }

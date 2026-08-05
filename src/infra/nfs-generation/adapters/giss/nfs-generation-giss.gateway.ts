@@ -4,11 +4,13 @@ import { LogContext, type ILoggerGateway } from 'src/infra/logger/logger.gateway
 import { ExternalApiError } from 'src/shared/errors/external-api.error';
 import { NfsProviderConfigError } from 'src/shared/errors/nfs-provider-config.error';
 import { TOKENS } from 'src/core/di/token';
+import { CancelNfsInputDto, CancelNfsOutputDto } from '../../dtos/cancel-nfs.dto';
 import { GetNfsBatchStatusInputDto, NfsBatchStatusDto } from '../../dtos/nfs-batch-status.dto';
 import { IssueNfsBatchInputDto, IssueNfsBatchOutputDto } from '../../dtos/issue-nfs-batch.dto';
 import { NfsProviderCredentialsDto } from '../../dtos/nfs-provider-credentials.dto';
 import { INfsGenerationGateway } from '../../nfs-generation.gateway';
 import { GissBatchStatusMapper } from './mappers/giss-batch-status.mapper';
+import { GissCancelNfseMapper } from './mappers/giss-cancel-nfse.mapper';
 import { GissIssueBatchMapper } from './mappers/giss-issue-batch.mapper';
 import { GissPfxLoader } from './signing/giss-pfx-loader';
 import { GissXmlSigner } from './signing/giss-xml-signer';
@@ -91,6 +93,39 @@ export class NfsGenerationGissAdapterGateway implements INfsGenerationGateway {
         errorMessage: error?.message,
       });
       throw new ExternalApiError(error?.message ?? 'Erro ao consultar status do lote no Giss');
+    }
+  }
+
+  public async cancelNfse(input: CancelNfsInputDto): Promise<CancelNfsOutputDto> {
+    const municipioSlug = this.getMunicipioSlug(input.provider);
+    const certMaterial = GissPfxLoader.load(input.provider.certFilePath, input.provider.certPasswordEnvVar);
+
+    try {
+      const { xml, infId } = GissCancelNfseMapper.buildCancelarNfseXml(input);
+      const signedXml = GissXmlSigner.signElementById(xml, infId, certMaterial);
+
+      const responseXml = await GissSoapClient.postSoapRequest(
+        this.httpService,
+        municipioSlug,
+        GissOperation.CancelarNfse,
+        signedXml,
+        certMaterial,
+      );
+
+      return GissCancelNfseMapper.parseCancelarNfseResponse(responseXml);
+    }
+    catch (error: any) {
+      if (error instanceof NfsProviderConfigError) {
+        throw error;
+      }
+      this.logger.error(LogContext.NFS_GENERATION, {
+        adapter: 'giss',
+        action: 'cancelNfse',
+        nfseNumber: input.nfseNumber,
+        error,
+        errorMessage: error?.message,
+      });
+      throw new ExternalApiError(error?.message ?? 'Erro ao cancelar NFS-e no Giss');
     }
   }
 

@@ -8,6 +8,7 @@ import { GissCertMaterial } from '../signing/giss-pfx-loader';
 export enum GissOperation {
   RecepcionarLoteRps = 'RecepcionarLoteRps',
   ConsultarLoteRps = 'ConsultarLoteRps',
+  CancelarNfse = 'CancelarNfse',
 }
 
 export class GissSoapClient {

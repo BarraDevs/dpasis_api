@@ -38,15 +38,13 @@ export class NfseQueueModule {
         NfsGenerationModule.register(),
       ],
       providers: [
+        ProcessIssueNfseBatch,
+        ProcessPollNfseBatch,
         {
           provide: TOKENS.NfseQueueProducer,
           useClass: isTest ? NfseQueueFakeAdapterProducer : NfseQueueBullmqAdapterProducer,
         },
-        ...(isTest ? [] : [
-          NfseBullmqConsumer,
-          ProcessIssueNfseBatch,
-          ProcessPollNfseBatch,
-        ]),
+        ...(isTest ? [] : [NfseBullmqConsumer]),
       ],
       exports: [
         TOKENS.NfseQueueProducer,

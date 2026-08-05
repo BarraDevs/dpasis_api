@@ -12,6 +12,8 @@ export class NfseDto {
   verificationCode: string | null;
   issuedAt: Date | null;
   errorMessage: string | null;
+  canceledAt: Date | null;
+  cancelReasonCode: number | null;
   data: Record<string, unknown>;
   createdAt: Date;
   updatedAt: Date;

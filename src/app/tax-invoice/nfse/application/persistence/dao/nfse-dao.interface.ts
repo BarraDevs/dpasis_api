@@ -2,7 +2,14 @@ import { NfseCreateProps, NfseProps } from '../../../domain/entities/nfse.entity
 import { NfseDto } from '../../dtos/nfse.dto';
 
 export type UpdateNfseStatusData = Partial<Pick<NfseProps,
-  'status' | 'batchProtocol' | 'nfseNumber' | 'verificationCode' | 'issuedAt' | 'errorMessage'
+  'status' |
+  'batchProtocol' |
+  'nfseNumber' |
+  'verificationCode' |
+  'issuedAt' |
+  'errorMessage' |
+  'canceledAt' |
+  'cancelReasonCode'
 >>;
 
 export interface INfseDao {

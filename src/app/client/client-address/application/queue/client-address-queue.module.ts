@@ -39,14 +39,12 @@ export class ClientAddressQueueModule {
         CepLookupModule.register(),
       ],
       providers: [
+        ProcessResolveClientAddressIbgeCode,
         {
           provide: TOKENS.ClientAddressQueueProducer,
           useClass: isTest ? ClientAddressQueueFakeAdapterProducer : ClientAddressQueueBullmqAdapterProducer,
         },
-        ...(isTest ? [] : [
-          ClientAddressBullmqConsumer,
-          ProcessResolveClientAddressIbgeCode,
-        ]),
+        ...(isTest ? [] : [ClientAddressBullmqConsumer]),
       ],
       exports: [
         TOKENS.ClientAddressQueueProducer,

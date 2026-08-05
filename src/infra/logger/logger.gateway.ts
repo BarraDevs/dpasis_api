@@ -90,5 +90,6 @@ type NfsGenerationData = CommomData & {
   action: string;
   batchProtocol?: string;
   batchNumber?: number;
+  nfseNumber?: string;
   errorMessage?: string;
 }

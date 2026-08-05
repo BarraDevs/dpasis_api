@@ -18,6 +18,8 @@ const NfseSelect = {
   verificationCode: true,
   issuedAt: true,
   errorMessage: true,
+  canceledAt: true,
+  cancelReasonCode: true,
   data: true,
   createdAt: true,
   updatedAt: true,
@@ -58,6 +60,8 @@ export class NfseDaoAdapterPrisma implements INfseDao {
         verificationCode: patch.verificationCode,
         issuedAt: patch.issuedAt,
         errorMessage: patch.errorMessage,
+        canceledAt: patch.canceledAt,
+        cancelReasonCode: patch.cancelReasonCode,
       },
     });
   }

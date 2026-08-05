@@ -34,18 +34,11 @@ export class GissIssueBatchMapper {
     return undefined;
   }
 
-  private static buildFederalTrib(servicesValue: number): string {
-    const value = servicesValue.toFixed(2);
+  private static buildFederalTrib(): string {
     return '<p1:trib>'
       + '<p1:tribFed>'
       + '<p1:piscofins>'
       + '<p1:CST>00</p1:CST>'
-      + `<p1:vBCPisCofins>${value}</p1:vBCPisCofins>`
-      + '<p1:pAliqPis>0.00</p1:pAliqPis>'
-      + '<p1:pAliqCofins>0.00</p1:pAliqCofins>'
-      + '<p1:vPis>0.00</p1:vPis>'
-      + '<p1:vCofins>0.00</p1:vCofins>'
-      + '<p1:tpRetPisCofins>0</p1:tpRetPisCofins>'
       + '</p1:piscofins>'
       + '</p1:tribFed>'
       + '<p1:totTrib>'
@@ -141,7 +134,7 @@ export class GissIssueBatchMapper {
       + (s.issRate !== undefined ? `<p1:Aliquota>${s.issRate.toFixed(4)}</p1:Aliquota>` : '')
       + (s.unconditionalDiscount !== undefined ? `<p1:DescontoIncondicionado>${s.unconditionalDiscount.toFixed(2)}</p1:DescontoIncondicionado>` : '')
       + (s.conditionalDiscount !== undefined ? `<p1:DescontoCondicionado>${s.conditionalDiscount.toFixed(2)}</p1:DescontoCondicionado>` : '')
-      + this.buildFederalTrib(s.servicesValue)
+      + this.buildFederalTrib()
       + this.buildIbscbs(s.ibsCbs, s.serviceMunicipalCodeIbge)
       + '</p1:Valores>';
 

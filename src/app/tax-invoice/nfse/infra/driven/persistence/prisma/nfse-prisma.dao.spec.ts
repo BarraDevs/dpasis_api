@@ -74,6 +74,8 @@ describe('NfseDaoAdapterPrisma - Integration tests', () => {
         verificationCode: null,
         issuedAt: null,
         errorMessage: null,
+        canceledAt: null,
+        cancelReasonCode: null,
         data: props.data,
       });
       expect(result?.createdAt).toBeInstanceOf(Date);
@@ -161,6 +163,85 @@ describe('NfseDaoAdapterPrisma - Integration tests', () => {
         verificationCode: null,
         issuedAt: null,
         errorMessage: null,
+      });
+    });
+
+    it('should persist FAILED status with errorMessage', async() => {
+      // Arrange
+      const id = await sut.save(makeNfseCreateProps());
+
+      // Act
+      await sut.updateStatus(id, {
+        status: NfseStatus.FAILED,
+        errorMessage: 'Lote rejeitado pelo Giss',
+      });
+
+      // Assert
+      const saved = await prisma.nfse.findUnique({ where: { id } });
+      expect(saved).toMatchObject({
+        status: NfseStatus.FAILED,
+        errorMessage: 'Lote rejeitado pelo Giss',
+      });
+    });
+
+    it('should persist CANCELED status with canceledAt and cancelReasonCode', async() => {
+      // Arrange
+      const id = await sut.save(makeNfseCreateProps());
+      const issuedAt = new Date('2026-07-20T10:00:00.000Z');
+      const canceledAt = new Date('2026-07-29T12:00:00.000Z');
+
+      await sut.updateStatus(id, {
+        status: NfseStatus.ISSUED,
+        nfseNumber: '1000',
+        verificationCode: 'ABC123',
+        issuedAt,
+      });
+
+      // Act
+      await sut.updateStatus(id, {
+        status: NfseStatus.CANCELED,
+        canceledAt,
+        cancelReasonCode: 2,
+      });
+
+      // Assert
+      const saved = await prisma.nfse.findUnique({ where: { id } });
+      expect(saved).toMatchObject({
+        status: NfseStatus.CANCELED,
+        nfseNumber: '1000',
+        verificationCode: 'ABC123',
+        issuedAt,
+        canceledAt,
+        cancelReasonCode: 2,
+      });
+    });
+
+    it('should return canceled fields via findById after cancellation', async() => {
+      // Arrange
+      const id = await sut.save(makeNfseCreateProps());
+      const canceledAt = new Date('2026-07-29T15:30:00.000Z');
+
+      await sut.updateStatus(id, {
+        status: NfseStatus.ISSUED,
+        nfseNumber: '1001',
+        verificationCode: 'XYZ999',
+        issuedAt: new Date('2026-07-20T10:00:00.000Z'),
+      });
+      await sut.updateStatus(id, {
+        status: NfseStatus.CANCELED,
+        canceledAt,
+        cancelReasonCode: 4,
+      });
+
+      // Act
+      const result = await sut.findById(id);
+
+      // Assert
+      expect(result).toMatchObject({
+        status: NfseStatus.CANCELED,
+        nfseNumber: '1001',
+        canceledAt,
+        cancelReasonCode: 4,
       });
     });
   });
