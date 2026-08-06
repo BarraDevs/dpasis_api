@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import * as forge from 'node-forge';
-import { NfsProviderConfigError } from 'src/shared/errors/nfs-provider-config.error';
+import { NfsProviderConfigError } from 'src/infra/nfs-generation/errors/nfs-provider-config.error';
 import { GissPfxLoader } from './giss-pfx-loader';
 
 const PASSWORD_ENV_VAR = 'TEST_GISS_CERT_PASSWORD';

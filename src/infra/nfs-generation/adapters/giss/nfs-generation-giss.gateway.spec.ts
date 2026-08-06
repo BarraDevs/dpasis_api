@@ -2,7 +2,7 @@ import { createMock } from '@golevelup/ts-jest';
 import { HttpService } from '@nestjs/axios';
 import { LogContext, type ILoggerGateway } from 'src/infra/logger/logger.gateway';
 import { ExternalApiError } from 'src/shared/errors/external-api.error';
-import { NfsProviderConfigError } from 'src/shared/errors/nfs-provider-config.error';
+import { NfsProviderConfigError } from 'src/infra/nfs-generation/errors/nfs-provider-config.error';
 import { NfsBatchSituation } from '../../dtos/nfs-batch-status.dto';
 import { NfsProviderEnvironment } from '../../dtos/nfs-provider-credentials.dto';
 import { GissBatchStatusMapper } from './mappers/giss-batch-status.mapper';

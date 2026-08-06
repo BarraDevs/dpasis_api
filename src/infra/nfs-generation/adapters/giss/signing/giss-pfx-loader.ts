@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import * as forge from 'node-forge';
-import { NfsProviderConfigError } from 'src/shared/errors/nfs-provider-config.error';
+import { NfsProviderConfigError } from 'src/infra/nfs-generation/errors/nfs-provider-config.error';
 
 export type GissCertMaterial = {
   certPem: string;
