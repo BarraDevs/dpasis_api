@@ -1,0 +1,153 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: dpasis-postgres-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      POSTGRES_DB: ${POSTGRES_DB:-dpasis}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    networks:
+      - dpasis-dev-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:8-alpine
+    container_name: dpasis-redis-dev
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_dev_data:/data
+    networks:
+      - dpasis-dev-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+      target: development
+    container_name: dpasis-api-dev
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file:
+      - .env.development
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-password}@postgres:5432/${POSTGRES_DB:-dpasis}?schema=public
+      REDIS_URL: redis://redis:6379
+    ports:
+      - "${PORT:-3000}:3000"
+      - "9229:9229"
+    networks:
+      - dpasis-dev-network
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: npm run start:dev
+
+  log-http:
+    image: alpine:3.21
+    container_name: dpasis-log-http
+    restart: unless-stopped
+    volumes:
+      - ./logs:/logs:ro
+    command: ["tail", "-n", "50", "-F", "/logs/http.log"]
+
+  log-ws:
+    image: alpine:3.21
+    container_name: dpasis-log-ws
+    restart: unless-stopped
+    volumes:
+      - ./logs:/logs:ro
+    command: ["tail", "-n", "50", "-F", "/logs/ws.log"]
+
+  log-cache:
+    image: alpine:3.21
+    container_name: dpasis-log-cache
+    restart: unless-stopped
+    volumes:
+      - ./logs:/logs:ro
+    command: ["tail", "-n", "50", "-F", "/logs/cache.log"]
+
+  log-cep-lookup:
+    image: alpine:3.21
+    container_name: dpasis-log-cep-lookup
+    restart: unless-stopped
+    volumes:
+      - ./logs:/logs:ro
+    command: ["tail", "-n", "50", "-F", "/logs/cep-lookup.log"]
+
+  log-cnpj-lookup:
+    image: alpine:3.21
+    container_name: dpasis-log-cnpj-lookup
+    restart: unless-stopped
+    volumes:
+      - ./logs:/logs:ro
+    command: ["tail", "-n", "50", "-F", "/logs/cnpj-lookup.log"]
+
+  log-smtp:
+    image: alpine:3.21
+    container_name: dpasis-log-smtp
+    restart: unless-stopped
+    volumes:
+      - ./logs:/logs:ro
+    command: ["tail", "-n", "50", "-F", "/logs/smtp.log"]
+
+  log-upload:
+    image: alpine:3.21
+    container_name: dpasis-log-upload
+    restart: unless-stopped
+    volumes:
+      - ./logs:/logs:ro
+    command: ["tail", "-n", "50", "-F", "/logs/upload-file.log"]
+
+  log-nf-generation:
+    image: alpine:3.21
+    container_name: dpasis-log-nf-generation
+    restart: unless-stopped
+    volumes:
+      - ./logs:/logs:ro
+    command: ["tail", "-n", "50", "-F", "/logs/nf-generation.log"]
+
+  log-nfs-generation:
+    image: alpine:3.21
+    container_name: dpasis-log-nfs-generation
+    restart: unless-stopped
+    volumes:
+      - ./logs:/logs:ro
+    command: ["tail", "-n", "50", "-F", "/logs/nfs-generation.log"]
+
+  dozzle:
+    image: amir20/dozzle:latest
+    container_name: dpasis-dozzle-dev
+    restart: unless-stopped
+    ports:
+      - "${DOZZLE_PORT:-9999}:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+networks:
+  dpasis-dev-network:
+    driver: bridge
+
+volumes:
+  postgres_dev_data:
+  redis_dev_data:

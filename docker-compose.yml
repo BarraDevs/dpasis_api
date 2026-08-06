@@ -1,0 +1,101 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: dpasis-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      POSTGRES_DB: ${POSTGRES_DB:-dpasis}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - dpasis-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:8-alpine
+    container_name: dpasis-redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - dpasis-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: dpasis-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: ${PORT:-3000}
+
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-password}@postgres:5432/${POSTGRES_DB:-dpasis}?schema=public
+      REDIS_URL: redis://redis:6379
+
+      SSL_KEY: ${SSL_KEY}
+      SSL_CERT: ${SSL_CERT}
+      SSL_CA: ${SSL_CA}
+
+      CORS_ORIGIN: ${CORS_ORIGIN}
+      JWT_SECRET: ${JWT_SECRET}
+
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_REGION: ${AWS_REGION}
+      AWS_BUCKET_NAME: ${AWS_BUCKET_NAME}
+
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_TO: ${SMTP_TO}
+      SMTP_FROM: ${SMTP_FROM}
+      SMTP_USERNAME: ${SMTP_USERNAME}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+
+      QUEUE_DASHBOARD_USERNAME: ${QUEUE_DASHBOARD_USERNAME}
+      QUEUE_DASHBOARD_PASSWORD: ${QUEUE_DASHBOARD_PASSWORD}
+
+      CNPJA_API_URL: ${CNPJA_API_URL:-https://open.cnpja.com/office}
+      VIACEP_API_URL: ${VIACEP_API_URL:-https://viacep.com.br/ws}
+
+      NFEMAIL_API_URL: ${NFEMAIL_API_URL}
+      NFEMAIL_CNPJ: ${NFEMAIL_CNPJ}
+      NFEMAIL_API_KEY: ${NFEMAIL_API_KEY}
+
+      GISS_CERT_PASSWORD: ${GISS_CERT_PASSWORD:-}
+    ports:
+      - "${PORT:-3000}:3000"
+    networks:
+      - dpasis-network
+    volumes:
+      - ./resources:/app/resources
+    command: sh -c "npx prisma db push && node dist/src/main"
+
+networks:
+  dpasis-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
