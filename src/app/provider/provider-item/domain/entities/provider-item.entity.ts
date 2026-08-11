@@ -1,5 +1,7 @@
 import { ProviderItemInstallmentStatus } from '../enums/provider-item-installment-status.enum';
 import { ProviderItemScheduleType } from '../enums/provider-item-schedule-type.enum';
+import { ProviderItemInstallmentAlreadyPaidError } from '../errors/provider-item-installment-already-paid.error';
+import { ProviderItemInstallmentNotFoundError } from '../errors/provider-item-installment-not-found.error';
 
 export type ProviderItemInstallmentProps = {
   id: number | null;
@@ -55,5 +57,16 @@ export class ProviderItem {
 
   public deactivate(): void {
     this._props.active = false;
+  }
+
+  public payInstallment(installmentId: number): void {
+    const installment = this._props.installments.find((item) => item.id === installmentId);
+    if (!installment) {
+      throw new ProviderItemInstallmentNotFoundError();
+    }
+    if (installment.status === ProviderItemInstallmentStatus.PAID) {
+      throw new ProviderItemInstallmentAlreadyPaidError();
+    }
+    installment.status = ProviderItemInstallmentStatus.PAID;
   }
 }

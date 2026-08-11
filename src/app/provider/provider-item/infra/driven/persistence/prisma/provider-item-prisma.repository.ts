@@ -4,7 +4,6 @@ import { ProviderItem } from 'src/app/provider/provider-item/domain/entities/pro
 import { ProviderItemInstallmentStatus } from 'src/app/provider/provider-item/domain/enums/provider-item-installment-status.enum';
 import { ProviderItemScheduleType } from 'src/app/provider/provider-item/domain/enums/provider-item-schedule-type.enum';
 import { ProviderItemFactory } from 'src/app/provider/provider-item/domain/factories/provider-item.factory';
-import { ProviderItemInstallmentAlreadyPaidError } from 'src/app/provider/provider-item/domain/errors/provider-item-installment-already-paid.error';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 
 @Injectable()
@@ -63,20 +62,35 @@ export class ProviderItemRepositoryAdapterPrisma implements IProviderItemReposit
         },
       });
 
+      const installmentsWithId = props.installments.filter((installment) => installment.id != null);
+      for (const installment of installmentsWithId) {
+        await tx.providerItemInstallment.update({
+          where: { id: installment.id! },
+          data: {
+            number: installment.number,
+            valueInCents: installment.valueInCents,
+            dueDate: installment.dueDate,
+            status: installment.status,
+          },
+        });
+      }
+
+      const keptIds = installmentsWithId.map((installment) => installment.id!);
       await tx.providerItemInstallment.deleteMany({
         where: {
           providerItemId: props.id!,
           status: ProviderItemInstallmentStatus.PENDING,
+          ...(keptIds.length > 0 ? { id: { notIn: keptIds } } : {}),
         },
       });
 
-      const pendingInstallments = props.installments.filter(
-        (installment) => installment.status === ProviderItemInstallmentStatus.PENDING,
+      const newPendingInstallments = props.installments.filter(
+        (installment) => installment.id == null && installment.status === ProviderItemInstallmentStatus.PENDING,
       );
 
-      if (pendingInstallments.length > 0) {
+      if (newPendingInstallments.length > 0) {
         await tx.providerItemInstallment.createMany({
-          data: pendingInstallments.map((installment) => ({
+          data: newPendingInstallments.map((installment) => ({
             providerItemId: props.id!,
             number: installment.number,
             valueInCents: installment.valueInCents,
@@ -88,7 +102,7 @@ export class ProviderItemRepositoryAdapterPrisma implements IProviderItemReposit
     });
   }
 
-  public async updateActive(id: number, active: boolean): Promise<void> {
+  public async updateStatus(id: number, active: boolean): Promise<void> {
     await this.prisma.providerItem.update({
       where: { id },
       data: { active },
@@ -135,52 +149,5 @@ export class ProviderItemRepositoryAdapterPrisma implements IProviderItemReposit
     await this.prisma.providerItem.delete({
       where: { id },
     });
-  }
-
-  public async payInstallment(providerItemId: number, installmentId: number): Promise<void> {
-    const installment = await this.prisma.providerItemInstallment.findFirst({
-      where: {
-        id: installmentId,
-        providerItemId,
-      },
-    });
-
-    if (!installment) {
-      return;
-    }
-
-    if (installment.status === ProviderItemInstallmentStatus.PAID) {
-      throw new ProviderItemInstallmentAlreadyPaidError();
-    }
-
-    await this.prisma.providerItemInstallment.update({
-      where: { id: installmentId },
-      data: { status: ProviderItemInstallmentStatus.PAID },
-    });
-  }
-
-  public async findInstallmentById(
-    providerItemId: number,
-    installmentId: number,
-  ): Promise<{ id: number; status: ProviderItemInstallmentStatus } | null> {
-    const installment = await this.prisma.providerItemInstallment.findFirst({
-      where: {
-        id: installmentId,
-        providerItemId,
-      },
-      select: {
-        id: true,
-        status: true,
-      },
-    });
-
-    if (!installment) {
-      return null;
-    }
-
-    return {
-      id: installment.id,
-      status: installment.status as ProviderItemInstallmentStatus,
-    };
   }
 }

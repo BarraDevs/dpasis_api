@@ -17,7 +17,7 @@ export class ActivateProviderItem {
     }
 
     item.activate();
-    await this.providerItemRepository.updateActive(id, true);
+    await this.providerItemRepository.updateStatus(id, true);
 
     return { message: 'Item do prestador ativado com sucesso' };
   }

@@ -17,7 +17,7 @@ export class DeactivateProviderItem {
     }
 
     item.deactivate();
-    await this.providerItemRepository.updateActive(id, false);
+    await this.providerItemRepository.updateStatus(id, false);
 
     return { message: 'Item do prestador desativado com sucesso' };
   }

@@ -1,5 +1,7 @@
 import { ProviderItemInstallmentStatus } from '../enums/provider-item-installment-status.enum';
 import { ProviderItemScheduleType } from '../enums/provider-item-schedule-type.enum';
+import { ProviderItemInstallmentAlreadyPaidError } from '../errors/provider-item-installment-already-paid.error';
+import { ProviderItemInstallmentNotFoundError } from '../errors/provider-item-installment-not-found.error';
 import { ProviderItem, ProviderItemProps } from './provider-item.entity';
 
 function makeProviderItemProps(overrides?: Partial<ProviderItemProps>): ProviderItemProps {
@@ -176,6 +178,45 @@ describe('ProviderItem', () => {
 
       // Assert
       expect(providerItem.props.active).toBe(false);
+    });
+  });
+
+  describe('payInstallment', () => {
+    it('should mark installment as paid', () => {
+      // Arrange
+      const providerItem = ProviderItem._instantiate(makeProviderItemProps());
+
+      // Act
+      providerItem.payInstallment(1);
+
+      // Assert
+      expect(providerItem.props.installments[0].status).toBe(ProviderItemInstallmentStatus.PAID);
+    });
+
+    it('should throw ProviderItemInstallmentNotFoundError when installment does not exist', () => {
+      // Arrange
+      const providerItem = ProviderItem._instantiate(makeProviderItemProps());
+
+      // Act & Assert
+      expect(() => providerItem.payInstallment(999)).toThrow(ProviderItemInstallmentNotFoundError);
+    });
+
+    it('should throw ProviderItemInstallmentAlreadyPaidError when installment is already paid', () => {
+      // Arrange
+      const providerItem = ProviderItem._instantiate(makeProviderItemProps({
+        installments: [
+          {
+            id: 1,
+            number: 1,
+            valueInCents: 30000,
+            dueDate: new Date('2026-07-10'),
+            status: ProviderItemInstallmentStatus.PAID,
+          },
+        ],
+      }));
+
+      // Act & Assert
+      expect(() => providerItem.payInstallment(1)).toThrow(ProviderItemInstallmentAlreadyPaidError);
     });
   });
 });

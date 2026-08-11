@@ -1,7 +1,4 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { ProviderItemInstallmentStatus } from 'src/app/provider/provider-item/domain/enums/provider-item-installment-status.enum';
-import { ProviderItemInstallmentAlreadyPaidError } from 'src/app/provider/provider-item/domain/errors/provider-item-installment-already-paid.error';
-import { ProviderItemInstallmentNotFoundError } from 'src/app/provider/provider-item/domain/errors/provider-item-installment-not-found.error';
 import { ProviderItemNotFoundError } from 'src/app/provider/provider-item/domain/errors/provider-item-not-found.error';
 import { TOKENS } from 'src/core/di/token';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
@@ -19,16 +16,8 @@ export class PayProviderItemInstallment {
       throw new ProviderItemNotFoundError();
     }
 
-    const installment = await this.providerItemRepository.findInstallmentById(providerItemId, installmentId);
-    if (!installment) {
-      throw new ProviderItemInstallmentNotFoundError();
-    }
-
-    if (installment.status === ProviderItemInstallmentStatus.PAID) {
-      throw new ProviderItemInstallmentAlreadyPaidError();
-    }
-
-    await this.providerItemRepository.payInstallment(providerItemId, installmentId);
+    item.payInstallment(installmentId);
+    await this.providerItemRepository.edit(item);
 
     return { message: 'Parcela marcada como paga com sucesso' };
   }

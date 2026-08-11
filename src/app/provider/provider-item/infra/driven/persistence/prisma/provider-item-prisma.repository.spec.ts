@@ -1,7 +1,6 @@
 import { Test } from '@nestjs/testing';
 import { ProviderItemInstallmentStatus } from 'src/app/provider/provider-item/domain/enums/provider-item-installment-status.enum';
 import { ProviderItemScheduleType } from 'src/app/provider/provider-item/domain/enums/provider-item-schedule-type.enum';
-import { ProviderItemInstallmentAlreadyPaidError } from 'src/app/provider/provider-item/domain/errors/provider-item-installment-already-paid.error';
 import { ProviderItemFactory } from 'src/app/provider/provider-item/domain/factories/provider-item.factory';
 import { ConfigModule } from 'src/core/config/config.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
@@ -241,29 +240,51 @@ describe('ProviderItemRepositoryAdapterPrisma - Integration tests', () => {
     });
   });
 
-  describe('updateActive', () => {
-    it('should update active status', async() => {
+  describe('updateStatus', () => {
+    it('should update active flag without touching installments', async() => {
       // Arrange
       const id = await sut.save(ProviderItemFactory.create(makeValidCreateProps(providerId, bankId)));
+      const installmentsBefore = await prisma.providerItemInstallment.findMany({
+        where: { providerItemId: id },
+        orderBy: { number: 'asc' },
+      });
 
       // Act
-      await sut.updateActive(id, false);
+      await sut.updateStatus(id, false);
 
       // Assert
       const saved = await prisma.providerItem.findUnique({ where: { id } });
       expect(saved?.active).toBe(false);
-    });
 
-    it('should be idempotent when setting active to true on already active item', async() => {
+      const installmentsAfter = await prisma.providerItemInstallment.findMany({
+        where: { providerItemId: id },
+        orderBy: { number: 'asc' },
+      });
+      expect(installmentsAfter).toEqual(installmentsBefore);
+    });
+  });
+
+  describe('edit - pay installment via entity', () => {
+    it('should persist installment paid status from entity without dropping other installments', async() => {
       // Arrange
       const id = await sut.save(ProviderItemFactory.create(makeValidCreateProps(providerId, bankId)));
+      const item = await sut.findById(id);
+      const installmentId = item!.props.installments[0].id!;
+      item!.payInstallment(installmentId);
 
       // Act
-      await sut.updateActive(id, true);
+      await sut.edit(item!);
 
       // Assert
-      const saved = await prisma.providerItem.findUnique({ where: { id } });
-      expect(saved?.active).toBe(true);
+      const updatedInstallments = await prisma.providerItemInstallment.findMany({
+        where: { providerItemId: id },
+        orderBy: { number: 'asc' },
+      });
+
+      expect(updatedInstallments).toHaveLength(3);
+      expect(updatedInstallments[0].id).toBe(installmentId);
+      expect(updatedInstallments[0].status).toBe(ProviderItemInstallmentStatus.PAID);
+      expect(updatedInstallments.slice(1).every((row) => row.status === ProviderItemInstallmentStatus.PENDING)).toBe(true);
     });
   });
 
@@ -288,73 +309,6 @@ describe('ProviderItemRepositoryAdapterPrisma - Integration tests', () => {
     it('should throw when deleting non-existent id', async() => {
       // Act & Assert
       await expect(sut.delete(99999)).rejects.toThrow();
-    });
-  });
-
-  describe('payInstallment', () => {
-    it('should mark installment as paid', async() => {
-      // Arrange
-      const id = await sut.save(ProviderItemFactory.create(makeValidCreateProps(providerId, bankId)));
-      const installment = await prisma.providerItemInstallment.findFirst({
-        where: { providerItemId: id, number: 1 },
-      });
-
-      // Act
-      await sut.payInstallment(id, installment!.id);
-
-      // Assert
-      const updated = await prisma.providerItemInstallment.findUnique({
-        where: { id: installment!.id },
-      });
-      expect(updated?.status).toBe(ProviderItemInstallmentStatus.PAID);
-    });
-
-    it('should throw ProviderItemInstallmentAlreadyPaidError when installment is already paid', async() => {
-      // Arrange
-      const id = await sut.save(ProviderItemFactory.create(makeValidCreateProps(providerId, bankId)));
-      const installment = await prisma.providerItemInstallment.findFirst({
-        where: { providerItemId: id, number: 1 },
-      });
-
-      await sut.payInstallment(id, installment!.id);
-
-      // Act & Assert
-      await expect(sut.payInstallment(id, installment!.id)).rejects.toThrow(ProviderItemInstallmentAlreadyPaidError);
-    });
-
-    it('should do nothing when installment does not belong to provider item', async() => {
-      // Arrange
-      const id = await sut.save(ProviderItemFactory.create(makeValidCreateProps(providerId, bankId)));
-
-      // Act & Assert
-      await expect(sut.payInstallment(id, 99999)).resolves.toBeUndefined();
-    });
-  });
-
-  describe('findInstallmentById', () => {
-    it('should return null when installment does not exist', async() => {
-      // Act
-      const result = await sut.findInstallmentById(1, 99999);
-
-      // Assert
-      expect(result).toBeNull();
-    });
-
-    it('should return installment id and status when found', async() => {
-      // Arrange
-      const id = await sut.save(ProviderItemFactory.create(makeValidCreateProps(providerId, bankId)));
-      const installment = await prisma.providerItemInstallment.findFirst({
-        where: { providerItemId: id, number: 2 },
-      });
-
-      // Act
-      const result = await sut.findInstallmentById(id, installment!.id);
-
-      // Assert
-      expect(result).toEqual({
-        id: installment!.id,
-        status: ProviderItemInstallmentStatus.PENDING,
-      });
     });
   });
 });

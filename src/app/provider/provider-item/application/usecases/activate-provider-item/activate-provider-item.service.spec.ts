@@ -1,6 +1,5 @@
 import { createMock } from '@golevelup/ts-jest';
 import { Test } from '@nestjs/testing';
-import { ProviderItem } from 'src/app/provider/provider-item/domain/entities/provider-item.entity';
 import { ProviderItemNotFoundError } from 'src/app/provider/provider-item/domain/errors/provider-item-not-found.error';
 import { ProviderItemFactory } from 'src/app/provider/provider-item/domain/factories/provider-item.factory';
 import { TOKENS } from 'src/core/di/token';
@@ -72,7 +71,7 @@ describe('ActivateProviderItem - Unit tests', () => {
     await expect(sut.execute(1)).rejects.toThrow(ProviderItemNotFoundError);
   });
 
-  it('should call repository.updateActive with true', async() => {
+  it('should call repository.updateStatus after activating item', async() => {
     // Arrange
     const item = ProviderItemFactory.create({
       providerId: 1,
@@ -86,19 +85,31 @@ describe('ActivateProviderItem - Unit tests', () => {
       bankId: 1,
     });
     jest.spyOn(providerItemRepository, 'findById').mockResolvedValue(item);
-    const updateActiveSpy = jest.spyOn(providerItemRepository, 'updateActive');
+    const updateStatusSpy = jest.spyOn(providerItemRepository, 'updateStatus');
 
     // Act
     await sut.execute(1);
 
     // Assert
-    expect(updateActiveSpy).toHaveBeenCalledWith(1, true);
-    expect(updateActiveSpy).toHaveBeenCalledTimes(1);
+    expect(item.props.active).toBe(true);
+    expect(updateStatusSpy).toHaveBeenCalledWith(1, true);
+    expect(updateStatusSpy).toHaveBeenCalledTimes(1);
   });
 
   it('should return success message', async() => {
     // Arrange
-    jest.spyOn(providerItemRepository, 'findById').mockResolvedValue(createMock<ProviderItem>());
+    const item = ProviderItemFactory.create({
+      providerId: 1,
+      description: 'Serviço',
+      totalValueInCents: 10000,
+      installmentsCount: 1,
+      scheduleType: ProviderItemScheduleType.INTERVAL_DAYS,
+      intervalDays: 30,
+      dueDay: null,
+      firstDueDate: new Date('2026-07-10'),
+      bankId: 1,
+    });
+    jest.spyOn(providerItemRepository, 'findById').mockResolvedValue(item);
 
     // Act
     const result = await sut.execute(1);
