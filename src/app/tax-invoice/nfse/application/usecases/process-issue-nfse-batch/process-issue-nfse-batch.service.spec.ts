@@ -6,16 +6,16 @@ import { NfsProviderEnvironment } from 'src/infra/nfs-generation/dtos/nfs-provid
 import type { INfsGenerationGateway } from 'src/infra/nfs-generation/nfs-generation.gateway';
 import { NfseStatus } from '../../../domain/enums/nfse-status.enum';
 import { NfseNotFoundError } from '../../../domain/errors/nfse-not-found.error';
-import { NfsProviderNotConfiguredError } from '../../../domain/errors/nfs-provider-not-configured.error';
+import { CompanyNfsConfigDto } from 'src/app/company/company-nfs-config/application/dtos/company-nfs-config.dto';
+import { FindCompanyNfsConfigByCompanyId } from 'src/app/company/company-nfs-config/application/usecases/find-company-nfs-config-by-company-id/find-company-nfs-config-by-company-id.service';
+import { CompanyNfsConfigNotFoundError } from 'src/app/company/company-nfs-config/domain/errors/company-nfs-config-not-found.error';
 import { NfseDto } from '../../dtos/nfse.dto';
-import { NfsProviderConfigDto } from '../../dtos/nfs-provider-config.dto';
-import type { INfsProviderConfigDao } from '../../persistence/dao/nfs-provider-config-dao.interface';
 import type { INfseDao } from '../../persistence/dao/nfse-dao.interface';
 import type { INfseQueueProducer } from '../../queue/nfse-queue-producer.interface';
 import { NfseIssueSnapshot } from '../issue-nfse/issue-nfse.service';
 import { ProcessIssueNfseBatch } from './process-issue-nfse-batch.service';
 
-const providerConfig = createMock<NfsProviderConfigDto>({
+const providerConfig = createMock<CompanyNfsConfigDto>({
   certFilePath: '/certs/x.pfx',
   certPasswordEnvVar: 'X_PASS',
   environment: NfsProviderEnvironment.Demonstration,
@@ -84,7 +84,7 @@ describe('ProcessIssueNfseBatch - Unit tests', () => {
   let sut: ProcessIssueNfseBatch;
   let logger: ILoggerGateway;
   let nfseDao: INfseDao;
-  let providerConfigDao: INfsProviderConfigDao;
+  let findCompanyNfsConfigByCompanyId: FindCompanyNfsConfigByCompanyId;
   let nfsGenerationGateway: INfsGenerationGateway;
   let queueProducer: INfseQueueProducer;
 
@@ -94,7 +94,7 @@ describe('ProcessIssueNfseBatch - Unit tests', () => {
         ProcessIssueNfseBatch,
         { provide: TOKENS.LoggerGateway, useValue: createMock<ILoggerGateway>() },
         { provide: TOKENS.NfseDao, useValue: createMock<INfseDao>() },
-        { provide: TOKENS.NfsProviderConfigDao, useValue: createMock<INfsProviderConfigDao>() },
+        { provide: FindCompanyNfsConfigByCompanyId, useValue: createMock<FindCompanyNfsConfigByCompanyId>() },
         { provide: TOKENS.NfsGenerationGateway, useValue: createMock<INfsGenerationGateway>() },
         { provide: TOKENS.NfseQueueProducer, useValue: createMock<INfseQueueProducer>() },
       ],
@@ -103,7 +103,7 @@ describe('ProcessIssueNfseBatch - Unit tests', () => {
     sut = module.get(ProcessIssueNfseBatch);
     logger = module.get(TOKENS.LoggerGateway);
     nfseDao = module.get(TOKENS.NfseDao);
-    providerConfigDao = module.get(TOKENS.NfsProviderConfigDao);
+    findCompanyNfsConfigByCompanyId = module.get(FindCompanyNfsConfigByCompanyId);
     nfsGenerationGateway = module.get(TOKENS.NfsGenerationGateway);
     queueProducer = module.get(TOKENS.NfseQueueProducer);
   });
@@ -133,20 +133,20 @@ describe('ProcessIssueNfseBatch - Unit tests', () => {
     expect(queueProducer.addPollBatchJob).not.toHaveBeenCalled();
   });
 
-  it('should throw NfsProviderNotConfiguredError when the company has no provider config', async() => {
+  it('should throw CompanyNfsConfigNotFoundError when the company has no provider config', async() => {
     // Arrange
     jest.spyOn(nfseDao, 'findById').mockResolvedValue(makeNfseDto());
-    jest.spyOn(providerConfigDao, 'findByCompanyId').mockResolvedValue(null);
+    jest.spyOn(findCompanyNfsConfigByCompanyId, 'execute').mockRejectedValue(new CompanyNfsConfigNotFoundError());
 
     // Act & Assert
-    await expect(sut.execute({ nfseId: 1 })).rejects.toThrow(NfsProviderNotConfiguredError);
+    await expect(sut.execute({ nfseId: 1 })).rejects.toThrow(CompanyNfsConfigNotFoundError);
   });
 
   it('should mark the nfse SUBMITTED and schedule a poll job on success', async() => {
     // Arrange
     const today = new Date().toISOString().slice(0, 10);
     jest.spyOn(nfseDao, 'findById').mockResolvedValue(makeNfseDto());
-    jest.spyOn(providerConfigDao, 'findByCompanyId').mockResolvedValue(providerConfig);
+    jest.spyOn(findCompanyNfsConfigByCompanyId, 'execute').mockResolvedValue(providerConfig);
     jest.spyOn(nfsGenerationGateway, 'issueBatch').mockResolvedValue({ batchProtocol: 'protocol-123' });
 
     // Act
@@ -203,7 +203,7 @@ describe('ProcessIssueNfseBatch - Unit tests', () => {
     jest.spyOn(nfseDao, 'findById').mockResolvedValue(makeNfseDto({
       data: snapshot as unknown as Record<string, unknown>,
     }));
-    jest.spyOn(providerConfigDao, 'findByCompanyId').mockResolvedValue(providerConfig);
+    jest.spyOn(findCompanyNfsConfigByCompanyId, 'execute').mockResolvedValue(providerConfig);
     jest.spyOn(nfsGenerationGateway, 'issueBatch').mockResolvedValue({ batchProtocol: 'protocol-123' });
 
     // Act
@@ -229,7 +229,7 @@ describe('ProcessIssueNfseBatch - Unit tests', () => {
     jest.spyOn(nfseDao, 'findById').mockResolvedValue(makeNfseDto({
       data: snapshot as unknown as Record<string, unknown>,
     }));
-    jest.spyOn(providerConfigDao, 'findByCompanyId').mockResolvedValue(providerConfig);
+    jest.spyOn(findCompanyNfsConfigByCompanyId, 'execute').mockResolvedValue(providerConfig);
     jest.spyOn(nfsGenerationGateway, 'issueBatch').mockResolvedValue({ batchProtocol: 'protocol-123' });
 
     // Act
@@ -255,7 +255,7 @@ describe('ProcessIssueNfseBatch - Unit tests', () => {
     // Arrange
     const gatewayError = new Error('Giss indisponível');
     jest.spyOn(nfseDao, 'findById').mockResolvedValue(makeNfseDto());
-    jest.spyOn(providerConfigDao, 'findByCompanyId').mockResolvedValue(providerConfig);
+    jest.spyOn(findCompanyNfsConfigByCompanyId, 'execute').mockResolvedValue(providerConfig);
     jest.spyOn(nfsGenerationGateway, 'issueBatch').mockRejectedValue(gatewayError);
     const loggerSpy = jest.spyOn(logger, 'error');
 
@@ -278,7 +278,7 @@ describe('ProcessIssueNfseBatch - Unit tests', () => {
   it('should use a default pt-BR error message when the gateway error has no message', async() => {
     // Arrange
     jest.spyOn(nfseDao, 'findById').mockResolvedValue(makeNfseDto());
-    jest.spyOn(providerConfigDao, 'findByCompanyId').mockResolvedValue(providerConfig);
+    jest.spyOn(findCompanyNfsConfigByCompanyId, 'execute').mockResolvedValue(providerConfig);
     jest.spyOn(nfsGenerationGateway, 'issueBatch').mockRejectedValue({});
 
     // Act

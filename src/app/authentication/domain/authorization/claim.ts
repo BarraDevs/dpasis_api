@@ -77,6 +77,9 @@ export const Claim = {
   COMPANY_READ: { subject: ClaimSubject.Company, action: ClaimAction.Read },
   COMPANY_WRITE: { subject: ClaimSubject.Company, action: ClaimAction.Write },
 
+  COMPANY_NFS_CONFIG_READ: { subject: ClaimSubject.CompanyNfsConfig, action: ClaimAction.Read },
+  COMPANY_NFS_CONFIG_WRITE: { subject: ClaimSubject.CompanyNfsConfig, action: ClaimAction.Write },
+
   PROVIDER_READ: { subject: ClaimSubject.Provider, action: ClaimAction.Read },
   PROVIDER_WRITE: { subject: ClaimSubject.Provider, action: ClaimAction.Write },
 

@@ -12,7 +12,7 @@ model NfsProviderConfig {
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt
 
-  company Company @relation(fields: [companyId], references: [id])
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   @@map("nfs_provider_configs")
 }

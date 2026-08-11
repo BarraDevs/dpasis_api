@@ -1,4 +1,4 @@
-export class NfsProviderConfigDto {
+export class CompanyNfsConfigDto {
   id: number;
   companyId: number;
   vendor: string;

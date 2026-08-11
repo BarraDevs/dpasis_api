@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { FindCompanyNfsConfigByCompanyId } from 'src/app/company/company-nfs-config/application/usecases/find-company-nfs-config-by-company-id/find-company-nfs-config-by-company-id.service';
 import { TOKENS } from 'src/core/di/token';
 import { LogContext, type ILoggerGateway } from 'src/infra/logger/logger.gateway';
 import { IssueNfsBatchOutputDto } from 'src/infra/nfs-generation/dtos/issue-nfs-batch.dto';
@@ -8,8 +9,6 @@ import type { INfsGenerationGateway } from 'src/infra/nfs-generation/nfs-generat
 import { Nfse } from '../../../domain/entities/nfse.entity';
 import { NfseStatus } from '../../../domain/enums/nfse-status.enum';
 import { NfseNotFoundError } from '../../../domain/errors/nfse-not-found.error';
-import { NfsProviderNotConfiguredError } from '../../../domain/errors/nfs-provider-not-configured.error';
-import type { INfsProviderConfigDao } from '../../persistence/dao/nfs-provider-config-dao.interface';
 import type { INfseDao } from '../../persistence/dao/nfse-dao.interface';
 import type { INfseQueueProducer } from '../../queue/nfse-queue-producer.interface';
 import type { NfseIssueSnapshot } from '../issue-nfse/issue-nfse.service';
@@ -22,9 +21,9 @@ export class ProcessIssueNfseBatch {
   constructor(
     @Inject(TOKENS.NfseDao) private readonly nfseDao: INfseDao,
     @Inject(TOKENS.LoggerGateway) private readonly logger: ILoggerGateway,
-    @Inject(TOKENS.NfsProviderConfigDao) private readonly providerConfigDao: INfsProviderConfigDao,
     @Inject(TOKENS.NfsGenerationGateway) private readonly nfsGenerationGateway: INfsGenerationGateway,
     @Inject(TOKENS.NfseQueueProducer) private readonly queueProducer: INfseQueueProducer,
+    private readonly findCompanyNfsConfigByCompanyId: FindCompanyNfsConfigByCompanyId,
   ) {}
 
   public async execute(input: ProcessIssueNfseBatchInputDto): Promise<void> {
@@ -38,10 +37,7 @@ export class ProcessIssueNfseBatch {
 
     const nfse = Nfse._instantiate(nfseDto);
 
-    const providerConfig = await this.providerConfigDao.findByCompanyId(nfseDto.companyId);
-    if (!providerConfig) {
-      throw new NfsProviderNotConfiguredError();
-    }
+    const providerConfig = await this.findCompanyNfsConfigByCompanyId.execute(nfseDto.companyId);
 
     const snapshot = nfseDto.data as unknown as NfseIssueSnapshot;
     const today = new Date().toISOString().slice(0, 10);

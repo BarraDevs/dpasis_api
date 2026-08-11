@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ClientAddressModule } from 'src/app/client/client-address/client-address.module';
 import { ClientModule } from 'src/app/client/client/client.module';
 import { CompanyModule } from 'src/app/company/company/company.module';
+import { CompanyNfsConfigModule } from 'src/app/company/company-nfs-config/company-nfs-config.module';
 import { NfsGenerationModule } from 'src/infra/nfs-generation/nfs-generation.module';
 import { NfsePersistenceModule } from './application/persistence/nfse-persistence.module';
 import { NfseQueueModule } from './application/queue/nfse-queue.module';
@@ -15,6 +16,7 @@ import { NfseAdminController } from './infra/drivers/http/admin/nfse-admin.contr
     ClientModule,
     ClientAddressModule,
     CompanyModule,
+    CompanyNfsConfigModule,
     NfsePersistenceModule,
     NfseQueueModule.register(),
     NfsGenerationModule.register(),

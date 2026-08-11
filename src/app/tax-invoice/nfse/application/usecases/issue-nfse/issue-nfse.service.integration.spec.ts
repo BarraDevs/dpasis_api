@@ -9,10 +9,10 @@ import { buildMinimalResaleData, nextResaleFixtureId } from 'src/test/fixtures/m
 import { NfseQueueFakeAdapterProducer } from '../../../infra/driven/queue/fake/nfse-queue-fake.producer';
 import { NfseStatus } from '../../../domain/enums/nfse-status.enum';
 import { ClientAddressForNfseNotFoundError } from '../../../domain/errors/client-address-for-nfse-not-found.error';
-import { NfsProviderNotConfiguredError } from '../../../domain/errors/nfs-provider-not-configured.error';
 import { NfseModule } from '../../../nfse.module';
 import { IssueNfse } from './issue-nfse.service';
 import { IssueNfseInputDto } from './dtos/issue-nfse.dto';
+import { CompanyNfsConfigNotFoundError } from 'src/app/company/company-nfs-config/domain/errors/company-nfs-config-not-found.error';
 
 function makeIssueNfseInput(companyId: number, clientId: number): IssueNfseInputDto {
   return {
@@ -105,13 +105,13 @@ describe('IssueNfse - Integration tests', () => {
     expect(sut).toBeDefined();
   });
 
-  it('should throw NfsProviderNotConfiguredError when the company has no provider config', async() => {
+  it('should throw CompanyNfsConfigNotFoundError when the company has no provider config', async() => {
     // Arrange
     const company = await seedCompany(prisma);
     const client = await seedClient(prisma, Date.now() % 100_000);
 
     // Act & Assert
-    await expect(sut.execute(makeIssueNfseInput(company.id, client.id))).rejects.toThrow(NfsProviderNotConfiguredError);
+    await expect(sut.execute(makeIssueNfseInput(company.id, client.id))).rejects.toThrow(CompanyNfsConfigNotFoundError);
   });
 
   it('should throw ClientAddressForNfseNotFoundError when the client has no billing or main address with cityCodeIbge', async() => {

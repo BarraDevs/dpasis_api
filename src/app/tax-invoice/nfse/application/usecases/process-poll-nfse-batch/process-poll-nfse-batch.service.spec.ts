@@ -7,10 +7,10 @@ import { NfsProviderEnvironment } from 'src/infra/nfs-generation/dtos/nfs-provid
 import type { INfsGenerationGateway } from 'src/infra/nfs-generation/nfs-generation.gateway';
 import { NfseStatus } from '../../../domain/enums/nfse-status.enum';
 import { NfseNotFoundError } from '../../../domain/errors/nfse-not-found.error';
-import { NfsProviderNotConfiguredError } from '../../../domain/errors/nfs-provider-not-configured.error';
+import { CompanyNfsConfigDto } from 'src/app/company/company-nfs-config/application/dtos/company-nfs-config.dto';
+import { FindCompanyNfsConfigByCompanyId } from 'src/app/company/company-nfs-config/application/usecases/find-company-nfs-config-by-company-id/find-company-nfs-config-by-company-id.service';
+import { CompanyNfsConfigNotFoundError } from 'src/app/company/company-nfs-config/domain/errors/company-nfs-config-not-found.error';
 import { NfseDto } from '../../dtos/nfse.dto';
-import { NfsProviderConfigDto } from '../../dtos/nfs-provider-config.dto';
-import type { INfsProviderConfigDao } from '../../persistence/dao/nfs-provider-config-dao.interface';
 import type { INfseDao } from '../../persistence/dao/nfse-dao.interface';
 import type { INfseQueueProducer } from '../../queue/nfse-queue-producer.interface';
 import { ProcessPollNfseBatch } from './process-poll-nfse-batch.service';
@@ -37,7 +37,7 @@ function makeNfseDto(overrides: Partial<NfseDto> = {}): NfseDto {
   };
 }
 
-const providerConfig = createMock<NfsProviderConfigDto>({
+const providerConfig = createMock<CompanyNfsConfigDto>({
   certFilePath: '/certs/x.pfx',
   certPasswordEnvVar: 'X_PASS',
   environment: NfsProviderEnvironment.Demonstration,
@@ -48,7 +48,7 @@ describe('ProcessPollNfseBatch - Unit tests', () => {
   let sut: ProcessPollNfseBatch;
   let logger: ILoggerGateway;
   let nfseDao: INfseDao;
-  let providerConfigDao: INfsProviderConfigDao;
+  let findCompanyNfsConfigByCompanyId: FindCompanyNfsConfigByCompanyId;
   let nfsGenerationGateway: INfsGenerationGateway;
   let queueProducer: INfseQueueProducer;
 
@@ -58,7 +58,7 @@ describe('ProcessPollNfseBatch - Unit tests', () => {
         ProcessPollNfseBatch,
         { provide: TOKENS.LoggerGateway, useValue: createMock<ILoggerGateway>() },
         { provide: TOKENS.NfseDao, useValue: createMock<INfseDao>() },
-        { provide: TOKENS.NfsProviderConfigDao, useValue: createMock<INfsProviderConfigDao>() },
+        { provide: FindCompanyNfsConfigByCompanyId, useValue: createMock<FindCompanyNfsConfigByCompanyId>() },
         { provide: TOKENS.NfsGenerationGateway, useValue: createMock<INfsGenerationGateway>() },
         { provide: TOKENS.NfseQueueProducer, useValue: createMock<INfseQueueProducer>() },
       ],
@@ -67,11 +67,11 @@ describe('ProcessPollNfseBatch - Unit tests', () => {
     sut = module.get(ProcessPollNfseBatch);
     logger = module.get(TOKENS.LoggerGateway);
     nfseDao = module.get(TOKENS.NfseDao);
-    providerConfigDao = module.get(TOKENS.NfsProviderConfigDao);
+    findCompanyNfsConfigByCompanyId = module.get(FindCompanyNfsConfigByCompanyId);
     nfsGenerationGateway = module.get(TOKENS.NfsGenerationGateway);
     queueProducer = module.get(TOKENS.NfseQueueProducer);
 
-    jest.spyOn(providerConfigDao, 'findByCompanyId').mockResolvedValue(providerConfig);
+    jest.spyOn(findCompanyNfsConfigByCompanyId, 'execute').mockResolvedValue(providerConfig);
   });
 
   it('should be defined', () => {
@@ -122,13 +122,13 @@ describe('ProcessPollNfseBatch - Unit tests', () => {
     expect(nfseDao.updateStatus).not.toHaveBeenCalled();
   });
 
-  it('should throw NfsProviderNotConfiguredError when the company has no provider config', async() => {
+  it('should throw CompanyNfsConfigNotFoundError when the company has no provider config', async() => {
     // Arrange
     jest.spyOn(nfseDao, 'findById').mockResolvedValue(makeNfseDto());
-    jest.spyOn(providerConfigDao, 'findByCompanyId').mockResolvedValue(null);
+    jest.spyOn(findCompanyNfsConfigByCompanyId, 'execute').mockRejectedValue(new CompanyNfsConfigNotFoundError());
 
     // Act & Assert
-    await expect(sut.execute({ nfseId: 1, attempt: 1 })).rejects.toThrow(NfsProviderNotConfiguredError);
+    await expect(sut.execute({ nfseId: 1, attempt: 1 })).rejects.toThrow(CompanyNfsConfigNotFoundError);
   });
 
   it('should mark the nfse ISSUED when Giss reports success', async() => {

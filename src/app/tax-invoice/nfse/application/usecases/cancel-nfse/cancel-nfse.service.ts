@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { FindCompanyNfsConfigByCompanyId } from 'src/app/company/company-nfs-config/application/usecases/find-company-nfs-config-by-company-id/find-company-nfs-config-by-company-id.service';
 import { TOKENS } from 'src/core/di/token';
 import { NfsProviderCredentialsDto, NfsProviderEnvironment } from 'src/infra/nfs-generation/dtos/nfs-provider-credentials.dto';
 import type { INfsGenerationGateway } from 'src/infra/nfs-generation/nfs-generation.gateway';
@@ -7,8 +8,6 @@ import { NfseStatus } from '../../../domain/enums/nfse-status.enum';
 import { NfseAlreadyCanceledError } from '../../../domain/errors/nfse-already-canceled.error';
 import { NfseNotFoundError } from '../../../domain/errors/nfse-not-found.error';
 import { NfseNotIssuedError } from '../../../domain/errors/nfse-not-issued.error';
-import { NfsProviderNotConfiguredError } from '../../../domain/errors/nfs-provider-not-configured.error';
-import type { INfsProviderConfigDao } from '../../persistence/dao/nfs-provider-config-dao.interface';
 import type { INfseDao } from '../../persistence/dao/nfse-dao.interface';
 import type { NfseIssueSnapshot } from '../issue-nfse/issue-nfse.service';
 import { CancelNfseInputDto, CancelNfseOutputDto } from './dtos/cancel-nfse.dto';
@@ -17,8 +16,8 @@ import { CancelNfseInputDto, CancelNfseOutputDto } from './dtos/cancel-nfse.dto'
 export class CancelNfse {
   constructor(
     @Inject(TOKENS.NfseDao) private readonly nfseDao: INfseDao,
-    @Inject(TOKENS.NfsProviderConfigDao) private readonly providerConfigDao: INfsProviderConfigDao,
     @Inject(TOKENS.NfsGenerationGateway) private readonly nfsGenerationGateway: INfsGenerationGateway,
+    private readonly findCompanyNfsConfigByCompanyId: FindCompanyNfsConfigByCompanyId,
   ) {}
 
   public async execute(id: number, input: CancelNfseInputDto): Promise<CancelNfseOutputDto> {
@@ -33,10 +32,7 @@ export class CancelNfse {
       throw new NfseNotIssuedError();
     }
 
-    const providerConfig = await this.providerConfigDao.findByCompanyId(nfseDto.companyId);
-    if (!providerConfig) {
-      throw new NfsProviderNotConfiguredError();
-    }
+    const providerConfig = await this.findCompanyNfsConfigByCompanyId.execute(nfseDto.companyId);
 
     const snapshot = nfseDto.data as unknown as NfseIssueSnapshot;
     const provider: NfsProviderCredentialsDto = {

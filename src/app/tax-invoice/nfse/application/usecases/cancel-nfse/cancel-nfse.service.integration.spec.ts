@@ -11,9 +11,9 @@ import { NfseStatus } from '../../../domain/enums/nfse-status.enum';
 import { NfseNotFoundError } from '../../../domain/errors/nfse-not-found.error';
 import { NfseAlreadyCanceledError } from '../../../domain/errors/nfse-already-canceled.error';
 import { NfseNotIssuedError } from '../../../domain/errors/nfse-not-issued.error';
-import { NfsProviderNotConfiguredError } from '../../../domain/errors/nfs-provider-not-configured.error';
 import { NfseModule } from '../../../nfse.module';
 import { CancelNfse } from './cancel-nfse.service';
+import { CompanyNfsConfigNotFoundError } from 'src/app/company/company-nfs-config/domain/errors/company-nfs-config-not-found.error';
 
 async function seedCompany(prisma: PrismaService) {
   return prisma.company.create({
@@ -143,12 +143,12 @@ describe('CancelNfse - Integration tests', () => {
     await expect(sut.execute(nfse.id, { cancelReasonCode: 2 })).rejects.toThrow(NfseNotIssuedError);
   });
 
-  it('should throw NfsProviderNotConfiguredError when the company has no provider config', async() => {
+  it('should throw CompanyNfsConfigNotFoundError when the company has no provider config', async() => {
     const company = await seedCompany(prisma);
     const client = await seedClient(prisma, Date.now() % 100_000);
     const nfse = await seedIssuedNfse(prisma, company.id, client.id);
 
-    await expect(sut.execute(nfse.id, { cancelReasonCode: 2 })).rejects.toThrow(NfsProviderNotConfiguredError);
+    await expect(sut.execute(nfse.id, { cancelReasonCode: 2 })).rejects.toThrow(CompanyNfsConfigNotFoundError);
   });
 
   it('should cancel an ISSUED nfse and persist canceledAt/cancelReasonCode', async() => {

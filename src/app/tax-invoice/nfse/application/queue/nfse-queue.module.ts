@@ -2,6 +2,7 @@ import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
 import { BullBoardModule } from '@bull-board/nestjs';
 import { BullModule } from '@nestjs/bullmq';
 import { DynamicModule, Module } from '@nestjs/common';
+import { CompanyNfsConfigModule } from 'src/app/company/company-nfs-config/company-nfs-config.module';
 import { Environment } from 'src/core/config/environment.enum';
 import { TOKENS } from 'src/core/di/token';
 import { NfsGenerationModule } from 'src/infra/nfs-generation/nfs-generation.module';
@@ -34,6 +35,7 @@ export class NfseQueueModule {
             adapter: BullMQAdapter,
           }),
         ]),
+        CompanyNfsConfigModule,
         NfsePersistenceModule,
         NfsGenerationModule.register(),
       ],

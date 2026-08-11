@@ -1,9 +1,9 @@
 import { Test } from '@nestjs/testing';
-import { NfsProviderConfigDto } from 'src/app/tax-invoice/nfse/application/dtos/nfs-provider-config.dto';
+import { CompanyNfsConfigDto } from 'src/app/company/company-nfs-config/application/dtos/company-nfs-config.dto';
 import { ConfigModule } from 'src/core/config/config.module';
 import { NfsProviderEnvironment } from 'src/infra/nfs-generation/dtos/nfs-provider-credentials.dto';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
-import { NfsProviderConfigDaoAdapterPrisma } from './nfs-provider-config-prisma.dao';
+import { CompanyNfsConfigDaoAdapterPrisma } from './company-nfs-config-prisma.dao';
 
 async function seedCompany(prisma: PrismaService) {
   return prisma.company.create({
@@ -24,17 +24,17 @@ async function seedCompany(prisma: PrismaService) {
   });
 }
 
-describe('NfsProviderConfigDaoAdapterPrisma - Integration tests', () => {
-  let sut: NfsProviderConfigDaoAdapterPrisma;
+describe('CompanyNfsConfigDaoAdapterPrisma - Integration tests', () => {
+  let sut: CompanyNfsConfigDaoAdapterPrisma;
   let prisma: PrismaService;
 
   beforeAll(async() => {
     const module = await Test.createTestingModule({
       imports: [ConfigModule],
-      providers: [NfsProviderConfigDaoAdapterPrisma, PrismaService],
+      providers: [CompanyNfsConfigDaoAdapterPrisma, PrismaService],
     }).compile();
 
-    sut = module.get(NfsProviderConfigDaoAdapterPrisma);
+    sut = module.get(CompanyNfsConfigDaoAdapterPrisma);
     prisma = module.get(PrismaService);
   });
 
@@ -52,7 +52,7 @@ describe('NfsProviderConfigDaoAdapterPrisma - Integration tests', () => {
   });
 
   describe('findByCompanyId', () => {
-    it('should return null when the company has no provider config', async() => {
+    it('should return null when the company has no nfs config', async() => {
       // Arrange
       const company = await seedCompany(prisma);
 
@@ -63,7 +63,7 @@ describe('NfsProviderConfigDaoAdapterPrisma - Integration tests', () => {
       expect(result).toBeNull();
     });
 
-    it('should return the provider config with the complete DTO shape', async() => {
+    it('should return the config with the complete DTO shape', async() => {
       // Arrange
       const company = await seedCompany(prisma);
       const created = await prisma.nfsProviderConfig.create({
@@ -84,7 +84,7 @@ describe('NfsProviderConfigDaoAdapterPrisma - Integration tests', () => {
       const result = await sut.findByCompanyId(company.id);
 
       // Assert
-      expect(result).toMatchObject<NfsProviderConfigDto>({
+      expect(result).toMatchObject<CompanyNfsConfigDto>({
         id: created.id,
         companyId: company.id,
         vendor: 'giss',
@@ -96,6 +96,32 @@ describe('NfsProviderConfigDaoAdapterPrisma - Integration tests', () => {
         certPasswordEnvVar: 'X_PASS',
         vendorConfig: { municipioSlug: 'demonstracao' },
       });
+    });
+  });
+
+  describe('save and edit', () => {
+    it('should persist and update nfs config', async() => {
+      // Arrange
+      const company = await seedCompany(prisma);
+
+      // Act
+      const id = await sut.save({
+        companyId: company.id,
+        vendor: 'giss',
+        municipalRegistration: '12345',
+        municipalCodeIbge: '3529401',
+        serieRps: 'NFSE',
+        environment: NfsProviderEnvironment.Demonstration,
+        certFilePath: '/certs/x.pfx',
+        certPasswordEnvVar: 'X_PASS',
+        vendorConfig: { municipioSlug: 'demonstracao' },
+      });
+
+      await sut.edit(id, { serieRps: 'NFSE2' });
+
+      // Assert
+      const result = await sut.findById(id);
+      expect(result?.serieRps).toBe('NFSE2');
     });
   });
 });

@@ -15,7 +15,6 @@ const TOKENS = {
   NfseDao: Symbol.for('NfseDao'),
   NfseRepository: Symbol.for('NfseRepository'),
   NfseRpsSequenceRepository: Symbol.for('NfseRpsSequenceRepository'),
-  NfsProviderConfigDao: Symbol.for('NfsProviderConfigDao'),
   NfseQueueProducer: Symbol.for('NfseQueueProducer'),
 
   AccountDao: Symbol.for('AccountDao'),
@@ -64,6 +63,7 @@ const TOKENS = {
 
   CompanyDao: Symbol.for('CompanyDao'),
   CompanyRepository: Symbol.for('CompanyRepository'),
+  CompanyNfsConfigDao: Symbol.for('CompanyNfsConfigDao'),
 
   SellerDao: Symbol.for('SellerDao'),
   SellerRepository: Symbol.for('SellerRepository'),

@@ -7,10 +7,10 @@ import { NfsProviderEnvironment } from 'src/infra/nfs-generation/dtos/nfs-provid
 import { NfseQueueFakeAdapterProducer } from '../../../infra/driven/queue/fake/nfse-queue-fake.producer';
 import { NfseStatus } from '../../../domain/enums/nfse-status.enum';
 import { NfseNotFoundError } from '../../../domain/errors/nfse-not-found.error';
-import { NfsProviderNotConfiguredError } from '../../../domain/errors/nfs-provider-not-configured.error';
 import { NfseQueueModule } from '../../queue/nfse-queue.module';
 import { NfseIssueSnapshot } from '../issue-nfse/issue-nfse.service';
 import { ProcessPollNfseBatch } from './process-poll-nfse-batch.service';
+import { CompanyNfsConfigNotFoundError } from 'src/app/company/company-nfs-config/domain/errors/company-nfs-config-not-found.error';
 
 function makeSnapshot(): NfseIssueSnapshot {
   return {
@@ -160,13 +160,13 @@ describe('ProcessPollNfseBatch - Integration tests', () => {
     expect(queueProducer.addedPollBatchJobs).toHaveLength(0);
   });
 
-  it('should throw NfsProviderNotConfiguredError when the company has no provider config', async() => {
+  it('should throw CompanyNfsConfigNotFoundError when the company has no provider config', async() => {
     // Arrange
     const company = await seedCompany(prisma);
     const nfse = await seedNfse(prisma, company.id);
 
     // Act & Assert
-    await expect(sut.execute({ nfseId: nfse.id, attempt: 1 })).rejects.toThrow(NfsProviderNotConfiguredError);
+    await expect(sut.execute({ nfseId: nfse.id, attempt: 1 })).rejects.toThrow(CompanyNfsConfigNotFoundError);
   });
 
   it('should mark the nfse PROCESSING and reschedule when the gateway fails before max attempts', async() => {

@@ -10,9 +10,9 @@ import { CompanyDto } from 'src/app/company/company/application/dtos/company.dto
 import { TOKENS } from 'src/core/di/token';
 import { ClientAddressForNfseNotFoundError } from '../../../domain/errors/client-address-for-nfse-not-found.error';
 import { NfseStatus } from '../../../domain/enums/nfse-status.enum';
-import { NfsProviderNotConfiguredError } from '../../../domain/errors/nfs-provider-not-configured.error';
-import { NfsProviderConfigDto } from '../../dtos/nfs-provider-config.dto';
-import type { INfsProviderConfigDao } from '../../persistence/dao/nfs-provider-config-dao.interface';
+import { CompanyNfsConfigDto } from 'src/app/company/company-nfs-config/application/dtos/company-nfs-config.dto';
+import { FindCompanyNfsConfigByCompanyId } from 'src/app/company/company-nfs-config/application/usecases/find-company-nfs-config-by-company-id/find-company-nfs-config-by-company-id.service';
+import { CompanyNfsConfigNotFoundError } from 'src/app/company/company-nfs-config/domain/errors/company-nfs-config-not-found.error';
 import type { INfseDao } from '../../persistence/dao/nfse-dao.interface';
 import type { INfseRpsSequenceRepository } from '../../persistence/repository/nfse-rps-sequence-repository.interface';
 import type { INfseQueueProducer } from '../../queue/nfse-queue-producer.interface';
@@ -55,7 +55,7 @@ function makeClientAddress(overrides: Partial<ClientAddressDto> = {}): ClientAdd
 
 describe('IssueNfse - Unit tests', () => {
   let sut: IssueNfse;
-  let providerConfigDao: INfsProviderConfigDao;
+  let findCompanyNfsConfigByCompanyId: FindCompanyNfsConfigByCompanyId;
   let findCompanyById: FindCompanyById;
   let findClientById: FindClientById;
   let findClientAddressByClientIdAndType: FindClientAddressByClientIdAndType;
@@ -67,7 +67,7 @@ describe('IssueNfse - Unit tests', () => {
     const module = await Test.createTestingModule({
       providers: [
         IssueNfse,
-        { provide: TOKENS.NfsProviderConfigDao, useValue: createMock<INfsProviderConfigDao>() },
+        { provide: FindCompanyNfsConfigByCompanyId, useValue: createMock<FindCompanyNfsConfigByCompanyId>() },
         { provide: FindCompanyById, useValue: createMock<FindCompanyById>() },
         { provide: FindClientById, useValue: createMock<FindClientById>() },
         { provide: FindClientAddressByClientIdAndType, useValue: createMock<FindClientAddressByClientIdAndType>() },
@@ -78,7 +78,7 @@ describe('IssueNfse - Unit tests', () => {
     }).compile();
 
     sut = module.get(IssueNfse);
-    providerConfigDao = module.get(TOKENS.NfsProviderConfigDao);
+    findCompanyNfsConfigByCompanyId = module.get(FindCompanyNfsConfigByCompanyId);
     findCompanyById = module.get(FindCompanyById);
     findClientById = module.get(FindClientById);
     findClientAddressByClientIdAndType = module.get(FindClientAddressByClientIdAndType);
@@ -91,18 +91,18 @@ describe('IssueNfse - Unit tests', () => {
     expect(sut).toBeDefined();
   });
 
-  it('should throw NfsProviderNotConfiguredError when the company has no provider config', async() => {
+  it('should throw CompanyNfsConfigNotFoundError when the company has no provider config', async() => {
     // Arrange
-    jest.spyOn(providerConfigDao, 'findByCompanyId').mockResolvedValue(null);
+    jest.spyOn(findCompanyNfsConfigByCompanyId, 'execute').mockRejectedValue(new CompanyNfsConfigNotFoundError());
 
     // Act & Assert
-    await expect(sut.execute(makeIssueNfseInput())).rejects.toThrow(NfsProviderNotConfiguredError);
+    await expect(sut.execute(makeIssueNfseInput())).rejects.toThrow(CompanyNfsConfigNotFoundError);
   });
 
   it('should throw ClientAddressForNfseNotFoundError when billing address has blank cityCodeIbge', async() => {
     // Arrange
-    const providerConfig = createMock<NfsProviderConfigDto>({ serieRps: 'NFSE', municipalRegistration: '12345' });
-    jest.spyOn(providerConfigDao, 'findByCompanyId').mockResolvedValue(providerConfig);
+    const providerConfig = createMock<CompanyNfsConfigDto>({ serieRps: 'NFSE', municipalRegistration: '12345' });
+    jest.spyOn(findCompanyNfsConfigByCompanyId, 'execute').mockResolvedValue(providerConfig);
     jest.spyOn(findCompanyById, 'execute').mockResolvedValue(createMock<CompanyDto>({ document: '12345678000199' }));
     jest.spyOn(findClientById, 'execute').mockResolvedValue(createMock<ClientDto>({ document: '98765432000188', companyName: 'Cliente LTDA' }));
     jest.spyOn(findClientAddressByClientIdAndType, 'execute').mockResolvedValue(makeClientAddress({ cityCodeIbge: '   ' }));
@@ -113,8 +113,8 @@ describe('IssueNfse - Unit tests', () => {
 
   it('should throw ClientAddressForNfseNotFoundError when the client has no billing or main address with cityCodeIbge', async() => {
     // Arrange
-    const providerConfig = createMock<NfsProviderConfigDto>({ serieRps: 'NFSE', municipalRegistration: '12345' });
-    jest.spyOn(providerConfigDao, 'findByCompanyId').mockResolvedValue(providerConfig);
+    const providerConfig = createMock<CompanyNfsConfigDto>({ serieRps: 'NFSE', municipalRegistration: '12345' });
+    jest.spyOn(findCompanyNfsConfigByCompanyId, 'execute').mockResolvedValue(providerConfig);
     jest.spyOn(findCompanyById, 'execute').mockResolvedValue(createMock<CompanyDto>({ document: '12345678000199' }));
     jest.spyOn(findClientById, 'execute').mockResolvedValue(createMock<ClientDto>({ document: '98765432000188', companyName: 'Cliente LTDA' }));
     jest.spyOn(findClientAddressByClientIdAndType, 'execute')
@@ -127,9 +127,9 @@ describe('IssueNfse - Unit tests', () => {
 
   it('should persist a PENDING nfse with taker address, reserve a rps number and enqueue the issue-batch job', async() => {
     // Arrange
-    const providerConfig = createMock<NfsProviderConfigDto>({ serieRps: 'NFSE', municipalRegistration: '12345' });
+    const providerConfig = createMock<CompanyNfsConfigDto>({ serieRps: 'NFSE', municipalRegistration: '12345' });
     const address = makeClientAddress();
-    jest.spyOn(providerConfigDao, 'findByCompanyId').mockResolvedValue(providerConfig);
+    jest.spyOn(findCompanyNfsConfigByCompanyId, 'execute').mockResolvedValue(providerConfig);
     jest.spyOn(findCompanyById, 'execute').mockResolvedValue(createMock<CompanyDto>({ document: '12345678000199' }));
     jest.spyOn(findClientById, 'execute').mockResolvedValue(createMock<ClientDto>({ document: '98765432000188', companyName: 'Cliente LTDA' }));
     jest.spyOn(findClientAddressByClientIdAndType, 'execute').mockResolvedValue(address);
@@ -165,9 +165,9 @@ describe('IssueNfse - Unit tests', () => {
 
   it('should fallback to MAIN address when BILLING is not found', async() => {
     // Arrange
-    const providerConfig = createMock<NfsProviderConfigDto>({ serieRps: 'NFSE', municipalRegistration: '12345' });
+    const providerConfig = createMock<CompanyNfsConfigDto>({ serieRps: 'NFSE', municipalRegistration: '12345' });
     const mainAddress = makeClientAddress({ type: ClientAddressType.MAIN });
-    jest.spyOn(providerConfigDao, 'findByCompanyId').mockResolvedValue(providerConfig);
+    jest.spyOn(findCompanyNfsConfigByCompanyId, 'execute').mockResolvedValue(providerConfig);
     jest.spyOn(findCompanyById, 'execute').mockResolvedValue(createMock<CompanyDto>({ document: '12345678000199' }));
     jest.spyOn(findClientById, 'execute').mockResolvedValue(createMock<ClientDto>({ document: '98765432000188', companyName: 'Cliente LTDA' }));
     jest.spyOn(findClientAddressByClientIdAndType, 'execute')
