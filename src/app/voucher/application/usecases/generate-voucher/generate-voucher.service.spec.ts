@@ -55,4 +55,57 @@ describe('GenerateVoucher - Unit tests', () => {
     expect(result.voucher).toBe(VoucherCode.fromResaleCode('1', result.year).value);
     expect(result.voucher).not.toBe(VoucherCode.fromResaleCode('00001', result.year).value);
   });
+
+  it('should return the same voucher for the same id (deterministic)', async() => {
+    // Arrange
+    jest.useFakeTimers({ now: new Date(2025, 5, 15) });
+    const input = makeGenerateVoucherInput({ id: 7 });
+
+    // Act
+    const first = await sut.execute(input);
+    const second = await sut.execute(input);
+
+    // Assert
+    expect(first.voucher).toBe(second.voucher);
+    expect(first.year).toBe(second.year);
+  });
+
+  it('should return different vouchers for different ids', async() => {
+    // Arrange
+    jest.useFakeTimers({ now: new Date(2025, 5, 15) });
+
+    // Act
+    const a = await sut.execute(makeGenerateVoucherInput({ id: 10 }));
+    const b = await sut.execute(makeGenerateVoucherInput({ id: 11 }));
+
+    // Assert
+    expect(a.voucher).not.toBe(b.voucher);
+  });
+
+  it('should use current year from Date when clock is in 2026', async() => {
+    // Arrange
+    jest.useFakeTimers({ now: new Date(2026, 2, 10) });
+    const input = makeGenerateVoucherInput({ id: 42 });
+
+    // Act
+    const result = await sut.execute(input);
+
+    // Assert
+    expect(result.year).toBe(2026);
+    expect(result.voucher).toBe(VoucherCode.fromResaleCode('42', 2026).value);
+  });
+
+  it('should return only voucher and year in output', async() => {
+    // Arrange
+    jest.useFakeTimers({ now: new Date(2025, 5, 15) });
+    const input = makeGenerateVoucherInput({ id: 3 });
+
+    // Act
+    const result = await sut.execute(input);
+
+    // Assert
+    expect(Object.keys(result).sort()).toEqual(['voucher', 'year']);
+    expect(typeof result.voucher).toBe('string');
+    expect(typeof result.year).toBe('number');
+  });
 });

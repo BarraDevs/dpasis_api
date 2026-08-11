@@ -1,25 +1,48 @@
-import { createMock } from '@golevelup/ts-jest';
 import { Test } from '@nestjs/testing';
 import { CarrierNotFoundError } from 'src/app/carrier/domain/errors/carrier-not-found.error';
-import { Carrier } from 'src/app/carrier/domain/entities/carrier.entity';
-import { TOKENS } from 'src/core/di/token';
-import type { ICarrierRepository } from '../../persistence/repository/carrier-repository.interface';
+import { PrismaService } from 'src/infra/database/prisma/prisma.service';
+import { CarrierModule } from '../../../carrier.module';
 import { ActivateCarrier } from './activate-carrier.service';
 
-describe('ActivateCarrier - Unit tests', () => {
-  let sut: ActivateCarrier;
-  let carrierRepository: ICarrierRepository;
+function makeCarrierData(overrides: Record<string, unknown> = {}) {
+  return {
+    name: 'Transportadora LTDA',
+    fantasyName: 'Transportadora',
+    representative: 'João Silva',
+    document: '09748165000110',
+    contact: 'João Silva - (11) 99999-9999',
+    active: false,
+    zipCode: '01310100',
+    street: 'Av Paulista',
+    number: '1000',
+    complement: null,
+    neighborhood: 'Bela Vista',
+    city: 'São Paulo',
+    state: 'SP',
+    ...overrides,
+  };
+}
 
-  beforeEach(async() => {
+describe('ActivateCarrier - Integration tests', () => {
+  let sut: ActivateCarrier;
+  let prisma: PrismaService;
+
+  beforeAll(async() => {
     const module = await Test.createTestingModule({
-      providers: [
-        ActivateCarrier,
-        { provide: TOKENS.CarrierRepository, useValue: createMock<ICarrierRepository>() },
-      ],
+      imports: [CarrierModule],
     }).compile();
 
     sut = module.get(ActivateCarrier);
-    carrierRepository = module.get(TOKENS.CarrierRepository);
+    prisma = module.get(PrismaService);
+  });
+
+  beforeEach(async() => {
+    await prisma.truncate();
+  });
+
+  afterAll(async() => {
+    await prisma.truncate();
+    await prisma.$disconnect();
   });
 
   it('should be defined', () => {
@@ -27,21 +50,50 @@ describe('ActivateCarrier - Unit tests', () => {
   });
 
   it('should throw CarrierNotFoundError when carrier does not exist', async() => {
-    jest.spyOn(carrierRepository, 'findById').mockResolvedValue(null);
-
-    await expect(sut.execute(1)).rejects.toThrow(CarrierNotFoundError);
+    // Act / Assert
+    await expect(sut.execute(99999)).rejects.toThrow(CarrierNotFoundError);
+    await expect(sut.execute(99999)).rejects.toThrow('Transportadora não encontrada na base de dados.');
   });
 
-  it('should activate carrier', async() => {
-    const carrier = createMock<Carrier>();
-    jest.spyOn(carrierRepository, 'findById').mockResolvedValue(carrier);
-    const activateSpy = jest.spyOn(carrier, 'activate');
-    const editSpy = jest.spyOn(carrierRepository, 'edit').mockResolvedValue();
+  it('should activate carrier in database', async() => {
+    // Arrange
+    const carrier = await prisma.carrier.create({
+      data: makeCarrierData({ active: false }),
+    });
 
-    const result = await sut.execute(1);
+    // Act
+    await sut.execute(carrier.id);
 
-    expect(activateSpy).toHaveBeenCalled();
-    expect(editSpy).toHaveBeenCalledWith(carrier);
+    // Assert
+    const updated = await prisma.carrier.findUnique({ where: { id: carrier.id } });
+    expect(updated?.active).toBe(true);
+  });
+
+  it('should return success message', async() => {
+    // Arrange
+    const carrier = await prisma.carrier.create({
+      data: makeCarrierData({ active: false }),
+    });
+
+    // Act
+    const result = await sut.execute(carrier.id);
+
+    // Assert
     expect(result).toEqual({ message: 'Transportadora ativada com sucesso' });
+  });
+
+  it('should be idempotent when carrier is already active', async() => {
+    // Arrange
+    const carrier = await prisma.carrier.create({
+      data: makeCarrierData({ active: true }),
+    });
+
+    // Act
+    const result = await sut.execute(carrier.id);
+
+    // Assert
+    expect(result).toEqual({ message: 'Transportadora ativada com sucesso' });
+    const updated = await prisma.carrier.findUnique({ where: { id: carrier.id } });
+    expect(updated?.active).toBe(true);
   });
 });

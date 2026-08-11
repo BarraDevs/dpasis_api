@@ -7,6 +7,20 @@ const metadata: ArgumentMetadata = {
   metatype: CreateCarrierInputDto,
 };
 
+const REQUIRED_STRING_FIELDS = [
+  'name',
+  'fantasyName',
+  'representative',
+  'document',
+  'contact',
+  'zipCode',
+  'street',
+  'number',
+  'neighborhood',
+  'city',
+  'state',
+] as const;
+
 function expectMessageToContain(message: string | string[], substring: string) {
   const messages = Array.isArray(message) ? message : [message];
   expect(messages.some((m) => m.includes(substring))).toBe(true);
@@ -37,51 +51,70 @@ describe('CreateCarrierInputDto', () => {
     target = new ValidationPipe(pipeOptions);
   });
 
-  describe('name field', () => {
-    it.each([undefined, null, '', '  '])('should throw if name is empty (%s)', async(value: unknown) => {
-      const data = makeValidInputDto({ name: value as string });
+  describe.each(REQUIRED_STRING_FIELDS)('%s field', (field) => {
+    it.each([undefined, null, '', '  '])('should reject empty (%s)', async(value: unknown) => {
+      const data = makeValidInputDto({ [field]: value } as Partial<CreateCarrierInputDto>);
 
       expect.assertions(1);
       return target.transform(data, metadata).catch((error) => {
-        expectMessageToContain(error.getResponse().message, 'name');
+        expectMessageToContain(error.getResponse().message, field);
       });
     });
 
-    it('should trim name', async() => {
-      const data = makeValidInputDto({ name: '  Transportadora LTDA  ' });
+    it('should trim whitespace', async() => {
+      const data = makeValidInputDto({ [field]: `  value-${field}  ` } as Partial<CreateCarrierInputDto>);
 
       const result = await target.transform(data, metadata);
 
-      expect(result.name).toBe('Transportadora LTDA');
+      expect(result[field]).toBe(`value-${field}`);
+    });
+
+    it.each([
+      ['number', 123],
+      ['boolean', true],
+      ['object', {}],
+      ['array', []],
+    ] as const)('should reject %s', async(_label, value) => {
+      const data = makeValidInputDto({ [field]: value } as any);
+
+      expect.assertions(1);
+      return target.transform(data, metadata).catch((error) => {
+        expectMessageToContain(error.getResponse().message, `${field} deve ser uma string`);
+      });
     });
   });
 
-  describe('representative field', () => {
-    it.each([undefined, null, '', '  '])(
-      'should throw if representative is empty (%s)',
-      async(value: unknown) => {
-        const data = makeValidInputDto({ representative: value as string });
+  describe('complement field', () => {
+    it('should accept null', async() => {
+      const result = await target.transform(makeValidInputDto({ complement: null }), metadata);
+      expect(result.complement).toBeNull();
+    });
 
-        expect.assertions(1);
-        return target.transform(data, metadata).catch((error) => {
-          expectMessageToContain(error.getResponse().message, 'representative');
-        });
-      },
-    );
-  });
+    it('should accept omitted complement', async() => {
+      const data = makeValidInputDto();
+      delete (data as { complement?: string | null }).complement;
+      const result = await target.transform(data, metadata);
+      expect(result.complement).toBeUndefined();
+    });
 
-  describe('contact field', () => {
-    it.each([undefined, null, '', '  '])(
-      'should throw if contact is empty (%s)',
-      async(value: unknown) => {
-        const data = makeValidInputDto({ contact: value as string });
+    it('should trim complement when provided', async() => {
+      const result = await target.transform(makeValidInputDto({ complement: '  Sala 1  ' }), metadata);
+      expect(result.complement).toBe('Sala 1');
+    });
 
-        expect.assertions(1);
-        return target.transform(data, metadata).catch((error) => {
-          expectMessageToContain(error.getResponse().message, 'contact');
-        });
-      },
-    );
+    it.each([
+      ['number', 1],
+      ['boolean', false],
+      ['object', {}],
+      ['array', []],
+    ] as const)('should reject %s', async(_label, value) => {
+      const data = makeValidInputDto({ complement: value as any });
+
+      expect.assertions(1);
+      return target.transform(data, metadata).catch((error) => {
+        expectMessageToContain(error.getResponse().message, 'complement deve ser uma string');
+      });
+    });
   });
 
   it('should accept valid input', async() => {
@@ -90,5 +123,13 @@ describe('CreateCarrierInputDto', () => {
     const result = await target.transform(data, metadata);
 
     expect(result).toEqual(data);
+  });
+
+  it('should accept valid input with complement filled', async() => {
+    const data = makeValidInputDto({ complement: 'Sala 1' });
+
+    const result = await target.transform(data, metadata);
+
+    expect(result.complement).toBe('Sala 1');
   });
 });

@@ -70,6 +70,22 @@ describe('CreateCarrier - Integration tests', () => {
       expect(saved?.active).toBe(true);
       expect(saved?.representative).toBe('João Silva');
       expect(saved?.contact).toBe('João Silva - (11) 99999-9999');
+      expect(saved?.zipCode).toBe('01310100');
+      expect(saved?.street).toBe('Av Paulista');
+      expect(saved?.number).toBe('1000');
+      expect(saved?.complement).toBeNull();
+      expect(saved?.neighborhood).toBe('Bela Vista');
+      expect(saved?.city).toBe('São Paulo');
+      expect(saved?.state).toBe('SP');
+    });
+
+    it('should create carrier with complement filled', async() => {
+      const input = makeValidInput({ complement: 'Sala 1' });
+
+      const result = await sut.execute(input);
+
+      const saved = await prisma.carrier.findUnique({ where: { id: result.id } });
+      expect(saved?.complement).toBe('Sala 1');
     });
   });
 
@@ -80,6 +96,7 @@ describe('CreateCarrier - Integration tests', () => {
       await sut.execute(input);
 
       await expect(sut.execute(input)).rejects.toThrow(DocumentAlreadyTakenError);
+      await expect(sut.execute(input)).rejects.toThrow('O documento 09748165000110 já está em uso.');
     });
   });
 
