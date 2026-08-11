@@ -6,10 +6,8 @@ import { IssueNfsBatchOutputDto } from 'src/infra/nfs-generation/dtos/issue-nfs-
 import { NfsProviderCredentialsDto, NfsProviderEnvironment } from 'src/infra/nfs-generation/dtos/nfs-provider-credentials.dto';
 import { NfsRpsType } from 'src/infra/nfs-generation/dtos/nfs-rps.dto';
 import type { INfsGenerationGateway } from 'src/infra/nfs-generation/nfs-generation.gateway';
-import { Nfse } from '../../../domain/entities/nfse.entity';
-import { NfseStatus } from '../../../domain/enums/nfse-status.enum';
 import { NfseNotFoundError } from '../../../domain/errors/nfse-not-found.error';
-import type { INfseDao } from '../../persistence/dao/nfse-dao.interface';
+import type { INfseRepository } from '../../persistence/repository/nfse-repository.interface';
 import type { INfseQueueProducer } from '../../queue/nfse-queue-producer.interface';
 import type { NfseIssueSnapshot } from '../issue-nfse/issue-nfse.service';
 import { ProcessIssueNfseBatchInputDto } from './dtos/process-issue-nfse-batch.dto';
@@ -19,7 +17,7 @@ export class ProcessIssueNfseBatch {
   private static readonly FIRST_POLL_DELAY_MS = 30_000;
 
   constructor(
-    @Inject(TOKENS.NfseDao) private readonly nfseDao: INfseDao,
+    @Inject(TOKENS.NfseRepository) private readonly nfseRepository: INfseRepository,
     @Inject(TOKENS.LoggerGateway) private readonly logger: ILoggerGateway,
     @Inject(TOKENS.NfsGenerationGateway) private readonly nfsGenerationGateway: INfsGenerationGateway,
     @Inject(TOKENS.NfseQueueProducer) private readonly queueProducer: INfseQueueProducer,
@@ -27,19 +25,17 @@ export class ProcessIssueNfseBatch {
   ) {}
 
   public async execute(input: ProcessIssueNfseBatchInputDto): Promise<void> {
-    const nfseDto = await this.nfseDao.findById(input.nfseId);
-    if (!nfseDto) {
+    const nfse = await this.nfseRepository.findById(input.nfseId);
+    if (!nfse) {
       throw new NfseNotFoundError();
     }
-    if (nfseDto.status === NfseStatus.ISSUED) {
+    if (nfse.isIssued()) {
       return;
     }
 
-    const nfse = Nfse._instantiate(nfseDto);
+    const providerConfig = await this.findCompanyNfsConfigByCompanyId.execute(nfse.props.companyId);
 
-    const providerConfig = await this.findCompanyNfsConfigByCompanyId.execute(nfseDto.companyId);
-
-    const snapshot = nfseDto.data as unknown as NfseIssueSnapshot;
+    const snapshot = nfse.props.data as unknown as NfseIssueSnapshot;
     const today = new Date().toISOString().slice(0, 10);
 
     const provider: NfsProviderCredentialsDto = {
@@ -52,12 +48,12 @@ export class ProcessIssueNfseBatch {
     let result: IssueNfsBatchOutputDto;
     try {
       result = await this.nfsGenerationGateway.issueBatch({
-        batchNumber: nfseDto.rpsNumber,
+        batchNumber: nfse.props.rpsNumber,
         provider,
         rpsList: [
           {
-            rpsNumber: nfseDto.rpsNumber,
-            rpsSeries: nfseDto.rpsSeries,
+            rpsNumber: nfse.props.rpsNumber,
+            rpsSeries: nfse.props.rpsSeries,
             rpsType: NfsRpsType.Rps,
             issueDate: today,
             competence: today,
@@ -114,18 +110,12 @@ export class ProcessIssueNfseBatch {
       });
 
       nfse.markFailed(error?.message ?? 'Erro desconhecido ao enviar lote ao provedor de NFS-e');
-      await this.nfseDao.updateStatus(nfse.props.id, {
-        status: nfse.props.status,
-        errorMessage: nfse.props.errorMessage ?? undefined,
-      });
+      await this.nfseRepository.edit(nfse);
       return;
     }
 
     nfse.markSubmitted(result.batchProtocol);
-    await this.nfseDao.updateStatus(nfse.props.id, {
-      status: nfse.props.status,
-      batchProtocol: nfse.props.batchProtocol ?? undefined,
-    });
+    await this.nfseRepository.edit(nfse);
 
     await this.queueProducer.addPollBatchJob(
       { nfseId: nfse.props.id, attempt: 1 },

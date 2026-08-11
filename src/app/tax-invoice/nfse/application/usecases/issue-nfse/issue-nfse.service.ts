@@ -7,7 +7,8 @@ import { FindCompanyNfsConfigByCompanyId } from 'src/app/company/company-nfs-con
 import { TOKENS } from 'src/core/di/token';
 import { ClientAddressForNfseNotFoundError } from '../../../domain/errors/client-address-for-nfse-not-found.error';
 import { NfseStatus } from '../../../domain/enums/nfse-status.enum';
-import type { INfseDao } from '../../persistence/dao/nfse-dao.interface';
+import { NfseFactory } from '../../../domain/factories/nfse.factory';
+import type { INfseRepository } from '../../persistence/repository/nfse-repository.interface';
 import type { INfseRpsSequenceRepository } from '../../persistence/repository/nfse-rps-sequence-repository.interface';
 import type { INfseQueueProducer } from '../../queue/nfse-queue-producer.interface';
 import { IssueNfseInputDto, IssueNfseOutputDto } from './dtos/issue-nfse.dto';
@@ -36,7 +37,7 @@ export class IssueNfse {
     private readonly findCompanyNfsConfigByCompanyId: FindCompanyNfsConfigByCompanyId,
     private readonly findClientById: FindClientById,
     private readonly findClientAddressByClientIdAndType: FindClientAddressByClientIdAndType,
-    @Inject(TOKENS.NfseDao) private readonly nfseDao: INfseDao,
+    @Inject(TOKENS.NfseRepository) private readonly nfseRepository: INfseRepository,
     @Inject(TOKENS.NfseRpsSequenceRepository) private readonly rpsSequenceRepository: INfseRpsSequenceRepository,
     @Inject(TOKENS.NfseQueueProducer) private readonly queueProducer: INfseQueueProducer,
   ) {}
@@ -81,13 +82,15 @@ export class IssueNfse {
       },
     };
 
-    const nfseId = await this.nfseDao.save({
+    const entity = NfseFactory.create({
       companyId: input.companyId,
       clientId: input.clientId,
       rpsNumber,
       rpsSeries: providerConfig.serieRps,
       data: snapshot as unknown as Record<string, unknown>,
     });
+
+    const nfseId = await this.nfseRepository.save(entity);
 
     await this.queueProducer.addIssueBatchJob({ nfseId });
 

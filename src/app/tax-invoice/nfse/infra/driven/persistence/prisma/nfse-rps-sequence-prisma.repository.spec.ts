@@ -78,5 +78,22 @@ describe('NfseRpsSequenceRepositoryAdapterPrisma - Integration tests', () => {
       expect(firstB).toBe(1);
       expect(secondA).toBe(2);
     });
+
+    it('should return consecutive values across many sequential increments', async() => {
+      // Arrange
+      const companyId = Date.now() % 100_000;
+      const results: number[] = [];
+
+      // Act
+      for (let i = 0; i < 10; i++) {
+        results.push(await sut.getAndIncrement(companyId));
+      }
+
+      // Assert
+      expect(results).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+
+      const row = await prisma.nfseRpsSequence.findUnique({ where: { companyId } });
+      expect(row?.nextId).toBe(11);
+    });
   });
 });

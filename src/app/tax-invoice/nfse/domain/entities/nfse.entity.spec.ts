@@ -1,4 +1,5 @@
 import { NfseStatus } from '../enums/nfse-status.enum';
+import { NfseAlreadyCanceledError } from '../errors/nfse-already-canceled.error';
 import { NfseAlreadyIssuedError } from '../errors/nfse-already-issued.error';
 import { NfseNotIssuedError } from '../errors/nfse-not-issued.error';
 import { Nfse, NfseProps } from './nfse.entity';
@@ -191,10 +192,67 @@ describe('Nfse - Unit tests', () => {
     NfseStatus.SUBMITTED,
     NfseStatus.PROCESSING,
     NfseStatus.FAILED,
-    NfseStatus.CANCELED,
   ])('should throw NfseNotIssuedError when trying to cancel a Nfse with status %s', (status) => {
     const sut = Nfse._instantiate(makeNfseProps({ status }));
     expect(() => sut.markCanceled(new Date(), 1)).toThrow(NfseNotIssuedError);
+  });
+
+  it('should throw NfseAlreadyCanceledError when trying to cancel an already CANCELED Nfse', () => {
+    const sut = Nfse._instantiate(makeNfseProps({ status: NfseStatus.CANCELED }));
+    expect(() => sut.markCanceled(new Date(), 1)).toThrow(NfseAlreadyCanceledError);
+  });
+
+  it('should throw NfseAlreadyCanceledError on ensureCanCancel when status is CANCELED', () => {
+    const sut = Nfse._instantiate(makeNfseProps({ status: NfseStatus.CANCELED }));
+    expect(() => sut.ensureCanCancel()).toThrow(NfseAlreadyCanceledError);
+  });
+
+  it('should throw NfseNotIssuedError on ensureCanCancel when status is not ISSUED', () => {
+    const sut = Nfse._instantiate(makeNfseProps({ status: NfseStatus.PENDING }));
+    expect(() => sut.ensureCanCancel()).toThrow(NfseNotIssuedError);
+  });
+
+  it('should allow ensureCanCancel when status is ISSUED', () => {
+    const sut = Nfse._instantiate(makeNfseProps({ status: NfseStatus.ISSUED, nfseNumber: '1000' }));
+    expect(() => sut.ensureCanCancel()).not.toThrow();
+  });
+
+  it('should report isIssued only for ISSUED status', () => {
+    expect(Nfse._instantiate(makeNfseProps({ status: NfseStatus.ISSUED })).isIssued()).toBe(true);
+    expect(Nfse._instantiate(makeNfseProps({ status: NfseStatus.PENDING })).isIssued()).toBe(false);
+  });
+
+  it('should report isFailed only for FAILED status', () => {
+    expect(Nfse._instantiate(makeNfseProps({ status: NfseStatus.FAILED })).isFailed()).toBe(true);
+    expect(Nfse._instantiate(makeNfseProps({ status: NfseStatus.SUBMITTED })).isFailed()).toBe(false);
+  });
+
+  it('should report isTerminal for ISSUED and FAILED', () => {
+    expect(Nfse._instantiate(makeNfseProps({ status: NfseStatus.ISSUED })).isTerminal()).toBe(true);
+    expect(Nfse._instantiate(makeNfseProps({ status: NfseStatus.FAILED })).isTerminal()).toBe(true);
+    expect(Nfse._instantiate(makeNfseProps({ status: NfseStatus.SUBMITTED })).isTerminal()).toBe(false);
+  });
+
+  it('should report canPoll only when not terminal and batchProtocol is present', () => {
+    expect(Nfse._instantiate(makeNfseProps({
+      status: NfseStatus.SUBMITTED,
+      batchProtocol: 'protocol-123',
+    })).canPoll()).toBe(true);
+
+    expect(Nfse._instantiate(makeNfseProps({
+      status: NfseStatus.SUBMITTED,
+      batchProtocol: null,
+    })).canPoll()).toBe(false);
+
+    expect(Nfse._instantiate(makeNfseProps({
+      status: NfseStatus.ISSUED,
+      batchProtocol: 'protocol-123',
+    })).canPoll()).toBe(false);
+
+    expect(Nfse._instantiate(makeNfseProps({
+      status: NfseStatus.FAILED,
+      batchProtocol: 'protocol-123',
+    })).canPoll()).toBe(false);
   });
 
   it('should return a copy of props, not a live reference', () => {
@@ -208,5 +266,63 @@ describe('Nfse - Unit tests', () => {
     // Assert
     expect(props.status).toBe(NfseStatus.PENDING);
     expect(sut.props.status).toBe(NfseStatus.SUBMITTED);
+  });
+
+  it('should throw NfseAlreadyIssuedError with pt-BR message', () => {
+    // Arrange
+    const sut = Nfse._instantiate(makeNfseProps({ status: NfseStatus.ISSUED, nfseNumber: '1000' }));
+
+    // Act & Assert
+    expect(() => sut.markSubmitted('protocol')).toThrow(NfseAlreadyIssuedError);
+    expect(() => sut.markSubmitted('protocol')).toThrow('Nfse já foi emitida e não pode ser alterada.');
+  });
+
+  it('should throw NfseNotIssuedError with pt-BR message', () => {
+    // Arrange
+    const sut = Nfse._instantiate(makeNfseProps({ status: NfseStatus.PENDING }));
+
+    // Act & Assert
+    expect(() => sut.markCanceled(new Date(), 1)).toThrow(NfseNotIssuedError);
+    expect(() => sut.markCanceled(new Date(), 1)).toThrow('Nfse não está emitida e não pode ser cancelada.');
+  });
+
+  it('should throw NfseAlreadyCanceledError with pt-BR message', () => {
+    // Arrange
+    const sut = Nfse._instantiate(makeNfseProps({ status: NfseStatus.CANCELED }));
+
+    // Act & Assert
+    expect(() => sut.markCanceled(new Date(), 1)).toThrow(NfseAlreadyCanceledError);
+    expect(() => sut.markCanceled(new Date(), 1)).toThrow('Nfse já está cancelada.');
+  });
+
+  it('should allow markSubmitted, markProcessing and markFailed on a CANCELED Nfse', () => {
+    // Arrange
+    const sutSubmitted = Nfse._instantiate(makeNfseProps({ status: NfseStatus.CANCELED }));
+    const sutProcessing = Nfse._instantiate(makeNfseProps({ status: NfseStatus.CANCELED }));
+    const sutFailed = Nfse._instantiate(makeNfseProps({ status: NfseStatus.CANCELED }));
+
+    // Act
+    sutSubmitted.markSubmitted('protocol-from-canceled');
+    sutProcessing.markProcessing();
+    sutFailed.markFailed('erro após cancelamento');
+
+    // Assert
+    expect(sutSubmitted.props.status).toBe(NfseStatus.SUBMITTED);
+    expect(sutSubmitted.props.batchProtocol).toBe('protocol-from-canceled');
+    expect(sutProcessing.props.status).toBe(NfseStatus.PROCESSING);
+    expect(sutFailed.props.status).toBe(NfseStatus.FAILED);
+    expect(sutFailed.props.errorMessage).toBe('erro após cancelamento');
+  });
+
+  it('should allow markSubmitted from PROCESSING status', () => {
+    // Arrange
+    const sut = Nfse._instantiate(makeNfseProps({ status: NfseStatus.PROCESSING }));
+
+    // Act
+    sut.markSubmitted('protocol-from-processing');
+
+    // Assert
+    expect(sut.props.status).toBe(NfseStatus.SUBMITTED);
+    expect(sut.props.batchProtocol).toBe('protocol-from-processing');
   });
 });

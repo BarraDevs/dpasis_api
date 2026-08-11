@@ -1,3 +1,4 @@
+import { NfseAlreadyCanceledError } from '../errors/nfse-already-canceled.error';
 import { NfseAlreadyIssuedError } from '../errors/nfse-already-issued.error';
 import { NfseNotIssuedError } from '../errors/nfse-not-issued.error';
 import { NfseStatus } from '../enums/nfse-status.enum';
@@ -37,6 +38,22 @@ export class Nfse {
     return { ...this._props };
   }
 
+  public isIssued(): boolean {
+    return this._props.status === NfseStatus.ISSUED;
+  }
+
+  public isFailed(): boolean {
+    return this._props.status === NfseStatus.FAILED;
+  }
+
+  public isTerminal(): boolean {
+    return this.isIssued() || this.isFailed();
+  }
+
+  public canPoll(): boolean {
+    return !this.isTerminal() && !!this._props.batchProtocol;
+  }
+
   public markSubmitted(batchProtocol: string): void {
     this.ensureNotIssued();
     this._props.status = NfseStatus.SUBMITTED;
@@ -62,21 +79,28 @@ export class Nfse {
     this._props.errorMessage = errorMessage;
   }
 
-  public markCanceled(canceledAt: Date, cancelReasonCode: number): void {
+  public ensureCanCancel(): void {
+    if (this._props.status === NfseStatus.CANCELED) {
+      throw new NfseAlreadyCanceledError();
+    }
     this.ensureIssued();
+  }
+
+  public markCanceled(canceledAt: Date, cancelReasonCode: number): void {
+    this.ensureCanCancel();
     this._props.status = NfseStatus.CANCELED;
     this._props.canceledAt = canceledAt;
     this._props.cancelReasonCode = cancelReasonCode;
   }
 
   private ensureNotIssued(): void {
-    if (this._props.status === NfseStatus.ISSUED) {
+    if (this.isIssued()) {
       throw new NfseAlreadyIssuedError();
     }
   }
 
   private ensureIssued(): void {
-    if (this._props.status !== NfseStatus.ISSUED) {
+    if (!this.isIssued()) {
       throw new NfseNotIssuedError();
     }
   }

@@ -1,21 +1,22 @@
 import { createMock } from '@golevelup/ts-jest';
 import { Test } from '@nestjs/testing';
+import { CompanyNfsConfigDto } from 'src/app/company/company-nfs-config/application/dtos/company-nfs-config.dto';
+import { FindCompanyNfsConfigByCompanyId } from 'src/app/company/company-nfs-config/application/usecases/find-company-nfs-config-by-company-id/find-company-nfs-config-by-company-id.service';
+import { CompanyNfsConfigNotFoundError } from 'src/app/company/company-nfs-config/domain/errors/company-nfs-config-not-found.error';
 import { TOKENS } from 'src/core/di/token';
 import { NfsProviderEnvironment } from 'src/infra/nfs-generation/dtos/nfs-provider-credentials.dto';
 import type { INfsGenerationGateway } from 'src/infra/nfs-generation/nfs-generation.gateway';
+import { NfseProps } from '../../../domain/entities/nfse.entity';
 import { NfseStatus } from '../../../domain/enums/nfse-status.enum';
 import { NfseAlreadyCanceledError } from '../../../domain/errors/nfse-already-canceled.error';
 import { NfseNotFoundError } from '../../../domain/errors/nfse-not-found.error';
 import { NfseNotIssuedError } from '../../../domain/errors/nfse-not-issued.error';
-import { CompanyNfsConfigDto } from 'src/app/company/company-nfs-config/application/dtos/company-nfs-config.dto';
-import { FindCompanyNfsConfigByCompanyId } from 'src/app/company/company-nfs-config/application/usecases/find-company-nfs-config-by-company-id/find-company-nfs-config-by-company-id.service';
-import { CompanyNfsConfigNotFoundError } from 'src/app/company/company-nfs-config/domain/errors/company-nfs-config-not-found.error';
-import { NfseDto } from '../../dtos/nfse.dto';
-import type { INfseDao } from '../../persistence/dao/nfse-dao.interface';
+import { NfseFactory } from '../../../domain/factories/nfse.factory';
+import type { INfseRepository } from '../../persistence/repository/nfse-repository.interface';
 import { CancelNfse } from './cancel-nfse.service';
 import { CancelNfseInputDto } from './dtos/cancel-nfse.dto';
 
-function makeNfseDto(overrides: Partial<NfseDto> = {}): NfseDto {
+function makeNfseProps(overrides: Partial<NfseProps> = {}): NfseProps {
   return {
     id: 1,
     companyId: 1,
@@ -31,8 +32,6 @@ function makeNfseDto(overrides: Partial<NfseDto> = {}): NfseDto {
     canceledAt: null,
     cancelReasonCode: null,
     data: { providerDocument: '12345678000199' },
-    createdAt: new Date(),
-    updatedAt: new Date(),
     ...overrides,
   };
 }
@@ -48,7 +47,7 @@ const providerConfig = createMock<CompanyNfsConfigDto>({
 
 describe('CancelNfse - Unit tests', () => {
   let sut: CancelNfse;
-  let nfseDao: INfseDao;
+  let nfseRepository: INfseRepository;
   let findCompanyNfsConfigByCompanyId: FindCompanyNfsConfigByCompanyId;
   let nfsGenerationGateway: INfsGenerationGateway;
 
@@ -56,14 +55,14 @@ describe('CancelNfse - Unit tests', () => {
     const module = await Test.createTestingModule({
       providers: [
         CancelNfse,
-        { provide: TOKENS.NfseDao, useValue: createMock<INfseDao>() },
+        { provide: TOKENS.NfseRepository, useValue: createMock<INfseRepository>() },
         { provide: FindCompanyNfsConfigByCompanyId, useValue: createMock<FindCompanyNfsConfigByCompanyId>() },
         { provide: TOKENS.NfsGenerationGateway, useValue: createMock<INfsGenerationGateway>() },
       ],
     }).compile();
 
     sut = module.get(CancelNfse);
-    nfseDao = module.get(TOKENS.NfseDao);
+    nfseRepository = module.get(TOKENS.NfseRepository);
     findCompanyNfsConfigByCompanyId = module.get(FindCompanyNfsConfigByCompanyId);
     nfsGenerationGateway = module.get(TOKENS.NfsGenerationGateway);
   });
@@ -75,33 +74,37 @@ describe('CancelNfse - Unit tests', () => {
   });
 
   it('should throw NfseNotFoundError when the nfse does not exist', async() => {
-    jest.spyOn(nfseDao, 'findById').mockResolvedValue(null);
+    jest.spyOn(nfseRepository, 'findById').mockResolvedValue(null);
 
     await expect(sut.execute(1, input)).rejects.toThrow(NfseNotFoundError);
     expect(nfsGenerationGateway.cancelNfse).not.toHaveBeenCalled();
   });
 
   it('should throw NfseAlreadyCanceledError and not call the gateway when status is CANCELED', async() => {
-    jest.spyOn(nfseDao, 'findById').mockResolvedValue(makeNfseDto({ status: NfseStatus.CANCELED }));
+    jest.spyOn(nfseRepository, 'findById').mockResolvedValue(
+      NfseFactory.load(makeNfseProps({ status: NfseStatus.CANCELED })),
+    );
 
     await expect(sut.execute(1, input)).rejects.toThrow(NfseAlreadyCanceledError);
     expect(nfsGenerationGateway.cancelNfse).not.toHaveBeenCalled();
-    expect(nfseDao.updateStatus).not.toHaveBeenCalled();
+    expect(nfseRepository.edit).not.toHaveBeenCalled();
   });
 
   it.each([NfseStatus.PENDING, NfseStatus.SUBMITTED, NfseStatus.PROCESSING, NfseStatus.FAILED])(
     'should throw NfseNotIssuedError and not call the gateway when status is %s',
     async(status) => {
-      jest.spyOn(nfseDao, 'findById').mockResolvedValue(makeNfseDto({ status }));
+      jest.spyOn(nfseRepository, 'findById').mockResolvedValue(
+        NfseFactory.load(makeNfseProps({ status })),
+      );
 
       await expect(sut.execute(1, input)).rejects.toThrow(NfseNotIssuedError);
       expect(nfsGenerationGateway.cancelNfse).not.toHaveBeenCalled();
-      expect(nfseDao.updateStatus).not.toHaveBeenCalled();
+      expect(nfseRepository.edit).not.toHaveBeenCalled();
     },
   );
 
   it('should throw CompanyNfsConfigNotFoundError when the company has no provider config', async() => {
-    jest.spyOn(nfseDao, 'findById').mockResolvedValue(makeNfseDto());
+    jest.spyOn(nfseRepository, 'findById').mockResolvedValue(NfseFactory.load(makeNfseProps()));
     jest.spyOn(findCompanyNfsConfigByCompanyId, 'execute').mockRejectedValue(new CompanyNfsConfigNotFoundError());
 
     await expect(sut.execute(1, input)).rejects.toThrow(CompanyNfsConfigNotFoundError);
@@ -109,8 +112,8 @@ describe('CancelNfse - Unit tests', () => {
   });
 
   it('should cancel an ISSUED nfse: call the gateway, update status and return the output', async() => {
-    const nfseDto = makeNfseDto();
-    jest.spyOn(nfseDao, 'findById').mockResolvedValue(nfseDto);
+    const nfse = NfseFactory.load(makeNfseProps());
+    jest.spyOn(nfseRepository, 'findById').mockResolvedValue(nfse);
     jest.spyOn(findCompanyNfsConfigByCompanyId, 'execute').mockResolvedValue(providerConfig);
     jest.spyOn(nfsGenerationGateway, 'cancelNfse').mockResolvedValue({ confirmedAt: '2026-07-29T12:00:00.000Z' });
 
@@ -129,7 +132,8 @@ describe('CancelNfse - Unit tests', () => {
         vendorConfig: { municipioSlug: 'demonstracao' },
       },
     });
-    expect(nfseDao.updateStatus).toHaveBeenCalledWith(1, {
+    expect(nfseRepository.edit).toHaveBeenCalledWith(nfse);
+    expect(nfse.props).toMatchObject({
       status: NfseStatus.CANCELED,
       canceledAt: new Date('2026-07-29T12:00:00.000Z'),
       cancelReasonCode: 2,
@@ -143,7 +147,8 @@ describe('CancelNfse - Unit tests', () => {
 
   it.each([1, 4])('should forward cancelReasonCode %s to the gateway and persist it', async(cancelReasonCode) => {
     // Arrange
-    jest.spyOn(nfseDao, 'findById').mockResolvedValue(makeNfseDto());
+    const nfse = NfseFactory.load(makeNfseProps());
+    jest.spyOn(nfseRepository, 'findById').mockResolvedValue(nfse);
     jest.spyOn(findCompanyNfsConfigByCompanyId, 'execute').mockResolvedValue(providerConfig);
     jest.spyOn(nfsGenerationGateway, 'cancelNfse').mockResolvedValue({ confirmedAt: '2026-07-29T12:00:00.000Z' });
 
@@ -152,13 +157,15 @@ describe('CancelNfse - Unit tests', () => {
 
     // Assert
     expect(nfsGenerationGateway.cancelNfse).toHaveBeenCalledWith(expect.objectContaining({ cancelReasonCode }));
-    expect(nfseDao.updateStatus).toHaveBeenCalledWith(1, expect.objectContaining({ cancelReasonCode }));
+    expect(nfseRepository.edit).toHaveBeenCalledWith(nfse);
+    expect(nfse.props.cancelReasonCode).toBe(cancelReasonCode);
     expect(result.status).toBe(NfseStatus.CANCELED);
   });
 
   it('should query nfse by the id passed to execute', async() => {
     // Arrange
-    jest.spyOn(nfseDao, 'findById').mockResolvedValue(makeNfseDto({ id: 42 }));
+    const nfse = NfseFactory.load(makeNfseProps({ id: 42 }));
+    jest.spyOn(nfseRepository, 'findById').mockResolvedValue(nfse);
     jest.spyOn(findCompanyNfsConfigByCompanyId, 'execute').mockResolvedValue(providerConfig);
     jest.spyOn(nfsGenerationGateway, 'cancelNfse').mockResolvedValue({ confirmedAt: '2026-07-29T12:00:00.000Z' });
 
@@ -166,17 +173,18 @@ describe('CancelNfse - Unit tests', () => {
     const result = await sut.execute(42, input);
 
     // Assert
-    expect(nfseDao.findById).toHaveBeenCalledWith(42);
-    expect(nfseDao.updateStatus).toHaveBeenCalledWith(42, expect.objectContaining({ status: NfseStatus.CANCELED }));
+    expect(nfseRepository.findById).toHaveBeenCalledWith(42);
+    expect(nfseRepository.edit).toHaveBeenCalledWith(nfse);
+    expect(nfse.props.status).toBe(NfseStatus.CANCELED);
     expect(result.id).toBe(42);
   });
 
   it('should propagate gateway errors without updating status', async() => {
-    jest.spyOn(nfseDao, 'findById').mockResolvedValue(makeNfseDto());
+    jest.spyOn(nfseRepository, 'findById').mockResolvedValue(NfseFactory.load(makeNfseProps()));
     jest.spyOn(findCompanyNfsConfigByCompanyId, 'execute').mockResolvedValue(providerConfig);
     jest.spyOn(nfsGenerationGateway, 'cancelNfse').mockRejectedValue(new Error('Erro ao cancelar NFS-e no Giss'));
 
     await expect(sut.execute(1, input)).rejects.toThrow('Erro ao cancelar NFS-e no Giss');
-    expect(nfseDao.updateStatus).not.toHaveBeenCalled();
+    expect(nfseRepository.edit).not.toHaveBeenCalled();
   });
 });

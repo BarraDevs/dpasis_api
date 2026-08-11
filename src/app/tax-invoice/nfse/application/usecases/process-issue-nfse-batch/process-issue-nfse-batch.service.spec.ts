@@ -1,16 +1,17 @@
 import { createMock } from '@golevelup/ts-jest';
 import { Test } from '@nestjs/testing';
+import { CompanyNfsConfigDto } from 'src/app/company/company-nfs-config/application/dtos/company-nfs-config.dto';
+import { FindCompanyNfsConfigByCompanyId } from 'src/app/company/company-nfs-config/application/usecases/find-company-nfs-config-by-company-id/find-company-nfs-config-by-company-id.service';
+import { CompanyNfsConfigNotFoundError } from 'src/app/company/company-nfs-config/domain/errors/company-nfs-config-not-found.error';
 import { TOKENS } from 'src/core/di/token';
 import { LogContext, type ILoggerGateway } from 'src/infra/logger/logger.gateway';
 import { NfsProviderEnvironment } from 'src/infra/nfs-generation/dtos/nfs-provider-credentials.dto';
 import type { INfsGenerationGateway } from 'src/infra/nfs-generation/nfs-generation.gateway';
+import { Nfse, NfseProps } from '../../../domain/entities/nfse.entity';
 import { NfseStatus } from '../../../domain/enums/nfse-status.enum';
 import { NfseNotFoundError } from '../../../domain/errors/nfse-not-found.error';
-import { CompanyNfsConfigDto } from 'src/app/company/company-nfs-config/application/dtos/company-nfs-config.dto';
-import { FindCompanyNfsConfigByCompanyId } from 'src/app/company/company-nfs-config/application/usecases/find-company-nfs-config-by-company-id/find-company-nfs-config-by-company-id.service';
-import { CompanyNfsConfigNotFoundError } from 'src/app/company/company-nfs-config/domain/errors/company-nfs-config-not-found.error';
-import { NfseDto } from '../../dtos/nfse.dto';
-import type { INfseDao } from '../../persistence/dao/nfse-dao.interface';
+import { NfseFactory } from '../../../domain/factories/nfse.factory';
+import type { INfseRepository } from '../../persistence/repository/nfse-repository.interface';
 import type { INfseQueueProducer } from '../../queue/nfse-queue-producer.interface';
 import { NfseIssueSnapshot } from '../issue-nfse/issue-nfse.service';
 import { ProcessIssueNfseBatch } from './process-issue-nfse-batch.service';
@@ -22,7 +23,7 @@ const providerConfig = createMock<CompanyNfsConfigDto>({
   vendorConfig: { municipioSlug: 'demonstracao' },
 });
 
-function makeNfseDto(overrides: Partial<NfseDto> = {}): NfseDto {
+function makeNfseProps(overrides: Partial<NfseProps> = {}): NfseProps {
   const snapshot: NfseIssueSnapshot = {
     input: {
       companyId: 1,
@@ -74,8 +75,6 @@ function makeNfseDto(overrides: Partial<NfseDto> = {}): NfseDto {
     canceledAt: null,
     cancelReasonCode: null,
     data: snapshot as unknown as Record<string, unknown>,
-    createdAt: new Date(),
-    updatedAt: new Date(),
     ...overrides,
   };
 }
@@ -83,7 +82,7 @@ function makeNfseDto(overrides: Partial<NfseDto> = {}): NfseDto {
 describe('ProcessIssueNfseBatch - Unit tests', () => {
   let sut: ProcessIssueNfseBatch;
   let logger: ILoggerGateway;
-  let nfseDao: INfseDao;
+  let nfseRepository: INfseRepository;
   let findCompanyNfsConfigByCompanyId: FindCompanyNfsConfigByCompanyId;
   let nfsGenerationGateway: INfsGenerationGateway;
   let queueProducer: INfseQueueProducer;
@@ -93,7 +92,7 @@ describe('ProcessIssueNfseBatch - Unit tests', () => {
       providers: [
         ProcessIssueNfseBatch,
         { provide: TOKENS.LoggerGateway, useValue: createMock<ILoggerGateway>() },
-        { provide: TOKENS.NfseDao, useValue: createMock<INfseDao>() },
+        { provide: TOKENS.NfseRepository, useValue: createMock<INfseRepository>() },
         { provide: FindCompanyNfsConfigByCompanyId, useValue: createMock<FindCompanyNfsConfigByCompanyId>() },
         { provide: TOKENS.NfsGenerationGateway, useValue: createMock<INfsGenerationGateway>() },
         { provide: TOKENS.NfseQueueProducer, useValue: createMock<INfseQueueProducer>() },
@@ -102,7 +101,7 @@ describe('ProcessIssueNfseBatch - Unit tests', () => {
 
     sut = module.get(ProcessIssueNfseBatch);
     logger = module.get(TOKENS.LoggerGateway);
-    nfseDao = module.get(TOKENS.NfseDao);
+    nfseRepository = module.get(TOKENS.NfseRepository);
     findCompanyNfsConfigByCompanyId = module.get(FindCompanyNfsConfigByCompanyId);
     nfsGenerationGateway = module.get(TOKENS.NfsGenerationGateway);
     queueProducer = module.get(TOKENS.NfseQueueProducer);
@@ -114,7 +113,7 @@ describe('ProcessIssueNfseBatch - Unit tests', () => {
 
   it('should throw NfseNotFoundError when the nfse does not exist', async() => {
     // Arrange
-    jest.spyOn(nfseDao, 'findById').mockResolvedValue(null);
+    jest.spyOn(nfseRepository, 'findById').mockResolvedValue(null);
 
     // Act & Assert
     await expect(sut.execute({ nfseId: 1 })).rejects.toThrow(NfseNotFoundError);
@@ -122,20 +121,22 @@ describe('ProcessIssueNfseBatch - Unit tests', () => {
 
   it('should be a no-op when the nfse is already ISSUED', async() => {
     // Arrange
-    jest.spyOn(nfseDao, 'findById').mockResolvedValue(makeNfseDto({ status: NfseStatus.ISSUED }));
+    jest.spyOn(nfseRepository, 'findById').mockResolvedValue(
+      NfseFactory.load(makeNfseProps({ status: NfseStatus.ISSUED })),
+    );
 
     // Act
     await sut.execute({ nfseId: 1 });
 
     // Assert
     expect(nfsGenerationGateway.issueBatch).not.toHaveBeenCalled();
-    expect(nfseDao.updateStatus).not.toHaveBeenCalled();
+    expect(nfseRepository.edit).not.toHaveBeenCalled();
     expect(queueProducer.addPollBatchJob).not.toHaveBeenCalled();
   });
 
   it('should throw CompanyNfsConfigNotFoundError when the company has no provider config', async() => {
     // Arrange
-    jest.spyOn(nfseDao, 'findById').mockResolvedValue(makeNfseDto());
+    jest.spyOn(nfseRepository, 'findById').mockResolvedValue(NfseFactory.load(makeNfseProps()));
     jest.spyOn(findCompanyNfsConfigByCompanyId, 'execute').mockRejectedValue(new CompanyNfsConfigNotFoundError());
 
     // Act & Assert
@@ -145,7 +146,8 @@ describe('ProcessIssueNfseBatch - Unit tests', () => {
   it('should mark the nfse SUBMITTED and schedule a poll job on success', async() => {
     // Arrange
     const today = new Date().toISOString().slice(0, 10);
-    jest.spyOn(nfseDao, 'findById').mockResolvedValue(makeNfseDto());
+    const nfse = NfseFactory.load(makeNfseProps());
+    jest.spyOn(nfseRepository, 'findById').mockResolvedValue(nfse);
     jest.spyOn(findCompanyNfsConfigByCompanyId, 'execute').mockResolvedValue(providerConfig);
     jest.spyOn(nfsGenerationGateway, 'issueBatch').mockResolvedValue({ batchProtocol: 'protocol-123' });
 
@@ -186,7 +188,8 @@ describe('ProcessIssueNfseBatch - Unit tests', () => {
         }),
       ],
     }));
-    expect(nfseDao.updateStatus).toHaveBeenCalledWith(1, {
+    expect(nfseRepository.edit).toHaveBeenCalledWith(nfse);
+    expect(nfse.props).toMatchObject({
       status: NfseStatus.SUBMITTED,
       batchProtocol: 'protocol-123',
     });
@@ -198,11 +201,11 @@ describe('ProcessIssueNfseBatch - Unit tests', () => {
 
   it('should omit taker address when the snapshot has no takerAddress', async() => {
     // Arrange
-    const snapshot = makeNfseDto().data as unknown as NfseIssueSnapshot;
+    const snapshot = makeNfseProps().data as unknown as NfseIssueSnapshot;
     delete snapshot.takerAddress;
-    jest.spyOn(nfseDao, 'findById').mockResolvedValue(makeNfseDto({
+    jest.spyOn(nfseRepository, 'findById').mockResolvedValue(NfseFactory.load(makeNfseProps({
       data: snapshot as unknown as Record<string, unknown>,
-    }));
+    })));
     jest.spyOn(findCompanyNfsConfigByCompanyId, 'execute').mockResolvedValue(providerConfig);
     jest.spyOn(nfsGenerationGateway, 'issueBatch').mockResolvedValue({ batchProtocol: 'protocol-123' });
 
@@ -223,12 +226,12 @@ describe('ProcessIssueNfseBatch - Unit tests', () => {
 
   it('should apply default ibsCbs values when cst and cClassTrib are missing from the snapshot', async() => {
     // Arrange
-    const snapshot = makeNfseDto().data as unknown as NfseIssueSnapshot;
+    const snapshot = makeNfseProps().data as unknown as NfseIssueSnapshot;
     delete snapshot.input.service.ibsCbsCst;
     delete snapshot.input.service.cClassTrib;
-    jest.spyOn(nfseDao, 'findById').mockResolvedValue(makeNfseDto({
+    jest.spyOn(nfseRepository, 'findById').mockResolvedValue(NfseFactory.load(makeNfseProps({
       data: snapshot as unknown as Record<string, unknown>,
-    }));
+    })));
     jest.spyOn(findCompanyNfsConfigByCompanyId, 'execute').mockResolvedValue(providerConfig);
     jest.spyOn(nfsGenerationGateway, 'issueBatch').mockResolvedValue({ batchProtocol: 'protocol-123' });
 
@@ -254,7 +257,8 @@ describe('ProcessIssueNfseBatch - Unit tests', () => {
   it('should mark the nfse FAILED and not schedule a poll job when the gateway call fails', async() => {
     // Arrange
     const gatewayError = new Error('Giss indisponível');
-    jest.spyOn(nfseDao, 'findById').mockResolvedValue(makeNfseDto());
+    const nfse = NfseFactory.load(makeNfseProps());
+    jest.spyOn(nfseRepository, 'findById').mockResolvedValue(nfse);
     jest.spyOn(findCompanyNfsConfigByCompanyId, 'execute').mockResolvedValue(providerConfig);
     jest.spyOn(nfsGenerationGateway, 'issueBatch').mockRejectedValue(gatewayError);
     const loggerSpy = jest.spyOn(logger, 'error');
@@ -268,7 +272,8 @@ describe('ProcessIssueNfseBatch - Unit tests', () => {
       action: 'processIssueNfseBatch',
       error: gatewayError,
     });
-    expect(nfseDao.updateStatus).toHaveBeenCalledWith(1, {
+    expect(nfseRepository.edit).toHaveBeenCalledWith(nfse);
+    expect(nfse.props).toMatchObject({
       status: NfseStatus.FAILED,
       errorMessage: 'Giss indisponível',
     });
@@ -277,7 +282,8 @@ describe('ProcessIssueNfseBatch - Unit tests', () => {
 
   it('should use a default pt-BR error message when the gateway error has no message', async() => {
     // Arrange
-    jest.spyOn(nfseDao, 'findById').mockResolvedValue(makeNfseDto());
+    const nfse = NfseFactory.load(makeNfseProps());
+    jest.spyOn(nfseRepository, 'findById').mockResolvedValue(nfse);
     jest.spyOn(findCompanyNfsConfigByCompanyId, 'execute').mockResolvedValue(providerConfig);
     jest.spyOn(nfsGenerationGateway, 'issueBatch').mockRejectedValue({});
 
@@ -285,7 +291,8 @@ describe('ProcessIssueNfseBatch - Unit tests', () => {
     await sut.execute({ nfseId: 1 });
 
     // Assert
-    expect(nfseDao.updateStatus).toHaveBeenCalledWith(1, {
+    expect(nfseRepository.edit).toHaveBeenCalledWith(expect.any(Nfse));
+    expect(nfse.props).toMatchObject({
       status: NfseStatus.FAILED,
       errorMessage: 'Erro desconhecido ao enviar lote ao provedor de NFS-e',
     });

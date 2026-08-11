@@ -6,9 +6,8 @@ import { NfsBatchSituation, NfsBatchStatusDto } from 'src/infra/nfs-generation/d
 import { NfsProviderCredentialsDto, NfsProviderEnvironment } from 'src/infra/nfs-generation/dtos/nfs-provider-credentials.dto';
 import type { INfsGenerationGateway } from 'src/infra/nfs-generation/nfs-generation.gateway';
 import { Nfse } from '../../../domain/entities/nfse.entity';
-import { NfseStatus } from '../../../domain/enums/nfse-status.enum';
 import { NfseNotFoundError } from '../../../domain/errors/nfse-not-found.error';
-import type { INfseDao } from '../../persistence/dao/nfse-dao.interface';
+import type { INfseRepository } from '../../persistence/repository/nfse-repository.interface';
 import type { INfseQueueProducer } from '../../queue/nfse-queue-producer.interface';
 import type { NfseIssueSnapshot } from '../issue-nfse/issue-nfse.service';
 import { ProcessPollNfseBatchInputDto } from './dtos/process-poll-nfse-batch.dto';
@@ -20,29 +19,24 @@ export class ProcessPollNfseBatch {
 
   constructor(
     @Inject(TOKENS.LoggerGateway) private readonly logger: ILoggerGateway,
-    @Inject(TOKENS.NfseDao) private readonly nfseDao: INfseDao,
+    @Inject(TOKENS.NfseRepository) private readonly nfseRepository: INfseRepository,
     @Inject(TOKENS.NfsGenerationGateway) private readonly nfsGenerationGateway: INfsGenerationGateway,
     @Inject(TOKENS.NfseQueueProducer) private readonly queueProducer: INfseQueueProducer,
     private readonly findCompanyNfsConfigByCompanyId: FindCompanyNfsConfigByCompanyId,
   ) {}
 
   public async execute(input: ProcessPollNfseBatchInputDto): Promise<void> {
-    const nfseDto = await this.nfseDao.findById(input.nfseId);
-    if (!nfseDto) {
+    const nfse = await this.nfseRepository.findById(input.nfseId);
+    if (!nfse) {
       throw new NfseNotFoundError();
     }
-    if (nfseDto.status === NfseStatus.ISSUED || nfseDto.status === NfseStatus.FAILED) {
-      return;
-    }
-    if (!nfseDto.batchProtocol) {
+    if (!nfse.canPoll()) {
       return;
     }
 
-    const nfse = Nfse._instantiate(nfseDto);
+    const providerConfig = await this.findCompanyNfsConfigByCompanyId.execute(nfse.props.companyId);
 
-    const providerConfig = await this.findCompanyNfsConfigByCompanyId.execute(nfseDto.companyId);
-
-    const snapshot = nfseDto.data as unknown as NfseIssueSnapshot;
+    const snapshot = nfse.props.data as unknown as NfseIssueSnapshot;
     const provider: NfsProviderCredentialsDto = {
       certFilePath: providerConfig.certFilePath,
       certPasswordEnvVar: providerConfig.certPasswordEnvVar,
@@ -53,7 +47,7 @@ export class ProcessPollNfseBatch {
     let status: NfsBatchStatusDto;
     try {
       status = await this.nfsGenerationGateway.getBatchStatus({
-        batchProtocol: nfseDto.batchProtocol,
+        batchProtocol: nfse.props.batchProtocol!, // canPoll() ensures batchProtocol is not null
         providerDocument: snapshot.providerDocument,
         provider,
       });
@@ -62,7 +56,7 @@ export class ProcessPollNfseBatch {
       this.logger.error(LogContext.NFS_GENERATION, {
         adapter: 'nfse',
         action: 'processPollNfseBatch',
-        batchProtocol: nfseDto.batchProtocol,
+        batchProtocol: nfse.props.batchProtocol!, // canPoll() ensures batchProtocol is not null
         error,
       });
       await this.rescheduleOrFail(nfse, input.attempt, 'Erro ao consultar status do lote no Giss');
@@ -73,24 +67,19 @@ export class ProcessPollNfseBatch {
       const issuedNote = status.issuedNotes?.[0];
       if (!issuedNote) {
         nfse.markFailed('Giss retornou sucesso na consulta do lote, mas sem dados da NFS-e emitida');
-        await this.nfseDao.updateStatus(nfse.props.id, { status: nfse.props.status, errorMessage: nfse.props.errorMessage ?? undefined });
+        await this.nfseRepository.edit(nfse);
         return;
       }
 
       nfse.markIssued(issuedNote.nfseNumber, issuedNote.verificationCode, new Date(issuedNote.issueDate));
-      await this.nfseDao.updateStatus(nfse.props.id, {
-        status: nfse.props.status,
-        nfseNumber: nfse.props.nfseNumber ?? undefined,
-        verificationCode: nfse.props.verificationCode ?? undefined,
-        issuedAt: nfse.props.issuedAt ?? undefined,
-      });
+      await this.nfseRepository.edit(nfse);
       return;
     }
 
     if (status.situation === NfsBatchSituation.Error) {
       const message = status.errors?.map(e => `${e.code}: ${e.message}`).join('; ') ?? 'Lote rejeitado pelo Giss';
       nfse.markFailed(message);
-      await this.nfseDao.updateStatus(nfse.props.id, { status: nfse.props.status, errorMessage: nfse.props.errorMessage ?? undefined });
+      await this.nfseRepository.edit(nfse);
       return;
     }
 
@@ -101,12 +90,12 @@ export class ProcessPollNfseBatch {
   private async rescheduleOrFail(nfse: Nfse, attempt: number, failureMessage: string): Promise<void> {
     if (attempt >= ProcessPollNfseBatch.MAX_ATTEMPTS) {
       nfse.markFailed(failureMessage);
-      await this.nfseDao.updateStatus(nfse.props.id, { status: nfse.props.status, errorMessage: nfse.props.errorMessage ?? undefined });
+      await this.nfseRepository.edit(nfse);
       return;
     }
 
     nfse.markProcessing();
-    await this.nfseDao.updateStatus(nfse.props.id, { status: nfse.props.status });
+    await this.nfseRepository.edit(nfse);
     await this.queueProducer.addPollBatchJob(
       { nfseId: nfse.props.id, attempt: attempt + 1 },
       { delayMs: ProcessPollNfseBatch.POLL_DELAY_MS },

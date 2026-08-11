@@ -3,38 +3,30 @@ import { FindCompanyNfsConfigByCompanyId } from 'src/app/company/company-nfs-con
 import { TOKENS } from 'src/core/di/token';
 import { NfsProviderCredentialsDto, NfsProviderEnvironment } from 'src/infra/nfs-generation/dtos/nfs-provider-credentials.dto';
 import type { INfsGenerationGateway } from 'src/infra/nfs-generation/nfs-generation.gateway';
-import { Nfse } from '../../../domain/entities/nfse.entity';
-import { NfseStatus } from '../../../domain/enums/nfse-status.enum';
-import { NfseAlreadyCanceledError } from '../../../domain/errors/nfse-already-canceled.error';
 import { NfseNotFoundError } from '../../../domain/errors/nfse-not-found.error';
-import { NfseNotIssuedError } from '../../../domain/errors/nfse-not-issued.error';
-import type { INfseDao } from '../../persistence/dao/nfse-dao.interface';
+import type { INfseRepository } from '../../persistence/repository/nfse-repository.interface';
 import type { NfseIssueSnapshot } from '../issue-nfse/issue-nfse.service';
 import { CancelNfseInputDto, CancelNfseOutputDto } from './dtos/cancel-nfse.dto';
 
 @Injectable()
 export class CancelNfse {
   constructor(
-    @Inject(TOKENS.NfseDao) private readonly nfseDao: INfseDao,
+    @Inject(TOKENS.NfseRepository) private readonly nfseRepository: INfseRepository,
     @Inject(TOKENS.NfsGenerationGateway) private readonly nfsGenerationGateway: INfsGenerationGateway,
     private readonly findCompanyNfsConfigByCompanyId: FindCompanyNfsConfigByCompanyId,
   ) {}
 
   public async execute(id: number, input: CancelNfseInputDto): Promise<CancelNfseOutputDto> {
-    const nfseDto = await this.nfseDao.findById(id);
-    if (!nfseDto) {
+    const nfse = await this.nfseRepository.findById(id);
+    if (!nfse) {
       throw new NfseNotFoundError();
     }
-    if (nfseDto.status === NfseStatus.CANCELED) {
-      throw new NfseAlreadyCanceledError();
-    }
-    if (nfseDto.status !== NfseStatus.ISSUED) {
-      throw new NfseNotIssuedError();
-    }
 
-    const providerConfig = await this.findCompanyNfsConfigByCompanyId.execute(nfseDto.companyId);
+    nfse.ensureCanCancel();
 
-    const snapshot = nfseDto.data as unknown as NfseIssueSnapshot;
+    const providerConfig = await this.findCompanyNfsConfigByCompanyId.execute(nfse.props.companyId);
+
+    const snapshot = nfse.props.data as unknown as NfseIssueSnapshot;
     const provider: NfsProviderCredentialsDto = {
       certFilePath: providerConfig.certFilePath,
       certPasswordEnvVar: providerConfig.certPasswordEnvVar,
@@ -43,7 +35,7 @@ export class CancelNfse {
     };
 
     const result = await this.nfsGenerationGateway.cancelNfse({
-      nfseNumber: nfseDto.nfseNumber!,
+      nfseNumber: nfse.props.nfseNumber!,
       providerDocument: snapshot.providerDocument,
       providerMunicipalCodeIbge: providerConfig.municipalCodeIbge,
       providerMunicipalRegistration: providerConfig.municipalRegistration,
@@ -51,14 +43,8 @@ export class CancelNfse {
       provider,
     });
 
-    const nfse = Nfse._instantiate(nfseDto);
     nfse.markCanceled(new Date(result.confirmedAt), input.cancelReasonCode);
-
-    await this.nfseDao.updateStatus(nfse.props.id, {
-      status: nfse.props.status,
-      canceledAt: nfse.props.canceledAt ?? undefined,
-      cancelReasonCode: nfse.props.cancelReasonCode ?? undefined,
-    });
+    await this.nfseRepository.edit(nfse);
 
     return {
       id: nfse.props.id,

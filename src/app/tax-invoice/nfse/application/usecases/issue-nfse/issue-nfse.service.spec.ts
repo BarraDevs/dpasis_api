@@ -7,13 +7,14 @@ import { FindClientById } from 'src/app/client/client/application/usecases/find-
 import { ClientDto } from 'src/app/client/client/application/dtos/client.dto';
 import { FindCompanyById } from 'src/app/company/company/application/usecases/find-company-by-id/find-company-by-id.service';
 import { CompanyDto } from 'src/app/company/company/application/dtos/company.dto';
-import { TOKENS } from 'src/core/di/token';
-import { ClientAddressForNfseNotFoundError } from '../../../domain/errors/client-address-for-nfse-not-found.error';
-import { NfseStatus } from '../../../domain/enums/nfse-status.enum';
 import { CompanyNfsConfigDto } from 'src/app/company/company-nfs-config/application/dtos/company-nfs-config.dto';
 import { FindCompanyNfsConfigByCompanyId } from 'src/app/company/company-nfs-config/application/usecases/find-company-nfs-config-by-company-id/find-company-nfs-config-by-company-id.service';
 import { CompanyNfsConfigNotFoundError } from 'src/app/company/company-nfs-config/domain/errors/company-nfs-config-not-found.error';
-import type { INfseDao } from '../../persistence/dao/nfse-dao.interface';
+import { TOKENS } from 'src/core/di/token';
+import { Nfse } from '../../../domain/entities/nfse.entity';
+import { ClientAddressForNfseNotFoundError } from '../../../domain/errors/client-address-for-nfse-not-found.error';
+import { NfseStatus } from '../../../domain/enums/nfse-status.enum';
+import type { INfseRepository } from '../../persistence/repository/nfse-repository.interface';
 import type { INfseRpsSequenceRepository } from '../../persistence/repository/nfse-rps-sequence-repository.interface';
 import type { INfseQueueProducer } from '../../queue/nfse-queue-producer.interface';
 import { IssueNfse } from './issue-nfse.service';
@@ -59,7 +60,7 @@ describe('IssueNfse - Unit tests', () => {
   let findCompanyById: FindCompanyById;
   let findClientById: FindClientById;
   let findClientAddressByClientIdAndType: FindClientAddressByClientIdAndType;
-  let nfseDao: INfseDao;
+  let nfseRepository: INfseRepository;
   let rpsSequenceRepository: INfseRpsSequenceRepository;
   let queueProducer: INfseQueueProducer;
 
@@ -71,7 +72,7 @@ describe('IssueNfse - Unit tests', () => {
         { provide: FindCompanyById, useValue: createMock<FindCompanyById>() },
         { provide: FindClientById, useValue: createMock<FindClientById>() },
         { provide: FindClientAddressByClientIdAndType, useValue: createMock<FindClientAddressByClientIdAndType>() },
-        { provide: TOKENS.NfseDao, useValue: createMock<INfseDao>() },
+        { provide: TOKENS.NfseRepository, useValue: createMock<INfseRepository>() },
         { provide: TOKENS.NfseRpsSequenceRepository, useValue: createMock<INfseRpsSequenceRepository>() },
         { provide: TOKENS.NfseQueueProducer, useValue: createMock<INfseQueueProducer>() },
       ],
@@ -82,7 +83,7 @@ describe('IssueNfse - Unit tests', () => {
     findCompanyById = module.get(FindCompanyById);
     findClientById = module.get(FindClientById);
     findClientAddressByClientIdAndType = module.get(FindClientAddressByClientIdAndType);
-    nfseDao = module.get(TOKENS.NfseDao);
+    nfseRepository = module.get(TOKENS.NfseRepository);
     rpsSequenceRepository = module.get(TOKENS.NfseRpsSequenceRepository);
     queueProducer = module.get(TOKENS.NfseQueueProducer);
   });
@@ -134,7 +135,7 @@ describe('IssueNfse - Unit tests', () => {
     jest.spyOn(findClientById, 'execute').mockResolvedValue(createMock<ClientDto>({ document: '98765432000188', companyName: 'Cliente LTDA' }));
     jest.spyOn(findClientAddressByClientIdAndType, 'execute').mockResolvedValue(address);
     jest.spyOn(rpsSequenceRepository, 'getAndIncrement').mockResolvedValue(7);
-    jest.spyOn(nfseDao, 'save').mockResolvedValue(42);
+    jest.spyOn(nfseRepository, 'save').mockResolvedValue(42);
 
     // Act
     const result = await sut.execute(makeIssueNfseInput());
@@ -142,11 +143,14 @@ describe('IssueNfse - Unit tests', () => {
     // Assert
     expect(findClientAddressByClientIdAndType.execute).toHaveBeenCalledWith(1, ClientAddressType.BILLING);
     expect(rpsSequenceRepository.getAndIncrement).toHaveBeenCalledWith(1);
-    expect(nfseDao.save).toHaveBeenCalledWith(expect.objectContaining({
+    expect(nfseRepository.save).toHaveBeenCalledWith(expect.any(Nfse));
+    const savedEntity = (nfseRepository.save as jest.Mock).mock.calls[0][0] as Nfse;
+    expect(savedEntity.props).toMatchObject({
       companyId: 1,
       clientId: 1,
       rpsNumber: 7,
       rpsSeries: 'NFSE',
+      status: NfseStatus.PENDING,
       data: expect.objectContaining({
         takerAddress: {
           street: address.street,
@@ -158,7 +162,7 @@ describe('IssueNfse - Unit tests', () => {
           zipCode: address.zipCode,
         },
       }),
-    }));
+    });
     expect(queueProducer.addIssueBatchJob).toHaveBeenCalledWith({ nfseId: 42 });
     expect(result).toEqual({ id: 42, status: NfseStatus.PENDING });
   });
@@ -174,7 +178,7 @@ describe('IssueNfse - Unit tests', () => {
       .mockResolvedValueOnce(null)
       .mockResolvedValueOnce(mainAddress);
     jest.spyOn(rpsSequenceRepository, 'getAndIncrement').mockResolvedValue(7);
-    jest.spyOn(nfseDao, 'save').mockResolvedValue(42);
+    jest.spyOn(nfseRepository, 'save').mockResolvedValue(42);
 
     // Act
     await sut.execute(makeIssueNfseInput());
