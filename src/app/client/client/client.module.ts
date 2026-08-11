@@ -1,5 +1,5 @@
 import { forwardRef, Module } from '@nestjs/common';
-import { CompanyModule } from 'src/app/company/company.module';
+import { CompanyModule } from 'src/app/company/company/company.module';
 import { AuthenticationGuardsModule } from '../../authentication/application/guards/guards.module';
 import { ClientAddressModule } from '../client-address/client-address.module';
 import { ClientAttendanceModule } from '../client-attendance/client-attendance.module';

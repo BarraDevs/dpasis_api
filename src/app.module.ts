@@ -4,7 +4,6 @@ import { AuditModule } from './app/audit/audit.module';
 import { AuthenticationModule } from './app/authentication/authentication.module';
 import { ClientModuleModule } from './app/client/client-module.module';
 import { CarrierModule } from './app/carrier/carrier.module';
-import { CompanyModule } from './app/company/company.module';
 import { ExternalApisModule } from './app/external-apis/external-apis.module';
 import { FaqModule } from './app/global/faq/faq.module';
 import { GlobalModule } from './app/global/global.module';
@@ -18,6 +17,7 @@ import { VoucherModule } from './app/voucher/voucher.module';
 import { CoreModule } from './core/core.module';
 import { InfraModule } from './infra/infra.module';
 import { TaxInvoiceModule } from './app/tax-invoice/tax-invoice.module';
+import { CompanyModuleModule } from './app/company/company-module.module';
 
 @Module({
   imports: [
@@ -27,7 +27,7 @@ import { TaxInvoiceModule } from './app/tax-invoice/tax-invoice.module';
     AuditModule,
     AdminModule,
     CarrierModule,
-    CompanyModule,
+    CompanyModuleModule,
     ClientModuleModule,
     ResaleModuleModule,
     SellerModule,

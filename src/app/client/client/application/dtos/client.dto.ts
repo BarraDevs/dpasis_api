@@ -1,4 +1,4 @@
-import { MinimalCompanyDto } from 'src/app/company/application/dtos/company.dto';
+import { MinimalCompanyDto } from 'src/app/company/company/application/dtos/company.dto';
 
 export class ClientDto {
   id: number;

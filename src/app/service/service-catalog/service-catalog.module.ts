@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AuthenticationGuardsModule } from 'src/app/authentication/application/guards/guards.module';
-import { CompanyModule } from 'src/app/company/company.module';
+import { CompanyModule } from 'src/app/company/company/company.module';
 import { BilledModule } from 'src/app/global/billed/billed.module';
 import { CategoryModule } from 'src/app/global/category/category.module';
 import { DeliveryTermModule } from 'src/app/global/delivery-term/delivery-term.module';

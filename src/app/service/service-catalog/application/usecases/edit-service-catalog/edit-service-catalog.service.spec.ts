@@ -1,5 +1,5 @@
 import { Test } from '@nestjs/testing';
-import { CompanyNotFoundError } from 'src/app/company/domain/errors/company-not-found.error';
+import { CompanyNotFoundError } from 'src/app/company/company/domain/errors/company-not-found.error';
 import { BilledNotFoundError } from 'src/app/global/billed/domain/errors/billed-not-found.error';
 import { CategoryNotFoundError } from 'src/app/global/category/domain/errors/category-not-found.error';
 import { DeliveryTermNotFoundError } from 'src/app/global/delivery-term/domain/errors/delivery-term-not-found.error';

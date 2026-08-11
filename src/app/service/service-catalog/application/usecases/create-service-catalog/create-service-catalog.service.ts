@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { FindCompanyById } from 'src/app/company/application/usecases/find-company-by-id/find-company-by-id.service';
+import { FindCompanyById } from 'src/app/company/company/application/usecases/find-company-by-id/find-company-by-id.service';
 import { FindBilledById } from 'src/app/global/billed/application/usecases/find-billed-by-id/find-billed-by-id.service';
 import { FindCategoryById } from 'src/app/global/category/application/usecases/find-category-by-id/find-category-by-id.service';
 import { FindDeliveryTermById } from 'src/app/global/delivery-term/application/usecases/find-delivery-term-by-id/find-delivery-term-by-id.service';

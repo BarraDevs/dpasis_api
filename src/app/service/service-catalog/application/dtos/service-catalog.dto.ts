@@ -1,4 +1,4 @@
-import { MinimalCompanyDto } from 'src/app/company/application/dtos/company.dto';
+import { MinimalCompanyDto } from 'src/app/company/company/application/dtos/company.dto';
 import { CnaeNbsIndopDto } from 'src/app/global/taxation/cnae-nbs-indop/application/dtos/cnae-nbs-indop.dto';
 
 export class ServiceCatalogDto {

@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ClientAddressModule } from 'src/app/client/client-address/client-address.module';
 import { ClientModule } from 'src/app/client/client/client.module';
-import { CompanyModule } from 'src/app/company/company.module';
+import { CompanyModule } from 'src/app/company/company/company.module';
 import { NfsGenerationModule } from 'src/infra/nfs-generation/nfs-generation.module';
 import { NfsePersistenceModule } from './application/persistence/nfse-persistence.module';
 import { NfseQueueModule } from './application/queue/nfse-queue.module';

@@ -5,8 +5,8 @@ import { FindClientAddressByClientIdAndType } from 'src/app/client/client-addres
 import { ClientAddressType } from 'src/app/client/client-address/domain/enums/client-address-type.enum';
 import { FindClientById } from 'src/app/client/client/application/usecases/find-client-by-id/find-client-by-id.service';
 import { ClientDto } from 'src/app/client/client/application/dtos/client.dto';
-import { FindCompanyById } from 'src/app/company/application/usecases/find-company-by-id/find-company-by-id.service';
-import { CompanyDto } from 'src/app/company/application/dtos/company.dto';
+import { FindCompanyById } from 'src/app/company/company/application/usecases/find-company-by-id/find-company-by-id.service';
+import { CompanyDto } from 'src/app/company/company/application/dtos/company.dto';
 import { TOKENS } from 'src/core/di/token';
 import { ClientAddressForNfseNotFoundError } from '../../../domain/errors/client-address-for-nfse-not-found.error';
 import { NfseStatus } from '../../../domain/enums/nfse-status.enum';
