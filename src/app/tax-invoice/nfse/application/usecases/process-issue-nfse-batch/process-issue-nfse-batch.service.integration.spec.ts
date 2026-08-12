@@ -3,6 +3,7 @@ import { ConfigModule } from 'src/core/config/config.module';
 import { TOKENS } from 'src/core/di/token';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { LoggerModule } from 'src/infra/logger/logger.module';
+import { NfsGenerationFakeAdapterGateway } from 'src/infra/nfs-generation/adapters/fake/nfs-generation-fake.gateway';
 import { NfsProviderEnvironment } from 'src/infra/nfs-generation/dtos/nfs-provider-credentials.dto';
 import { NfseQueueFakeAdapterProducer } from '../../../infra/driven/queue/fake/nfse-queue-fake.producer';
 import { NfseStatus } from '../../../domain/enums/nfse-status.enum';
@@ -111,6 +112,7 @@ describe('ProcessIssueNfseBatch - Integration tests', () => {
   let sut: ProcessIssueNfseBatch;
   let prisma: PrismaService;
   let queueProducer: NfseQueueFakeAdapterProducer;
+  let nfsGenerationGateway: NfsGenerationFakeAdapterGateway;
 
   beforeAll(async() => {
     const module = await Test.createTestingModule({
@@ -124,11 +126,15 @@ describe('ProcessIssueNfseBatch - Integration tests', () => {
     sut = module.get(ProcessIssueNfseBatch);
     prisma = module.get(PrismaService);
     queueProducer = module.get(TOKENS.NfseQueueProducer);
+    nfsGenerationGateway = module.get(TOKENS.NfsGenerationGateway);
   });
 
   beforeEach(async() => {
     await prisma.truncate();
     queueProducer.addedPollBatchJobs.length = 0;
+    nfsGenerationGateway.issueBatchCalls.length = 0;
+    nfsGenerationGateway.issueBatchError = null;
+    nfsGenerationGateway.issueBatchResult = { batchProtocol: 'fake-protocol' };
   });
 
   afterAll(async() => {
@@ -178,6 +184,7 @@ describe('ProcessIssueNfseBatch - Integration tests', () => {
     const company = await seedCompany(prisma);
     await seedProviderConfig(prisma, company.id);
     const nfse = await seedNfse(prisma, company.id);
+    nfsGenerationGateway.issueBatchError = new Error('Falha ao enviar lote');
 
     // Act
     await sut.execute({ nfseId: nfse.id });
@@ -185,7 +192,7 @@ describe('ProcessIssueNfseBatch - Integration tests', () => {
     // Assert
     const saved = await prisma.nfse.findUnique({ where: { id: nfse.id } });
     expect(saved?.status).toBe(NfseStatus.FAILED);
-    expect(saved?.errorMessage).toBe('Method not implemented.');
+    expect(saved?.errorMessage).toBe('Falha ao enviar lote');
     expect(queueProducer.addedPollBatchJobs).toHaveLength(0);
   });
 });

@@ -7,7 +7,7 @@ import { FindAllNfmsQueryDto } from 'src/app/tax-invoice/nfm/application/usecase
 import { FindElegibleClients } from 'src/app/tax-invoice/nfm/application/usecases/find-elegible-clients/find-elegible-clients.service';
 import { SaveElegibleNfmsOutputDto } from 'src/app/tax-invoice/nfm/application/usecases/save-elegible-nfms/dtos/save-elegible-nfms.dto';
 import { SaveElegibleNfms } from 'src/app/tax-invoice/nfm/application/usecases/save-elegible-nfms/save-elegible-nfms.service';
-import { NfDto } from 'src/infra/nf-generation/dtos/nf.dto';
+import { NfsNoteDto } from 'src/infra/nfs-generation/dtos/find-nfs-servico-prestado.dto';
 import { NfmAdminController } from './nfm-admin.controller';
 
 describe('NfmAdminController - Unit tests', () => {
@@ -40,8 +40,12 @@ describe('NfmAdminController - Unit tests', () => {
   describe('findAllInvoices', () => {
     it('should call findAllNfms.execute with queries', async() => {
       // Arrange
-      const queries = createMock<FindAllNfmsQueryDto>({ page: 1, limit: 10 });
-      const output = [createMock<NfDto>()];
+      const queries = createMock<FindAllNfmsQueryDto>({
+        companyId: 1,
+        dateFrom: '2026-08-01',
+        dateTo: '2026-08-31',
+      });
+      const output = [createMock<NfsNoteDto>()];
       const findAllSpy = jest.spyOn(findAllNfms, 'execute').mockResolvedValue(output);
 
       // Act

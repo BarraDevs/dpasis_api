@@ -1,5 +1,4 @@
 import { ArgumentMetadata, ValidationPipe } from '@nestjs/common';
-import { NfProcessCode } from 'src/infra/nf-generation/enums/nf-process-code.enum';
 import { pipeOptions } from 'src/infra/validators/class/config';
 import { FindAllNfmsQueryDto } from './find-all-nfms.dto';
 
@@ -20,20 +19,21 @@ describe('FindAllNfmsQueryDto', () => {
     target = new ValidationPipe(pipeOptions);
   });
 
-  it('should pass with empty query', async() => {
-    const result = await target.transform({}, metadata);
+  it('should throw without companyId', async() => {
+    expect.assertions(1);
 
-    expect(result).toBeInstanceOf(FindAllNfmsQueryDto);
+    return target.transform({}, metadata).catch((error) => {
+      expectMessageToContain(error.getResponse().message, 'companyId');
+    });
   });
 
-  it('should pass with all valid fields', async() => {
+  it('should pass with companyId and period', async() => {
     const data = {
+      companyId: 1,
       page: 1,
-      limit: 10,
-      orderNumber: 'PED-123',
-      nfeNumber: 100,
+      dateFrom: '2026-08-01',
+      dateTo: '2026-08-31',
       recipientDocument: '98765432000111',
-      processCode: NfProcessCode.AUTHORIZED,
     };
 
     const result = await target.transform(data, metadata);
@@ -42,35 +42,95 @@ describe('FindAllNfmsQueryDto', () => {
     expect(result).toEqual(data);
   });
 
-  it('should transform string numbers to number', async() => {
+  it('should pass with companyId and nfseNumber', async() => {
     const data = {
-      page: '2',
-      limit: '15',
-      nfeNumber: '200',
-      processCode: String(NfProcessCode.REJECTED),
+      companyId: 1,
+      nfseNumber: '1000',
     };
 
     const result = await target.transform(data, metadata);
 
-    expect(result.page).toBe(2);
-    expect(result.limit).toBe(15);
-    expect(result.nfeNumber).toBe(200);
-    expect(result.processCode).toBe(NfProcessCode.REJECTED);
+    expect(result).toBeInstanceOf(FindAllNfmsQueryDto);
+    expect(result.nfseNumber).toBe('1000');
+  });
+
+  it('should transform string companyId and page to number', async() => {
+    const data = {
+      companyId: '2',
+      page: '3',
+      nfseNumber: '10',
+    };
+
+    const result = await target.transform(data, metadata);
+
+    expect(result.companyId).toBe(2);
+    expect(result.page).toBe(3);
   });
 
   it('should throw if page is not positive', async() => {
     expect.assertions(1);
 
-    return target.transform({ page: 0 }, metadata).catch((error) => {
+    return target.transform({ companyId: 1, page: 0, nfseNumber: '1' }, metadata).catch((error) => {
       expectMessageToContain(error.getResponse().message, 'page deve ser um número positivo');
     });
   });
 
-  it('should throw if processCode is invalid', async() => {
+  it('should throw if dateFrom has invalid format', async() => {
     expect.assertions(1);
 
-    return target.transform({ processCode: 999 }, metadata).catch((error) => {
-      expectMessageToContain(error.getResponse().message, 'processCode deve ser um código de situação válido');
+    return target.transform({
+      companyId: 1,
+      dateFrom: '01/08/2026',
+      dateTo: '2026-08-31',
+    }, metadata).catch((error) => {
+      expectMessageToContain(error.getResponse().message, 'dateFrom deve estar no formato YYYY-MM-DD');
     });
+  });
+
+  it('should throw if dateTo has invalid format', async() => {
+    expect.assertions(1);
+
+    return target.transform({
+      companyId: 1,
+      dateFrom: '2026-08-01',
+      dateTo: '31/08/2026',
+    }, metadata).catch((error) => {
+      expectMessageToContain(error.getResponse().message, 'dateTo deve estar no formato YYYY-MM-DD');
+    });
+  });
+
+  it.each([0, -1])('should throw if companyId is not positive (%s)', async(companyId) => {
+    expect.assertions(1);
+
+    return target.transform({ companyId, nfseNumber: '1' }, metadata).catch((error) => {
+      expectMessageToContain(error.getResponse().message, 'companyId deve ser um número positivo');
+    });
+  });
+
+  it('should trim whitespace on string query fields', async() => {
+    // Arrange
+    const data = {
+      companyId: 1,
+      dateFrom: '  2026-08-01  ',
+      dateTo: '  2026-08-31  ',
+      nfseNumber: undefined,
+      recipientDocument: '  98765432000111  ',
+    };
+
+    // Act
+    const result = await target.transform(data, metadata);
+
+    // Assert
+    expect(result.dateFrom).toBe('2026-08-01');
+    expect(result.dateTo).toBe('2026-08-31');
+    expect(result.recipientDocument).toBe('98765432000111');
+  });
+
+  it('should trim nfseNumber', async() => {
+    // Arrange & Act
+    const result = await target.transform({ companyId: 1, nfseNumber: '  1000  ' }, metadata);
+
+    // Assert
+    expect(result.nfseNumber).toBe('1000');
   });
 });

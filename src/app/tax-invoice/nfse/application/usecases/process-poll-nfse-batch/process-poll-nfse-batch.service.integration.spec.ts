@@ -3,6 +3,8 @@ import { ConfigModule } from 'src/core/config/config.module';
 import { TOKENS } from 'src/core/di/token';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { LoggerModule } from 'src/infra/logger/logger.module';
+import { NfsGenerationFakeAdapterGateway } from 'src/infra/nfs-generation/adapters/fake/nfs-generation-fake.gateway';
+import { NfsBatchSituation } from 'src/infra/nfs-generation/dtos/nfs-batch-status.dto';
 import { NfsProviderEnvironment } from 'src/infra/nfs-generation/dtos/nfs-provider-credentials.dto';
 import { NfseQueueFakeAdapterProducer } from '../../../infra/driven/queue/fake/nfse-queue-fake.producer';
 import { NfseStatus } from '../../../domain/enums/nfse-status.enum';
@@ -97,6 +99,7 @@ describe('ProcessPollNfseBatch - Integration tests', () => {
   let sut: ProcessPollNfseBatch;
   let prisma: PrismaService;
   let queueProducer: NfseQueueFakeAdapterProducer;
+  let nfsGenerationGateway: NfsGenerationFakeAdapterGateway;
 
   beforeAll(async() => {
     const module = await Test.createTestingModule({
@@ -110,11 +113,15 @@ describe('ProcessPollNfseBatch - Integration tests', () => {
     sut = module.get(ProcessPollNfseBatch);
     prisma = module.get(PrismaService);
     queueProducer = module.get(TOKENS.NfseQueueProducer);
+    nfsGenerationGateway = module.get(TOKENS.NfsGenerationGateway);
   });
 
   beforeEach(async() => {
     await prisma.truncate();
     queueProducer.addedPollBatchJobs.length = 0;
+    nfsGenerationGateway.getBatchStatusCalls.length = 0;
+    nfsGenerationGateway.getBatchStatusError = null;
+    nfsGenerationGateway.getBatchStatusResult = { situation: NfsBatchSituation.Success };
   });
 
   afterAll(async() => {
@@ -174,6 +181,7 @@ describe('ProcessPollNfseBatch - Integration tests', () => {
     const company = await seedCompany(prisma);
     await seedProviderConfig(prisma, company.id);
     const nfse = await seedNfse(prisma, company.id);
+    nfsGenerationGateway.getBatchStatusError = new Error('timeout');
 
     // Act
     await sut.execute({ nfseId: nfse.id, attempt: 1 });
@@ -194,6 +202,7 @@ describe('ProcessPollNfseBatch - Integration tests', () => {
     const company = await seedCompany(prisma);
     await seedProviderConfig(prisma, company.id);
     const nfse = await seedNfse(prisma, company.id);
+    nfsGenerationGateway.getBatchStatusError = new Error('timeout');
 
     // Act
     await sut.execute({ nfseId: nfse.id, attempt: 10 });
