@@ -75,13 +75,13 @@ describe('SetClientNextId - Integration tests', () => {
         ie: null,
         groupId: group.id,
         resaleId: resale.id,
+        companyId: company.id,
         companyName: 'Cliente Teste',
         fantasyName: null,
         headquarters: 'São Paulo',
         invoiceType: ClientInvoiceType.CONTRACT,
         generateInvoice: true,
         active: true,
-        companies: { connect: [{ id: company.id }] },
       },
     });
   }

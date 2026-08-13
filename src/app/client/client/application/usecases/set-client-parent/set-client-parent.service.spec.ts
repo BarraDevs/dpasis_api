@@ -31,7 +31,7 @@ function minimalClientDto(overrides: Partial<ClientDto> = {}): ClientDto {
     active: true,
     group: { id: 1, name: 'Grupo' },
     resale: { id: 1, name: 'Revenda' },
-    companies: [],
+    company: { id: 1, name: 'Empresa' },
     createdAt: new Date(),
     updatedAt: new Date(),
     ...overrides,
@@ -97,7 +97,7 @@ describe('SetClientParent - Unit tests', () => {
 
   it('should set parent when valid', async() => {
     jest.spyOn(clientDao, 'findById')
-      .mockResolvedValueOnce(minimalClientDto({ id: 10, companies: [{ id: 1, name: 'Co' }] }))
+      .mockResolvedValueOnce(minimalClientDto({ id: 10, company: { id: 1, name: 'Co' } }))
       .mockResolvedValueOnce(minimalClientDto({
         id: 20,
         parentClientId: null,
@@ -133,7 +133,7 @@ describe('SetClientParent - Unit tests', () => {
       parentClientId: 5,
       isSubClient: true,
       id: 2,
-      companies: [{ id: 1, name: 'X' }],
+      company: { id: 1, name: 'X' },
     }));
 
     await sut.execute(2, { parentClientId: null });

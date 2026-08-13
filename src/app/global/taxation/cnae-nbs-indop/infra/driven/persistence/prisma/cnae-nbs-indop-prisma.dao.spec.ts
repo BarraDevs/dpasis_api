@@ -1,4 +1,5 @@
 import { buildMinimalResaleData, nextResaleFixtureId } from 'src/test/fixtures/minimal-resale';
+import { buildMinimalCompanyData } from 'src/test/fixtures/minimal-company';
 import { Test } from '@nestjs/testing';
 import { CnaeNbsIndopDto } from 'src/app/global/taxation/cnae-nbs-indop/application/dtos/cnae-nbs-indop.dto';
 import { CreateCnaeNbsIndopInputDto } from 'src/app/global/taxation/cnae-nbs-indop/application/usecases/create-cnae-nbs-indop/dtos/create-cnae-nbs-indop.dto';
@@ -244,9 +245,10 @@ describe('CnaeNbsIndopDaoAdapterPrisma - Integration tests', () => {
         data: { cnaeId, nbsId, indopId },
       });
 
-      const [group, resale] = await Promise.all([
+      const [group, resale, company] = await Promise.all([
         prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
         prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
+        prisma.company.create({ data: buildMinimalCompanyData() }),
       ]);
 
       const client = await prisma.client.create({
@@ -257,6 +259,7 @@ describe('CnaeNbsIndopDaoAdapterPrisma - Integration tests', () => {
           ie: null,
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'Empresa Test',
           fantasyName: null,
           headquarters: 'São Paulo',

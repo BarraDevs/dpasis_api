@@ -1,4 +1,5 @@
 import { buildMinimalResaleData, nextResaleFixtureId } from 'src/test/fixtures/minimal-resale';
+import { buildMinimalCompanyData } from 'src/test/fixtures/minimal-company';
 import { Test } from '@nestjs/testing';
 import { DiscountType } from 'src/app/client/client-discount/domain/enums/discount-type.enum';
 import { ClientDiscountFactory } from 'src/app/client/client-discount/domain/factories/client-discount.factory';
@@ -26,9 +27,10 @@ describe('ClientDiscountRepositoryAdapterPrisma - Integration tests', () => {
   beforeEach(async() => {
     await prisma.truncate();
 
-    const [group, resale] = await Promise.all([
+    const [group, resale, company] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
       prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
+      prisma.company.create({ data: buildMinimalCompanyData() }),
     ]);
 
     const client = await prisma.client.create({
@@ -39,6 +41,7 @@ describe('ClientDiscountRepositoryAdapterPrisma - Integration tests', () => {
         ie: null,
         groupId: group.id,
         resaleId: resale.id,
+        companyId: company.id,
         companyName: 'Empresa Test',
         fantasyName: null,
         headquarters: 'São Paulo',

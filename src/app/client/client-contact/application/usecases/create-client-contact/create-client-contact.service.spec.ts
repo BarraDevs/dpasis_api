@@ -1,4 +1,5 @@
 import { buildMinimalResaleData, nextResaleFixtureId } from 'src/test/fixtures/minimal-resale';
+import { buildMinimalCompanyData } from 'src/test/fixtures/minimal-company';
 import { Test } from '@nestjs/testing';
 import { DepartmentNotFoundError } from 'src/app/global/department/domain/errors/department-not-found.error';
 import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
@@ -30,9 +31,10 @@ describe('CreateClientContact - Integration tests', () => {
   beforeEach(async() => {
     await prisma.truncate();
 
-    const [group, resale, department] = await Promise.all([
+    const [group, resale, company, department] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
       prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
+      prisma.company.create({ data: buildMinimalCompanyData() }),
       prisma.department.create({ data: { name: `Dept ${Date.now()}`, active: true } }),
     ]);
 
@@ -44,6 +46,7 @@ describe('CreateClientContact - Integration tests', () => {
         ie: null,
         groupId: group.id,
         resaleId: resale.id,
+        companyId: company.id,
         companyName: 'Empresa Test',
         fantasyName: null,
         headquarters: 'São Paulo',
@@ -83,9 +86,10 @@ describe('CreateClientContact - Integration tests', () => {
   });
 
   it('should allow same email for different clients', async() => {
-    const [group2, resale2] = await Promise.all([
+    const [group2, resale2, company2] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo2 ${Date.now()}`, active: true } }),
       prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
+      prisma.company.create({ data: buildMinimalCompanyData() }),
     ]);
     const client2 = await prisma.client.create({
       data: {
@@ -95,6 +99,7 @@ describe('CreateClientContact - Integration tests', () => {
         ie: null,
         groupId: group2.id,
         resaleId: resale2.id,
+        companyId: company2.id,
         companyName: 'Outra Empresa',
         fantasyName: null,
         headquarters: 'Rio',
@@ -227,9 +232,10 @@ describe('CreateClientContact - Integration tests', () => {
   });
 
   it('should throw ClientNotFoundError when client is inactive', async() => {
-    const [group2, resale2] = await Promise.all([
+    const [group2, resale2, company2] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo2 ${Date.now()}`, active: true } }),
       prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
+      prisma.company.create({ data: buildMinimalCompanyData() }),
     ]);
     const inactiveClient = await prisma.client.create({
       data: {
@@ -239,6 +245,7 @@ describe('CreateClientContact - Integration tests', () => {
         ie: null,
         groupId: group2.id,
         resaleId: resale2.id,
+        companyId: company2.id,
         companyName: 'Cliente Inativo',
         fantasyName: null,
         headquarters: 'Rio',

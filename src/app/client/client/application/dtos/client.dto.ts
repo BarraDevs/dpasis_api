@@ -29,7 +29,7 @@ export class ClientDto {
     id: number;
     name: string;
   };
-  companies: MinimalCompanyDto[];
+  company: MinimalCompanyDto;
   createdAt: Date;
   updatedAt: Date;
 }

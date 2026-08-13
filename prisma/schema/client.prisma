@@ -7,6 +7,7 @@ model Client {
   ie                  String?
   groupId             Int
   resaleId            Int
+  companyId           Int
   attendanceId        Int?
   maintenanceTicketId Int?
   honorificId         Int?
@@ -26,11 +27,11 @@ model Client {
 
   group             ClientGroup              @relation(fields: [groupId], references: [id])
   resale            Resale                   @relation(fields: [resaleId], references: [id])
+  company           Company                  @relation(fields: [companyId], references: [id], onDelete: Restrict)
   attendance        ClientAttendance?        @relation(fields: [attendanceId], references: [id])
   maintenanceTicket ClientMaintenanceTicket? @relation(fields: [maintenanceTicketId], references: [id])
   honorific         Honorific?               @relation(fields: [honorificId], references: [id], onDelete: Restrict)
 
-  companies     Company[]
   addresses     ClientAddress[]
   attachments   ClientAttachment[]
   contacts      ClientContact[]

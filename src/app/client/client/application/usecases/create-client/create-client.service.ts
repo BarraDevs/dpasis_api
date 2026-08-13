@@ -54,15 +54,13 @@ export class CreateClient {
       }
     }
 
-    // Verifica se o grupo e a revenda existem E estão ativas
+    // Verifica se o grupo, revenda e empresa existem E estão ativas
     // Lança um erro se não existirem ou estão inativos
-    await this.findClientGroupById.execute(data.groupId, { onlyActive: true });
-    await this.findResaleById.execute(data.resaleId, { onlyActive: true });
-
-    // Verifica se todas as empresas existem e estão ativas
-    for (const companyId of data.companyIds) {
-      await this.findCompanyById.execute(companyId, { onlyActive: true });
-    }
+    await Promise.all([
+      this.findClientGroupById.execute(data.groupId, { onlyActive: true }),
+      this.findResaleById.execute(data.resaleId, { onlyActive: true }),
+      this.findCompanyById.execute(data.companyId, { onlyActive: true }),
+    ]);
 
     if (data.honorificId != null) {
       await this.findHonorificById.execute(data.honorificId, { onlyActive: true });
@@ -86,7 +84,7 @@ export class CreateClient {
       groupId: data.groupId,
       resaleId: data.resaleId,
       parentClientId: data.parentClientId,
-      companyIds: data.companyIds,
+      companyId: data.companyId,
       invoiceType: data.invoiceType,
       generateInvoice: data.generateInvoice,
       companyName: data.companyName,

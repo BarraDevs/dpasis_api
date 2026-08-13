@@ -1,4 +1,5 @@
 import { buildMinimalResaleData, nextResaleFixtureId } from 'src/test/fixtures/minimal-resale';
+import { buildMinimalCompanyData } from 'src/test/fixtures/minimal-company';
 import { Test } from '@nestjs/testing';
 import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
 import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum';
@@ -25,12 +26,13 @@ describe('DeleteClientItem - Integration tests', () => {
   beforeEach(async() => {
     await prisma.truncate();
 
-    const [group, resale, cnae, nbs, indop] = await Promise.all([
+    const [group, resale, cnae, nbs, indop, company] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
       prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
       prisma.cnae.create({ data: { code: '1234567', description: 'CNAE Test', active: true } }),
       prisma.nbs.create({ data: { code: '12345678', description: 'NBS Test', active: true } }),
       prisma.indop.create({ data: { code: '1', description: 'INDOP Test', active: true } }),
+      prisma.company.create({ data: buildMinimalCompanyData() }),
     ]);
 
     const cni = await prisma.cnaeNbsIndop.create({
@@ -46,6 +48,7 @@ describe('DeleteClientItem - Integration tests', () => {
         ie: null,
         groupId: group.id,
         resaleId: resale.id,
+        companyId: company.id,
         companyName: 'Empresa Test',
         fantasyName: null,
         headquarters: 'São Paulo',

@@ -43,7 +43,7 @@ const ClientSelect = {
       name: true,
     },
   },
-  companies: {
+  company: {
     select: {
       id: true,
       name: true,

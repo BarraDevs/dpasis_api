@@ -13,7 +13,7 @@ function makeClientCreateProps(overrides?: Partial<ClientCreateProps>): ClientCr
     ie: null,
     groupId: 1,
     resaleId: 1,
-    companyIds: [1],
+    companyId: 1,
     parentClientId: null,
     honorificId: null,
     invoiceType: ClientInvoiceType.CONTRACT,
@@ -39,7 +39,7 @@ function makeClientProps(overrides?: Partial<ClientProps>): ClientProps {
     parentClientId: null,
     isSubClient: false,
     honorificId: null,
-    companyIds: [1],
+    companyId: 1,
     invoiceType: ClientInvoiceType.CONTRACT,
     generateInvoice: true,
     companyName: 'Empresa LTDA',
@@ -59,7 +59,7 @@ describe('ClientFactory', () => {
         ie: null,
         groupId: 1,
         resaleId: 1,
-        companyIds: [1],
+        companyId: 1,
         invoiceType: ClientInvoiceType.CONTRACT,
         generateInvoice: true,
         companyName: 'Empresa LTDA',
@@ -82,7 +82,7 @@ describe('ClientFactory', () => {
         parentClientId: null,
         isSubClient: false,
         honorificId: null,
-        companyIds: [1],
+        companyId: 1,
         invoiceType: ClientInvoiceType.CONTRACT,
         generateInvoice: true,
         companyName: 'Empresa LTDA',
@@ -396,25 +396,25 @@ describe('ClientFactory', () => {
       });
     });
 
-    describe('validation - companyIds', () => {
-      it('should throw when companyIds contains invalid id (0)', () => {
-        const props = makeClientCreateProps({ companyIds: [0] });
+    describe('validation - companyId', () => {
+      it('should throw when companyId is invalid (0)', () => {
+        const props = makeClientCreateProps({ companyId: 0 });
 
         expect(() => ClientFactory.create(props)).toThrow(NumberMustBePositiveAndInt);
       });
 
-      it('should throw when companyIds contains invalid id (-1)', () => {
-        const props = makeClientCreateProps({ companyIds: [-1] });
+      it('should throw when companyId is invalid (-1)', () => {
+        const props = makeClientCreateProps({ companyId: -1 });
 
         expect(() => ClientFactory.create(props)).toThrow(NumberMustBePositiveAndInt);
       });
 
-      it('should accept valid companyIds', () => {
-        const props = makeClientCreateProps({ companyIds: [1, 2, 3] });
+      it('should accept valid companyId', () => {
+        const props = makeClientCreateProps({ companyId: 1 });
 
         const client = ClientFactory.create(props);
 
-        expect(client.props.companyIds).toEqual([1, 2, 3]);
+        expect(client.props.companyId).toBe(1);
       });
     });
 

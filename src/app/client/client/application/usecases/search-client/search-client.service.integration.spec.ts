@@ -1,4 +1,5 @@
 import { buildMinimalResaleData, nextResaleFixtureId } from 'src/test/fixtures/minimal-resale';
+import { buildMinimalCompanyData } from 'src/test/fixtures/minimal-company';
 import { Test } from '@nestjs/testing';
 import { ClientModule } from 'src/app/client/client/client.module';
 import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
@@ -34,9 +35,10 @@ describe('SearchClient - Integration tests', () => {
   });
 
   it('should return empty when no clients match filter', async() => {
-    const [group, resale] = await Promise.all([
+    const [group, resale, company] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `G-${Date.now()}`, active: true } }),
       prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
+      prisma.company.create({ data: buildMinimalCompanyData() }),
     ]);
     await prisma.client.create({
       data: {
@@ -45,6 +47,7 @@ describe('SearchClient - Integration tests', () => {
         document: '09748165000110',
         groupId: group.id,
         resaleId: resale.id,
+        companyId: company.id,
         companyName: 'X',
         headquarters: 'SP',
         invoiceType: ClientInvoiceType.CONTRACT,
@@ -61,9 +64,10 @@ describe('SearchClient - Integration tests', () => {
   });
 
   it('should return all matching rows when page and size are omitted', async() => {
-    const [group, resale] = await Promise.all([
+    const [group, resale, company] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `G-${Date.now()}`, active: true } }),
       prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
+      prisma.company.create({ data: buildMinimalCompanyData() }),
     ]);
     await prisma.client.create({
       data: {
@@ -72,6 +76,7 @@ describe('SearchClient - Integration tests', () => {
         document: '09748165803101',
         groupId: group.id,
         resaleId: resale.id,
+        companyId: company.id,
         companyName: 'Todos A',
         headquarters: 'SP',
         invoiceType: ClientInvoiceType.CONTRACT,
@@ -86,6 +91,7 @@ describe('SearchClient - Integration tests', () => {
         document: '09748165803102',
         groupId: group.id,
         resaleId: resale.id,
+        companyId: company.id,
         companyName: 'Todos B',
         headquarters: 'SP',
         invoiceType: ClientInvoiceType.CONTRACT,
@@ -100,6 +106,7 @@ describe('SearchClient - Integration tests', () => {
         document: '09748165803103',
         groupId: group.id,
         resaleId: resale.id,
+        companyId: company.id,
         companyName: 'Todos C',
         headquarters: 'SP',
         invoiceType: ClientInvoiceType.CONTRACT,
@@ -119,9 +126,10 @@ describe('SearchClient - Integration tests', () => {
   });
 
   it('should paginate search results', async() => {
-    const [group, resale] = await Promise.all([
+    const [group, resale, company] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `G-${Date.now()}`, active: true } }),
       prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
+      prisma.company.create({ data: buildMinimalCompanyData() }),
     ]);
     await prisma.client.createMany({
       data: Array.from({ length: 5 }, (_, i) => ({
@@ -130,6 +138,7 @@ describe('SearchClient - Integration tests', () => {
         document: `097481650001${String(i).padStart(2, '0')}`,
         groupId: group.id,
         resaleId: resale.id,
+        companyId: company.id,
         companyName: `C${i}`,
         headquarters: 'SP',
         invoiceType: ClientInvoiceType.CONTRACT,

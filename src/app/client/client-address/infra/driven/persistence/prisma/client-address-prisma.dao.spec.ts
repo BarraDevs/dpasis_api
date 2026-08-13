@@ -1,4 +1,5 @@
 import { buildMinimalResaleData, nextResaleFixtureId } from 'src/test/fixtures/minimal-resale';
+import { buildMinimalCompanyData } from 'src/test/fixtures/minimal-company';
 import { Test } from '@nestjs/testing';
 import { ClientAddressDto } from 'src/app/client/client-address/application/dtos/client-address.dto';
 import { ClientAddressType } from 'src/app/client/client-address/domain/enums/client-address-type.enum';
@@ -26,9 +27,10 @@ describe('ClientAddressDaoAdapterPrisma - Integration tests', () => {
   beforeEach(async() => {
     await prisma.truncate();
 
-    const [group, resale] = await Promise.all([
+    const [group, resale, company] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
       prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
+      prisma.company.create({ data: buildMinimalCompanyData() }),
     ]);
 
     const client = await prisma.client.create({
@@ -39,6 +41,7 @@ describe('ClientAddressDaoAdapterPrisma - Integration tests', () => {
         ie: null,
         groupId: group.id,
         resaleId: resale.id,
+        companyId: company.id,
         companyName: 'Empresa Test',
         fantasyName: null,
         headquarters: 'São Paulo',
@@ -450,9 +453,10 @@ describe('ClientAddressDaoAdapterPrisma - Integration tests', () => {
     });
 
     it('should return null when address exists for same type but different client', async() => {
-      const [group, resale] = await Promise.all([
+      const [group, resale, company] = await Promise.all([
         prisma.clientGroup.create({ data: { name: `Grupo Outro ${Date.now()}`, active: true } }),
         prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
+        prisma.company.create({ data: buildMinimalCompanyData() }),
       ]);
 
       const otherClient = await prisma.client.create({
@@ -463,6 +467,7 @@ describe('ClientAddressDaoAdapterPrisma - Integration tests', () => {
           ie: null,
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'Outra Empresa',
           fantasyName: null,
           headquarters: 'Rio de Janeiro',

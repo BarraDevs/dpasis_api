@@ -1,4 +1,5 @@
 import { buildMinimalResaleData, nextResaleFixtureId } from 'src/test/fixtures/minimal-resale';
+import { buildMinimalCompanyData } from 'src/test/fixtures/minimal-company';
 import { Test } from '@nestjs/testing';
 import { ClientAttendanceNotFoundError } from 'src/app/client/client-attendance/domain/errors/client-attendance-not-found.error';
 import { ClientMaintenanceTicketNotFoundError } from 'src/app/client/client-maintenance-ticket/domain/errors/client-maintenance-ticket-not-found.error';
@@ -45,9 +46,10 @@ describe('LinkClientAttendanceAndMaintenance - Integration tests', () => {
   });
 
   it('should throw ClientAttendanceNotFoundError when attendance does not exist', async() => {
-    const [group, resale] = await Promise.all([
+    const [group, resale, company] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
       prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
+      prisma.company.create({ data: buildMinimalCompanyData() }),
     ]);
 
     const client = await prisma.client.create({
@@ -57,6 +59,7 @@ describe('LinkClientAttendanceAndMaintenance - Integration tests', () => {
         document: '09748165000110',
         groupId: group.id,
         resaleId: resale.id,
+        companyId: company.id,
         companyName: 'Empresa LTDA',
         headquarters: 'São Paulo',
         invoiceType: ClientInvoiceType.CONTRACT,
@@ -71,10 +74,11 @@ describe('LinkClientAttendanceAndMaintenance - Integration tests', () => {
   });
 
   it('should throw ClientAttendanceNotFoundError when attendance is inactive', async() => {
-    const [group, resale, attendance] = await Promise.all([
+    const [group, resale, attendance, company] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
       prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
       prisma.clientAttendance.create({ data: { name: `Att ${Date.now()}`, active: false } }),
+      prisma.company.create({ data: buildMinimalCompanyData() }),
     ]);
 
     const client = await prisma.client.create({
@@ -84,6 +88,7 @@ describe('LinkClientAttendanceAndMaintenance - Integration tests', () => {
         document: '09748165000110',
         groupId: group.id,
         resaleId: resale.id,
+        companyId: company.id,
         companyName: 'Empresa LTDA',
         headquarters: 'São Paulo',
         invoiceType: ClientInvoiceType.CONTRACT,
@@ -98,10 +103,11 @@ describe('LinkClientAttendanceAndMaintenance - Integration tests', () => {
   });
 
   it('should throw ClientMaintenanceTicketNotFoundError when maintenance ticket does not exist', async() => {
-    const [group, resale, attendance] = await Promise.all([
+    const [group, resale, attendance, company] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
       prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
       prisma.clientAttendance.create({ data: { name: `Att ${Date.now()}`, active: true } }),
+      prisma.company.create({ data: buildMinimalCompanyData() }),
     ]);
 
     const client = await prisma.client.create({
@@ -111,6 +117,7 @@ describe('LinkClientAttendanceAndMaintenance - Integration tests', () => {
         document: '09748165000110',
         groupId: group.id,
         resaleId: resale.id,
+        companyId: company.id,
         companyName: 'Empresa LTDA',
         headquarters: 'São Paulo',
         invoiceType: ClientInvoiceType.CONTRACT,
@@ -125,11 +132,12 @@ describe('LinkClientAttendanceAndMaintenance - Integration tests', () => {
   });
 
   it('should throw ClientMaintenanceTicketNotFoundError when maintenance ticket is inactive', async() => {
-    const [group, resale, attendance, ticket] = await Promise.all([
+    const [group, resale, attendance, ticket, company] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
       prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
       prisma.clientAttendance.create({ data: { name: `Att ${Date.now()}`, active: true } }),
       prisma.clientMaintenanceTicket.create({ data: { name: `Tk ${Date.now()}`, active: false } }),
+      prisma.company.create({ data: buildMinimalCompanyData() }),
     ]);
 
     const client = await prisma.client.create({
@@ -139,6 +147,7 @@ describe('LinkClientAttendanceAndMaintenance - Integration tests', () => {
         document: '09748165000110',
         groupId: group.id,
         resaleId: resale.id,
+        companyId: company.id,
         companyName: 'Empresa LTDA',
         headquarters: 'São Paulo',
         invoiceType: ClientInvoiceType.CONTRACT,
@@ -153,11 +162,12 @@ describe('LinkClientAttendanceAndMaintenance - Integration tests', () => {
   });
 
   it('should persist attendance and maintenance ticket ids on client', async() => {
-    const [group, resale, attendance, ticket] = await Promise.all([
+    const [group, resale, attendance, ticket, company] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
       prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
       prisma.clientAttendance.create({ data: { name: `Att ${Date.now()}`, active: true } }),
       prisma.clientMaintenanceTicket.create({ data: { name: `Tk ${Date.now()}`, active: true } }),
+      prisma.company.create({ data: buildMinimalCompanyData() }),
     ]);
 
     const client = await prisma.client.create({
@@ -167,6 +177,7 @@ describe('LinkClientAttendanceAndMaintenance - Integration tests', () => {
         document: '09748165000110',
         groupId: group.id,
         resaleId: resale.id,
+        companyId: company.id,
         companyName: 'Empresa LTDA',
         headquarters: 'São Paulo',
         invoiceType: ClientInvoiceType.CONTRACT,

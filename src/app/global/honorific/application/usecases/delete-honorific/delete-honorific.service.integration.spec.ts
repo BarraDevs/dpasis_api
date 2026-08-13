@@ -1,4 +1,5 @@
 import { buildMinimalResaleData, nextResaleFixtureId } from 'src/test/fixtures/minimal-resale';
+import { buildMinimalCompanyData } from 'src/test/fixtures/minimal-company';
 import { Test } from '@nestjs/testing';
 import { Prisma } from '@prisma/client';
 import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
@@ -49,9 +50,10 @@ describe('DeleteHonorific - Integration tests', () => {
       data: { name: `Vinc-${Date.now()}` },
     });
 
-    const [group, resale] = await Promise.all([
+    const [group, resale, company] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `G-${Date.now()}`, active: true } }),
       prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
+      prisma.company.create({ data: buildMinimalCompanyData() }),
     ]);
 
     await prisma.client.create({
@@ -61,6 +63,7 @@ describe('DeleteHonorific - Integration tests', () => {
         document: '09748165000110',
         groupId: group.id,
         resaleId: resale.id,
+        companyId: company.id,
         honorificId: honorific.id,
         companyName: 'Empresa X',
         headquarters: 'SP',

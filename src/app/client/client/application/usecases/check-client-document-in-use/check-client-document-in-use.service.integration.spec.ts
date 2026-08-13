@@ -1,4 +1,5 @@
 import { buildMinimalResaleData, nextResaleFixtureId } from 'src/test/fixtures/minimal-resale';
+import { buildMinimalCompanyData } from 'src/test/fixtures/minimal-company';
 import { Test } from '@nestjs/testing';
 import { ClientModule } from 'src/app/client/client/client.module';
 import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
@@ -39,9 +40,10 @@ describe('CheckClientDocumentInUse - Integration tests', () => {
   });
 
   it('should return documentInUse true when a client exists with normalized document', async() => {
-    const [group, resale] = await Promise.all([
+    const [group, resale, company] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
       prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
+      prisma.company.create({ data: buildMinimalCompanyData() }),
     ]);
 
     await prisma.client.create({
@@ -51,6 +53,7 @@ describe('CheckClientDocumentInUse - Integration tests', () => {
         document: '09748165000110',
         groupId: group.id,
         resaleId: resale.id,
+        companyId: company.id,
         companyName: 'Empresa',
         headquarters: 'SP',
         invoiceType: ClientInvoiceType.CONTRACT,

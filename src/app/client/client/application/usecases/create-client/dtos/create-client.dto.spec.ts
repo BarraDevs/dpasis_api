@@ -35,7 +35,7 @@ function makeValidInputDto(overrides: Partial<CreateClientInputDto> = {}): Creat
     ie: null,
     groupId: 1,
     resaleId: 1,
-    companyIds: [1],
+    companyId: 1,
     companyName: 'Empresa LTDA',
     fantasyName: null,
     socialName: null,
@@ -193,31 +193,22 @@ describe('CreateClientInputDto', () => {
     });
   });
 
-  describe('companyIds field', () => {
-    it.each([undefined, null])('should throw if companyIds is empty (%s)', async(value: unknown) => {
-      const data = makeValidInputDto({ companyIds: value as number[] });
+  describe('companyId field', () => {
+    it.each([undefined, null])('should throw if companyId is missing (%s)', async(value: unknown) => {
+      const data = makeValidInputDto({ companyId: value as number });
 
       expect.assertions(1);
       return target.transform(data, metadata).catch((error) => {
-        expectMessageToContain(error.getResponse().message, 'companyIds');
+        expectMessageToContain(error.getResponse().message, 'companyId');
       });
     });
 
-    it('should throw if companyIds is empty array', async() => {
-      const data = makeValidInputDto({ companyIds: [] });
-
-      expect.assertions(1);
-      return target.transform(data, metadata).catch((error) => {
-        expectMessageToContain(error.getResponse().message, 'pelo menos 1');
-      });
-    });
-
-    it('should accept valid companyIds', async() => {
-      const data = makeValidInputDto({ companyIds: [1, 2, 3] });
+    it('should accept valid companyId', async() => {
+      const data = makeValidInputDto({ companyId: 3 });
 
       const result = await target.transform(data, metadata);
 
-      expect(result.companyIds).toEqual([1, 2, 3]);
+      expect(result.companyId).toBe(3);
     });
   });
 
@@ -607,7 +598,7 @@ describe('CreateClientInputDto', () => {
       expect(result.ie).toBeNull();
       expect(result.groupId).toBe(1);
       expect(result.resaleId).toBe(1);
-      expect(result.companyIds).toEqual([1]);
+      expect(result.companyId).toBe(1);
       expect(result.companyName).toBe('Empresa LTDA');
       expect(result.fantasyName).toBeNull();
       expect(result.socialName).toBeNull();

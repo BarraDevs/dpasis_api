@@ -5,6 +5,7 @@ import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum'
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
 import { buildMinimalResaleData, nextResaleFixtureId } from 'src/test/fixtures/minimal-resale';
+import { buildMinimalCompanyData } from 'src/test/fixtures/minimal-company';
 import { ClientDto } from '../../dtos/client.dto';
 import { FindAllClientQueryDto } from './dtos/find-all-client.dto';
 import { FindAllClient } from './find-all-client.service';
@@ -40,11 +41,12 @@ describe('FindAllClient - Integration tests', () => {
   });
 
   async function createClientGroupAndResale() {
-    const [group, resale] = await Promise.all([
+    const [group, resale, company] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}-${Math.random().toString(36).slice(2)}`, active: true } }),
       prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
+      prisma.company.create({ data: buildMinimalCompanyData() }),
     ]);
-    return { group, resale };
+    return { group, resale, company };
   }
 
   it('should be defined', () => {
@@ -54,7 +56,7 @@ describe('FindAllClient - Integration tests', () => {
   describe('pagination', () => {
     it('should return a slice of rows ordered by id ascending', async() => {
       // Arrange
-      const { group, resale } = await createClientGroupAndResale();
+      const { group, resale, company } = await createClientGroupAndResale();
       const baseId = 41_000;
       for (let i = 0; i < 5; i += 1) {
         await prisma.client.create({
@@ -64,6 +66,7 @@ describe('FindAllClient - Integration tests', () => {
             document: `${baseId + i}`.padStart(14, '0'),
             groupId: group.id,
             resaleId: resale.id,
+            companyId: company.id,
             companyName: `Pag ${i}`,
             headquarters: 'SP',
             invoiceType: ClientInvoiceType.CONTRACT,
@@ -88,7 +91,7 @@ describe('FindAllClient - Integration tests', () => {
 
     it('should use Pagination defaults when page and size are omitted', async() => {
       // Arrange
-      const { group, resale } = await createClientGroupAndResale();
+      const { group, resale, company } = await createClientGroupAndResale();
       const baseId = 42_000;
       for (let i = 0; i < 3; i += 1) {
         await prisma.client.create({
@@ -98,6 +101,7 @@ describe('FindAllClient - Integration tests', () => {
             document: `D${baseId + i}`.padStart(14, '0'),
             groupId: group.id,
             resaleId: resale.id,
+            companyId: company.id,
             companyName: `All ${i}`,
             headquarters: 'SP',
             invoiceType: ClientInvoiceType.CONTRACT,
@@ -144,7 +148,7 @@ describe('FindAllClient - Integration tests', () => {
       { totalRows: 1, size: 10, expectedPages: 1 },
     ])('should expose totalPages $expectedPages for $totalRows row(s) with size $size', async({ totalRows, size, expectedPages }) => {
       // Arrange
-      const { group, resale } = await createClientGroupAndResale();
+      const { group, resale, company } = await createClientGroupAndResale();
       const baseId = 50_000 + totalRows;
       for (let i = 0; i < totalRows; i += 1) {
         await prisma.client.create({
@@ -154,6 +158,7 @@ describe('FindAllClient - Integration tests', () => {
             document: `R${baseId + i}`.padStart(14, '0'),
             groupId: group.id,
             resaleId: resale.id,
+            companyId: company.id,
             companyName: `Row ${i}`,
             headquarters: 'SP',
             invoiceType: ClientInvoiceType.CONTRACT,
@@ -173,7 +178,7 @@ describe('FindAllClient - Integration tests', () => {
 
     it('should paginate within a filtered subset', async() => {
       // Arrange
-      const { group, resale } = await createClientGroupAndResale();
+      const { group, resale, company } = await createClientGroupAndResale();
       const baseId = 43_000;
       for (let i = 0; i < 5; i += 1) {
         await prisma.client.create({
@@ -183,6 +188,7 @@ describe('FindAllClient - Integration tests', () => {
             document: `F${baseId + i}`.padStart(14, '0'),
             groupId: group.id,
             resaleId: resale.id,
+            companyId: company.id,
             companyName: i < 3 ? 'Match Filter Co' : 'Other Name',
             headquarters: 'SP',
             invoiceType: ClientInvoiceType.CONTRACT,
@@ -208,7 +214,7 @@ describe('FindAllClient - Integration tests', () => {
 
   describe('filters — isolated', () => {
     it('should filter by companyName (case-insensitive, partial)', async() => {
-      const { group, resale } = await createClientGroupAndResale();
+      const { group, resale, company } = await createClientGroupAndResale();
       await prisma.client.create({
         data: {
           id: 60_001,
@@ -216,6 +222,7 @@ describe('FindAllClient - Integration tests', () => {
           document: '60100000000001',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'Zebra Alpha Indústria',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -230,6 +237,7 @@ describe('FindAllClient - Integration tests', () => {
           document: '60200000000002',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'Beta Sem Relação',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -245,7 +253,7 @@ describe('FindAllClient - Integration tests', () => {
     });
 
     it('should filter by fantasyName', async() => {
-      const { group, resale } = await createClientGroupAndResale();
+      const { group, resale, company } = await createClientGroupAndResale();
       await prisma.client.create({
         data: {
           id: 60_101,
@@ -253,6 +261,7 @@ describe('FindAllClient - Integration tests', () => {
           document: '61100000000001',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'A',
           fantasyName: 'Nome Fantasia Delta',
           headquarters: 'SP',
@@ -268,6 +277,7 @@ describe('FindAllClient - Integration tests', () => {
           document: '61200000000002',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'B',
           fantasyName: 'Outro',
           headquarters: 'SP',
@@ -284,7 +294,7 @@ describe('FindAllClient - Integration tests', () => {
     });
 
     it('should filter by socialName', async() => {
-      const { group, resale } = await createClientGroupAndResale();
+      const { group, resale, company } = await createClientGroupAndResale();
       await prisma.client.create({
         data: {
           id: 60_201,
@@ -292,6 +302,7 @@ describe('FindAllClient - Integration tests', () => {
           document: '62100000000001',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'C',
           socialName: 'Social Ômega',
           headquarters: 'SP',
@@ -307,6 +318,7 @@ describe('FindAllClient - Integration tests', () => {
           document: '62200000000002',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'D',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -322,7 +334,7 @@ describe('FindAllClient - Integration tests', () => {
     });
 
     it('should filter by document (partial)', async() => {
-      const { group, resale } = await createClientGroupAndResale();
+      const { group, resale, company } = await createClientGroupAndResale();
       await prisma.client.create({
         data: {
           id: 60_301,
@@ -330,6 +342,7 @@ describe('FindAllClient - Integration tests', () => {
           document: '11.222.333/0001-99',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'E',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -344,6 +357,7 @@ describe('FindAllClient - Integration tests', () => {
           document: '99888777666555',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'F',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -359,7 +373,7 @@ describe('FindAllClient - Integration tests', () => {
     });
 
     it('should filter by headquarters', async() => {
-      const { group, resale } = await createClientGroupAndResale();
+      const { group, resale, company } = await createClientGroupAndResale();
       await prisma.client.create({
         data: {
           id: 60_401,
@@ -367,6 +381,7 @@ describe('FindAllClient - Integration tests', () => {
           document: '64100000000001',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'G',
           headquarters: 'Matriz SÃO PAULO Centro',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -381,6 +396,7 @@ describe('FindAllClient - Integration tests', () => {
           document: '64200000000002',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'H',
           headquarters: 'Filial Rio',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -396,7 +412,7 @@ describe('FindAllClient - Integration tests', () => {
     });
 
     it('should filter by domain', async() => {
-      const { group, resale } = await createClientGroupAndResale();
+      const { group, resale, company } = await createClientGroupAndResale();
       await prisma.client.create({
         data: {
           id: 60_501,
@@ -404,6 +420,7 @@ describe('FindAllClient - Integration tests', () => {
           document: '65100000000001',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'I',
           domain: 'Cliente.EXEMPLO.org',
           headquarters: 'SP',
@@ -419,6 +436,7 @@ describe('FindAllClient - Integration tests', () => {
           document: '65200000000002',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'J',
           domain: 'outro.com',
           headquarters: 'SP',
@@ -435,7 +453,7 @@ describe('FindAllClient - Integration tests', () => {
     });
 
     it('should filter by ie', async() => {
-      const { group, resale } = await createClientGroupAndResale();
+      const { group, resale, company } = await createClientGroupAndResale();
       await prisma.client.create({
         data: {
           id: 60_601,
@@ -444,6 +462,7 @@ describe('FindAllClient - Integration tests', () => {
           ie: 'IE-ESP-2024',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'K',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -459,6 +478,7 @@ describe('FindAllClient - Integration tests', () => {
           ie: '999',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'L',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -474,7 +494,7 @@ describe('FindAllClient - Integration tests', () => {
     });
 
     it('should filter by active', async() => {
-      const { group, resale } = await createClientGroupAndResale();
+      const { group, resale, company } = await createClientGroupAndResale();
       await prisma.client.create({
         data: {
           id: 60_701,
@@ -482,6 +502,7 @@ describe('FindAllClient - Integration tests', () => {
           document: '67100000000001',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'Ativo',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -496,6 +517,7 @@ describe('FindAllClient - Integration tests', () => {
           document: '67200000000002',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'Inativo',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -513,7 +535,7 @@ describe('FindAllClient - Integration tests', () => {
 
   describe('filters — combinations (AND)', () => {
     it('should require both companyName and fantasyName to match', async() => {
-      const { group, resale } = await createClientGroupAndResale();
+      const { group, resale, company } = await createClientGroupAndResale();
       await prisma.client.create({
         data: {
           id: 61_001,
@@ -521,6 +543,7 @@ describe('FindAllClient - Integration tests', () => {
           document: '68100000000001',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'Combo Alfa Ltda',
           fantasyName: 'Marca Gamma',
           headquarters: 'SP',
@@ -536,6 +559,7 @@ describe('FindAllClient - Integration tests', () => {
           document: '68200000000002',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'Combo Alfa Outro',
           fantasyName: 'Marca Delta',
           headquarters: 'SP',
@@ -554,7 +578,7 @@ describe('FindAllClient - Integration tests', () => {
     });
 
     it('should combine document, ie, and domain', async() => {
-      const { group, resale } = await createClientGroupAndResale();
+      const { group, resale, company } = await createClientGroupAndResale();
       await prisma.client.create({
         data: {
           id: 61_101,
@@ -563,6 +587,7 @@ describe('FindAllClient - Integration tests', () => {
           ie: 'SP-IE-555',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'M',
           domain: 'unico.dev.br',
           headquarters: 'SP',
@@ -579,6 +604,7 @@ describe('FindAllClient - Integration tests', () => {
           ie: 'RJ-IE-555',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'N',
           domain: 'unico.dev.br',
           headquarters: 'SP',
@@ -597,7 +623,7 @@ describe('FindAllClient - Integration tests', () => {
     });
 
     it('should combine socialName, headquarters, and active', async() => {
-      const { group, resale } = await createClientGroupAndResale();
+      const { group, resale, company } = await createClientGroupAndResale();
       await prisma.client.create({
         data: {
           id: 61_201,
@@ -605,6 +631,7 @@ describe('FindAllClient - Integration tests', () => {
           document: '69100000000001',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'O',
           socialName: 'Sol Nascente',
           headquarters: 'Filial Norte Especial',
@@ -620,6 +647,7 @@ describe('FindAllClient - Integration tests', () => {
           document: '69200000000002',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'P',
           socialName: 'Sol Nascente',
           headquarters: 'Filial Sul',
@@ -635,6 +663,7 @@ describe('FindAllClient - Integration tests', () => {
           document: '69300000000003',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'Q',
           socialName: 'Sol Nascente',
           headquarters: 'Filial Norte Especial',
@@ -657,7 +686,7 @@ describe('FindAllClient - Integration tests', () => {
     });
 
     it('should apply every filter plus pagination at once', async() => {
-      const { group, resale } = await createClientGroupAndResale();
+      const { group, resale, company } = await createClientGroupAndResale();
       await prisma.client.create({
         data: {
           id: 62_001,
@@ -666,6 +695,7 @@ describe('FindAllClient - Integration tests', () => {
           ie: 'FULL-1',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'Full Match Alpha',
           fantasyName: 'Fant Full',
           socialName: 'Soc Full',
@@ -684,6 +714,7 @@ describe('FindAllClient - Integration tests', () => {
           ie: 'FULL-1',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'Full Match Alpha',
           fantasyName: 'Fant Full',
           socialName: 'Soc Full',

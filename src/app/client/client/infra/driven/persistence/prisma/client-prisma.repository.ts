@@ -12,15 +12,12 @@ export class ClientRepositoryAdapterPrisma implements IClientRepository {
 
   public async save(entity: Client): Promise<number> {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { id, companyIds, ...props } = entity.props;
+    const { id, ...props } = entity.props;
 
     const created = await this.prisma.client.create({
       data: {
         id,
         ...props,
-        companies: {
-          connect: companyIds.map((companyId) => ({ id: companyId })),
-        },
       },
     });
     return created.id;
@@ -28,15 +25,12 @@ export class ClientRepositoryAdapterPrisma implements IClientRepository {
 
   public async edit(entity: Client): Promise<void> {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { id, companyIds, ...props } = entity.props;
+    const { id, ...props } = entity.props;
 
     await this.prisma.client.update({
       where: { id: id! },
       data: {
         ...props,
-        companies: {
-          set: companyIds.map((companyId) => ({ id: companyId })),
-        },
       },
     });
   }
@@ -44,16 +38,11 @@ export class ClientRepositoryAdapterPrisma implements IClientRepository {
   public async findById(id: number): Promise<Client | null> {
     const data = await this.prisma.client.findUnique({
       where: { id },
-      include: { companies: true },
     });
     if (!data) return null;
 
-    const { companies, ...clientData } = data;
-    const companyIds = companies?.map((c) => c.id) ?? [];
-
     return ClientFactory.load({
-      ...clientData,
-      companyIds,
+      ...data,
       parentClientId: data.parentClientId ?? null,
       isSubClient: data.isSubClient,
       type: data.type as ClientType,

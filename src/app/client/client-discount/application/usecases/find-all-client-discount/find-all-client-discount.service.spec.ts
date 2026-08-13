@@ -1,4 +1,5 @@
 import { buildMinimalResaleData, nextResaleFixtureId } from 'src/test/fixtures/minimal-resale';
+import { buildMinimalCompanyData } from 'src/test/fixtures/minimal-company';
 import { Test } from '@nestjs/testing';
 import { ClientDiscountModule } from 'src/app/client/client-discount/client-discount.module';
 import { DiscountType } from 'src/app/client/client-discount/domain/enums/discount-type.enum';
@@ -25,9 +26,10 @@ describe('FindAllClientDiscount', () => {
   beforeEach(async() => {
     await prisma.truncate();
 
-    const [group, resale] = await Promise.all([
+    const [group, resale, company] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
       prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
+      prisma.company.create({ data: buildMinimalCompanyData() }),
     ]);
 
     const client = await prisma.client.create({
@@ -38,6 +40,7 @@ describe('FindAllClientDiscount', () => {
         ie: null,
         groupId: group.id,
         resaleId: resale.id,
+        companyId: company.id,
         companyName: 'Empresa Test',
         fantasyName: null,
         headquarters: 'São Paulo',
@@ -284,9 +287,10 @@ describe('FindAllClientDiscount', () => {
   });
 
   it('should return only discounts for the given clientId', async() => {
-    const [group2, resale2] = await Promise.all([
+    const [group2, resale2, company2] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo Outro ${Date.now()}`, active: true } }),
       prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
+      prisma.company.create({ data: buildMinimalCompanyData() }),
     ]);
 
     const otherClient = await prisma.client.create({
@@ -297,6 +301,7 @@ describe('FindAllClientDiscount', () => {
         ie: null,
         groupId: group2.id,
         resaleId: resale2.id,
+        companyId: company2.id,
         companyName: 'Outra Empresa',
         fantasyName: null,
         headquarters: 'Rio',

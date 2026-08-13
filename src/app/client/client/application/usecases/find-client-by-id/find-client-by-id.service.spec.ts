@@ -1,4 +1,5 @@
 import { buildMinimalResaleData, nextResaleFixtureId } from 'src/test/fixtures/minimal-resale';
+import { buildMinimalCompanyData } from 'src/test/fixtures/minimal-company';
 import { Test } from '@nestjs/testing';
 import { ClientModule } from 'src/app/client/client/client.module';
 import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
@@ -40,9 +41,10 @@ describe('FindClientById - Integration tests', () => {
   });
 
   it('should throw ClientNotFoundError when onlyActive is true and client is inactive', async() => {
-    const [group, resale] = await Promise.all([
+    const [group, resale, company] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
       prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
+      prisma.company.create({ data: buildMinimalCompanyData() }),
     ]);
 
     const client = await prisma.client.create({
@@ -52,6 +54,7 @@ describe('FindClientById - Integration tests', () => {
         document: '09748165000110',
         groupId: group.id,
         resaleId: resale.id,
+        companyId: company.id,
         companyName: 'Empresa',
         headquarters: 'SP',
         invoiceType: ClientInvoiceType.CONTRACT,
@@ -65,9 +68,10 @@ describe('FindClientById - Integration tests', () => {
   });
 
   it('should return client when onlyActive is true and client is active', async() => {
-    const [group, resale] = await Promise.all([
+    const [group, resale, company] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
       prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
+      prisma.company.create({ data: buildMinimalCompanyData() }),
     ]);
 
     const client = await prisma.client.create({
@@ -77,6 +81,7 @@ describe('FindClientById - Integration tests', () => {
         document: '09748165000110',
         groupId: group.id,
         resaleId: resale.id,
+        companyId: company.id,
         companyName: 'Empresa Ativa',
         headquarters: 'SP',
         invoiceType: ClientInvoiceType.CONTRACT,
@@ -93,9 +98,10 @@ describe('FindClientById - Integration tests', () => {
   });
 
   it('should return client by id', async() => {
-    const [group, resale] = await Promise.all([
+    const [group, resale, company] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
       prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
+      prisma.company.create({ data: buildMinimalCompanyData() }),
     ]);
 
     const client = await prisma.client.create({
@@ -106,6 +112,7 @@ describe('FindClientById - Integration tests', () => {
         ie: '123456789',
         groupId: group.id,
         resaleId: resale.id,
+        companyId: company.id,
         companyName: 'Empresa LTDA',
         fantasyName: 'Empresa',
         headquarters: 'São Paulo',
@@ -125,9 +132,10 @@ describe('FindClientById - Integration tests', () => {
   });
 
   it('should return all client fields correctly', async() => {
-    const [group, resale] = await Promise.all([
+    const [group, resale, company] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
       prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
+      prisma.company.create({ data: buildMinimalCompanyData() }),
     ]);
 
     const client = await prisma.client.create({
@@ -138,6 +146,7 @@ describe('FindClientById - Integration tests', () => {
         ie: null,
         groupId: group.id,
         resaleId: resale.id,
+        companyId: company.id,
         companyName: 'Pessoa Física',
         fantasyName: null,
         headquarters: 'Rio de Janeiro',
@@ -175,7 +184,7 @@ describe('FindClientById - Integration tests', () => {
       invoiceType: ClientInvoiceType.INDIVIDUAL,
       generateInvoice: false,
       active: false,
-      companies: [],
+      company: { id: company.id, name: company.name },
       createdAt: client.createdAt,
       updatedAt: client.updatedAt,
     });

@@ -61,7 +61,7 @@ export class SetClientParent {
       resaleId: client.resale.id,
       parentClientId: requestedParent,
       isSubClient: requestedParent !== null,
-      companyIds: (client.companies ?? []).map((c) => c.id),
+      companyId: client.company.id,
       invoiceType: client.invoiceType as ClientInvoiceType,
       generateInvoice: client.generateInvoice,
       companyName: client.companyName,

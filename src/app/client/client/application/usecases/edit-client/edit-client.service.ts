@@ -30,8 +30,8 @@ export class EditClient {
       throw new ClientNotFoundError();
     }
 
-    const companyIds =
-      data.companyIds !== undefined ? data.companyIds : (client.companies ?? []).map((c) => c.id);
+    const companyId =
+      data.companyId !== undefined ? data.companyId : client.company.id;
 
     const honorificId =
       data.honorificId !== undefined ? data.honorificId : (client.honorific?.id ?? null);
@@ -42,8 +42,8 @@ export class EditClient {
       id,
       groupId: data.groupId ?? client.group.id,
       resaleId: data.resaleId ?? client.resale.id,
+      companyId,
       honorificId,
-      companyIds,
       type: client.type as ClientType,
       invoiceType: client.invoiceType as ClientInvoiceType,
     });
@@ -54,12 +54,9 @@ export class EditClient {
     if (data.resaleId) {
       await this.findResaleById.execute(data.resaleId!, { onlyActive: true });
     }
-    if (data.companyIds) {
-      for (const companyId of data.companyIds) {
-        await this.findCompanyById.execute(companyId, { onlyActive: true });
-      }
+    if (data.companyId) {
+      await this.findCompanyById.execute(data.companyId, { onlyActive: true });
     }
-
     if (data.honorificId !== undefined && data.honorificId != null) {
       await this.findHonorificById.execute(data.honorificId, { onlyActive: true });
     }

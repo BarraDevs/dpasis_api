@@ -2,6 +2,7 @@ import { Test } from '@nestjs/testing';
 import { DepartmentInUseError } from 'src/app/global/department/domain/errors/department-in-use.error';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { buildMinimalResaleData, nextResaleFixtureId } from 'src/test/fixtures/minimal-resale';
+import { buildMinimalCompanyData } from 'src/test/fixtures/minimal-company';
 import { DepartmentModule } from '../../../department.module';
 import { DepartmentNotFoundError } from '../../../domain/errors/department-not-found.error';
 import { DeleteDepartment } from './delete-department.service';
@@ -40,9 +41,10 @@ describe('DeleteDepartment - Integration tests', () => {
     const department = await prisma.department.create({
       data: { name: `Dept ${Date.now()}`, active: true },
     });
-    const [group, resale] = await Promise.all([
+    const [group, resale, company] = await Promise.all([
       prisma.clientGroup.create({ data: { name: 'Grupo', active: true } }),
       prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
+      prisma.company.create({ data: buildMinimalCompanyData() }),
     ]);
     const client = await prisma.client.create({
       data: {
@@ -52,6 +54,7 @@ describe('DeleteDepartment - Integration tests', () => {
         ie: null,
         groupId: group.id,
         resaleId: resale.id,
+        companyId: company.id,
         companyName: 'Empresa',
         fantasyName: null,
         headquarters: 'SP',

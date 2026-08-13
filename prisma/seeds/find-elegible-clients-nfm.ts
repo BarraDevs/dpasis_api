@@ -150,6 +150,7 @@ const SEED_CLIENT_PROFILES: SeedClientProfile[] = [
 type SeedDeps = {
   groupId: number;
   resaleId: number;
+  companyId: number;
   bankId: number;
   cnaeNbsIndopId: number;
   todayDueDay: number;
@@ -167,6 +168,7 @@ export class FindElegibleClientsNfmSeed {
     const deps: SeedDeps = {
       groupId: await this.ensureClientGroup(prisma),
       resaleId: await this.ensureResale(prisma),
+      companyId: await this.ensureCompany(prisma),
       bankId: await this.ensureBank(prisma),
       cnaeNbsIndopId: await this.ensureCnaeNbsIndop(prisma),
       todayDueDay,
@@ -213,6 +215,7 @@ export class FindElegibleClientsNfmSeed {
       ie: null,
       group: { connect: { id: deps.groupId } },
       resale: { connect: { id: deps.resaleId } },
+      company: { connect: { id: deps.companyId } },
       companyName: profile.companyName,
       fantasyName: profile.fantasyName,
       headquarters: 'Matriz',
@@ -233,6 +236,7 @@ export class FindElegibleClientsNfmSeed {
         active: profile.active ?? true,
         group: { connect: { id: deps.groupId } },
         resale: { connect: { id: deps.resaleId } },
+        company: { connect: { id: deps.companyId } },
       },
     });
 
@@ -324,6 +328,36 @@ export class FindElegibleClientsNfmSeed {
       select: { id: true },
     });
     return group.id;
+  }
+
+  private static async ensureCompany(prisma: PrismaClient): Promise<number> {
+    const found = await prisma.company.findFirst({ select: { id: true } });
+    if (found) {
+      return found.id;
+    }
+
+    const company = await prisma.company.create({
+      data: {
+        name: 'Empresa seed NFM',
+        fantasyName: 'Seed NFM',
+        document: '88.888.888/0000-00',
+        ie: null,
+        active: true,
+        zipCode: '01310-100',
+        street: 'Av. Paulista',
+        number: '1000',
+        complement: null,
+        neighborhood: 'Bela Vista',
+        city: 'São Paulo',
+        state: 'SP',
+        phone01: '11999999999',
+        phone02: null,
+        cellphone: null,
+        email01: 'seed-nfm@test.com',
+        email02: null,
+      },
+    });
+    return company.id;
   }
 
   private static async ensureResale(prisma: PrismaClient): Promise<number> {

@@ -1,4 +1,5 @@
 import { buildMinimalResaleData, nextResaleFixtureId } from 'src/test/fixtures/minimal-resale';
+import { buildMinimalCompanyData } from 'src/test/fixtures/minimal-company';
 import { Test } from '@nestjs/testing';
 import { ClientAddressType } from 'src/app/client/client-address/domain/enums/client-address-type.enum';
 import { ClientTypeModule } from 'src/app/client/client-type/client-type/client-type.module';
@@ -16,6 +17,7 @@ describe('FindClientTypeById', () => {
       data: { name: `Grupo ${Date.now()}-${Math.random()}`, active: true },
     });
     const resale = await prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) });
+    const company = await prisma.company.create({ data: buildMinimalCompanyData() });
     const client = await prisma.client.create({
       data: {
         id: 1,
@@ -24,6 +26,7 @@ describe('FindClientTypeById', () => {
         ie: null,
         groupId: group.id,
         resaleId: resale.id,
+        companyId: company.id,
         companyName: 'Empresa Test',
         fantasyName: null,
         headquarters: 'SP',

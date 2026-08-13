@@ -203,7 +203,8 @@ describe('CreateClientAddressInputDto', () => {
     });
 
     it('should accept undefined cityCodeIbge', async() => {
-      const { cityCodeIbge: _, ...data } = makeValidData();
+      const data = { ...makeValidData() };
+      delete (data as { cityCodeIbge?: string | null }).cityCodeIbge;
 
       const result = await target.transform(data, metadata);
 

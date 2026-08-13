@@ -6,6 +6,7 @@ import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-inv
 import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { buildMinimalResaleData, nextResaleFixtureId } from 'src/test/fixtures/minimal-resale';
+import { buildMinimalCompanyData } from 'src/test/fixtures/minimal-company';
 import { NfmModule } from '../../../nfm.module';
 import { FindElegibleClients } from './find-elegible-clients.service';
 
@@ -15,14 +16,16 @@ const TOMORROW = TODAY < 28 ? TODAY + 1 : TODAY - 1;
 type SeedBase = {
   groupId: number;
   resaleId: number;
+  companyId: number;
   bankId: number;
   cnaeNbsIndopId: number;
 };
 
 async function seedBase(prisma: PrismaService): Promise<SeedBase> {
-  const [group, resale] = await Promise.all([
+  const [group, resale, company] = await Promise.all([
     prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
     prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
+    prisma.company.create({ data: buildMinimalCompanyData() }),
   ]);
 
   const bank = await prisma.bank.create({
@@ -50,6 +53,7 @@ async function seedBase(prisma: PrismaService): Promise<SeedBase> {
   return {
     groupId: group.id,
     resaleId: resale.id,
+    companyId: company.id,
     bankId: bank.id,
     cnaeNbsIndopId: cnaeNbsIndop.id,
   };
@@ -85,6 +89,7 @@ async function createClientWithConfig(
       ie: null,
       groupId: base.groupId,
       resaleId: base.resaleId,
+      companyId: base.companyId,
       companyName: `Empresa ${clientId}`,
       fantasyName: null,
       headquarters: 'São Paulo',

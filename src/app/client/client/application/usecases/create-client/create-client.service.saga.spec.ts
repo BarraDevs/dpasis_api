@@ -71,7 +71,7 @@ describe('CreateClient — saga (step 1: save client, step 2: create MAIN addres
         groupId: 0,
         resaleId: 0,
         parentClientId: null,
-        companyIds: [1],
+        companyId: 1,
         companyName: 'Empresa LTDA',
         fantasyName: null,
         socialName: null,
@@ -100,7 +100,7 @@ describe('CreateClient — saga (step 1: save client, step 2: create MAIN addres
         createCompany(),
       ]);
 
-      const input = makeValidInput({ groupId: group.id, resaleId: resale.id, companyIds: [company.id] });
+      const input = makeValidInput({ groupId: group.id, resaleId: resale.id, companyId: company.id });
 
       const result = await sut.execute(input);
 
@@ -189,7 +189,7 @@ describe('CreateClient — saga (step 1: save client, step 2: create MAIN addres
         groupId: 0,
         resaleId: 0,
         parentClientId: null,
-        companyIds: [1],
+        companyId: 1,
         companyName: 'Empresa LTDA',
         fantasyName: null,
         socialName: null,
@@ -220,7 +220,7 @@ describe('CreateClient — saga (step 1: save client, step 2: create MAIN addres
         createCompany(),
       ]);
 
-      const input = makeValidInput({ groupId: group.id, resaleId: resale.id, companyIds: [company.id] });
+      const input = makeValidInput({ groupId: group.id, resaleId: resale.id, companyId: company.id });
 
       await expect(sut.execute(input)).rejects.toThrow('step 2 failed');
 
@@ -243,7 +243,7 @@ describe('CreateClient — saga (step 1: save client, step 2: create MAIN addres
         createCompany(),
       ]);
 
-      const input = makeValidInput({ groupId: group.id, resaleId: resale.id, companyIds: [company.id] });
+      const input = makeValidInput({ groupId: group.id, resaleId: resale.id, companyId: company.id });
 
       await expect(sut.execute(input)).rejects.toThrow(ClientAddressAlreadyExistsError);
 
@@ -262,7 +262,7 @@ describe('CreateClient — saga (step 1: save client, step 2: create MAIN addres
         createCompany(),
       ]);
 
-      const input = makeValidInput({ groupId: group.id, resaleId: resale.id, companyIds: [company.id] });
+      const input = makeValidInput({ groupId: group.id, resaleId: resale.id, companyId: company.id });
 
       const result = await sut.execute(input);
 

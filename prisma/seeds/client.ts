@@ -9,13 +9,14 @@ export class ClientSeed {
       return;
     }
 
-    const [firstGroup, firstResale] = await Promise.all([
+    const [firstGroup, firstResale, firstCompany] = await Promise.all([
       prisma.clientGroup.findFirst({ select: { id: true } }),
       prisma.resale.findFirst({ select: { id: true } }),
+      prisma.company.findFirst({ select: { id: true } }),
     ]);
 
-    if (!firstGroup || !firstResale) {
-      console.log('Client: Skipping - ClientGroup or Resale not seeded');
+    if (!firstGroup || !firstResale || !firstCompany) {
+      console.log('Client: Skipping - ClientGroup, Resale or Company not seeded');
       return;
     }
 
@@ -27,6 +28,7 @@ export class ClientSeed {
         ie: '123.456.789.001',
         group: { connect: { id: firstGroup.id } },
         resale: { connect: { id: firstResale.id } },
+        company: { connect: { id: firstCompany.id } },
         companyName: 'Cliente Exemplo Ltda',
         fantasyName: 'Cliente Exemplo',
         socialName: 'Cliente Exemplo Ltda.',
@@ -41,6 +43,7 @@ export class ClientSeed {
         document: '98.765.432/0001-11',
         group: { connect: { id: firstGroup.id } },
         resale: { connect: { id: firstResale.id } },
+        company: { connect: { id: firstCompany.id } },
         companyName: 'Tech Cliente S.A.',
         fantasyName: 'TechCliente',
         headquarters: 'Matriz',
@@ -54,6 +57,7 @@ export class ClientSeed {
         document: '123.456.789-00',
         group: { connect: { id: firstGroup.id } },
         resale: { connect: { id: firstResale.id } },
+        company: { connect: { id: firstCompany.id } },
         companyName: 'João da Silva',
         headquarters: 'Único',
         invoiceType: ClientInvoiceType.CONTRACT,

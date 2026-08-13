@@ -1,4 +1,5 @@
 import { buildMinimalResaleData, nextResaleFixtureId } from 'src/test/fixtures/minimal-resale';
+import { buildMinimalCompanyData } from 'src/test/fixtures/minimal-company';
 import { Test } from '@nestjs/testing';
 import { ClientAddressType } from 'src/app/client/client-address/domain/enums/client-address-type.enum';
 import { ClientInvoiceConfigDto } from 'src/app/client/client-invoice-config/application/dtos/client-invoice-config.dto';
@@ -69,9 +70,10 @@ describe('ClientInvoiceConfigDaoAdapterPrisma - Integration tests', () => {
   beforeEach(async() => {
     await prisma.truncate();
 
-    const [group, resale] = await Promise.all([
+    const [group, resale, company] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
       prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
+      prisma.company.create({ data: buildMinimalCompanyData() }),
     ]);
 
     clientRow = await prisma.client.create({
@@ -82,6 +84,7 @@ describe('ClientInvoiceConfigDaoAdapterPrisma - Integration tests', () => {
         ie: null,
         groupId: group.id,
         resaleId: resale.id,
+        companyId: company.id,
         companyName: 'Empresa Test',
         fantasyName: null,
         headquarters: 'São Paulo',
@@ -247,14 +250,17 @@ describe('ClientInvoiceConfigDaoAdapterPrisma - Integration tests', () => {
         },
       });
 
+      const existingClient = await prisma.client.findUniqueOrThrow({ where: { id: clientId } });
+
       const client2 = await prisma.client.create({
         data: {
           id: 2,
           type: ClientType.PJ,
           document: '09748165000121',
           ie: null,
-          groupId: (await prisma.client.findUniqueOrThrow({ where: { id: clientId } })).groupId,
-          resaleId: (await prisma.client.findUniqueOrThrow({ where: { id: clientId } })).resaleId,
+          groupId: existingClient.groupId,
+          resaleId: existingClient.resaleId,
+          companyId: existingClient.companyId,
           companyName: 'Empresa 2',
           fantasyName: null,
           headquarters: 'São Paulo',
@@ -323,14 +329,17 @@ describe('ClientInvoiceConfigDaoAdapterPrisma - Integration tests', () => {
         },
       });
 
+      const existingClient = await prisma.client.findUniqueOrThrow({ where: { id: clientId } });
+
       const client2 = await prisma.client.create({
         data: {
           id: 2,
           type: ClientType.PJ,
           document: '09748165000121',
           ie: null,
-          groupId: (await prisma.client.findUniqueOrThrow({ where: { id: clientId } })).groupId,
-          resaleId: (await prisma.client.findUniqueOrThrow({ where: { id: clientId } })).resaleId,
+          groupId: existingClient.groupId,
+          resaleId: existingClient.resaleId,
+          companyId: existingClient.companyId,
           companyName: 'Empresa 2',
           fantasyName: null,
           headquarters: 'São Paulo',

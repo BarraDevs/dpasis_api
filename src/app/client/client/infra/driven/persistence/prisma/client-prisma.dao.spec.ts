@@ -1,4 +1,5 @@
 import { buildMinimalResaleData, nextResaleFixtureId } from 'src/test/fixtures/minimal-resale';
+import { buildMinimalCompanyData } from 'src/test/fixtures/minimal-company';
 import { Test } from '@nestjs/testing';
 import { ClientDto } from 'src/app/client/client/application/dtos/client.dto';
 import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
@@ -34,11 +35,12 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
   });
 
   async function createClientGroupAndResale() {
-    const [group, resale] = await Promise.all([
+    const [group, resale, company] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
       prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
+      prisma.company.create({ data: buildMinimalCompanyData() }),
     ]);
-    return { group, resale };
+    return { group, resale, company };
   }
 
   describe('findAll', () => {
@@ -58,7 +60,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
     });
 
     it('should apply pagination with stable ascending id order', async() => {
-      const { group, resale } = await createClientGroupAndResale();
+      const { group, resale, company } = await createClientGroupAndResale();
       const baseId = 70_000;
       for (let i = 0; i < 4; i += 1) {
         await prisma.client.create({
@@ -68,6 +70,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
             document: `D${baseId + i}`.padStart(14, '0'),
             groupId: group.id,
             resaleId: resale.id,
+            companyId: company.id,
             companyName: `Dao Pag ${i}`,
             headquarters: 'SP',
             invoiceType: ClientInvoiceType.CONTRACT,
@@ -87,7 +90,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
     });
 
     it('should filter by companyName (contains, case-insensitive)', async() => {
-      const { group, resale } = await createClientGroupAndResale();
+      const { group, resale, company } = await createClientGroupAndResale();
       await prisma.client.create({
         data: {
           id: 70_100,
@@ -95,6 +98,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           document: '70100000000001',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'Zebra DAO Alpha',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -109,6 +113,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           document: '70101000000002',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'Outro Nome',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -125,7 +130,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
     });
 
     it('should filter by fantasyName', async() => {
-      const { group, resale } = await createClientGroupAndResale();
+      const { group, resale, company } = await createClientGroupAndResale();
       await prisma.client.create({
         data: {
           id: 70_200,
@@ -133,6 +138,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           document: '70200000000001',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'A',
           fantasyName: 'Fantasia Gama Especial',
           headquarters: 'SP',
@@ -148,6 +154,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           document: '70201000000002',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'B',
           fantasyName: 'Outra',
           headquarters: 'SP',
@@ -164,7 +171,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
     });
 
     it('should filter by socialName', async() => {
-      const { group, resale } = await createClientGroupAndResale();
+      const { group, resale, company } = await createClientGroupAndResale();
       await prisma.client.create({
         data: {
           id: 70_300,
@@ -172,6 +179,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           document: '70300000000001',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'C',
           socialName: 'Social Ômega Plus',
           headquarters: 'SP',
@@ -187,6 +195,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           document: '70301000000002',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'D',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -202,7 +211,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
     });
 
     it('should filter by document (partial)', async() => {
-      const { group, resale } = await createClientGroupAndResale();
+      const { group, resale, company } = await createClientGroupAndResale();
       await prisma.client.create({
         data: {
           id: 70_400,
@@ -210,6 +219,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           document: '12.444.555/0001-88',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'E',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -224,6 +234,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           document: '99887766554433',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'F',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -239,7 +250,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
     });
 
     it('should filter by headquarters', async() => {
-      const { group, resale } = await createClientGroupAndResale();
+      const { group, resale, company } = await createClientGroupAndResale();
       await prisma.client.create({
         data: {
           id: 70_500,
@@ -247,6 +258,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           document: '70500000000001',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'G',
           headquarters: 'Sede MATRIZ Paulista',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -261,6 +273,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           document: '70501000000002',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'H',
           headquarters: 'Filial RJ',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -276,7 +289,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
     });
 
     it('should filter by domain', async() => {
-      const { group, resale } = await createClientGroupAndResale();
+      const { group, resale, company } = await createClientGroupAndResale();
       await prisma.client.create({
         data: {
           id: 70_600,
@@ -284,6 +297,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           document: '70600000000001',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'I',
           domain: 'cliente.DAO-TEST.app',
           headquarters: 'SP',
@@ -299,6 +313,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           document: '70601000000002',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'J',
           domain: 'outro.com',
           headquarters: 'SP',
@@ -315,7 +330,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
     });
 
     it('should filter by ie', async() => {
-      const { group, resale } = await createClientGroupAndResale();
+      const { group, resale, company } = await createClientGroupAndResale();
       await prisma.client.create({
         data: {
           id: 70_700,
@@ -324,6 +339,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           ie: 'IE-DAO-999-x',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'K',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -339,6 +355,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           ie: '000',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'L',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -354,7 +371,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
     });
 
     it('should filter by active', async() => {
-      const { group, resale } = await createClientGroupAndResale();
+      const { group, resale, company } = await createClientGroupAndResale();
       await prisma.client.create({
         data: {
           id: 70_800,
@@ -362,6 +379,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           document: '70800000000001',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'Ativo Dao',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -376,6 +394,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           document: '70801000000002',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'Inativo Dao',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -392,7 +411,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
     });
 
     it('should AND-combine companyName and domain', async() => {
-      const { group, resale } = await createClientGroupAndResale();
+      const { group, resale, company } = await createClientGroupAndResale();
       await prisma.client.create({
         data: {
           id: 70_900,
@@ -400,6 +419,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           document: '70900000000001',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'Mix Alfa Ltda',
           domain: 'alfa.cobinar.br',
           headquarters: 'SP',
@@ -415,6 +435,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           document: '70901000000002',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'Mix Alfa Outro',
           domain: 'delta.cobinar.br',
           headquarters: 'SP',
@@ -433,7 +454,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
     });
 
     it('should not add companyName condition when value is only whitespace', async() => {
-      const { group, resale } = await createClientGroupAndResale();
+      const { group, resale, company } = await createClientGroupAndResale();
       await prisma.client.create({
         data: {
           id: 70_910,
@@ -441,6 +462,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           document: '70910000000001',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'Whitespace Dao',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -464,7 +486,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
     });
 
     it('should return client by id with correct format', async() => {
-      const { group, resale } = await createClientGroupAndResale();
+      const { group, resale, company } = await createClientGroupAndResale();
 
       const created = await prisma.client.create({
         data: {
@@ -474,6 +496,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           ie: '123456789',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'Empresa Test',
           fantasyName: 'Fantasia',
           headquarters: 'São Paulo',
@@ -512,14 +535,14 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
         invoiceType: ClientInvoiceType.CONTRACT,
         generateInvoice: true,
         active: true,
-        companies: [],
+        company: { id: company.id, name: company.name },
         createdAt: created.createdAt,
         updatedAt: created.updatedAt,
       });
     });
 
     it('should verify record is in clients table', async() => {
-      const { group, resale } = await createClientGroupAndResale();
+      const { group, resale, company } = await createClientGroupAndResale();
 
       const created = await prisma.client.create({
         data: {
@@ -528,6 +551,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           document: '09748165000110',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'Empresa',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -554,7 +578,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
     });
 
     it('should return client by document with correct format', async() => {
-      const { group, resale } = await createClientGroupAndResale();
+      const { group, resale, company } = await createClientGroupAndResale();
 
       const created = await prisma.client.create({
         data: {
@@ -564,6 +588,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           ie: '123456789',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'Empresa Test',
           fantasyName: 'Fantasia',
           headquarters: 'São Paulo',
@@ -595,7 +620,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           id: resale.id,
           name: resale.name,
         },
-        companies: [],
+        company: { id: company.id, name: company.name },
         fantasyName: 'Fantasia',
         socialName: null,
         domain: null,
@@ -609,7 +634,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
     });
 
     it('should find client by document (CPF format)', async() => {
-      const { group, resale } = await createClientGroupAndResale();
+      const { group, resale, company } = await createClientGroupAndResale();
 
       const created = await prisma.client.create({
         data: {
@@ -618,6 +643,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           document: '97456321558',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'Pessoa Física',
           headquarters: 'Rio de Janeiro',
           invoiceType: ClientInvoiceType.INDIVIDUAL,
@@ -635,7 +661,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
     });
 
     it('should verify record is in clients table', async() => {
-      const { group, resale } = await createClientGroupAndResale();
+      const { group, resale, company } = await createClientGroupAndResale();
 
       const created = await prisma.client.create({
         data: {
@@ -644,6 +670,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           document: '09748165000110',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'Empresa',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -669,7 +696,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
     });
 
     it('should return the highest id among clients', async() => {
-      const { group, resale } = await createClientGroupAndResale();
+      const { group, resale, company } = await createClientGroupAndResale();
 
       const first = await prisma.client.create({
         data: {
@@ -678,6 +705,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           document: '09748165000110',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'Primeira',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -693,6 +721,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           document: '09748165000199',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'Segunda',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -709,7 +738,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
     });
 
     it('should return explicit id when it is greater than other rows', async() => {
-      const { group, resale } = await createClientGroupAndResale();
+      const { group, resale, company } = await createClientGroupAndResale();
       const suffix = String(Date.now()).slice(-4);
 
       await prisma.client.create({
@@ -719,6 +748,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           document: '09748165000110',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'Auto',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -735,6 +765,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           document: `09.748.165/0001-${suffix}`,
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'Id explícito',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -751,7 +782,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
 
   describe('findSubClients', () => {
     it('should return empty array and zero count when client has no sub-clients', async() => {
-      const { group, resale } = await createClientGroupAndResale();
+      const { group, resale, company } = await createClientGroupAndResale();
 
       const parent = await prisma.client.create({
         data: {
@@ -760,6 +791,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           document: '09748165000110',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'Empresa Pai',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -782,7 +814,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
     });
 
     it('should return sub-clients ordered by id', async() => {
-      const { group, resale } = await createClientGroupAndResale();
+      const { group, resale, company } = await createClientGroupAndResale();
 
       const parent = await prisma.client.create({
         data: {
@@ -791,6 +823,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           document: '09748165000110',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'Empresa Pai',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -806,6 +839,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           document: '09748165000121',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'Sub-cliente 1',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -823,6 +857,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           document: '97456321558',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'Sub-cliente 2',
           headquarters: 'RJ',
           invoiceType: ClientInvoiceType.INDIVIDUAL,
@@ -846,7 +881,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
     });
 
     it('should not return sub-clients of a different parent', async() => {
-      const { group, resale } = await createClientGroupAndResale();
+      const { group, resale, company } = await createClientGroupAndResale();
 
       const [parent1, parent2] = await Promise.all([
         prisma.client.create({
@@ -856,6 +891,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
             document: '09748165000110',
             groupId: group.id,
             resaleId: resale.id,
+            companyId: company.id,
             companyName: 'Empresa Pai 1',
             headquarters: 'SP',
             invoiceType: ClientInvoiceType.CONTRACT,
@@ -870,6 +906,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
             document: '09748165000121',
             groupId: group.id,
             resaleId: resale.id,
+            companyId: company.id,
             companyName: 'Empresa Pai 2',
             headquarters: 'SP',
             invoiceType: ClientInvoiceType.CONTRACT,
@@ -886,6 +923,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           document: '97456321558',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'Sub-cliente do Pai 2',
           headquarters: 'RJ',
           invoiceType: ClientInvoiceType.INDIVIDUAL,
@@ -903,7 +941,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
     });
 
     it('should return sub-clients with full ClientDto format', async() => {
-      const { group, resale } = await createClientGroupAndResale();
+      const { group, resale, company } = await createClientGroupAndResale();
 
       const parent = await prisma.client.create({
         data: {
@@ -912,6 +950,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           document: '09748165000110',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'Empresa Pai',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -928,6 +967,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           ie: null,
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'Sub-cliente',
           fantasyName: null,
           socialName: null,
@@ -964,14 +1004,14 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
         active: true,
         group: { id: group.id, name: group.name },
         resale: { id: resale.id, name: resale.name },
-        companies: [],
+        company: { id: company.id, name: company.name },
         createdAt: child.createdAt,
         updatedAt: child.updatedAt,
       });
     });
 
     it('should paginate sub-clients correctly', async() => {
-      const { group, resale } = await createClientGroupAndResale();
+      const { group, resale, company } = await createClientGroupAndResale();
 
       const parent = await prisma.client.create({
         data: {
@@ -980,6 +1020,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           document: '19748165000110',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'Empresa Pai',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -997,6 +1038,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
               document: `097481650001${String(i).padStart(2, '0')}`,
               groupId: group.id,
               resaleId: resale.id,
+              companyId: company.id,
               companyName: `Sub-cliente ${i + 1}`,
               headquarters: 'SP',
               invoiceType: ClientInvoiceType.CONTRACT,
@@ -1018,7 +1060,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
     });
 
     it('should filter sub-clients by search', async() => {
-      const { group, resale } = await createClientGroupAndResale();
+      const { group, resale, company } = await createClientGroupAndResale();
 
       const parent = await prisma.client.create({
         data: {
@@ -1027,6 +1069,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           document: '09748165000110',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'Empresa Pai',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -1043,6 +1086,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
             document: '09748165000121',
             groupId: group.id,
             resaleId: resale.id,
+            companyId: company.id,
             companyName: 'Sub Premium',
             headquarters: 'SP',
             invoiceType: ClientInvoiceType.CONTRACT,
@@ -1059,6 +1103,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
             document: '09748165000132',
             groupId: group.id,
             resaleId: resale.id,
+            companyId: company.id,
             companyName: 'Sub Básica',
             headquarters: 'SP',
             invoiceType: ClientInvoiceType.CONTRACT,
@@ -1078,7 +1123,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
     });
 
     it('should filter sub-clients by search in domain (case-insensitive)', async() => {
-      const { group, resale } = await createClientGroupAndResale();
+      const { group, resale, company } = await createClientGroupAndResale();
 
       const parent = await prisma.client.create({
         data: {
@@ -1087,6 +1132,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           document: '09748165997010',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'Empresa Pai',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -1102,6 +1148,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           document: '09748165997101',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'Sub Genérico',
           domain: 'sub.APP-teste.dev',
           headquarters: 'SP',
@@ -1119,6 +1166,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           document: '09748165997201',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'Sub Outro',
           domain: null,
           headquarters: 'SP',
@@ -1143,7 +1191,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
     });
 
     it('should filter sub-clients by active status', async() => {
-      const { group, resale } = await createClientGroupAndResale();
+      const { group, resale, company } = await createClientGroupAndResale();
 
       const parent = await prisma.client.create({
         data: {
@@ -1152,6 +1200,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           document: '09748165000110',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'Empresa Pai',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -1168,6 +1217,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
             document: '09748165000121',
             groupId: group.id,
             resaleId: resale.id,
+            companyId: company.id,
             companyName: 'Sub Ativo',
             headquarters: 'SP',
             invoiceType: ClientInvoiceType.CONTRACT,
@@ -1184,6 +1234,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
             document: '09748165000132',
             groupId: group.id,
             resaleId: resale.id,
+            companyId: company.id,
             companyName: 'Sub Inativo',
             headquarters: 'SP',
             invoiceType: ClientInvoiceType.CONTRACT,
@@ -1209,7 +1260,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
 
   describe('countSubClients', () => {
     it('should return 0 when client has no sub-clients', async() => {
-      const { group, resale } = await createClientGroupAndResale();
+      const { group, resale, company } = await createClientGroupAndResale();
 
       const row = await prisma.client.create({
         data: {
@@ -1218,6 +1269,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           document: '09748165000177',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'Sem filhos',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -1232,7 +1284,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
     });
 
     it('should return number of clients with parentClientId matching', async() => {
-      const { group, resale } = await createClientGroupAndResale();
+      const { group, resale, company } = await createClientGroupAndResale();
 
       const parent = await prisma.client.create({
         data: {
@@ -1241,6 +1293,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           document: '09748165000188',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'Pai para contagem',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -1257,6 +1310,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
             document: '09748165000199',
             groupId: group.id,
             resaleId: resale.id,
+            companyId: company.id,
             companyName: 'Sub Um',
             headquarters: 'SP',
             invoiceType: ClientInvoiceType.CONTRACT,
@@ -1273,6 +1327,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
             document: '09748165000200',
             groupId: group.id,
             resaleId: resale.id,
+            companyId: company.id,
             companyName: 'Sub Dois',
             headquarters: 'SP',
             invoiceType: ClientInvoiceType.CONTRACT,
@@ -1292,7 +1347,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
 
   describe('search', () => {
     it('should return all clients when filter is empty', async() => {
-      const { group, resale } = await createClientGroupAndResale();
+      const { group, resale, company } = await createClientGroupAndResale();
       await prisma.client.create({
         data: {
           id: 9001,
@@ -1300,6 +1355,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           document: '09748165000110',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'Busca Vazia',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -1317,7 +1373,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
     });
 
     it('should filter by groupId in and active eq (AND)', async() => {
-      const { group, resale } = await createClientGroupAndResale();
+      const { group, resale, company } = await createClientGroupAndResale();
       const g2 = await prisma.clientGroup.create({ data: { name: `G2-${Date.now()}`, active: true } });
       await prisma.client.createMany({
         data: [
@@ -1327,6 +1383,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
             document: '09748165000111',
             groupId: group.id,
             resaleId: resale.id,
+            companyId: company.id,
             companyName: 'A',
             headquarters: 'SP',
             invoiceType: ClientInvoiceType.CONTRACT,
@@ -1339,6 +1396,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
             document: '09748165000112',
             groupId: g2.id,
             resaleId: resale.id,
+            companyId: company.id,
             companyName: 'B',
             headquarters: 'SP',
             invoiceType: ClientInvoiceType.CONTRACT,
@@ -1356,7 +1414,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
     });
 
     it('should filter fantasyName isNull', async() => {
-      const { group, resale } = await createClientGroupAndResale();
+      const { group, resale, company } = await createClientGroupAndResale();
       await prisma.client.createMany({
         data: [
           {
@@ -1365,6 +1423,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
             document: '09748165000120',
             groupId: group.id,
             resaleId: resale.id,
+            companyId: company.id,
             companyName: 'Sem fantasia',
             fantasyName: null,
             headquarters: 'SP',
@@ -1378,6 +1437,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
             document: '09748165000121',
             groupId: group.id,
             resaleId: resale.id,
+            companyId: company.id,
             companyName: 'Com fantasia',
             fantasyName: 'Fan',
             headquarters: 'SP',
@@ -1396,7 +1456,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
     });
 
     it('should filter companyName contains case-insensitive', async() => {
-      const { group, resale } = await createClientGroupAndResale();
+      const { group, resale, company } = await createClientGroupAndResale();
       await prisma.client.createMany({
         data: [
           {
@@ -1405,6 +1465,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
             document: '09748165000130',
             groupId: group.id,
             resaleId: resale.id,
+            companyId: company.id,
             companyName: 'ACME Brasil',
             headquarters: 'SP',
             invoiceType: ClientInvoiceType.CONTRACT,
@@ -1417,6 +1478,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
             document: '09748165000131',
             groupId: group.id,
             resaleId: resale.id,
+            companyId: company.id,
             companyName: 'Outra',
             headquarters: 'SP',
             invoiceType: ClientInvoiceType.CONTRACT,
@@ -1434,7 +1496,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
     });
 
     it('should return all clients when filter is omitted', async() => {
-      const { group, resale } = await createClientGroupAndResale();
+      const { group, resale, company } = await createClientGroupAndResale();
       await prisma.client.create({
         data: {
           id: 9355,
@@ -1442,6 +1504,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
           document: '09748165803552',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'Sem filtro objeto',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -1458,7 +1521,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
     });
 
     it('should order clients by id ascending', async() => {
-      const { group, resale } = await createClientGroupAndResale();
+      const { group, resale, company } = await createClientGroupAndResale();
       await prisma.client.createMany({
         data: [
           {
@@ -1467,6 +1530,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
             document: '09748165805121',
             groupId: group.id,
             resaleId: resale.id,
+            companyId: company.id,
             companyName: 'Ordem B',
             headquarters: 'SP',
             invoiceType: ClientInvoiceType.CONTRACT,
@@ -1479,6 +1543,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
             document: '09748165805112',
             groupId: group.id,
             resaleId: resale.id,
+            companyId: company.id,
             companyName: 'Ordem A',
             headquarters: 'SP',
             invoiceType: ClientInvoiceType.CONTRACT,
@@ -1497,7 +1562,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
     });
 
     it('should filter by createdAt gte', async() => {
-      const { group, resale } = await createClientGroupAndResale();
+      const { group, resale, company } = await createClientGroupAndResale();
       const oldDate = new Date('2026-01-05T12:00:00.000Z');
       const newDate = new Date('2026-06-01T12:00:00.000Z');
       await prisma.client.createMany({
@@ -1508,6 +1573,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
             document: '09748165806207',
             groupId: group.id,
             resaleId: resale.id,
+            companyId: company.id,
             companyName: 'Cliente velho',
             headquarters: 'SP',
             invoiceType: ClientInvoiceType.CONTRACT,
@@ -1521,6 +1587,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
             document: '09748165806218',
             groupId: group.id,
             resaleId: resale.id,
+            companyId: company.id,
             companyName: 'Cliente novo',
             headquarters: 'SP',
             invoiceType: ClientInvoiceType.CONTRACT,
@@ -1542,7 +1609,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
     });
 
     it('should filter by document eq', async() => {
-      const { group, resale } = await createClientGroupAndResale();
+      const { group, resale, company } = await createClientGroupAndResale();
       await prisma.client.createMany({
         data: [
           {
@@ -1551,6 +1618,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
             document: '09748165807406',
             groupId: group.id,
             resaleId: resale.id,
+            companyId: company.id,
             companyName: 'Alfa Docs',
             headquarters: 'SP',
             invoiceType: ClientInvoiceType.CONTRACT,
@@ -1563,6 +1631,7 @@ describe('ClientDaoAdapterPrisma - Integration tests', () => {
             document: '09748165807417',
             groupId: group.id,
             resaleId: resale.id,
+            companyId: company.id,
             companyName: 'Beta Docs',
             headquarters: 'SP',
             invoiceType: ClientInvoiceType.CONTRACT,

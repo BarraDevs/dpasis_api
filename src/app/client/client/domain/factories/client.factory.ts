@@ -10,13 +10,6 @@ import { ClientInvoiceType } from '../enums/client-invoice-type.enum';
 import { ClientType } from '../enums/client-type.enum';
 
 export class ClientFactory {
-  private static validateCompanyIds(companyIds: number[], fieldName: string): number[] {
-    if (!Array.isArray(companyIds)) {
-      throw new Error(`${fieldName} deve ser um array`);
-    }
-    return companyIds.map((id, index) => new PositiveInt(id, `${fieldName}[${index}]`).value);
-  }
-
   private static validateCreateProps(props: ClientCreateProps): Omit<ClientProps, 'id' | 'active' | 'isSubClient'> {
     return {
       type: new Enum(props.type, ClientType, 'type').value,
@@ -26,7 +19,7 @@ export class ClientFactory {
       resaleId: new PositiveInt(props.resaleId, 'resaleId').value,
       parentClientId: props.parentClientId ? new PositiveInt(props.parentClientId, 'parentClientId').value : null,
       honorificId: props.honorificId ? new PositiveInt(props.honorificId, 'honorificId').value : null,
-      companyIds: this.validateCompanyIds(props.companyIds ?? [], 'companyIds'),
+      companyId: new PositiveInt(props.companyId, 'companyId').value,
       companyName: new NonEmptyString(props.companyName, 'companyName').value,
       headquarters: new NonEmptyString(props.headquarters, 'headquarters').value,
       ie: new OptionalString(props.ie, 'ie').value,
@@ -85,7 +78,7 @@ export class ClientFactory {
       parentClientId: props.parentClientId ?? null,
       honorificId: props.honorificId ?? null,
       isSubClient: props.isSubClient ?? false,
-      companyIds: props.companyIds ?? [],
+      companyId: props.companyId,
       invoiceType: props.invoiceType,
       generateInvoice: props.generateInvoice,
       companyName: props.companyName,

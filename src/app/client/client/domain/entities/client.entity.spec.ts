@@ -14,7 +14,7 @@ function makeClientProps(overrides?: Partial<ClientProps>): ClientProps {
     parentClientId: null,
     isSubClient: false,
     honorificId: null,
-    companyIds: [1],
+    companyId: 1,
     invoiceType: ClientInvoiceType.CONTRACT,
     generateInvoice: true,
     companyName: 'Empresa LTDA',
@@ -78,7 +78,7 @@ describe('Client', () => {
       expect(client.props.ie).toBe('123456789');
       expect(client.props.groupId).toBe(10);
       expect(client.props.resaleId).toBe(20);
-      expect(client.props.companyIds).toEqual([1]);
+      expect(client.props.companyId).toBe(1);
       expect(client.props.invoiceType).toBe(ClientInvoiceType.CONTRACT);
       expect(client.props.generateInvoice).toBe(true);
       expect(client.props.companyName).toBe('Custom Company');
@@ -122,7 +122,7 @@ describe('Client', () => {
         'parentClientId',
         'isSubClient',
         'honorificId',
-        'companyIds',
+        'companyId',
         'invoiceType',
         'generateInvoice',
         'companyName',

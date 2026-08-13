@@ -1,4 +1,5 @@
 import { buildMinimalResaleData, nextResaleFixtureId } from 'src/test/fixtures/minimal-resale';
+import { buildMinimalCompanyData } from 'src/test/fixtures/minimal-company';
 import { Test } from '@nestjs/testing';
 import { ClientItemProps } from 'src/app/client/client-item/domain/entities/client-item.entity';
 import { ClientItemFactory } from 'src/app/client/client-item/domain/factories/client-item.factory';
@@ -27,12 +28,13 @@ describe('ClientItemRepositoryAdapterPrisma - Integration tests', () => {
   beforeEach(async() => {
     await prisma.truncate();
 
-    const [group, resale, cnae, nbs, indop] = await Promise.all([
+    const [group, resale, cnae, nbs, indop, company] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
       prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
       prisma.cnae.create({ data: { code: 'cnae-code', description: 'CNAE Test', active: true } }),
       prisma.nbs.create({ data: { code: 'nbs-code', description: 'NBS Test', active: true } }),
       prisma.indop.create({ data: { code: 'indop-code', description: 'INDOP Test', active: true } }),
+      prisma.company.create({ data: buildMinimalCompanyData() }),
     ]);
 
     const cni = await prisma.cnaeNbsIndop.create({
@@ -48,6 +50,7 @@ describe('ClientItemRepositoryAdapterPrisma - Integration tests', () => {
         ie: null,
         groupId: group.id,
         resaleId: resale.id,
+        companyId: company.id,
         companyName: 'Empresa Test',
         fantasyName: null,
         headquarters: 'São Paulo',

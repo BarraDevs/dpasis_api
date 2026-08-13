@@ -1,5 +1,6 @@
 import { Test } from '@nestjs/testing';
 import { buildMinimalResaleData, nextResaleFixtureId } from 'src/test/fixtures/minimal-resale';
+import { buildMinimalCompanyData } from 'src/test/fixtures/minimal-company';
 import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
 import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum';
 import { ClientHasSubClientsCannotSetParentError } from 'src/app/client/client/domain/errors/client-has-sub-clients-cannot-set-parent.error';
@@ -34,11 +35,12 @@ describe('SetClientParent - Integration tests', () => {
   });
 
   async function seedGroupAndResale() {
-    const [group, resale] = await Promise.all([
+    const [group, resale, company] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
       prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
+      prisma.company.create({ data: buildMinimalCompanyData() }),
     ]);
-    return { group, resale };
+    return { group, resale, company };
   }
 
   it('should be defined', () => {
@@ -46,7 +48,7 @@ describe('SetClientParent - Integration tests', () => {
   });
 
   it('should transfer sub-client from parent A to parent B', async() => {
-    const { group, resale } = await seedGroupAndResale();
+    const { group, resale, company } = await seedGroupAndResale();
 
     const clientA = await prisma.client.create({
       data: {
@@ -55,6 +57,7 @@ describe('SetClientParent - Integration tests', () => {
         document: '09748165000110',
         groupId: group.id,
         resaleId: resale.id,
+        companyId: company.id,
         companyName: 'Cliente A',
         headquarters: 'SP',
         invoiceType: ClientInvoiceType.CONTRACT,
@@ -70,6 +73,7 @@ describe('SetClientParent - Integration tests', () => {
         document: '28695096000179',
         groupId: group.id,
         resaleId: resale.id,
+        companyId: company.id,
         companyName: 'Cliente B',
         headquarters: 'SP',
         invoiceType: ClientInvoiceType.CONTRACT,
@@ -85,6 +89,7 @@ describe('SetClientParent - Integration tests', () => {
         document: '33000167000101',
         groupId: group.id,
         resaleId: resale.id,
+        companyId: company.id,
         companyName: 'Sub C',
         headquarters: 'SP',
         invoiceType: ClientInvoiceType.CONTRACT,
@@ -105,7 +110,7 @@ describe('SetClientParent - Integration tests', () => {
   });
 
   it('should detach sub-client when parentClientId is null', async() => {
-    const { group, resale } = await seedGroupAndResale();
+    const { group, resale, company } = await seedGroupAndResale();
 
     const parent = await prisma.client.create({
       data: {
@@ -114,6 +119,7 @@ describe('SetClientParent - Integration tests', () => {
         document: '09748165000110',
         groupId: group.id,
         resaleId: resale.id,
+        companyId: company.id,
         companyName: 'Pai',
         headquarters: 'SP',
         invoiceType: ClientInvoiceType.CONTRACT,
@@ -129,6 +135,7 @@ describe('SetClientParent - Integration tests', () => {
         document: '28695096000179',
         groupId: group.id,
         resaleId: resale.id,
+        companyId: company.id,
         companyName: 'Filho',
         headquarters: 'SP',
         invoiceType: ClientInvoiceType.CONTRACT,
@@ -147,7 +154,7 @@ describe('SetClientParent - Integration tests', () => {
   });
 
   it('should throw ClientHasSubClientsCannotSetParentError when root has sub-clients', async() => {
-    const { group, resale } = await seedGroupAndResale();
+    const { group, resale, company } = await seedGroupAndResale();
 
     const root = await prisma.client.create({
       data: {
@@ -156,6 +163,7 @@ describe('SetClientParent - Integration tests', () => {
         document: '09748165000110',
         groupId: group.id,
         resaleId: resale.id,
+        companyId: company.id,
         companyName: 'Raiz com filhos',
         headquarters: 'SP',
         invoiceType: ClientInvoiceType.CONTRACT,
@@ -171,6 +179,7 @@ describe('SetClientParent - Integration tests', () => {
         document: '28695096000179',
         groupId: group.id,
         resaleId: resale.id,
+        companyId: company.id,
         companyName: 'Outro titular',
         headquarters: 'SP',
         invoiceType: ClientInvoiceType.CONTRACT,
@@ -186,6 +195,7 @@ describe('SetClientParent - Integration tests', () => {
         document: '33000167000101',
         groupId: group.id,
         resaleId: resale.id,
+        companyId: company.id,
         companyName: 'Sub',
         headquarters: 'SP',
         invoiceType: ClientInvoiceType.CONTRACT,
@@ -202,7 +212,7 @@ describe('SetClientParent - Integration tests', () => {
   });
 
   it('should throw ClientParentIsSubClientError when new parent is a sub-client', async() => {
-    const { group, resale } = await seedGroupAndResale();
+    const { group, resale, company } = await seedGroupAndResale();
 
     const grand = await prisma.client.create({
       data: {
@@ -211,6 +221,7 @@ describe('SetClientParent - Integration tests', () => {
         document: '09748165000110',
         groupId: group.id,
         resaleId: resale.id,
+        companyId: company.id,
         companyName: 'Raiz',
         headquarters: 'SP',
         invoiceType: ClientInvoiceType.CONTRACT,
@@ -226,6 +237,7 @@ describe('SetClientParent - Integration tests', () => {
         document: '28695096000179',
         groupId: group.id,
         resaleId: resale.id,
+        companyId: company.id,
         companyName: 'Ja sub-cliente',
         headquarters: 'SP',
         invoiceType: ClientInvoiceType.CONTRACT,
@@ -243,6 +255,7 @@ describe('SetClientParent - Integration tests', () => {
         document: '33000167000101',
         groupId: group.id,
         resaleId: resale.id,
+        companyId: company.id,
         companyName: 'Alvo',
         headquarters: 'SP',
         invoiceType: ClientInvoiceType.CONTRACT,
@@ -255,7 +268,7 @@ describe('SetClientParent - Integration tests', () => {
   });
 
   it('should throw ClientNotFoundError when parent client does not exist', async() => {
-    const { group, resale } = await seedGroupAndResale();
+    const { group, resale, company } = await seedGroupAndResale();
 
     await prisma.client.create({
       data: {
@@ -264,6 +277,7 @@ describe('SetClientParent - Integration tests', () => {
         document: '09748165000110',
         groupId: group.id,
         resaleId: resale.id,
+        companyId: company.id,
         companyName: 'Sozinho',
         headquarters: 'SP',
         invoiceType: ClientInvoiceType.CONTRACT,

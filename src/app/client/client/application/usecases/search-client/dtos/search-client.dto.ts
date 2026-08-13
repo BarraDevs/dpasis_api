@@ -60,6 +60,12 @@ export class ClientSearchFilterDto {
   @IsOptional()
   @ValidateNested()
   @Type(() => IntFilterDto)
+  companyId?: IntFilterDto;
+
+  @ApiPropertyOptional({ type: IntFilterDto })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => IntFilterDto)
   attendanceId?: IntFilterDto;
 
   @ApiPropertyOptional({ type: IntFilterDto })

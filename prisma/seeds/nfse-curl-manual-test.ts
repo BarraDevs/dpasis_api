@@ -65,6 +65,7 @@ async function main() {
       document: '58982473000111',
       groupId: group.id,
       resaleId: resale.id,
+      companyId: COMPANY_ID,
       companyName: '58982473 YUDI MATSUGUMA',
       headquarters: 'São Paulo',
       invoiceType: ClientInvoiceType.CONTRACT,
@@ -73,6 +74,7 @@ async function main() {
     },
     update: {
       active: true,
+      companyId: COMPANY_ID,
     },
   });
 

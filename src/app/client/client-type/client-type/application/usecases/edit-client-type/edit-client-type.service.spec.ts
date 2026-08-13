@@ -1,4 +1,5 @@
 import { buildMinimalResaleData, nextResaleFixtureId } from 'src/test/fixtures/minimal-resale';
+import { buildMinimalCompanyData } from 'src/test/fixtures/minimal-company';
 import { Test } from '@nestjs/testing';
 import { ClientAddressType } from 'src/app/client/client-address/domain/enums/client-address-type.enum';
 import { ClientAddressNotFoundError } from 'src/app/client/client-address/domain/errors/client-address-not-found.error';
@@ -20,6 +21,7 @@ describe('EditClientType', () => {
       data: { name: `Grupo ${Date.now()}-${Math.random()}`, active: true },
     });
     const resale = await prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) });
+    const company = await prisma.company.create({ data: buildMinimalCompanyData() });
     const client = await prisma.client.create({
       data: {
         id: 1,
@@ -28,6 +30,7 @@ describe('EditClientType', () => {
         ie: null,
         groupId: group.id,
         resaleId: resale.id,
+        companyId: company.id,
         companyName: 'Empresa Test',
         fantasyName: null,
         headquarters: 'SP',
@@ -175,6 +178,7 @@ describe('EditClientType', () => {
     const otherResale = await prisma.resale.create({
       data: buildMinimalResaleData(nextResaleFixtureId()),
     });
+    const otherCompany = await prisma.company.create({ data: buildMinimalCompanyData() });
     const otherClient = await prisma.client.create({
       data: {
         id: 998,
@@ -183,6 +187,7 @@ describe('EditClientType', () => {
         ie: null,
         groupId: otherGroup.id,
         resaleId: otherResale.id,
+        companyId: otherCompany.id,
         companyName: 'Outra',
         fantasyName: null,
         headquarters: 'SP',

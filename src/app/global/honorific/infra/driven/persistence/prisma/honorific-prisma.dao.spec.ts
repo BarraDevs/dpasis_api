@@ -8,6 +8,7 @@ import { FindAllHonorificQueryDto } from 'src/app/global/honorific/application/u
 import { ConfigModule } from 'src/core/config/config.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { buildMinimalResaleData, nextResaleFixtureId } from 'src/test/fixtures/minimal-resale';
+import { buildMinimalCompanyData } from 'src/test/fixtures/minimal-company';
 import { HonorificDaoAdapterPrisma } from './honorific-prisma.dao';
 
 describe('HonorificDaoAdapterPrisma - Integration tests', () => {
@@ -144,9 +145,10 @@ describe('HonorificDaoAdapterPrisma - Integration tests', () => {
       const honorific = await prisma.honorific.create({
         data: { name: `Cnt2-${Date.now()}` },
       });
-      const [group, resale] = await Promise.all([
+      const [group, resale, company] = await Promise.all([
         prisma.clientGroup.create({ data: { name: `G-${Date.now()}`, active: true } }),
         prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
+        prisma.company.create({ data: buildMinimalCompanyData() }),
       ]);
 
       await Promise.all([
@@ -157,6 +159,7 @@ describe('HonorificDaoAdapterPrisma - Integration tests', () => {
             document: '09748165000211',
             groupId: group.id,
             resaleId: resale.id,
+            companyId: company.id,
             honorificId: honorific.id,
             companyName: 'A',
             headquarters: 'SP',
@@ -172,6 +175,7 @@ describe('HonorificDaoAdapterPrisma - Integration tests', () => {
             document: '09748165000222',
             groupId: group.id,
             resaleId: resale.id,
+            companyId: company.id,
             honorificId: honorific.id,
             companyName: 'B',
             headquarters: 'SP',

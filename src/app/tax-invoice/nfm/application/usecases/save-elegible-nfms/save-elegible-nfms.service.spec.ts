@@ -29,7 +29,7 @@ function makeNfmDto(overrides: Partial<NfmDto> = {}): NfmDto {
       honorific: null,
       group: { id: 1, name: 'Grupo' },
       resale: { id: 1, name: 'Revenda' },
-      companies: [],
+      company: { id: 1, name: 'Empresa' },
       createdAt: new Date(),
       updatedAt: new Date(),
     },

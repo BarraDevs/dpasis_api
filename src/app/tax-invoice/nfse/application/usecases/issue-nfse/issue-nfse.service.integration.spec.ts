@@ -6,6 +6,7 @@ import { TOKENS } from 'src/core/di/token';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { NfsProviderEnvironment } from 'src/infra/nfs-generation/dtos/nfs-provider-credentials.dto';
 import { buildMinimalResaleData, nextResaleFixtureId } from 'src/test/fixtures/minimal-resale';
+import { buildMinimalCompanyData } from 'src/test/fixtures/minimal-company';
 import { NfseQueueFakeAdapterProducer } from '../../../infra/driven/queue/fake/nfse-queue-fake.producer';
 import { NfseStatus } from '../../../domain/enums/nfse-status.enum';
 import { ClientAddressForNfseNotFoundError } from '../../../domain/errors/client-address-for-nfse-not-found.error';
@@ -53,9 +54,10 @@ async function seedCompany(prisma: PrismaService) {
 }
 
 async function seedClient(prisma: PrismaService, clientId: number) {
-  const [group, resale] = await Promise.all([
+  const [group, resale, company] = await Promise.all([
     prisma.clientGroup.create({ data: { name: `Grupo ${clientId}`, active: true } }),
     prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
+    prisma.company.create({ data: buildMinimalCompanyData() }),
   ]);
 
   return prisma.client.create({
@@ -66,6 +68,7 @@ async function seedClient(prisma: PrismaService, clientId: number) {
       ie: null,
       groupId: group.id,
       resaleId: resale.id,
+      companyId: company.id,
       companyName: 'Cliente LTDA',
       fantasyName: null,
       headquarters: 'São Paulo',

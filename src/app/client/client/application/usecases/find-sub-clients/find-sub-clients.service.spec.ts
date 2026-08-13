@@ -1,4 +1,5 @@
 import { buildMinimalResaleData, nextResaleFixtureId } from 'src/test/fixtures/minimal-resale';
+import { buildMinimalCompanyData } from 'src/test/fixtures/minimal-company';
 import { Test } from '@nestjs/testing';
 import { ClientModule } from 'src/app/client/client/client.module';
 import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
@@ -30,11 +31,12 @@ describe('FindSubClients - Integration tests', () => {
   });
 
   async function createGroupAndResale() {
-    const [group, resale] = await Promise.all([
+    const [group, resale, company] = await Promise.all([
       prisma.clientGroup.create({ data: { name: `Grupo ${Date.now()}`, active: true } }),
       prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
+      prisma.company.create({ data: buildMinimalCompanyData() }),
     ]);
-    return { group, resale };
+    return { group, resale, company };
   }
 
   it('should be defined', () => {
@@ -42,7 +44,7 @@ describe('FindSubClients - Integration tests', () => {
   });
 
   it('should return empty pagination when client has no sub-clients', async() => {
-    const { group, resale } = await createGroupAndResale();
+    const { group, resale, company } = await createGroupAndResale();
 
     const parent = await prisma.client.create({
       data: {
@@ -51,6 +53,7 @@ describe('FindSubClients - Integration tests', () => {
         document: '09748165000110',
         groupId: group.id,
         resaleId: resale.id,
+        companyId: company.id,
         companyName: 'Empresa Pai',
         headquarters: 'SP',
         invoiceType: ClientInvoiceType.CONTRACT,
@@ -72,7 +75,7 @@ describe('FindSubClients - Integration tests', () => {
   });
 
   it('should return empty pagination when client is itself a sub-client', async() => {
-    const { group, resale } = await createGroupAndResale();
+    const { group, resale, company } = await createGroupAndResale();
 
     const parent = await prisma.client.create({
       data: {
@@ -81,6 +84,7 @@ describe('FindSubClients - Integration tests', () => {
         document: '09748165000110',
         groupId: group.id,
         resaleId: resale.id,
+        companyId: company.id,
         companyName: 'Empresa Pai',
         headquarters: 'SP',
         invoiceType: ClientInvoiceType.CONTRACT,
@@ -96,6 +100,7 @@ describe('FindSubClients - Integration tests', () => {
         document: '97456321558',
         groupId: group.id,
         resaleId: resale.id,
+        companyId: company.id,
         companyName: 'Sub-cliente',
         headquarters: 'RJ',
         invoiceType: ClientInvoiceType.INDIVIDUAL,
@@ -113,7 +118,7 @@ describe('FindSubClients - Integration tests', () => {
   });
 
   it('should return all sub-clients of a parent', async() => {
-    const { group, resale } = await createGroupAndResale();
+    const { group, resale, company } = await createGroupAndResale();
 
     const parent = await prisma.client.create({
       data: {
@@ -122,6 +127,7 @@ describe('FindSubClients - Integration tests', () => {
         document: '09748165000110',
         groupId: group.id,
         resaleId: resale.id,
+        companyId: company.id,
         companyName: 'Empresa Pai',
         headquarters: 'SP',
         invoiceType: ClientInvoiceType.CONTRACT,
@@ -138,6 +144,7 @@ describe('FindSubClients - Integration tests', () => {
           document: '09748165000121',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'Sub-cliente 1',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -154,6 +161,7 @@ describe('FindSubClients - Integration tests', () => {
           document: '97456321558',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'Sub-cliente 2',
           headquarters: 'RJ',
           invoiceType: ClientInvoiceType.INDIVIDUAL,
@@ -174,7 +182,7 @@ describe('FindSubClients - Integration tests', () => {
   });
 
   it('should return sub-clients ordered by id ascending', async() => {
-    const { group, resale } = await createGroupAndResale();
+    const { group, resale, company } = await createGroupAndResale();
 
     const parent = await prisma.client.create({
       data: {
@@ -183,6 +191,7 @@ describe('FindSubClients - Integration tests', () => {
         document: '09748165000110',
         groupId: group.id,
         resaleId: resale.id,
+        companyId: company.id,
         companyName: 'Empresa Pai',
         headquarters: 'SP',
         invoiceType: ClientInvoiceType.CONTRACT,
@@ -198,6 +207,7 @@ describe('FindSubClients - Integration tests', () => {
         document: '09748165000121',
         groupId: group.id,
         resaleId: resale.id,
+        companyId: company.id,
         companyName: 'Sub-cliente A',
         headquarters: 'SP',
         invoiceType: ClientInvoiceType.CONTRACT,
@@ -215,6 +225,7 @@ describe('FindSubClients - Integration tests', () => {
         document: '97456321558',
         groupId: group.id,
         resaleId: resale.id,
+        companyId: company.id,
         companyName: 'Sub-cliente B',
         headquarters: 'RJ',
         invoiceType: ClientInvoiceType.INDIVIDUAL,
@@ -232,7 +243,7 @@ describe('FindSubClients - Integration tests', () => {
   });
 
   it('should not return sub-clients from a different parent', async() => {
-    const { group, resale } = await createGroupAndResale();
+    const { group, resale, company } = await createGroupAndResale();
 
     const [parent1, parent2] = await Promise.all([
       prisma.client.create({
@@ -242,6 +253,7 @@ describe('FindSubClients - Integration tests', () => {
           document: '09748165000110',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'Empresa Pai 1',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -256,6 +268,7 @@ describe('FindSubClients - Integration tests', () => {
           document: '09748165000121',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'Empresa Pai 2',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -272,6 +285,7 @@ describe('FindSubClients - Integration tests', () => {
         document: '97456321558',
         groupId: group.id,
         resaleId: resale.id,
+        companyId: company.id,
         companyName: 'Sub-cliente do Pai 2',
         headquarters: 'RJ',
         invoiceType: ClientInvoiceType.INDIVIDUAL,
@@ -289,7 +303,7 @@ describe('FindSubClients - Integration tests', () => {
   });
 
   it('should paginate sub-clients correctly', async() => {
-    const { group, resale } = await createGroupAndResale();
+    const { group, resale, company } = await createGroupAndResale();
 
     const parent = await prisma.client.create({
       data: {
@@ -298,6 +312,7 @@ describe('FindSubClients - Integration tests', () => {
         document: '19748165000110',
         groupId: group.id,
         resaleId: resale.id,
+        companyId: company.id,
         companyName: 'Empresa Pai',
         headquarters: 'SP',
         invoiceType: ClientInvoiceType.CONTRACT,
@@ -315,6 +330,7 @@ describe('FindSubClients - Integration tests', () => {
             document: `097481650001${String(i).padStart(2, '0')}`,
             groupId: group.id,
             resaleId: resale.id,
+            companyId: company.id,
             companyName: `Sub-cliente ${i + 1}`,
             headquarters: 'SP',
             invoiceType: ClientInvoiceType.CONTRACT,
@@ -337,7 +353,7 @@ describe('FindSubClients - Integration tests', () => {
   });
 
   it('should return correct page 2 for sub-clients', async() => {
-    const { group, resale } = await createGroupAndResale();
+    const { group, resale, company } = await createGroupAndResale();
 
     const parent = await prisma.client.create({
       data: {
@@ -346,6 +362,7 @@ describe('FindSubClients - Integration tests', () => {
         document: '19748165000110',
         groupId: group.id,
         resaleId: resale.id,
+        companyId: company.id,
         companyName: 'Empresa Pai',
         headquarters: 'SP',
         invoiceType: ClientInvoiceType.CONTRACT,
@@ -363,6 +380,7 @@ describe('FindSubClients - Integration tests', () => {
             document: `097481650001${String(i).padStart(2, '0')}`,
             groupId: group.id,
             resaleId: resale.id,
+            companyId: company.id,
             companyName: `Sub-cliente ${i + 1}`,
             headquarters: 'SP',
             invoiceType: ClientInvoiceType.CONTRACT,
@@ -384,7 +402,7 @@ describe('FindSubClients - Integration tests', () => {
   });
 
   it('should filter sub-clients by search in companyName (case-insensitive)', async() => {
-    const { group, resale } = await createGroupAndResale();
+    const { group, resale, company } = await createGroupAndResale();
 
     const parent = await prisma.client.create({
       data: {
@@ -393,6 +411,7 @@ describe('FindSubClients - Integration tests', () => {
         document: '09748165000110',
         groupId: group.id,
         resaleId: resale.id,
+        companyId: company.id,
         companyName: 'Empresa Pai',
         headquarters: 'SP',
         invoiceType: ClientInvoiceType.CONTRACT,
@@ -409,6 +428,7 @@ describe('FindSubClients - Integration tests', () => {
           document: '09748165000121',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'Sub Premium LTDA',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -425,6 +445,7 @@ describe('FindSubClients - Integration tests', () => {
           document: '09748165000132',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'Sub Básica',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -444,7 +465,7 @@ describe('FindSubClients - Integration tests', () => {
   });
 
   it('should filter sub-clients by search in document', async() => {
-    const { group, resale } = await createGroupAndResale();
+    const { group, resale, company } = await createGroupAndResale();
 
     const parent = await prisma.client.create({
       data: {
@@ -453,6 +474,7 @@ describe('FindSubClients - Integration tests', () => {
         document: '09748165000110',
         groupId: group.id,
         resaleId: resale.id,
+        companyId: company.id,
         companyName: 'Empresa Pai',
         headquarters: 'SP',
         invoiceType: ClientInvoiceType.CONTRACT,
@@ -469,6 +491,7 @@ describe('FindSubClients - Integration tests', () => {
           document: '33000167000101',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'Sub A',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -485,6 +508,7 @@ describe('FindSubClients - Integration tests', () => {
           document: '09748165000121',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'Sub B',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -504,7 +528,7 @@ describe('FindSubClients - Integration tests', () => {
   });
 
   it('should filter sub-clients by active status', async() => {
-    const { group, resale } = await createGroupAndResale();
+    const { group, resale, company } = await createGroupAndResale();
 
     const parent = await prisma.client.create({
       data: {
@@ -513,6 +537,7 @@ describe('FindSubClients - Integration tests', () => {
         document: '09748165000110',
         groupId: group.id,
         resaleId: resale.id,
+        companyId: company.id,
         companyName: 'Empresa Pai',
         headquarters: 'SP',
         invoiceType: ClientInvoiceType.CONTRACT,
@@ -529,6 +554,7 @@ describe('FindSubClients - Integration tests', () => {
           document: '09748165000121',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'Sub Ativo',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -545,6 +571,7 @@ describe('FindSubClients - Integration tests', () => {
           document: '09748165000132',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'Sub Inativo',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -568,7 +595,7 @@ describe('FindSubClients - Integration tests', () => {
   });
 
   it('should combine search and active filters', async() => {
-    const { group, resale } = await createGroupAndResale();
+    const { group, resale, company } = await createGroupAndResale();
 
     const parent = await prisma.client.create({
       data: {
@@ -577,6 +604,7 @@ describe('FindSubClients - Integration tests', () => {
         document: '09748165000110',
         groupId: group.id,
         resaleId: resale.id,
+        companyId: company.id,
         companyName: 'Empresa Pai',
         headquarters: 'SP',
         invoiceType: ClientInvoiceType.CONTRACT,
@@ -593,6 +621,7 @@ describe('FindSubClients - Integration tests', () => {
           document: '09748165000121',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'Tech Ativo',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,
@@ -609,6 +638,7 @@ describe('FindSubClients - Integration tests', () => {
           document: '09748165000132',
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'Tech Inativo',
           headquarters: 'SP',
           invoiceType: ClientInvoiceType.CONTRACT,

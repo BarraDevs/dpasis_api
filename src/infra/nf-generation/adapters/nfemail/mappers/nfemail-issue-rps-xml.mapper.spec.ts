@@ -1,4 +1,3 @@
-import { NfIssueFormat } from '../../../enums/nf-issue-format.enum';
 import { makeValidIssueNfseInput } from '../testing/make-valid-issue-nfse-input';
 import { buildNfemailIssueRpsXml } from './nfemail-issue-rps-xml.mapper';
 

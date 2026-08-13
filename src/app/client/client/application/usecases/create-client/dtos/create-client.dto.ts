@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional, OmitType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { ArrayMinSize, IsArray, IsBoolean, IsDateString, IsEnum, IsInt, IsNotEmpty, IsNumber, IsOptional, IsPositive, IsString, Matches, MaxLength, ValidateNested } from 'class-validator';
+import { IsBoolean, IsDateString, IsEnum, IsInt, IsNotEmpty, IsNumber, IsOptional, IsPositive, IsString, Matches, MaxLength, ValidateNested } from 'class-validator';
 import { CreateClientAddressInputDto } from 'src/app/client/client-address/application/usecases/create-client-address/dtos/create-client-address.dto';
 import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
 import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum';
@@ -85,12 +85,12 @@ export class CreateClientInputDto {
   @IsInt({ message: '$property deve ser um número inteiro' })
   honorificId?: number | null;
 
-  @ApiProperty({ example: [1], description: 'IDs das empresas associadas ao cliente (obrigatório pelo menos 1)' })
-  @IsArray({ message: '$property deve ser um array' })
-  @ArrayMinSize(1, { message: '$property deve ter pelo menos 1 empresa' })
-  @IsInt({ each: true, message: 'Cada ID deve ser um número inteiro' })
-  @IsPositive({ each: true, message: 'Cada ID deve ser um número positivo' })
-  companyIds: number[];
+  @ApiProperty({ example: 1, description: 'ID da empresa (Company) associada ao cliente.' })
+  @IsNumber({}, { message: '$property deve ser um número' })
+  @IsNotEmpty({ message: '$property é obrigatório' })
+  @IsPositive({ message: '$property deve ser um número positivo' })
+  @IsInt({ message: '$property deve ser um número inteiro' })
+  companyId: number;
 
   @ApiProperty({ example: 'Empresa LTDA' })
   @IsString({ message: '$property deve ser uma string' })

@@ -1,4 +1,5 @@
 import { buildMinimalResaleData, nextResaleFixtureId } from 'src/test/fixtures/minimal-resale';
+import { buildMinimalCompanyData } from 'src/test/fixtures/minimal-company';
 import { Test } from '@nestjs/testing';
 import { ClientGroupDto } from 'src/app/client/client-group/application/dtos/client-group.dto';
 import { CreateClientGroupInputDto } from 'src/app/client/client-group/application/usecases/create-client-group/dtos/create-client-group.dto';
@@ -392,6 +393,7 @@ describe('ClientGroupDaoAdapterPrisma - Integration tests', () => {
       const resale = await prisma.resale.create({
         data: buildMinimalResaleData(nextResaleFixtureId()),
       });
+      const company = await prisma.company.create({ data: buildMinimalCompanyData() });
       await prisma.client.create({
         data: {
           id: 1,
@@ -400,6 +402,7 @@ describe('ClientGroupDaoAdapterPrisma - Integration tests', () => {
           ie: null,
           groupId: group.id,
           resaleId: resale.id,
+          companyId: company.id,
           companyName: 'Empresa',
           fantasyName: null,
           headquarters: 'SP',
@@ -428,6 +431,7 @@ describe('ClientGroupDaoAdapterPrisma - Integration tests', () => {
       const resale = await prisma.resale.create({
         data: buildMinimalResaleData(nextResaleFixtureId()),
       });
+      const company = await prisma.company.create({ data: buildMinimalCompanyData() });
       await prisma.client.createMany({
         data: [
           {
@@ -437,6 +441,7 @@ describe('ClientGroupDaoAdapterPrisma - Integration tests', () => {
             ie: null,
             groupId: group.id,
             resaleId: resale.id,
+            companyId: company.id,
             companyName: 'Empresa 1',
             fantasyName: null,
             headquarters: 'SP',
@@ -451,6 +456,7 @@ describe('ClientGroupDaoAdapterPrisma - Integration tests', () => {
             ie: null,
             groupId: group.id,
             resaleId: resale.id,
+            companyId: company.id,
             companyName: 'Empresa 2',
             fantasyName: null,
             headquarters: 'RJ',

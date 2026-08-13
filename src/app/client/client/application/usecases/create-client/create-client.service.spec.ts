@@ -73,7 +73,7 @@ describe('CreateClient - Integration tests', () => {
       ie: null,
       groupId: 0,
       resaleId: 0,
-      companyIds: [1],
+      companyId: 1,
       companyName: 'Empresa LTDA',
       fantasyName: null,
       socialName: null,
@@ -104,7 +104,7 @@ describe('CreateClient - Integration tests', () => {
         createCompany(),
       ]);
 
-      const input = makeValidInput({ groupId: group.id, resaleId: resale.id, companyIds: [company.id] });
+      const input = makeValidInput({ groupId: group.id, resaleId: resale.id, companyId: company.id });
 
       const result = await sut.execute(input);
 
@@ -147,7 +147,7 @@ describe('CreateClient - Integration tests', () => {
       const input = makeValidInput({
         groupId: group.id,
         resaleId: resale.id,
-        companyIds: [company.id],
+        companyId: company.id,
         createdAt: '2020-03-15',
       });
 
@@ -166,7 +166,7 @@ describe('CreateClient - Integration tests', () => {
         createCompany(),
       ]);
 
-      const input = makeValidInput({ groupId: group.id, resaleId: resale.id, companyIds: [company.id] });
+      const input = makeValidInput({ groupId: group.id, resaleId: resale.id, companyId: company.id });
 
       const result = await sut.execute(input);
 
@@ -186,7 +186,7 @@ describe('CreateClient - Integration tests', () => {
       const input = makeValidInput({
         groupId: group.id,
         resaleId: resale.id,
-        companyIds: [company.id],
+        companyId: company.id,
         address: {
           ...makeValidInput().address,
           complement: 'Apto 202',
@@ -211,7 +211,7 @@ describe('CreateClient - Integration tests', () => {
       const input = makeValidInput({
         groupId: group.id,
         resaleId: resale.id,
-        companyIds: [company.id],
+        companyId: company.id,
         ie: '123456789',
         fantasyName: 'Empresa',
         socialName: 'Razão integrada LTDA',
@@ -239,7 +239,7 @@ describe('CreateClient - Integration tests', () => {
       const input = makeValidInput({
         groupId: group.id,
         resaleId: resale.id,
-        companyIds: [company.id],
+        companyId: company.id,
         domain: 'integracao.persist.dev',
       });
 
@@ -262,7 +262,7 @@ describe('CreateClient - Integration tests', () => {
       const input = makeValidInput({
         groupId: group.id,
         resaleId: resale.id,
-        companyIds: [company.id],
+        companyId: company.id,
         honorificId: honorific.id,
       });
 
@@ -284,7 +284,7 @@ describe('CreateClient - Integration tests', () => {
         document: '974.563.215-58',
         groupId: group.id,
         resaleId: resale.id,
-        companyIds: [company.id],
+        companyId: company.id,
       });
 
       const result = await sut.execute(input);
@@ -309,7 +309,7 @@ describe('CreateClient - Integration tests', () => {
       const input = makeValidInput({
         groupId: group.id,
         resaleId: resale.id,
-        companyIds: [company.id],
+        companyId: company.id,
         id: explicitId,
       });
 
@@ -339,7 +339,7 @@ describe('CreateClient - Integration tests', () => {
       const inputFirst = makeValidInput({
         groupId: group.id,
         resaleId: resale.id,
-        companyIds: [company.id],
+        companyId: company.id,
         id: explicitId,
       });
       await sut.execute(inputFirst);
@@ -347,7 +347,7 @@ describe('CreateClient - Integration tests', () => {
       const inputSecond = makeValidInput({
         groupId: group.id,
         resaleId: resale.id,
-        companyIds: [company.id],
+        companyId: company.id,
         id: explicitId,
         type: ClientType.PF,
         document: '974.563.215-58',
@@ -372,13 +372,13 @@ describe('CreateClient - Integration tests', () => {
         createCompany(),
       ]);
 
-      const input1 = makeValidInput({ groupId: group.id, resaleId: resale.id, companyIds: [company.id] });
+      const input1 = makeValidInput({ groupId: group.id, resaleId: resale.id, companyId: company.id });
       const { id: id1 } = await sut.execute(input1);
 
       const input2 = makeValidInput({
         groupId: group.id,
         resaleId: resale.id,
-        companyIds: [company.id],
+        companyId: company.id,
         document: '09.748.165/0001-10',
         companyName: 'Outra Empresa',
       });
@@ -404,7 +404,7 @@ describe('CreateClient - Integration tests', () => {
       const input = makeValidInput({
         groupId: group.id,
         resaleId: resale.id,
-        companyIds: [company.id],
+        companyId: company.id,
         honorificId: honorific.id,
       });
 
@@ -421,7 +421,7 @@ describe('CreateClient - Integration tests', () => {
       const input = makeValidInput({
         groupId: group.id,
         resaleId: resale.id,
-        companyIds: [company.id],
+        companyId: company.id,
         honorificId: 888_888,
       });
 
@@ -436,7 +436,7 @@ describe('CreateClient - Integration tests', () => {
         createCompany(),
       ]);
 
-      const input = makeValidInput({ groupId: 99999, resaleId: resale.id, companyIds: [company.id] });
+      const input = makeValidInput({ groupId: 99999, resaleId: resale.id, companyId: company.id });
 
       await expect(sut.execute(input)).rejects.toThrow(ClientGroupNotFoundError);
       await expect(sut.execute(input)).rejects.toThrow('Grupo de clientes não encontrado na base de dados.');
@@ -449,7 +449,7 @@ describe('CreateClient - Integration tests', () => {
         createCompany(),
       ]);
 
-      const input = makeValidInput({ groupId: group.id, resaleId: resale.id, companyIds: [company.id] });
+      const input = makeValidInput({ groupId: group.id, resaleId: resale.id, companyId: company.id });
 
       await expect(sut.execute(input)).rejects.toThrow(ClientGroupNotFoundError);
       await expect(sut.execute(input)).rejects.toThrow('Grupo de clientes não encontrado na base de dados.');
@@ -461,7 +461,7 @@ describe('CreateClient - Integration tests', () => {
         createCompany(),
       ]);
 
-      const input = makeValidInput({ groupId: 99999, resaleId: resale.id, companyIds: [company.id] });
+      const input = makeValidInput({ groupId: 99999, resaleId: resale.id, companyId: company.id });
 
       await expect(sut.execute(input)).rejects.toThrow(ClientGroupNotFoundError);
 
@@ -479,7 +479,7 @@ describe('CreateClient - Integration tests', () => {
         prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
       ]);
 
-      const input = makeValidInput({ groupId: group.id, resaleId: resale.id, companyIds: [99999] });
+      const input = makeValidInput({ groupId: group.id, resaleId: resale.id, companyId: 99999 });
 
       await expect(sut.execute(input)).rejects.toThrow(CompanyNotFoundError);
     });
@@ -506,7 +506,7 @@ describe('CreateClient - Integration tests', () => {
         }),
       ]);
 
-      const input = makeValidInput({ groupId: group.id, resaleId: resale.id, companyIds: [company.id] });
+      const input = makeValidInput({ groupId: group.id, resaleId: resale.id, companyId: company.id });
 
       await expect(sut.execute(input)).rejects.toThrow(CompanyNotFoundError);
     });
@@ -519,7 +519,7 @@ describe('CreateClient - Integration tests', () => {
         createCompany(),
       ]);
 
-      const input = makeValidInput({ groupId: group.id, resaleId: 99999, companyIds: [company.id] });
+      const input = makeValidInput({ groupId: group.id, resaleId: 99999, companyId: company.id });
 
       await expect(sut.execute(input)).rejects.toThrow(ResaleNotFoundError);
       await expect(sut.execute(input)).rejects.toThrow('Revenda não encontrada na base de dados.');
@@ -532,7 +532,7 @@ describe('CreateClient - Integration tests', () => {
         createCompany(),
       ]);
 
-      const input = makeValidInput({ groupId: group.id, resaleId: resale.id, companyIds: [company.id] });
+      const input = makeValidInput({ groupId: group.id, resaleId: resale.id, companyId: company.id });
 
       await expect(sut.execute(input)).rejects.toThrow(ResaleNotFoundError);
       await expect(sut.execute(input)).rejects.toThrow('Revenda não encontrada na base de dados.');
@@ -544,7 +544,7 @@ describe('CreateClient - Integration tests', () => {
         createCompany(),
       ]);
 
-      const input = makeValidInput({ groupId: group.id, resaleId: 99999, companyIds: [company.id] });
+      const input = makeValidInput({ groupId: group.id, resaleId: 99999, companyId: company.id });
 
       await expect(sut.execute(input)).rejects.toThrow(ResaleNotFoundError);
 
@@ -566,7 +566,7 @@ describe('CreateClient - Integration tests', () => {
       const input = makeValidInput({
         groupId: group.id,
         resaleId: resale.id,
-        companyIds: [company.id],
+        companyId: company.id,
         document: '123',
       });
 
@@ -583,7 +583,7 @@ describe('CreateClient - Integration tests', () => {
       const input = makeValidInput({
         groupId: group.id,
         resaleId: resale.id,
-        companyIds: [company.id],
+        companyId: company.id,
         type: 'INVALID' as ClientType,
       });
 
