@@ -1,9 +1,10 @@
-# Integração frontend — NFM (elegíveis + emissão NFS-e + invoices Giss)
+# Integração frontend — NFM (geradas + elegíveis + emissão NFS-e + invoices Giss)
 
 ## Introdução
 
 Este documento cobre as rotas admin de **NFM**:
-- `GET /admin/nfm` — clientes/grupos elegíveis
+- `GET /admin/nfm` — NFMs persistidas com NFS-e vinculada (filtro por período)
+- `GET /admin/nfm/elegible` — clientes/grupos elegíveis para emissão
 - `POST /admin/nfm` — salva NFMs e dispara emissão de NFS-e (1:1)
 - `GET /admin/nfm/invoices` — consulta NFS-e no Giss Online
 
@@ -20,7 +21,62 @@ ItemListaServico (LC 116) na correspondência CNAE/NBS/INDOP: [frontend-integrac
 
 ---
 
-## Listar elegíveis (`GET /admin/nfm`)
+## Resumo das mudanças (breaking)
+
+| Antes | Depois |
+|-------|--------|
+| `GET /admin/nfm` → elegíveis (`NfmDto[]`) | `GET /admin/nfm` → NFMs geradas (paginado, `NfmWithNfseDto`) |
+| — | `GET /admin/nfm/elegible` → elegíveis (`NfmDto[]`, contrato antigo) |
+| `POST /admin/nfm` | Sem mudança |
+| `GET /admin/nfm/invoices` | Sem mudança |
+
+### Fluxo sugerido na UI
+
+1. **Tela lista** — `GET /admin/nfm?dateStart&dateEnd` exibe NFMs com NFS-e vinculada no intervalo.
+2. Botão **Gerar NFMs** → abre tela de elegíveis.
+3. **Tela elegíveis** — `GET /admin/nfm/elegible`; botão confirmar → `POST /admin/nfm`.
+
+---
+
+## Listar NFMs geradas (`GET /admin/nfm`)
+
+Retorna apenas NFMs com `nfseId` preenchido (já dispararam emissão no Giss).  
+Filtro de data usa `createdAt` da NFM (UTC, dias inclusivos).
+
+### Query
+
+| Campo | Obrigatório | Tipo | Observação |
+|-------|-------------|------|------------|
+| `dateStart` | não | string `YYYY-MM-DD` | `createdAt >= início do dia` |
+| `dateEnd` | não | string `YYYY-MM-DD` | `createdAt <= fim do dia` |
+| `page` | não | number | Paginação |
+| `size` | não | number | Paginação |
+
+`dateStart` e `dateEnd` são **independentes**. Se ambos e `dateStart > dateEnd` → **400**.
+
+### Response (200)
+
+Paginação (`data`, `totalItems`, `itemsPerPage`, `totalPages`, `currentPage`).
+
+Cada item em `data` é `NfmWithNfseDto`:
+- `id`, `clientId`, `clientDocument`, `companyName`, `status`
+- `referenceMonth`, `referenceYear`, `totalValueInCents`, `cnaeNbsIndopId`
+- `createdAt`, `updatedAt`
+- `nfse` — objeto `NfseDto` completo (`nfseNumber`, `status`, `issuedAt`, etc.)
+
+**Nota:** `nfse.issuedAt` pode ser `null` enquanto a fila Giss processa. A presença de `nfse` já indica que a emissão foi enfileirada.
+
+### Erros
+
+| Status | Quando |
+|--------|--------|
+| 400 | Formato de data inválido ou `dateStart > dateEnd` |
+
+---
+
+## Listar elegíveis (`GET /admin/nfm/elegible`)
+
+Mesmo contrato que o antigo `GET /admin/nfm`.
 
 Retorna **um item por grupo fiscal** `(cliente + cnaeNbsIndop)`, não um por cliente.
 
@@ -113,8 +169,10 @@ Array de `NfsNoteDto` (`nfseNumber`, `verificationCode`, `issueDate`, `rpsNumber
 
 ## Checklist frontend
 
-1. `GET /admin/nfm`: UI trata **N grupos por cliente** (não assume 1 linha/cliente).
-2. `POST /admin/nfm`: exibir resumo `created` / `skipped` / `failed` + lista de `errors`.
-3. Garantir cadastro fiscal antes de emitir: LC 116 na correspondência, ISS/Simples na config da empresa, `issWithheld` no invoice config do cliente.
-4. `GET /admin/nfm/invoices`: `companyId` + período ou `nfseNumber`.
-5. Atualizar mocks E2E das três rotas.
+1. **Breaking:** migrar tela de elegíveis de `GET /admin/nfm` → `GET /admin/nfm/elegible`.
+2. Nova tela lista: `GET /admin/nfm?dateStart&dateEnd&page&size` — resposta **paginada** (`data[]` de `NfmWithNfseDto`).
+3. Botão gerar → tela elegíveis → confirmar com `POST /admin/nfm`.
+4. `POST /admin/nfm`: exibir resumo `created` / `skipped` / `failed` + lista de `errors`.
+5. Garantir cadastro fiscal antes de emitir: LC 116 na correspondência, ISS/Simples na config da empresa, `issWithheld` no invoice config do cliente.
+6. `GET /admin/nfm/invoices`: `companyId` + período ou `nfseNumber` (sem mudança).
+7. Atualizar mocks/tipos E2E das rotas.

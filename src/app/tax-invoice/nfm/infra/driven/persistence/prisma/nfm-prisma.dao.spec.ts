@@ -2,6 +2,7 @@ import { Test } from '@nestjs/testing';
 import { NfmStatus } from 'src/app/tax-invoice/nfm/domain/enums/nfm-status.enum';
 import { NfmPersistenceModule } from 'src/app/tax-invoice/nfm/application/persistence/nfm-persistence.module';
 import { SaveNfmData } from 'src/app/tax-invoice/nfm/application/usecases/save-elegible-nfms/dtos/save-elegible-nfms.dto';
+import { NfseStatus } from 'src/app/tax-invoice/nfse/domain/enums/nfse-status.enum';
 import { ConfigModule } from 'src/core/config/config.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { NfmDaoAdapterPrisma } from './nfm-prisma.dao';
@@ -84,6 +85,7 @@ describe('NfmDaoAdapterPrisma', () => {
 
   beforeEach(async() => {
     await prisma.nfm.deleteMany();
+    await prisma.nfse.deleteMany();
   });
 
   afterAll(async() => {
@@ -159,6 +161,91 @@ describe('NfmDaoAdapterPrisma', () => {
       const saved = await prisma.nfm.findUnique({ where: { id } });
       expect(saved?.status).toBe(NfmStatus.FAILED);
       expect(saved?.nfseId).toBeNull();
+    });
+  });
+
+  describe('findAll', () => {
+    async function createNfse(rpsNumber: number) {
+      return prisma.nfse.create({
+        data: {
+          companyId: 1,
+          clientId: 1,
+          rpsNumber,
+          rpsSeries: 'NFSE',
+          status: NfseStatus.PENDING,
+          data: { providerDocument: '12345678000199' },
+        },
+      });
+    }
+
+    it('should exclude rows without nfseId', async() => {
+      // Arrange
+      await sut.save(makeSaveNfmData({ clientId: 1 }));
+      const nfse = await createNfse(1);
+      await sut.save(makeSaveNfmData({
+        clientId: 2,
+        nfseId: nfse.id,
+        cnaeNbsIndopId: cnaeNbsIndopId2,
+      }));
+
+      // Act
+      const [rows, total] = await sut.findAll({});
+
+      // Assert
+      expect(total).toBe(1);
+      expect(rows).toHaveLength(1);
+      expect(rows[0].nfse.id).toBe(nfse.id);
+    });
+
+    it('should filter by dateStart and dateEnd on createdAt', async() => {
+      // Arrange
+      const nfseIn = await createNfse(10);
+      const nfseOut = await createNfse(11);
+      const idIn = await sut.save(makeSaveNfmData({ clientId: 10, nfseId: nfseIn.id }));
+      const idOut = await sut.save(makeSaveNfmData({
+        clientId: 11,
+        nfseId: nfseOut.id,
+        cnaeNbsIndopId: cnaeNbsIndopId2,
+      }));
+
+      await prisma.nfm.update({
+        where: { id: idIn },
+        data: { createdAt: new Date('2026-08-15T12:00:00.000Z') },
+      });
+      await prisma.nfm.update({
+        where: { id: idOut },
+        data: { createdAt: new Date('2026-07-01T12:00:00.000Z') },
+      });
+
+      // Act
+      const [rows, total] = await sut.findAll({
+        dateStart: '2026-08-01',
+        dateEnd: '2026-08-31',
+      });
+
+      // Assert
+      expect(total).toBe(1);
+      expect(rows).toHaveLength(1);
+      expect(rows[0].id).toBe(idIn);
+    });
+
+    it('should paginate results', async() => {
+      // Arrange
+      const nfse1 = await createNfse(20);
+      const nfse2 = await createNfse(21);
+      await sut.save(makeSaveNfmData({ clientId: 20, nfseId: nfse1.id }));
+      await sut.save(makeSaveNfmData({
+        clientId: 21,
+        nfseId: nfse2.id,
+        cnaeNbsIndopId: cnaeNbsIndopId2,
+      }));
+
+      // Act
+      const [rows, total] = await sut.findAll({ page: 1, size: 1 });
+
+      // Assert
+      expect(total).toBe(2);
+      expect(rows).toHaveLength(1);
     });
   });
 });
