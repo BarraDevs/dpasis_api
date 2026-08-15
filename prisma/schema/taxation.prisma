@@ -35,19 +35,21 @@ model Indop {
 }
 
 model CnaeNbsIndop {
-  id        Int      @id @default(autoincrement())
-  cnaeId    Int
-  nbsId     Int
-  indopId   Int
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                   Int      @id @default(autoincrement())
+  cnaeId               Int
+  nbsId                Int
+  indopId              Int
+  serviceListItemCode  String?  @db.VarChar(10)
+  active               Boolean  @default(true)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
 
   cnae        Cnae         @relation(fields: [cnaeId], references: [id])
   nbs         Nbs          @relation(fields: [nbsId], references: [id])
   indop       Indop        @relation(fields: [indopId], references: [id])
   clientItems ClientItem[]
   services    Service[]
+  nfms        Nfm[]
 
   @@unique([cnaeId, nbsId, indopId])
   @@map("cnae_nbs_indops")

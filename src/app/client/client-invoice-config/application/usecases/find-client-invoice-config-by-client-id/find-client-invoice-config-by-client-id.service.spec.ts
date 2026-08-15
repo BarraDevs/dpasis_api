@@ -158,6 +158,7 @@ describe('FindClientInvoiceConfigByClientId - Integration tests', () => {
         billingAddressId,
         bankId,
         autoProtestBoleto: false,
+        issWithheld: false,
         message: 'Mensagem teste',
       },
     });
@@ -179,6 +180,7 @@ describe('FindClientInvoiceConfigByClientId - Integration tests', () => {
       billingAddress: expectedBillingAddressDto(),
       bank: expectedBankDto(),
       autoProtestBoleto: false,
+      issWithheld: false,
       message: 'Mensagem teste',
       createdAt: config.createdAt,
       updatedAt: config.updatedAt,
@@ -199,6 +201,7 @@ describe('FindClientInvoiceConfigByClientId - Integration tests', () => {
         billingAddressId,
         bankId,
         autoProtestBoleto: true,
+        issWithheld: false,
         message: null,
       },
     });
@@ -219,6 +222,7 @@ describe('FindClientInvoiceConfigByClientId - Integration tests', () => {
       billingAddress: expectedBillingAddressDto(),
       bank: expectedBankDto(),
       autoProtestBoleto: true,
+      issWithheld: false,
       message: null,
       createdAt: config.createdAt,
       updatedAt: config.updatedAt,

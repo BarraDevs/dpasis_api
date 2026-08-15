@@ -17,6 +17,10 @@ const CompanyNfsConfigSelect = {
   certFilePath: true,
   certPasswordEnvVar: true,
   vendorConfig: true,
+  simpleNationalOptant: true,
+  fiscalIncentive: true,
+  issRate: true,
+  issExigibility: true,
 } satisfies Prisma.NfsProviderConfigSelect;
 
 @Injectable()
@@ -53,6 +57,10 @@ export class CompanyNfsConfigDaoAdapterPrisma implements ICompanyNfsConfigDao {
         certFilePath: data.certFilePath,
         certPasswordEnvVar: data.certPasswordEnvVar,
         vendorConfig: data.vendorConfig as Prisma.InputJsonValue,
+        simpleNationalOptant: data.simpleNationalOptant,
+        fiscalIncentive: data.fiscalIncentive,
+        issRate: data.issRate,
+        issExigibility: data.issExigibility,
       },
     });
 
@@ -72,8 +80,20 @@ export class CompanyNfsConfigDaoAdapterPrisma implements ICompanyNfsConfigDao {
 
   private mapToDto(row: Prisma.NfsProviderConfigGetPayload<{ select: typeof CompanyNfsConfigSelect }>): CompanyNfsConfigDto {
     return {
-      ...row,
+      id: row.id,
+      companyId: row.companyId,
+      vendor: row.vendor,
+      municipalRegistration: row.municipalRegistration,
+      municipalCodeIbge: row.municipalCodeIbge,
+      serieRps: row.serieRps,
+      environment: row.environment,
+      certFilePath: row.certFilePath,
+      certPasswordEnvVar: row.certPasswordEnvVar,
       vendorConfig: row.vendorConfig as Record<string, unknown>,
+      simpleNationalOptant: row.simpleNationalOptant,
+      fiscalIncentive: row.fiscalIncentive,
+      issRate: row.issRate != null ? Number(row.issRate) : null,
+      issExigibility: row.issExigibility,
     };
   }
 }

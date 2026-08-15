@@ -19,6 +19,10 @@ function makeValidInputDto(overrides: Partial<CreateCompanyNfsConfigInputDto> = 
     certFilePath: '/certs/x.pfx',
     certPasswordEnvVar: 'X_PASS',
     vendorConfig: { municipioSlug: 'demonstracao' },
+    simpleNationalOptant: false,
+    fiscalIncentive: false,
+    issRate: 0.05,
+    issExigibility: 1,
     ...overrides,
   };
 }
@@ -54,6 +58,26 @@ describe('CreateCompanyNfsConfigInputDto', () => {
     return target.transform(data, metadata).catch((error) => {
       const message = error.getResponse().message as string[];
       expect(message).toContain('vendorConfig deve ser um objeto');
+    });
+  });
+
+  it('should reject invalid issExigibility', async() => {
+    const data = makeValidInputDto({ issExigibility: 99 });
+
+    expect.assertions(1);
+    return target.transform(data, metadata).catch((error) => {
+      const message = error.getResponse().message as string[];
+      expect(message).toContain('issExigibility deve ser um código válido de exigibilidade do ISS');
+    });
+  });
+
+  it('should reject negative issRate', async() => {
+    const data = makeValidInputDto({ issRate: -1 });
+
+    expect.assertions(1);
+    return target.transform(data, metadata).catch((error) => {
+      const message = error.getResponse().message as string[];
+      expect(message).toContain('issRate deve ser maior ou igual a 0');
     });
   });
 });

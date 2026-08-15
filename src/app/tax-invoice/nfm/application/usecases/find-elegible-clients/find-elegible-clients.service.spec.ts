@@ -95,6 +95,7 @@ function makeInvoiceConfigDto(overrides: Partial<ClientInvoiceConfigDto> = {}): 
     billingAddress,
     bank,
     autoProtestBoleto: false,
+    issWithheld: false,
     message: null,
     createdAt: baseDate,
     updatedAt: baseDate,
@@ -293,5 +294,43 @@ describe('FindElegibleClients - Unit tests', () => {
     expect(result).toHaveLength(2);
     expect(result[0]).toMatchObject({ client: client1, clientInvoiceConfig: invoiceConfig1, clientItems: [item1] });
     expect(result[1]).toMatchObject({ client: client2, clientInvoiceConfig: invoiceConfig2, clientItems: [item2] });
+  });
+
+  it('should emit one NfmDto per cnaeNbsIndop group for the same client', async() => {
+    // Arrange
+    const client = makeClientDto({ id: 1 });
+    const invoiceConfig = makeInvoiceConfigDto({ clientId: 1 });
+    const itemA1 = makeClientItemDto({
+      id: 50,
+      clientId: 1,
+      description: 'xpto',
+      totalValueInCents: 10,
+      cnaeNbsIndop: { id: 1 } as any,
+    });
+    const itemA2 = makeClientItemDto({
+      id: 51,
+      clientId: 1,
+      description: 'foo',
+      totalValueInCents: 35,
+      cnaeNbsIndop: { id: 1 } as any,
+    });
+    const itemB = makeClientItemDto({
+      id: 52,
+      clientId: 1,
+      description: 'bar',
+      totalValueInCents: 100,
+      cnaeNbsIndop: { id: 2 } as any,
+    });
+    jest.spyOn(findAllClientInvoiceConfig, 'execute').mockResolvedValue(makePagination([invoiceConfig]));
+    jest.spyOn(searchClient, 'execute').mockResolvedValue(makePagination([client]));
+    jest.spyOn(findAllClientItem, 'execute').mockResolvedValue(makePagination([itemA1, itemA2, itemB]));
+
+    // Act
+    const result = await sut.execute();
+
+    // Assert
+    expect(result).toHaveLength(2);
+    expect(result[0].clientItems).toEqual([itemA1, itemA2]);
+    expect(result[1].clientItems).toEqual([itemB]);
   });
 });

@@ -2,7 +2,7 @@
 
 ## Introdução
 
-Este documento cobre o CRUD de configuração de NFS-e por empresa (relação 1-1). A config **não** vem embutida em `GET /admin/company/:id`; o front deve usar a aba dedicada com as rotas abaixo.
+CRUD de configuração de NFS-e por empresa (relação 1-1). A config **não** vem embutida em `GET /admin/company/:id`.
 
 **Referência OpenAPI:** Swagger em `/swagger`, tag **Empresas - Config NFS-e**.
 
@@ -12,9 +12,18 @@ Este documento cobre o CRUD de configuração de NFS-e por empresa (relação 1-
 |---------|---------|--------------|
 | Config NFS-e de empresa | `/admin/company-nfs-config` | Admin + claims `COMPANY_NFS_CONFIG_READ` / `COMPANY_NFS_CONFIG_WRITE` |
 
-## Buscar por empresa (`GET /admin/company-nfs-config/company/:companyId`)
+## Breaking — campos fiscais novos
 
-Retorna a config existente ou **404** se a empresa ainda não tem config (aba vazia → fluxo de criação).
+Obrigatórios no **POST** (e disponíveis no GET/PATCH):
+
+| Campo | Tipo | Observação |
+|-------|------|------------|
+| `simpleNationalOptant` | boolean | Optante Simples Nacional |
+| `fiscalIncentive` | boolean | Incentivo fiscal |
+| `issRate` | number | Alíquota ISS (ex.: `0.05` = 5%). Obrigatório na criação; emissão NFM falha se `null` |
+| `issExigibility` | number | `1`–`7` (mesmos códigos do Issue NFS-e; default `1` = Exigível) |
+
+## Buscar por empresa (`GET /admin/company-nfs-config/company/:companyId`)
 
 ### Response (200)
 
@@ -31,19 +40,25 @@ Retorna a config existente ou **404** se a empresa ainda não tem config (aba va
   "certPasswordEnvVar": "COMPANY_CERT_PASSWORD",
   "vendorConfig": {
     "municipioSlug": "demonstracao"
-  }
+  },
+  "simpleNationalOptant": false,
+  "fiscalIncentive": false,
+  "issRate": 0.05,
+  "issExigibility": 1
 }
 ```
 
 | Campo | Tipo | Observação |
 |-------|------|------------|
 | `environment` | `string` | `PRODUCTION`, `DEMONSTRATION` ou `FICTITIOUS` |
-| `vendorConfig` | `object` | Campos livres do provedor (ex.: GISS exige `municipioSlug`) |
-| `certPasswordEnvVar` | `string` | Nome da variável de ambiente com a senha do certificado — **não** enviar a senha no body |
+| `vendorConfig` | `object` | GISS exige `municipioSlug` |
+| `certPasswordEnvVar` | `string` | Nome da env var da senha — **não** enviar a senha |
+
+**404** se a empresa ainda não tem config.
 
 ## Criar (`POST /admin/company-nfs-config`)
 
-Uma empresa só pode ter uma config. Segundo POST para o mesmo `companyId` → **409**.
+Uma empresa = uma config. Segundo POST → **409**.
 
 ### Request
 
@@ -59,48 +74,36 @@ Uma empresa só pode ter uma config. Segundo POST para o mesmo `companyId` → *
   "certPasswordEnvVar": "COMPANY_CERT_PASSWORD",
   "vendorConfig": {
     "municipioSlug": "demonstracao"
-  }
+  },
+  "simpleNationalOptant": false,
+  "fiscalIncentive": false,
+  "issRate": 0.05,
+  "issExigibility": 1
 }
 ```
 
 ### Response (201)
 
 ```json
-{
-  "id": 1
-}
+{ "id": 1 }
 ```
 
 ## Editar (`PATCH /admin/company-nfs-config/:id`)
 
-`companyId` **não** pode ser alterado (omitido do body). Envie apenas campos que mudam.
-
-### Request (exemplo)
-
-```json
-{
-  "serieRps": "NFSE2",
-  "vendorConfig": {
-    "municipioSlug": "maua"
-  }
-}
-```
+`companyId` **não** pode ser alterado. Envie só os campos que mudam (inclui os fiscais).
 
 ### Response (200)
 
 ```json
-{
-  "message": "Configuração de NFS-e atualizada com sucesso"
-}
+{ "message": "Configuração de NFS-e atualizada com sucesso" }
 ```
 
 ## Fluxo recomendado na UI
 
-1. Abrir aba NFS-e da empresa com `companyId` conhecido.
-2. `GET /admin/company-nfs-config/company/:companyId`
-   - **404** → exibir formulário de criação (`POST`).
-   - **200** → exibir formulário de edição; salvar com `PATCH /:id` (usar `id` da resposta).
-3. Garantir que admins tenham claims `COMPANY_NFS_CONFIG_READ` e `COMPANY_NFS_CONFIG_WRITE`.
+1. Aba NFS-e da empresa → `GET .../company/:companyId`
+2. **404** → formulário de criação (`POST`) com os 4 campos fiscais
+3. **200** → edição (`PATCH /:id`)
+4. Claims: `COMPANY_NFS_CONFIG_READ` / `COMPANY_NFS_CONFIG_WRITE`
 
 ## Erros comuns
 
@@ -108,4 +111,4 @@ Uma empresa só pode ter uma config. Segundo POST para o mesmo `companyId` → *
 |--------|----------|
 | `404` | Empresa sem config (GET) ou `id` inválido no PATCH |
 | `409` | Empresa já possui config (POST) |
-| `400` | Validação de campos ou `environment` inválido |
+| `400` | Validação / `environment` ou `issExigibility` inválido |

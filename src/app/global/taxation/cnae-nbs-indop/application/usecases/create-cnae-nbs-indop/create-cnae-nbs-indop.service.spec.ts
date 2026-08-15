@@ -39,7 +39,7 @@ describe('CreateCnaeNbsIndop - Integration tests', () => {
       prisma.nbs.create({ data: { code: '12345678', description: 'NBS Test', active: true } }),
       prisma.indop.create({ data: { code: '1', description: 'INDOP Test', active: true } }),
     ]);
-    const input: CreateCnaeNbsIndopInputDto = { cnaeId: 99999, nbsId: nbs.id, indopId: indop.id };
+    const input: CreateCnaeNbsIndopInputDto = { cnaeId: 99999, nbsId: nbs.id, indopId: indop.id, serviceListItemCode: '01.07' };
 
     await expect(sut.execute(input)).rejects.toThrow(CnaeNotFoundError);
   });
@@ -50,7 +50,7 @@ describe('CreateCnaeNbsIndop - Integration tests', () => {
       prisma.nbs.create({ data: { code: '12345678', description: 'NBS Test', active: true } }),
       prisma.indop.create({ data: { code: '1', description: 'INDOP Test', active: true } }),
     ]);
-    const input: CreateCnaeNbsIndopInputDto = { cnaeId: cnae.id, nbsId: nbs.id, indopId: indop.id };
+    const input: CreateCnaeNbsIndopInputDto = { cnaeId: cnae.id, nbsId: nbs.id, indopId: indop.id, serviceListItemCode: '01.07' };
 
     await expect(sut.execute(input)).rejects.toThrow(CnaeNotFoundError);
   });
@@ -60,7 +60,7 @@ describe('CreateCnaeNbsIndop - Integration tests', () => {
       prisma.cnae.create({ data: { code: '1234567', description: 'CNAE Test', active: true } }),
       prisma.indop.create({ data: { code: '1', description: 'INDOP Test', active: true } }),
     ]);
-    const input: CreateCnaeNbsIndopInputDto = { cnaeId: cnae.id, nbsId: 99999, indopId: indop.id };
+    const input: CreateCnaeNbsIndopInputDto = { cnaeId: cnae.id, nbsId: 99999, indopId: indop.id, serviceListItemCode: '01.07' };
 
     await expect(sut.execute(input)).rejects.toThrow(NbsNotFoundError);
   });
@@ -71,7 +71,7 @@ describe('CreateCnaeNbsIndop - Integration tests', () => {
       prisma.nbs.create({ data: { code: '12345678', description: 'NBS Inativo', active: false } }),
       prisma.indop.create({ data: { code: '1', description: 'INDOP Test', active: true } }),
     ]);
-    const input: CreateCnaeNbsIndopInputDto = { cnaeId: cnae.id, nbsId: nbs.id, indopId: indop.id };
+    const input: CreateCnaeNbsIndopInputDto = { cnaeId: cnae.id, nbsId: nbs.id, indopId: indop.id, serviceListItemCode: '01.07' };
 
     await expect(sut.execute(input)).rejects.toThrow(NbsNotFoundError);
   });
@@ -81,7 +81,7 @@ describe('CreateCnaeNbsIndop - Integration tests', () => {
       prisma.cnae.create({ data: { code: '1234567', description: 'CNAE Test', active: true } }),
       prisma.nbs.create({ data: { code: '12345678', description: 'NBS Test', active: true } }),
     ]);
-    const input: CreateCnaeNbsIndopInputDto = { cnaeId: cnae.id, nbsId: nbs.id, indopId: 99999 };
+    const input: CreateCnaeNbsIndopInputDto = { cnaeId: cnae.id, nbsId: nbs.id, indopId: 99999, serviceListItemCode: '01.07' };
 
     await expect(sut.execute(input)).rejects.toThrow(IndopNotFoundError);
   });
@@ -92,7 +92,7 @@ describe('CreateCnaeNbsIndop - Integration tests', () => {
       prisma.nbs.create({ data: { code: '12345678', description: 'NBS Test', active: true } }),
       prisma.indop.create({ data: { code: '1', description: 'INDOP Inativo', active: false } }),
     ]);
-    const input: CreateCnaeNbsIndopInputDto = { cnaeId: cnae.id, nbsId: nbs.id, indopId: indop.id };
+    const input: CreateCnaeNbsIndopInputDto = { cnaeId: cnae.id, nbsId: nbs.id, indopId: indop.id, serviceListItemCode: '01.07' };
 
     await expect(sut.execute(input)).rejects.toThrow(IndopNotFoundError);
   });
@@ -106,7 +106,7 @@ describe('CreateCnaeNbsIndop - Integration tests', () => {
     await prisma.cnaeNbsIndop.create({
       data: { cnaeId: cnae.id, nbsId: nbs.id, indopId: indop.id },
     });
-    const input: CreateCnaeNbsIndopInputDto = { cnaeId: cnae.id, nbsId: nbs.id, indopId: indop.id };
+    const input: CreateCnaeNbsIndopInputDto = { cnaeId: cnae.id, nbsId: nbs.id, indopId: indop.id, serviceListItemCode: '01.07' };
 
     await expect(sut.execute(input)).rejects.toThrow(CnaeNbsIndopAlreadyExistsError);
   });
@@ -117,7 +117,7 @@ describe('CreateCnaeNbsIndop - Integration tests', () => {
       prisma.nbs.create({ data: { code: '12345678', description: 'NBS Test', active: true } }),
       prisma.indop.create({ data: { code: '1', description: 'INDOP Test', active: true } }),
     ]);
-    const input: CreateCnaeNbsIndopInputDto = { cnaeId: cnae.id, nbsId: nbs.id, indopId: indop.id };
+    const input: CreateCnaeNbsIndopInputDto = { cnaeId: cnae.id, nbsId: nbs.id, indopId: indop.id, serviceListItemCode: '01.07' };
 
     const result = await sut.execute(input);
 
@@ -131,5 +131,6 @@ describe('CreateCnaeNbsIndop - Integration tests', () => {
     expect(saved?.cnaeId).toBe(cnae.id);
     expect(saved?.nbsId).toBe(nbs.id);
     expect(saved?.indopId).toBe(indop.id);
+    expect(saved?.serviceListItemCode).toBe('01.07');
   });
 });

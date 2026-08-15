@@ -9,4 +9,8 @@ export class CompanyNfsConfigDto {
   certFilePath: string;
   certPasswordEnvVar: string;
   vendorConfig: Record<string, unknown>;
+  simpleNationalOptant: boolean;
+  fiscalIncentive: boolean;
+  issRate: number | null;
+  issExigibility: number;
 }

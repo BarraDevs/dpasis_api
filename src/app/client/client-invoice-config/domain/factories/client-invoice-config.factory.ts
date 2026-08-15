@@ -65,6 +65,7 @@ export class ClientInvoiceConfigFactory {
 
       generateNf: new BooleanVo(props.generateNf, 'generateNf').value,
       autoProtestBoleto: new BooleanVo(props.autoProtestBoleto, 'autoProtestBoleto').value,
+      issWithheld: new BooleanVo(props.issWithheld, 'issWithheld').value,
       message: new OptionalString(props.message ?? null, 'message').value,
     };
   }

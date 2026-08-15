@@ -59,7 +59,7 @@ export class FindElegibleClients {
       }
     }
 
-    // filter clients with active items and client invoice config
+    // one NfmDto per (client + cnaeNbsIndop) group
     const nfms: NfmDto[] = [];
     for (const client of clients.data) {
       const clientInvoiceConfig = invoices.data.find(invoice => invoice.clientId === client.id);
@@ -69,11 +69,21 @@ export class FindElegibleClients {
         continue;
       }
 
-      nfms.push({
-        client,
-        clientInvoiceConfig,
-        clientItems: items,
-      });
+      const groups = new Map<number, ClientItemDto[]>();
+      for (const item of items) {
+        const groupId = item.cnaeNbsIndop.id;
+        const groupItems = groups.get(groupId) ?? [];
+        groupItems.push(item);
+        groups.set(groupId, groupItems);
+      }
+
+      for (const groupItems of groups.values()) {
+        nfms.push({
+          client,
+          clientInvoiceConfig,
+          clientItems: groupItems,
+        });
+      }
     }
 
     return nfms;

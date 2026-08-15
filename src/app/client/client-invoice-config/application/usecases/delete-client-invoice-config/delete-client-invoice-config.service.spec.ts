@@ -93,6 +93,7 @@ describe('DeleteClientInvoiceConfig - Integration tests', () => {
         billingAddressId: address.id,
         bankId: bank.id,
         autoProtestBoleto: false,
+        issWithheld: false,
         message: null,
       },
     });

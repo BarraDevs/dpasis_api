@@ -63,6 +63,10 @@ describe('CreateCompanyNfsConfig - Integration tests', () => {
       certFilePath: '/certs/x.pfx',
       certPasswordEnvVar: 'X_PASS',
       vendorConfig: { municipioSlug: 'demonstracao' },
+      simpleNationalOptant: false,
+      fiscalIncentive: false,
+      issRate: 0.05,
+      issExigibility: 1,
     };
 
     // Act

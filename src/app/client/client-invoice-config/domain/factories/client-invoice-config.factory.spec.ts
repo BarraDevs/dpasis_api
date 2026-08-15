@@ -26,6 +26,7 @@ function makeValidCreateProps(overrides: Partial<ClientInvoiceConfigCreateProps>
     billingAddressId: 2,
     bankId: 3,
     autoProtestBoleto: false,
+    issWithheld: false,
     message: null,
     ...overrides,
   };
@@ -78,6 +79,7 @@ describe('ClientInvoiceConfigFactory - Unit tests', () => {
         billingAddressId: 2,
         bankId: 3,
         autoProtestBoleto: false,
+        issWithheld: false,
         message: null,
       });
     });

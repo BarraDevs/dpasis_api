@@ -16,6 +16,8 @@ model Nfse {
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
+  nfm Nfm?
+
   @@unique([companyId, rpsSeries, rpsNumber])
   @@map("nfses")
 }

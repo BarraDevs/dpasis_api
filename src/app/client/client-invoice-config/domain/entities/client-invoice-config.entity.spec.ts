@@ -17,6 +17,7 @@ function makeClientInvoiceConfigProps(overrides?: Partial<ClientInvoiceConfigPro
     billingAddressId: 1,
     bankId: 1,
     autoProtestBoleto: false,
+    issWithheld: false,
     message: null,
     ...overrides,
   };
@@ -351,6 +352,7 @@ describe('ClientInvoiceConfig Entity', () => {
         billingAddressId: 8,
         bankId: 9,
         autoProtestBoleto: true,
+        issWithheld: false,
         message: 'Test',
       });
       const config = ClientInvoiceConfig._instantiate(props);
@@ -368,6 +370,7 @@ describe('ClientInvoiceConfig Entity', () => {
         billingAddressId: 8,
         bankId: 9,
         autoProtestBoleto: true,
+        issWithheld: false,
         message: 'Test',
       });
     });

@@ -40,6 +40,7 @@ export class CreateClientInvoiceConfig {
       billingAddressId: billingAddress.id,
       bankId: bank.id,
       autoProtestBoleto: data.autoProtestBoleto,
+      issWithheld: data.issWithheld,
       message: data.message,
     });
 

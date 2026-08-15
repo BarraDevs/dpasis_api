@@ -18,6 +18,7 @@ const ClientItemSelect = {
     select: {
       id: true,
       active: true,
+      serviceListItemCode: true,
       cnae: {
         select: {
           id: true,
@@ -61,6 +62,7 @@ export class ClientItemDaoAdapterPrisma implements IClientItemDao {
       cnaeNbsIndop: {
         id: row.cnaeNbsIndop.id,
         active: row.cnaeNbsIndop.active,
+        serviceListItemCode: row.cnaeNbsIndop.serviceListItemCode,
         cnae: row.cnaeNbsIndop.cnae,
         nbs: row.cnaeNbsIndop.nbs,
         indop: row.cnaeNbsIndop.indop,

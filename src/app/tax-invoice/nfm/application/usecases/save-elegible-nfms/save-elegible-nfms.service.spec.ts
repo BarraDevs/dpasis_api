@@ -1,11 +1,27 @@
 import { createMock } from '@golevelup/ts-jest';
 import { Test } from '@nestjs/testing';
+import { FindCompanyNfsConfigByCompanyId } from 'src/app/company/company-nfs-config/application/usecases/find-company-nfs-config-by-company-id/find-company-nfs-config-by-company-id.service';
+import { CompanyNfsConfigDto } from 'src/app/company/company-nfs-config/application/dtos/company-nfs-config.dto';
+import { IssueNfse } from 'src/app/tax-invoice/nfse/application/usecases/issue-nfse/issue-nfse.service';
+import { NfseStatus } from 'src/app/tax-invoice/nfse/domain/enums/nfse-status.enum';
 import { TOKENS } from 'src/core/di/token';
+import { AppException } from 'src/core/filters/app.exception';
 import { NfmStatus } from '../../../domain/enums/nfm-status.enum';
 import { NfmDto } from '../../dtos/nfm.dto';
 import type { INfmDao } from '../../persistence/dao/nfm-dao.interface';
 import { FindElegibleClients } from '../find-elegible-clients/find-elegible-clients.service';
 import { SaveElegibleNfms } from './save-elegible-nfms.service';
+
+function makeCnaeNbsIndop(id = 1) {
+  return {
+    id,
+    active: true,
+    serviceListItemCode: '01.07',
+    cnae: { id: 1, code: '6209-1/00', description: 'CNAE' },
+    nbs: { id: 1, code: '1.1501.30.00', description: 'NBS' },
+    indop: { id: 1, code: '050101', description: 'INDOP' },
+  } as NfmDto['clientItems'][number]['cnaeNbsIndop'];
+}
 
 function makeNfmDto(overrides: Partial<NfmDto> = {}): NfmDto {
   const base: NfmDto = {
@@ -74,6 +90,7 @@ function makeNfmDto(overrides: Partial<NfmDto> = {}): NfmDto {
         updatedAt: new Date(),
       },
       autoProtestBoleto: false,
+      issWithheld: false,
       message: null,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -87,19 +104,7 @@ function makeNfmDto(overrides: Partial<NfmDto> = {}): NfmDto {
         unitValueInCents: 5000,
         totalValueInCents: 10000,
         active: true,
-        cnaeNbsIndop: { id: 1 } as NfmDto['clientItems'][number]['cnaeNbsIndop'],
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-      {
-        id: 2,
-        clientId: 1,
-        description: 'Item 2',
-        quantity: 1,
-        unitValueInCents: 3000,
-        totalValueInCents: 3000,
-        active: true,
-        cnaeNbsIndop: { id: 1 } as NfmDto['clientItems'][number]['cnaeNbsIndop'],
+        cnaeNbsIndop: makeCnaeNbsIndop(1),
         createdAt: new Date(),
         updatedAt: new Date(),
       },
@@ -109,20 +114,45 @@ function makeNfmDto(overrides: Partial<NfmDto> = {}): NfmDto {
   return { ...base, ...overrides };
 }
 
+function makeProviderConfig(): CompanyNfsConfigDto {
+  return {
+    id: 1,
+    companyId: 1,
+    vendor: 'giss',
+    municipalRegistration: '123',
+    municipalCodeIbge: '3529401',
+    serieRps: 'NFSE',
+    environment: 'DEMONSTRATION',
+    certFilePath: '/certs/a.pfx',
+    certPasswordEnvVar: 'PWD',
+    vendorConfig: { municipioSlug: 'demonstracao' },
+    simpleNationalOptant: false,
+    fiscalIncentive: false,
+    issRate: 0.05,
+    issExigibility: 1,
+  };
+}
+
 describe('SaveElegibleNfms - Unit tests', () => {
   let sut: SaveElegibleNfms;
   let findElegibleClients: jest.Mocked<FindElegibleClients>;
   let nfmDao: jest.Mocked<INfmDao>;
+  let findCompanyNfsConfigByCompanyId: jest.Mocked<FindCompanyNfsConfigByCompanyId>;
+  let issueNfse: jest.Mocked<IssueNfse>;
 
   beforeEach(async() => {
     findElegibleClients = createMock<FindElegibleClients>();
     nfmDao = createMock<INfmDao>();
+    findCompanyNfsConfigByCompanyId = createMock<FindCompanyNfsConfigByCompanyId>();
+    issueNfse = createMock<IssueNfse>();
 
     const module = await Test.createTestingModule({
       providers: [
         SaveElegibleNfms,
         { provide: FindElegibleClients, useValue: findElegibleClients },
         { provide: TOKENS.NfmDao, useValue: nfmDao },
+        { provide: FindCompanyNfsConfigByCompanyId, useValue: findCompanyNfsConfigByCompanyId },
+        { provide: IssueNfse, useValue: issueNfse },
       ],
     }).compile();
 
@@ -133,7 +163,7 @@ describe('SaveElegibleNfms - Unit tests', () => {
     expect(sut).toBeDefined();
   });
 
-  it('should return created 0 when no elegible clients', async() => {
+  it('should return zeros when no elegible clients', async() => {
     // Arrange
     findElegibleClients.execute.mockResolvedValue([]);
 
@@ -141,119 +171,131 @@ describe('SaveElegibleNfms - Unit tests', () => {
     const result = await sut.execute();
 
     // Assert
-    expect(result).toEqual({ created: 0 });
-    expect(nfmDao.saveMany).not.toHaveBeenCalled();
+    expect(result).toEqual({ created: 0, skipped: 0, failed: 0, errors: [] });
+    expect(nfmDao.save).not.toHaveBeenCalled();
+    expect(issueNfse.execute).not.toHaveBeenCalled();
   });
 
-  it('should map elegibles and persist with correct fields', async() => {
+  it('should create nfm, issue nfse and link nfseId', async() => {
     // Arrange
     const nfm = makeNfmDto();
     findElegibleClients.execute.mockResolvedValue([nfm]);
-    nfmDao.saveMany.mockResolvedValue(1);
-
-    const now = new Date();
-    const referenceMonth = now.getMonth() + 1;
-    const referenceYear = now.getFullYear();
-
-    // Act
-    const result = await sut.execute();
-
-    // Assert
-    expect(result).toEqual({ created: 1 });
-    expect(nfmDao.saveMany).toHaveBeenCalledWith([
-      {
-        clientId: 1,
-        clientDocument: '00000000000101',
-        companyName: 'Empresa Teste',
-        status: NfmStatus.PENDING,
-        referenceMonth,
-        referenceYear,
-        totalValueInCents: 13000,
-        data: nfm,
-      },
-    ]);
-  });
-
-  it('should return created count from dao', async() => {
-    // Arrange
-    const secondNfm = makeNfmDto();
-    secondNfm.client = { ...secondNfm.client, id: 2, document: '00000000000202', companyName: 'Outra' };
-    findElegibleClients.execute.mockResolvedValue([makeNfmDto(), secondNfm]);
-    nfmDao.saveMany.mockResolvedValue(2);
+    nfmDao.findByClientReferenceAndCnae.mockResolvedValue(null);
+    nfmDao.save.mockResolvedValue(99);
+    findCompanyNfsConfigByCompanyId.execute.mockResolvedValue(makeProviderConfig());
+    issueNfse.execute.mockResolvedValue({ id: 55, status: NfseStatus.PENDING });
 
     // Act
     const result = await sut.execute();
 
     // Assert
-    expect(result).toEqual({ created: 2 });
-    expect(nfmDao.saveMany).toHaveBeenCalledTimes(1);
+    expect(result).toEqual({ created: 1, skipped: 0, failed: 0, errors: [] });
+    expect(nfmDao.save).toHaveBeenCalledWith(expect.objectContaining({
+      clientId: 1,
+      cnaeNbsIndopId: 1,
+      totalValueInCents: 10000,
+      status: NfmStatus.PENDING,
+    }));
+    expect(issueNfse.execute).toHaveBeenCalledTimes(1);
+    expect(nfmDao.edit).toHaveBeenCalledWith(99, { nfseId: 55, status: NfmStatus.PENDING });
   });
 
-  it('should call findElegibleClients.execute once', async() => {
-    // Arrange
-    findElegibleClients.execute.mockResolvedValue([]);
-
-    // Act
-    await sut.execute();
-
-    // Assert
-    expect(findElegibleClients.execute).toHaveBeenCalledTimes(1);
-  });
-
-  it('should return created 0 when dao saves zero rows', async() => {
+  it('should skip when nfm already has nfseId', async() => {
     // Arrange
     findElegibleClients.execute.mockResolvedValue([makeNfmDto()]);
-    nfmDao.saveMany.mockResolvedValue(0);
+    nfmDao.findByClientReferenceAndCnae.mockResolvedValue({
+      id: 10,
+      nfseId: 20,
+      status: NfmStatus.PENDING,
+    });
 
     // Act
     const result = await sut.execute();
 
     // Assert
-    expect(result).toEqual({ created: 0 });
-    expect(nfmDao.saveMany).toHaveBeenCalledTimes(1);
+    expect(result).toEqual({ created: 0, skipped: 1, failed: 0, errors: [] });
+    expect(nfmDao.save).not.toHaveBeenCalled();
+    expect(issueNfse.execute).not.toHaveBeenCalled();
   });
 
-  it('should compute totalValueInCents as 0 when client has no items', async() => {
+  it('should retry issue when nfm exists without nfseId', async() => {
     // Arrange
-    const nfm = makeNfmDto({ clientItems: [] });
+    findElegibleClients.execute.mockResolvedValue([makeNfmDto()]);
+    nfmDao.findByClientReferenceAndCnae.mockResolvedValue({
+      id: 10,
+      nfseId: null,
+      status: NfmStatus.FAILED,
+    });
+    findCompanyNfsConfigByCompanyId.execute.mockResolvedValue(makeProviderConfig());
+    issueNfse.execute.mockResolvedValue({ id: 77, status: NfseStatus.PENDING });
+
+    // Act
+    const result = await sut.execute();
+
+    // Assert
+    expect(result.created).toBe(1);
+    expect(nfmDao.save).not.toHaveBeenCalled();
+    expect(nfmDao.edit).toHaveBeenCalledWith(10, { nfseId: 77, status: NfmStatus.PENDING });
+  });
+
+  it('should continue after one failure and count failed', async() => {
+    // Arrange
+    const ok = makeNfmDto();
+    const fail = makeNfmDto();
+    fail.client = { ...fail.client, id: 2, company: { id: 2, name: 'Outra' } };
+    fail.clientItems = [{
+      ...fail.clientItems[0],
+      cnaeNbsIndop: makeCnaeNbsIndop(2),
+    }];
+
+    findElegibleClients.execute.mockResolvedValue([fail, ok]);
+    nfmDao.findByClientReferenceAndCnae
+      .mockResolvedValueOnce(null) // fail path — before issue
+      .mockResolvedValueOnce({ id: 1, nfseId: null, status: NfmStatus.PENDING }) // fail path — after catch
+      .mockResolvedValueOnce(null); // ok path
+    nfmDao.save
+      .mockResolvedValueOnce(1)
+      .mockResolvedValueOnce(2);
+    findCompanyNfsConfigByCompanyId.execute
+      .mockRejectedValueOnce(new AppException('Config NFS-e não encontrada'))
+      .mockResolvedValueOnce(makeProviderConfig());
+    issueNfse.execute.mockResolvedValue({ id: 55, status: NfseStatus.PENDING });
+
+    // Act
+    const result = await sut.execute();
+
+    // Assert
+    expect(result.created).toBe(1);
+    expect(result.failed).toBe(1);
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0]).toMatchObject({
+      clientId: 2,
+      cnaeNbsIndopId: 2,
+      message: 'Config NFS-e não encontrada',
+    });
+    expect(nfmDao.edit).toHaveBeenCalledWith(1, { status: NfmStatus.FAILED, nfseId: null });
+  });
+
+  it('should mark failed when mapper rejects missing LC 116', async() => {
+    // Arrange
+    const nfm = makeNfmDto();
+    nfm.clientItems[0].cnaeNbsIndop = {
+      ...makeCnaeNbsIndop(1),
+      serviceListItemCode: null,
+    };
     findElegibleClients.execute.mockResolvedValue([nfm]);
-    nfmDao.saveMany.mockResolvedValue(1);
-
-    const now = new Date();
-    const referenceMonth = now.getMonth() + 1;
-    const referenceYear = now.getFullYear();
+    nfmDao.findByClientReferenceAndCnae
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({ id: 9, nfseId: null, status: NfmStatus.PENDING });
+    nfmDao.save.mockResolvedValue(9);
+    findCompanyNfsConfigByCompanyId.execute.mockResolvedValue(makeProviderConfig());
 
     // Act
-    await sut.execute();
+    const result = await sut.execute();
 
     // Assert
-    expect(nfmDao.saveMany).toHaveBeenCalledWith([
-      expect.objectContaining({
-        totalValueInCents: 0,
-        referenceMonth,
-        referenceYear,
-        status: NfmStatus.PENDING,
-      }),
-    ]);
-  });
-
-  it('should propagate error when findElegibleClients fails', async() => {
-    // Arrange
-    const error = new Error('falha ao buscar elegíveis');
-    findElegibleClients.execute.mockRejectedValue(error);
-
-    // Act & Assert
-    await expect(sut.execute()).rejects.toThrow(error);
-    expect(nfmDao.saveMany).not.toHaveBeenCalled();
-  });
-
-  it('should propagate error when nfmDao.saveMany fails', async() => {
-    // Arrange
-    const error = new Error('falha ao persistir NFMs');
-    findElegibleClients.execute.mockResolvedValue([makeNfmDto()]);
-    nfmDao.saveMany.mockRejectedValue(error);
-
-    // Act & Assert
-    await expect(sut.execute()).rejects.toThrow(error);
+    expect(result.failed).toBe(1);
+    expect(result.errors[0].message).toMatch(/ItemListaServico/);
+    expect(issueNfse.execute).not.toHaveBeenCalled();
   });
 });

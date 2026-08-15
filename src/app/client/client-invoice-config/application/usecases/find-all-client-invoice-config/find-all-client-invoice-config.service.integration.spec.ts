@@ -102,6 +102,7 @@ async function createClientWithConfig(
       billingAddressId: address.id,
       bankId: base.bankId,
       autoProtestBoleto: false,
+      issWithheld: false,
       message: opts.message,
     },
   });

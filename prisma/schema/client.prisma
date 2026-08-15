@@ -180,6 +180,7 @@ model ClientInvoiceConfig {
   billingAddressId  Int
   bankId            Int
   autoProtestBoleto Boolean
+  issWithheld       Boolean  @default(false)
   message           String?  @db.Text
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt

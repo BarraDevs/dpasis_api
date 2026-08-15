@@ -39,6 +39,7 @@ const IndopSelectForSelect = {
 const CnaeNbsIndopSelect = {
   id: true,
   active: true,
+  serviceListItemCode: true,
   cnae: {
     select: {
       id: true,
@@ -122,6 +123,7 @@ export class CnaeNbsIndopDaoAdapterPrisma implements ICnaeNbsIndopDao {
         cnaeId: data.cnaeId,
         nbsId: data.nbsId,
         indopId: data.indopId,
+        serviceListItemCode: data.serviceListItemCode,
       },
     });
     return result.id;

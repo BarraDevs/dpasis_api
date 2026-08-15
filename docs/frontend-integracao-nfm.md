@@ -1,12 +1,16 @@
-# Integração frontend — Listagem de NFS-e NFM (`GET /admin/nfm/invoices`)
+# Integração frontend — NFM (elegíveis + emissão NFS-e + invoices Giss)
 
 ## Introdução
 
-A rota `GET /admin/nfm/invoices` deixou de consultar o **NFeMail** e passou a listar **NFS-e de serviço prestado** no **Giss Online** (`ConsultarNfseServicoPrestado`).
+Este documento cobre as rotas admin de **NFM**:
+- `GET /admin/nfm` — clientes/grupos elegíveis
+- `POST /admin/nfm` — salva NFMs e dispara emissão de NFS-e (1:1)
+- `GET /admin/nfm/invoices` — consulta NFS-e no Giss Online
 
 **Referência OpenAPI:** Swagger em `/swagger`, tag **NFM**.
 
-Config de certificado/município por empresa: ver [frontend-integracao-company-nfs-config.md](./frontend-integracao-company-nfs-config.md).
+Config fiscal da empresa: [frontend-integracao-company-nfs-config.md](./frontend-integracao-company-nfs-config.md).  
+ItemListaServico (LC 116) na correspondência CNAE/NBS/INDOP: [frontend-integracao-cnae-nbs-indop.md](./frontend-integracao-cnae-nbs-indop.md).
 
 ## Base URL
 
@@ -14,94 +18,103 @@ Config de certificado/município por empresa: ver [frontend-integracao-company-n
 |---------|---------|--------------|
 | NFM | `/admin/nfm` | Admin (mesmo padrão das demais rotas NFM) |
 
-## Resumo das mudanças
+---
 
-| Área | Antes | Depois |
-|------|-------|--------|
-| Fonte dos dados | NFeMail (`nf-generation`) | Giss Online (`nfs-generation`) |
-| Query | `page`, `limit`, `orderNumber`, `nfeNumber`, `recipientDocument`, `processCode` | **`companyId` obrigatório** + (`dateFrom`+`dateTo`) **ou** `nfseNumber` + `page?` + `recipientDocument?` |
-| Response | `NfDto` (NFeMail) | **`NfsNoteDto`** (shape novo — **breaking**) |
+## Listar elegíveis (`GET /admin/nfm`)
 
-**Breaking change:** query e response mudaram. Atualizar tipos, formulários de filtro e tabela de listagem.
+Retorna **um item por grupo fiscal** `(cliente + cnaeNbsIndop)`, não um por cliente.
 
-## Listar NFS-e (`GET /admin/nfm/invoices`)
+Se o cliente tem itens com 2 tributações diferentes → **2** objetos no array (mesmo `client`, `clientItems` só do grupo).
+
+### Response (200)
+
+Array de `NfmDto`:
+- `client` — inclui `company: { id, name }`
+- `clientInvoiceConfig` — inclui `issWithheld: boolean`
+- `clientItems[]` — itens do **mesmo** `cnaeNbsIndop`; cada item traz `cnaeNbsIndop` completo (incl. `serviceListItemCode`)
+
+---
+
+## Salvar elegíveis e emitir (`POST /admin/nfm`)
+
+Sem body. Para cada grupo elegível do mês corrente:
+1. Persiste NFM (se ainda não existir)
+2. Chama emissão NFS-e (`IssueNfse`) — fila GISS assíncrona
+3. Vincula `nfseId` (relação 1:1)
+
+Reexecução no mesmo mês:
+- Já tem `nfseId` → **skip**
+- Existe NFM sem `nfseId` (falha anterior) → **retry** da emissão
+
+### Response (201)
+
+```json
+{
+  "created": 2,
+  "skipped": 1,
+  "failed": 1,
+  "errors": [
+    {
+      "clientId": 10,
+      "cnaeNbsIndopId": 3,
+      "message": "Correspondência CNAE/NBS/INDOP 3 sem ItemListaServico (LC 116)."
+    }
+  ]
+}
+```
+
+| Campo | Significado |
+|-------|-------------|
+| `created` | Vinculou `nfseId` nesta execução |
+| `skipped` | Já tinha NFS-e |
+| `failed` | Erro (NFM fica sem `nfseId`, status `FAILED`) |
+| `errors[]` | Detalhe por grupo que falhou |
+
+HTTP **não** espera a GISS. Só persistência + enqueue.
+
+### Falhas comuns em `errors[].message`
+
+- Sem `serviceListItemCode` na correspondência CNAE/NBS/INDOP
+- Sem alíquota ISS / config NFS-e da empresa
+- Cliente sem endereço BILLING/MAIN com `cityCodeIbge`
+
+---
+
+## Listar NFS-e no Giss (`GET /admin/nfm/invoices`)
+
+Consulta **NFS-e de serviço prestado** no Giss (`ConsultarNfseServicoPrestado`).
 
 ### Query
 
 | Campo | Obrigatório | Tipo | Observação |
 |-------|-------------|------|------------|
 | `companyId` | sim | number | Empresa prestadora (credenciais Giss) |
-| `page` | não | number | Default `1` (Giss pagina; até 50 itens/página) |
-| `dateFrom` | condicional | string `YYYY-MM-DD` | Com `dateTo`: período de emissão |
-| `dateTo` | condicional | string `YYYY-MM-DD` | Com `dateFrom`: período de emissão |
-| `nfseNumber` | condicional | string | Número da NFS-e; **exclusivo** com o período |
+| `page` | não | number | Default `1` (até 50 itens/página) |
+| `dateFrom` | condicional | string `YYYY-MM-DD` | Com `dateTo`: período |
+| `dateTo` | condicional | string `YYYY-MM-DD` | Com `dateFrom` |
+| `nfseNumber` | condicional | string | Exclusivo com o período |
 | `recipientDocument` | não | string | CPF/CNPJ do tomador |
 
-Regras:
-1. Enviar **período** (`dateFrom` + `dateTo`) **ou** `nfseNumber` — nunca ambos, nunca nenhum.
-2. `dateFrom` e `dateTo` devem vir juntos.
-
-### Exemplos
-
-```http
-GET /admin/nfm/invoices?companyId=10&dateFrom=2026-08-01&dateTo=2026-08-31&page=1
-```
-
-```http
-GET /admin/nfm/invoices?companyId=10&nfseNumber=1000
-```
-
-```http
-GET /admin/nfm/invoices?companyId=10&dateFrom=2026-08-01&dateTo=2026-08-31&recipientDocument=98765432000111
-```
+Regras: período **ou** `nfseNumber` — nunca ambos, nunca nenhum.
 
 ### Response (200)
 
-```json
-[
-  {
-    "nfseNumber": "1000",
-    "verificationCode": "ABC123",
-    "issueDate": "2026-08-10T10:00:00",
-    "rpsNumber": 7,
-    "rpsSeries": "NFSE",
-    "takerDocument": "98765432000111",
-    "takerName": "Cliente Teste",
-    "serviceAmount": "200",
-    "status": "Normal"
-  }
-]
-```
+Array de `NfsNoteDto` (`nfseNumber`, `verificationCode`, `issueDate`, `rpsNumber`, `rpsSeries`, `takerDocument`, `takerName`, `serviceAmount`, `status` `Normal`|`Cancelada`).
 
-| Campo | Tipo | Observação |
-|-------|------|------------|
-| `nfseNumber` | string | Número da NFS-e |
-| `verificationCode` | string | Código de verificação |
-| `issueDate` | string | Data/hora de emissão (ISO do Giss) |
-| `rpsNumber` | number | Número do RPS |
-| `rpsSeries` | string | Série do RPS |
-| `takerDocument` | string \| null | CPF/CNPJ do tomador |
-| `takerName` | string \| null | Razão social do tomador |
-| `serviceAmount` | string \| null | Valor dos serviços (ou líquido, se ValorServicos ausente) |
-| `status` | `"Normal"` \| `"Cancelada"` | Situação da NFS-e |
+### Erros
 
-Campos antigos (`rowId`, `orderNumber`, `externalId`, `processCode`, `nfeKey`, etc.) **não existem mais**.
+| Status | Quando |
+|--------|--------|
+| 400 | Query inválida |
+| 404 | Empresa ou config NFS-e não encontrada |
+| 503 | Giss indisponível |
 
-## Erros / UX
+---
 
-| Status | Quando | Ação sugerida |
-|--------|--------|---------------|
-| 400 | Query inválida (sem período/`nfseNumber`, ambos, ou só um de `dateFrom`/`dateTo`); validação de formato | Exibir `message` do body |
-| 404 | Empresa ou config NFS-e da empresa não encontrada | Orientar cadastro em company-nfs-config |
-| 503 | Giss indisponível / erro de integração | Retry + mensagem de serviço indisponível |
+## Checklist frontend
 
-Sempre exibir `message` do payload padronizado (`AppException`).
-
-## Checklist prático para o frontend
-
-1. Atualizar tipos OpenAPI / `NfDto` → `NfsNoteDto` na tela de invoices NFM.
-2. Exigir seleção de `companyId` antes de listar.
-3. Trocar filtros: período (`dateFrom`/`dateTo`) **ou** número da NFS-e; remover `limit`, `orderNumber`, `processCode`.
-4. Ajustar colunas da tabela para o novo shape (`status` `Normal`/`Cancelada`, sem `processDescription`).
-5. Tratar 404 de config NFS-e (empresa sem certificado/`municipioSlug`).
-6. Atualizar mocks E2E da rota `GET /admin/nfm/invoices`.
+1. `GET /admin/nfm`: UI trata **N grupos por cliente** (não assume 1 linha/cliente).
+2. `POST /admin/nfm`: exibir resumo `created` / `skipped` / `failed` + lista de `errors`.
+3. Garantir cadastro fiscal antes de emitir: LC 116 na correspondência, ISS/Simples na config da empresa, `issWithheld` no invoice config do cliente.
+4. `GET /admin/nfm/invoices`: `companyId` + período ou `nfseNumber`.
+5. Atualizar mocks E2E das três rotas.

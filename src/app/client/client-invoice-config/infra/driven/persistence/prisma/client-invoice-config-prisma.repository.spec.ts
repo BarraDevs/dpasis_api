@@ -110,6 +110,7 @@ describe('ClientInvoiceConfigRepositoryAdapterPrisma - Integration tests', () =>
         billingAddressId,
         bankId,
         autoProtestBoleto: false,
+        issWithheld: false,
         message: 'Mensagem de teste',
       });
 
@@ -134,6 +135,7 @@ describe('ClientInvoiceConfigRepositoryAdapterPrisma - Integration tests', () =>
         billingAddressId,
         bankId,
         autoProtestBoleto: false,
+        issWithheld: false,
         message: 'Mensagem de teste',
         createdAt: expect.any(Date),
         updatedAt: expect.any(Date),
@@ -154,6 +156,7 @@ describe('ClientInvoiceConfigRepositoryAdapterPrisma - Integration tests', () =>
         billingAddressId,
         bankId,
         autoProtestBoleto: true,
+        issWithheld: false,
         message: null,
       });
 
@@ -175,6 +178,7 @@ describe('ClientInvoiceConfigRepositoryAdapterPrisma - Integration tests', () =>
         billingAddressId,
         bankId,
         autoProtestBoleto: true,
+        issWithheld: false,
         message: null,
         createdAt: expect.any(Date),
         updatedAt: expect.any(Date),
@@ -197,6 +201,7 @@ describe('ClientInvoiceConfigRepositoryAdapterPrisma - Integration tests', () =>
         billingAddressId,
         bankId,
         autoProtestBoleto: false,
+        issWithheld: false,
         message: 'Original',
       });
 
@@ -214,6 +219,7 @@ describe('ClientInvoiceConfigRepositoryAdapterPrisma - Integration tests', () =>
         deadlineDays: 30,
         months: [3, 6, 12],
         autoProtestBoleto: true,
+        issWithheld: false,
         message: 'Atualizado',
       });
 
@@ -235,6 +241,7 @@ describe('ClientInvoiceConfigRepositoryAdapterPrisma - Integration tests', () =>
         billingAddressId,
         bankId,
         autoProtestBoleto: true,
+        issWithheld: false,
         message: 'Atualizado',
         createdAt: expect.any(Date),
         updatedAt: expect.any(Date),
@@ -263,6 +270,7 @@ describe('ClientInvoiceConfigRepositoryAdapterPrisma - Integration tests', () =>
           billingAddressId,
           bankId,
           autoProtestBoleto: false,
+          issWithheld: false,
           message: 'Teste findById',
         },
       });
@@ -284,6 +292,7 @@ describe('ClientInvoiceConfigRepositoryAdapterPrisma - Integration tests', () =>
         billingAddressId,
         bankId,
         autoProtestBoleto: false,
+        issWithheld: false,
         message: 'Teste findById',
       });
     });
@@ -310,6 +319,7 @@ describe('ClientInvoiceConfigRepositoryAdapterPrisma - Integration tests', () =>
           billingAddressId,
           bankId,
           autoProtestBoleto: true,
+          issWithheld: false,
           message: null,
         },
       });
@@ -331,6 +341,7 @@ describe('ClientInvoiceConfigRepositoryAdapterPrisma - Integration tests', () =>
         billingAddressId,
         bankId,
         autoProtestBoleto: true,
+        issWithheld: false,
         message: null,
       });
     });
@@ -351,6 +362,7 @@ describe('ClientInvoiceConfigRepositoryAdapterPrisma - Integration tests', () =>
         billingAddressId,
         bankId,
         autoProtestBoleto: false,
+        issWithheld: false,
         message: null,
       });
 

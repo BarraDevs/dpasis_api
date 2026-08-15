@@ -22,6 +22,7 @@ export const ServiceCatalogSelect = {
     select: {
       id: true,
       active: true,
+      serviceListItemCode: true,
       cnae: {
         select: {
           id: true,

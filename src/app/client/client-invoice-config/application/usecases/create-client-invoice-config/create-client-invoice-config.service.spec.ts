@@ -28,6 +28,7 @@ function makeValidInput(overrides?: Record<string, unknown>) {
     billingAddressId: 0,
     bankId: 0,
     autoProtestBoleto: false,
+    issWithheld: false,
     message: null,
     ...overrides,
   };

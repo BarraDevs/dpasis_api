@@ -17,6 +17,7 @@ export class ClientInvoiceConfigDto {
   billingAddress: ClientAddressDto;
   bank: BankDto;
   autoProtestBoleto: boolean;
+  issWithheld: boolean;
   message: string | null;
   createdAt: Date;
   updatedAt: Date;

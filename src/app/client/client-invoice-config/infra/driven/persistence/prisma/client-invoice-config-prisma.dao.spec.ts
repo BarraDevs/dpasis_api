@@ -154,6 +154,7 @@ describe('ClientInvoiceConfigDaoAdapterPrisma - Integration tests', () => {
           billingAddressId,
           bankId,
           autoProtestBoleto: false,
+          issWithheld: false,
           message: 'Mensagem DAO',
         },
       });
@@ -175,6 +176,7 @@ describe('ClientInvoiceConfigDaoAdapterPrisma - Integration tests', () => {
         billingAddress: expectedBillingAddressDto(),
         bank: expectedBankDto(),
         autoProtestBoleto: false,
+        issWithheld: false,
         message: 'Mensagem DAO',
         createdAt: created.createdAt,
         updatedAt: created.updatedAt,
@@ -196,6 +198,7 @@ describe('ClientInvoiceConfigDaoAdapterPrisma - Integration tests', () => {
           billingAddressId,
           bankId,
           autoProtestBoleto: true,
+          issWithheld: false,
           message: null,
         },
       });
@@ -217,6 +220,7 @@ describe('ClientInvoiceConfigDaoAdapterPrisma - Integration tests', () => {
         billingAddress: expectedBillingAddressDto(),
         bank: expectedBankDto(),
         autoProtestBoleto: true,
+        issWithheld: false,
         message: null,
         createdAt: created.createdAt,
         updatedAt: created.updatedAt,
@@ -246,6 +250,7 @@ describe('ClientInvoiceConfigDaoAdapterPrisma - Integration tests', () => {
           billingAddressId,
           bankId,
           autoProtestBoleto: false,
+          issWithheld: false,
           message: null,
         },
       });
@@ -299,6 +304,7 @@ describe('ClientInvoiceConfigDaoAdapterPrisma - Integration tests', () => {
           billingAddressId: address2.id,
           bankId,
           autoProtestBoleto: false,
+          issWithheld: false,
           message: null,
         },
       });
@@ -325,6 +331,7 @@ describe('ClientInvoiceConfigDaoAdapterPrisma - Integration tests', () => {
           billingAddressId,
           bankId,
           autoProtestBoleto: false,
+          issWithheld: false,
           message: null,
         },
       });
@@ -378,6 +385,7 @@ describe('ClientInvoiceConfigDaoAdapterPrisma - Integration tests', () => {
           billingAddressId: address2.id,
           bankId,
           autoProtestBoleto: false,
+          issWithheld: false,
           message: null,
         },
       });
@@ -405,6 +413,7 @@ describe('ClientInvoiceConfigDaoAdapterPrisma - Integration tests', () => {
           billingAddressId,
           bankId,
           autoProtestBoleto: false,
+          issWithheld: false,
           message: 'Texto BOLETO especial',
         },
       });
@@ -437,6 +446,7 @@ describe('ClientInvoiceConfigDaoAdapterPrisma - Integration tests', () => {
           billingAddressId,
           bankId,
           autoProtestBoleto: true,
+          issWithheld: false,
           message: 'Config por clientId',
         },
       });
@@ -458,6 +468,7 @@ describe('ClientInvoiceConfigDaoAdapterPrisma - Integration tests', () => {
         billingAddress: expectedBillingAddressDto(),
         bank: expectedBankDto(),
         autoProtestBoleto: true,
+        issWithheld: false,
         message: 'Config por clientId',
         createdAt: created.createdAt,
         updatedAt: created.updatedAt,

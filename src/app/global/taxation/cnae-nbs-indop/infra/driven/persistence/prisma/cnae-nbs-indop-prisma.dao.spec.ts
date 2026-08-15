@@ -204,7 +204,7 @@ describe('CnaeNbsIndopDaoAdapterPrisma - Integration tests', () => {
 
   describe('save', () => {
     it('should create record and return id', async() => {
-      const data: CreateCnaeNbsIndopInputDto = { cnaeId, nbsId, indopId };
+      const data: CreateCnaeNbsIndopInputDto = { cnaeId, nbsId, indopId, serviceListItemCode: '01.07' };
 
       const id = await sut.save(data);
 
@@ -213,6 +213,7 @@ describe('CnaeNbsIndopDaoAdapterPrisma - Integration tests', () => {
       expect(created?.cnaeId).toBe(cnaeId);
       expect(created?.nbsId).toBe(nbsId);
       expect(created?.indopId).toBe(indopId);
+      expect(created?.serviceListItemCode).toBe('01.07');
     });
   });
 

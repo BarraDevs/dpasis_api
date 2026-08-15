@@ -113,6 +113,7 @@ describe('FindAllClientItem - Integration tests', () => {
       cnaeNbsIndop: {
         id: cnaeNbsIndop.id,
         active: cnaeNbsIndop.active,
+        serviceListItemCode: cnaeNbsIndop.serviceListItemCode,
         cnae: {
           id: cnae.id,
           code: cnae.code,

@@ -93,6 +93,11 @@ export class CreateClientInvoiceConfigInputDto {
   @IsBoolean()
   autoProtestBoleto: boolean;
 
+  @ApiProperty({ example: false })
+  @IsNotEmpty({ message: '$property é obrigatório' })
+  @IsBoolean({ message: '$property deve ser um booleano' })
+  issWithheld: boolean;
+
   @ApiPropertyOptional({ example: 'Mensagem de cobrança' })
   @IsOptional()
   @IsString()

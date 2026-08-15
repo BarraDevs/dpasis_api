@@ -7,10 +7,15 @@ model Nfm {
   referenceMonth    Int
   referenceYear     Int
   totalValueInCents Int
+  cnaeNbsIndopId    Int
+  nfseId            Int?     @unique
   data              Json
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
-  @@unique([clientId, referenceMonth, referenceYear])
+  cnaeNbsIndop CnaeNbsIndop @relation(fields: [cnaeNbsIndopId], references: [id], onDelete: Restrict)
+  nfse         Nfse?        @relation(fields: [nfseId], references: [id], onDelete: Restrict)
+
+  @@unique([clientId, referenceMonth, referenceYear, cnaeNbsIndopId])
   @@map("nfms")
 }

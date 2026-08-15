@@ -24,6 +24,7 @@ function makeValidData(overrides?: Partial<CreateClientInvoiceConfigInputDto>) {
     billingAddressId: 1,
     bankId: 1,
     autoProtestBoleto: false,
+    issWithheld: false,
     message: null as string | null,
     ...overrides,
   };
@@ -333,6 +334,28 @@ describe('CreateClientInvoiceConfigInputDto', () => {
       const result = await target.transform(data, metadata);
 
       expect(result.autoProtestBoleto).toBe(true);
+    });
+  });
+
+  describe('issWithheld', () => {
+    it.each([undefined, null])(
+      'should throw an error if issWithheld is empty (%s)',
+      async(value: unknown) => {
+        const data = makeValidData({ issWithheld: value as boolean });
+
+        expect.assertions(1);
+        return target.transform(data, metadata).catch((error) => {
+          expect(error.getResponse().message).toContain('issWithheld é obrigatório');
+        });
+      },
+    );
+
+    it('should accept issWithheld as true', async() => {
+      const data = makeValidData({ issWithheld: true });
+
+      const result = await target.transform(data, metadata);
+
+      expect(result.issWithheld).toBe(true);
     });
   });
 

@@ -97,6 +97,7 @@ describe('EditClientInvoiceConfig - Integration tests', () => {
         billingAddressId: address.id,
         bankId: bank.id,
         autoProtestBoleto: false,
+        issWithheld: false,
         message: 'Original',
       },
     });
@@ -132,6 +133,7 @@ describe('EditClientInvoiceConfig - Integration tests', () => {
       deadlineDays: 20,
       months: [3, 6, 12],
       autoProtestBoleto: true,
+      issWithheld: false,
       message: 'Atualizado',
     };
 

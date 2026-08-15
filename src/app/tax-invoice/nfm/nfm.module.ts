@@ -4,6 +4,7 @@ import { CompanyNfsConfigModule } from 'src/app/company/company-nfs-config/compa
 import { ClientModule } from 'src/app/client/client/client.module';
 import { ClientInvoiceConfigModule } from 'src/app/client/client-invoice-config/client-invoice-config.module';
 import { ClientItemModule } from 'src/app/client/client-item/client-item.module';
+import { NfseModule } from 'src/app/tax-invoice/nfse/nfse.module';
 import { NfsGenerationModule } from 'src/infra/nfs-generation/nfs-generation.module';
 import { NfmPersistenceModule } from './application/persistence/nfm-persistence.module';
 import { FindAllNfms } from './application/usecases/find-all-nfms/find-all-nfms.service';
@@ -18,6 +19,7 @@ import { NfmAdminController } from './infra/drivers/http/admin/nfm-admin.control
     ClientItemModule,
     CompanyModule,
     CompanyNfsConfigModule,
+    NfseModule,
     NfmPersistenceModule,
     NfsGenerationModule.register(),
   ],

@@ -1,5 +1,17 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsInt, IsNotEmpty, IsObject, IsPositive, IsString, MaxLength } from 'class-validator';
+import {
+  IsBoolean,
+  IsEnum,
+  IsIn,
+  IsInt,
+  IsNotEmpty,
+  IsNumber,
+  IsObject,
+  IsPositive,
+  IsString,
+  MaxLength,
+  Min,
+} from 'class-validator';
 import { NfsProviderEnvironment } from 'src/infra/nfs-generation/dtos/nfs-provider-credentials.dto';
 import { StringToNumber } from 'src/infra/validators/class/decorators/string-number/string-number';
 import { Trim } from 'src/infra/validators/class/decorators/trim/trim';
@@ -61,6 +73,28 @@ export class CreateCompanyNfsConfigInputDto {
   @ApiProperty({ example: { municipioSlug: 'demonstracao' } })
   @IsObject({ message: '$property deve ser um objeto' })
   vendorConfig: Record<string, unknown>;
+
+  @ApiProperty({ example: false })
+  @IsBoolean({ message: '$property deve ser um booleano' })
+  @IsNotEmpty({ message: '$property é obrigatório' })
+  simpleNationalOptant: boolean;
+
+  @ApiProperty({ example: false })
+  @IsBoolean({ message: '$property deve ser um booleano' })
+  @IsNotEmpty({ message: '$property é obrigatório' })
+  fiscalIncentive: boolean;
+
+  @ApiProperty({ example: 0.05 })
+  @IsNumber({}, { message: '$property deve ser um número' })
+  @IsNotEmpty({ message: '$property é obrigatório' })
+  @Min(0, { message: '$property deve ser maior ou igual a 0' })
+  issRate: number;
+
+  @ApiProperty({ example: 1, description: '1=Exigível 2=Não incidência 3=Isenção 4=Exportação 5=Imunidade 6=Susp. judicial 7=Susp. administrativa' })
+  @IsInt({ message: '$property deve ser um número inteiro' })
+  @IsNotEmpty({ message: '$property é obrigatório' })
+  @IsIn([1, 2, 3, 4, 5, 6, 7], { message: '$property deve ser um código válido de exigibilidade do ISS' })
+  issExigibility: number;
 }
 
 export class CreateCompanyNfsConfigOutputDto {

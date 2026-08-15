@@ -18,6 +18,7 @@ export type ClientInvoiceConfigCreateProps = {
   billingAddressId: number;
   bankId: number;
   autoProtestBoleto: boolean;
+  issWithheld: boolean;
   message: string | null;
 };
 
@@ -43,6 +44,7 @@ export class ClientInvoiceConfig {
       billingAddressId: props.billingAddressId,
       bankId: props.bankId,
       autoProtestBoleto: props.autoProtestBoleto,
+      issWithheld: props.issWithheld,
       message: props.message,
     };
   }

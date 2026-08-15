@@ -196,6 +196,7 @@ describe('EditClientInvoiceConfigInputDto', () => {
       billingAddressId: 2,
       bankId: 4,
       autoProtestBoleto: true,
+      issWithheld: false,
       message: 'Nova mensagem',
     };
 
