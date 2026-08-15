@@ -20,7 +20,7 @@ export class FindGeneratedNfmsQueryDto {
 
   @ApiPropertyOptional({
     example: '2026-08-01',
-    description: 'Início do período de criação da NFM (YYYY-MM-DD). Opcional e independente de dateEnd.',
+    description: 'Início do período de criação da NFM (YYYY-MM-DD), no fuso de Brasília (UTC-3). Opcional e independente de dateEnd.',
   })
   @IsOptional()
   @IsString({ message: '$property deve ser um texto' })
@@ -30,7 +30,7 @@ export class FindGeneratedNfmsQueryDto {
 
   @ApiPropertyOptional({
     example: '2026-08-31',
-    description: 'Fim do período de criação da NFM (YYYY-MM-DD). Opcional e independente de dateStart.',
+    description: 'Fim do período de criação da NFM (YYYY-MM-DD), no fuso de Brasília (UTC-3). Opcional e independente de dateStart.',
   })
   @IsOptional()
   @IsString({ message: '$property deve ser um texto' })

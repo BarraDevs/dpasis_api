@@ -9,6 +9,7 @@ import {
   SaveNfmData,
 } from 'src/app/tax-invoice/nfm/application/usecases/save-elegible-nfms/dtos/save-elegible-nfms.dto';
 import { NfmStatus } from 'src/app/tax-invoice/nfm/domain/enums/nfm-status.enum';
+import { NfmNfseMissingError } from 'src/app/tax-invoice/nfm/domain/errors/nfm-nfse-missing.error';
 import { NfseStatus } from 'src/app/tax-invoice/nfse/domain/enums/nfse-status.enum';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 
@@ -59,13 +60,13 @@ export class NfmDaoAdapterPrisma implements INfmDao {
 
     if (queries.dateStart) {
       conditions.push({
-        createdAt: { gte: new Date(`${queries.dateStart}T00:00:00.000Z`) },
+        createdAt: { gte: new Date(`${queries.dateStart}T00:00:00.000-03:00`) },
       });
     }
 
     if (queries.dateEnd) {
       conditions.push({
-        createdAt: { lte: new Date(`${queries.dateEnd}T23:59:59.999Z`) },
+        createdAt: { lte: new Date(`${queries.dateEnd}T23:59:59.999-03:00`) },
       });
     }
 
@@ -145,7 +146,7 @@ export class NfmDaoAdapterPrisma implements INfmDao {
     row: Prisma.NfmGetPayload<{ select: typeof NfmWithNfseSelect }>,
   ): NfmWithNfseDto {
     if (!row.nfse) {
-      throw new Error(`NFM ${row.id} sem NFS-e vinculada`);
+      throw new NfmNfseMissingError(row.id);
     }
 
     return {

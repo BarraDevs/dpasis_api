@@ -1,5 +1,6 @@
 import { Test } from '@nestjs/testing';
 import { NfmStatus } from 'src/app/tax-invoice/nfm/domain/enums/nfm-status.enum';
+import { NfmNfseMissingError } from 'src/app/tax-invoice/nfm/domain/errors/nfm-nfse-missing.error';
 import { NfmPersistenceModule } from 'src/app/tax-invoice/nfm/application/persistence/nfm-persistence.module';
 import { SaveNfmData } from 'src/app/tax-invoice/nfm/application/usecases/save-elegible-nfms/dtos/save-elegible-nfms.dto';
 import { NfseStatus } from 'src/app/tax-invoice/nfse/domain/enums/nfse-status.enum';
@@ -246,6 +247,48 @@ describe('NfmDaoAdapterPrisma', () => {
       // Assert
       expect(total).toBe(2);
       expect(rows).toHaveLength(1);
+    });
+
+    it('should apply dateStart as BRT (UTC-3) midnight, not UTC midnight', async() => {
+      // Arrange: 2026-08-01T01:00:00Z is 2026-07-31 22:00 BRT, i.e. still July 31st in Brazil.
+      const nfse = await createNfse(30);
+      const id = await sut.save(makeSaveNfmData({ clientId: 30, nfseId: nfse.id }));
+      await prisma.nfm.update({
+        where: { id },
+        data: { createdAt: new Date('2026-08-01T01:00:00.000Z') },
+      });
+
+      // Act
+      const [excluded] = await sut.findAll({ dateStart: '2026-08-01' });
+      const [included] = await sut.findAll({ dateStart: '2026-07-31' });
+
+      // Assert
+      expect(excluded.find((row) => row.id === id)).toBeUndefined();
+      expect(included.find((row) => row.id === id)).toBeDefined();
+    });
+
+    it('should throw NfmNfseMissingError when a matched row has no linked nfse', async() => {
+      // Arrange
+      jest.spyOn(prisma, '$transaction').mockResolvedValueOnce([
+        [{
+          id: 999,
+          clientId: 1,
+          clientDocument: '00000000000101',
+          companyName: 'Empresa Teste',
+          status: NfmStatus.PENDING,
+          referenceMonth: 8,
+          referenceYear: 2026,
+          totalValueInCents: 10000,
+          cnaeNbsIndopId,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          nfse: null,
+        }],
+        1,
+      ] as any);
+
+      // Act & Assert
+      await expect(sut.findAll({})).rejects.toThrow(NfmNfseMissingError);
     });
   });
 });
