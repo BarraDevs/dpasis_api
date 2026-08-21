@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { AuthenticationGuardsModule } from 'src/app/authentication/application/guards/guards.module';
 import { ClientAddressModule } from 'src/app/client/client-address/client-address.module';
 import { ClientModule } from 'src/app/client/client/client.module';
 import { CompanyModule } from 'src/app/company/company/company.module';
@@ -20,6 +21,7 @@ import { NfseAdminController } from './infra/drivers/http/admin/nfse-admin.contr
     NfsePersistenceModule,
     NfseQueueModule.register(),
     NfsGenerationModule.register(),
+    AuthenticationGuardsModule,
   ],
   controllers: [
     NfseAdminController,

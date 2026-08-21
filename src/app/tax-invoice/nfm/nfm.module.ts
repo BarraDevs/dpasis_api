@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { AuthenticationGuardsModule } from 'src/app/authentication/application/guards/guards.module';
 import { CompanyModule } from 'src/app/company/company/company.module';
 import { CompanyNfsConfigModule } from 'src/app/company/company-nfs-config/company-nfs-config.module';
 import { ClientModule } from 'src/app/client/client/client.module';
@@ -23,6 +24,7 @@ import { NfmAdminController } from './infra/drivers/http/admin/nfm-admin.control
     NfseModule,
     NfmPersistenceModule,
     NfsGenerationModule.register(),
+    AuthenticationGuardsModule,
   ],
   controllers: [
     NfmAdminController,

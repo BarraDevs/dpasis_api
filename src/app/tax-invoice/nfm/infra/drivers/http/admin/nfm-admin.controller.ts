@@ -1,4 +1,8 @@
 import { Controller, Get, Post, Query } from '@nestjs/common';
+import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
+import { Claim } from 'src/app/authentication/domain/authorization/claim';
+import { RequiredClaims } from 'src/app/authentication/infra/decorators/required-claims.decorator';
+import { RequiredRoles } from 'src/app/authentication/infra/decorators/required-role.decorator';
 import { NfmDto, NfmWithNfseDto } from 'src/app/tax-invoice/nfm/application/dtos/nfm.dto';
 import { FindAllNfms } from 'src/app/tax-invoice/nfm/application/usecases/find-all-nfms/find-all-nfms.service';
 import { FindAllNfmsQueryDto } from 'src/app/tax-invoice/nfm/application/usecases/find-all-nfms/dtos/find-all-nfms.dto';
@@ -12,6 +16,7 @@ import { Swagger } from 'src/infra/openapi/swagger';
 import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
 
 @Controller('admin/nfm')
+@RequiredRoles(AccountRole.ADMIN)
 export class NfmAdminController {
   constructor(
     private readonly findAllNfms: FindAllNfms,
@@ -21,6 +26,7 @@ export class NfmAdminController {
   ) {}
 
   @Get('elegible')
+  @RequiredClaims(Claim.NFM_READ)
   @Swagger({
     tags: ['NFM'],
     summary: 'Listar clientes elegíveis para emissão de NFS-e',
@@ -32,6 +38,7 @@ export class NfmAdminController {
   }
 
   @Get('invoices')
+  @RequiredClaims(Claim.NFM_READ)
   @Swagger({
     tags: ['NFM'],
     summary: 'Listar NFS-e de serviço prestado no Giss Online',
@@ -44,6 +51,7 @@ export class NfmAdminController {
   }
 
   @Get()
+  @RequiredClaims(Claim.NFM_READ)
   @Swagger({
     tags: ['NFM'],
     summary: 'Listar NFMs com NFS-e vinculada',
@@ -55,6 +63,7 @@ export class NfmAdminController {
   }
 
   @Post()
+  @RequiredClaims(Claim.NFM_WRITE)
   @Swagger({
     tags: ['NFM'],
     summary: 'Salvar NFMs elegíveis no banco de dados',

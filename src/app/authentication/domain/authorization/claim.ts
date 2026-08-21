@@ -71,6 +71,12 @@ export const Claim = {
   NBS_READ: { subject: ClaimSubject.Nbs, action: ClaimAction.Read },
   NBS_WRITE: { subject: ClaimSubject.Nbs, action: ClaimAction.Write },
 
+  NFM_READ: { subject: ClaimSubject.Nfm, action: ClaimAction.Read },
+  NFM_WRITE: { subject: ClaimSubject.Nfm, action: ClaimAction.Write },
+
+  NFSE_READ: { subject: ClaimSubject.Nfse, action: ClaimAction.Read },
+  NFSE_WRITE: { subject: ClaimSubject.Nfse, action: ClaimAction.Write },
+
   CARRIER_READ: { subject: ClaimSubject.Carrier, action: ClaimAction.Read },
   CARRIER_WRITE: { subject: ClaimSubject.Carrier, action: ClaimAction.Write },
 
