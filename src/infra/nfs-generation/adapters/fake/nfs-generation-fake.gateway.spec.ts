@@ -1,5 +1,5 @@
 import { NfsProviderEnvironment } from '../../dtos/nfs-provider-credentials.dto';
-import { NfsNoteStatus } from '../../dtos/find-nfs-servico-prestado.dto';
+import { NfsNoteDto, NfsNoteStatus } from '../../dtos/find-nfs-servico-prestado.dto';
 import { NfsGenerationFakeAdapterGateway } from './nfs-generation-fake.gateway';
 
 const findAllNFseInput = {
@@ -48,7 +48,7 @@ describe('NfsGenerationFakeAdapterGateway - Unit tests', () => {
         takerName: null,
         serviceAmount: null,
         status: NfsNoteStatus.Normal,
-      }];
+      }] as NfsNoteDto[];
       sut.findAllNFseResult = notes;
 
       // Act

@@ -4,7 +4,7 @@ import { LogContext, type ILoggerGateway } from 'src/infra/logger/logger.gateway
 import { ExternalApiError } from 'src/shared/errors/external-api.error';
 import { NfsProviderConfigError } from 'src/infra/nfs-generation/errors/nfs-provider-config.error';
 import { NfsBatchSituation } from '../../dtos/nfs-batch-status.dto';
-import { NfsNoteStatus } from '../../dtos/find-nfs-servico-prestado.dto';
+import { NfsNoteDto, NfsNoteStatus } from '../../dtos/find-nfs-servico-prestado.dto';
 import { NfsProviderEnvironment } from '../../dtos/nfs-provider-credentials.dto';
 import { GissBatchStatusMapper } from './mappers/giss-batch-status.mapper';
 import { GissCancelNfseMapper } from './mappers/giss-cancel-nfse.mapper';
@@ -415,7 +415,7 @@ describe('NfsGenerationGissAdapterGateway - Unit tests', () => {
 
     it('should build, sign, post and parse the consulta on success', async() => {
       // Arrange
-      const notes = [{ nfseNumber: '1', verificationCode: 'ABC', issueDate: '2026-08-10', rpsNumber: 1, rpsSeries: 'NFSE', takerDocument: null, takerName: null, serviceAmount: null, status: NfsNoteStatus.Normal }];
+      const notes = [{ nfseNumber: '1', verificationCode: 'ABC', issueDate: '2026-08-10', rpsNumber: 1, rpsSeries: 'NFSE', takerDocument: null, takerName: null, serviceAmount: null, status: NfsNoteStatus.Normal }] as NfsNoteDto[];
       mockedBuildServicoPrestado.mockReturnValue('<consulta/>');
       mockedSignWholeDocument.mockReturnValue('<consulta-assinada/>');
       mockedPostSoap.mockResolvedValue('<response/>');
