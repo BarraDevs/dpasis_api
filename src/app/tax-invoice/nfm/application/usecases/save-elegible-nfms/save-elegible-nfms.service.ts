@@ -97,9 +97,9 @@ export class SaveElegibleNfms {
         result.created += 1;
       }
       catch (error: unknown) {
-        result.failed += 1;
         const message = this.resolveErrorMessage(error);
         const errorDto: SaveElegibleNfmErrorDto = { clientId, cnaeNbsIndopId, message };
+        result.failed += 1;
         result.errors.push(errorDto);
 
         const existing = await this.nfmDao.findByClientReferenceAndCnae(

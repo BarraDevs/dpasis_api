@@ -8,7 +8,7 @@ export type GissCertMaterial = {
 };
 
 export class GissPfxLoader {
-  static load(certFilePath: string, certPasswordEnvVar: string): GissCertMaterial {
+  public static load(certFilePath: string, certPasswordEnvVar: string): GissCertMaterial {
     const password = process.env[certPasswordEnvVar];
     if (!password) {
       throw new NfsProviderConfigError(`Variável de ambiente "${certPasswordEnvVar}" com a senha do certificado não está definida`);

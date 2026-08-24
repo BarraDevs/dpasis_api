@@ -10,7 +10,6 @@ import { XmlEscapeUtil } from './xml-escape.util';
 
 export class GissIssueBatchMapper {
   private static readonly RESPONSE_PARSER = new XMLParser({ removeNSPrefix: true, ignoreAttributes: false });
-
   private static readonly LEIAUTE_VERSION = '2.04';
 
   private static yesNo(value: boolean): 1 | 2 {
@@ -202,7 +201,7 @@ export class GissIssueBatchMapper {
    * — são dois namespaces distintos, confirmado nos XSDs reais e no exemplo oficial
    * (`gissonline_docs/Exemplo_XML-Servicos_Prestados_20260420.rar`).
    */
-  static buildIssueBatchXml(input: IssueNfsBatchInputDto): { xml: string; loteId: string; rpsIds: string[] } {
+  public static buildIssueBatchXml(input: IssueNfsBatchInputDto): { xml: string; loteId: string; rpsIds: string[] } {
     if (input.rpsList.length === 0) {
       throw new Error('Lote de RPS não pode ser vazio');
     }
@@ -228,7 +227,7 @@ export class GissIssueBatchMapper {
     return { xml, loteId, rpsIds };
   }
 
-  static parseRecepcionarLoteRpsResponse(xml: string): IssueNfsBatchOutputDto {
+  public static parseRecepcionarLoteRpsResponse(xml: string): IssueNfsBatchOutputDto {
     const parsed = this.RESPONSE_PARSER.parse(xml);
     const resposta = parsed?.Envelope?.Body?.EnviarLoteRpsResposta ?? parsed?.EnviarLoteRpsResposta;
 

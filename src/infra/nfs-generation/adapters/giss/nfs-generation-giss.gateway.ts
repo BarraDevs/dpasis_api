@@ -5,14 +5,12 @@ import { ExternalApiError } from 'src/shared/errors/external-api.error';
 import { NfsProviderConfigError } from 'src/infra/nfs-generation/errors/nfs-provider-config.error';
 import { TOKENS } from 'src/core/di/token';
 import { CancelNfsInputDto, CancelNfsOutputDto } from '../../dtos/cancel-nfs.dto';
-import { FindNfsServicoPrestadoInputDto, NfsNoteDto } from '../../dtos/find-nfs-servico-prestado.dto';
 import { GetNfsBatchStatusInputDto, NfsBatchStatusDto } from '../../dtos/nfs-batch-status.dto';
 import { IssueNfsBatchInputDto, IssueNfsBatchOutputDto } from '../../dtos/issue-nfs-batch.dto';
 import { NfsProviderCredentialsDto } from '../../dtos/nfs-provider-credentials.dto';
 import { INfsGenerationGateway } from '../../nfs-generation.gateway';
 import { GissBatchStatusMapper } from './mappers/giss-batch-status.mapper';
 import { GissCancelNfseMapper } from './mappers/giss-cancel-nfse.mapper';
-import { GissConsultNfseServicoPrestadoMapper } from './mappers/giss-consult-nfse-servico-prestado.mapper';
 import { GissIssueBatchMapper } from './mappers/giss-issue-batch.mapper';
 import { GissPfxLoader } from './signing/giss-pfx-loader';
 import { GissXmlSigner } from './signing/giss-xml-signer';
@@ -31,10 +29,6 @@ export class NfsGenerationGissAdapterGateway implements INfsGenerationGateway {
 
     try {
       const { xml, loteId, rpsIds } = GissIssueBatchMapper.buildIssueBatchXml(input);
-      // O Giss exige assinatura em dois níveis: cada RPS individual (referenciado pelo próprio Id — sem
-      // isso dá E174 "RPS não assinado") e o lote inteiro por último, também referenciado pelo próprio Id
-      // (sem isso dá E173 "Lote de RPS não assinado", inclusive na checagem síncrona — testado ao vivo
-      // contra produção; a variante com URI vazia/sem Id no lote regrediu pra E173, foi revertida).
       const rpsSignedXml = rpsIds.reduce((currentXml, rpsId) => GissXmlSigner.signElementById(currentXml, rpsId, certMaterial), xml);
       const signedXml = GissXmlSigner.signElementById(rpsSignedXml, loteId, certMaterial);
 
@@ -128,39 +122,6 @@ export class NfsGenerationGissAdapterGateway implements INfsGenerationGateway {
         errorMessage: error?.message,
       });
       throw new ExternalApiError(error?.message ?? 'Erro ao cancelar NFS-e no Giss');
-    }
-  }
-
-  public async findAllNFse(input: FindNfsServicoPrestadoInputDto): Promise<NfsNoteDto[]> {
-    const municipioSlug = this.getMunicipioSlug(input.provider);
-    const certMaterial = GissPfxLoader.load(input.provider.certFilePath, input.provider.certPasswordEnvVar);
-
-    try {
-      const xml = GissConsultNfseServicoPrestadoMapper.buildConsultarNfseServicoPrestadoXml(input);
-      // ConsultarNfseServicoPrestadoEnvio não tem atributo Id no XSD — assinatura do documento inteiro.
-      const signedXml = GissXmlSigner.signWholeDocument(xml, certMaterial);
-
-      const responseXml = await GissSoapClient.postSoapRequest(
-        this.httpService,
-        municipioSlug,
-        GissOperation.ConsultarNfseServicoPrestado,
-        signedXml,
-        certMaterial,
-      );
-
-      return GissConsultNfseServicoPrestadoMapper.parseConsultarNfseServicoPrestadoResponse(responseXml);
-    }
-    catch (error: any) {
-      if (error instanceof NfsProviderConfigError) {
-        throw error;
-      }
-      this.logger.error(LogContext.NFS_GENERATION, {
-        adapter: 'giss',
-        action: 'findAllNFse',
-        error,
-        errorMessage: error?.message,
-      });
-      throw new ExternalApiError(error?.message ?? 'Erro ao consultar NFS-e de serviço prestado no Giss');
     }
   }
 

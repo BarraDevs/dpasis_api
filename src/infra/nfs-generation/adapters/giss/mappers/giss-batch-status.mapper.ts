@@ -35,14 +35,14 @@ export class GissBatchStatusMapper {
    * aninhado (que vem do tipo `tipos:tcIdentificacaoPessoaEmpresa`) fica em `p1` (tipos). Validado com
    * `xmllint --schema consultar-lote-rps-envio-v2_04.xsd` contra o XSD oficial.
    */
-  static buildConsultarLoteRpsXml(input: GetNfsBatchStatusInputDto): string {
+  public static buildConsultarLoteRpsXml(input: GetNfsBatchStatusInputDto): string {
     return `<p:ConsultarLoteRpsEnvio xmlns:p="${GISS_CONSULTAR_LOTE_RPS_ENVIO_NAMESPACE}" xmlns:p1="${GISS_TIPOS_NAMESPACE}">`
       + `<p:Prestador>${this.buildCpfCnpj(input.providerDocument)}</p:Prestador>`
       + `<p:Protocolo>${input.batchProtocol}</p:Protocolo>`
       + '</p:ConsultarLoteRpsEnvio>';
   }
 
-  static parseConsultarLoteRpsResponse(xml: string): NfsBatchStatusDto {
+  public static parseConsultarLoteRpsResponse(xml: string): NfsBatchStatusDto {
     const parsed = this.PARSER.parse(xml);
     const resposta = parsed?.Envelope?.Body?.ConsultarLoteRpsResposta ?? parsed?.ConsultarLoteRpsResposta;
 

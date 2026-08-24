@@ -23,7 +23,7 @@ export class GissCancelNfseMapper {
    * compartilhados) seguem por analogia com `EnviarLoteRpsEnvio`/`LoteRps`, mas não foram validados contra o
    * XSD real (ver comentário em giss-namespaces.ts).
    */
-  static buildCancelarNfseXml(input: CancelNfsInputDto): { xml: string; infId: string } {
+  public static buildCancelarNfseXml(input: CancelNfsInputDto): { xml: string; infId: string } {
     const infId = 'cancelamento1';
 
     const identificacaoNfse = '<p1:IdentificacaoNfse>'
@@ -45,7 +45,7 @@ export class GissCancelNfseMapper {
     return { xml, infId };
   }
 
-  static parseCancelarNfseResponse(xml: string): CancelNfsOutputDto {
+  public static parseCancelarNfseResponse(xml: string): CancelNfsOutputDto {
     const parsed = this.RESPONSE_PARSER.parse(xml);
     const resposta = parsed?.Envelope?.Body?.CancelarNfseResposta ?? parsed?.CancelarNfseResposta;
 

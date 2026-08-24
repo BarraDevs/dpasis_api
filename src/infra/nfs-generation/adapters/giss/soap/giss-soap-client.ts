@@ -8,15 +8,12 @@ import { GissCertMaterial } from '../signing/giss-pfx-loader';
 export enum GissOperation {
   RecepcionarLoteRps = 'RecepcionarLoteRps',
   ConsultarLoteRps = 'ConsultarLoteRps',
-  ConsultarNfseServicoPrestado = 'ConsultarNfseServicoPrestado',
   CancelarNfse = 'CancelarNfse',
 }
 
 export class GissSoapClient {
   private static readonly WRAPPER_NAMESPACE = 'http://nfse.abrasf.org.br';
-
   private static readonly CABECALHO_VERSION = '2.04';
-
   private static readonly RESPONSE_PARSER = new XMLParser({ removeNSPrefix: true, ignoreAttributes: false });
 
   /**

@@ -1,9 +1,11 @@
+import { join } from 'node:path';
 import { Prisma, PrismaClient } from '@prisma/client';
 import { ClientAddressType } from '../../src/app/client/client-address/domain/enums/client-address-type.enum';
 import { ClientInvoiceConfigDueDateType } from '../../src/app/client/client-invoice-config/domain/enums/client-invoice-config-due-date-type.enum';
 import { ClientInvoiceConfigType } from '../../src/app/client/client-invoice-config/domain/enums/client-invoice-config-type.enum';
 import { ClientInvoiceType } from '../../src/app/client/client/domain/enums/client-invoice-type.enum';
 import { ClientType } from '../../src/app/client/client/domain/enums/client-type.enum';
+import { NfsProviderEnvironment } from '../../src/infra/nfs-generation/dtos/nfs-provider-credentials.dto';
 import { ClientSequenceSeed } from './client-sequence';
 import { ResaleSequenceSeed } from './resale-sequence';
 
@@ -13,6 +15,7 @@ import { ResaleSequenceSeed } from './resale-sequence';
  * - `dueDateDay` dos elegíveis = dia do mês de hoje (`new Date().getDate()`), igual ao use case.
  * - `emissionDay` ajustado para manter `dueDateDay - emissionDay >= 15` quando possível.
  * - IDs na faixa `9_500_0xx` e CNPJs `88.888.888/000x-xx` só para seed.
+ * - `9_999_999` = cliente do curl NFSe (`nfse-curl-manual-test.ts`, company 516 / GISS).
  *
  * Se mudar o dia do calendário e a lista vier vazia, rode o seed de novo (`npm run db:seed`).
  * Use o mesmo fuso do servidor da API.
@@ -28,6 +31,7 @@ import { ResaleSequenceSeed } from './resale-sequence';
  * | 9_500_007 | não       | `invoiceType` Avulso (não Contrato)    |
  * | 9_500_008 | não       | sem itens no cliente                   |
  * | 9_500_009 | não       | só itens `active: false`               |
+ * | 9_999_999 | sim       | curl.md — company 516 / GISS Mauá      |
  *
  * Uso junto do seed principal (`index.ts`) ou isolado:
  *
@@ -35,7 +39,15 @@ import { ResaleSequenceSeed } from './resale-sequence';
  * dotenv -e .env.development -- ts-node prisma/seeds/find-elegible-clients-nfm.ts
  * ```
  */
-export const SEED_NFM_ELEGIBLE_CLIENT_IDS = [9_500_001, 9_500_002] as const;
+export const SEED_NFM_ELEGIBLE_CLIENT_IDS = [9_500_001, 9_500_002, 9_999_999] as const;
+
+const SEED_NFSE_CURL_CLIENT_ID = 9_999_999;
+const SEED_NFSE_CURL_COMPANY_ID = 516;
+const SEED_NFSE_CURL_PROVIDER_CNPJ = '02099923000178';
+const SEED_NFSE_CURL_CERT_PATH = join(
+  __dirname,
+  '../../resources/files/DPA_TEC_EQUIPAMENTOS_DE_PONTO_LTDA_02099923000178.pfx',
+);
 
 const SEED_GROUP_NAME = '__seed_nfm_elegivel_client_group';
 const SEED_BANK_CODE = '__SEED_NFM__';
@@ -43,6 +55,17 @@ const SEED_BANK_AGENCY = '0001';
 const SEED_BANK_ACCOUNT = '00000-0';
 
 type SeedClientItemsMode = 'active' | 'inactive' | 'none';
+
+type SeedBillingAddress = {
+  zipCode: string;
+  street: string;
+  number: string;
+  complement: string;
+  neighborhood: string;
+  city: string;
+  cityCodeIbge: string;
+  state: string;
+};
 
 type SeedClientProfile = {
   id: number;
@@ -57,6 +80,9 @@ type SeedClientProfile = {
   generateNf?: boolean;
   dueDateDay?: number;
   items?: SeedClientItemsMode;
+  companyId?: number;
+  headquarters?: string;
+  billingAddress?: SeedBillingAddress;
 };
 
 const SEED_CLIENT_PROFILES: SeedClientProfile[] = [
@@ -145,6 +171,27 @@ const SEED_CLIENT_PROFILES: SeedClientProfile[] = [
     filterNote: 'itens cadastrados com active: false',
     items: 'inactive',
   },
+  {
+    id: SEED_NFSE_CURL_CLIENT_ID,
+    document: '58982473000111',
+    companyName: '58982473 YUDI MATSUGUMA',
+    fantasyName: 'NFSe curl Yudi',
+    eligible: true,
+    filterNote: 'curl.md — company 516 GISS Mauá + vencimento hoje + itens ativos',
+    items: 'active',
+    companyId: SEED_NFSE_CURL_COMPANY_ID,
+    headquarters: 'São Paulo',
+    billingAddress: {
+      zipCode: '08780-000',
+      street: 'Rua Teste NFSe',
+      number: '200',
+      complement: 'Sala 1',
+      neighborhood: 'Centro',
+      city: 'Mogi das Cruzes',
+      cityCodeIbge: '3530607',
+      state: 'SP',
+    },
+  },
 ];
 
 type SeedDeps = {
@@ -175,6 +222,8 @@ export class FindElegibleClientsNfmSeed {
       emissionDay,
       notTodayDueDay,
     };
+
+    await this.ensureNfseCurlCompany(prisma);
 
     for (const profile of SEED_CLIENT_PROFILES) {
       await this.upsertSeedClient(prisma, deps, profile);
@@ -207,6 +256,17 @@ export class FindElegibleClientsNfmSeed {
   ): Promise<void> {
     const dueDateDay = profile.dueDateDay
       ?? (profile.id === 9_500_003 ? deps.notTodayDueDay : deps.todayDueDay);
+    const companyId = profile.companyId ?? deps.companyId;
+    const billingAddressData: SeedBillingAddress = profile.billingAddress ?? {
+      zipCode: '01310-100',
+      street: 'Av. Paulista',
+      number: String(profile.id).slice(-4),
+      complement: `Seed NFM ${profile.id}`,
+      neighborhood: 'Bela Vista',
+      city: 'São Paulo',
+      cityCodeIbge: '3550308',
+      state: 'SP',
+    };
 
     const clientData: Prisma.ClientCreateInput = {
       id: profile.id,
@@ -215,10 +275,10 @@ export class FindElegibleClientsNfmSeed {
       ie: null,
       group: { connect: { id: deps.groupId } },
       resale: { connect: { id: deps.resaleId } },
-      company: { connect: { id: deps.companyId } },
+      company: { connect: { id: companyId } },
       companyName: profile.companyName,
       fantasyName: profile.fantasyName,
-      headquarters: 'Matriz',
+      headquarters: profile.headquarters ?? 'Matriz',
       invoiceType: profile.invoiceType ?? ClientInvoiceType.CONTRACT,
       generateInvoice: profile.generateInvoice ?? true,
       active: profile.active ?? true,
@@ -231,12 +291,13 @@ export class FindElegibleClientsNfmSeed {
         document: profile.document,
         companyName: profile.companyName,
         fantasyName: profile.fantasyName,
+        headquarters: profile.headquarters ?? 'Matriz',
         invoiceType: profile.invoiceType ?? ClientInvoiceType.CONTRACT,
         generateInvoice: profile.generateInvoice ?? true,
         active: profile.active ?? true,
         group: { connect: { id: deps.groupId } },
         resale: { connect: { id: deps.resaleId } },
-        company: { connect: { id: deps.companyId } },
+        company: { connect: { id: companyId } },
       },
     });
 
@@ -251,17 +312,10 @@ export class FindElegibleClientsNfmSeed {
       create: {
         clientId: profile.id,
         type: ClientAddressType.BILLING,
-        zipCode: '01310-100',
-        street: 'Av. Paulista',
-        number: String(profile.id).slice(-4),
-        complement: `Seed NFM ${profile.id}`,
-        neighborhood: 'Bela Vista',
-        city: 'São Paulo',
-        cityCodeIbge: '3550308',
-        state: 'SP',
+        ...billingAddressData,
         active: true,
       },
-      update: { active: true },
+      update: { ...billingAddressData, active: true },
     });
 
     await prisma.clientInvoiceConfig.upsert({
@@ -304,7 +358,7 @@ export class FindElegibleClientsNfmSeed {
           clientId: profile.id,
           description: `Item seed NFM — serviço (${profile.fantasyName})`,
           quantity: 1,
-          unitValueInCents: 10000,
+          unitValueInCents: 100,
           cnaeNbsIndopId: deps.cnaeNbsIndopId,
           active: itemActive,
         },
@@ -312,7 +366,7 @@ export class FindElegibleClientsNfmSeed {
           clientId: profile.id,
           description: `Item seed NFM — manutenção (${profile.fantasyName})`,
           quantity: 2,
-          unitValueInCents: 5000,
+          unitValueInCents: 50,
           cnaeNbsIndopId: deps.cnaeNbsIndopId,
           active: itemActive,
         },
@@ -358,6 +412,60 @@ export class FindElegibleClientsNfmSeed {
       },
     });
     return company.id;
+  }
+
+  private static async ensureNfseCurlCompany(prisma: PrismaClient): Promise<void> {
+    await prisma.company.upsert({
+      where: { id: SEED_NFSE_CURL_COMPANY_ID },
+      create: {
+        id: SEED_NFSE_CURL_COMPANY_ID,
+        name: 'DPA TEC EQUIPAMENTOS DE PONTO LTDA',
+        fantasyName: 'DPA TEC',
+        document: SEED_NFSE_CURL_PROVIDER_CNPJ,
+        active: true,
+        zipCode: '08780-000',
+        street: 'Rua Exemplo',
+        number: '100',
+        neighborhood: 'Centro',
+        city: 'Mogi das Cruzes',
+        state: 'SP',
+        phone01: '1140000000',
+        email01: 'nfse-manual-test@dpasis.local',
+      },
+      update: {
+        document: SEED_NFSE_CURL_PROVIDER_CNPJ,
+        active: true,
+      },
+    });
+
+    await prisma.$executeRawUnsafe(
+      'SELECT setval(pg_get_serial_sequence(\'companies\', \'id\'), (SELECT MAX(id) FROM companies))',
+    );
+
+    await prisma.nfsProviderConfig.upsert({
+      where: { companyId: SEED_NFSE_CURL_COMPANY_ID },
+      create: {
+        companyId: SEED_NFSE_CURL_COMPANY_ID,
+        vendor: 'giss',
+        municipalRegistration: '16895',
+        municipalCodeIbge: '3530607',
+        serieRps: 'NFSE',
+        environment: NfsProviderEnvironment.Production,
+        certFilePath: SEED_NFSE_CURL_CERT_PATH,
+        certPasswordEnvVar: 'GISS_CERT_PASSWORD',
+        vendorConfig: { municipioSlug: 'maua' },
+      },
+      update: {
+        vendor: 'giss',
+        municipalRegistration: '16895',
+        municipalCodeIbge: '3530607',
+        serieRps: 'NFSE',
+        environment: NfsProviderEnvironment.Production,
+        certFilePath: SEED_NFSE_CURL_CERT_PATH,
+        certPasswordEnvVar: 'GISS_CERT_PASSWORD',
+        vendorConfig: { municipioSlug: 'maua' },
+      },
+    });
   }
 
   private static async ensureResale(prisma: PrismaClient): Promise<number> {

@@ -4,11 +4,9 @@ import { LogContext, type ILoggerGateway } from 'src/infra/logger/logger.gateway
 import { ExternalApiError } from 'src/shared/errors/external-api.error';
 import { NfsProviderConfigError } from 'src/infra/nfs-generation/errors/nfs-provider-config.error';
 import { NfsBatchSituation } from '../../dtos/nfs-batch-status.dto';
-import { NfsNoteDto, NfsNoteStatus } from '../../dtos/find-nfs-servico-prestado.dto';
 import { NfsProviderEnvironment } from '../../dtos/nfs-provider-credentials.dto';
 import { GissBatchStatusMapper } from './mappers/giss-batch-status.mapper';
 import { GissCancelNfseMapper } from './mappers/giss-cancel-nfse.mapper';
-import { GissConsultNfseServicoPrestadoMapper } from './mappers/giss-consult-nfse-servico-prestado.mapper';
 import { GissIssueBatchMapper } from './mappers/giss-issue-batch.mapper';
 import { NfsGenerationGissAdapterGateway } from './nfs-generation-giss.gateway';
 import { GissPfxLoader } from './signing/giss-pfx-loader';
@@ -18,7 +16,6 @@ import { GissSoapClient } from './soap/giss-soap-client';
 jest.mock('./mappers/giss-issue-batch.mapper');
 jest.mock('./mappers/giss-batch-status.mapper');
 jest.mock('./mappers/giss-cancel-nfse.mapper');
-jest.mock('./mappers/giss-consult-nfse-servico-prestado.mapper');
 jest.mock('./signing/giss-pfx-loader');
 jest.mock('./signing/giss-xml-signer');
 jest.mock('./soap/giss-soap-client');
@@ -29,8 +26,6 @@ const mockedBuildConsultar = GissBatchStatusMapper.buildConsultarLoteRpsXml as j
 const mockedParseConsultar = GissBatchStatusMapper.parseConsultarLoteRpsResponse as jest.Mock;
 const mockedBuildCancelar = GissCancelNfseMapper.buildCancelarNfseXml as jest.Mock;
 const mockedParseCancelar = GissCancelNfseMapper.parseCancelarNfseResponse as jest.Mock;
-const mockedBuildServicoPrestado = GissConsultNfseServicoPrestadoMapper.buildConsultarNfseServicoPrestadoXml as jest.Mock;
-const mockedParseServicoPrestado = GissConsultNfseServicoPrestadoMapper.parseConsultarNfseServicoPrestadoResponse as jest.Mock;
 const mockedLoadCert = GissPfxLoader.load as jest.Mock;
 const mockedSign = GissXmlSigner.signElementById as jest.Mock;
 const mockedSignWholeDocument = GissXmlSigner.signWholeDocument as jest.Mock;
@@ -57,15 +52,6 @@ const cancelNfseInput = {
   providerMunicipalCodeIbge: '3550308',
   cancelReasonCode: 1,
   provider,
-};
-
-const findAllNFseInput = {
-  provider,
-  providerDocument: '12345678000199',
-  providerMunicipalRegistration: '12345',
-  page: 1,
-  periodFrom: '2026-08-01',
-  periodTo: '2026-08-31',
 };
 
 describe('NfsGenerationGissAdapterGateway - Unit tests', () => {
@@ -385,85 +371,6 @@ describe('NfsGenerationGissAdapterGateway - Unit tests', () => {
 
       // Act & Assert
       await expect(sut.cancelNfse(cancelNfseInput)).rejects.toThrow(NfsProviderConfigError);
-      expect(logger.error).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('findAllNFse', () => {
-    it('should throw NfsProviderConfigError when vendorConfig has no municipioSlug', async() => {
-      // Act & Assert
-      await expect(sut.findAllNFse({
-        ...findAllNFseInput,
-        provider: { ...provider, vendorConfig: {} },
-      })).rejects.toThrow(NfsProviderConfigError);
-    });
-
-    it('should load the certificate before building the consulta XML', async() => {
-      // Arrange
-      mockedBuildServicoPrestado.mockReturnValue('<consulta/>');
-      mockedSignWholeDocument.mockReturnValue('<consulta-assinada/>');
-      mockedPostSoap.mockResolvedValue('<response/>');
-      mockedParseServicoPrestado.mockReturnValue([]);
-
-      // Act
-      await sut.findAllNFse(findAllNFseInput);
-
-      // Assert
-      expect(mockedLoadCert).toHaveBeenCalledWith('/certs/x.pfx', 'X_PASS');
-      expect(mockedLoadCert.mock.invocationCallOrder[0]).toBeLessThan(mockedBuildServicoPrestado.mock.invocationCallOrder[0]);
-    });
-
-    it('should build, sign, post and parse the consulta on success', async() => {
-      // Arrange
-      const notes = [{ nfseNumber: '1', verificationCode: 'ABC', issueDate: '2026-08-10', rpsNumber: 1, rpsSeries: 'NFSE', takerDocument: null, takerName: null, serviceAmount: null, status: NfsNoteStatus.Normal }] as NfsNoteDto[];
-      mockedBuildServicoPrestado.mockReturnValue('<consulta/>');
-      mockedSignWholeDocument.mockReturnValue('<consulta-assinada/>');
-      mockedPostSoap.mockResolvedValue('<response/>');
-      mockedParseServicoPrestado.mockReturnValue(notes);
-
-      // Act
-      const result = await sut.findAllNFse(findAllNFseInput);
-
-      // Assert
-      expect(mockedSignWholeDocument).toHaveBeenCalledWith('<consulta/>', certMaterial);
-      expect(mockedPostSoap).toHaveBeenCalledWith(httpService, 'demonstracao', 'ConsultarNfseServicoPrestado', '<consulta-assinada/>', certMaterial);
-      expect(result).toEqual(notes);
-    });
-
-    it('should wrap unexpected errors as ExternalApiError and log them', async() => {
-      // Arrange
-      mockedBuildServicoPrestado.mockReturnValue('<consulta/>');
-      mockedSignWholeDocument.mockReturnValue('<consulta-assinada/>');
-      mockedPostSoap.mockRejectedValue(new Error('timeout'));
-
-      // Act & Assert
-      await expect(sut.findAllNFse(findAllNFseInput)).rejects.toThrow(ExternalApiError);
-      await expect(sut.findAllNFse(findAllNFseInput)).rejects.toThrow('timeout');
-      expect(logger.error).toHaveBeenCalledWith(LogContext.NFS_GENERATION, expect.objectContaining({
-        adapter: 'giss',
-        action: 'findAllNFse',
-        errorMessage: 'timeout',
-      }));
-    });
-
-    it('should use the default ExternalApiError message when the caught error has no message', async() => {
-      // Arrange
-      mockedBuildServicoPrestado.mockReturnValue('<consulta/>');
-      mockedSignWholeDocument.mockReturnValue('<consulta-assinada/>');
-      mockedPostSoap.mockRejectedValue({});
-
-      // Act & Assert
-      await expect(sut.findAllNFse(findAllNFseInput)).rejects.toThrow('Erro ao consultar NFS-e de serviço prestado no Giss');
-    });
-
-    it('should let NfsProviderConfigError from the cert loader propagate without wrapping', async() => {
-      // Arrange
-      mockedLoadCert.mockImplementation(() => {
-        throw new NfsProviderConfigError('senha incorreta');
-      });
-
-      // Act & Assert
-      await expect(sut.findAllNFse(findAllNFseInput)).rejects.toThrow(NfsProviderConfigError);
       expect(logger.error).not.toHaveBeenCalled();
     });
   });
