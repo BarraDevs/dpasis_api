@@ -13,4 +13,5 @@ export class CompanyNfsConfigDto {
   fiscalIncentive: boolean;
   issRate: number | null;
   issExigibility: number;
+  municipalTaxCode: string | null;
 }

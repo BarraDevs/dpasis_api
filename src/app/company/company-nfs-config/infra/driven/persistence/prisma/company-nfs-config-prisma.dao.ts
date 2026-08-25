@@ -21,6 +21,7 @@ const CompanyNfsConfigSelect = {
   fiscalIncentive: true,
   issRate: true,
   issExigibility: true,
+  municipalTaxCode: true,
 } satisfies Prisma.NfsProviderConfigSelect;
 
 @Injectable()
@@ -61,6 +62,7 @@ export class CompanyNfsConfigDaoAdapterPrisma implements ICompanyNfsConfigDao {
         fiscalIncentive: data.fiscalIncentive,
         issRate: data.issRate,
         issExigibility: data.issExigibility,
+        municipalTaxCode: data.municipalTaxCode,
       },
     });
 
@@ -94,6 +96,7 @@ export class CompanyNfsConfigDaoAdapterPrisma implements ICompanyNfsConfigDao {
       fiscalIncentive: row.fiscalIncentive,
       issRate: row.issRate != null ? Number(row.issRate) : null,
       issExigibility: row.issExigibility,
+      municipalTaxCode: row.municipalTaxCode,
     };
   }
 }

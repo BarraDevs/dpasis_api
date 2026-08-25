@@ -13,6 +13,7 @@ model NfsProviderConfig {
   fiscalIncentive        Boolean  @default(false)
   issRate                Decimal? @db.Decimal(7, 4)
   issExigibility         Int      @default(1)
+  municipalTaxCode       String?  @db.VarChar(20)
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt
 

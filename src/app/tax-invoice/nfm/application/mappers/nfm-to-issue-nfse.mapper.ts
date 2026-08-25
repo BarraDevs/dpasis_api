@@ -24,6 +24,13 @@ export class NfmToIssueNfseMapper {
       );
     }
 
+    const municipalTaxCode = providerConfig.municipalTaxCode?.trim();
+    if (!municipalTaxCode) {
+      throw new AppException(
+        `Config NFS-e da empresa ${providerConfig.companyId} sem código de tributação municipal.`,
+      );
+    }
+
     const description = nfm.clientItems.map(item => item.description).join('\n');
     const servicesValue = nfm.clientItems.reduce((sum, item) => sum + item.totalValueInCents, 0) / 100;
     const issWithheld = nfm.clientInvoiceConfig.issWithheld;
@@ -46,6 +53,7 @@ export class NfmToIssueNfseMapper {
         servicesValue,
         cnaeCode: cnaeNbsIndop.cnae.code.replace(/\D/g, ''),
         issRate: providerConfig.issRate,
+        municipalTaxCode,
         ...(issWithheld ? { issRetentionResponsible: 1 as const } : {}),
       },
     };

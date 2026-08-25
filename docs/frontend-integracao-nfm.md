@@ -131,6 +131,7 @@ HTTP **não** espera a GISS. Só persistência + enqueue.
 
 - Sem `serviceListItemCode` na correspondência CNAE/NBS/INDOP
 - Sem alíquota ISS / config NFS-e da empresa
+- Sem código de tributação municipal (`municipalTaxCode`) na config NFS-e da empresa
 - Cliente sem endereço BILLING/MAIN com `cityCodeIbge`
 
 ---
@@ -141,6 +142,6 @@ HTTP **não** espera a GISS. Só persistência + enqueue.
 2. Nova tela lista: `GET /admin/nfm?dateStart&dateEnd&page&size` — resposta **paginada** (`data[]` de `NfmWithNfseDto`).
 3. Botão gerar → tela elegíveis → confirmar com `POST /admin/nfm`.
 4. `POST /admin/nfm`: exibir resumo `created` / `skipped` / `failed` + lista de `errors`.
-5. Garantir cadastro fiscal antes de emitir: LC 116 na correspondência, ISS/Simples na config da empresa, `issWithheld` no invoice config do cliente.
+5. Garantir cadastro fiscal antes de emitir: LC 116 na correspondência, ISS/Simples/`municipalTaxCode` na config da empresa, `issWithheld` no invoice config do cliente.
 6. **Breaking:** `GET /admin/nfm/invoices` saiu. Parar de chamar a rota; regenerar tipos OpenAPI.
 7. Atualizar mocks/tipos E2E das rotas.

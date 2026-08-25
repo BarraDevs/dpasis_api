@@ -67,6 +67,7 @@ describe('CreateCompanyNfsConfig - Integration tests', () => {
       fiscalIncentive: false,
       issRate: 0.05,
       issExigibility: 1,
+      municipalTaxCode: '010700',
     };
 
     // Act

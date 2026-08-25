@@ -22,6 +22,7 @@ Obrigatórios no **POST** (e disponíveis no GET/PATCH):
 | `fiscalIncentive` | boolean | Incentivo fiscal |
 | `issRate` | number | Alíquota ISS (ex.: `0.05` = 5%). Obrigatório na criação; emissão NFM falha se `null` |
 | `issExigibility` | number | `1`–`7` (mesmos códigos do Issue NFS-e; default `1` = Exigível) |
+| `municipalTaxCode` | string (máx. 20) | Código de tributação do município (cadastro do contribuinte no GISS → XML `CodigoTributacaoMunicipio`). Obrigatório na criação; emissão NFM falha se `null`/vazio |
 
 ## Buscar por empresa (`GET /admin/company-nfs-config/company/:companyId`)
 
@@ -44,7 +45,8 @@ Obrigatórios no **POST** (e disponíveis no GET/PATCH):
   "simpleNationalOptant": false,
   "fiscalIncentive": false,
   "issRate": 0.05,
-  "issExigibility": 1
+  "issExigibility": 1,
+  "municipalTaxCode": "010700"
 }
 ```
 
@@ -53,6 +55,7 @@ Obrigatórios no **POST** (e disponíveis no GET/PATCH):
 | `environment` | `string` | `PRODUCTION`, `DEMONSTRATION` ou `FICTITIOUS` |
 | `vendorConfig` | `object` | GISS exige `municipioSlug` |
 | `certPasswordEnvVar` | `string` | Nome da env var da senha — **não** enviar a senha |
+| `municipalTaxCode` | `string \| null` | Código de tributação municipal; configs antigas podem vir `null` até o PATCH |
 
 **404** se a empresa ainda não tem config.
 
@@ -78,7 +81,8 @@ Uma empresa = uma config. Segundo POST → **409**.
   "simpleNationalOptant": false,
   "fiscalIncentive": false,
   "issRate": 0.05,
-  "issExigibility": 1
+  "issExigibility": 1,
+  "municipalTaxCode": "010700"
 }
 ```
 
@@ -101,8 +105,8 @@ Uma empresa = uma config. Segundo POST → **409**.
 ## Fluxo recomendado na UI
 
 1. Aba NFS-e da empresa → `GET .../company/:companyId`
-2. **404** → formulário de criação (`POST`) com os 4 campos fiscais
-3. **200** → edição (`PATCH /:id`)
+2. **404** → formulário de criação (`POST`) com os campos fiscais (inclui `municipalTaxCode`)
+3. **200** → edição (`PATCH /:id`); se `municipalTaxCode` for `null`, pedir preenchimento antes de emitir NFM
 4. Claims: `COMPANY_NFS_CONFIG_READ` / `COMPANY_NFS_CONFIG_WRITE`
 
 ## Erros comuns
@@ -111,4 +115,4 @@ Uma empresa = uma config. Segundo POST → **409**.
 |--------|----------|
 | `404` | Empresa sem config (GET) ou `id` inválido no PATCH |
 | `409` | Empresa já possui config (POST) |
-| `400` | Validação / `environment` ou `issExigibility` inválido |
+| `400` | Validação / `environment` ou `issExigibility` inválido / `municipalTaxCode` vazio ou > 20 chars |

@@ -100,6 +100,7 @@ async function main() {
       certPasswordEnvVar: 'GISS_CERT_PASSWORD',
       vendorConfig: { municipioSlug: 'maua' },
       issRate: 10,
+      municipalTaxCode: '010700',
     },
     update: {
       vendor: 'giss',
@@ -111,6 +112,7 @@ async function main() {
       certPasswordEnvVar: 'GISS_CERT_PASSWORD',
       vendorConfig: { municipioSlug: 'maua' },
       issRate: 10,
+      municipalTaxCode: '010700',
     },
   });
 

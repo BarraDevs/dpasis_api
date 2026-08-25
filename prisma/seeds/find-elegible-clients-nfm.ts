@@ -465,6 +465,7 @@ export class FindElegibleClientsNfmSeed {
         certFilePath: SEED_NFSE_CURL_CERT_PATH,
         certPasswordEnvVar: 'GISS_CERT_PASSWORD',
         vendorConfig: { municipioSlug: 'maua' },
+        municipalTaxCode: '010700',
       },
       update: {
         vendor: 'giss',
@@ -475,6 +476,7 @@ export class FindElegibleClientsNfmSeed {
         certFilePath: SEED_NFSE_CURL_CERT_PATH,
         certPasswordEnvVar: 'GISS_CERT_PASSWORD',
         vendorConfig: { municipioSlug: 'maua' },
+        municipalTaxCode: '010700',
       },
     });
   }

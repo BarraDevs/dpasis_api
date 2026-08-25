@@ -23,6 +23,7 @@ function makeValidInputDto(overrides: Partial<CreateCompanyNfsConfigInputDto> = 
     fiscalIncentive: false,
     issRate: 0.05,
     issExigibility: 1,
+    municipalTaxCode: '010700',
     ...overrides,
   };
 }
@@ -78,6 +79,26 @@ describe('CreateCompanyNfsConfigInputDto', () => {
     return target.transform(data, metadata).catch((error) => {
       const message = error.getResponse().message as string[];
       expect(message).toContain('issRate deve ser maior ou igual a 0');
+    });
+  });
+
+  it('should reject empty municipalTaxCode', async() => {
+    const data = makeValidInputDto({ municipalTaxCode: '' });
+
+    expect.assertions(1);
+    return target.transform(data, metadata).catch((error) => {
+      const message = error.getResponse().message as string[];
+      expect(message.some((m: string) => m.includes('municipalTaxCode'))).toBe(true);
+    });
+  });
+
+  it('should reject municipalTaxCode longer than 20 characters', async() => {
+    const data = makeValidInputDto({ municipalTaxCode: '123456789012345678901' });
+
+    expect.assertions(1);
+    return target.transform(data, metadata).catch((error) => {
+      const message = error.getResponse().message as string[];
+      expect(message).toContain('municipalTaxCode deve ter no máximo 20 caracteres');
     });
   });
 });

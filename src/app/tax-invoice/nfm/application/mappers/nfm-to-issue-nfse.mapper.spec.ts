@@ -74,6 +74,7 @@ function makeProviderConfig(overrides: Partial<CompanyNfsConfigDto> = {}): Compa
     fiscalIncentive: false,
     issRate: 0.05,
     issExigibility: 1,
+    municipalTaxCode: '010700',
     ...overrides,
   };
 }
@@ -107,6 +108,7 @@ describe('NfmToIssueNfseMapper - Unit tests', () => {
     expect(result.service.indopCode).toBe('050101');
     expect(result.service.cnaeCode).toBe('6209100');
     expect(result.service.issRate).toBe(0.05);
+    expect(result.service.municipalTaxCode).toBe('010700');
     expect(result.service.issWithheld).toBe(false);
     expect(result.service.issRetentionResponsible).toBeUndefined();
   });
@@ -144,5 +146,15 @@ describe('NfmToIssueNfseMapper - Unit tests', () => {
     // Act / Assert
     expect(() => NfmToIssueNfseMapper.toIssueNfseInput(nfm, provider))
       .toThrow(/alíquota de ISS/);
+  });
+
+  it('should throw when municipalTaxCode is missing', () => {
+    // Arrange
+    const nfm = makeNfm();
+    const provider = makeProviderConfig({ municipalTaxCode: null });
+
+    // Act / Assert
+    expect(() => NfmToIssueNfseMapper.toIssueNfseInput(nfm, provider))
+      .toThrow(/código de tributação municipal/);
   });
 });

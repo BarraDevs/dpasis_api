@@ -95,6 +95,13 @@ export class CreateCompanyNfsConfigInputDto {
   @IsNotEmpty({ message: '$property é obrigatório' })
   @IsIn([1, 2, 3, 4, 5, 6, 7], { message: '$property deve ser um código válido de exigibilidade do ISS' })
   issExigibility: number;
+
+  @ApiProperty({ example: '010700', description: 'Código de tributação do município (cadastro do contribuinte no GISS)' })
+  @IsString({ message: '$property deve ser uma string' })
+  @IsNotEmpty({ message: '$property é obrigatório' })
+  @MaxLength(20, { message: '$property deve ter no máximo 20 caracteres' })
+  @Trim()
+  municipalTaxCode: string;
 }
 
 export class CreateCompanyNfsConfigOutputDto {
