@@ -16,6 +16,7 @@ import { ResaleSequenceSeed } from './resale-sequence';
  * - `emissionDay` ajustado para manter `dueDateDay - emissionDay >= 15` quando possível.
  * - IDs na faixa `9_500_0xx` e CNPJs `88.888.888/000x-xx` só para seed.
  * - `9_999_999` = cliente do curl NFSe (`nfse-curl-manual-test.ts`, company 516 / GISS).
+ * - Sequência RPS da company 516 sobe para piso `80_000` no seed (evita E10 no GISS após resets locais).
  *
  * Se mudar o dia do calendário e a lista vier vazia, rode o seed de novo (`npm run db:seed`).
  * Use o mesmo fuso do servidor da API.
@@ -260,8 +261,7 @@ export class FindElegibleClientsNfmSeed {
     deps: SeedDeps,
     profile: SeedClientProfile,
   ): Promise<void> {
-    const dueDateDay = profile.dueDateDay
-      ?? (profile.id === 9_500_003 ? deps.notTodayDueDay : deps.todayDueDay);
+    const dueDateDay = profile.dueDateDay ?? (profile.id === 9_500_003 ? deps.notTodayDueDay : deps.todayDueDay);
     const companyId = profile.companyId ?? deps.companyId;
     const billingAddressData: SeedBillingAddress = profile.billingAddress ?? {
       zipCode: '01310-100',
@@ -459,24 +459,42 @@ export class FindElegibleClientsNfmSeed {
         companyId: SEED_NFSE_CURL_COMPANY_ID,
         vendor: 'giss',
         municipalRegistration: '16895',
-        municipalCodeIbge: '3530607',
+        municipalCodeIbge: '3529401',
         serieRps: 'NFSE',
         environment: NfsProviderEnvironment.Production,
         certFilePath: SEED_NFSE_CURL_CERT_PATH,
         certPasswordEnvVar: 'GISS_CERT_PASSWORD',
         vendorConfig: { municipioSlug: 'maua' },
-        municipalTaxCode: '010700',
+        municipalTaxCode: '620230001',
+        issRate: 0.0387,
       },
       update: {
         vendor: 'giss',
         municipalRegistration: '16895',
-        municipalCodeIbge: '3530607',
+        municipalCodeIbge: '3529401',
         serieRps: 'NFSE',
         environment: NfsProviderEnvironment.Production,
         certFilePath: SEED_NFSE_CURL_CERT_PATH,
         certPasswordEnvVar: 'GISS_CERT_PASSWORD',
         vendorConfig: { municipioSlug: 'maua' },
-        municipalTaxCode: '010700',
+        municipalTaxCode: '620230001',
+        issRate: 0.0387,
+      },
+    });
+
+    // GISS rejeita RPS duplicado (E10). Sequência local costuma recomeçar em 1 após reset,
+    // enquanto o GISS já consumiu números em testes anteriores. Piso alto evita colisão;
+    // nota real 55363 usou RPS 73468 (série 1) — margem acima disso.
+    const rpsSequenceFloor = 80_000;
+    const existingSeq = await prisma.nfseRpsSequence.findUnique({
+      where: { companyId: SEED_NFSE_CURL_COMPANY_ID },
+      select: { nextId: true },
+    });
+    await prisma.nfseRpsSequence.upsert({
+      where: { companyId: SEED_NFSE_CURL_COMPANY_ID },
+      create: { companyId: SEED_NFSE_CURL_COMPANY_ID, nextId: rpsSequenceFloor },
+      update: {
+        nextId: Math.max(existingSeq?.nextId ?? 0, rpsSequenceFloor),
       },
     });
   }
@@ -547,45 +565,90 @@ export class FindElegibleClientsNfmSeed {
     return bank.id;
   }
 
+  /** Correlação alinhada à NFS-e GISS 55363 (Mauá) — códigos que existem no cadastro do contribuinte. */
+  private static readonly GISS_CURL_CORR = {
+    cnaeCode: '6202-3/00',
+    nbsCode: '1.1103.22.00',
+    indopCode: '100501',
+    serviceListItemCode: '01.05',
+  } as const;
+
+  private static readonly GISS_CURL_CORR_2 = {
+    cnaeCode: '6201-5/01',
+    nbsCode: '1.1103.22.00',
+    indopCode: '100501',
+    serviceListItemCode: '01.05',
+  } as const;
+
   /** Dois ids distintos: `FindElegibleClients` emite um NFM por (cliente + cnaeNbsIndop). */
   private static async ensureCnaeNbsIndopPair(prisma: PrismaClient): Promise<[number, number]> {
-    const existing = await prisma.cnaeNbsIndop.findMany({
-      select: { id: true },
-      orderBy: { id: 'asc' },
-      take: 2,
-    });
-    if (existing.length >= 2) {
-      return [existing[0].id, existing[1].id];
-    }
-
-    const firstId = existing[0]?.id ?? await this.createSeedCnaeNbsIndop(prisma, 'A');
-    const secondId = await this.createSeedCnaeNbsIndop(prisma, 'B');
+    const firstId = await this.ensureGissCurlCnaeNbsIndop(prisma, this.GISS_CURL_CORR);
+    const secondId = await this.ensureGissCurlCnaeNbsIndop(prisma, this.GISS_CURL_CORR_2);
     return [firstId, secondId];
   }
 
-  private static async createSeedCnaeNbsIndop(prisma: PrismaClient, slot: 'A' | 'B'): Promise<number> {
-    const u = `${slot}${String(Date.now()).slice(-5)}`;
+  private static async ensureGissCurlCnaeNbsIndop(
+    prisma: PrismaClient,
+    corr: { cnaeCode: string; nbsCode: string; indopCode: string; serviceListItemCode: string },
+  ): Promise<number> {
     const [cnae, nbs, indop] = await Promise.all([
-      prisma.cnae.create({
-        data: { code: `NFMC${u}`, description: `CNAE seed NFM ${slot}`, active: true },
+      prisma.cnae.upsert({
+        where: { code: corr.cnaeCode },
+        create: {
+          code: corr.cnaeCode,
+          description: corr.cnaeCode === '6202-3/00'
+            ? 'Desenvolvimento e licenciamento de programas de computador customizáveis'
+            : 'Desenvolvimento de programas de computador sob encomenda',
+          active: true,
+        },
+        update: { active: true },
+        select: { id: true },
       }),
-      prisma.nbs.create({
-        data: { code: `NFMN${u}`, description: `NBS seed NFM ${slot}`, active: true },
+      prisma.nbs.upsert({
+        where: { code: corr.nbsCode },
+        create: {
+          code: corr.nbsCode,
+          description: 'Licenciamento de direito de uso de programas de computador',
+          active: true,
+        },
+        update: { active: true },
+        select: { id: true },
       }),
-      prisma.indop.create({
-        data: { code: `NFMI${u}`, description: `INDOP seed NFM ${slot}`, active: true },
+      prisma.indop.upsert({
+        where: { code: corr.indopCode },
+        create: {
+          code: corr.indopCode,
+          description: 'Operação de licenciamento / cessão de direito de uso de software',
+          active: true,
+        },
+        update: { active: true },
+        select: { id: true },
       }),
     ]);
 
-    const row = await prisma.cnaeNbsIndop.create({
-      data: {
+    const row = await prisma.cnaeNbsIndop.upsert({
+      where: {
+        // eslint-disable-next-line camelcase
+        cnaeId_nbsId_indopId: {
+          cnaeId: cnae.id,
+          nbsId: nbs.id,
+          indopId: indop.id,
+        },
+      },
+      create: {
         cnaeId: cnae.id,
         nbsId: nbs.id,
         indopId: indop.id,
-        serviceListItemCode: '01.07',
+        serviceListItemCode: corr.serviceListItemCode,
         active: true,
       },
+      update: {
+        serviceListItemCode: corr.serviceListItemCode,
+        active: true,
+      },
+      select: { id: true },
     });
+
     return row.id;
   }
 }

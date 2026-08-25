@@ -90,6 +90,18 @@ describe('GissIssueBatchMapper.buildIssueBatchXml - Unit tests', () => {
     expect(xml).toContain('Cliente &amp; Cia LTDA');
   });
 
+  it('should pad ItemListaServico to XSD enum format (1.05 → 01.05)', () => {
+    // Arrange
+    const input = makeIssueNfsBatchInput();
+    input.rpsList[0].service = makeDefaultService({ serviceListItemCode: '1.05' });
+
+    // Act
+    const { xml } = GissIssueBatchMapper.buildIssueBatchXml(input);
+
+    // Assert
+    expect(xml).toContain('<p1:ItemListaServico>01.05</p1:ItemListaServico>');
+  });
+
   it('should include ResponsavelRetencao and ValorIss when ISS is withheld', () => {
     // Arrange
     const input = makeIssueNfsBatchInput();

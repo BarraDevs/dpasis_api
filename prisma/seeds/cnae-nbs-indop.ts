@@ -7,11 +7,6 @@ import { PrismaClient } from '@prisma/client';
  */
 export class CnaeNbsIndopSeed {
   static async seed(prisma: PrismaClient): Promise<void> {
-    const cnaeNbsIndop = await prisma.cnaeNbsIndop.findFirst();
-    if (cnaeNbsIndop) {
-      return;
-    }
-
     const cnaes = await prisma.cnae.findMany({ select: { id: true, code: true } });
     const nbss = await prisma.nbs.findMany({ select: { id: true, code: true } });
     const indops = await prisma.indop.findMany({ select: { id: true, code: true } });
@@ -22,10 +17,11 @@ export class CnaeNbsIndopSeed {
     }
 
     const correlations = [
-      { cnaeCode: '6201-5/01', nbsCode: '1.0201.10.00', indopCode: '060101', serviceListItemCode: '01.07' },
-      { cnaeCode: '6204-0/00', nbsCode: '1.0201.20.00', indopCode: '060101', serviceListItemCode: '01.07' },
-      { cnaeCode: '6209-1/01', nbsCode: '1.0201.30.00', indopCode: '060101', serviceListItemCode: '01.07' },
-      { cnaeCode: '6201-5/01', nbsCode: '1.0601.20.00', indopCode: '020101', serviceListItemCode: '01.07' },
+      { cnaeCode: '6201-5/01', nbsCode: '1.0201.10.00', indopCode: '060101', serviceListItemCode: '01.05' },
+      { cnaeCode: '6204-0/00', nbsCode: '1.0201.20.00', indopCode: '060101', serviceListItemCode: '01.05' },
+      { cnaeCode: '6209-1/01', nbsCode: '1.0201.30.00', indopCode: '060101', serviceListItemCode: '01.05' },
+      { cnaeCode: '6201-5/01', nbsCode: '1.0601.20.00', indopCode: '020101', serviceListItemCode: '01.05' },
+      { cnaeCode: '6202-3/00', nbsCode: '1.1103.22.00', indopCode: '100501', serviceListItemCode: '01.05' },
       { cnaeCode: '7020-4/00', nbsCode: '1.0601.10.00', indopCode: '020201', serviceListItemCode: '01.07' },
       { cnaeCode: '7319-0/04', nbsCode: '1.0701.10.00', indopCode: '060101', serviceListItemCode: '01.07' },
       { cnaeCode: '4120-4/00', nbsCode: '1.0101.30.00', indopCode: '100101', serviceListItemCode: '01.07' },
@@ -58,7 +54,9 @@ export class CnaeNbsIndopSeed {
             indopId: indop.id,
             serviceListItemCode: corr.serviceListItemCode,
           },
-          update: {},
+          update: {
+            serviceListItemCode: corr.serviceListItemCode,
+          },
         });
       }
     }

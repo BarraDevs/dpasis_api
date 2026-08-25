@@ -26,6 +26,7 @@ export class IndopSeed {
     { code: '080101', description: 'Operação de serviço de locação', active: true },
     { code: '100101', description: 'Operação de serviço de construção', active: true },
     { code: '100102', description: 'Operação de serviço de reforma', active: true },
+    { code: '100501', description: 'Operação de licenciamento / cessão de direito de uso de software', active: true },
   ];
 
   static async seed(prisma: PrismaClient): Promise<void> {

@@ -20,6 +20,16 @@ export class GissIssueBatchMapper {
     return code.replace(/\D/g, '').slice(0, 9);
   }
 
+  /** XSD `tsItemListaServico` enum usa `01.05`; CompNfse devolve `1.05`. Padroniza no envio. */
+  private static normalizeItemListaServico(code: string): string {
+    const trimmed = code.trim();
+    const match = /^(\d{1,2})\.(\d{2})$/.exec(trimmed);
+    if (!match) {
+      return trimmed;
+    }
+    return `${match[1].padStart(2, '0')}.${match[2]}`;
+  }
+
   private static resolveIssValue(s: NfsServiceDto): number | undefined {
     if (s.issValue !== undefined) {
       return s.issValue;
@@ -144,7 +154,7 @@ export class GissIssueBatchMapper {
     return `<p1:Servico>${valores}`
       + `<p1:IssRetido>${this.yesNo(s.issWithheld)}</p1:IssRetido>`
       + responsavelRetencao
-      + `<p1:ItemListaServico>${XmlEscapeUtil.escape(s.serviceListItemCode)}</p1:ItemListaServico>`
+      + `<p1:ItemListaServico>${XmlEscapeUtil.escape(this.normalizeItemListaServico(s.serviceListItemCode))}</p1:ItemListaServico>`
       + (s.cnaeCode ? `<p1:CodigoCnae>${s.cnaeCode}</p1:CodigoCnae>` : '')
       + (s.municipalTaxCode ? `<p1:CodigoTributacaoMunicipio>${XmlEscapeUtil.escape(s.municipalTaxCode)}</p1:CodigoTributacaoMunicipio>` : '')
       + `<p1:CodigoNbs>${this.normalizeCodigoNbs(s.nbsCode)}</p1:CodigoNbs>`

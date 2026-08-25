@@ -22,6 +22,7 @@ export class NbsSeed {
     { code: '1.0901.10.00', description: 'Serviços de ensino', active: true },
     { code: '1.1001.10.00', description: 'Serviços de transporte de cargas', active: true },
     { code: '1.1101.10.00', description: 'Serviços de fornecimento de alimentação, bebidas e congêneres', active: true },
+    { code: '1.1103.22.00', description: 'Licenciamento de direito de uso de programas de computador', active: true },
   ];
 
   static async seed(prisma: PrismaClient): Promise<void> {

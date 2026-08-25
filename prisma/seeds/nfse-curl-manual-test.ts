@@ -93,26 +93,39 @@ async function main() {
       companyId: COMPANY_ID,
       vendor: 'giss',
       municipalRegistration: '16895',
-      municipalCodeIbge: '3530607',
+      municipalCodeIbge: '3529401',
       serieRps: 'NFSE',
       environment: NfsProviderEnvironment.Production,
       certFilePath,
       certPasswordEnvVar: 'GISS_CERT_PASSWORD',
       vendorConfig: { municipioSlug: 'maua' },
-      issRate: 10,
-      municipalTaxCode: '010700',
+      issRate: 0.0387,
+      municipalTaxCode: '620230001',
     },
     update: {
       vendor: 'giss',
       municipalRegistration: '16895',
-      municipalCodeIbge: '3530607',
+      municipalCodeIbge: '3529401',
       serieRps: 'NFSE',
       environment: NfsProviderEnvironment.Production,
       certFilePath,
       certPasswordEnvVar: 'GISS_CERT_PASSWORD',
       vendorConfig: { municipioSlug: 'maua' },
-      issRate: 10,
-      municipalTaxCode: '010700',
+      issRate: 0.0387,
+      municipalTaxCode: '620230001',
+    },
+  });
+
+  const rpsSequenceFloor = 80_000;
+  const existingSeq = await prisma.nfseRpsSequence.findUnique({
+    where: { companyId: COMPANY_ID },
+    select: { nextId: true },
+  });
+  await prisma.nfseRpsSequence.upsert({
+    where: { companyId: COMPANY_ID },
+    create: { companyId: COMPANY_ID, nextId: rpsSequenceFloor },
+    update: {
+      nextId: Math.max(existingSeq?.nextId ?? 0, rpsSequenceFloor),
     },
   });
 
