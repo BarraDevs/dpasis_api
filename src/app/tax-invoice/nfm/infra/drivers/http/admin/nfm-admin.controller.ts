@@ -1,9 +1,11 @@
-import { Controller, Get, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
 import { Claim } from 'src/app/authentication/domain/authorization/claim';
 import { RequiredClaims } from 'src/app/authentication/infra/decorators/required-claims.decorator';
 import { RequiredRoles } from 'src/app/authentication/infra/decorators/required-role.decorator';
 import { NfmDto, NfmWithNfseDto } from 'src/app/tax-invoice/nfm/application/dtos/nfm.dto';
+import { CancelNfm } from 'src/app/tax-invoice/nfm/application/usecases/cancel-nfm/cancel-nfm.service';
+import { CancelNfmInputDto, CancelNfmOutputDto } from 'src/app/tax-invoice/nfm/application/usecases/cancel-nfm/dtos/cancel-nfm.dto';
 import { FindElegibleClients } from 'src/app/tax-invoice/nfm/application/usecases/find-elegible-clients/find-elegible-clients.service';
 import { FindGeneratedNfms } from 'src/app/tax-invoice/nfm/application/usecases/find-generated-nfms/find-generated-nfms.service';
 import { FindGeneratedNfmsQueryDto } from 'src/app/tax-invoice/nfm/application/usecases/find-generated-nfms/dtos/find-generated-nfms.dto';
@@ -22,6 +24,7 @@ export class NfmAdminController {
     private readonly findElegibleClients: FindElegibleClients,
     private readonly findNfmById: FindNfmById,
     private readonly saveElegibleNfms: SaveElegibleNfms,
+    private readonly cancelNfm: CancelNfm,
   ) {}
 
   @Get()
@@ -48,6 +51,32 @@ export class NfmAdminController {
     return this.findElegibleClients.execute();
   }
 
+  @Post()
+  @RequiredClaims(Claim.NFM_WRITE)
+  @Swagger({
+    tags: ['NFM'],
+    summary: 'Salvar NFMs elegíveis no banco de dados',
+    applyBadRequest: true,
+    createdResponse: SaveElegibleNfmsOutputDto,
+  })
+  public saveElegible(): Promise<SaveElegibleNfmsOutputDto> {
+    return this.saveElegibleNfms.execute();
+  }
+
+  @Post(':id/cancel')
+  @RequiredClaims(Claim.NFM_WRITE)
+  @Swagger({
+    tags: ['NFM'],
+    summary: 'Cancelar NFS-e vinculada à NFM (síncrono, via Giss Online)',
+    applyBadRequest: true,
+    applyNotFound: true,
+    applyServiceUnavailable: true,
+    okResponse: CancelNfmOutputDto,
+  })
+  public cancel(@Param() params: Params, @Body() body: CancelNfmInputDto): Promise<CancelNfmOutputDto> {
+    return this.cancelNfm.execute(params.id, body);
+  }
+
   @Get(':id')
   @RequiredClaims(Claim.NFM_READ)
   @Swagger({
@@ -59,17 +88,5 @@ export class NfmAdminController {
   })
   public findOne(@Param() params: Params): Promise<NfmWithNfseDto> {
     return this.findNfmById.execute(params.id);
-  }
-
-  @Post()
-  @RequiredClaims(Claim.NFM_WRITE)
-  @Swagger({
-    tags: ['NFM'],
-    summary: 'Salvar NFMs elegíveis no banco de dados',
-    applyBadRequest: true,
-    createdResponse: SaveElegibleNfmsOutputDto,
-  })
-  public saveElegible(): Promise<SaveElegibleNfmsOutputDto> {
-    return this.saveElegibleNfms.execute();
   }
 }

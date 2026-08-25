@@ -7,6 +7,7 @@ Este documento cobre as rotas admin de **NFM**:
 - `GET /admin/nfm/elegible` — clientes/grupos elegíveis para emissão
 - `GET /admin/nfm/:id` — detalhe de uma NFM gerada (com NFS-e vinculada)
 - `POST /admin/nfm` — salva NFMs e dispara emissão de NFS-e (1:1)
+- `POST /admin/nfm/:id/cancel` — cancela a NFS-e vinculada à NFM (síncrono, Giss)
 
 **Referência OpenAPI:** Swagger em `/swagger`, tag **NFM**.
 
@@ -29,14 +30,16 @@ ItemListaServico (LC 116) na correspondência CNAE/NBS/INDOP: [frontend-integrac
 | — | `GET /admin/nfm/elegible` → elegíveis (`NfmDto[]`, contrato antigo) |
 | — | `GET /admin/nfm/:id` → detalhe (`NfmWithNfseDto`) — **aditivo** |
 | `POST /admin/nfm` | Sem mudança |
+| `POST /admin/nfse/:id/cancel` (`:id` = NFS-e, claim `NFSE_WRITE`) | `POST /admin/nfm/:id/cancel` (`:id` = **NFM**, claim `NFM_WRITE`) — **breaking** |
 | `GET /admin/nfm/invoices` | **Removido.** Consulta de NFS-e no Giss saiu da API. Listar notas via `GET /admin/nfm`. |
 
 ### Fluxo sugerido na UI
 
 1. **Tela lista** — `GET /admin/nfm?dateStart&dateEnd` exibe NFMs com NFS-e vinculada no intervalo.
 2. Clique no item → `GET /admin/nfm/:id` para tela/detalhe.
-3. Botão **Gerar NFMs** → abre tela de elegíveis.
-4. **Tela elegíveis** — `GET /admin/nfm/elegible`; botão confirmar → `POST /admin/nfm`.
+3. Se NFS-e `ISSUED` → botão cancelar → `POST /admin/nfm/:id/cancel` com `cancelReasonCode`.
+4. Botão **Gerar NFMs** → abre tela de elegíveis.
+5. **Tela elegíveis** — `GET /admin/nfm/elegible`; botão confirmar → `POST /admin/nfm`.
 
 ---
 
@@ -122,6 +125,61 @@ Array de `NfmDto`:
 
 ---
 
+## Cancelar NFS-e da NFM (`POST /admin/nfm/:id/cancel`)
+
+**Breaking:** a rota antiga `POST /admin/nfse/:id/cancel` foi removida.  
+Use o **id da NFM** (o mesmo de `GET /admin/nfm` / `GET /admin/nfm/:id`), não o id da NFS-e.
+
+Claim: `NFM_WRITE`.
+
+Chamada **síncrona** ao Giss Online. Só funciona se a NFS-e vinculada estiver `ISSUED`.
+
+### Path
+
+| Campo | Tipo | Observação |
+|-------|------|------------|
+| `id` | number (inteiro positivo) | ID da **NFM** |
+
+### Body
+
+| Campo | Obrigatório | Tipo | Valores |
+|-------|-------------|------|---------|
+| `cancelReasonCode` | sim | number | `1` (erro na emissão), `2` (serviço não prestado), `4` (duplicidade). Códigos `3` e `5` são rejeitados (restritos à Administração Tributária). |
+
+Exemplo:
+
+```json
+{ "cancelReasonCode": 2 }
+```
+
+### Response (200)
+
+```json
+{
+  "id": 42,
+  "status": "CANCELED",
+  "canceledAt": "2026-07-29T12:00:00.000Z"
+}
+```
+
+| Campo | Significado |
+|-------|-------------|
+| `id` | ID da **NFM** (igual ao path) |
+| `status` | Status da NFS-e após o cancelamento (`CANCELED`) |
+| `canceledAt` | Data/hora confirmada pelo provedor |
+
+### Erros
+
+| Status | Quando |
+|--------|--------|
+| 400 | `id` inválido; `cancelReasonCode` inválido; NFS-e não emitida / já cancelada |
+| 404 | NFM não encontrada |
+| 503 | Giss / provedor indisponível |
+
+Após sucesso, recarregar o detalhe com `GET /admin/nfm/:id` — `nfse.status` deve ser `CANCELED`.
+
+---
+
 ## Salvar elegíveis e emitir (`POST /admin/nfm`)
 
 Sem body. Para cada grupo elegível do mês corrente:
@@ -168,13 +226,24 @@ HTTP **não** espera a GISS. Só persistência + enqueue.
 
 ---
 
+## Autenticação e claims
+
+| Rota | Claim |
+|------|-------|
+| `GET /admin/nfm`, `GET /admin/nfm/elegible`, `GET /admin/nfm/:id` | `NFM_READ` |
+| `POST /admin/nfm`, `POST /admin/nfm/:id/cancel` | `NFM_WRITE` |
+
+---
+
 ## Checklist frontend
 
 1. **Breaking:** migrar tela de elegíveis de `GET /admin/nfm` → `GET /admin/nfm/elegible`.
 2. Nova tela lista: `GET /admin/nfm?dateStart&dateEnd&page&size` — resposta **paginada** (`data[]` de `NfmWithNfseDto`).
 3. Detalhe: `GET /admin/nfm/:id` — mesmo `NfmWithNfseDto`; tratar **404**.
-4. Botão gerar → tela elegíveis → confirmar com `POST /admin/nfm`.
-5. `POST /admin/nfm`: exibir resumo `created` / `skipped` / `failed` + lista de `errors`.
-6. Garantir cadastro fiscal antes de emitir: LC 116 na correspondência, ISS/Simples/`municipalTaxCode` na config da empresa, `issWithheld` no invoice config do cliente.
-7. **Breaking:** `GET /admin/nfm/invoices` saiu. Parar de chamar a rota; regenerar tipos OpenAPI.
-8. Atualizar mocks/tipos E2E das rotas (incluir `GET /admin/nfm/:id`).
+4. **Breaking:** cancelamento — parar `POST /admin/nfse/:id/cancel`; usar `POST /admin/nfm/:id/cancel` com **id da NFM** e claim `NFM_WRITE`.
+5. Cancelar só quando `nfse.status === 'ISSUED'`; body `{ cancelReasonCode: 1 | 2 | 4 }`; após 200, refrescar detalhe.
+6. Botão gerar → tela elegíveis → confirmar com `POST /admin/nfm`.
+7. `POST /admin/nfm`: exibir resumo `created` / `skipped` / `failed` + lista de `errors`.
+8. Garantir cadastro fiscal antes de emitir: LC 116 na correspondência, ISS/Simples/`municipalTaxCode` na config da empresa, `issWithheld` no invoice config do cliente.
+9. **Breaking:** `GET /admin/nfm/invoices` saiu. Parar de chamar a rota; regenerar tipos OpenAPI.
+10. Atualizar mocks/tipos E2E (`GET /admin/nfm/:id`, `POST /admin/nfm/:id/cancel`).

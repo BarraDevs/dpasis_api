@@ -2,6 +2,8 @@ import { createMock } from '@golevelup/ts-jest';
 import { Test } from '@nestjs/testing';
 import { AuthenticationGuardsModule } from 'src/app/authentication/application/guards/guards.module';
 import { NfmDto, NfmWithNfseDto } from 'src/app/tax-invoice/nfm/application/dtos/nfm.dto';
+import { CancelNfm } from 'src/app/tax-invoice/nfm/application/usecases/cancel-nfm/cancel-nfm.service';
+import { CancelNfmInputDto, CancelNfmOutputDto } from 'src/app/tax-invoice/nfm/application/usecases/cancel-nfm/dtos/cancel-nfm.dto';
 import { FindElegibleClients } from 'src/app/tax-invoice/nfm/application/usecases/find-elegible-clients/find-elegible-clients.service';
 import { FindGeneratedNfms } from 'src/app/tax-invoice/nfm/application/usecases/find-generated-nfms/find-generated-nfms.service';
 import { FindGeneratedNfmsQueryDto } from 'src/app/tax-invoice/nfm/application/usecases/find-generated-nfms/dtos/find-generated-nfms.dto';
@@ -18,6 +20,7 @@ describe('NfmAdminController - Unit tests', () => {
   let findGeneratedNfms: FindGeneratedNfms;
   let findNfmById: FindNfmById;
   let saveElegibleNfms: SaveElegibleNfms;
+  let cancelNfm: CancelNfm;
 
   beforeEach(async() => {
     const module = await Test.createTestingModule({
@@ -28,6 +31,7 @@ describe('NfmAdminController - Unit tests', () => {
         { provide: FindGeneratedNfms, useValue: createMock<FindGeneratedNfms>() },
         { provide: FindNfmById, useValue: createMock<FindNfmById>() },
         { provide: SaveElegibleNfms, useValue: createMock<SaveElegibleNfms>() },
+        { provide: CancelNfm, useValue: createMock<CancelNfm>() },
       ],
     }).compile();
 
@@ -36,6 +40,7 @@ describe('NfmAdminController - Unit tests', () => {
     findGeneratedNfms = module.get(FindGeneratedNfms);
     findNfmById = module.get(FindNfmById);
     saveElegibleNfms = module.get(SaveElegibleNfms);
+    cancelNfm = module.get(CancelNfm);
   });
 
   it('should be defined', () => {
@@ -106,6 +111,23 @@ describe('NfmAdminController - Unit tests', () => {
       // Assert
       expect(result).toEqual(output);
       expect(saveSpy).toHaveBeenCalledWith();
+    });
+  });
+
+  describe('cancel', () => {
+    it('should call cancelNfm.execute with params.id and body', async() => {
+      // Arrange
+      const params = { id: 42 } as Params;
+      const body = createMock<CancelNfmInputDto>({ cancelReasonCode: 2 });
+      const output = createMock<CancelNfmOutputDto>();
+      const cancelSpy = jest.spyOn(cancelNfm, 'execute').mockResolvedValue(output);
+
+      // Act
+      const result = await sut.cancel(params, body);
+
+      // Assert
+      expect(result).toEqual(output);
+      expect(cancelSpy).toHaveBeenCalledWith(42, body);
     });
   });
 });

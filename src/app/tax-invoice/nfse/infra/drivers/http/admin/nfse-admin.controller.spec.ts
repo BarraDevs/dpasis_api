@@ -3,8 +3,6 @@ import { Test } from '@nestjs/testing';
 import { AuthenticationGuardsModule } from 'src/app/authentication/application/guards/guards.module';
 import { Params } from 'src/infra/validators/class/dtos/params';
 import { NfseDto } from '../../../../application/dtos/nfse.dto';
-import { CancelNfse } from '../../../../application/usecases/cancel-nfse/cancel-nfse.service';
-import { CancelNfseInputDto, CancelNfseOutputDto } from '../../../../application/usecases/cancel-nfse/dtos/cancel-nfse.dto';
 import { FindNfseById } from '../../../../application/usecases/find-nfse-by-id/find-nfse-by-id.service';
 import { IssueNfseInputDto, IssueNfseOutputDto } from '../../../../application/usecases/issue-nfse/dtos/issue-nfse.dto';
 import { IssueNfse } from '../../../../application/usecases/issue-nfse/issue-nfse.service';
@@ -14,7 +12,6 @@ describe('NfseAdminController - Unit tests', () => {
   let sut: NfseAdminController;
   let issueNfse: IssueNfse;
   let findNfseById: FindNfseById;
-  let cancelNfse: CancelNfse;
 
   beforeEach(async() => {
     const module = await Test.createTestingModule({
@@ -23,14 +20,12 @@ describe('NfseAdminController - Unit tests', () => {
       providers: [
         { provide: IssueNfse, useValue: createMock<IssueNfse>() },
         { provide: FindNfseById, useValue: createMock<FindNfseById>() },
-        { provide: CancelNfse, useValue: createMock<CancelNfse>() },
       ],
     }).compile();
 
     sut = module.get(NfseAdminController);
     issueNfse = module.get(IssueNfse);
     findNfseById = module.get(FindNfseById);
-    cancelNfse = module.get(CancelNfse);
   });
 
   it('should be defined', () => {
@@ -66,23 +61,6 @@ describe('NfseAdminController - Unit tests', () => {
       // Assert
       expect(result).toEqual(output);
       expect(findOneSpy).toHaveBeenCalledWith(params.id);
-    });
-  });
-
-  describe('cancel', () => {
-    it('should call cancelNfse.execute with params.id and body', async() => {
-      // Arrange
-      const params = createMock<Params>({ id: 42 });
-      const body = createMock<CancelNfseInputDto>({ cancelReasonCode: 2 });
-      const output = createMock<CancelNfseOutputDto>();
-      const cancelSpy = jest.spyOn(cancelNfse, 'execute').mockResolvedValue(output);
-
-      // Act
-      const result = await sut.cancel(params, body);
-
-      // Assert
-      expect(result).toEqual(output);
-      expect(cancelSpy).toHaveBeenCalledWith(params.id, body);
     });
   });
 });
