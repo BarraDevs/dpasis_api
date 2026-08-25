@@ -4,15 +4,8 @@ import { EditNfmData, NfmPersistedRowDto, SaveNfmData } from '../../usecases/sav
 
 export interface INfmDao {
   findAll(queries: FindGeneratedNfmsQueryDto): Promise<[NfmWithNfseDto[], number]>;
-
-  findByClientReferenceAndCnae(
-    clientId: number,
-    referenceMonth: number,
-    referenceYear: number,
-    cnaeNbsIndopId: number,
-  ): Promise<NfmPersistedRowDto | null>;
-
+  findById(id: number): Promise<NfmWithNfseDto | null>;
+  findByClientReferenceAndCnae(clientId: number, referenceMonth: number, referenceYear: number, cnaeNbsIndopId: number): Promise<NfmPersistedRowDto | null>;
   save(data: SaveNfmData): Promise<number>;
-
   edit(id: number, data: EditNfmData): Promise<void>;
 }

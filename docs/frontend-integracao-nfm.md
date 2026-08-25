@@ -5,6 +5,7 @@
 Este documento cobre as rotas admin de **NFM**:
 - `GET /admin/nfm` — NFMs persistidas com NFS-e vinculada (filtro por período)
 - `GET /admin/nfm/elegible` — clientes/grupos elegíveis para emissão
+- `GET /admin/nfm/:id` — detalhe de uma NFM gerada (com NFS-e vinculada)
 - `POST /admin/nfm` — salva NFMs e dispara emissão de NFS-e (1:1)
 
 **Referência OpenAPI:** Swagger em `/swagger`, tag **NFM**.
@@ -26,14 +27,16 @@ ItemListaServico (LC 116) na correspondência CNAE/NBS/INDOP: [frontend-integrac
 |-------|--------|
 | `GET /admin/nfm` → elegíveis (`NfmDto[]`) | `GET /admin/nfm` → NFMs geradas (paginado, `NfmWithNfseDto`) |
 | — | `GET /admin/nfm/elegible` → elegíveis (`NfmDto[]`, contrato antigo) |
+| — | `GET /admin/nfm/:id` → detalhe (`NfmWithNfseDto`) — **aditivo** |
 | `POST /admin/nfm` | Sem mudança |
 | `GET /admin/nfm/invoices` | **Removido.** Consulta de NFS-e no Giss saiu da API. Listar notas via `GET /admin/nfm`. |
 
 ### Fluxo sugerido na UI
 
 1. **Tela lista** — `GET /admin/nfm?dateStart&dateEnd` exibe NFMs com NFS-e vinculada no intervalo.
-2. Botão **Gerar NFMs** → abre tela de elegíveis.
-3. **Tela elegíveis** — `GET /admin/nfm/elegible`; botão confirmar → `POST /admin/nfm`.
+2. Clique no item → `GET /admin/nfm/:id` para tela/detalhe.
+3. Botão **Gerar NFMs** → abre tela de elegíveis.
+4. **Tela elegíveis** — `GET /admin/nfm/elegible`; botão confirmar → `POST /admin/nfm`.
 
 ---
 
@@ -70,6 +73,35 @@ Cada item em `data` é `NfmWithNfseDto`:
 | Status | Quando |
 |--------|--------|
 | 400 | Formato de data inválido ou `dateStart > dateEnd` |
+
+---
+
+## Buscar NFM por ID (`GET /admin/nfm/:id`)
+
+**Aditivo** (sem breaking). Mesmo shape de item da lista: `NfmWithNfseDto`.
+
+Claim: `NFM_READ` (igual às demais leituras NFM).
+
+### Path
+
+| Campo | Tipo | Observação |
+|-------|------|------------|
+| `id` | number (inteiro positivo) | ID da NFM |
+
+### Response (200)
+
+`NfmWithNfseDto`:
+- `id`, `clientId`, `clientDocument`, `companyName`
+- `referenceMonth`, `referenceYear`, `totalValueInCents`, `cnaeNbsIndopId`
+- `createdAt`, `updatedAt`
+- `nfse` — objeto `NfseDto` completo
+
+### Erros
+
+| Status | Quando |
+|--------|--------|
+| 400 | `id` inválido (não numérico / não positivo) |
+| 404 | NFM não encontrada |
 
 ---
 
@@ -140,8 +172,9 @@ HTTP **não** espera a GISS. Só persistência + enqueue.
 
 1. **Breaking:** migrar tela de elegíveis de `GET /admin/nfm` → `GET /admin/nfm/elegible`.
 2. Nova tela lista: `GET /admin/nfm?dateStart&dateEnd&page&size` — resposta **paginada** (`data[]` de `NfmWithNfseDto`).
-3. Botão gerar → tela elegíveis → confirmar com `POST /admin/nfm`.
-4. `POST /admin/nfm`: exibir resumo `created` / `skipped` / `failed` + lista de `errors`.
-5. Garantir cadastro fiscal antes de emitir: LC 116 na correspondência, ISS/Simples/`municipalTaxCode` na config da empresa, `issWithheld` no invoice config do cliente.
-6. **Breaking:** `GET /admin/nfm/invoices` saiu. Parar de chamar a rota; regenerar tipos OpenAPI.
-7. Atualizar mocks/tipos E2E das rotas.
+3. Detalhe: `GET /admin/nfm/:id` — mesmo `NfmWithNfseDto`; tratar **404**.
+4. Botão gerar → tela elegíveis → confirmar com `POST /admin/nfm`.
+5. `POST /admin/nfm`: exibir resumo `created` / `skipped` / `failed` + lista de `errors`.
+6. Garantir cadastro fiscal antes de emitir: LC 116 na correspondência, ISS/Simples/`municipalTaxCode` na config da empresa, `issWithheld` no invoice config do cliente.
+7. **Breaking:** `GET /admin/nfm/invoices` saiu. Parar de chamar a rota; regenerar tipos OpenAPI.
+8. Atualizar mocks/tipos E2E das rotas (incluir `GET /admin/nfm/:id`).

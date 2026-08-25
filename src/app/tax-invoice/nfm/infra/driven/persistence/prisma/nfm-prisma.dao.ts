@@ -84,6 +84,19 @@ export class NfmDaoAdapterPrisma implements INfmDao {
     return [rows.map((row) => this.mapToDto(row)), total];
   }
 
+  public async findById(id: number): Promise<NfmWithNfseDto | null> {
+    const row = await this.prisma.nfm.findUnique({
+      where: { id },
+      select: NfmWithNfseSelect,
+    });
+
+    if (!row) {
+      return null;
+    }
+
+    return this.mapToDto(row);
+  }
+
   public async findByClientReferenceAndCnae(
     clientId: number,
     referenceMonth: number,

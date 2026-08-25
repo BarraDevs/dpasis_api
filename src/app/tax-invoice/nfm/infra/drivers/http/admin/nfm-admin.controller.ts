@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Query } from '@nestjs/common';
+import { Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
 import { Claim } from 'src/app/authentication/domain/authorization/claim';
 import { RequiredClaims } from 'src/app/authentication/infra/decorators/required-claims.decorator';
@@ -7,9 +7,11 @@ import { NfmDto, NfmWithNfseDto } from 'src/app/tax-invoice/nfm/application/dtos
 import { FindElegibleClients } from 'src/app/tax-invoice/nfm/application/usecases/find-elegible-clients/find-elegible-clients.service';
 import { FindGeneratedNfms } from 'src/app/tax-invoice/nfm/application/usecases/find-generated-nfms/find-generated-nfms.service';
 import { FindGeneratedNfmsQueryDto } from 'src/app/tax-invoice/nfm/application/usecases/find-generated-nfms/dtos/find-generated-nfms.dto';
+import { FindNfmById } from 'src/app/tax-invoice/nfm/application/usecases/find-nfm-by-id/find-nfm-by-id.service';
 import { SaveElegibleNfms } from 'src/app/tax-invoice/nfm/application/usecases/save-elegible-nfms/save-elegible-nfms.service';
 import { SaveElegibleNfmsOutputDto } from 'src/app/tax-invoice/nfm/application/usecases/save-elegible-nfms/dtos/save-elegible-nfms.dto';
 import { Swagger } from 'src/infra/openapi/swagger';
+import { Params } from 'src/infra/validators/class/dtos/params';
 import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
 
 @Controller('admin/nfm')
@@ -18,6 +20,7 @@ export class NfmAdminController {
   constructor(
     private readonly findGeneratedNfms: FindGeneratedNfms,
     private readonly findElegibleClients: FindElegibleClients,
+    private readonly findNfmById: FindNfmById,
     private readonly saveElegibleNfms: SaveElegibleNfms,
   ) {}
 
@@ -43,6 +46,19 @@ export class NfmAdminController {
   })
   public findElegible(): Promise<NfmDto[]> {
     return this.findElegibleClients.execute();
+  }
+
+  @Get(':id')
+  @RequiredClaims(Claim.NFM_READ)
+  @Swagger({
+    tags: ['NFM'],
+    summary: 'Buscar NFM por ID',
+    applyBadRequest: true,
+    applyNotFound: true,
+    okResponse: NfmWithNfseDto,
+  })
+  public findOne(@Param() params: Params): Promise<NfmWithNfseDto> {
+    return this.findNfmById.execute(params.id);
   }
 
   @Post()

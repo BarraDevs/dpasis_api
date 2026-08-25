@@ -5,8 +5,10 @@ import { NfmDto, NfmWithNfseDto } from 'src/app/tax-invoice/nfm/application/dtos
 import { FindElegibleClients } from 'src/app/tax-invoice/nfm/application/usecases/find-elegible-clients/find-elegible-clients.service';
 import { FindGeneratedNfms } from 'src/app/tax-invoice/nfm/application/usecases/find-generated-nfms/find-generated-nfms.service';
 import { FindGeneratedNfmsQueryDto } from 'src/app/tax-invoice/nfm/application/usecases/find-generated-nfms/dtos/find-generated-nfms.dto';
+import { FindNfmById } from 'src/app/tax-invoice/nfm/application/usecases/find-nfm-by-id/find-nfm-by-id.service';
 import { SaveElegibleNfmsOutputDto } from 'src/app/tax-invoice/nfm/application/usecases/save-elegible-nfms/dtos/save-elegible-nfms.dto';
 import { SaveElegibleNfms } from 'src/app/tax-invoice/nfm/application/usecases/save-elegible-nfms/save-elegible-nfms.service';
+import { Params } from 'src/infra/validators/class/dtos/params';
 import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
 import { NfmAdminController } from './nfm-admin.controller';
 
@@ -14,6 +16,7 @@ describe('NfmAdminController - Unit tests', () => {
   let sut: NfmAdminController;
   let findElegibleClients: FindElegibleClients;
   let findGeneratedNfms: FindGeneratedNfms;
+  let findNfmById: FindNfmById;
   let saveElegibleNfms: SaveElegibleNfms;
 
   beforeEach(async() => {
@@ -23,6 +26,7 @@ describe('NfmAdminController - Unit tests', () => {
       providers: [
         { provide: FindElegibleClients, useValue: createMock<FindElegibleClients>() },
         { provide: FindGeneratedNfms, useValue: createMock<FindGeneratedNfms>() },
+        { provide: FindNfmById, useValue: createMock<FindNfmById>() },
         { provide: SaveElegibleNfms, useValue: createMock<SaveElegibleNfms>() },
       ],
     }).compile();
@@ -30,6 +34,7 @@ describe('NfmAdminController - Unit tests', () => {
     sut = module.get(NfmAdminController);
     findElegibleClients = module.get(FindElegibleClients);
     findGeneratedNfms = module.get(FindGeneratedNfms);
+    findNfmById = module.get(FindNfmById);
     saveElegibleNfms = module.get(SaveElegibleNfms);
   });
 
@@ -70,6 +75,22 @@ describe('NfmAdminController - Unit tests', () => {
       // Assert
       expect(result).toEqual(output);
       expect(findSpy).toHaveBeenCalledWith(queries);
+    });
+  });
+
+  describe('findOne', () => {
+    it('should call findNfmById.execute with params.id', async() => {
+      // Arrange
+      const params = { id: 42 } as Params;
+      const output = createMock<NfmWithNfseDto>({ id: 42 });
+      const findSpy = jest.spyOn(findNfmById, 'execute').mockResolvedValue(output);
+
+      // Act
+      const result = await sut.findOne(params);
+
+      // Assert
+      expect(result).toEqual(output);
+      expect(findSpy).toHaveBeenCalledWith(42);
     });
   });
 

@@ -126,6 +126,53 @@ describe('NfmDaoAdapterPrisma', () => {
     });
   });
 
+  describe('findById', () => {
+    async function createNfse(rpsNumber: number) {
+      return prisma.nfse.create({
+        data: {
+          companyId: 1,
+          clientId: 1,
+          rpsNumber,
+          rpsSeries: 'NFSE',
+          status: NfseStatus.PENDING,
+          data: { providerDocument: '12345678000199' },
+        },
+      });
+    }
+
+    it('should return null when not found', async() => {
+      // Act
+      const result = await sut.findById(999_999);
+
+      // Assert
+      expect(result).toBeNull();
+    });
+
+    it('should return dto when nfm has linked nfse', async() => {
+      // Arrange
+      const nfse = await createNfse(50);
+      const id = await sut.save(makeSaveNfmData({ nfseId: nfse.id }));
+
+      // Act
+      const result = await sut.findById(id);
+
+      // Assert
+      expect(result).toMatchObject({
+        id,
+        clientId: 1,
+        nfse: { id: nfse.id },
+      });
+    });
+
+    it('should throw NfmNfseMissingError when nfm has no linked nfse', async() => {
+      // Arrange
+      const id = await sut.save(makeSaveNfmData());
+
+      // Act & Assert
+      await expect(sut.findById(id)).rejects.toThrow(NfmNfseMissingError);
+    });
+  });
+
   describe('findByClientReferenceAndCnae', () => {
     it('should return null when not found', async() => {
       // Act
