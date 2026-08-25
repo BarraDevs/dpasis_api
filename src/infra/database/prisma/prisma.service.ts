@@ -22,6 +22,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
     await this.$transaction(async(tx) => {
       // Audit logs (sem dependências)
       await tx.auditLog.deleteMany();
+      await tx.nfmCronRun.deleteMany();
       await tx.nfm.deleteMany();
       // Nfs-e (referencia Company/Client por id solto, sem FK — apagar antes por hygiene)
       await tx.nfse.deleteMany();

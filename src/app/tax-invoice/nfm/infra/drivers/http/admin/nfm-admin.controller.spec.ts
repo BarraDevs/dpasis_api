@@ -73,14 +73,14 @@ describe('NfmAdminController - Unit tests', () => {
     });
   });
 
-  describe('saveElegibleNfms', () => {
+  describe('saveElegible', () => {
     it('should call saveElegibleNfms.execute', async() => {
       // Arrange
       const output = createMock<SaveElegibleNfmsOutputDto>();
       const saveSpy = jest.spyOn(saveElegibleNfms, 'execute').mockResolvedValue(output);
 
       // Act
-      const result = await sut.saveElegibleNfms();
+      const result = await sut.saveElegible();
 
       // Assert
       expect(result).toEqual(output);

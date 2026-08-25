@@ -93,6 +93,7 @@ const TOKENS = {
   ProviderItemRepository: Symbol.for('ProviderItemRepository'),
 
   NfmDao: Symbol.for('NfmDao'),
+  NfmCronRunDao: Symbol.for('NfmCronRunDao'),
 
   ServiceCatalogDao: Symbol.for('ServiceCatalogDao'),
   ServiceCatalogRepository: Symbol.for('ServiceCatalogRepository'),

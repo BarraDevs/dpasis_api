@@ -145,7 +145,7 @@ describe('ProcessIssueNfseBatch - Unit tests', () => {
 
   it('should mark the nfse SUBMITTED and schedule a poll job on success', async() => {
     // Arrange
-    const today = new Date().toISOString().slice(0, 10);
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
     const nfse = NfseFactory.load(makeNfseProps());
     jest.spyOn(nfseRepository, 'findById').mockResolvedValue(nfse);
     jest.spyOn(findCompanyNfsConfigByCompanyId, 'execute').mockResolvedValue(providerConfig);

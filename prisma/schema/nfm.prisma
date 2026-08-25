@@ -3,7 +3,6 @@ model Nfm {
   clientId          Int
   clientDocument    String
   companyName       String
-  status            String
   referenceMonth    Int
   referenceYear     Int
   totalValueInCents Int
@@ -18,4 +17,16 @@ model Nfm {
 
   @@unique([clientId, referenceMonth, referenceYear, cnaeNbsIndopId])
   @@map("nfms")
+}
+
+model NfmCronRun {
+  id           Int      @id @default(autoincrement())
+  createdCount Int
+  skippedCount Int
+  failedCount  Int
+  errors       Json
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("nfm_cron_runs")
 }

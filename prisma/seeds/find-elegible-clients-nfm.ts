@@ -31,7 +31,7 @@ import { ResaleSequenceSeed } from './resale-sequence';
  * | 9_500_007 | não       | `invoiceType` Avulso (não Contrato)    |
  * | 9_500_008 | não       | sem itens no cliente                   |
  * | 9_500_009 | não       | só itens `active: false`               |
- * | 9_999_999 | sim       | curl.md — company 516 / GISS Mauá      |
+ * | 9_999_999 | sim       | curl.md — 2 cnaeNbsIndop → 2 NFS-e    |
  *
  * Uso junto do seed principal (`index.ts`) ou isolado:
  *
@@ -54,7 +54,7 @@ const SEED_BANK_CODE = '__SEED_NFM__';
 const SEED_BANK_AGENCY = '0001';
 const SEED_BANK_ACCOUNT = '00000-0';
 
-type SeedClientItemsMode = 'active' | 'inactive' | 'none';
+type SeedClientItemsMode = 'active' | 'inactive' | 'none' | 'split-cnae';
 
 type SeedBillingAddress = {
   zipCode: string;
@@ -177,8 +177,8 @@ const SEED_CLIENT_PROFILES: SeedClientProfile[] = [
     companyName: '58982473 YUDI MATSUGUMA',
     fantasyName: 'NFSe curl Yudi',
     eligible: true,
-    filterNote: 'curl.md — company 516 GISS Mauá + vencimento hoje + itens ativos',
-    items: 'active',
+    filterNote: 'curl.md — 2 itens, 2 cnaeNbsIndop (2 NFMs / 2 NFS-e)',
+    items: 'split-cnae',
     companyId: SEED_NFSE_CURL_COMPANY_ID,
     headquarters: 'São Paulo',
     billingAddress: {
@@ -200,6 +200,7 @@ type SeedDeps = {
   companyId: number;
   bankId: number;
   cnaeNbsIndopId: number;
+  cnaeNbsIndopId2: number;
   todayDueDay: number;
   emissionDay: number;
   notTodayDueDay: number;
@@ -211,13 +212,15 @@ export class FindElegibleClientsNfmSeed {
     const notTodayDueDay = todayDueDay >= 28 ? 1 : todayDueDay + 1;
     /** Mantém `dueDateDay - emissionDay >= 15` quando `todayDueDay >= 16` (alinhado ao VO de vencimento). */
     const emissionDay = todayDueDay >= 16 ? todayDueDay - 15 : 1;
+    const [cnaeNbsIndopId, cnaeNbsIndopId2] = await this.ensureCnaeNbsIndopPair(prisma);
 
     const deps: SeedDeps = {
       groupId: await this.ensureClientGroup(prisma),
       resaleId: await this.ensureResale(prisma),
       companyId: await this.ensureCompany(prisma),
       bankId: await this.ensureBank(prisma),
-      cnaeNbsIndopId: await this.ensureCnaeNbsIndop(prisma),
+      cnaeNbsIndopId,
+      cnaeNbsIndopId2,
       todayDueDay,
       emissionDay,
       notTodayDueDay,
@@ -240,6 +243,9 @@ export class FindElegibleClientsNfmSeed {
     );
     console.log(
       `[FindElegibleClientsNfmSeed] Elegíveis (esperado em GET /admin/nfm): ${eligibleIds.join(', ')}`,
+    );
+    console.log(
+      `[FindElegibleClientsNfmSeed] Cliente ${SEED_NFSE_CURL_CLIENT_ID}: 2 NFMs (cnaeNbsIndop ${deps.cnaeNbsIndopId} e ${deps.cnaeNbsIndopId2}).`,
     );
     console.log(
       `[FindElegibleClientsNfmSeed] Não elegíveis (${skipped.length}):`,
@@ -351,12 +357,15 @@ export class FindElegibleClientsNfmSeed {
       return;
     }
 
-    const itemActive = itemsMode === 'active';
+    const splitCnae = itemsMode === 'split-cnae';
+    const itemActive = itemsMode !== 'inactive';
     await prisma.clientItem.createMany({
       data: [
         {
           clientId: profile.id,
-          description: `Item seed NFM — serviço (${profile.fantasyName})`,
+          description: splitCnae
+            ? `Item seed NFM — grupo CNAE/NBS/INDOP #1 (${profile.fantasyName})`
+            : `Item seed NFM — serviço (${profile.fantasyName})`,
           quantity: 1,
           unitValueInCents: 100,
           cnaeNbsIndopId: deps.cnaeNbsIndopId,
@@ -364,10 +373,12 @@ export class FindElegibleClientsNfmSeed {
         },
         {
           clientId: profile.id,
-          description: `Item seed NFM — manutenção (${profile.fantasyName})`,
+          description: splitCnae
+            ? `Item seed NFM — grupo CNAE/NBS/INDOP #2 (${profile.fantasyName})`
+            : `Item seed NFM — manutenção (${profile.fantasyName})`,
           quantity: 2,
           unitValueInCents: 50,
-          cnaeNbsIndopId: deps.cnaeNbsIndopId,
+          cnaeNbsIndopId: splitCnae ? deps.cnaeNbsIndopId2 : deps.cnaeNbsIndopId,
           active: itemActive,
         },
       ],
@@ -534,28 +545,44 @@ export class FindElegibleClientsNfmSeed {
     return bank.id;
   }
 
-  private static async ensureCnaeNbsIndop(prisma: PrismaClient): Promise<number> {
-    const existing = await prisma.cnaeNbsIndop.findFirst({ select: { id: true } });
-    if (existing) {
-      return existing.id;
+  /** Dois ids distintos: `FindElegibleClients` emite um NFM por (cliente + cnaeNbsIndop). */
+  private static async ensureCnaeNbsIndopPair(prisma: PrismaClient): Promise<[number, number]> {
+    const existing = await prisma.cnaeNbsIndop.findMany({
+      select: { id: true },
+      orderBy: { id: 'asc' },
+      take: 2,
+    });
+    if (existing.length >= 2) {
+      return [existing[0].id, existing[1].id];
     }
 
-    const u = String(Date.now()).slice(-6);
+    const firstId = existing[0]?.id ?? await this.createSeedCnaeNbsIndop(prisma, 'A');
+    const secondId = await this.createSeedCnaeNbsIndop(prisma, 'B');
+    return [firstId, secondId];
+  }
 
+  private static async createSeedCnaeNbsIndop(prisma: PrismaClient, slot: 'A' | 'B'): Promise<number> {
+    const u = `${slot}${String(Date.now()).slice(-5)}`;
     const [cnae, nbs, indop] = await Promise.all([
       prisma.cnae.create({
-        data: { code: `NFMC${u}`, description: 'CNAE seed NFM', active: true },
+        data: { code: `NFMC${u}`, description: `CNAE seed NFM ${slot}`, active: true },
       }),
       prisma.nbs.create({
-        data: { code: `NFMN${u}`, description: 'NBS seed NFM', active: true },
+        data: { code: `NFMN${u}`, description: `NBS seed NFM ${slot}`, active: true },
       }),
       prisma.indop.create({
-        data: { code: `NFMI${u}`, description: 'INDOP seed NFM', active: true },
+        data: { code: `NFMI${u}`, description: `INDOP seed NFM ${slot}`, active: true },
       }),
     ]);
 
     const row = await prisma.cnaeNbsIndop.create({
-      data: { cnaeId: cnae.id, nbsId: nbs.id, indopId: indop.id, active: true },
+      data: {
+        cnaeId: cnae.id,
+        nbsId: nbs.id,
+        indopId: indop.id,
+        serviceListItemCode: '01.07',
+        active: true,
+      },
     });
     return row.id;
   }

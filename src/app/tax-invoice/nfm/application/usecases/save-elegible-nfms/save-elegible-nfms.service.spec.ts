@@ -6,8 +6,8 @@ import { IssueNfse } from 'src/app/tax-invoice/nfse/application/usecases/issue-n
 import { NfseStatus } from 'src/app/tax-invoice/nfse/domain/enums/nfse-status.enum';
 import { TOKENS } from 'src/core/di/token';
 import { AppException } from 'src/core/filters/app.exception';
-import { NfmStatus } from '../../../domain/enums/nfm-status.enum';
 import { NfmDto } from '../../dtos/nfm.dto';
+import type { INfmCronRunDao } from '../../persistence/dao/nfm-cron-run-dao.interface';
 import type { INfmDao } from '../../persistence/dao/nfm-dao.interface';
 import { FindElegibleClients } from '../find-elegible-clients/find-elegible-clients.service';
 import { SaveElegibleNfms } from './save-elegible-nfms.service';
@@ -137,12 +137,14 @@ describe('SaveElegibleNfms - Unit tests', () => {
   let sut: SaveElegibleNfms;
   let findElegibleClients: jest.Mocked<FindElegibleClients>;
   let nfmDao: jest.Mocked<INfmDao>;
+  let nfmCronRunDao: jest.Mocked<INfmCronRunDao>;
   let findCompanyNfsConfigByCompanyId: jest.Mocked<FindCompanyNfsConfigByCompanyId>;
   let issueNfse: jest.Mocked<IssueNfse>;
 
   beforeEach(async() => {
     findElegibleClients = createMock<FindElegibleClients>();
     nfmDao = createMock<INfmDao>();
+    nfmCronRunDao = createMock<INfmCronRunDao>();
     findCompanyNfsConfigByCompanyId = createMock<FindCompanyNfsConfigByCompanyId>();
     issueNfse = createMock<IssueNfse>();
 
@@ -151,6 +153,7 @@ describe('SaveElegibleNfms - Unit tests', () => {
         SaveElegibleNfms,
         { provide: FindElegibleClients, useValue: findElegibleClients },
         { provide: TOKENS.NfmDao, useValue: nfmDao },
+        { provide: TOKENS.NfmCronRunDao, useValue: nfmCronRunDao },
         { provide: FindCompanyNfsConfigByCompanyId, useValue: findCompanyNfsConfigByCompanyId },
         { provide: IssueNfse, useValue: issueNfse },
       ],
@@ -174,6 +177,13 @@ describe('SaveElegibleNfms - Unit tests', () => {
     expect(result).toEqual({ created: 0, skipped: 0, failed: 0, errors: [] });
     expect(nfmDao.save).not.toHaveBeenCalled();
     expect(issueNfse.execute).not.toHaveBeenCalled();
+    expect(nfmCronRunDao.save).toHaveBeenCalledTimes(1);
+    expect(nfmCronRunDao.save).toHaveBeenCalledWith({
+      created: 0,
+      skipped: 0,
+      failed: 0,
+      errors: [],
+    });
   });
 
   it('should create nfm, issue nfse and link nfseId', async() => {
@@ -194,10 +204,16 @@ describe('SaveElegibleNfms - Unit tests', () => {
       clientId: 1,
       cnaeNbsIndopId: 1,
       totalValueInCents: 10000,
-      status: NfmStatus.PENDING,
     }));
     expect(issueNfse.execute).toHaveBeenCalledTimes(1);
-    expect(nfmDao.edit).toHaveBeenCalledWith(99, { nfseId: 55, status: NfmStatus.PENDING });
+    expect(nfmDao.edit).toHaveBeenCalledWith(99, { nfseId: 55 });
+    expect(nfmCronRunDao.save).toHaveBeenCalledTimes(1);
+    expect(nfmCronRunDao.save).toHaveBeenCalledWith({
+      created: 1,
+      skipped: 0,
+      failed: 0,
+      errors: [],
+    });
   });
 
   it('should skip when nfm already has nfseId', async() => {
@@ -206,7 +222,6 @@ describe('SaveElegibleNfms - Unit tests', () => {
     nfmDao.findByClientReferenceAndCnae.mockResolvedValue({
       id: 10,
       nfseId: 20,
-      status: NfmStatus.PENDING,
     });
 
     // Act
@@ -216,6 +231,12 @@ describe('SaveElegibleNfms - Unit tests', () => {
     expect(result).toEqual({ created: 0, skipped: 1, failed: 0, errors: [] });
     expect(nfmDao.save).not.toHaveBeenCalled();
     expect(issueNfse.execute).not.toHaveBeenCalled();
+    expect(nfmCronRunDao.save).toHaveBeenCalledWith({
+      created: 0,
+      skipped: 1,
+      failed: 0,
+      errors: [],
+    });
   });
 
   it('should retry issue when nfm exists without nfseId', async() => {
@@ -224,7 +245,6 @@ describe('SaveElegibleNfms - Unit tests', () => {
     nfmDao.findByClientReferenceAndCnae.mockResolvedValue({
       id: 10,
       nfseId: null,
-      status: NfmStatus.FAILED,
     });
     findCompanyNfsConfigByCompanyId.execute.mockResolvedValue(makeProviderConfig());
     issueNfse.execute.mockResolvedValue({ id: 77, status: NfseStatus.PENDING });
@@ -235,7 +255,8 @@ describe('SaveElegibleNfms - Unit tests', () => {
     // Assert
     expect(result.created).toBe(1);
     expect(nfmDao.save).not.toHaveBeenCalled();
-    expect(nfmDao.edit).toHaveBeenCalledWith(10, { nfseId: 77, status: NfmStatus.PENDING });
+    expect(nfmDao.edit).toHaveBeenCalledWith(10, { nfseId: 77 });
+    expect(nfmCronRunDao.save).toHaveBeenCalledTimes(1);
   });
 
   it('should continue after one failure and count failed', async() => {
@@ -251,7 +272,6 @@ describe('SaveElegibleNfms - Unit tests', () => {
     findElegibleClients.execute.mockResolvedValue([fail, ok]);
     nfmDao.findByClientReferenceAndCnae
       .mockResolvedValueOnce(null) // fail path — before issue
-      .mockResolvedValueOnce({ id: 1, nfseId: null, status: NfmStatus.PENDING }) // fail path — after catch
       .mockResolvedValueOnce(null); // ok path
     nfmDao.save
       .mockResolvedValueOnce(1)
@@ -273,7 +293,21 @@ describe('SaveElegibleNfms - Unit tests', () => {
       cnaeNbsIndopId: 2,
       message: 'Config NFS-e não encontrada',
     });
-    expect(nfmDao.edit).toHaveBeenCalledWith(1, { status: NfmStatus.FAILED, nfseId: null });
+    expect(nfmDao.edit).toHaveBeenCalledTimes(1);
+    expect(nfmDao.edit).toHaveBeenCalledWith(2, { nfseId: 55 });
+    expect(nfmCronRunDao.save).toHaveBeenCalledTimes(1);
+    expect(nfmCronRunDao.save).toHaveBeenCalledWith({
+      created: 1,
+      skipped: 0,
+      failed: 1,
+      errors: [
+        {
+          clientId: 2,
+          cnaeNbsIndopId: 2,
+          message: 'Config NFS-e não encontrada',
+        },
+      ],
+    });
   });
 
   it('should mark failed when mapper rejects missing LC 116', async() => {
@@ -284,9 +318,7 @@ describe('SaveElegibleNfms - Unit tests', () => {
       serviceListItemCode: null,
     };
     findElegibleClients.execute.mockResolvedValue([nfm]);
-    nfmDao.findByClientReferenceAndCnae
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce({ id: 9, nfseId: null, status: NfmStatus.PENDING });
+    nfmDao.findByClientReferenceAndCnae.mockResolvedValueOnce(null);
     nfmDao.save.mockResolvedValue(9);
     findCompanyNfsConfigByCompanyId.execute.mockResolvedValue(makeProviderConfig());
 
@@ -297,5 +329,6 @@ describe('SaveElegibleNfms - Unit tests', () => {
     expect(result.failed).toBe(1);
     expect(result.errors[0].message).toMatch(/ItemListaServico/);
     expect(issueNfse.execute).not.toHaveBeenCalled();
+    expect(nfmCronRunDao.save).toHaveBeenCalledTimes(1);
   });
 });

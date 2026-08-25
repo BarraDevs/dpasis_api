@@ -8,7 +8,6 @@ import {
   NfmPersistedRowDto,
   SaveNfmData,
 } from 'src/app/tax-invoice/nfm/application/usecases/save-elegible-nfms/dtos/save-elegible-nfms.dto';
-import { NfmStatus } from 'src/app/tax-invoice/nfm/domain/enums/nfm-status.enum';
 import { NfmNfseMissingError } from 'src/app/tax-invoice/nfm/domain/errors/nfm-nfse-missing.error';
 import { NfseStatus } from 'src/app/tax-invoice/nfse/domain/enums/nfse-status.enum';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
@@ -37,7 +36,6 @@ const NfmWithNfseSelect = {
   clientId: true,
   clientDocument: true,
   companyName: true,
-  status: true,
   referenceMonth: true,
   referenceYear: true,
   totalValueInCents: true,
@@ -106,7 +104,6 @@ export class NfmDaoAdapterPrisma implements INfmDao {
       select: {
         id: true,
         nfseId: true,
-        status: true,
       },
     });
 
@@ -119,7 +116,6 @@ export class NfmDaoAdapterPrisma implements INfmDao {
         clientId: data.clientId,
         clientDocument: data.clientDocument,
         companyName: data.companyName,
-        status: data.status,
         referenceMonth: data.referenceMonth,
         referenceYear: data.referenceYear,
         totalValueInCents: data.totalValueInCents,
@@ -136,7 +132,6 @@ export class NfmDaoAdapterPrisma implements INfmDao {
     await this.prisma.nfm.update({
       where: { id },
       data: {
-        status: data.status,
         ...(data.nfseId !== undefined ? { nfseId: data.nfseId } : {}),
       },
     });
@@ -154,7 +149,6 @@ export class NfmDaoAdapterPrisma implements INfmDao {
       clientId: row.clientId,
       clientDocument: row.clientDocument,
       companyName: row.companyName,
-      status: row.status as NfmStatus,
       referenceMonth: row.referenceMonth,
       referenceYear: row.referenceYear,
       totalValueInCents: row.totalValueInCents,

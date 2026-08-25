@@ -16,22 +16,10 @@ import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
 @RequiredRoles(AccountRole.ADMIN)
 export class NfmAdminController {
   constructor(
-    private readonly findElegibleClients: FindElegibleClients,
     private readonly findGeneratedNfms: FindGeneratedNfms,
-    private readonly saveElegibleNfmsService: SaveElegibleNfms,
+    private readonly findElegibleClients: FindElegibleClients,
+    private readonly saveElegibleNfms: SaveElegibleNfms,
   ) {}
-
-  @Get('elegible')
-  @RequiredClaims(Claim.NFM_READ)
-  @Swagger({
-    tags: ['NFM'],
-    summary: 'Listar clientes elegíveis para emissão de NFS-e',
-    applyBadRequest: true,
-    okResponse: NfmDto,
-  })
-  public findElegible(): Promise<NfmDto[]> {
-    return this.findElegibleClients.execute();
-  }
 
   @Get()
   @RequiredClaims(Claim.NFM_READ)
@@ -45,6 +33,18 @@ export class NfmAdminController {
     return this.findGeneratedNfms.execute(queries);
   }
 
+  @Get('elegible')
+  @RequiredClaims(Claim.NFM_READ)
+  @Swagger({
+    tags: ['NFM'],
+    summary: 'Listar NFMs elegíveis para emissão de NFS-e',
+    applyBadRequest: true,
+    okResponse: NfmDto,
+  })
+  public findElegible(): Promise<NfmDto[]> {
+    return this.findElegibleClients.execute();
+  }
+
   @Post()
   @RequiredClaims(Claim.NFM_WRITE)
   @Swagger({
@@ -53,7 +53,7 @@ export class NfmAdminController {
     applyBadRequest: true,
     createdResponse: SaveElegibleNfmsOutputDto,
   })
-  public saveElegibleNfms(): Promise<SaveElegibleNfmsOutputDto> {
-    return this.saveElegibleNfmsService.execute();
+  public saveElegible(): Promise<SaveElegibleNfmsOutputDto> {
+    return this.saveElegibleNfms.execute();
   }
 }

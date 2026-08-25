@@ -4,7 +4,6 @@ import { ClientInvoiceConfigDueDateType } from 'src/app/client/client-invoice-co
 import { ClientInvoiceConfigType } from 'src/app/client/client-invoice-config/domain/enums/client-invoice-config-type.enum';
 import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
 import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum';
-import { NfmStatus } from 'src/app/tax-invoice/nfm/domain/enums/nfm-status.enum';
 import { TOKENS } from 'src/core/di/token';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { NfsProviderEnvironment } from 'src/infra/nfs-generation/dtos/nfs-provider-credentials.dto';
@@ -238,6 +237,14 @@ describe('SaveElegibleNfms - Integration tests', () => {
     // Assert
     expect(result).toEqual({ created: 0, skipped: 0, failed: 0, errors: [] });
     expect(await prisma.nfm.count()).toBe(0);
+    const cronRuns = await prisma.nfmCronRun.findMany();
+    expect(cronRuns).toHaveLength(1);
+    expect(cronRuns[0]).toMatchObject({
+      createdCount: 0,
+      skippedCount: 0,
+      failedCount: 0,
+      errors: [],
+    });
   });
 
   it('should persist nfm linked to nfse and enqueue issue batch', async() => {
@@ -260,12 +267,20 @@ describe('SaveElegibleNfms - Integration tests', () => {
     expect(rows[0].clientId).toBe(1);
     expect(rows[0].cnaeNbsIndopId).toBe(base.cnaeNbsIndopId);
     expect(rows[0].nfseId).not.toBeNull();
-    expect(rows[0].status).toBe(NfmStatus.PENDING);
     expect(rows[0].referenceMonth).toBe(referenceMonth);
     expect(rows[0].referenceYear).toBe(referenceYear);
     expect(rows[0].totalValueInCents).toBe(10000);
     expect(queueProducer.addedIssueBatchJobs).toHaveLength(1);
     expect(queueProducer.addedIssueBatchJobs[0].data).toEqual({ nfseId: rows[0].nfseId });
+
+    const cronRuns = await prisma.nfmCronRun.findMany();
+    expect(cronRuns).toHaveLength(1);
+    expect(cronRuns[0]).toMatchObject({
+      createdCount: 1,
+      skippedCount: 0,
+      failedCount: 0,
+      errors: [],
+    });
   });
 
   it('should skip when executed twice in the same month', async() => {
@@ -282,6 +297,19 @@ describe('SaveElegibleNfms - Integration tests', () => {
     expect(second).toEqual({ created: 0, skipped: 1, failed: 0, errors: [] });
     expect(await prisma.nfm.count()).toBe(1);
     expect(await prisma.nfse.count()).toBe(1);
+
+    const cronRuns = await prisma.nfmCronRun.findMany({ orderBy: { id: 'asc' } });
+    expect(cronRuns).toHaveLength(2);
+    expect(cronRuns[0]).toMatchObject({
+      createdCount: 1,
+      skippedCount: 0,
+      failedCount: 0,
+    });
+    expect(cronRuns[1]).toMatchObject({
+      createdCount: 0,
+      skippedCount: 1,
+      failedCount: 0,
+    });
   });
 
   it('should create one nfm per cnaeNbsIndop group', async() => {
@@ -300,7 +328,7 @@ describe('SaveElegibleNfms - Integration tests', () => {
     expect(await prisma.nfse.count()).toBe(2);
   });
 
-  it('should mark failed when client has no cityCodeIbge and keep nfm without nfseId', async() => {
+  it('should keep nfm without nfseId when client has no cityCodeIbge', async() => {
     // Arrange
     const base = await seedBase(prisma);
     await createClientWithConfig(prisma, base, 1, '00000000000101', {
@@ -317,7 +345,6 @@ describe('SaveElegibleNfms - Integration tests', () => {
     expect(result.errors[0].clientId).toBe(1);
     const row = await prisma.nfm.findFirst();
     expect(row?.nfseId).toBeNull();
-    expect(row?.status).toBe(NfmStatus.FAILED);
   });
 
   it('should retry issue when nfm exists without nfseId', async() => {
@@ -342,7 +369,6 @@ describe('SaveElegibleNfms - Integration tests', () => {
     expect(second).toEqual({ created: 1, skipped: 0, failed: 0, errors: [] });
     const row = await prisma.nfm.findFirst();
     expect(row?.nfseId).not.toBeNull();
-    expect(row?.status).toBe(NfmStatus.PENDING);
   });
 
   it('should not persist client without active items', async() => {

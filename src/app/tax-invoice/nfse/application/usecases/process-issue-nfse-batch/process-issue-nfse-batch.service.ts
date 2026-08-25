@@ -36,7 +36,7 @@ export class ProcessIssueNfseBatch {
     const providerConfig = await this.findCompanyNfsConfigByCompanyId.execute(nfse.props.companyId);
 
     const snapshot = nfse.props.data as unknown as NfseIssueSnapshot;
-    const today = new Date().toISOString().slice(0, 10);
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
 
     const provider: NfsProviderCredentialsDto = {
       certFilePath: providerConfig.certFilePath,

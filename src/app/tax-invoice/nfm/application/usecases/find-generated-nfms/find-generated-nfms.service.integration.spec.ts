@@ -1,5 +1,4 @@
 import { Test } from '@nestjs/testing';
-import { NfmStatus } from 'src/app/tax-invoice/nfm/domain/enums/nfm-status.enum';
 import { NfseStatus } from 'src/app/tax-invoice/nfse/domain/enums/nfse-status.enum';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { NfmModule } from '../../../nfm.module';
@@ -91,7 +90,6 @@ describe('FindGeneratedNfms - Integration tests', () => {
         clientId: opts.clientId,
         clientDocument: '00000000000101',
         companyName: 'Empresa Teste',
-        status: NfmStatus.PENDING,
         referenceMonth: 8,
         referenceYear: 2026,
         totalValueInCents: 10000,

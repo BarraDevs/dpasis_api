@@ -1,8 +1,7 @@
 import { Test } from '@nestjs/testing';
-import { NfmStatus } from 'src/app/tax-invoice/nfm/domain/enums/nfm-status.enum';
-import { NfmNfseMissingError } from 'src/app/tax-invoice/nfm/domain/errors/nfm-nfse-missing.error';
 import { NfmPersistenceModule } from 'src/app/tax-invoice/nfm/application/persistence/nfm-persistence.module';
 import { SaveNfmData } from 'src/app/tax-invoice/nfm/application/usecases/save-elegible-nfms/dtos/save-elegible-nfms.dto';
+import { NfmNfseMissingError } from 'src/app/tax-invoice/nfm/domain/errors/nfm-nfse-missing.error';
 import { NfseStatus } from 'src/app/tax-invoice/nfse/domain/enums/nfse-status.enum';
 import { ConfigModule } from 'src/core/config/config.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
@@ -20,7 +19,6 @@ describe('NfmDaoAdapterPrisma', () => {
       clientId: 1,
       clientDocument: '00000000000101',
       companyName: 'Empresa Teste',
-      status: NfmStatus.PENDING,
       referenceMonth: now.getMonth() + 1,
       referenceYear: now.getFullYear(),
       totalValueInCents: 10000,
@@ -146,22 +144,31 @@ describe('NfmDaoAdapterPrisma', () => {
       const result = await sut.findByClientReferenceAndCnae(1, 8, 2026, cnaeNbsIndopId);
 
       // Assert
-      expect(result).toEqual({ id, nfseId: null, status: NfmStatus.PENDING });
+      expect(result).toEqual({ id, nfseId: null });
     });
   });
 
   describe('edit', () => {
-    it('should update status and nfseId', async() => {
+    it('should update nfseId', async() => {
       // Arrange
       const id = await sut.save(makeSaveNfmData());
+      const nfse = await prisma.nfse.create({
+        data: {
+          companyId: 1,
+          clientId: 1,
+          rpsNumber: 99,
+          rpsSeries: 'NFSE',
+          status: NfseStatus.PENDING,
+          data: { providerDocument: '12345678000199' },
+        },
+      });
 
       // Act
-      await sut.edit(id, { status: NfmStatus.FAILED, nfseId: null });
+      await sut.edit(id, { nfseId: nfse.id });
 
       // Assert
       const saved = await prisma.nfm.findUnique({ where: { id } });
-      expect(saved?.status).toBe(NfmStatus.FAILED);
-      expect(saved?.nfseId).toBeNull();
+      expect(saved?.nfseId).toBe(nfse.id);
     });
   });
 
@@ -275,7 +282,6 @@ describe('NfmDaoAdapterPrisma', () => {
           clientId: 1,
           clientDocument: '00000000000101',
           companyName: 'Empresa Teste',
-          status: NfmStatus.PENDING,
           referenceMonth: 8,
           referenceYear: 2026,
           totalValueInCents: 10000,

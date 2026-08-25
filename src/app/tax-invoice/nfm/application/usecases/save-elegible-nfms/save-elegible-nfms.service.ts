@@ -3,8 +3,8 @@ import { FindCompanyNfsConfigByCompanyId } from 'src/app/company/company-nfs-con
 import { IssueNfse } from 'src/app/tax-invoice/nfse/application/usecases/issue-nfse/issue-nfse.service';
 import { TOKENS } from 'src/core/di/token';
 import { AppException } from 'src/core/filters/app.exception';
-import { NfmStatus } from '../../../domain/enums/nfm-status.enum';
 import { NfmToIssueNfseMapper } from '../../mappers/nfm-to-issue-nfse.mapper';
+import type { INfmCronRunDao } from '../../persistence/dao/nfm-cron-run-dao.interface';
 import type { INfmDao } from '../../persistence/dao/nfm-dao.interface';
 import { FindElegibleClients } from '../find-elegible-clients/find-elegible-clients.service';
 import {
@@ -16,6 +16,7 @@ import {
 export class SaveElegibleNfms {
   constructor(
     @Inject(TOKENS.NfmDao) private readonly nfmDao: INfmDao,
+    @Inject(TOKENS.NfmCronRunDao) private readonly nfmCronRunDao: INfmCronRunDao,
     private readonly findElegibleClients: FindElegibleClients,
     private readonly findCompanyNfsConfigByCompanyId: FindCompanyNfsConfigByCompanyId,
     private readonly issueNfse: IssueNfse,
@@ -30,10 +31,6 @@ export class SaveElegibleNfms {
       failed: 0,
       errors: [],
     };
-
-    if (elegibles.length === 0) {
-      return result;
-    }
 
     const now = new Date();
     const referenceMonth = now.getMonth() + 1;
@@ -75,7 +72,6 @@ export class SaveElegibleNfms {
             clientId,
             clientDocument: nfm.client.document,
             companyName: nfm.client.companyName,
-            status: NfmStatus.PENDING,
             referenceMonth,
             referenceYear,
             totalValueInCents: nfm.clientItems.reduce((sum, item) => sum + item.totalValueInCents, 0),
@@ -91,7 +87,6 @@ export class SaveElegibleNfms {
 
         await this.nfmDao.edit(nfmId, {
           nfseId: issued.id,
-          status: NfmStatus.PENDING,
         });
 
         result.created += 1;
@@ -101,18 +96,10 @@ export class SaveElegibleNfms {
         const errorDto: SaveElegibleNfmErrorDto = { clientId, cnaeNbsIndopId, message };
         result.failed += 1;
         result.errors.push(errorDto);
-
-        const existing = await this.nfmDao.findByClientReferenceAndCnae(
-          clientId,
-          referenceMonth,
-          referenceYear,
-          cnaeNbsIndopId,
-        );
-        if (existing && !existing.nfseId) {
-          await this.nfmDao.edit(existing.id, { status: NfmStatus.FAILED, nfseId: null });
-        }
       }
     }
+
+    await this.nfmCronRunDao.save(result);
 
     return result;
   }
