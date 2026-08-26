@@ -46,6 +46,33 @@ import { Environment } from './environment.enum';
         NFEMAIL_CNPJ: Joi.string().required(),
         NFEMAIL_API_KEY: Joi.string().required(),
 
+        INTER_PROVIDER_ENABLED: Joi.boolean().truthy('true').falsy('false').default(false),
+        INTER_API_URL: Joi.when('INTER_PROVIDER_ENABLED', {
+          is: true,
+          then: Joi.string().required(),
+          otherwise: Joi.string().optional().allow(''),
+        }),
+        INTER_CLIENT_ID: Joi.when('INTER_PROVIDER_ENABLED', {
+          is: true,
+          then: Joi.string().required(),
+          otherwise: Joi.string().optional().allow(''),
+        }),
+        INTER_CLIENT_SECRET: Joi.when('INTER_PROVIDER_ENABLED', {
+          is: true,
+          then: Joi.string().required(),
+          otherwise: Joi.string().optional().allow(''),
+        }),
+        INTER_CERT_PATH: Joi.when('INTER_PROVIDER_ENABLED', {
+          is: true,
+          then: Joi.string().required(),
+          otherwise: Joi.string().optional().allow(''),
+        }),
+        INTER_KEY_PATH: Joi.when('INTER_PROVIDER_ENABLED', {
+          is: true,
+          then: Joi.string().required(),
+          otherwise: Joi.string().optional().allow(''),
+        }),
+
         THROTTLE_LIMIT: Joi.number().integer().min(2),
         THROTTLE_TTL_MS: Joi.number().integer().min(1_000),
       }),

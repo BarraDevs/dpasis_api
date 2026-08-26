@@ -13,6 +13,7 @@ export enum LogContext {
   CNPJ_LOOKUP = 'cnpj-lookup',
   NF_GENERATION = 'nf-generation',
   NFS_GENERATION = 'nfs-generation',
+  BANK_PAYMENT = 'bank-payment',
 }
 
 type LogContextDataMap = {
@@ -25,6 +26,7 @@ type LogContextDataMap = {
   [LogContext.CNPJ_LOOKUP]: CnpjLookupData
   [LogContext.NF_GENERATION]: NfGenerationData
   [LogContext.NFS_GENERATION]: NfsGenerationData
+  [LogContext.BANK_PAYMENT]: BankPaymentData
 }
 
 type CommomData = {
@@ -92,4 +94,9 @@ type NfsGenerationData = CommomData & {
   batchNumber?: number;
   nfseNumber?: string;
   errorMessage?: string;
+}
+
+type BankPaymentData = CommomData & {
+  action: string;
+  scope?: string;
 }

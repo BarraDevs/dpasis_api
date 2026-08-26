@@ -363,6 +363,85 @@ describe('ConfigService', () => {
         expect(result).toBe(mockApiKey);
       });
     });
+
+    describe('interProviderEnabled', () => {
+      it('should return the INTER_PROVIDER_ENABLED value as boolean', () => {
+        nestConfigService.get.mockReturnValue(true);
+
+        const result = sut.interProviderEnabled;
+
+        expect(nestConfigService.get).toHaveBeenCalledWith('INTER_PROVIDER_ENABLED');
+        expect(result).toBe(true);
+      });
+
+      it('should return false when INTER_PROVIDER_ENABLED is undefined', () => {
+        nestConfigService.get.mockReturnValue(undefined);
+
+        const result = sut.interProviderEnabled;
+
+        expect(result).toBe(false);
+      });
+    });
+
+    describe('interApiUrl', () => {
+      it('should return the INTER_API_URL value', () => {
+        const mockUrl = 'https://cdpj-sandbox.partners.uatinter.co';
+        nestConfigService.get.mockReturnValue(mockUrl);
+
+        const result = sut.interApiUrl;
+
+        expect(nestConfigService.get).toHaveBeenCalledWith('INTER_API_URL');
+        expect(result).toBe(mockUrl);
+      });
+    });
+
+    describe('interClientId', () => {
+      it('should return the INTER_CLIENT_ID value', () => {
+        const mockClientId = 'inter-client-id';
+        nestConfigService.get.mockReturnValue(mockClientId);
+
+        const result = sut.interClientId;
+
+        expect(nestConfigService.get).toHaveBeenCalledWith('INTER_CLIENT_ID');
+        expect(result).toBe(mockClientId);
+      });
+    });
+
+    describe('interClientSecret', () => {
+      it('should return the INTER_CLIENT_SECRET value', () => {
+        const mockClientSecret = 'inter-client-secret';
+        nestConfigService.get.mockReturnValue(mockClientSecret);
+
+        const result = sut.interClientSecret;
+
+        expect(nestConfigService.get).toHaveBeenCalledWith('INTER_CLIENT_SECRET');
+        expect(result).toBe(mockClientSecret);
+      });
+    });
+
+    describe('interCertPath', () => {
+      it('should return the INTER_CERT_PATH value', () => {
+        const mockPath = '/certs/inter.crt';
+        nestConfigService.get.mockReturnValue(mockPath);
+
+        const result = sut.interCertPath;
+
+        expect(nestConfigService.get).toHaveBeenCalledWith('INTER_CERT_PATH');
+        expect(result).toBe(mockPath);
+      });
+    });
+
+    describe('interKeyPath', () => {
+      it('should return the INTER_KEY_PATH value', () => {
+        const mockPath = '/certs/inter.key';
+        nestConfigService.get.mockReturnValue(mockPath);
+
+        const result = sut.interKeyPath;
+
+        expect(nestConfigService.get).toHaveBeenCalledWith('INTER_KEY_PATH');
+        expect(result).toBe(mockPath);
+      });
+    });
   });
 
   describe('throttle properties', () => {

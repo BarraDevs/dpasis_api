@@ -7,8 +7,8 @@ const TOKENS = {
   TaxInvoiceGenerationGateway: Symbol.for('TaxInvoiceGenerationGateway'),
   NfGenerationGateway: Symbol.for('NfGenerationGateway'),
   NfsGenerationGateway: Symbol.for('NfsGenerationGateway'),
-  BankSlipGenerationGateway: Symbol.for('BankSlipGenerationGateway'),
-  BankSlipGenerationStrategies: Symbol.for('BankSlipGenerationStrategies'),
+  BankPaymentGateway: Symbol.for('BankPaymentGateway'),
+  BankPaymentStrategies: Symbol.for('BankPaymentStrategies'),
   LoggerGateway: Symbol.for('LoggerGateway'),
 
   UploadFileGateway: Symbol.for('UploadFileGateway'),

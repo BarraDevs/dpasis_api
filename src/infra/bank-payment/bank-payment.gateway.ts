@@ -1,5 +1,5 @@
 import { IssueBankSlipInputDto, IssueBankSlipOutputDto } from './dtos/issue-bank-slip.dto';
 
-export interface IBankSlipGenerationGateway {
+export interface IBankPaymentGateway {
   issue(input: IssueBankSlipInputDto): Promise<IssueBankSlipOutputDto>;
 }

@@ -1,7 +1,7 @@
 import { IssueBankSlipInputDto, IssueBankSlipOutputDto } from '../dtos/issue-bank-slip.dto';
-import { BankSlipProvider } from '../enums/bank-slip-provider.enum';
+import { BankPaymentProvider } from '../enums/bank-payment-provider.enum';
 
-export interface IBankSlipGenerationStrategy {
-  readonly provider: BankSlipProvider;
+export interface IBankPaymentStrategy {
+  readonly provider: BankPaymentProvider;
   issue(input: IssueBankSlipInputDto): Promise<IssueBankSlipOutputDto>;
 }

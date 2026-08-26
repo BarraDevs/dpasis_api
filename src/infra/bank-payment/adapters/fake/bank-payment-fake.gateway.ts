@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import type { IBankSlipGenerationGateway } from '../../bank-slip-generation.gateway';
+import type { IBankPaymentGateway } from '../../bank-payment.gateway';
 import { IssueBankSlipInputDto, IssueBankSlipOutputDto } from '../../dtos/issue-bank-slip.dto';
-import { BankSlipProvider } from '../../enums/bank-slip-provider.enum';
+import { BankPaymentProvider } from '../../enums/bank-payment-provider.enum';
 
 @Injectable()
-export class BankSlipGenerationFakeAdapterGateway implements IBankSlipGenerationGateway {
+export class BankPaymentFakeAdapterGateway implements IBankPaymentGateway {
   public readonly issueCalls: IssueBankSlipInputDto[] = [];
   public issueResult: IssueBankSlipOutputDto = {
-    provider: BankSlipProvider.INTER,
+    provider: BankPaymentProvider.INTER,
     externalId: 'fake-external-id',
   };
   public issueError: Error | null = null;

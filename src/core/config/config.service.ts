@@ -123,6 +123,26 @@ export class ConfigService {
     return this.nestConfigService.get<string>('NFEMAIL_API_KEY')!;
   }
 
+  // banco inter
+  get interProviderEnabled(): boolean {
+    return this.nestConfigService.get<boolean>('INTER_PROVIDER_ENABLED') ?? false;
+  }
+  get interApiUrl(): string {
+    return this.nestConfigService.get<string>('INTER_API_URL')!;
+  }
+  get interClientId(): string {
+    return this.nestConfigService.get<string>('INTER_CLIENT_ID')!;
+  }
+  get interClientSecret(): string {
+    return this.nestConfigService.get<string>('INTER_CLIENT_SECRET')!;
+  }
+  get interCertPath(): string {
+    return this.nestConfigService.get<string>('INTER_CERT_PATH')!;
+  }
+  get interKeyPath(): string {
+    return this.nestConfigService.get<string>('INTER_KEY_PATH')!;
+  }
+
   // throttle
   get throttleLimit(): number {
     return this.nestConfigService.get<number>('THROTTLE_LIMIT') ?? 100; // 100 requests

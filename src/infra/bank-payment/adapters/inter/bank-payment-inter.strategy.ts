@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { IssueBankSlipInputDto, IssueBankSlipOutputDto } from '../../dtos/issue-bank-slip.dto';
-import { BankSlipProvider } from '../../enums/bank-slip-provider.enum';
-import type { IBankSlipGenerationStrategy } from '../../strategies/bank-slip-generation.strategy';
+import { BankPaymentProvider } from '../../enums/bank-payment-provider.enum';
+import type { IBankPaymentStrategy } from '../../strategies/bank-payment.strategy';
 
 @Injectable()
-export class BankSlipGenerationInterStrategy implements IBankSlipGenerationStrategy {
-  public readonly provider = BankSlipProvider.INTER;
+export class BankPaymentInterStrategy implements IBankPaymentStrategy {
+  public readonly provider = BankPaymentProvider.INTER;
 
   public async issue(input: IssueBankSlipInputDto): Promise<IssueBankSlipOutputDto> {
     return {

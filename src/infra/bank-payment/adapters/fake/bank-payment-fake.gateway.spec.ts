@@ -1,11 +1,11 @@
-import { BankSlipProvider } from '../../enums/bank-slip-provider.enum';
-import { BankSlipGenerationFakeAdapterGateway } from './bank-slip-generation-fake.gateway';
+import { BankPaymentProvider } from '../../enums/bank-payment-provider.enum';
+import { BankPaymentFakeAdapterGateway } from './bank-payment-fake.gateway';
 
-describe('BankSlipGenerationFakeAdapterGateway - Unit tests', () => {
-  let sut: BankSlipGenerationFakeAdapterGateway;
+describe('BankPaymentFakeAdapterGateway - Unit tests', () => {
+  let sut: BankPaymentFakeAdapterGateway;
 
   beforeEach(() => {
-    sut = new BankSlipGenerationFakeAdapterGateway();
+    sut = new BankPaymentFakeAdapterGateway();
   });
 
   it('should be defined', () => {
@@ -14,7 +14,7 @@ describe('BankSlipGenerationFakeAdapterGateway - Unit tests', () => {
 
   it('should record issue calls and return default result', async() => {
     // Arrange
-    const input = { provider: BankSlipProvider.INTER };
+    const input = { provider: BankPaymentProvider.INTER };
 
     // Act
     const result = await sut.issue(input);
@@ -22,7 +22,7 @@ describe('BankSlipGenerationFakeAdapterGateway - Unit tests', () => {
     // Assert
     expect(sut.issueCalls).toEqual([input]);
     expect(result).toEqual({
-      provider: BankSlipProvider.INTER,
+      provider: BankPaymentProvider.INTER,
       externalId: 'fake-external-id',
     });
   });
@@ -31,7 +31,7 @@ describe('BankSlipGenerationFakeAdapterGateway - Unit tests', () => {
     // Arrange
     const error = new Error('fake failure');
     sut.issueError = error;
-    const input = { provider: BankSlipProvider.INTER };
+    const input = { provider: BankPaymentProvider.INTER };
 
     // Act
     const promise = sut.issue(input);
