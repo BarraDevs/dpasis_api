@@ -142,9 +142,18 @@ prisma/
 - **Sub-módulos de agregado** (ex.: `client/`, `service/`, `resale/`) ficam em `src/app/<agregado>/<sub-modulo>/` e são listados em `<agregado>-module.module.ts` (note: nome do agregador termina em `ModuleModule`).
 - **CASL fail-closed para admins**: admin sem claims em `account_claims` → CASL nega rotas protegidas por claim.
 
+## Integrações externas — Banco Inter
+
+Qualquer pedido envolvendo **Pix, boleto/cobrança, banking, webhook, OAuth/token ou sandbox do Banco Inter** começa pelo glossário:
+
+- **[`.cursor/docs/banco-inter-api.md`](docs/banco-inter-api.md)** — índice URL + descrição + cross-links da documentação oficial (`developers.inter.co`).
+
+Não inventar endpoints: cruzar o mapa rápido do glossário com a spec Redoc/YAML listada lá. Implementação no Nest segue o padrão Gateway (Rule 9 / skill `gateway-adapters`).
+
 ## Pré-requisitos para qualquer geração de código
 
 1. Ler **`.cursor/rules/RULES.md`** (rules absolutas)
 2. Ler a **skill específica** ao que está sendo feito (`.cursor/skills/<nome>/SKILL.md`)
 3. Olhar um **exemplo real do código** (FAQ para CRUD simples; Admin para DDD; Client para casos com sub-módulos)
 4. Em caso de divergência entre rules e skills, **as RULES vencem**; em caso de divergência entre skills e código, **o código vence** (e a skill deve ser atualizada)
+5. Se o tema for API Inter: ler **`.cursor/docs/banco-inter-api.md`** antes de projetar o gateway
