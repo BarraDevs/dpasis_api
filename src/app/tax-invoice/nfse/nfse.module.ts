@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { AuthenticationGuardsModule } from 'src/app/authentication/application/guards/guards.module';
 import { ClientAddressModule } from 'src/app/client/client-address/client-address.module';
 import { ClientModule } from 'src/app/client/client/client.module';
 import { CompanyModule } from 'src/app/company/company/company.module';
@@ -10,7 +9,6 @@ import { NfseQueueModule } from './application/queue/nfse-queue.module';
 import { CancelNfse } from './application/usecases/cancel-nfse/cancel-nfse.service';
 import { FindNfseById } from './application/usecases/find-nfse-by-id/find-nfse-by-id.service';
 import { IssueNfse } from './application/usecases/issue-nfse/issue-nfse.service';
-import { NfseAdminController } from './infra/drivers/http/admin/nfse-admin.controller';
 
 @Module({
   imports: [
@@ -21,10 +19,6 @@ import { NfseAdminController } from './infra/drivers/http/admin/nfse-admin.contr
     NfsePersistenceModule,
     NfseQueueModule.register(),
     NfsGenerationModule.register(),
-    AuthenticationGuardsModule,
-  ],
-  controllers: [
-    NfseAdminController,
   ],
   providers: [
     IssueNfse,

@@ -30,6 +30,8 @@ ItemListaServico (LC 116) na correspondência CNAE/NBS/INDOP: [frontend-integrac
 | — | `GET /admin/nfm/elegible` → elegíveis (`NfmDto[]`, contrato antigo) |
 | — | `GET /admin/nfm/:id` → detalhe (`NfmWithNfseDto`) — **aditivo** |
 | `POST /admin/nfm` | Sem mudança |
+| `POST /admin/nfse` (emissão avulsa, claim `NFSE_WRITE`) | **Removido.** Emissão só via `POST /admin/nfm` (e demais módulos) |
+| `GET /admin/nfse/:id` (claim `NFSE_READ`) | **Removido.** Detalhe da NFS-e vem em `GET /admin/nfm/:id` (`nfse`) |
 | `POST /admin/nfse/:id/cancel` (`:id` = NFS-e, claim `NFSE_WRITE`) | `POST /admin/nfm/:id/cancel` (`:id` = **NFM**, claim `NFM_WRITE`) — **breaking** |
 | `GET /admin/nfm/invoices` | **Removido.** Consulta de NFS-e no Giss saiu da API. Listar notas via `GET /admin/nfm`. |
 
@@ -240,7 +242,7 @@ HTTP **não** espera a GISS. Só persistência + enqueue.
 1. **Breaking:** migrar tela de elegíveis de `GET /admin/nfm` → `GET /admin/nfm/elegible`.
 2. Nova tela lista: `GET /admin/nfm?dateStart&dateEnd&page&size` — resposta **paginada** (`data[]` de `NfmWithNfseDto`).
 3. Detalhe: `GET /admin/nfm/:id` — mesmo `NfmWithNfseDto`; tratar **404**.
-4. **Breaking:** cancelamento — parar `POST /admin/nfse/:id/cancel`; usar `POST /admin/nfm/:id/cancel` com **id da NFM** e claim `NFM_WRITE`.
+4. **Breaking:** parar `POST /admin/nfse`, `GET /admin/nfse/:id` e `POST /admin/nfse/:id/cancel`. Claims `NFSE_READ` / `NFSE_WRITE` saíram. Emissão via `POST /admin/nfm`; detalhe via `GET /admin/nfm/:id`; cancelamento via `POST /admin/nfm/:id/cancel` (id da **NFM**, claim `NFM_WRITE`).
 5. Cancelar só quando `nfse.status === 'ISSUED'`; body `{ cancelReasonCode: 1 | 2 | 4 }`; após 200, refrescar detalhe.
 6. Botão gerar → tela elegíveis → confirmar com `POST /admin/nfm`.
 7. `POST /admin/nfm`: exibir resumo `created` / `skipped` / `failed` + lista de `errors`.
