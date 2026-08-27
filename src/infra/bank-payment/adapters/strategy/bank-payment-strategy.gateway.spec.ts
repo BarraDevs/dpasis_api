@@ -33,6 +33,11 @@ describe('BankPaymentStrategyAdapterGateway - Unit tests', () => {
         },
       }),
       cancel: jest.fn().mockResolvedValue(undefined),
+      getPdf: jest.fn().mockResolvedValue({
+        provider: BankPaymentProvider.INTER,
+        requestCode: 'req-1',
+        pdf: 'JVBERi0xLjQK',
+      }),
     });
 
     const module = await Test.createTestingModule({
@@ -75,8 +80,9 @@ describe('BankPaymentStrategyAdapterGateway - Unit tests', () => {
     });
   });
 
-  it('should delegate find and cancel', async() => {
+  it('should delegate find, getPdf and cancel', async() => {
     await sut.find({ provider: BankPaymentProvider.INTER, requestCode: 'req-1' });
+    await sut.getPdf({ provider: BankPaymentProvider.INTER, requestCode: 'req-1' });
     await sut.cancel({
       provider: BankPaymentProvider.INTER,
       requestCode: 'req-1',
@@ -84,6 +90,7 @@ describe('BankPaymentStrategyAdapterGateway - Unit tests', () => {
     });
 
     expect(interStrategy.find).toHaveBeenCalled();
+    expect(interStrategy.getPdf).toHaveBeenCalled();
     expect(interStrategy.cancel).toHaveBeenCalled();
   });
 

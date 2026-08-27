@@ -48,6 +48,33 @@ describe('BankPaymentFakeAdapterGateway - Unit tests', () => {
     expect(sut.cancelCalls).toHaveLength(1);
   });
 
+  it('should record getPdf calls and return default result', async() => {
+    const result = await sut.getPdf({
+      provider: BankPaymentProvider.INTER,
+      requestCode: 'abc',
+    });
+
+    expect(sut.getPdfCalls).toEqual([{
+      provider: BankPaymentProvider.INTER,
+      requestCode: 'abc',
+    }]);
+    expect(result).toEqual({
+      provider: BankPaymentProvider.INTER,
+      requestCode: 'abc',
+      pdf: 'JVBERi0xLjQK',
+    });
+  });
+
+  it('should reject when getPdfError is set', async() => {
+    const error = new Error('fake pdf failure');
+    sut.getPdfError = error;
+
+    await expect(sut.getPdf({
+      provider: BankPaymentProvider.INTER,
+      requestCode: 'abc',
+    })).rejects.toBe(error);
+  });
+
   it('should reject when issueError is set', async() => {
     const error = new Error('fake failure');
     sut.issueError = error;

@@ -105,3 +105,10 @@ export type InterCobrancaDetalheDto = {
   pix?: InterCobrancaPixDto;
   notaFiscal?: InterCobrancaNotaFiscalDto;
 };
+
+/**
+ * Shape do GET /cobrancas/{codigoSolicitacao}/pdf conforme documentação Inter.
+ */
+export type InterCobrancaPdfResponseDto = {
+  pdf?: string;
+};

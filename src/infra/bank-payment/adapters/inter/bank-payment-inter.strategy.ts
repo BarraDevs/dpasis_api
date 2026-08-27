@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { BankPaymentDto } from '../../dtos/bank-payment.dto';
+import { BankPaymentPdfDto } from '../../dtos/bank-payment-pdf.dto';
 import { CancelBankPaymentInputDto } from '../../dtos/cancel-bank-payment.dto';
 import { FindBankPaymentInputDto } from '../../dtos/find-bank-payment.dto';
 import { IssueBankPaymentInputDto, IssueBankPaymentOutputDto } from '../../dtos/issue-bank-payment.dto';
@@ -19,6 +20,10 @@ export class BankPaymentInterStrategy implements IBankPaymentStrategy {
 
   public async find(input: FindBankPaymentInputDto): Promise<BankPaymentDto> {
     return this.cobrancaClient.find(input);
+  }
+
+  public async getPdf(input: FindBankPaymentInputDto): Promise<BankPaymentPdfDto> {
+    return this.cobrancaClient.getPdf(input);
   }
 
   public async cancel(input: CancelBankPaymentInputDto): Promise<void> {

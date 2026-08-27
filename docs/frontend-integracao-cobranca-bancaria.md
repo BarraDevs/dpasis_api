@@ -6,6 +6,7 @@ Este documento cobre as rotas admin de **cobrança bancária** (boleto com Pix v
 
 - `POST /admin/bank-payment` — emitir cobrança
 - `GET /admin/bank-payment/:codigoSolicitacao` — recuperar cobrança
+- `GET /admin/bank-payment/:codigoSolicitacao/pdf` — recuperar PDF da cobrança (base64)
 - `POST /admin/bank-payment/:codigoSolicitacao/cancel` — cancelar cobrança
 
 **Referência OpenAPI:** Swagger em `/swagger`, tag **Cobrança bancária**.
@@ -24,7 +25,7 @@ A emissão no Inter é **assíncrona**: o `POST` devolve só o `requestCode` (`c
 
 | Área | O que mudou |
 |------|-------------|
-| Endpoints | **Novos** (aditivo) — emitir / recuperar / cancelar |
+| Endpoints | **Novos** (aditivo) — emitir / recuperar / PDF / cancelar |
 | Claims | Novos subjects: `bank-payment` → `BANK_PAYMENT_READ` / `BANK_PAYMENT_WRITE` |
 | Persistência | **Não** há registro da cobrança no banco da API nesta entrega — a fonte da verdade é o provedor |
 | Cancel `reason` | **Breaking** — deixou de ser enum (`ADJUSTMENTS` / …) e passou a ser **texto livre** (string, máx. 50 caracteres) |
@@ -37,6 +38,7 @@ A emissão no Inter é **assíncrona**: o `POST` devolve só o `requestCode` (`c
 |------|-------|
 | `POST /admin/bank-payment` | `BANK_PAYMENT_WRITE` |
 | `GET /admin/bank-payment/:codigoSolicitacao` | `BANK_PAYMENT_READ` |
+| `GET /admin/bank-payment/:codigoSolicitacao/pdf` | `BANK_PAYMENT_READ` |
 | `POST /admin/bank-payment/:codigoSolicitacao/cancel` | `BANK_PAYMENT_WRITE` |
 
 Admin sem essas claims → **403** (fail-closed). Atribuir na UI de permissões do admin (`subject`: `bank-payment`, ações read/write).
@@ -137,6 +139,48 @@ Campos principais:
 
 ---
 
+## Recuperar PDF da cobrança (`GET /admin/bank-payment/:codigoSolicitacao/pdf`)
+
+Retorna o PDF da cobrança (boleto + QR Code Pix) como **string base64** no JSON — o Inter não devolve binário nesta API.
+
+### Path
+
+| Campo | Tipo |
+|-------|------|
+| `codigoSolicitacao` | string (`requestCode` do emit) |
+
+### Query
+
+| Campo | Obrigatório | Tipo |
+|-------|-------------|------|
+| `provider` | sim | `"INTER"` |
+
+Ex.: `GET /admin/bank-payment/req-123/pdf?provider=INTER`
+
+### Response (200)
+
+```json
+{
+  "provider": "INTER",
+  "requestCode": "req-123",
+  "pdf": "JVBERi0xLjQK..."
+}
+```
+
+| Campo | Tipo | Observação |
+|-------|------|------------|
+| `provider` | string | |
+| `requestCode` | string | |
+| `pdf` | string | PDF em base64 (sem prefixo `data:`) |
+
+### UX sugerida
+
+1. Chamar o endpoint após a cobrança estar emitida (status/`boleto` disponíveis no `GET` de detalhe).
+2. Decodificar `pdf` (base64) → `Blob` com `type: 'application/pdf'`.
+3. Abrir em nova aba (`URL.createObjectURL`) ou disparar download (`cobranca-{requestCode}.pdf`).
+
+---
+
 ## Cancelar cobrança (`POST /admin/bank-payment/:codigoSolicitacao/cancel`)
 
 ### Path
@@ -188,9 +232,10 @@ Exibir sempre `message` do payload padronizado.
 
 ## Checklist prático para o frontend
 
-1. Tipar OpenAPI / DTOs com `provider`, `requestCode`, `payer.personType`, `reason`.
+1. Tipar OpenAPI / DTOs com `provider`, `requestCode`, `payer.personType`, `reason`, `pdf`.
 2. Tela de emissão: após 201, navegar para detalhe com `requestCode` e `provider=INTER`.
 3. Detalhe: `GET` com query `provider`; mostrar `boleto`/`pix` quando existirem.
-4. Cancelar: modal com campo de texto `reason` (máx. 50) + `POST .../cancel`.
-5. Menu/permissões: incluir subject **Cobrança bancária** (`bank-payment`) read/write.
-6. Não persistir cobrança local nesta fase — listagem histórica virá em feature futura.
+4. PDF: `GET .../pdf?provider=INTER`; decodificar base64 → Blob `application/pdf` (preview/download).
+5. Cancelar: modal com campo de texto `reason` (máx. 50) + `POST .../cancel`.
+6. Menu/permissões: incluir subject **Cobrança bancária** (`bank-payment`) read/write.
+7. Não persistir cobrança local nesta fase — listagem histórica virá em feature futura.

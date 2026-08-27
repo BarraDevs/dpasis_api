@@ -159,4 +159,22 @@ describe('InterCobrancaMapper - Unit tests', () => {
     expect(result.yourNumber).toBe('');
     expect(result.status).toBe(BankPaymentStatus.UNKNOWN);
   });
+
+  it('should map Inter PDF response to BankPaymentPdfDto', () => {
+    const result = InterCobrancaMapper.toPdfDto('req-1', {
+      pdf: 'JVBERi0xLjQK',
+    });
+
+    expect(result).toEqual({
+      provider: BankPaymentProvider.INTER,
+      requestCode: 'req-1',
+      pdf: 'JVBERi0xLjQK',
+    });
+  });
+
+  it('should fallback empty pdf when Inter response omits pdf', () => {
+    const result = InterCobrancaMapper.toPdfDto('req-1', {});
+
+    expect(result.pdf).toBe('');
+  });
 });

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import type { IBankPaymentGateway } from '../../bank-payment.gateway';
 import { BankPaymentDto } from '../../dtos/bank-payment.dto';
+import { BankPaymentPdfDto } from '../../dtos/bank-payment-pdf.dto';
 import { CancelBankPaymentInputDto } from '../../dtos/cancel-bank-payment.dto';
 import { FindBankPaymentInputDto } from '../../dtos/find-bank-payment.dto';
 import { IssueBankPaymentInputDto, IssueBankPaymentOutputDto } from '../../dtos/issue-bank-payment.dto';
@@ -12,6 +13,7 @@ import { BankPaymentStatus } from '../../enums/bank-payment-status.enum';
 export class BankPaymentFakeAdapterGateway implements IBankPaymentGateway {
   public readonly issueCalls: IssueBankPaymentInputDto[] = [];
   public readonly findCalls: FindBankPaymentInputDto[] = [];
+  public readonly getPdfCalls: FindBankPaymentInputDto[] = [];
   public readonly cancelCalls: CancelBankPaymentInputDto[] = [];
 
   public issueResult: IssueBankPaymentOutputDto = {
@@ -43,8 +45,15 @@ export class BankPaymentFakeAdapterGateway implements IBankPaymentGateway {
     },
   };
 
+  public getPdfResult: BankPaymentPdfDto = {
+    provider: BankPaymentProvider.INTER,
+    requestCode: 'fake-request-code',
+    pdf: 'JVBERi0xLjQK',
+  };
+
   public issueError: Error | null = null;
   public findError: Error | null = null;
+  public getPdfError: Error | null = null;
   public cancelError: Error | null = null;
 
   public async issue(input: IssueBankPaymentInputDto): Promise<IssueBankPaymentOutputDto> {
@@ -62,6 +71,17 @@ export class BankPaymentFakeAdapterGateway implements IBankPaymentGateway {
     }
     return Promise.resolve({
       ...this.findResult,
+      requestCode: input.requestCode,
+    });
+  }
+
+  public async getPdf(input: FindBankPaymentInputDto): Promise<BankPaymentPdfDto> {
+    this.getPdfCalls.push(input);
+    if (this.getPdfError) {
+      return Promise.reject(this.getPdfError);
+    }
+    return Promise.resolve({
+      ...this.getPdfResult,
       requestCode: input.requestCode,
     });
   }

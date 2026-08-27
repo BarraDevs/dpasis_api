@@ -1,5 +1,6 @@
 import { BankPaymentDto } from '../../../dtos/bank-payment.dto';
 import { BankPaymentPayerDto } from '../../../dtos/bank-payment-payer.dto';
+import { BankPaymentPdfDto } from '../../../dtos/bank-payment-pdf.dto';
 import { CancelBankPaymentInputDto } from '../../../dtos/cancel-bank-payment.dto';
 import { IssueBankPaymentInputDto } from '../../../dtos/issue-bank-payment.dto';
 import { BankPaymentPersonType } from '../../../enums/bank-payment-person-type.enum';
@@ -8,6 +9,7 @@ import { BankPaymentStatus } from '../../../enums/bank-payment-status.enum';
 import type {
   InterCancelarCobrancaRequestDto,
   InterCobrancaDetalheDto,
+  InterCobrancaPdfResponseDto,
   InterEmitirCobrancaRequestDto,
   InterPagadorDto,
   InterTipoPessoa,
@@ -81,6 +83,14 @@ export class InterCobrancaMapper {
           copyAndPaste: data.pix.pixCopiaECola,
         }
         : undefined,
+    };
+  }
+
+  public static toPdfDto(requestCode: string, data: InterCobrancaPdfResponseDto): BankPaymentPdfDto {
+    return {
+      provider: BankPaymentProvider.INTER,
+      requestCode,
+      pdf: data.pdf ?? '',
     };
   }
 

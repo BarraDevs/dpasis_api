@@ -7,6 +7,7 @@ import { TOKENS } from 'src/core/di/token';
 import { LogContext, type ILoggerGateway } from 'src/infra/logger/logger.gateway';
 import { ExternalApiError } from 'src/shared/errors/external-api.error';
 import { BankPaymentDto } from '../../../dtos/bank-payment.dto';
+import { BankPaymentPdfDto } from '../../../dtos/bank-payment-pdf.dto';
 import { CancelBankPaymentInputDto } from '../../../dtos/cancel-bank-payment.dto';
 import { FindBankPaymentInputDto } from '../../../dtos/find-bank-payment.dto';
 import { IssueBankPaymentInputDto, IssueBankPaymentOutputDto } from '../../../dtos/issue-bank-payment.dto';
@@ -18,6 +19,7 @@ import { InterOauthClient } from '../oauth/inter-oauth.client';
 import { toLoggableHttpError } from '../to-loggable-http-error';
 import type {
   InterCobrancaDetalheDto,
+  InterCobrancaPdfResponseDto,
   InterEmitirCobrancaResponseDto,
 } from './dtos/inter-cobranca.dto';
 import { InterCobrancaMapper } from './inter-cobranca.mapper';
@@ -67,6 +69,25 @@ export class InterCobrancaClient {
       );
 
       return InterCobrancaMapper.toBankPaymentDto(input.requestCode, result ?? {});
+    }
+    catch (error) {
+      throw this.mapThrownError(error);
+    }
+  }
+
+  public async getPdf(input: FindBankPaymentInputDto): Promise<BankPaymentPdfDto> {
+    try {
+      const result = await this.request<InterCobrancaPdfResponseDto>(
+        'GET',
+        `/cobrancas/${encodeURIComponent(input.requestCode)}/pdf`,
+        { action: 'getPdf', requestCode: input.requestCode },
+      );
+
+      if (!result?.pdf) {
+        throw new ExternalApiError('Falha ao obter PDF da cobrança no Banco Inter.');
+      }
+
+      return InterCobrancaMapper.toPdfDto(input.requestCode, result);
     }
     catch (error) {
       throw this.mapThrownError(error);
@@ -176,27 +197,21 @@ export class InterCobrancaClient {
       return null;
     }
     const record = data as Record<string, unknown>;
-    console.log({ record });
     if (typeof record.message === 'string' && record.message.trim()) {
-      console.log({ message: record.message });
       return record.message;
     }
     if (typeof record.detail === 'string' && record.detail.trim()) {
-      console.log({ detail: record.detail });
       return record.detail;
     }
     if (typeof record.title === 'string' && record.title.trim()) {
-      console.log({ title: record.title });
       return record.title;
     }
     if (Array.isArray(record.violacoes) && record.violacoes.length > 0) {
       const first = record.violacoes[0] as Record<string, unknown>;
       if (typeof first.razao === 'string') {
-        console.log({ razao: first.razao });
         return first.razao;
       }
     }
-    console.log({ noIfAtAll: null });
     return null;
   }
 }

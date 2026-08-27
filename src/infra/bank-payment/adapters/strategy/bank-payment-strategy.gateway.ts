@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { TOKENS } from 'src/core/di/token';
 import type { IBankPaymentGateway } from '../../bank-payment.gateway';
 import { BankPaymentDto } from '../../dtos/bank-payment.dto';
+import { BankPaymentPdfDto } from '../../dtos/bank-payment-pdf.dto';
 import { CancelBankPaymentInputDto } from '../../dtos/cancel-bank-payment.dto';
 import { FindBankPaymentInputDto } from '../../dtos/find-bank-payment.dto';
 import { IssueBankPaymentInputDto, IssueBankPaymentOutputDto } from '../../dtos/issue-bank-payment.dto';
@@ -20,6 +21,10 @@ export class BankPaymentStrategyAdapterGateway implements IBankPaymentGateway {
 
   public async find(input: FindBankPaymentInputDto): Promise<BankPaymentDto> {
     return this.resolve(input.provider).find(input);
+  }
+
+  public async getPdf(input: FindBankPaymentInputDto): Promise<BankPaymentPdfDto> {
+    return this.resolve(input.provider).getPdf(input);
   }
 
   public async cancel(input: CancelBankPaymentInputDto): Promise<void> {

@@ -178,6 +178,63 @@ describe('InterCobrancaClient - Unit tests', () => {
     expect(result.yourNumber).toBe('INV-1');
   });
 
+  it('should GET /cobrancas/{codigoSolicitacao}/pdf with Bearer and mTLS', async() => {
+    // Arrange
+    httpService.axiosRef.request.mockResolvedValue({
+      data: { pdf: 'JVBERi0xLjQK' },
+    });
+
+    // Act
+    const result = await sut.getPdf({
+      provider: BankPaymentProvider.INTER,
+      requestCode: 'req-123',
+    });
+
+    // Assert
+    expect(oauthClient.getAccessToken).toHaveBeenCalledWith(InterCobrancaClient.OAUTH_SCOPE);
+    expect(httpService.axiosRef.request).toHaveBeenCalledWith(expect.objectContaining({
+      method: 'GET',
+      url: 'https://cdpj-sandbox.partners.uatinter.co/cobranca/v3/cobrancas/req-123/pdf',
+      headers: expect.objectContaining({
+        Authorization: 'Bearer access-token',
+        Accept: 'application/json',
+      }),
+      httpsAgent: expect.anything(),
+    }));
+    expect(result).toEqual({
+      provider: BankPaymentProvider.INTER,
+      requestCode: 'req-123',
+      pdf: 'JVBERi0xLjQK',
+    });
+  });
+
+  it('should throw ExternalApiError when pdf is missing from response', async() => {
+    httpService.axiosRef.request.mockResolvedValue({ data: {} });
+
+    await expect(sut.getPdf({
+      provider: BankPaymentProvider.INTER,
+      requestCode: 'req-123',
+    })).rejects.toBeInstanceOf(ExternalApiError);
+    await expect(sut.getPdf({
+      provider: BankPaymentProvider.INTER,
+      requestCode: 'req-123',
+    })).rejects.toThrow('Falha ao obter PDF da cobrança no Banco Inter.');
+  });
+
+  it('should throw BankPaymentNotFoundError on 404 for getPdf', async() => {
+    httpService.axiosRef.request.mockRejectedValue(makeAxiosError(404));
+
+    await expect(sut.getPdf({
+      provider: BankPaymentProvider.INTER,
+      requestCode: 'missing',
+    })).rejects.toBeInstanceOf(BankPaymentNotFoundError);
+
+    expect(logger.error).toHaveBeenCalledWith(LogContext.BANK_PAYMENT, expect.objectContaining({
+      action: 'getPdf',
+      requestCode: 'missing',
+    }));
+  });
+
   it('should POST cancelar with motivoCancelamento', async() => {
     // Arrange
     httpService.axiosRef.request.mockResolvedValue({ data: undefined });

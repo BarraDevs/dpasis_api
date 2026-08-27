@@ -5,6 +5,7 @@ import { RequiredClaims } from 'src/app/authentication/infra/decorators/required
 import { RequiredRoles } from 'src/app/authentication/infra/decorators/required-role.decorator';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
 import { BankPaymentDto } from 'src/infra/bank-payment/dtos/bank-payment.dto';
+import { BankPaymentPdfDto } from 'src/infra/bank-payment/dtos/bank-payment-pdf.dto';
 import { Swagger } from 'src/infra/openapi/swagger';
 import { CancelBankPayment } from '../../../../application/usecases/cancel-bank-payment/cancel-bank-payment.service';
 import { CancelBankPaymentInputDto } from '../../../../application/usecases/cancel-bank-payment/dtos/cancel-bank-payment.dto';
@@ -13,6 +14,7 @@ import {
   FindBankPaymentQueryDto,
 } from '../../../../application/usecases/find-bank-payment/dtos/find-bank-payment.dto';
 import { FindBankPayment } from '../../../../application/usecases/find-bank-payment/find-bank-payment.service';
+import { GetBankPaymentPdf } from '../../../../application/usecases/get-bank-payment-pdf/get-bank-payment-pdf.service';
 import {
   IssueBankPaymentInputDto,
   IssueBankPaymentOutputDto,
@@ -25,6 +27,7 @@ export class BankPaymentAdminController {
   constructor(
     private readonly issueBankPayment: IssueBankPayment,
     private readonly findBankPayment: FindBankPayment,
+    private readonly getBankPaymentPdf: GetBankPaymentPdf,
     private readonly cancelBankPayment: CancelBankPayment,
   ) {}
 
@@ -39,6 +42,23 @@ export class BankPaymentAdminController {
   })
   public issue(@Body() body: IssueBankPaymentInputDto): Promise<IssueBankPaymentOutputDto> {
     return this.issueBankPayment.execute(body);
+  }
+
+  @Get(':codigoSolicitacao/pdf')
+  @RequiredClaims(Claim.BANK_PAYMENT_READ)
+  @Swagger({
+    tags: ['Cobrança bancária'],
+    summary: 'Recuperar PDF da cobrança (base64)',
+    applyBadRequest: true,
+    applyNotFound: true,
+    applyServiceUnavailable: true,
+    okResponse: BankPaymentPdfDto,
+  })
+  public getPdf(
+    @Param() params: BankPaymentRequestCodeParams,
+    @Query() query: FindBankPaymentQueryDto,
+  ): Promise<BankPaymentPdfDto> {
+    return this.getBankPaymentPdf.execute(params.codigoSolicitacao, query.provider);
   }
 
   @Get(':codigoSolicitacao')
