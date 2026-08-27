@@ -1,5 +1,4 @@
 import { ArgumentMetadata, ValidationPipe } from '@nestjs/common';
-import { BankPaymentCancelReason } from 'src/infra/bank-payment/enums/bank-payment-cancel-reason.enum';
 import { BankPaymentProvider } from 'src/infra/bank-payment/enums/bank-payment-provider.enum';
 import { pipeOptions } from 'src/infra/validators/class/config';
 import { CancelBankPaymentInputDto } from './cancel-bank-payment.dto';
@@ -24,17 +23,46 @@ describe('CancelBankPaymentInputDto', () => {
   it('should accept a valid input', async() => {
     const result = await target.transform({
       provider: BankPaymentProvider.INTER,
-      reason: BankPaymentCancelReason.CUSTOMER_REQUEST,
+      reason: 'Cliente pediu o cancelamento',
     }, metadata);
 
-    expect(result.reason).toBe(BankPaymentCancelReason.CUSTOMER_REQUEST);
+    expect(result.reason).toBe('Cliente pediu o cancelamento');
   });
 
-  it('should reject invalid reason', async() => {
+  it('should trim reason', async() => {
+    const result = await target.transform({
+      provider: BankPaymentProvider.INTER,
+      reason: '  Cliente pediu o cancelamento  ',
+    }, metadata);
+
+    expect(result.reason).toBe('Cliente pediu o cancelamento');
+  });
+
+  it('should reject empty reason', async() => {
     expect.assertions(1);
     return target.transform({
       provider: BankPaymentProvider.INTER,
-      reason: 'INVALID',
+      reason: '   ',
+    }, metadata).catch((error) => {
+      expectMessageToContain(error.getResponse().message, 'reason');
+    });
+  });
+
+  it('should reject non-string reason', async() => {
+    expect.assertions(1);
+    return target.transform({
+      provider: BankPaymentProvider.INTER,
+      reason: 123,
+    }, metadata).catch((error) => {
+      expectMessageToContain(error.getResponse().message, 'reason');
+    });
+  });
+
+  it('should reject reason longer than 50 characters', async() => {
+    expect.assertions(1);
+    return target.transform({
+      provider: BankPaymentProvider.INTER,
+      reason: 'a'.repeat(51),
     }, metadata).catch((error) => {
       expectMessageToContain(error.getResponse().message, 'reason');
     });

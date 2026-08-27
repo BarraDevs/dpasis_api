@@ -1,4 +1,3 @@
-import { BankPaymentCancelReason } from '../../enums/bank-payment-cancel-reason.enum';
 import { BankPaymentPersonType } from '../../enums/bank-payment-person-type.enum';
 import { BankPaymentProvider } from '../../enums/bank-payment-provider.enum';
 import { BankPaymentFakeAdapterGateway } from './bank-payment-fake.gateway';
@@ -42,7 +41,7 @@ describe('BankPaymentFakeAdapterGateway - Unit tests', () => {
     await sut.cancel({
       provider: BankPaymentProvider.INTER,
       requestCode: 'abc',
-      reason: BankPaymentCancelReason.CUSTOMER_REQUEST,
+      reason: 'Cliente pediu o cancelamento',
     });
 
     expect(sut.findCalls).toHaveLength(1);

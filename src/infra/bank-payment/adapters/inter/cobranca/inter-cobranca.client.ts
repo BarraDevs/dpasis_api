@@ -15,6 +15,7 @@ import { BankPaymentNotFoundError } from '../../../errors/bank-payment-not-found
 import { BankPaymentRequestError } from '../../../errors/bank-payment-request.error';
 import { InterCertLoader, type InterCertMaterial } from '../oauth/inter-cert.loader';
 import { InterOauthClient } from '../oauth/inter-oauth.client';
+import { toLoggableHttpError } from '../to-loggable-http-error';
 import type {
   InterCobrancaDetalheDto,
   InterEmitirCobrancaResponseDto,
@@ -79,7 +80,12 @@ export class InterCobrancaClient {
       await this.request<void>(
         'POST',
         `/cobrancas/${encodeURIComponent(input.requestCode)}/cancelar`,
-        { body, action: 'cancel', requestCode: input.requestCode },
+        {
+          body,
+          action: 'cancel',
+          requestCode: input.requestCode,
+          accept: 'application/problem+json',
+        },
       );
     }
     catch (error) {
@@ -90,7 +96,7 @@ export class InterCobrancaClient {
   private async request<T>(
     method: 'GET' | 'POST',
     path: string,
-    options: { body?: unknown; action: string; requestCode?: string },
+    options: { body?: unknown; action: string; requestCode?: string; accept?: string },
   ): Promise<T> {
     const token = await this.oauthClient.getAccessToken(InterCobrancaClient.OAUTH_SCOPE);
     const agent = this.createHttpsAgent();
@@ -104,7 +110,7 @@ export class InterCobrancaClient {
         httpsAgent: agent,
         headers: {
           Authorization: `${token.tokenType} ${token.accessToken}`,
-          Accept: 'application/json',
+          Accept: options.accept ?? 'application/json',
           ...(options.body ? { 'Content-Type': 'application/json' } : {}),
         },
       });
@@ -116,7 +122,7 @@ export class InterCobrancaClient {
         adapter: 'inter',
         action: options.action,
         requestCode: options.requestCode,
-        error,
+        error: toLoggableHttpError(error),
       });
 
       if (isAxiosError(error)) {
@@ -170,18 +176,27 @@ export class InterCobrancaClient {
       return null;
     }
     const record = data as Record<string, unknown>;
+    console.log({ record });
     if (typeof record.message === 'string' && record.message.trim()) {
+      console.log({ message: record.message });
       return record.message;
     }
+    if (typeof record.detail === 'string' && record.detail.trim()) {
+      console.log({ detail: record.detail });
+      return record.detail;
+    }
     if (typeof record.title === 'string' && record.title.trim()) {
+      console.log({ title: record.title });
       return record.title;
     }
     if (Array.isArray(record.violacoes) && record.violacoes.length > 0) {
       const first = record.violacoes[0] as Record<string, unknown>;
       if (typeof first.razao === 'string') {
+        console.log({ razao: first.razao });
         return first.razao;
       }
     }
+    console.log({ noIfAtAll: null });
     return null;
   }
 }

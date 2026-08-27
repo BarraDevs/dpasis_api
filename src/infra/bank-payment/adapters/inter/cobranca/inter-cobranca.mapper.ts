@@ -2,7 +2,6 @@ import { BankPaymentDto } from '../../../dtos/bank-payment.dto';
 import { BankPaymentPayerDto } from '../../../dtos/bank-payment-payer.dto';
 import { CancelBankPaymentInputDto } from '../../../dtos/cancel-bank-payment.dto';
 import { IssueBankPaymentInputDto } from '../../../dtos/issue-bank-payment.dto';
-import { BankPaymentCancelReason } from '../../../enums/bank-payment-cancel-reason.enum';
 import { BankPaymentPersonType } from '../../../enums/bank-payment-person-type.enum';
 import { BankPaymentProvider } from '../../../enums/bank-payment-provider.enum';
 import { BankPaymentStatus } from '../../../enums/bank-payment-status.enum';
@@ -10,7 +9,6 @@ import type {
   InterCancelarCobrancaRequestDto,
   InterCobrancaDetalheDto,
   InterEmitirCobrancaRequestDto,
-  InterMotivoCancelamento,
   InterPagadorDto,
   InterTipoPessoa,
 } from './dtos/inter-cobranca.dto';
@@ -23,13 +21,6 @@ const PERSON_TYPE_TO_INTER: Record<BankPaymentPersonType, InterTipoPessoa> = {
 const PERSON_TYPE_FROM_INTER: Record<InterTipoPessoa, BankPaymentPersonType> = {
   FISICA: BankPaymentPersonType.INDIVIDUAL,
   JURIDICA: BankPaymentPersonType.COMPANY,
-};
-
-const CANCEL_REASON_TO_INTER: Record<BankPaymentCancelReason, InterMotivoCancelamento> = {
-  [BankPaymentCancelReason.ADJUSTMENTS]: 'ACERTOS',
-  [BankPaymentCancelReason.CUSTOMER_REQUEST]: 'APEDIDODOCLIENTE',
-  [BankPaymentCancelReason.PAID_DIRECTLY_TO_CUSTOMER]: 'PAGODIRETOAOCLIENTE',
-  [BankPaymentCancelReason.REPLACEMENT]: 'SUBSTITUICAO',
 };
 
 const STATUS_FROM_INTER: Record<string, BankPaymentStatus> = {
@@ -60,7 +51,7 @@ export class InterCobrancaMapper {
 
   public static toCancelRequest(input: CancelBankPaymentInputDto): InterCancelarCobrancaRequestDto {
     return {
-      motivoCancelamento: CANCEL_REASON_TO_INTER[input.reason],
+      motivoCancelamento: input.reason,
     };
   }
 

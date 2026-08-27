@@ -27,6 +27,7 @@ A emissão no Inter é **assíncrona**: o `POST` devolve só o `requestCode` (`c
 | Endpoints | **Novos** (aditivo) — emitir / recuperar / cancelar |
 | Claims | Novos subjects: `bank-payment` → `BANK_PAYMENT_READ` / `BANK_PAYMENT_WRITE` |
 | Persistência | **Não** há registro da cobrança no banco da API nesta entrega — a fonte da verdade é o provedor |
+| Cancel `reason` | **Breaking** — deixou de ser enum (`ADJUSTMENTS` / …) e passou a ser **texto livre** (string, máx. 50 caracteres) |
 
 ---
 
@@ -149,16 +150,18 @@ Campos principais:
 | Campo | Obrigatório | Tipo |
 |-------|-------------|------|
 | `provider` | sim | `"INTER"` |
-| `reason` | sim | enum abaixo |
+| `reason` | sim | string (máx. 50 caracteres) — motivo em texto livre enviado ao Inter |
 
-### `reason`
+Exemplo:
 
-| Valor | Uso |
-|-------|-----|
-| `ADJUSTMENTS` | Acertos |
-| `CUSTOMER_REQUEST` | A pedido do cliente |
-| `PAID_DIRECTLY_TO_CUSTOMER` | Pago direto ao cliente |
-| `REPLACEMENT` | Substituição |
+```json
+{
+  "provider": "INTER",
+  "reason": "Cliente pediu o cancelamento"
+}
+```
+
+`reason` vazio (após trim) ou com mais de 50 caracteres → **400**.
 
 ### Response (200)
 
@@ -176,7 +179,7 @@ Exibir sempre `message` do payload padronizado.
 
 | Status | Quando |
 |--------|--------|
-| 400 | Validação de body/query ou provedor/motivo inválido; ou erro 4xx do Inter |
+| 400 | Validação de body/query ou provedor inválido / `reason` inválido (vazio ou > 50); ou erro 4xx do Inter |
 | 403 | Sem claim |
 | 404 | Cobrança não encontrada no provedor |
 | 503 | Inter/API externa indisponível (`INTER_PROVIDER_ENABLED=false` sem strategy → tipicamente erro de provedor não suportado / 400) |
@@ -188,6 +191,6 @@ Exibir sempre `message` do payload padronizado.
 1. Tipar OpenAPI / DTOs com `provider`, `requestCode`, `payer.personType`, `reason`.
 2. Tela de emissão: após 201, navegar para detalhe com `requestCode` e `provider=INTER`.
 3. Detalhe: `GET` com query `provider`; mostrar `boleto`/`pix` quando existirem.
-4. Cancelar: modal com select de `reason` + `POST .../cancel`.
+4. Cancelar: modal com campo de texto `reason` (máx. 50) + `POST .../cancel`.
 5. Menu/permissões: incluir subject **Cobrança bancária** (`bank-payment`) read/write.
 6. Não persistir cobrança local nesta fase — listagem histórica virá em feature futura.

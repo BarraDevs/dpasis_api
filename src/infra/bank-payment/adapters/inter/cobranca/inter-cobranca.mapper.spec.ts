@@ -1,4 +1,3 @@
-import { BankPaymentCancelReason } from '../../../enums/bank-payment-cancel-reason.enum';
 import { BankPaymentPersonType } from '../../../enums/bank-payment-person-type.enum';
 import { BankPaymentProvider } from '../../../enums/bank-payment-provider.enum';
 import { BankPaymentStatus } from '../../../enums/bank-payment-status.enum';
@@ -66,8 +65,8 @@ describe('InterCobrancaMapper - Unit tests', () => {
     expect(InterCobrancaMapper.toCancelRequest({
       provider: BankPaymentProvider.INTER,
       requestCode: 'abc',
-      reason: BankPaymentCancelReason.CUSTOMER_REQUEST,
-    })).toEqual({ motivoCancelamento: 'APEDIDODOCLIENTE' });
+      reason: 'Cliente pediu o cancelamento',
+    })).toEqual({ motivoCancelamento: 'Cliente pediu o cancelamento' });
   });
 
   it('should map Inter detail response to BankPaymentDto', () => {

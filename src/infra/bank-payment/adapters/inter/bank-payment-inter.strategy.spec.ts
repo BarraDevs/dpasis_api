@@ -2,7 +2,6 @@ import { createMock } from '@golevelup/ts-jest';
 import { BankPaymentPersonType } from '../../enums/bank-payment-person-type.enum';
 import { BankPaymentProvider } from '../../enums/bank-payment-provider.enum';
 import { BankPaymentStatus } from '../../enums/bank-payment-status.enum';
-import { BankPaymentCancelReason } from '../../enums/bank-payment-cancel-reason.enum';
 import { InterCobrancaClient } from './cobranca/inter-cobranca.client';
 import { BankPaymentInterStrategy } from './bank-payment-inter.strategy';
 
@@ -72,7 +71,7 @@ describe('BankPaymentInterStrategy - Unit tests', () => {
     const input = {
       provider: BankPaymentProvider.INTER,
       requestCode: 'req-1',
-      reason: BankPaymentCancelReason.CUSTOMER_REQUEST,
+      reason: 'Cliente pediu o cancelamento',
     };
     await sut.cancel(input);
     expect(cobrancaClient.cancel).toHaveBeenCalledWith(input);

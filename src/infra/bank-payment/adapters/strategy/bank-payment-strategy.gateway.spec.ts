@@ -1,7 +1,6 @@
 import { createMock } from '@golevelup/ts-jest';
 import { Test } from '@nestjs/testing';
 import { TOKENS } from 'src/core/di/token';
-import { BankPaymentCancelReason } from '../../enums/bank-payment-cancel-reason.enum';
 import { BankPaymentPersonType } from '../../enums/bank-payment-person-type.enum';
 import { BankPaymentProvider } from '../../enums/bank-payment-provider.enum';
 import { BankPaymentStatus } from '../../enums/bank-payment-status.enum';
@@ -81,7 +80,7 @@ describe('BankPaymentStrategyAdapterGateway - Unit tests', () => {
     await sut.cancel({
       provider: BankPaymentProvider.INTER,
       requestCode: 'req-1',
-      reason: BankPaymentCancelReason.CUSTOMER_REQUEST,
+      reason: 'Cliente pediu o cancelamento',
     });
 
     expect(interStrategy.find).toHaveBeenCalled();

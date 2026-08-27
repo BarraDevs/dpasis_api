@@ -5,6 +5,7 @@ import { ConfigService } from 'src/core/config/config.service';
 import { TOKENS } from 'src/core/di/token';
 import { LogContext, type ILoggerGateway } from 'src/infra/logger/logger.gateway';
 import { ExternalApiError } from 'src/shared/errors/external-api.error';
+import { toLoggableHttpError } from '../to-loggable-http-error';
 import { InterOauthTokenDto } from './dtos/inter-oauth-token.dto';
 import { InterTokenResponseDto } from './dtos/inter-token-response.dto';
 import { InterOauthConfigError } from './errors/inter-oauth-config.error';
@@ -110,7 +111,7 @@ export class InterOauthClient {
         adapter: 'inter',
         action: 'oauth-token',
         scope,
-        error,
+        error: toLoggableHttpError(error),
       });
       throw new ExternalApiError('Falha ao obter token OAuth no Banco Inter.');
     }

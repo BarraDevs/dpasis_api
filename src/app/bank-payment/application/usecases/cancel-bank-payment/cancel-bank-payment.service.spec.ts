@@ -2,7 +2,6 @@ import { createMock } from '@golevelup/ts-jest';
 import { Test } from '@nestjs/testing';
 import { TOKENS } from 'src/core/di/token';
 import type { IBankPaymentGateway } from 'src/infra/bank-payment/bank-payment.gateway';
-import { BankPaymentCancelReason } from 'src/infra/bank-payment/enums/bank-payment-cancel-reason.enum';
 import { BankPaymentProvider } from 'src/infra/bank-payment/enums/bank-payment-provider.enum';
 import { CancelBankPayment } from './cancel-bank-payment.service';
 
@@ -34,13 +33,13 @@ describe('CancelBankPayment - Unit tests', () => {
 
     const result = await sut.execute('req-1', {
       provider: BankPaymentProvider.INTER,
-      reason: BankPaymentCancelReason.CUSTOMER_REQUEST,
+      reason: 'Cliente pediu o cancelamento',
     });
 
     expect(cancelSpy).toHaveBeenCalledWith({
       provider: BankPaymentProvider.INTER,
       requestCode: 'req-1',
-      reason: BankPaymentCancelReason.CUSTOMER_REQUEST,
+      reason: 'Cliente pediu o cancelamento',
     });
     expect(result).toEqual({ message: 'Cobrança bancária cancelada com sucesso.' });
   });

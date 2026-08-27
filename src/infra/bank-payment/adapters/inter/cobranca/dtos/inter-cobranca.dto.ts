@@ -2,12 +2,6 @@
 
 export type InterTipoPessoa = 'FISICA' | 'JURIDICA';
 
-export type InterMotivoCancelamento =
-  | 'ACERTOS'
-  | 'APEDIDODOCLIENTE'
-  | 'PAGODIRETOAOCLIENTE'
-  | 'SUBSTITUICAO';
-
 export type InterPagadorDto = {
   cpfCnpj: string;
   tipoPessoa: InterTipoPessoa;
@@ -37,7 +31,7 @@ export type InterEmitirCobrancaResponseDto = {
 };
 
 export type InterCancelarCobrancaRequestDto = {
-  motivoCancelamento: InterMotivoCancelamento;
+  motivoCancelamento: string;
 };
 
 export type InterCobrancaBoletoDto = {

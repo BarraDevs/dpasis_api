@@ -2,6 +2,7 @@
 import { createMock } from '@golevelup/ts-jest';
 import { HttpService } from '@nestjs/axios';
 import { Test, TestingModule } from '@nestjs/testing';
+import { AxiosError } from 'axios';
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -207,10 +208,58 @@ describe('InterOauthClient - Unit tests', () => {
       adapter: 'inter',
       action: 'oauth-token',
       scope: 'boleto-cobranca.read boleto-cobranca.write',
-      error: networkError,
+      error: {
+        name: 'Error',
+        message: 'network down',
+      },
     });
     const logged = (logger.error as jest.Mock).mock.calls[0][1];
     expect(JSON.stringify(logged)).not.toContain('client-secret');
     expect(JSON.stringify(logged)).not.toContain('access-token-abc');
+  });
+
+  it('should log axios failure without certs, private key or authorization', async() => {
+    // Arrange
+    const axiosError = new AxiosError('Request failed with status code 401');
+    axiosError.code = 'ERR_BAD_REQUEST';
+    axiosError.config = {
+      method: 'post',
+      url: 'https://cdpj-sandbox.partners.uatinter.co/oauth/v2/token',
+      data: 'grant_type=client_credentials&client_id=client-id&client_secret=client-secret',
+      headers: { Authorization: 'Bearer leaked-token' },
+      httpsAgent: {
+        cert: '-----BEGIN CERTIFICATE-----\nfake\n-----END CERTIFICATE-----',
+        key: '-----BEGIN PRIVATE KEY-----\nfake\n-----END PRIVATE KEY-----',
+      },
+    } as never;
+    axiosError.response = {
+      status: 401,
+      data: { error: 'invalid_client' },
+      statusText: 'Unauthorized',
+      headers: {},
+      config: axiosError.config,
+    };
+    httpService.axiosRef.post.mockRejectedValue(axiosError);
+
+    // Act
+    await expect(sut.getAccessToken(SCOPE_A)).rejects.toBeInstanceOf(ExternalApiError);
+
+    // Assert
+    const logged = (logger.error as jest.Mock).mock.calls[0][1];
+    expect(logged.error).toEqual({
+      name: 'AxiosError',
+      message: 'Request failed with status code 401',
+      code: 'ERR_BAD_REQUEST',
+      status: 401,
+      method: 'post',
+      url: 'https://cdpj-sandbox.partners.uatinter.co/oauth/v2/token',
+      response: { error: 'invalid_client' },
+    });
+    const serialized = JSON.stringify(logged);
+    expect(serialized).not.toContain('BEGIN CERTIFICATE');
+    expect(serialized).not.toContain('BEGIN PRIVATE KEY');
+    expect(serialized).not.toContain('client-secret');
+    expect(serialized).not.toContain('Bearer');
+    expect(serialized).not.toContain('leaked-token');
   });
 });

@@ -3,7 +3,6 @@ import { Test } from '@nestjs/testing';
 import { AuthenticationGuardsModule } from 'src/app/authentication/application/guards/guards.module';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
 import { BankPaymentDto } from 'src/infra/bank-payment/dtos/bank-payment.dto';
-import { BankPaymentCancelReason } from 'src/infra/bank-payment/enums/bank-payment-cancel-reason.enum';
 import { BankPaymentProvider } from 'src/infra/bank-payment/enums/bank-payment-provider.enum';
 import { CancelBankPayment } from '../../../../application/usecases/cancel-bank-payment/cancel-bank-payment.service';
 import { FindBankPayment } from '../../../../application/usecases/find-bank-payment/find-bank-payment.service';
@@ -71,12 +70,12 @@ describe('BankPaymentAdminController - Unit tests', () => {
 
     const result = await sut.cancel(
       { codigoSolicitacao: 'req-1' },
-      { provider: BankPaymentProvider.INTER, reason: BankPaymentCancelReason.CUSTOMER_REQUEST },
+      { provider: BankPaymentProvider.INTER, reason: 'Cliente pediu o cancelamento' },
     );
 
     expect(spy).toHaveBeenCalledWith('req-1', {
       provider: BankPaymentProvider.INTER,
-      reason: BankPaymentCancelReason.CUSTOMER_REQUEST,
+      reason: 'Cliente pediu o cancelamento',
     });
     expect(result).toBe(output);
   });

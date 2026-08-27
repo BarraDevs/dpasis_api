@@ -9,7 +9,6 @@ import { ConfigService } from 'src/core/config/config.service';
 import { TOKENS } from 'src/core/di/token';
 import { LogContext, type ILoggerGateway } from 'src/infra/logger/logger.gateway';
 import { ExternalApiError } from 'src/shared/errors/external-api.error';
-import { BankPaymentCancelReason } from '../../../enums/bank-payment-cancel-reason.enum';
 import { BankPaymentPersonType } from '../../../enums/bank-payment-person-type.enum';
 import { BankPaymentProvider } from '../../../enums/bank-payment-provider.enum';
 import { BankPaymentNotFoundError } from '../../../errors/bank-payment-not-found.error';
@@ -187,14 +186,18 @@ describe('InterCobrancaClient - Unit tests', () => {
     await sut.cancel({
       provider: BankPaymentProvider.INTER,
       requestCode: 'req-123',
-      reason: BankPaymentCancelReason.CUSTOMER_REQUEST,
+      reason: 'Cliente pediu o cancelamento',
     });
 
     // Assert
     expect(httpService.axiosRef.request).toHaveBeenCalledWith(expect.objectContaining({
       method: 'POST',
       url: 'https://cdpj-sandbox.partners.uatinter.co/cobranca/v3/cobrancas/req-123/cancelar',
-      data: { motivoCancelamento: 'APEDIDODOCLIENTE' },
+      headers: expect.objectContaining({
+        Accept: 'application/problem+json',
+        'Content-Type': 'application/json',
+      }),
+      data: { motivoCancelamento: 'Cliente pediu o cancelamento' },
     }));
   });
 
@@ -225,5 +228,50 @@ describe('InterCobrancaClient - Unit tests', () => {
     httpService.axiosRef.request.mockRejectedValue(new Error('network down'));
 
     await expect(sut.issue(issueInput)).rejects.toBeInstanceOf(ExternalApiError);
+  });
+
+  it('should log axios failure without certs, private key or authorization', async() => {
+    // Arrange
+    const axiosError = new AxiosError('Request failed with status code 422');
+    axiosError.code = 'ERR_BAD_REQUEST';
+    axiosError.config = {
+      method: 'post',
+      url: 'https://cdpj-sandbox.partners.uatinter.co/cobranca/v3/cobrancas',
+      data: '{"seuNumero":"INV-1"}',
+      headers: { Authorization: 'Bearer leaked-token' },
+      httpsAgent: {
+        cert: '-----BEGIN CERTIFICATE-----\nfake\n-----END CERTIFICATE-----',
+        key: '-----BEGIN PRIVATE KEY-----\nfake\n-----END PRIVATE KEY-----',
+      },
+    } as never;
+    axiosError.response = {
+      status: 422,
+      data: { message: 'Dados inválidos' },
+      statusText: 'Unprocessable Entity',
+      headers: {},
+      config: axiosError.config,
+    };
+    httpService.axiosRef.request.mockRejectedValue(axiosError);
+
+    // Act
+    await expect(sut.issue(issueInput)).rejects.toBeInstanceOf(BankPaymentRequestError);
+
+    // Assert
+    const logged = (logger.error as jest.Mock).mock.calls[0][1];
+    expect(logged.error).toEqual({
+      name: 'AxiosError',
+      message: 'Request failed with status code 422',
+      code: 'ERR_BAD_REQUEST',
+      status: 422,
+      method: 'post',
+      url: 'https://cdpj-sandbox.partners.uatinter.co/cobranca/v3/cobrancas',
+      response: { message: 'Dados inválidos' },
+    });
+    const serialized = JSON.stringify(logged);
+    expect(serialized).not.toContain('BEGIN CERTIFICATE');
+    expect(serialized).not.toContain('BEGIN PRIVATE KEY');
+    expect(serialized).not.toContain('Bearer');
+    expect(serialized).not.toContain('leaked-token');
+    expect(serialized).not.toContain('httpsAgent');
   });
 });
