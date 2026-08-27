@@ -183,6 +183,98 @@ describe('InterOauthClient - Unit tests', () => {
     expect(httpService.axiosRef.post).not.toHaveBeenCalled();
   });
 
+  it('should throw InterOauthConfigError when API URL is missing', async() => {
+    // Arrange
+    Object.defineProperty(configService, 'interApiUrl', { get: () => '' });
+
+    // Act / Assert
+    await expect(sut.getAccessToken(SCOPE_A)).rejects.toBeInstanceOf(InterOauthConfigError);
+    await expect(sut.getAccessToken(SCOPE_A)).rejects.toThrow(
+      'Variável de ambiente "INTER_API_URL" não está definida',
+    );
+    expect(httpService.axiosRef.post).not.toHaveBeenCalled();
+  });
+
+  it('should throw InterOauthConfigError when client secret is missing', async() => {
+    // Arrange
+    Object.defineProperty(configService, 'interClientSecret', { get: () => '' });
+
+    // Act / Assert
+    await expect(sut.getAccessToken(SCOPE_A)).rejects.toBeInstanceOf(InterOauthConfigError);
+    await expect(sut.getAccessToken(SCOPE_A)).rejects.toThrow(
+      'Variável de ambiente "INTER_CLIENT_SECRET" não está definida',
+    );
+    expect(httpService.axiosRef.post).not.toHaveBeenCalled();
+  });
+
+  it('should default tokenType to Bearer and scope to requested when response omits them', async() => {
+    // Arrange
+    httpService.axiosRef.post.mockResolvedValue({
+      data: {
+        access_token: 'access-token-abc',
+        expires_in: 3600,
+      },
+    });
+
+    // Act
+    const result = await sut.getAccessToken(SCOPE_A);
+
+    // Assert
+    expect(result).toEqual({
+      accessToken: 'access-token-abc',
+      tokenType: 'Bearer',
+      expiresIn: 3600,
+      scope: SCOPE_A,
+    });
+  });
+
+  it('should throw ExternalApiError when access_token is missing', async() => {
+    // Arrange
+    httpService.axiosRef.post.mockResolvedValue({
+      data: {
+        expires_in: 3600,
+        token_type: 'Bearer',
+      },
+    });
+
+    // Act / Assert
+    await expect(sut.getAccessToken(SCOPE_A)).rejects.toBeInstanceOf(ExternalApiError);
+    await expect(sut.getAccessToken(SCOPE_A)).rejects.toThrow(
+      'Falha ao obter token OAuth no Banco Inter.',
+    );
+  });
+
+  it('should throw ExternalApiError when expires_in is missing', async() => {
+    // Arrange
+    httpService.axiosRef.post.mockResolvedValue({
+      data: {
+        access_token: 'access-token-abc',
+        token_type: 'Bearer',
+      },
+    });
+
+    // Act / Assert
+    await expect(sut.getAccessToken(SCOPE_A)).rejects.toBeInstanceOf(ExternalApiError);
+    await expect(sut.getAccessToken(SCOPE_A)).rejects.toThrow(
+      'Falha ao obter token OAuth no Banco Inter.',
+    );
+  });
+
+  it('should allow a new POST after a failed inflight request', async() => {
+    // Arrange
+    httpService.axiosRef.post
+      .mockRejectedValueOnce(new Error('network down'))
+      .mockResolvedValueOnce({ data: TOKEN_RESPONSE });
+
+    // Act
+    await expect(sut.getAccessToken(SCOPE_A)).rejects.toBeInstanceOf(ExternalApiError);
+    const result = await sut.getAccessToken(SCOPE_A);
+
+    // Assert
+    expect(httpService.axiosRef.post).toHaveBeenCalledTimes(2);
+    expect(result.accessToken).toBe('access-token-abc');
+  });
+
   it('should throw InterOauthConfigError when cert file is missing', async() => {
     // Arrange
     Object.defineProperty(configService, 'interCertPath', {

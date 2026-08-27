@@ -61,12 +61,69 @@ describe('InterCobrancaMapper - Unit tests', () => {
     });
   });
 
+  it('should map COMPANY payer to JURIDICA', () => {
+    // Arrange
+    const input = {
+      provider: BankPaymentProvider.INTER,
+      yourNumber: 'INV-2',
+      amount: 10,
+      dueDate: '2026-09-01',
+      daysAfterDue: 30,
+      payer: {
+        document: '11222333000181',
+        personType: BankPaymentPersonType.COMPANY,
+        name: 'Empresa LTDA',
+      },
+    };
+
+    // Act
+    const result = InterCobrancaMapper.toIssueRequest(input);
+
+    // Assert
+    expect(result.pagador.tipoPessoa).toBe('JURIDICA');
+    expect(result.pagador.cpfCnpj).toBe('11222333000181');
+  });
+
   it('should map cancel reason to Inter motivoCancelamento', () => {
     expect(InterCobrancaMapper.toCancelRequest({
       provider: BankPaymentProvider.INTER,
       requestCode: 'abc',
       reason: 'Cliente pediu o cancelamento',
     })).toEqual({ motivoCancelamento: 'Cliente pediu o cancelamento' });
+  });
+
+  it.each([
+    ['RECEBIDO', BankPaymentStatus.RECEIVED],
+    ['A_RECEBER', BankPaymentStatus.EMITTED],
+    ['EMABERTO', BankPaymentStatus.EMITTED],
+    ['EMISSAO', BankPaymentStatus.EMITTED],
+    ['Aguardando', BankPaymentStatus.AWAITING_APPROVAL],
+    ['AGUARDANDO_APROVACAO', BankPaymentStatus.AWAITING_APPROVAL],
+    ['PAGO', BankPaymentStatus.PAID],
+    ['CANCELADO', BankPaymentStatus.CANCELLED],
+    ['EXPIRADO', BankPaymentStatus.EXPIRED],
+    ['MARCADO_RECEBIDO', BankPaymentStatus.MARKED_RECEIVED],
+    ['FALHA', BankPaymentStatus.FAILED],
+    ['FALHA_EMISSAO', BankPaymentStatus.FAILED],
+  ])('should map Inter situacao %s to %s', (situacao, expectedStatus) => {
+    // Act
+    const result = InterCobrancaMapper.toBankPaymentDto('req-1', {
+      cobranca: {
+        codigoSolicitacao: 'req-1',
+        seuNumero: 'INV-1',
+        situacao,
+        valorNominal: 10,
+        dataVencimento: '2026-09-01',
+        pagador: {
+          cpfCnpj: '1',
+          tipoPessoa: 'FISICA',
+          nome: 'A',
+        },
+      },
+    });
+
+    // Assert
+    expect(result.status).toBe(expectedStatus);
   });
 
   it('should map Inter detail response to BankPaymentDto', () => {
@@ -158,6 +215,69 @@ describe('InterCobrancaMapper - Unit tests', () => {
     expect(result.requestCode).toBe('fallback-code');
     expect(result.yourNumber).toBe('');
     expect(result.status).toBe(BankPaymentStatus.UNKNOWN);
+  });
+
+  it('should return empty INDIVIDUAL payer when pagador is missing', () => {
+    // Act
+    const result = InterCobrancaMapper.toBankPaymentDto('req-1', {
+      cobranca: {
+        codigoSolicitacao: 'req-1',
+        seuNumero: 'INV-1',
+        situacao: 'A_RECEBER',
+        valorNominal: 10,
+        dataVencimento: '2026-09-01',
+      },
+    });
+
+    // Assert
+    expect(result.payer).toEqual({
+      document: '',
+      personType: BankPaymentPersonType.INDIVIDUAL,
+      name: '',
+    });
+  });
+
+  it('should fallback to INDIVIDUAL when tipoPessoa is unknown', () => {
+    // Act
+    const result = InterCobrancaMapper.toBankPaymentDto('req-1', {
+      cobranca: {
+        codigoSolicitacao: 'req-1',
+        seuNumero: 'INV-1',
+        situacao: 'A_RECEBER',
+        valorNominal: 10,
+        dataVencimento: '2026-09-01',
+        pagador: {
+          cpfCnpj: '1',
+          tipoPessoa: 'OUTRO' as 'FISICA',
+          nome: 'A',
+        },
+      },
+    });
+
+    // Assert
+    expect(result.payer.personType).toBe(BankPaymentPersonType.INDIVIDUAL);
+  });
+
+  it('should omit boleto and pix when Inter response lacks them', () => {
+    // Act
+    const result = InterCobrancaMapper.toBankPaymentDto('req-1', {
+      cobranca: {
+        codigoSolicitacao: 'req-1',
+        seuNumero: 'INV-1',
+        situacao: 'A_RECEBER',
+        valorNominal: 10,
+        dataVencimento: '2026-09-01',
+        pagador: {
+          cpfCnpj: '1',
+          tipoPessoa: 'FISICA',
+          nome: 'A',
+        },
+      },
+    });
+
+    // Assert
+    expect(result.boleto).toBeUndefined();
+    expect(result.pix).toBeUndefined();
   });
 
   it('should map Inter PDF response to BankPaymentPdfDto', () => {

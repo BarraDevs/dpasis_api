@@ -48,6 +48,43 @@ describe('BankPaymentFakeAdapterGateway - Unit tests', () => {
     expect(sut.cancelCalls).toHaveLength(1);
   });
 
+  it('should return findResult with requestCode from input', async() => {
+    // Arrange
+    const input = { provider: BankPaymentProvider.INTER, requestCode: 'abc' };
+
+    // Act
+    const result = await sut.find(input);
+
+    // Assert
+    expect(result.requestCode).toBe('abc');
+    expect(result.yourNumber).toBe(sut.findResult.yourNumber);
+  });
+
+  it('should reject when findError is set', async() => {
+    // Arrange
+    const error = new Error('fake find failure');
+    sut.findError = error;
+
+    // Act / Assert
+    await expect(sut.find({
+      provider: BankPaymentProvider.INTER,
+      requestCode: 'abc',
+    })).rejects.toBe(error);
+  });
+
+  it('should reject when cancelError is set', async() => {
+    // Arrange
+    const error = new Error('fake cancel failure');
+    sut.cancelError = error;
+
+    // Act / Assert
+    await expect(sut.cancel({
+      provider: BankPaymentProvider.INTER,
+      requestCode: 'abc',
+      reason: 'Cliente pediu o cancelamento',
+    })).rejects.toBe(error);
+  });
+
   it('should record getPdf calls and return default result', async() => {
     const result = await sut.getPdf({
       provider: BankPaymentProvider.INTER,

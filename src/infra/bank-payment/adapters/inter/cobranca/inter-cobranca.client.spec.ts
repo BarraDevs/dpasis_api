@@ -287,6 +287,145 @@ describe('InterCobrancaClient - Unit tests', () => {
     await expect(sut.issue(issueInput)).rejects.toBeInstanceOf(ExternalApiError);
   });
 
+  it('should throw ExternalApiError when codigoSolicitacao is missing from issue response', async() => {
+    // Arrange
+    httpService.axiosRef.request.mockResolvedValue({ data: {} });
+
+    // Act / Assert
+    await expect(sut.issue(issueInput)).rejects.toBeInstanceOf(ExternalApiError);
+    await expect(sut.issue(issueInput)).rejects.toThrow('Falha ao emitir cobrança no Banco Inter.');
+  });
+
+  it.each([
+    [{ detail: 'Detalhe da falha' }, 'Detalhe da falha'],
+    [{ title: 'Título da falha' }, 'Título da falha'],
+    [{ violacoes: [{ razao: 'Campo inválido' }] }, 'Campo inválido'],
+  ])('should extract Inter 4xx message from %j', async(data, expectedMessage) => {
+    // Arrange
+    httpService.axiosRef.request.mockRejectedValue(makeAxiosError(422, data));
+
+    // Act / Assert
+    await expect(sut.issue(issueInput)).rejects.toBeInstanceOf(BankPaymentRequestError);
+    await expect(sut.issue(issueInput)).rejects.toThrow(expectedMessage);
+  });
+
+  it('should throw BankPaymentRequestError with default message when 4xx body has no extractable text', async() => {
+    // Arrange
+    httpService.axiosRef.request.mockRejectedValue(makeAxiosError(400, { code: 'X' }));
+
+    // Act / Assert
+    await expect(sut.issue(issueInput)).rejects.toBeInstanceOf(BankPaymentRequestError);
+    await expect(sut.issue(issueInput)).rejects.toThrow(
+      'Requisição inválida na API de cobrança do Banco Inter.',
+    );
+  });
+
+  it('should throw ExternalApiError on 5xx', async() => {
+    // Arrange
+    httpService.axiosRef.request.mockRejectedValue(makeAxiosError(500, { message: 'erro interno' }));
+
+    // Act / Assert
+    await expect(sut.issue(issueInput)).rejects.toBeInstanceOf(ExternalApiError);
+    await expect(sut.issue(issueInput)).rejects.toThrow(
+      'Falha na comunicação com a API de cobrança do Banco Inter.',
+    );
+  });
+
+  it('should encode requestCode in find URL', async() => {
+    // Arrange
+    httpService.axiosRef.request.mockResolvedValue({
+      data: {
+        cobranca: {
+          codigoSolicitacao: 'req/123',
+          seuNumero: 'INV-1',
+          situacao: 'A_RECEBER',
+          valorNominal: 10,
+          dataVencimento: '2026-09-01',
+          pagador: {
+            cpfCnpj: '1',
+            tipoPessoa: 'FISICA',
+            nome: 'A',
+          },
+        },
+      },
+    });
+
+    // Act
+    await sut.find({
+      provider: BankPaymentProvider.INTER,
+      requestCode: 'req/123',
+    });
+
+    // Assert
+    expect(httpService.axiosRef.request).toHaveBeenCalledWith(expect.objectContaining({
+      method: 'GET',
+      url: 'https://cdpj-sandbox.partners.uatinter.co/cobranca/v3/cobrancas/req%2F123',
+    }));
+  });
+
+  it('should not send Content-Type on GET find', async() => {
+    // Arrange
+    httpService.axiosRef.request.mockResolvedValue({
+      data: {
+        cobranca: {
+          codigoSolicitacao: 'req-123',
+          seuNumero: 'INV-1',
+          situacao: 'A_RECEBER',
+          valorNominal: 10,
+          dataVencimento: '2026-09-01',
+          pagador: {
+            cpfCnpj: '1',
+            tipoPessoa: 'FISICA',
+            nome: 'A',
+          },
+        },
+      },
+    });
+
+    // Act
+    await sut.find({
+      provider: BankPaymentProvider.INTER,
+      requestCode: 'req-123',
+    });
+
+    // Assert
+    const call = httpService.axiosRef.request.mock.calls[0][0];
+    expect(call.headers).toEqual({
+      Authorization: 'Bearer access-token',
+      Accept: 'application/json',
+    });
+    expect(call.headers).not.toHaveProperty('Content-Type');
+  });
+
+  it('should throw BankPaymentNotFoundError on 404 for cancel', async() => {
+    // Arrange
+    httpService.axiosRef.request.mockRejectedValue(makeAxiosError(404));
+
+    // Act / Assert
+    await expect(sut.cancel({
+      provider: BankPaymentProvider.INTER,
+      requestCode: 'missing',
+      reason: 'Cliente pediu o cancelamento',
+    })).rejects.toBeInstanceOf(BankPaymentNotFoundError);
+
+    expect(logger.error).toHaveBeenCalledWith(LogContext.BANK_PAYMENT, expect.objectContaining({
+      action: 'cancel',
+      requestCode: 'missing',
+    }));
+  });
+
+  it('should wrap oauth failure as ExternalApiError', async() => {
+    // Arrange
+    oauthClient.getAccessToken.mockRejectedValue(new Error('oauth down'));
+
+    // Act / Assert
+    await expect(sut.issue(issueInput)).rejects.toBeInstanceOf(ExternalApiError);
+    await expect(sut.issue(issueInput)).rejects.toThrow(
+      'Falha na comunicação com a API de cobrança do Banco Inter.',
+    );
+    expect(httpService.axiosRef.request).not.toHaveBeenCalled();
+  });
+
   it('should log axios failure without certs, private key or authorization', async() => {
     // Arrange
     const axiosError = new AxiosError('Request failed with status code 422');

@@ -81,17 +81,24 @@ describe('BankPaymentStrategyAdapterGateway - Unit tests', () => {
   });
 
   it('should delegate find, getPdf and cancel', async() => {
-    await sut.find({ provider: BankPaymentProvider.INTER, requestCode: 'req-1' });
-    await sut.getPdf({ provider: BankPaymentProvider.INTER, requestCode: 'req-1' });
-    await sut.cancel({
+    // Arrange
+    const findInput = { provider: BankPaymentProvider.INTER, requestCode: 'req-1' };
+    const getPdfInput = { provider: BankPaymentProvider.INTER, requestCode: 'req-1' };
+    const cancelInput = {
       provider: BankPaymentProvider.INTER,
       requestCode: 'req-1',
       reason: 'Cliente pediu o cancelamento',
-    });
+    };
 
-    expect(interStrategy.find).toHaveBeenCalled();
-    expect(interStrategy.getPdf).toHaveBeenCalled();
-    expect(interStrategy.cancel).toHaveBeenCalled();
+    // Act
+    await sut.find(findInput);
+    await sut.getPdf(getPdfInput);
+    await sut.cancel(cancelInput);
+
+    // Assert
+    expect(interStrategy.find).toHaveBeenCalledWith(findInput);
+    expect(interStrategy.getPdf).toHaveBeenCalledWith(getPdfInput);
+    expect(interStrategy.cancel).toHaveBeenCalledWith(cancelInput);
   });
 
   it('should throw BankPaymentProviderNotSupportedError when provider is unknown', async() => {

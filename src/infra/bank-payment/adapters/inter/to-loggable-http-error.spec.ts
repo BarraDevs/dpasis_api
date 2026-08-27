@@ -69,6 +69,26 @@ describe('toLoggableHttpError - Unit tests', () => {
     });
   });
 
+  it('should map AxiosError without response to name, message and code', () => {
+    // Arrange
+    const error = new AxiosError('Network Error');
+    error.code = 'ERR_NETWORK';
+
+    // Act
+    const logged = toLoggableHttpError(error);
+
+    // Assert
+    expect(logged).toEqual({
+      name: 'AxiosError',
+      message: 'Network Error',
+      code: 'ERR_NETWORK',
+      status: undefined,
+      method: undefined,
+      url: undefined,
+      response: undefined,
+    });
+  });
+
   it('should stringify unknown values', () => {
     // Act
     const logged = toLoggableHttpError('boom');

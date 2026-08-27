@@ -44,9 +44,23 @@ describe('InterCertLoader - Unit tests', () => {
     );
   });
 
+  it('should throw InterOauthConfigError when cert path is whitespace', () => {
+    expect(() => InterCertLoader.load('   ', keyPath)).toThrow(InterOauthConfigError);
+    expect(() => InterCertLoader.load('   ', keyPath)).toThrow(
+      'Caminho do certificado Inter (INTER_CERT_PATH) não está definido',
+    );
+  });
+
   it('should throw InterOauthConfigError when key path is empty', () => {
     expect(() => InterCertLoader.load(certPath, '')).toThrow(InterOauthConfigError);
     expect(() => InterCertLoader.load(certPath, '')).toThrow(
+      'Caminho da chave privada Inter (INTER_KEY_PATH) não está definido',
+    );
+  });
+
+  it('should throw InterOauthConfigError when key path is whitespace', () => {
+    expect(() => InterCertLoader.load(certPath, '   ')).toThrow(InterOauthConfigError);
+    expect(() => InterCertLoader.load(certPath, '   ')).toThrow(
       'Caminho da chave privada Inter (INTER_KEY_PATH) não está definido',
     );
   });
