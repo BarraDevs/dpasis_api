@@ -1,5 +1,10 @@
-import { IssueBankSlipInputDto, IssueBankSlipOutputDto } from './dtos/issue-bank-slip.dto';
+import { BankPaymentDto } from './dtos/bank-payment.dto';
+import { CancelBankPaymentInputDto } from './dtos/cancel-bank-payment.dto';
+import { FindBankPaymentInputDto } from './dtos/find-bank-payment.dto';
+import { IssueBankPaymentInputDto, IssueBankPaymentOutputDto } from './dtos/issue-bank-payment.dto';
 
 export interface IBankPaymentGateway {
-  issue(input: IssueBankSlipInputDto): Promise<IssueBankSlipOutputDto>;
+  issue(input: IssueBankPaymentInputDto): Promise<IssueBankPaymentOutputDto>;
+  find(input: FindBankPaymentInputDto): Promise<BankPaymentDto>;
+  cancel(input: CancelBankPaymentInputDto): Promise<void>;
 }

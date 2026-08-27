@@ -1,16 +1,27 @@
 import { Injectable } from '@nestjs/common';
-import { IssueBankSlipInputDto, IssueBankSlipOutputDto } from '../../dtos/issue-bank-slip.dto';
+import { BankPaymentDto } from '../../dtos/bank-payment.dto';
+import { CancelBankPaymentInputDto } from '../../dtos/cancel-bank-payment.dto';
+import { FindBankPaymentInputDto } from '../../dtos/find-bank-payment.dto';
+import { IssueBankPaymentInputDto, IssueBankPaymentOutputDto } from '../../dtos/issue-bank-payment.dto';
 import { BankPaymentProvider } from '../../enums/bank-payment-provider.enum';
 import type { IBankPaymentStrategy } from '../../strategies/bank-payment.strategy';
+import { InterCobrancaClient } from './cobranca/inter-cobranca.client';
 
 @Injectable()
 export class BankPaymentInterStrategy implements IBankPaymentStrategy {
   public readonly provider = BankPaymentProvider.INTER;
 
-  public async issue(input: IssueBankSlipInputDto): Promise<IssueBankSlipOutputDto> {
-    return {
-      provider: input.provider,
-      externalId: 'inter-stub',
-    };
+  constructor(private readonly cobrancaClient: InterCobrancaClient) {}
+
+  public async issue(input: IssueBankPaymentInputDto): Promise<IssueBankPaymentOutputDto> {
+    return this.cobrancaClient.issue(input);
+  }
+
+  public async find(input: FindBankPaymentInputDto): Promise<BankPaymentDto> {
+    return this.cobrancaClient.find(input);
+  }
+
+  public async cancel(input: CancelBankPaymentInputDto): Promise<void> {
+    return this.cobrancaClient.cancel(input);
   }
 }

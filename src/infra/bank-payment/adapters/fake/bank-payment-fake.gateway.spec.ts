@@ -1,3 +1,5 @@
+import { BankPaymentCancelReason } from '../../enums/bank-payment-cancel-reason.enum';
+import { BankPaymentPersonType } from '../../enums/bank-payment-person-type.enum';
 import { BankPaymentProvider } from '../../enums/bank-payment-provider.enum';
 import { BankPaymentFakeAdapterGateway } from './bank-payment-fake.gateway';
 
@@ -13,31 +15,55 @@ describe('BankPaymentFakeAdapterGateway - Unit tests', () => {
   });
 
   it('should record issue calls and return default result', async() => {
-    // Arrange
-    const input = { provider: BankPaymentProvider.INTER };
+    const input = {
+      provider: BankPaymentProvider.INTER,
+      yourNumber: 'INV-1',
+      amount: 10,
+      dueDate: '2026-09-01',
+      daysAfterDue: 30,
+      payer: {
+        document: '1',
+        personType: BankPaymentPersonType.INDIVIDUAL,
+        name: 'A',
+      },
+    };
 
-    // Act
     const result = await sut.issue(input);
 
-    // Assert
     expect(sut.issueCalls).toEqual([input]);
     expect(result).toEqual({
       provider: BankPaymentProvider.INTER,
-      externalId: 'fake-external-id',
+      requestCode: 'fake-request-code',
     });
   });
 
+  it('should record find and cancel calls', async() => {
+    await sut.find({ provider: BankPaymentProvider.INTER, requestCode: 'abc' });
+    await sut.cancel({
+      provider: BankPaymentProvider.INTER,
+      requestCode: 'abc',
+      reason: BankPaymentCancelReason.CUSTOMER_REQUEST,
+    });
+
+    expect(sut.findCalls).toHaveLength(1);
+    expect(sut.cancelCalls).toHaveLength(1);
+  });
+
   it('should reject when issueError is set', async() => {
-    // Arrange
     const error = new Error('fake failure');
     sut.issueError = error;
-    const input = { provider: BankPaymentProvider.INTER };
 
-    // Act
-    const promise = sut.issue(input);
-
-    // Assert
-    await expect(promise).rejects.toBe(error);
-    expect(sut.issueCalls).toEqual([input]);
+    await expect(sut.issue({
+      provider: BankPaymentProvider.INTER,
+      yourNumber: 'INV-1',
+      amount: 10,
+      dueDate: '2026-09-01',
+      daysAfterDue: 30,
+      payer: {
+        document: '1',
+        personType: BankPaymentPersonType.INDIVIDUAL,
+        name: 'A',
+      },
+    })).rejects.toBe(error);
   });
 });

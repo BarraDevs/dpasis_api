@@ -99,4 +99,5 @@ type NfsGenerationData = CommomData & {
 type BankPaymentData = CommomData & {
   action: string;
   scope?: string;
+  requestCode?: string;
 }

@@ -1,0 +1,187 @@
+import { HttpService } from '@nestjs/axios';
+import { Inject, Injectable } from '@nestjs/common';
+import { isAxiosError } from 'axios';
+import { Agent } from 'node:https';
+import { ConfigService } from 'src/core/config/config.service';
+import { TOKENS } from 'src/core/di/token';
+import { LogContext, type ILoggerGateway } from 'src/infra/logger/logger.gateway';
+import { ExternalApiError } from 'src/shared/errors/external-api.error';
+import { BankPaymentDto } from '../../../dtos/bank-payment.dto';
+import { CancelBankPaymentInputDto } from '../../../dtos/cancel-bank-payment.dto';
+import { FindBankPaymentInputDto } from '../../../dtos/find-bank-payment.dto';
+import { IssueBankPaymentInputDto, IssueBankPaymentOutputDto } from '../../../dtos/issue-bank-payment.dto';
+import { BankPaymentProvider } from '../../../enums/bank-payment-provider.enum';
+import { BankPaymentNotFoundError } from '../../../errors/bank-payment-not-found.error';
+import { BankPaymentRequestError } from '../../../errors/bank-payment-request.error';
+import { InterCertLoader, type InterCertMaterial } from '../oauth/inter-cert.loader';
+import { InterOauthClient } from '../oauth/inter-oauth.client';
+import type {
+  InterCobrancaDetalheDto,
+  InterEmitirCobrancaResponseDto,
+} from './dtos/inter-cobranca.dto';
+import { InterCobrancaMapper } from './inter-cobranca.mapper';
+
+@Injectable()
+export class InterCobrancaClient {
+  public static readonly OAUTH_SCOPE = 'boleto-cobranca.read boleto-cobranca.write';
+
+  private certMaterial: InterCertMaterial | null = null;
+
+  constructor(
+    private readonly httpService: HttpService,
+    private readonly configService: ConfigService,
+    private readonly oauthClient: InterOauthClient,
+    @Inject(TOKENS.LoggerGateway) private readonly logger: ILoggerGateway,
+  ) {}
+
+  public async issue(input: IssueBankPaymentInputDto): Promise<IssueBankPaymentOutputDto> {
+    const body = InterCobrancaMapper.toIssueRequest(input);
+
+    try {
+      const result = await this.request<InterEmitirCobrancaResponseDto>('POST', '/cobrancas', {
+        body,
+        action: 'issue',
+      });
+
+      if (!result?.codigoSolicitacao) {
+        throw new ExternalApiError('Falha ao emitir cobrança no Banco Inter.');
+      }
+
+      return {
+        provider: BankPaymentProvider.INTER,
+        requestCode: result.codigoSolicitacao,
+      };
+    }
+    catch (error) {
+      throw this.mapThrownError(error);
+    }
+  }
+
+  public async find(input: FindBankPaymentInputDto): Promise<BankPaymentDto> {
+    try {
+      const result = await this.request<InterCobrancaDetalheDto>(
+        'GET',
+        `/cobrancas/${encodeURIComponent(input.requestCode)}`,
+        { action: 'find', requestCode: input.requestCode },
+      );
+
+      return InterCobrancaMapper.toBankPaymentDto(input.requestCode, result ?? {});
+    }
+    catch (error) {
+      throw this.mapThrownError(error);
+    }
+  }
+
+  public async cancel(input: CancelBankPaymentInputDto): Promise<void> {
+    const body = InterCobrancaMapper.toCancelRequest(input);
+
+    try {
+      await this.request<void>(
+        'POST',
+        `/cobrancas/${encodeURIComponent(input.requestCode)}/cancelar`,
+        { body, action: 'cancel', requestCode: input.requestCode },
+      );
+    }
+    catch (error) {
+      throw this.mapThrownError(error);
+    }
+  }
+
+  private async request<T>(
+    method: 'GET' | 'POST',
+    path: string,
+    options: { body?: unknown; action: string; requestCode?: string },
+  ): Promise<T> {
+    const token = await this.oauthClient.getAccessToken(InterCobrancaClient.OAUTH_SCOPE);
+    const agent = this.createHttpsAgent();
+    const url = `${this.configService.interApiUrl}/cobranca/v3${path}`;
+
+    try {
+      const result = await this.httpService.axiosRef.request<T>({
+        method,
+        url,
+        data: options.body,
+        httpsAgent: agent,
+        headers: {
+          Authorization: `${token.tokenType} ${token.accessToken}`,
+          Accept: 'application/json',
+          ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+        },
+      });
+
+      return result.data;
+    }
+    catch (error) {
+      this.logger.error(LogContext.BANK_PAYMENT, {
+        adapter: 'inter',
+        action: options.action,
+        requestCode: options.requestCode,
+        error,
+      });
+
+      if (isAxiosError(error)) {
+        const status = error.response?.status;
+        if (status === 404) {
+          throw new BankPaymentNotFoundError(options.requestCode);
+        }
+        if (status && status >= 400 && status < 500) {
+          const message = this.extractInterErrorMessage(error.response?.data)
+            ?? 'Requisição inválida na API de cobrança do Banco Inter.';
+          throw new BankPaymentRequestError(message);
+        }
+      }
+
+      throw new ExternalApiError('Falha na comunicação com a API de cobrança do Banco Inter.');
+    }
+  }
+
+  private mapThrownError(error: unknown): Error {
+    if (
+      error instanceof BankPaymentNotFoundError
+      || error instanceof BankPaymentRequestError
+      || error instanceof ExternalApiError
+    ) {
+      return error;
+    }
+    return new ExternalApiError('Falha na comunicação com a API de cobrança do Banco Inter.');
+  }
+
+  private createHttpsAgent(): Agent {
+    const material = this.getCertMaterial();
+    return new Agent({
+      cert: material.cert,
+      key: material.key,
+      minVersion: 'TLSv1.2',
+    });
+  }
+
+  private getCertMaterial(): InterCertMaterial {
+    if (!this.certMaterial) {
+      this.certMaterial = InterCertLoader.load(
+        this.configService.interCertPath,
+        this.configService.interKeyPath,
+      );
+    }
+    return this.certMaterial;
+  }
+
+  private extractInterErrorMessage(data: unknown): string | null {
+    if (!data || typeof data !== 'object') {
+      return null;
+    }
+    const record = data as Record<string, unknown>;
+    if (typeof record.message === 'string' && record.message.trim()) {
+      return record.message;
+    }
+    if (typeof record.title === 'string' && record.title.trim()) {
+      return record.title;
+    }
+    if (Array.isArray(record.violacoes) && record.violacoes.length > 0) {
+      const first = record.violacoes[0] as Record<string, unknown>;
+      if (typeof first.razao === 'string') {
+        return first.razao;
+      }
+    }
+    return null;
+  }
+}

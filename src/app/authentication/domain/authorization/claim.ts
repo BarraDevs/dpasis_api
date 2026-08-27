@@ -38,6 +38,9 @@ export const Claim = {
   BANK_READ: { subject: ClaimSubject.Bank, action: ClaimAction.Read },
   BANK_WRITE: { subject: ClaimSubject.Bank, action: ClaimAction.Write },
 
+  BANK_PAYMENT_READ: { subject: ClaimSubject.BankPayment, action: ClaimAction.Read },
+  BANK_PAYMENT_WRITE: { subject: ClaimSubject.BankPayment, action: ClaimAction.Write },
+
   BILLED_READ: { subject: ClaimSubject.Billed, action: ClaimAction.Read },
   BILLED_WRITE: { subject: ClaimSubject.Billed, action: ClaimAction.Write },
 

@@ -15,7 +15,7 @@ const PROVIDER_CNPJ = '02099923000178';
 
 const certFilePath = join(
   __dirname,
-  '../../resources/files/DPA_TEC_EQUIPAMENTOS_DE_PONTO_LTDA_02099923000178.pfx',
+  '../../resources/files/nfs-generation/giss/DPA_TEC_EQUIPAMENTOS_DE_PONTO_LTDA_02099923000178.pfx',
 );
 
 const prisma = new PrismaClient();

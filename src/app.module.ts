@@ -18,7 +18,7 @@ import { CoreModule } from './core/core.module';
 import { InfraModule } from './infra/infra.module';
 import { TaxInvoiceModule } from './app/tax-invoice/tax-invoice.module';
 import { CompanyModuleModule } from './app/company/company-module.module';
-import { BankPaymentModule } from './infra/bank-payment/bank-payment.module';
+import { BankPaymentModule } from './app/bank-payment/bank-payment.module';
 
 @Module({
   imports: [
@@ -27,6 +27,7 @@ import { BankPaymentModule } from './infra/bank-payment/bank-payment.module';
     AuthenticationModule,
     AuditModule,
     AdminModule,
+    BankPaymentModule,
     CarrierModule,
     CompanyModuleModule,
     ClientModuleModule,
@@ -41,7 +42,6 @@ import { BankPaymentModule } from './infra/bank-payment/bank-payment.module';
     TaxInvoiceModule,
     UploadFileModule,
     VoucherModule,
-    BankPaymentModule.register(),
   ],
 })
 export class AppModule {}

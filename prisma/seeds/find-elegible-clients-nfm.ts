@@ -47,7 +47,7 @@ const SEED_NFSE_CURL_COMPANY_ID = 516;
 const SEED_NFSE_CURL_PROVIDER_CNPJ = '02099923000178';
 const SEED_NFSE_CURL_CERT_PATH = join(
   __dirname,
-  '../../resources/files/DPA_TEC_EQUIPAMENTOS_DE_PONTO_LTDA_02099923000178.pfx',
+  '../../resources/files/nfs-generation/giss/DPA_TEC_EQUIPAMENTOS_DE_PONTO_LTDA_02099923000178.pfx',
 );
 
 const SEED_GROUP_NAME = '__seed_nfm_elegivel_client_group';
