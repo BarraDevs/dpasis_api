@@ -11,6 +11,7 @@ import { BankPaymentPdfDto } from '../../../dtos/bank-payment-pdf.dto';
 import { CancelBankPaymentInputDto } from '../../../dtos/cancel-bank-payment.dto';
 import { FindBankPaymentInputDto } from '../../../dtos/find-bank-payment.dto';
 import { IssueBankPaymentInputDto, IssueBankPaymentOutputDto } from '../../../dtos/issue-bank-payment.dto';
+import { ListBankPaymentInputDto, ListBankPaymentOutputDto } from '../../../dtos/list-bank-payment.dto';
 import { BankPaymentProvider } from '../../../enums/bank-payment-provider.enum';
 import { BankPaymentNotFoundError } from '../../../errors/bank-payment-not-found.error';
 import { BankPaymentRequestError } from '../../../errors/bank-payment-request.error';
@@ -19,6 +20,7 @@ import { InterOauthClient } from '../oauth/inter-oauth.client';
 import { toLoggableHttpError } from '../to-loggable-http-error';
 import type {
   InterCobrancaDetalheDto,
+  InterCobrancaListResponseDto,
   InterCobrancaPdfResponseDto,
   InterEmitirCobrancaResponseDto,
 } from './dtos/inter-cobranca.dto';
@@ -75,6 +77,22 @@ export class InterCobrancaClient {
     }
   }
 
+  public async list(input: ListBankPaymentInputDto): Promise<ListBankPaymentOutputDto> {
+    try {
+      const params = InterCobrancaMapper.toListQueryParams(input);
+      const result = await this.request<InterCobrancaListResponseDto>(
+        'GET',
+        '/cobrancas',
+        { action: 'list', params },
+      );
+
+      return InterCobrancaMapper.toListOutput(result ?? {});
+    }
+    catch (error) {
+      throw this.mapThrownError(error);
+    }
+  }
+
   public async getPdf(input: FindBankPaymentInputDto): Promise<BankPaymentPdfDto> {
     try {
       const result = await this.request<InterCobrancaPdfResponseDto>(
@@ -117,7 +135,13 @@ export class InterCobrancaClient {
   private async request<T>(
     method: 'GET' | 'POST',
     path: string,
-    options: { body?: unknown; action: string; requestCode?: string; accept?: string },
+    options: {
+      body?: unknown;
+      action: string;
+      requestCode?: string;
+      accept?: string;
+      params?: Record<string, string | number>;
+    },
   ): Promise<T> {
     const token = await this.oauthClient.getAccessToken(InterCobrancaClient.OAUTH_SCOPE);
     const agent = this.createHttpsAgent();
@@ -128,6 +152,7 @@ export class InterCobrancaClient {
         method,
         url,
         data: options.body,
+        params: options.params,
         httpsAgent: agent,
         headers: {
           Authorization: `${token.tokenType} ${token.accessToken}`,

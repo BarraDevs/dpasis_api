@@ -32,6 +32,10 @@ describe('BankPaymentStrategyAdapterGateway - Unit tests', () => {
           name: 'A',
         },
       }),
+      list: jest.fn().mockResolvedValue({
+        items: [],
+        total: 0,
+      }),
       cancel: jest.fn().mockResolvedValue(undefined),
       getPdf: jest.fn().mockResolvedValue({
         provider: BankPaymentProvider.INTER,
@@ -99,6 +103,23 @@ describe('BankPaymentStrategyAdapterGateway - Unit tests', () => {
     expect(interStrategy.find).toHaveBeenCalledWith(findInput);
     expect(interStrategy.getPdf).toHaveBeenCalledWith(getPdfInput);
     expect(interStrategy.cancel).toHaveBeenCalledWith(cancelInput);
+  });
+
+  it('should delegate list to matching strategy', async() => {
+    const listInput = {
+      provider: BankPaymentProvider.INTER,
+      startDate: '2026-01-01',
+      endDate: '2026-01-31',
+    };
+    (interStrategy.list as jest.Mock).mockResolvedValue({
+      items: [],
+      total: 0,
+    });
+
+    const result = await sut.list(listInput);
+
+    expect(interStrategy.list).toHaveBeenCalledWith(listInput);
+    expect(result).toEqual({ items: [], total: 0 });
   });
 
   it('should throw BankPaymentProviderNotSupportedError when provider is unknown', async() => {

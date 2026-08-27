@@ -11,6 +11,7 @@ import { LogContext, type ILoggerGateway } from 'src/infra/logger/logger.gateway
 import { ExternalApiError } from 'src/shared/errors/external-api.error';
 import { BankPaymentPersonType } from '../../../enums/bank-payment-person-type.enum';
 import { BankPaymentProvider } from '../../../enums/bank-payment-provider.enum';
+import { BankPaymentStatus } from '../../../enums/bank-payment-status.enum';
 import { BankPaymentNotFoundError } from '../../../errors/bank-payment-not-found.error';
 import { BankPaymentRequestError } from '../../../errors/bank-payment-request.error';
 import { InterOauthClient } from '../oauth/inter-oauth.client';
@@ -176,6 +177,105 @@ describe('InterCobrancaClient - Unit tests', () => {
     }));
     expect(result.requestCode).toBe('req-123');
     expect(result.yourNumber).toBe('INV-1');
+  });
+
+  it('should GET /cobrancas with list query params', async() => {
+    // Arrange
+    httpService.axiosRef.request.mockResolvedValue({
+      data: {
+        totalElementos: 1,
+        cobrancas: [
+          {
+            codigoSolicitacao: 'req-list',
+            seuNumero: 'INV-L',
+            situacao: 'A_RECEBER',
+            valorNominal: 20,
+            dataVencimento: '2026-09-15',
+            pagador: {
+              cpfCnpj: '11122233344',
+              tipoPessoa: 'FISICA',
+              nome: 'João',
+            },
+          },
+        ],
+      },
+    });
+
+    // Act
+    const result = await sut.list({
+      provider: BankPaymentProvider.INTER,
+      startDate: '2026-01-01',
+      endDate: '2026-01-31',
+      status: BankPaymentStatus.EMITTED,
+      payerName: 'João',
+      payerDocument: '11122233344',
+      page: 1,
+      size: 50,
+    });
+
+    // Assert
+    expect(oauthClient.getAccessToken).toHaveBeenCalledWith(InterCobrancaClient.OAUTH_SCOPE);
+    expect(httpService.axiosRef.request).toHaveBeenCalledWith(expect.objectContaining({
+      method: 'GET',
+      url: 'https://cdpj-sandbox.partners.uatinter.co/cobranca/v3/cobrancas',
+      params: {
+        dataInicial: '2026-01-01',
+        dataFinal: '2026-01-31',
+        'paginacao.paginaAtual': 0,
+        'paginacao.itensPorPagina': 50,
+        situacao: 'A_RECEBER',
+        pessoaPagadora: 'João',
+        cpfCnpjPessoaPagadora: '11122233344',
+      },
+      headers: expect.objectContaining({
+        Authorization: 'Bearer access-token',
+        Accept: 'application/json',
+      }),
+      httpsAgent: expect.anything(),
+    }));
+    const call = httpService.axiosRef.request.mock.calls[0][0];
+    expect(call.headers).not.toHaveProperty('Content-Type');
+    expect(result.total).toBe(1);
+    expect(result.items).toHaveLength(1);
+    expect(result.items[0].requestCode).toBe('req-list');
+  });
+
+  it('should throw BankPaymentRequestError on unsupported list status before HTTP', async() => {
+    await expect(sut.list({
+      provider: BankPaymentProvider.INTER,
+      startDate: '2026-01-01',
+      endDate: '2026-01-31',
+      status: BankPaymentStatus.PAID,
+    })).rejects.toBeInstanceOf(BankPaymentRequestError);
+
+    expect(httpService.axiosRef.request).not.toHaveBeenCalled();
+  });
+
+  it('should throw BankPaymentRequestError on 4xx for list', async() => {
+    httpService.axiosRef.request.mockRejectedValue(
+      makeAxiosError(422, { message: 'Período inválido' }),
+    );
+
+    await expect(sut.list({
+      provider: BankPaymentProvider.INTER,
+      startDate: '2026-01-01',
+      endDate: '2026-01-31',
+    })).rejects.toBeInstanceOf(BankPaymentRequestError);
+    await expect(sut.list({
+      provider: BankPaymentProvider.INTER,
+      startDate: '2026-01-01',
+      endDate: '2026-01-31',
+    })).rejects.toThrow('Período inválido');
+  });
+
+  it('should throw ExternalApiError on 5xx for list', async() => {
+    httpService.axiosRef.request.mockRejectedValue(makeAxiosError(500));
+
+    await expect(sut.list({
+      provider: BankPaymentProvider.INTER,
+      startDate: '2026-01-01',
+      endDate: '2026-01-31',
+    })).rejects.toBeInstanceOf(ExternalApiError);
   });
 
   it('should GET /cobrancas/{codigoSolicitacao}/pdf with Bearer and mTLS', async() => {

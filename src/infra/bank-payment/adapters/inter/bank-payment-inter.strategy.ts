@@ -4,6 +4,7 @@ import { BankPaymentPdfDto } from '../../dtos/bank-payment-pdf.dto';
 import { CancelBankPaymentInputDto } from '../../dtos/cancel-bank-payment.dto';
 import { FindBankPaymentInputDto } from '../../dtos/find-bank-payment.dto';
 import { IssueBankPaymentInputDto, IssueBankPaymentOutputDto } from '../../dtos/issue-bank-payment.dto';
+import { ListBankPaymentInputDto, ListBankPaymentOutputDto } from '../../dtos/list-bank-payment.dto';
 import { BankPaymentProvider } from '../../enums/bank-payment-provider.enum';
 import type { IBankPaymentStrategy } from '../../strategies/bank-payment.strategy';
 import { InterCobrancaClient } from './cobranca/inter-cobranca.client';
@@ -20,6 +21,10 @@ export class BankPaymentInterStrategy implements IBankPaymentStrategy {
 
   public async find(input: FindBankPaymentInputDto): Promise<BankPaymentDto> {
     return this.cobrancaClient.find(input);
+  }
+
+  public async list(input: ListBankPaymentInputDto): Promise<ListBankPaymentOutputDto> {
+    return this.cobrancaClient.list(input);
   }
 
   public async getPdf(input: FindBankPaymentInputDto): Promise<BankPaymentPdfDto> {

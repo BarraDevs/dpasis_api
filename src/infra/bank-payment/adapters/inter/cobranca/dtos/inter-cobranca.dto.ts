@@ -112,3 +112,22 @@ export type InterCobrancaDetalheDto = {
 export type InterCobrancaPdfResponseDto = {
   pdf?: string;
 };
+
+/**
+ * Item de GET /cobrancas (listagem). Pode vir aninhado (cobranca/boleto/pix)
+ * ou flat (campos da cobrança na raiz + boleto/pix).
+ */
+export type InterCobrancaListItemDto = InterCobrancaDetalheDto & InterCobrancaDadosDto;
+
+/**
+ * Shape do GET /cobrancas (pesquisaCobranca) conforme documentação Inter.
+ */
+export type InterCobrancaListResponseDto = {
+  totalPaginas?: number;
+  totalElementos?: number;
+  tamanhoPagina?: number;
+  primeiraPagina?: boolean;
+  ultimaPagina?: boolean;
+  numeroDeElementos?: number;
+  cobrancas?: InterCobrancaListItemDto[];
+};

@@ -5,7 +5,9 @@ import { SuccessMessage } from 'src/core/dtos/success-message.dto';
 import { BankPaymentDto } from 'src/infra/bank-payment/dtos/bank-payment.dto';
 import { BankPaymentPdfDto } from 'src/infra/bank-payment/dtos/bank-payment-pdf.dto';
 import { BankPaymentProvider } from 'src/infra/bank-payment/enums/bank-payment-provider.enum';
+import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
 import { CancelBankPayment } from '../../../../application/usecases/cancel-bank-payment/cancel-bank-payment.service';
+import { FindAllBankPayment } from '../../../../application/usecases/find-all-bank-payment/find-all-bank-payment.service';
 import { FindBankPayment } from '../../../../application/usecases/find-bank-payment/find-bank-payment.service';
 import { GetBankPaymentPdf } from '../../../../application/usecases/get-bank-payment-pdf/get-bank-payment-pdf.service';
 import {
@@ -18,6 +20,7 @@ import { BankPaymentAdminController } from './bank-payment-admin.controller';
 describe('BankPaymentAdminController - Unit tests', () => {
   let sut: BankPaymentAdminController;
   let issueBankPayment: IssueBankPayment;
+  let findAllBankPayment: FindAllBankPayment;
   let findBankPayment: FindBankPayment;
   let getBankPaymentPdf: GetBankPaymentPdf;
   let cancelBankPayment: CancelBankPayment;
@@ -28,6 +31,7 @@ describe('BankPaymentAdminController - Unit tests', () => {
       controllers: [BankPaymentAdminController],
       providers: [
         { provide: IssueBankPayment, useValue: createMock<IssueBankPayment>() },
+        { provide: FindAllBankPayment, useValue: createMock<FindAllBankPayment>() },
         { provide: FindBankPayment, useValue: createMock<FindBankPayment>() },
         { provide: GetBankPaymentPdf, useValue: createMock<GetBankPaymentPdf>() },
         { provide: CancelBankPayment, useValue: createMock<CancelBankPayment>() },
@@ -36,6 +40,7 @@ describe('BankPaymentAdminController - Unit tests', () => {
 
     sut = module.get(BankPaymentAdminController);
     issueBankPayment = module.get(IssueBankPayment);
+    findAllBankPayment = module.get(FindAllBankPayment);
     findBankPayment = module.get(FindBankPayment);
     getBankPaymentPdf = module.get(GetBankPaymentPdf);
     cancelBankPayment = module.get(CancelBankPayment);
@@ -53,6 +58,21 @@ describe('BankPaymentAdminController - Unit tests', () => {
     const result = await sut.issue(body);
 
     expect(spy).toHaveBeenCalledWith(body);
+    expect(result).toBe(output);
+  });
+
+  it('should call findAllBankPayment.execute', async() => {
+    const queries = {
+      provider: BankPaymentProvider.INTER,
+      startDate: '2026-01-01',
+      endDate: '2026-01-31',
+    };
+    const output = createMock<IPagination<BankPaymentDto>>();
+    const spy = jest.spyOn(findAllBankPayment, 'execute').mockResolvedValue(output);
+
+    const result = await sut.findAll(queries);
+
+    expect(spy).toHaveBeenCalledWith(queries);
     expect(result).toBe(output);
   });
 

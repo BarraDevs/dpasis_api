@@ -48,6 +48,32 @@ describe('BankPaymentFakeAdapterGateway - Unit tests', () => {
     expect(sut.cancelCalls).toHaveLength(1);
   });
 
+  it('should record list calls and return default result', async() => {
+    const input = {
+      provider: BankPaymentProvider.INTER,
+      startDate: '2026-01-01',
+      endDate: '2026-01-31',
+    };
+
+    const result = await sut.list(input);
+
+    expect(sut.listCalls).toEqual([input]);
+    expect(result.total).toBe(1);
+    expect(result.items).toHaveLength(1);
+    expect(result.items[0].requestCode).toBe('fake-request-code');
+  });
+
+  it('should reject when listError is set', async() => {
+    const error = new Error('fake list failure');
+    sut.listError = error;
+
+    await expect(sut.list({
+      provider: BankPaymentProvider.INTER,
+      startDate: '2026-01-01',
+      endDate: '2026-01-31',
+    })).rejects.toBe(error);
+  });
+
   it('should return findResult with requestCode from input', async() => {
     // Arrange
     const input = { provider: BankPaymentProvider.INTER, requestCode: 'abc' };

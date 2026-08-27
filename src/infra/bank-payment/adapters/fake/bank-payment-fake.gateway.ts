@@ -5,6 +5,7 @@ import { BankPaymentPdfDto } from '../../dtos/bank-payment-pdf.dto';
 import { CancelBankPaymentInputDto } from '../../dtos/cancel-bank-payment.dto';
 import { FindBankPaymentInputDto } from '../../dtos/find-bank-payment.dto';
 import { IssueBankPaymentInputDto, IssueBankPaymentOutputDto } from '../../dtos/issue-bank-payment.dto';
+import { ListBankPaymentInputDto, ListBankPaymentOutputDto } from '../../dtos/list-bank-payment.dto';
 import { BankPaymentPersonType } from '../../enums/bank-payment-person-type.enum';
 import { BankPaymentProvider } from '../../enums/bank-payment-provider.enum';
 import { BankPaymentStatus } from '../../enums/bank-payment-status.enum';
@@ -13,6 +14,7 @@ import { BankPaymentStatus } from '../../enums/bank-payment-status.enum';
 export class BankPaymentFakeAdapterGateway implements IBankPaymentGateway {
   public readonly issueCalls: IssueBankPaymentInputDto[] = [];
   public readonly findCalls: FindBankPaymentInputDto[] = [];
+  public readonly listCalls: ListBankPaymentInputDto[] = [];
   public readonly getPdfCalls: FindBankPaymentInputDto[] = [];
   public readonly cancelCalls: CancelBankPaymentInputDto[] = [];
 
@@ -45,6 +47,11 @@ export class BankPaymentFakeAdapterGateway implements IBankPaymentGateway {
     },
   };
 
+  public listResult: ListBankPaymentOutputDto = {
+    items: [],
+    total: 1,
+  };
+
   public getPdfResult: BankPaymentPdfDto = {
     provider: BankPaymentProvider.INTER,
     requestCode: 'fake-request-code',
@@ -53,8 +60,16 @@ export class BankPaymentFakeAdapterGateway implements IBankPaymentGateway {
 
   public issueError: Error | null = null;
   public findError: Error | null = null;
+  public listError: Error | null = null;
   public getPdfError: Error | null = null;
   public cancelError: Error | null = null;
+
+  constructor() {
+    this.listResult = {
+      items: [this.findResult],
+      total: 1,
+    };
+  }
 
   public async issue(input: IssueBankPaymentInputDto): Promise<IssueBankPaymentOutputDto> {
     this.issueCalls.push(input);
@@ -73,6 +88,14 @@ export class BankPaymentFakeAdapterGateway implements IBankPaymentGateway {
       ...this.findResult,
       requestCode: input.requestCode,
     });
+  }
+
+  public async list(input: ListBankPaymentInputDto): Promise<ListBankPaymentOutputDto> {
+    this.listCalls.push(input);
+    if (this.listError) {
+      return Promise.reject(this.listError);
+    }
+    return Promise.resolve(this.listResult);
   }
 
   public async getPdf(input: FindBankPaymentInputDto): Promise<BankPaymentPdfDto> {

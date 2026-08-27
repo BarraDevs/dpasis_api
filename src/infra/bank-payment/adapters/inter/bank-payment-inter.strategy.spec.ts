@@ -67,6 +67,23 @@ describe('BankPaymentInterStrategy - Unit tests', () => {
     expect(cobrancaClient.find).toHaveBeenCalledWith(input);
   });
 
+  it('should delegate list to cobranca client', async() => {
+    const input = {
+      provider: BankPaymentProvider.INTER,
+      startDate: '2026-01-01',
+      endDate: '2026-01-31',
+    };
+    cobrancaClient.list = jest.fn().mockResolvedValue({
+      items: [],
+      total: 0,
+    });
+
+    const result = await sut.list(input);
+
+    expect(cobrancaClient.list).toHaveBeenCalledWith(input);
+    expect(result).toEqual({ items: [], total: 0 });
+  });
+
   it('should delegate getPdf to cobranca client', async() => {
     const input = { provider: BankPaymentProvider.INTER, requestCode: 'req-1' };
     cobrancaClient.getPdf = jest.fn().mockResolvedValue({

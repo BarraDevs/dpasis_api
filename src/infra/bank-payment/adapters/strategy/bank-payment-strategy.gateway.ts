@@ -6,6 +6,7 @@ import { BankPaymentPdfDto } from '../../dtos/bank-payment-pdf.dto';
 import { CancelBankPaymentInputDto } from '../../dtos/cancel-bank-payment.dto';
 import { FindBankPaymentInputDto } from '../../dtos/find-bank-payment.dto';
 import { IssueBankPaymentInputDto, IssueBankPaymentOutputDto } from '../../dtos/issue-bank-payment.dto';
+import { ListBankPaymentInputDto, ListBankPaymentOutputDto } from '../../dtos/list-bank-payment.dto';
 import { BankPaymentProviderNotSupportedError } from '../../errors/bank-payment-provider-not-supported.error';
 import type { IBankPaymentStrategy } from '../../strategies/bank-payment.strategy';
 
@@ -21,6 +22,10 @@ export class BankPaymentStrategyAdapterGateway implements IBankPaymentGateway {
 
   public async find(input: FindBankPaymentInputDto): Promise<BankPaymentDto> {
     return this.resolve(input.provider).find(input);
+  }
+
+  public async list(input: ListBankPaymentInputDto): Promise<ListBankPaymentOutputDto> {
+    return this.resolve(input.provider).list(input);
   }
 
   public async getPdf(input: FindBankPaymentInputDto): Promise<BankPaymentPdfDto> {

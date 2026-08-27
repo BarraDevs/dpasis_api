@@ -1,6 +1,7 @@
 import { BankPaymentPersonType } from '../../../enums/bank-payment-person-type.enum';
 import { BankPaymentProvider } from '../../../enums/bank-payment-provider.enum';
 import { BankPaymentStatus } from '../../../enums/bank-payment-status.enum';
+import { BankPaymentRequestError } from '../../../errors/bank-payment-request.error';
 import { InterCobrancaMapper } from './inter-cobranca.mapper';
 
 
@@ -296,5 +297,189 @@ describe('InterCobrancaMapper - Unit tests', () => {
     const result = InterCobrancaMapper.toPdfDto('req-1', {});
 
     expect(result.pdf).toBe('');
+  });
+
+  it('should map list input to Inter query params with defaults', () => {
+    const result = InterCobrancaMapper.toListQueryParams({
+      provider: BankPaymentProvider.INTER,
+      startDate: '2026-01-01',
+      endDate: '2026-01-31',
+    });
+
+    expect(result).toEqual({
+      dataInicial: '2026-01-01',
+      dataFinal: '2026-01-31',
+      'paginacao.paginaAtual': 0,
+      'paginacao.itensPorPagina': 100,
+    });
+  });
+
+  it('should map page 1 to paginaAtual 0 and omit empty optionals', () => {
+    const result = InterCobrancaMapper.toListQueryParams({
+      provider: BankPaymentProvider.INTER,
+      startDate: '2026-01-01',
+      endDate: '2026-01-31',
+      page: 1,
+      size: 50,
+      payerName: '  ',
+      payerDocument: '',
+    });
+
+    expect(result).toEqual({
+      dataInicial: '2026-01-01',
+      dataFinal: '2026-01-31',
+      'paginacao.paginaAtual': 0,
+      'paginacao.itensPorPagina': 50,
+    });
+  });
+
+  it('should map optional list filters including status', () => {
+    const result = InterCobrancaMapper.toListQueryParams({
+      provider: BankPaymentProvider.INTER,
+      startDate: '2026-01-01',
+      endDate: '2026-01-31',
+      page: 2,
+      size: 20,
+      status: BankPaymentStatus.EMITTED,
+      payerName: ' João ',
+      payerDocument: '11122233344',
+    });
+
+    expect(result).toEqual({
+      dataInicial: '2026-01-01',
+      dataFinal: '2026-01-31',
+      'paginacao.paginaAtual': 1,
+      'paginacao.itensPorPagina': 20,
+      situacao: 'A_RECEBER',
+      pessoaPagadora: 'João',
+      cpfCnpjPessoaPagadora: '11122233344',
+    });
+  });
+
+  it.each([
+    [BankPaymentStatus.RECEIVED, 'RECEBIDO'],
+    [BankPaymentStatus.EMITTED, 'A_RECEBER'],
+    [BankPaymentStatus.MARKED_RECEIVED, 'MARCADO_RECEBIDO'],
+    [BankPaymentStatus.CANCELLED, 'CANCELADO'],
+    [BankPaymentStatus.EXPIRED, 'EXPIRADO'],
+    [BankPaymentStatus.FAILED, 'FALHA_EMISSAO'],
+  ])('should map status filter %s to situacao %s', (status, situacao) => {
+    const result = InterCobrancaMapper.toListQueryParams({
+      provider: BankPaymentProvider.INTER,
+      startDate: '2026-01-01',
+      endDate: '2026-01-31',
+      status,
+    });
+
+    expect(result.situacao).toBe(situacao);
+  });
+
+  it.each([
+    BankPaymentStatus.PAID,
+    BankPaymentStatus.AWAITING_APPROVAL,
+    BankPaymentStatus.UNKNOWN,
+  ])('should throw BankPaymentRequestError for unsupported status filter %s', (status) => {
+    expect(() => InterCobrancaMapper.toListQueryParams({
+      provider: BankPaymentProvider.INTER,
+      startDate: '2026-01-01',
+      endDate: '2026-01-31',
+      status,
+    })).toThrow(BankPaymentRequestError);
+
+    expect(() => InterCobrancaMapper.toListQueryParams({
+      provider: BankPaymentProvider.INTER,
+      startDate: '2026-01-01',
+      endDate: '2026-01-31',
+      status,
+    })).toThrow('Situação não suportada na listagem.');
+  });
+
+  it('should map nested list response to ListBankPaymentOutputDto', () => {
+    const result = InterCobrancaMapper.toListOutput({
+      totalElementos: 1,
+      cobrancas: [
+        {
+          cobranca: {
+            codigoSolicitacao: 'req-1',
+            seuNumero: 'INV-1',
+            situacao: 'A_RECEBER',
+            valorNominal: 10,
+            dataVencimento: '2026-09-01',
+            pagador: {
+              cpfCnpj: '1',
+              tipoPessoa: 'FISICA',
+              nome: 'A',
+            },
+          },
+          boleto: {
+            nossoNumero: '1',
+            codigoBarras: 'bar',
+            linhaDigitavel: 'line',
+          },
+          pix: {
+            txid: 'tx',
+            pixCopiaECola: 'pix-copy',
+          },
+        },
+      ],
+    });
+
+    expect(result.total).toBe(1);
+    expect(result.items).toHaveLength(1);
+    expect(result.items[0]).toEqual(expect.objectContaining({
+      provider: BankPaymentProvider.INTER,
+      requestCode: 'req-1',
+      yourNumber: 'INV-1',
+      status: BankPaymentStatus.EMITTED,
+      amount: 10,
+      dueDate: '2026-09-01',
+      boleto: {
+        ourNumber: '1',
+        barcode: 'bar',
+        digitableLine: 'line',
+      },
+      pix: {
+        txid: 'tx',
+        copyAndPaste: 'pix-copy',
+      },
+    }));
+  });
+
+  it('should map flat list item to BankPaymentDto', () => {
+    const result = InterCobrancaMapper.toListOutput({
+      totalElementos: 1,
+      cobrancas: [
+        {
+          codigoSolicitacao: 'req-flat',
+          seuNumero: 'SN-1',
+          situacao: 'RECEBIDO',
+          valorNominal: 50,
+          dataVencimento: '2026-10-01',
+          boleto: {
+            nossoNumero: '99',
+          },
+          pix: {
+            txid: 'flat-tx',
+          },
+        },
+      ],
+    });
+
+    expect(result.items[0]).toEqual(expect.objectContaining({
+      requestCode: 'req-flat',
+      yourNumber: 'SN-1',
+      status: BankPaymentStatus.RECEIVED,
+      amount: 50,
+      dueDate: '2026-10-01',
+      boleto: { ourNumber: '99', barcode: undefined, digitableLine: undefined },
+      pix: { txid: 'flat-tx', copyAndPaste: undefined },
+    }));
+  });
+
+  it('should default empty list and total 0 when response is empty', () => {
+    expect(InterCobrancaMapper.toListOutput({})).toEqual({
+      items: [],
+      total: 0,
+    });
   });
 });

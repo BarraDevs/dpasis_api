@@ -7,8 +7,11 @@ import { SuccessMessage } from 'src/core/dtos/success-message.dto';
 import { BankPaymentDto } from 'src/infra/bank-payment/dtos/bank-payment.dto';
 import { BankPaymentPdfDto } from 'src/infra/bank-payment/dtos/bank-payment-pdf.dto';
 import { Swagger } from 'src/infra/openapi/swagger';
+import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
 import { CancelBankPayment } from '../../../../application/usecases/cancel-bank-payment/cancel-bank-payment.service';
 import { CancelBankPaymentInputDto } from '../../../../application/usecases/cancel-bank-payment/dtos/cancel-bank-payment.dto';
+import { FindAllBankPaymentQueryDto } from '../../../../application/usecases/find-all-bank-payment/dtos/find-all-bank-payment.dto';
+import { FindAllBankPayment } from '../../../../application/usecases/find-all-bank-payment/find-all-bank-payment.service';
 import {
   BankPaymentRequestCodeParams,
   FindBankPaymentQueryDto,
@@ -26,6 +29,7 @@ import { IssueBankPayment } from '../../../../application/usecases/issue-bank-pa
 export class BankPaymentAdminController {
   constructor(
     private readonly issueBankPayment: IssueBankPayment,
+    private readonly findAllBankPayment: FindAllBankPayment,
     private readonly findBankPayment: FindBankPayment,
     private readonly getBankPaymentPdf: GetBankPaymentPdf,
     private readonly cancelBankPayment: CancelBankPayment,
@@ -42,6 +46,19 @@ export class BankPaymentAdminController {
   })
   public issue(@Body() body: IssueBankPaymentInputDto): Promise<IssueBankPaymentOutputDto> {
     return this.issueBankPayment.execute(body);
+  }
+
+  @Get()
+  @RequiredClaims(Claim.BANK_PAYMENT_READ)
+  @Swagger({
+    tags: ['Cobrança bancária'],
+    summary: 'Listar cobranças por período',
+    applyBadRequest: true,
+    applyServiceUnavailable: true,
+    okPaginatedResponse: BankPaymentDto,
+  })
+  public findAll(@Query() queries: FindAllBankPaymentQueryDto): Promise<IPagination<BankPaymentDto>> {
+    return this.findAllBankPayment.execute(queries);
   }
 
   @Get(':codigoSolicitacao/pdf')

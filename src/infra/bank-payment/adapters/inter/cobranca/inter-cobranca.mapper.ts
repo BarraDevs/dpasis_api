@@ -3,12 +3,16 @@ import { BankPaymentPayerDto } from '../../../dtos/bank-payment-payer.dto';
 import { BankPaymentPdfDto } from '../../../dtos/bank-payment-pdf.dto';
 import { CancelBankPaymentInputDto } from '../../../dtos/cancel-bank-payment.dto';
 import { IssueBankPaymentInputDto } from '../../../dtos/issue-bank-payment.dto';
+import { ListBankPaymentInputDto, ListBankPaymentOutputDto } from '../../../dtos/list-bank-payment.dto';
 import { BankPaymentPersonType } from '../../../enums/bank-payment-person-type.enum';
 import { BankPaymentProvider } from '../../../enums/bank-payment-provider.enum';
 import { BankPaymentStatus } from '../../../enums/bank-payment-status.enum';
+import { BankPaymentRequestError } from '../../../errors/bank-payment-request.error';
 import type {
   InterCancelarCobrancaRequestDto,
   InterCobrancaDetalheDto,
+  InterCobrancaListItemDto,
+  InterCobrancaListResponseDto,
   InterCobrancaPdfResponseDto,
   InterEmitirCobrancaRequestDto,
   InterPagadorDto,
@@ -40,6 +44,15 @@ const STATUS_FROM_INTER: Record<string, BankPaymentStatus> = {
   FALHA_EMISSAO: BankPaymentStatus.FAILED,
 };
 
+const STATUS_TO_INTER: Partial<Record<BankPaymentStatus, string>> = {
+  [BankPaymentStatus.RECEIVED]: 'RECEBIDO',
+  [BankPaymentStatus.EMITTED]: 'A_RECEBER',
+  [BankPaymentStatus.MARKED_RECEIVED]: 'MARCADO_RECEBIDO',
+  [BankPaymentStatus.CANCELLED]: 'CANCELADO',
+  [BankPaymentStatus.EXPIRED]: 'EXPIRADO',
+  [BankPaymentStatus.FAILED]: 'FALHA_EMISSAO',
+};
+
 export class InterCobrancaMapper {
   public static toIssueRequest(input: IssueBankPaymentInputDto): InterEmitirCobrancaRequestDto {
     return {
@@ -54,6 +67,43 @@ export class InterCobrancaMapper {
   public static toCancelRequest(input: CancelBankPaymentInputDto): InterCancelarCobrancaRequestDto {
     return {
       motivoCancelamento: input.reason,
+    };
+  }
+
+  public static toListQueryParams(input: ListBankPaymentInputDto): Record<string, string | number> {
+    const page = input.page ?? 1;
+    const size = input.size ?? 100;
+    const params: Record<string, string | number> = {
+      dataInicial: input.startDate,
+      dataFinal: input.endDate,
+      'paginacao.paginaAtual': page - 1,
+      'paginacao.itensPorPagina': size,
+    };
+
+    if (input.status) {
+      const situacao = STATUS_TO_INTER[input.status];
+      if (!situacao) {
+        throw new BankPaymentRequestError('Situação não suportada na listagem.');
+      }
+      params.situacao = situacao;
+    }
+
+    if (input.payerName?.trim()) {
+      params.pessoaPagadora = input.payerName.trim();
+    }
+
+    if (input.payerDocument?.trim()) {
+      params.cpfCnpjPessoaPagadora = input.payerDocument.trim();
+    }
+
+    return params;
+  }
+
+  public static toListOutput(data: InterCobrancaListResponseDto): ListBankPaymentOutputDto {
+    const items = (data.cobrancas ?? []).map((item) => this.toBankPaymentDtoFromListItem(item));
+    return {
+      items,
+      total: data.totalElementos ?? 0,
     };
   }
 
@@ -92,6 +142,37 @@ export class InterCobrancaMapper {
       requestCode,
       pdf: data.pdf ?? '',
     };
+  }
+
+  private static toBankPaymentDtoFromListItem(item: InterCobrancaListItemDto): BankPaymentDto {
+    if (item.cobranca) {
+      return this.toBankPaymentDto(item.cobranca.codigoSolicitacao ?? '', item);
+    }
+
+    // Flat list item: fields at root + optional boleto/pix
+    return this.toBankPaymentDto(item.codigoSolicitacao ?? '', {
+      cobranca: {
+        codigoSolicitacao: item.codigoSolicitacao,
+        seuNumero: item.seuNumero,
+        dataEmissao: item.dataEmissao,
+        dataVencimento: item.dataVencimento,
+        valorNominal: item.valorNominal,
+        tipoCobranca: item.tipoCobranca,
+        situacao: item.situacao,
+        dataSituacao: item.dataSituacao,
+        valorTotalRecebido: item.valorTotalRecebido,
+        origemRecebimento: item.origemRecebimento,
+        arquivada: item.arquivada,
+        numDiasAgenda: item.numDiasAgenda,
+        descontos: item.descontos,
+        multa: item.multa,
+        mora: item.mora,
+        pagador: item.pagador,
+      },
+      boleto: item.boleto,
+      pix: item.pix,
+      notaFiscal: item.notaFiscal,
+    });
   }
 
   private static toInterPayer(payer: IssueBankPaymentInputDto['payer']): InterPagadorDto {
