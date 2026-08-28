@@ -73,6 +73,7 @@ export class ProcessPollNfseBatch {
 
       nfse.markIssued(issuedNote.nfseNumber, issuedNote.verificationCode, new Date(issuedNote.issueDate));
       await this.nfseRepository.edit(nfse);
+      await this.queueProducer.addIssueBankPaymentJob({ nfseId: nfse.props.id });
       return;
     }
 

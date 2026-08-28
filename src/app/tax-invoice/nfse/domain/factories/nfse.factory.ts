@@ -28,6 +28,8 @@ export class NfseFactory {
       errorMessage: null,
       canceledAt: null,
       cancelReasonCode: null,
+      bankPaymentProvider: null,
+      bankPaymentRequestCode: null,
     });
   }
 
@@ -46,6 +48,8 @@ export class NfseFactory {
       errorMessage: props.errorMessage,
       canceledAt: props.canceledAt,
       cancelReasonCode: props.cancelReasonCode,
+      bankPaymentProvider: props.bankPaymentProvider,
+      bankPaymentRequestCode: props.bankPaymentRequestCode,
       data: props.data,
     });
   }

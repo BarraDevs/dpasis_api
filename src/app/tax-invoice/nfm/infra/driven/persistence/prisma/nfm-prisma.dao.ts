@@ -26,6 +26,8 @@ const NfseSelect = {
   errorMessage: true,
   canceledAt: true,
   cancelReasonCode: true,
+  bankPaymentProvider: true,
+  bankPaymentRequestCode: true,
   data: true,
   createdAt: true,
   updatedAt: true,

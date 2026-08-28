@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ClientAddressModule } from 'src/app/client/client-address/client-address.module';
+import { ClientInvoiceConfigModule } from 'src/app/client/client-invoice-config/client-invoice-config.module';
 import { ClientModule } from 'src/app/client/client/client.module';
 import { CompanyModule } from 'src/app/company/company/company.module';
 import { CompanyNfsConfigModule } from 'src/app/company/company-nfs-config/company-nfs-config.module';
@@ -14,6 +15,7 @@ import { IssueNfse } from './application/usecases/issue-nfse/issue-nfse.service'
   imports: [
     ClientModule,
     ClientAddressModule,
+    ClientInvoiceConfigModule,
     CompanyModule,
     CompanyNfsConfigModule,
     NfsePersistenceModule,

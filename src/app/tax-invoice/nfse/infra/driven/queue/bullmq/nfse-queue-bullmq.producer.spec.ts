@@ -98,4 +98,31 @@ describe('NfseQueueBullmqAdapterProducer', () => {
       await expect(sut.addPollBatchJob(data)).rejects.toBe(err);
     });
   });
+
+  describe('addIssueBankPaymentJob', () => {
+    it('should enqueue bank payment job with retry options', async() => {
+      // Arrange
+      const data = { nfseId: 55 };
+
+      // Act
+      await sut.addIssueBankPaymentJob(data);
+
+      // Assert
+      expect(queueAdd).toHaveBeenCalledTimes(1);
+      expect(queueAdd).toHaveBeenCalledWith(JobName.IssueNfseBankPayment, data, {
+        attempts: 5,
+        backoff: { type: 'exponential', delay: 5000 },
+      });
+    });
+
+    it('should propagate queue.add errors', async() => {
+      // Arrange
+      const data = { nfseId: 55 };
+      const err = new Error('Redis down');
+      queueAdd.mockRejectedValueOnce(err);
+
+      // Act & Assert
+      await expect(sut.addIssueBankPaymentJob(data)).rejects.toBe(err);
+    });
+  });
 });

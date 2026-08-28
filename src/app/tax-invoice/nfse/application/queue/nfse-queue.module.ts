@@ -2,6 +2,8 @@ import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
 import { BullBoardModule } from '@bull-board/nestjs';
 import { BullModule } from '@nestjs/bullmq';
 import { DynamicModule, Module } from '@nestjs/common';
+import { BankPaymentModule } from 'src/app/bank-payment/bank-payment.module';
+import { ClientInvoiceConfigModule } from 'src/app/client/client-invoice-config/client-invoice-config.module';
 import { CompanyNfsConfigModule } from 'src/app/company/company-nfs-config/company-nfs-config.module';
 import { Environment } from 'src/core/config/environment.enum';
 import { TOKENS } from 'src/core/di/token';
@@ -11,6 +13,7 @@ import { NfseQueueBullmqAdapterProducer } from '../../infra/driven/queue/bullmq/
 import { NfseQueueFakeAdapterProducer } from '../../infra/driven/queue/fake/nfse-queue-fake.producer';
 import { NfseBullmqConsumer } from '../../infra/drivers/queue/bullmq/nfse-bullmq.consumer';
 import { NfsePersistenceModule } from '../persistence/nfse-persistence.module';
+import { ProcessIssueNfseBankPayment } from '../usecases/process-issue-nfse-bank-payment/process-issue-nfse-bank-payment.service';
 import { ProcessIssueNfseBatch } from '../usecases/process-issue-nfse-batch/process-issue-nfse-batch.service';
 import { ProcessPollNfseBatch } from '../usecases/process-poll-nfse-batch/process-poll-nfse-batch.service';
 
@@ -38,10 +41,13 @@ export class NfseQueueModule {
         CompanyNfsConfigModule,
         NfsePersistenceModule,
         NfsGenerationModule.register(),
+        BankPaymentModule,
+        ClientInvoiceConfigModule,
       ],
       providers: [
         ProcessIssueNfseBatch,
         ProcessPollNfseBatch,
+        ProcessIssueNfseBankPayment,
         {
           provide: TOKENS.NfseQueueProducer,
           useClass: isTest ? NfseQueueFakeAdapterProducer : NfseQueueBullmqAdapterProducer,

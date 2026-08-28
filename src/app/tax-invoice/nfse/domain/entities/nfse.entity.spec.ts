@@ -19,6 +19,8 @@ function makeNfseProps(overrides: Partial<NfseProps> = {}): NfseProps {
     errorMessage: null,
     canceledAt: null,
     cancelReasonCode: null,
+    bankPaymentProvider: null,
+    bankPaymentRequestCode: null,
     data: {},
     ...overrides,
   };
@@ -324,5 +326,61 @@ describe('Nfse - Unit tests', () => {
     // Assert
     expect(sut.props.status).toBe(NfseStatus.SUBMITTED);
     expect(sut.props.batchProtocol).toBe('protocol-from-processing');
+  });
+
+  it('should link bank payment when status is ISSUED', () => {
+    // Arrange
+    const sut = Nfse._instantiate(makeNfseProps({
+      status: NfseStatus.ISSUED,
+      nfseNumber: '1000',
+      verificationCode: 'ABC',
+      issuedAt: new Date('2026-07-20T10:00:00Z'),
+    }));
+
+    // Act
+    sut.linkBankPayment('INTER', 'request-code-123');
+
+    // Assert
+    expect(sut.hasBankPayment()).toBe(true);
+    expect(sut.props.bankPaymentProvider).toBe('INTER');
+    expect(sut.props.bankPaymentRequestCode).toBe('request-code-123');
+  });
+
+  it('should throw NfseNotIssuedError when linking bank payment without ISSUED status', () => {
+    // Arrange
+    const sut = Nfse._instantiate(makeNfseProps({ status: NfseStatus.PENDING }));
+
+    // Act / Assert
+    expect(() => sut.linkBankPayment('INTER', 'request-code-123')).toThrow(NfseNotIssuedError);
+    expect(sut.hasBankPayment()).toBe(false);
+  });
+
+  it('should report hasBankPayment as false when request code is absent', () => {
+    // Arrange
+    const sut = Nfse._instantiate(makeNfseProps({ status: NfseStatus.ISSUED, nfseNumber: '1' }));
+
+    // Assert
+    expect(sut.hasBankPayment()).toBe(false);
+  });
+
+  it('should report hasBankPayment as false when request code is empty string', () => {
+    // Arrange
+    const sut = Nfse._instantiate(makeNfseProps({
+      status: NfseStatus.ISSUED,
+      nfseNumber: '1',
+      bankPaymentRequestCode: '',
+    }));
+
+    // Assert
+    expect(sut.hasBankPayment()).toBe(false);
+  });
+
+  it('should throw NfseNotIssuedError when linking bank payment on CANCELED status', () => {
+    // Arrange
+    const sut = Nfse._instantiate(makeNfseProps({ status: NfseStatus.CANCELED }));
+
+    // Act & Assert
+    expect(() => sut.linkBankPayment('INTER', 'request-code-123')).toThrow(NfseNotIssuedError);
+    expect(sut.hasBankPayment()).toBe(false);
   });
 });

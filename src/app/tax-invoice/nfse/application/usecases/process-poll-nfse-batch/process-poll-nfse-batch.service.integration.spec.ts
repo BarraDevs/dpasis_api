@@ -36,6 +36,7 @@ function makeSnapshot(): NfseIssueSnapshot {
     providerMunicipalRegistration: '12345',
     clientDocument: '98765432000188',
     clientCompanyName: 'Cliente LTDA',
+    clientType: 'PJ',
   };
 }
 
@@ -119,6 +120,7 @@ describe('ProcessPollNfseBatch - Integration tests', () => {
   beforeEach(async() => {
     await prisma.truncate();
     queueProducer.addedPollBatchJobs.length = 0;
+    queueProducer.addedIssueBankPaymentJobs.length = 0;
     nfsGenerationGateway.getBatchStatusCalls.length = 0;
     nfsGenerationGateway.getBatchStatusError = null;
     nfsGenerationGateway.getBatchStatusResult = { situation: NfsBatchSituation.Success };
@@ -211,6 +213,40 @@ describe('ProcessPollNfseBatch - Integration tests', () => {
     const saved = await prisma.nfse.findUnique({ where: { id: nfse.id } });
     expect(saved?.status).toBe(NfseStatus.FAILED);
     expect(saved?.errorMessage).toBe('Erro ao consultar status do lote no Giss');
+    expect(queueProducer.addedPollBatchJobs).toHaveLength(0);
+  });
+
+  it('should mark the nfse ISSUED and enqueue bank payment job on Giss success', async() => {
+    // Arrange
+    const company = await seedCompany(prisma);
+    await seedProviderConfig(prisma, company.id);
+    const nfse = await seedNfse(prisma, company.id);
+    nfsGenerationGateway.getBatchStatusResult = {
+      situation: NfsBatchSituation.Success,
+      issuedNotes: [{
+        rpsNumber: nfse.rpsNumber,
+        rpsSeries: 'NFSE',
+        nfseNumber: '1000',
+        verificationCode: 'ABC123',
+        issueDate: '2026-07-20T10:00:00',
+      }],
+    };
+
+    // Act
+    await sut.execute({ nfseId: nfse.id, attempt: 1 });
+
+    // Assert
+    const saved = await prisma.nfse.findUnique({ where: { id: nfse.id } });
+    expect(saved).toMatchObject({
+      status: NfseStatus.ISSUED,
+      nfseNumber: '1000',
+      verificationCode: 'ABC123',
+    });
+    expect(queueProducer.addedIssueBankPaymentJobs).toEqual([
+      expect.objectContaining({
+        data: { nfseId: nfse.id },
+      }),
+    ]);
     expect(queueProducer.addedPollBatchJobs).toHaveLength(0);
   });
 });

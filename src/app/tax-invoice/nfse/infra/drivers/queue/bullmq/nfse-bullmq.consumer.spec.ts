@@ -3,8 +3,10 @@ import { Test } from '@nestjs/testing';
 import { Job } from 'bullmq';
 import { AppException } from 'src/core/filters/app.exception';
 import { JobName } from 'src/infra/queue/enums/job-name.enum';
+import type { IssueNfseBankPaymentJobDto } from '../../../../application/queue/jobs/issue-nfse-bank-payment-job.dto';
 import type { IssueNfseBatchJobDto } from '../../../../application/queue/jobs/issue-nfse-batch-job.dto';
 import type { PollNfseBatchJobDto } from '../../../../application/queue/jobs/poll-nfse-batch-job.dto';
+import { ProcessIssueNfseBankPayment } from '../../../../application/usecases/process-issue-nfse-bank-payment/process-issue-nfse-bank-payment.service';
 import { ProcessIssueNfseBatch } from '../../../../application/usecases/process-issue-nfse-batch/process-issue-nfse-batch.service';
 import { ProcessPollNfseBatch } from '../../../../application/usecases/process-poll-nfse-batch/process-poll-nfse-batch.service';
 import { NfseBullmqConsumer } from './nfse-bullmq.consumer';
@@ -21,10 +23,15 @@ function makePollBatchJob(overrides: Partial<PollNfseBatchJobDto> = {}): PollNfs
   return { nfseId: 1, attempt: 1, ...overrides };
 }
 
+function makeIssueBankPaymentJob(overrides: Partial<IssueNfseBankPaymentJobDto> = {}): IssueNfseBankPaymentJobDto {
+  return { nfseId: 1, ...overrides };
+}
+
 describe('NfseBullmqConsumer', () => {
   let sut: NfseBullmqConsumer;
   let processIssueNfseBatch: ProcessIssueNfseBatch;
   let processPollNfseBatch: ProcessPollNfseBatch;
+  let processIssueNfseBankPayment: ProcessIssueNfseBankPayment;
 
   beforeEach(async() => {
     const module = await Test.createTestingModule({
@@ -32,12 +39,14 @@ describe('NfseBullmqConsumer', () => {
         NfseBullmqConsumer,
         { provide: ProcessIssueNfseBatch, useValue: createMock<ProcessIssueNfseBatch>() },
         { provide: ProcessPollNfseBatch, useValue: createMock<ProcessPollNfseBatch>() },
+        { provide: ProcessIssueNfseBankPayment, useValue: createMock<ProcessIssueNfseBankPayment>() },
       ],
     }).compile();
 
     sut = module.get(NfseBullmqConsumer);
     processIssueNfseBatch = module.get(ProcessIssueNfseBatch);
     processPollNfseBatch = module.get(ProcessPollNfseBatch);
+    processIssueNfseBankPayment = module.get(ProcessIssueNfseBankPayment);
   });
 
   it('should be defined', () => {
@@ -57,6 +66,7 @@ describe('NfseBullmqConsumer', () => {
       expect(executeSpy).toHaveBeenCalledTimes(1);
       expect(executeSpy).toHaveBeenCalledWith(payload);
       expect(processPollNfseBatch.execute).not.toHaveBeenCalled();
+      expect(processIssueNfseBankPayment.execute).not.toHaveBeenCalled();
     });
 
     it('should delegate poll-nfse-batch jobs to ProcessPollNfseBatch', async() => {
@@ -71,11 +81,27 @@ describe('NfseBullmqConsumer', () => {
       expect(executeSpy).toHaveBeenCalledTimes(1);
       expect(executeSpy).toHaveBeenCalledWith(payload);
       expect(processIssueNfseBatch.execute).not.toHaveBeenCalled();
+      expect(processIssueNfseBankPayment.execute).not.toHaveBeenCalled();
+    });
+
+    it('should delegate issue-nfse-bank-payment jobs to ProcessIssueNfseBankPayment', async() => {
+      // Arrange
+      const payload = makeIssueBankPaymentJob({ nfseId: 99 });
+      const executeSpy = jest.spyOn(processIssueNfseBankPayment, 'execute').mockResolvedValue();
+
+      // Act
+      await sut.process(makeJob(JobName.IssueNfseBankPayment, payload));
+
+      // Assert
+      expect(executeSpy).toHaveBeenCalledTimes(1);
+      expect(executeSpy).toHaveBeenCalledWith(payload);
+      expect(processIssueNfseBatch.execute).not.toHaveBeenCalled();
+      expect(processPollNfseBatch.execute).not.toHaveBeenCalled();
     });
 
     it('should throw AppException for unknown job name', async() => {
       // Arrange
-      const job = { name: 'unknown-job', data: {} } as Job<IssueNfseBatchJobDto | PollNfseBatchJobDto>;
+      const job = { name: 'unknown-job', data: {} } as Job<IssueNfseBatchJobDto | PollNfseBatchJobDto | IssueNfseBankPaymentJobDto>;
 
       // Act
       const error = await sut.process(job).catch((e: unknown) => e);
@@ -85,6 +111,7 @@ describe('NfseBullmqConsumer', () => {
       expect((error as Error).message).toBe('Unknown job name: unknown-job');
       expect(processIssueNfseBatch.execute).not.toHaveBeenCalled();
       expect(processPollNfseBatch.execute).not.toHaveBeenCalled();
+      expect(processIssueNfseBankPayment.execute).not.toHaveBeenCalled();
     });
 
     it('should propagate ProcessIssueNfseBatch errors', async() => {
@@ -105,6 +132,16 @@ describe('NfseBullmqConsumer', () => {
 
       // Act & Assert
       await expect(sut.process(makeJob(JobName.PollNfseBatch, payload))).rejects.toBe(err);
+    });
+
+    it('should propagate ProcessIssueNfseBankPayment errors', async() => {
+      // Arrange
+      const payload = makeIssueBankPaymentJob();
+      const err = new Error('bank payment failed');
+      jest.spyOn(processIssueNfseBankPayment, 'execute').mockRejectedValue(err);
+
+      // Act & Assert
+      await expect(sut.process(makeJob(JobName.IssueNfseBankPayment, payload))).rejects.toBe(err);
     });
   });
 });

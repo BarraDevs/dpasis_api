@@ -25,6 +25,7 @@ describe('NfseQueueFakeAdapterProducer - Unit tests', () => {
   it('should start with empty job arrays', () => {
     expect(sut.addedIssueBatchJobs).toEqual([]);
     expect(sut.addedPollBatchJobs).toEqual([]);
+    expect(sut.addedIssueBankPaymentJobs).toEqual([]);
   });
 
   describe('addIssueBatchJob', () => {
@@ -81,6 +82,21 @@ describe('NfseQueueFakeAdapterProducer - Unit tests', () => {
       // Assert
       expect(sut.addedPollBatchJobs).toEqual([
         { name: JobName.PollNfseBatch, data, options: undefined },
+      ]);
+    });
+  });
+
+  describe('addIssueBankPaymentJob', () => {
+    it('should append the bank payment job with the correct name and payload', async() => {
+      // Arrange
+      const data = { nfseId: 55 };
+
+      // Act
+      await sut.addIssueBankPaymentJob(data);
+
+      // Assert
+      expect(sut.addedIssueBankPaymentJobs).toEqual([
+        { name: JobName.IssueNfseBankPayment, data },
       ]);
     });
   });

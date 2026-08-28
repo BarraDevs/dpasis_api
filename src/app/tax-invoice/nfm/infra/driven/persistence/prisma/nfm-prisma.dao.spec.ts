@@ -164,6 +164,36 @@ describe('NfmDaoAdapterPrisma', () => {
       });
     });
 
+    it('should return nested nfse bank payment fields via findById', async() => {
+      // Arrange
+      const nfse = await prisma.nfse.create({
+        data: {
+          companyId: 1,
+          clientId: 1,
+          rpsNumber: 51,
+          rpsSeries: 'NFSE',
+          status: NfseStatus.ISSUED,
+          nfseNumber: '9001',
+          verificationCode: 'NFM-BP',
+          issuedAt: new Date('2026-07-20T10:00:00.000Z'),
+          bankPaymentProvider: 'INTER',
+          bankPaymentRequestCode: 'nfm-request-code',
+          data: { providerDocument: '12345678000199' },
+        },
+      });
+      const id = await sut.save(makeSaveNfmData({ nfseId: nfse.id }));
+
+      // Act
+      const result = await sut.findById(id);
+
+      // Assert
+      expect(result?.nfse).toMatchObject({
+        id: nfse.id,
+        bankPaymentProvider: 'INTER',
+        bankPaymentRequestCode: 'nfm-request-code',
+      });
+    });
+
     it('should throw NfmNfseMissingError when nfm has no linked nfse', async() => {
       // Arrange
       const id = await sut.save(makeSaveNfmData());

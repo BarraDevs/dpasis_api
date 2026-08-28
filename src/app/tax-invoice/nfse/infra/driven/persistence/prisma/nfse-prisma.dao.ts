@@ -19,6 +19,8 @@ const NfseSelect = {
   errorMessage: true,
   canceledAt: true,
   cancelReasonCode: true,
+  bankPaymentProvider: true,
+  bankPaymentRequestCode: true,
   data: true,
   createdAt: true,
   updatedAt: true,
@@ -29,7 +31,10 @@ export class NfseDaoAdapterPrisma implements INfseDao {
   constructor(private readonly prisma: PrismaService) {}
 
   public async findById(id: number): Promise<NfseDto | null> {
-    const row = await this.prisma.nfse.findUnique({ where: { id }, select: NfseSelect });
+    const row = await this.prisma.nfse.findUnique({
+      where: { id },
+      select: NfseSelect,
+    });
     return row ? this.mapToDto(row) : null;
   }
 

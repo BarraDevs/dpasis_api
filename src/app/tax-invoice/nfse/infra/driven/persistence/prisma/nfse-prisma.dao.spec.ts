@@ -73,6 +73,8 @@ describe('NfseDaoAdapterPrisma - Integration tests', () => {
         errorMessage: null,
         canceledAt: null,
         cancelReasonCode: null,
+        bankPaymentProvider: null,
+        bankPaymentRequestCode: null,
         data,
       });
       expect(result?.createdAt).toBeInstanceOf(Date);
@@ -137,6 +139,35 @@ describe('NfseDaoAdapterPrisma - Integration tests', () => {
         nfseNumber: '2002',
         verificationCode: 'VER-ABC',
         issuedAt,
+      });
+    });
+
+    it('should return bank payment fields via findById', async() => {
+      // Arrange
+      const issuedAt = new Date('2026-07-20T10:00:00.000Z');
+      const row = await prisma.nfse.create({
+        data: {
+          companyId: 1,
+          clientId: 1,
+          rpsNumber: (Date.now() % 100_000) + 10,
+          rpsSeries: 'NFSE',
+          status: NfseStatus.ISSUED,
+          nfseNumber: '2003',
+          verificationCode: 'VER-BP',
+          issuedAt,
+          bankPaymentProvider: 'INTER',
+          bankPaymentRequestCode: 'request-dao-1',
+          data: {},
+        },
+      });
+
+      // Act
+      const result = await sut.findById(row.id);
+
+      // Assert
+      expect(result).toMatchObject({
+        bankPaymentProvider: 'INTER',
+        bankPaymentRequestCode: 'request-dao-1',
       });
     });
 

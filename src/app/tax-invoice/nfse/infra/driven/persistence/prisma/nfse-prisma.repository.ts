@@ -20,6 +20,8 @@ const NfseSelect = {
   errorMessage: true,
   canceledAt: true,
   cancelReasonCode: true,
+  bankPaymentProvider: true,
+  bankPaymentRequestCode: true,
   data: true,
 } satisfies Prisma.NfseSelect;
 
@@ -59,6 +61,8 @@ export class NfseRepositoryAdapterPrisma implements INfseRepository {
         errorMessage: props.errorMessage,
         canceledAt: props.canceledAt,
         cancelReasonCode: props.cancelReasonCode,
+        bankPaymentProvider: props.bankPaymentProvider,
+        bankPaymentRequestCode: props.bankPaymentRequestCode,
         data: props.data as unknown as Prisma.InputJsonValue,
       },
     });
@@ -88,6 +92,8 @@ export class NfseRepositoryAdapterPrisma implements INfseRepository {
       errorMessage: row.errorMessage,
       canceledAt: row.canceledAt,
       cancelReasonCode: row.cancelReasonCode,
+      bankPaymentProvider: row.bankPaymentProvider,
+      bankPaymentRequestCode: row.bankPaymentRequestCode,
       data: row.data as Record<string, unknown>,
     });
   }

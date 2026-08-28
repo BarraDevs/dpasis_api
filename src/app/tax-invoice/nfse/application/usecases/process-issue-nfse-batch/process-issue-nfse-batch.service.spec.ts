@@ -49,11 +49,13 @@ function makeNfseProps(overrides: Partial<NfseProps> = {}): NfseProps {
     providerMunicipalRegistration: '12345',
     clientDocument: '98765432000188',
     clientCompanyName: 'Cliente LTDA',
+    clientType: 'PJ',
     takerAddress: {
       street: 'Av. Paulista',
       number: '500',
       complement: 'Sala 301',
       neighborhood: 'Bela Vista',
+      city: 'São Paulo',
       cityCodeIbge: '3550308',
       state: 'SP',
       zipCode: '01310-100',
@@ -74,6 +76,8 @@ function makeNfseProps(overrides: Partial<NfseProps> = {}): NfseProps {
     errorMessage: null,
     canceledAt: null,
     cancelReasonCode: null,
+    bankPaymentProvider: null,
+    bankPaymentRequestCode: null,
     data: snapshot as unknown as Record<string, unknown>,
     ...overrides,
   };

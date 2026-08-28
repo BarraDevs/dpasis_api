@@ -1,20 +1,22 @@
 model Nfse {
-  id               Int       @id @default(autoincrement())
-  companyId        Int
-  clientId         Int
-  rpsNumber        Int
-  rpsSeries        String
-  status           String
-  batchProtocol    String?
-  nfseNumber       String?
-  verificationCode String?
-  issuedAt         DateTime?
-  errorMessage     String?
-  canceledAt       DateTime?
-  cancelReasonCode Int?
-  data             Json
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  id                      Int       @id @default(autoincrement())
+  companyId               Int
+  clientId                Int
+  rpsNumber               Int
+  rpsSeries               String
+  status                  String
+  batchProtocol           String?
+  nfseNumber              String?
+  verificationCode        String?
+  issuedAt                DateTime?
+  errorMessage            String?
+  canceledAt              DateTime?
+  cancelReasonCode        Int?
+  bankPaymentProvider     String?
+  bankPaymentRequestCode  String?
+  data                    Json
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
 
   nfm Nfm?
 

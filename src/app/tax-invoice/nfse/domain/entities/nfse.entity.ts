@@ -13,6 +13,8 @@ export type NfseProps = NfseCreateProps & {
   errorMessage: string | null;
   canceledAt: Date | null;
   cancelReasonCode: number | null;
+  bankPaymentProvider: string | null;
+  bankPaymentRequestCode: string | null;
 };
 
 export type NfseCreateProps = {
@@ -91,6 +93,16 @@ export class Nfse {
     this._props.status = NfseStatus.CANCELED;
     this._props.canceledAt = canceledAt;
     this._props.cancelReasonCode = cancelReasonCode;
+  }
+
+  public hasBankPayment(): boolean {
+    return !!this._props.bankPaymentRequestCode;
+  }
+
+  public linkBankPayment(provider: string, requestCode: string): void {
+    this.ensureIssued();
+    this._props.bankPaymentProvider = provider;
+    this._props.bankPaymentRequestCode = requestCode;
   }
 
   private ensureNotIssued(): void {

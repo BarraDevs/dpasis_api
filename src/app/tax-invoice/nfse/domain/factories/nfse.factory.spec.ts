@@ -30,6 +30,8 @@ function makeNfseProps(overrides: Partial<NfseProps> = {}): NfseProps {
     errorMessage: null,
     canceledAt: null,
     cancelReasonCode: null,
+    bankPaymentProvider: null,
+    bankPaymentRequestCode: null,
     data: {},
     ...overrides,
   };
@@ -66,6 +68,8 @@ describe('NfseFactory - Unit tests', () => {
         errorMessage: null,
         canceledAt: null,
         cancelReasonCode: null,
+        bankPaymentProvider: null,
+        bankPaymentRequestCode: null,
         data: { foo: 'bar' },
       });
     });
@@ -150,6 +154,8 @@ describe('NfseFactory - Unit tests', () => {
         errorMessage: null,
         canceledAt: null,
         cancelReasonCode: null,
+        bankPaymentProvider: null,
+        bankPaymentRequestCode: null,
         data: { loaded: true },
       });
 
@@ -159,6 +165,25 @@ describe('NfseFactory - Unit tests', () => {
       // Assert
       expect(sut).toBeInstanceOf(Nfse);
       expect(sut.props).toEqual(props);
+    });
+
+    it('should load preserving non-null bank payment fields', () => {
+      // Arrange
+      const props = makeNfseProps({
+        status: NfseStatus.ISSUED,
+        nfseNumber: '1000',
+        verificationCode: 'ABC',
+        issuedAt: new Date('2026-07-20T10:00:00Z'),
+        bankPaymentProvider: 'INTER',
+        bankPaymentRequestCode: 'request-factory-1',
+      });
+
+      // Act
+      const sut = NfseFactory.load(props);
+
+      // Assert
+      expect(sut.props.bankPaymentProvider).toBe('INTER');
+      expect(sut.props.bankPaymentRequestCode).toBe('request-factory-1');
     });
 
     it('should load a PENDING Nfse preserving null fields', () => {

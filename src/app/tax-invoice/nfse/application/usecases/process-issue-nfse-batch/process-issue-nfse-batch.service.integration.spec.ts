@@ -39,11 +39,13 @@ function makeSnapshot(): NfseIssueSnapshot {
     providerMunicipalRegistration: '12345',
     clientDocument: '98765432000188',
     clientCompanyName: 'Cliente LTDA',
+    clientType: 'PJ',
     takerAddress: {
       street: 'Av. Paulista',
       number: '500',
       complement: 'Sala 301',
       neighborhood: 'Bela Vista',
+      city: 'São Paulo',
       cityCodeIbge: '3550308',
       state: 'SP',
       zipCode: '01310-100',

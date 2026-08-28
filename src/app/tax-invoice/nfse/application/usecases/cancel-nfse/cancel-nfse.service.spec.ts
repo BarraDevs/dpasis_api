@@ -31,6 +31,8 @@ function makeNfseProps(overrides: Partial<NfseProps> = {}): NfseProps {
     errorMessage: null,
     canceledAt: null,
     cancelReasonCode: null,
+    bankPaymentProvider: null,
+    bankPaymentRequestCode: null,
     data: { providerDocument: '12345678000199' },
     ...overrides,
   };

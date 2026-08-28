@@ -31,6 +31,8 @@ function makeNfseProps(overrides: Partial<NfseProps> = {}): NfseProps {
     errorMessage: null,
     canceledAt: null,
     cancelReasonCode: null,
+    bankPaymentProvider: null,
+    bankPaymentRequestCode: null,
     data: { providerDocument: '12345678000199' },
     ...overrides,
   };
@@ -162,6 +164,7 @@ describe('ProcessPollNfseBatch - Unit tests', () => {
       verificationCode: 'ABC123',
     });
     expect(queueProducer.addPollBatchJob).not.toHaveBeenCalled();
+    expect(queueProducer.addIssueBankPaymentJob).toHaveBeenCalledWith({ nfseId: 1 });
   });
 
   it('should mark the nfse FAILED when Giss reports an error', async() => {
@@ -181,6 +184,7 @@ describe('ProcessPollNfseBatch - Unit tests', () => {
     expect(nfse.props.status).toBe(NfseStatus.FAILED);
     expect(nfse.props.errorMessage).toContain('RPS inválido');
     expect(queueProducer.addPollBatchJob).not.toHaveBeenCalled();
+    expect(queueProducer.addIssueBankPaymentJob).not.toHaveBeenCalled();
   });
 
   it('should reschedule the poll job when the batch is still pending', async() => {
@@ -238,6 +242,7 @@ describe('ProcessPollNfseBatch - Unit tests', () => {
       errorMessage: 'Giss retornou sucesso na consulta do lote, mas sem dados da NFS-e emitida',
     });
     expect(queueProducer.addPollBatchJob).not.toHaveBeenCalled();
+    expect(queueProducer.addIssueBankPaymentJob).not.toHaveBeenCalled();
   });
 
   it('should reschedule the poll job when the gateway call fails before max attempts', async() => {

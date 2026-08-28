@@ -253,6 +253,8 @@ describe('CancelNfse - Integration tests', () => {
     expect(saved).toMatchObject({
       status: NfseStatus.ISSUED,
       cancelReasonCode: null,
+      bankPaymentProvider: null,
+      bankPaymentRequestCode: null,
     });
     expect(saved?.canceledAt).toBeNull();
   });

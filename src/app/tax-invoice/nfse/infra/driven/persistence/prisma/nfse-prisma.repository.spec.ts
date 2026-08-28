@@ -122,6 +122,8 @@ describe('NfseRepositoryAdapterPrisma - Integration tests', () => {
         errorMessage: null,
         canceledAt: null,
         cancelReasonCode: null,
+        bankPaymentProvider: null,
+        bankPaymentRequestCode: null,
         data: props.data,
       });
     });
@@ -255,6 +257,33 @@ describe('NfseRepositoryAdapterPrisma - Integration tests', () => {
       });
     });
 
+    it('should persist and rehydrate bank payment fields after linkBankPayment', async() => {
+      // Arrange
+      const id = await sut.save(NfseFactory.create(makeNfseCreateProps()));
+      const issuedAt = new Date('2026-07-20T10:00:00.000Z');
+      let entity = await sut.findById(id);
+      entity!.markIssued('5005', 'VER-5005', issuedAt);
+      await sut.edit(entity!);
+
+      entity = await sut.findById(id);
+      entity!.linkBankPayment('INTER', 'request-code-repo');
+
+      // Act
+      await sut.edit(entity!);
+      const result = await sut.findById(id);
+
+      // Assert
+      expect(result?.props).toMatchObject({
+        bankPaymentProvider: 'INTER',
+        bankPaymentRequestCode: 'request-code-repo',
+      });
+      const saved = await prisma.nfse.findUnique({ where: { id } });
+      expect(saved).toMatchObject({
+        bankPaymentProvider: 'INTER',
+        bankPaymentRequestCode: 'request-code-repo',
+      });
+    });
+
     it('should persist PROCESSING status after markProcessing', async() => {
       // Arrange
       const id = await sut.save(NfseFactory.create(makeNfseCreateProps()));
@@ -314,6 +343,8 @@ describe('NfseRepositoryAdapterPrisma - Integration tests', () => {
         errorMessage: null,
         canceledAt: null,
         cancelReasonCode: null,
+        bankPaymentProvider: null,
+        bankPaymentRequestCode: null,
         data: {},
       });
       entity.markSubmitted('protocol-missing');

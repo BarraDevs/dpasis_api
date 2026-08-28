@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { JobName } from 'src/infra/queue/enums/job-name.enum';
+import type { IssueNfseBankPaymentJobDto } from '../../../../application/queue/jobs/issue-nfse-bank-payment-job.dto';
 import type { IssueNfseBatchJobDto } from '../../../../application/queue/jobs/issue-nfse-batch-job.dto';
 import type { PollNfseBatchJobDto } from '../../../../application/queue/jobs/poll-nfse-batch-job.dto';
 import type { INfseQueueProducer, NfseQueueJobOptions } from '../../../../application/queue/nfse-queue-producer.interface';
@@ -8,6 +9,7 @@ import type { INfseQueueProducer, NfseQueueJobOptions } from '../../../../applic
 export class NfseQueueFakeAdapterProducer implements INfseQueueProducer {
   public readonly addedIssueBatchJobs: Array<{ name: JobName; data: IssueNfseBatchJobDto }> = [];
   public readonly addedPollBatchJobs: Array<{ name: JobName; data: PollNfseBatchJobDto; options?: NfseQueueJobOptions }> = [];
+  public readonly addedIssueBankPaymentJobs: Array<{ name: JobName; data: IssueNfseBankPaymentJobDto }> = [];
 
   public async addIssueBatchJob(data: IssueNfseBatchJobDto): Promise<void> {
     this.addedIssueBatchJobs.push({ name: JobName.IssueNfseBatch, data });
@@ -15,5 +17,9 @@ export class NfseQueueFakeAdapterProducer implements INfseQueueProducer {
 
   public async addPollBatchJob(data: PollNfseBatchJobDto, options?: NfseQueueJobOptions): Promise<void> {
     this.addedPollBatchJobs.push({ name: JobName.PollNfseBatch, data, options });
+  }
+
+  public async addIssueBankPaymentJob(data: IssueNfseBankPaymentJobDto): Promise<void> {
+    this.addedIssueBankPaymentJobs.push({ name: JobName.IssueNfseBankPayment, data });
   }
 }

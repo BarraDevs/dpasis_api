@@ -2,6 +2,9 @@ import { Test } from '@nestjs/testing';
 import { ClientAddressType } from 'src/app/client/client-address/domain/enums/client-address-type.enum';
 import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
 import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum';
+import { ClientInvoiceConfigNotFoundError } from 'src/app/client/client-invoice-config/domain/errors/client-invoice-config-not-found.error';
+import { ClientInvoiceConfigType } from 'src/app/client/client-invoice-config/domain/enums/client-invoice-config-type.enum';
+import { ClientInvoiceConfigDueDateType } from 'src/app/client/client-invoice-config/domain/enums/client-invoice-config-due-date-type.enum';
 import { TOKENS } from 'src/core/di/token';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { NfsProviderEnvironment } from 'src/infra/nfs-generation/dtos/nfs-provider-credentials.dto';
@@ -79,6 +82,48 @@ async function seedClient(prisma: PrismaService, clientId: number) {
   });
 }
 
+
+async function seedBank(prisma: PrismaService) {
+  return prisma.bank.create({
+    data: {
+      drawer: 'Test Drawer',
+      wallet: '123',
+      account: '12345',
+      agency: '0001',
+      bankCode: '001',
+      bankName: 'Test Bank',
+      paymentLocation: null,
+      active: true,
+    },
+  });
+}
+
+async function seedInvoiceConfig(
+  prisma: PrismaService,
+  clientId: number,
+  billingAddressId: number,
+  bankId: number,
+) {
+  return prisma.clientInvoiceConfig.create({
+    data: {
+      clientId,
+      generateNf: true,
+      type: ClientInvoiceConfigType.MONTHLY,
+      emissionDay: 5,
+      dueDateType: ClientInvoiceConfigDueDateType.DUE_DATE,
+      dueDateDay: 15,
+      dueMonth: null,
+      deadlineDays: null,
+      months: [],
+      billingAddressId,
+      bankId,
+      autoProtestBoleto: false,
+      issWithheld: false,
+      message: null,
+    },
+  });
+}
+
 describe('IssueNfse - Integration tests', () => {
   let sut: IssueNfse;
   let prisma: PrismaService;
@@ -117,7 +162,7 @@ describe('IssueNfse - Integration tests', () => {
     await expect(sut.execute(makeIssueNfseInput(company.id, client.id))).rejects.toThrow(CompanyNfsConfigNotFoundError);
   });
 
-  it('should throw ClientAddressForNfseNotFoundError when the client has no billing or main address with cityCodeIbge', async() => {
+  it('should throw ClientInvoiceConfigNotFoundError when the client has no invoice config', async() => {
     // Arrange
     const company = await seedCompany(prisma);
     const client = await seedClient(prisma, Date.now() % 100_000);
@@ -134,6 +179,45 @@ describe('IssueNfse - Integration tests', () => {
         vendorConfig: { municipioSlug: 'demonstracao' },
       },
     });
+
+    // Act & Assert
+    await expect(sut.execute(makeIssueNfseInput(company.id, client.id))).rejects.toThrow(ClientInvoiceConfigNotFoundError);
+  });
+
+  it('should throw ClientAddressForNfseNotFoundError when the client has no billing or main address with cityCodeIbge', async() => {
+    // Arrange
+    const company = await seedCompany(prisma);
+    const client = await seedClient(prisma, Date.now() % 100_000);
+    const bank = await seedBank(prisma);
+    await prisma.nfsProviderConfig.create({
+      data: {
+        companyId: company.id,
+        vendor: 'giss',
+        municipalRegistration: '12345',
+        municipalCodeIbge: '3529401',
+        serieRps: 'NFSE',
+        environment: NfsProviderEnvironment.Demonstration,
+        certFilePath: '/certs/x.pfx',
+        certPasswordEnvVar: 'X_PASS',
+        vendorConfig: { municipioSlug: 'demonstracao' },
+      },
+    });
+    const supportAddress = await prisma.clientAddress.create({
+      data: {
+        clientId: client.id,
+        type: ClientAddressType.SUPPORT,
+        zipCode: '01310-100',
+        street: 'Rua Support',
+        number: '1',
+        complement: null,
+        neighborhood: 'Centro',
+        city: 'São Paulo',
+        cityCodeIbge: '3550308',
+        state: 'SP',
+        active: true,
+      },
+    });
+    await seedInvoiceConfig(prisma, client.id, supportAddress.id, bank.id);
 
     // Act & Assert
     await expect(sut.execute(makeIssueNfseInput(company.id, client.id))).rejects.toThrow(ClientAddressForNfseNotFoundError);
@@ -157,7 +241,8 @@ describe('IssueNfse - Integration tests', () => {
         vendorConfig: { municipioSlug: 'demonstracao' },
       },
     });
-    await prisma.clientAddress.create({
+    const bank = await seedBank(prisma);
+    const billingAddress = await prisma.clientAddress.create({
       data: {
         clientId: client.id,
         type: ClientAddressType.BILLING,
@@ -172,6 +257,7 @@ describe('IssueNfse - Integration tests', () => {
         active: true,
       },
     });
+    await seedInvoiceConfig(prisma, client.id, billingAddress.id, bank.id);
 
     // Act
     const result = await sut.execute(makeIssueNfseInput(company.id, client.id));
@@ -187,6 +273,15 @@ describe('IssueNfse - Integration tests', () => {
       status: NfseStatus.PENDING,
     });
     expect(saved?.rpsNumber).toBe(1);
+    expect(saved?.data).toMatchObject({
+      clientType: expect.any(String),
+      takerAddress: expect.objectContaining({ city: 'São Paulo' }),
+      bankPayment: expect.objectContaining({
+        invoiceType: ClientInvoiceConfigType.MONTHLY,
+        dueDateType: ClientInvoiceConfigDueDateType.DUE_DATE,
+        dueDateDay: 15,
+      }),
+    });
 
     const sequence = await prisma.nfseRpsSequence.findUnique({ where: { companyId: company.id } });
     expect(sequence?.nextId).toBe(2);

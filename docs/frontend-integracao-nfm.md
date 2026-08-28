@@ -69,9 +69,15 @@ Cada item em `data` é `NfmWithNfseDto`:
 - `id`, `clientId`, `clientDocument`, `companyName`, `status`
 - `referenceMonth`, `referenceYear`, `totalValueInCents`, `cnaeNbsIndopId`
 - `createdAt`, `updatedAt`
-- `nfse` — objeto `NfseDto` completo (`nfseNumber`, `status`, `issuedAt`, etc.)
+- `nfse` — objeto `NfseDto` completo (`nfseNumber`, `status`, `issuedAt`, `bankPaymentProvider`, `bankPaymentRequestCode`, etc.)
 
 **Nota:** `nfse.issuedAt` pode ser `null` enquanto a fila Giss processa. A presença de `nfse` já indica que a emissão foi enfileirada.
+
+**Campos aditivos em `nfse` (boleto Inter):**
+- `bankPaymentProvider` — provedor do boleto (ex.: `INTER`); `null` enquanto a emissão do boleto não concluiu
+- `bankPaymentRequestCode` — código da cobrança no Inter; `null` enquanto a fila/Inter estiver pendente
+
+Não há endpoint novo: os campos vêm em `GET /admin/nfm` e `GET /admin/nfm/:id` dentro de `nfse`. Não é breaking.
 
 ### Erros
 
