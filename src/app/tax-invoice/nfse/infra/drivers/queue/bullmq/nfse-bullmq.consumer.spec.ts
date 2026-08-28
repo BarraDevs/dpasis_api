@@ -87,7 +87,7 @@ describe('NfseBullmqConsumer', () => {
     it('should delegate issue-nfse-bank-payment jobs to ProcessIssueNfseBankPayment', async() => {
       // Arrange
       const payload = makeIssueBankPaymentJob({ nfseId: 99 });
-      const executeSpy = jest.spyOn(processIssueNfseBankPayment, 'execute').mockResolvedValue();
+      const executeSpy = jest.spyOn(processIssueNfseBankPayment, 'execute').mockResolvedValue(null);
 
       // Act
       await sut.process(makeJob(JobName.IssueNfseBankPayment, payload));

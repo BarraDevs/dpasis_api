@@ -10,6 +10,7 @@ import { NfseQueueModule } from './application/queue/nfse-queue.module';
 import { CancelNfse } from './application/usecases/cancel-nfse/cancel-nfse.service';
 import { FindNfseById } from './application/usecases/find-nfse-by-id/find-nfse-by-id.service';
 import { IssueNfse } from './application/usecases/issue-nfse/issue-nfse.service';
+import { BankPaymentModule } from 'src/infra/bank-payment/bank-payment.module';
 
 @Module({
   imports: [
@@ -19,18 +20,20 @@ import { IssueNfse } from './application/usecases/issue-nfse/issue-nfse.service'
     CompanyModule,
     CompanyNfsConfigModule,
     NfsePersistenceModule,
+    BankPaymentModule.register(),
     NfseQueueModule.register(),
     NfsGenerationModule.register(),
   ],
   providers: [
-    IssueNfse,
-    FindNfseById,
     CancelNfse,
+    FindNfseById,
+    IssueNfse,
   ],
   exports: [
-    IssueNfse,
-    FindNfseById,
     CancelNfse,
+    FindNfseById,
+    IssueNfse,
+    NfseQueueModule,
   ],
 })
 export class NfseModule {}

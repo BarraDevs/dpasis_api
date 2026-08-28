@@ -141,9 +141,10 @@ describe('ProcessIssueNfseBankPayment - Unit tests', () => {
     );
 
     // Act
-    await sut.execute({ nfseId: 1 });
+    const result = await sut.execute({ nfseId: 1 });
 
     // Assert
+    expect(result).toBeNull();
     expect(issueBankPayment.execute).not.toHaveBeenCalled();
     expect(nfseRepository.edit).not.toHaveBeenCalled();
   });
@@ -159,9 +160,10 @@ describe('ProcessIssueNfseBankPayment - Unit tests', () => {
     );
 
     // Act
-    await sut.execute({ nfseId: 1 });
+    const result = await sut.execute({ nfseId: 1 });
 
     // Assert
+    expect(result).toBeNull();
     expect(issueBankPayment.execute).not.toHaveBeenCalled();
     expect(nfseRepository.edit).not.toHaveBeenCalled();
   });
@@ -176,9 +178,10 @@ describe('ProcessIssueNfseBankPayment - Unit tests', () => {
     );
 
     // Act
-    await sut.execute({ nfseId: 1 });
+    const result = await sut.execute({ nfseId: 1 });
 
     // Assert
+    expect(result).toBeNull();
     expect(issueBankPayment.execute).not.toHaveBeenCalled();
     expect(nfseRepository.edit).not.toHaveBeenCalled();
   });
@@ -193,9 +196,13 @@ describe('ProcessIssueNfseBankPayment - Unit tests', () => {
     });
 
     // Act
-    await sut.execute({ nfseId: 1 });
+    const result = await sut.execute({ nfseId: 1 });
 
     // Assert
+    expect(result).toEqual({
+      provider: BankPaymentProvider.INTER,
+      requestCode: 'req-123',
+    });
     expect(issueBankPayment.execute).toHaveBeenCalledWith(expect.objectContaining({
       provider: BankPaymentProvider.INTER,
       yourNumber: '1',
@@ -225,9 +232,13 @@ describe('ProcessIssueNfseBankPayment - Unit tests', () => {
     });
 
     // Act
-    await sut.execute({ nfseId: 1 });
+    const result = await sut.execute({ nfseId: 1 });
 
     // Assert
+    expect(result).toEqual({
+      provider: BankPaymentProvider.INTER,
+      requestCode: 'req-fallback',
+    });
     expect(findClientInvoiceConfigByClientId.execute).toHaveBeenCalledWith(1);
     expect(issueBankPayment.execute).toHaveBeenCalledWith(expect.objectContaining({
       amount: 1000,
@@ -263,9 +274,10 @@ describe('ProcessIssueNfseBankPayment - Unit tests', () => {
     const loggerSpy = jest.spyOn(logger, 'error');
 
     // Act
-    await sut.execute({ nfseId: 1 });
+    const result = await sut.execute({ nfseId: 1 });
 
     // Assert
+    expect(result).toBeNull();
     expect(loggerSpy).toHaveBeenCalledWith(LogContext.BANK_PAYMENT, expect.objectContaining({
       adapter: 'nfse',
       action: 'processIssueNfseBankPayment',
@@ -284,9 +296,10 @@ describe('ProcessIssueNfseBankPayment - Unit tests', () => {
     const loggerSpy = jest.spyOn(logger, 'error');
 
     // Act
-    await sut.execute({ nfseId: 1 });
+    const result = await sut.execute({ nfseId: 1 });
 
     // Assert
+    expect(result).toBeNull();
     expect(loggerSpy).toHaveBeenCalledWith(LogContext.BANK_PAYMENT, expect.objectContaining({
       adapter: 'nfse',
       action: 'processIssueNfseBankPayment',
@@ -325,9 +338,10 @@ describe('ProcessIssueNfseBankPayment - Unit tests', () => {
     const loggerSpy = jest.spyOn(logger, 'error');
 
     // Act
-    await sut.execute({ nfseId: 1 });
+    const result = await sut.execute({ nfseId: 1 });
 
     // Assert
+    expect(result).toBeNull();
     expect(loggerSpy).toHaveBeenCalledWith(LogContext.BANK_PAYMENT, expect.objectContaining({
       adapter: 'nfse',
       action: 'processIssueNfseBankPayment',

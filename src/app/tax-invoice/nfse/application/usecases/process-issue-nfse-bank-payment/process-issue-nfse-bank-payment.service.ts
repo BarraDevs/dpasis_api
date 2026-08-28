@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { IssueBankPaymentOutputDto } from 'src/app/bank-payment/application/usecases/issue-bank-payment/dtos/issue-bank-payment.dto';
 import { IssueBankPayment } from 'src/app/bank-payment/application/usecases/issue-bank-payment/issue-bank-payment.service';
 import { FindClientInvoiceConfigByClientId } from 'src/app/client/client-invoice-config/application/usecases/find-client-invoice-config-by-client-id/find-client-invoice-config-by-client-id.service';
 import { ClientInvoiceConfigNotFoundError } from 'src/app/client/client-invoice-config/domain/errors/client-invoice-config-not-found.error';
@@ -21,16 +22,16 @@ export class ProcessIssueNfseBankPayment {
     private readonly findClientInvoiceConfigByClientId: FindClientInvoiceConfigByClientId,
   ) {}
 
-  public async execute(input: ProcessIssueNfseBankPaymentInputDto): Promise<void> {
+  public async execute(input: ProcessIssueNfseBankPaymentInputDto): Promise<IssueBankPaymentOutputDto | null> {
     const nfse = await this.nfseRepository.findById(input.nfseId);
     if (!nfse) {
       throw new NfseNotFoundError();
     }
     if (!nfse.isIssued()) {
-      return;
+      return null;
     }
     if (nfse.hasBankPayment()) {
-      return;
+      return null;
     }
 
     const snapshot = nfse.props.data as unknown as NfseIssueSnapshot;
@@ -46,7 +47,7 @@ export class ProcessIssueNfseBankPayment {
           action: 'processIssueNfseBankPayment',
           error,
         });
-        return;
+        return null;
       }
     }
 
@@ -65,13 +66,15 @@ export class ProcessIssueNfseBankPayment {
         action: 'processIssueNfseBankPayment',
         error,
       });
-      return;
+      return null;
     }
 
     const result = await this.issueBankPayment.execute(issueInput);
 
     nfse.linkBankPayment(result.provider, result.requestCode);
     await this.nfseRepository.edit(nfse);
+
+    return result;
   }
 
   private async loadBankPaymentFallback(clientId: number): Promise<NfseBankPaymentSnapshot> {

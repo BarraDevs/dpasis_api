@@ -2,7 +2,7 @@ import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
 import { BullBoardModule } from '@bull-board/nestjs';
 import { BullModule } from '@nestjs/bullmq';
 import { DynamicModule, Module } from '@nestjs/common';
-import { BankPaymentModule } from 'src/app/bank-payment/bank-payment.module';
+import { BankPaymentCoreModule } from 'src/app/bank-payment/bank-payment-core.module';
 import { ClientInvoiceConfigModule } from 'src/app/client/client-invoice-config/client-invoice-config.module';
 import { CompanyNfsConfigModule } from 'src/app/company/company-nfs-config/company-nfs-config.module';
 import { Environment } from 'src/core/config/environment.enum';
@@ -41,7 +41,7 @@ export class NfseQueueModule {
         CompanyNfsConfigModule,
         NfsePersistenceModule,
         NfsGenerationModule.register(),
-        BankPaymentModule,
+        BankPaymentCoreModule,
         ClientInvoiceConfigModule,
       ],
       providers: [
@@ -56,6 +56,7 @@ export class NfseQueueModule {
       ],
       exports: [
         TOKENS.NfseQueueProducer,
+        ProcessIssueNfseBankPayment,
       ],
     };
   }

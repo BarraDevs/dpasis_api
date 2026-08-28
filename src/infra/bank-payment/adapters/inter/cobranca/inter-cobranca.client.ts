@@ -222,21 +222,22 @@ export class InterCobrancaClient {
       return null;
     }
     const record = data as Record<string, unknown>;
-    if (typeof record.message === 'string' && record.message.trim()) {
-      return record.message;
-    }
-    if (typeof record.detail === 'string' && record.detail.trim()) {
-      return record.detail;
-    }
-    if (typeof record.title === 'string' && record.title.trim()) {
-      return record.title;
-    }
     if (Array.isArray(record.violacoes) && record.violacoes.length > 0) {
       const first = record.violacoes[0] as Record<string, unknown>;
       if (typeof first.razao === 'string') {
         return first.razao;
       }
     }
+    if (typeof record.title === 'string' && record.title.trim()) {
+      return record.title;
+    }
+    if (typeof record.detail === 'string' && record.detail.trim()) {
+      return record.detail;
+    }
+    if (typeof record.message === 'string' && record.message.trim()) {
+      return record.message;
+    }
+
     return null;
   }
 }

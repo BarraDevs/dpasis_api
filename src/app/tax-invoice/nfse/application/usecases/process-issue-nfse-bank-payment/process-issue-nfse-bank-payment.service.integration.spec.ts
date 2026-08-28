@@ -225,9 +225,10 @@ describe('ProcessIssueNfseBankPayment - Integration tests', () => {
     const nfse = await seedNfse(prisma, company.id, { status: NfseStatus.PENDING });
 
     // Act
-    await sut.execute({ nfseId: nfse.id });
+    const result = await sut.execute({ nfseId: nfse.id });
 
     // Assert
+    expect(result).toBeNull();
     const saved = await prisma.nfse.findUnique({ where: { id: nfse.id } });
     expect(saved?.bankPaymentProvider).toBeNull();
     expect(saved?.bankPaymentRequestCode).toBeNull();
@@ -243,9 +244,10 @@ describe('ProcessIssueNfseBankPayment - Integration tests', () => {
     });
 
     // Act
-    await sut.execute({ nfseId: nfse.id });
+    const result = await sut.execute({ nfseId: nfse.id });
 
     // Assert
+    expect(result).toBeNull();
     expect(bankPaymentGateway.issueCalls).toHaveLength(0);
     const saved = await prisma.nfse.findUnique({ where: { id: nfse.id } });
     expect(saved?.bankPaymentRequestCode).toBe('already-there');
@@ -261,9 +263,13 @@ describe('ProcessIssueNfseBankPayment - Integration tests', () => {
     };
 
     // Act
-    await sut.execute({ nfseId: nfse.id });
+    const result = await sut.execute({ nfseId: nfse.id });
 
     // Assert
+    expect(result).toEqual({
+      provider: BankPaymentProvider.INTER,
+      requestCode: 'req-integration-1',
+    });
     expect(bankPaymentGateway.issueCalls).toHaveLength(1);
     expect(bankPaymentGateway.issueCalls[0]).toMatchObject({
       provider: BankPaymentProvider.INTER,
@@ -322,9 +328,13 @@ describe('ProcessIssueNfseBankPayment - Integration tests', () => {
     };
 
     // Act
-    await sut.execute({ nfseId: nfse.id });
+    const result = await sut.execute({ nfseId: nfse.id });
 
     // Assert
+    expect(result).toEqual({
+      provider: BankPaymentProvider.INTER,
+      requestCode: 'req-fallback',
+    });
     expect(bankPaymentGateway.issueCalls).toHaveLength(1);
     const saved = await prisma.nfse.findUnique({ where: { id: nfse.id } });
     expect(saved).toMatchObject({
@@ -344,9 +354,10 @@ describe('ProcessIssueNfseBankPayment - Integration tests', () => {
     });
 
     // Act
-    await sut.execute({ nfseId: nfse.id });
+    const result = await sut.execute({ nfseId: nfse.id });
 
     // Assert
+    expect(result).toBeNull();
     expect(bankPaymentGateway.issueCalls).toHaveLength(0);
     const saved = await prisma.nfse.findUnique({ where: { id: nfse.id } });
     expect(saved?.bankPaymentProvider).toBeNull();

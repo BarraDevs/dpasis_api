@@ -7,6 +7,7 @@ import { SuccessMessage } from 'src/core/dtos/success-message.dto';
 import { BankPaymentDto } from 'src/infra/bank-payment/dtos/bank-payment.dto';
 import { BankPaymentPdfDto } from 'src/infra/bank-payment/dtos/bank-payment-pdf.dto';
 import { Swagger } from 'src/infra/openapi/swagger';
+import { Params } from 'src/infra/validators/class/dtos/params';
 import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
 import { CancelBankPayment } from '../../../../application/usecases/cancel-bank-payment/cancel-bank-payment.service';
 import { CancelBankPaymentInputDto } from '../../../../application/usecases/cancel-bank-payment/dtos/cancel-bank-payment.dto';
@@ -18,6 +19,7 @@ import {
 } from '../../../../application/usecases/find-bank-payment/dtos/find-bank-payment.dto';
 import { FindBankPayment } from '../../../../application/usecases/find-bank-payment/find-bank-payment.service';
 import { GetBankPaymentPdf } from '../../../../application/usecases/get-bank-payment-pdf/get-bank-payment-pdf.service';
+import { IssueBankPaymentByNfmId } from '../../../../application/usecases/issue-bank-payment-by-nfm-id/issue-bank-payment-by-nfm-id.service';
 import {
   IssueBankPaymentInputDto,
   IssueBankPaymentOutputDto,
@@ -29,6 +31,7 @@ import { IssueBankPayment } from '../../../../application/usecases/issue-bank-pa
 export class BankPaymentAdminController {
   constructor(
     private readonly issueBankPayment: IssueBankPayment,
+    private readonly issueBankPaymentByNfmId: IssueBankPaymentByNfmId,
     private readonly findAllBankPayment: FindAllBankPayment,
     private readonly findBankPayment: FindBankPayment,
     private readonly getBankPaymentPdf: GetBankPaymentPdf,
@@ -46,6 +49,21 @@ export class BankPaymentAdminController {
   })
   public issue(@Body() body: IssueBankPaymentInputDto): Promise<IssueBankPaymentOutputDto> {
     return this.issueBankPayment.execute(body);
+  }
+
+  @Post('nfm/:id')
+  @RequiredClaims(Claim.BANK_PAYMENT_WRITE)
+  @Swagger({
+    tags: ['Cobrança bancária'],
+    summary: 'Emitir boleto a partir de uma NFM (retry manual)',
+    applyBadRequest: true,
+    applyNotFound: true,
+    applyConflict: true,
+    applyServiceUnavailable: true,
+    createdResponse: IssueBankPaymentOutputDto,
+  })
+  public issueByNfm(@Param() params: Params): Promise<IssueBankPaymentOutputDto> {
+    return this.issueBankPaymentByNfmId.execute(params.id);
   }
 
   @Get()
