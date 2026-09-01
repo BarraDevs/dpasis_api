@@ -33,6 +33,7 @@ import { BankPaymentModule } from 'src/infra/bank-payment/bank-payment.module';
     CancelNfse,
     FindNfseById,
     IssueNfse,
+    NfsePersistenceModule,
     NfseQueueModule,
   ],
 })

@@ -1,14 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import { NfmWithNfseDto } from 'src/app/tax-invoice/nfm/application/dtos/nfm.dto';
+import { NfmDaoRowDto, NfmWithNfseDto } from 'src/app/tax-invoice/nfm/application/dtos/nfm.dto';
 import { INfmDao } from 'src/app/tax-invoice/nfm/application/persistence/dao/nfm-dao.interface';
 import { FindGeneratedNfmsQueryDto } from 'src/app/tax-invoice/nfm/application/usecases/find-generated-nfms/dtos/find-generated-nfms.dto';
-import {
-  EditNfmData,
-  NfmPersistedRowDto,
-  SaveNfmData,
-} from 'src/app/tax-invoice/nfm/application/usecases/save-elegible-nfms/dtos/save-elegible-nfms.dto';
-import { NfmNfseMissingError } from 'src/app/tax-invoice/nfm/domain/errors/nfm-nfse-missing.error';
 import { NfseStatus } from 'src/app/tax-invoice/nfse/domain/enums/nfse-status.enum';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 
@@ -83,10 +77,15 @@ export class NfmDaoAdapterPrisma implements INfmDao {
       this.prisma.nfm.count({ where }),
     ]);
 
-    return [rows.map((row) => this.mapToDto(row)), total];
+    // findAll filtra nfseId not null — linhas sem join de nfse são descartadas sem lançar domínio.
+    const mapped = rows
+      .map((row) => this.mapToRow(row))
+      .filter((row): row is NfmWithNfseDto => row.nfse !== null);
+
+    return [mapped, total];
   }
 
-  public async findById(id: number): Promise<NfmWithNfseDto | null> {
+  public async findById(id: number): Promise<NfmDaoRowDto | null> {
     const row = await this.prisma.nfm.findUnique({
       where: { id },
       select: NfmWithNfseSelect,
@@ -96,69 +95,10 @@ export class NfmDaoAdapterPrisma implements INfmDao {
       return null;
     }
 
-    return this.mapToDto(row);
+    return this.mapToRow(row);
   }
 
-  public async findByClientReferenceAndCnae(
-    clientId: number,
-    referenceMonth: number,
-    referenceYear: number,
-    cnaeNbsIndopId: number,
-  ): Promise<NfmPersistedRowDto | null> {
-    const row = await this.prisma.nfm.findUnique({
-      where: {
-        // Prisma compound unique name (not camelCase by design)
-        // eslint-disable-next-line camelcase
-        clientId_referenceMonth_referenceYear_cnaeNbsIndopId: {
-          clientId,
-          referenceMonth,
-          referenceYear,
-          cnaeNbsIndopId,
-        },
-      },
-      select: {
-        id: true,
-        nfseId: true,
-      },
-    });
-
-    return row;
-  }
-
-  public async save(data: SaveNfmData): Promise<number> {
-    const result = await this.prisma.nfm.create({
-      data: {
-        clientId: data.clientId,
-        clientDocument: data.clientDocument,
-        companyName: data.companyName,
-        referenceMonth: data.referenceMonth,
-        referenceYear: data.referenceYear,
-        totalValueInCents: data.totalValueInCents,
-        cnaeNbsIndopId: data.cnaeNbsIndopId,
-        nfseId: data.nfseId ?? null,
-        data: data.data as unknown as Prisma.InputJsonValue,
-      },
-    });
-
-    return result.id;
-  }
-
-  public async edit(id: number, data: EditNfmData): Promise<void> {
-    await this.prisma.nfm.update({
-      where: { id },
-      data: {
-        ...(data.nfseId !== undefined ? { nfseId: data.nfseId } : {}),
-      },
-    });
-  }
-
-  private mapToDto(
-    row: Prisma.NfmGetPayload<{ select: typeof NfmWithNfseSelect }>,
-  ): NfmWithNfseDto {
-    if (!row.nfse) {
-      throw new NfmNfseMissingError(row.id);
-    }
-
+  private mapToRow(row: Prisma.NfmGetPayload<{ select: typeof NfmWithNfseSelect }>): NfmDaoRowDto {
     return {
       id: row.id,
       clientId: row.clientId,
@@ -170,11 +110,13 @@ export class NfmDaoAdapterPrisma implements INfmDao {
       cnaeNbsIndopId: row.cnaeNbsIndopId,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
-      nfse: {
-        ...row.nfse,
-        status: row.nfse.status as NfseStatus,
-        data: row.nfse.data as Record<string, unknown>,
-      },
+      nfse: row.nfse
+        ? {
+          ...row.nfse,
+          status: row.nfse.status as NfseStatus,
+          data: row.nfse.data as Record<string, unknown>,
+        }
+        : null,
     };
   }
 }

@@ -1,8 +1,10 @@
 import { createMock } from '@golevelup/ts-jest';
 import { Test } from '@nestjs/testing';
+import { NfseDto } from 'src/app/tax-invoice/nfse/application/dtos/nfse.dto';
 import { TOKENS } from 'src/core/di/token';
+import { NfmNfseMissingError } from '../../../domain/errors/nfm-nfse-missing.error';
 import { NfmNotFoundError } from '../../../domain/errors/nfm-not-found.error';
-import { NfmWithNfseDto } from '../../dtos/nfm.dto';
+import { NfmDaoRowDto, NfmWithNfseDto } from '../../dtos/nfm.dto';
 import type { INfmDao } from '../../persistence/dao/nfm-dao.interface';
 import { FindNfmById } from './find-nfm-by-id.service';
 
@@ -34,15 +36,28 @@ describe('FindNfmById - Unit tests', () => {
     await expect(sut.execute(1)).rejects.toThrow(NfmNotFoundError);
   });
 
-  it('should return the nfm when found', async() => {
+  it('should throw NfmNfseMissingError when nfm has no linked nfse', async() => {
     // Arrange
-    const nfm = createMock<NfmWithNfseDto>({ id: 1 });
+    const nfm = createMock<NfmDaoRowDto>({ id: 1, nfse: null });
+    jest.spyOn(nfmDao, 'findById').mockResolvedValue(nfm);
+
+    // Act & Assert
+    await expect(sut.execute(1)).rejects.toThrow(NfmNfseMissingError);
+  });
+
+  it('should return the nfm when found with nfse', async() => {
+    // Arrange
+    const nfse = createMock<NfseDto>({ id: 99 });
+    const nfm = createMock<NfmDaoRowDto>({ id: 1, nfse });
     jest.spyOn(nfmDao, 'findById').mockResolvedValue(nfm);
 
     // Act
     const result = await sut.execute(1);
 
     // Assert
-    expect(result).toEqual(nfm);
+    expect(result).toEqual<NfmWithNfseDto>({
+      ...nfm,
+      nfse,
+    });
   });
 });

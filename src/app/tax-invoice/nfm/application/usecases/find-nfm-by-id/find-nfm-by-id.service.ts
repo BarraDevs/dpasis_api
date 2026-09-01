@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { TOKENS } from 'src/core/di/token';
+import { NfmNfseMissingError } from '../../../domain/errors/nfm-nfse-missing.error';
 import { NfmNotFoundError } from '../../../domain/errors/nfm-not-found.error';
 import { NfmWithNfseDto } from '../../dtos/nfm.dto';
 import type { INfmDao } from '../../persistence/dao/nfm-dao.interface';
@@ -15,7 +16,13 @@ export class FindNfmById {
     if (!result) {
       throw new NfmNotFoundError();
     }
+    if (!result.nfse) {
+      throw new NfmNfseMissingError(id);
+    }
 
-    return result;
+    return {
+      ...result,
+      nfse: result.nfse,
+    };
   }
 }

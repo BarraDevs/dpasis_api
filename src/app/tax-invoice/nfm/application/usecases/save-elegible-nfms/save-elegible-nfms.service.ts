@@ -1,11 +1,15 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { FindCompanyNfsConfigByCompanyId } from 'src/app/company/company-nfs-config/application/usecases/find-company-nfs-config-by-company-id/find-company-nfs-config-by-company-id.service';
+import type { INfseRepository } from 'src/app/tax-invoice/nfse/application/persistence/repository/nfse-repository.interface';
 import { IssueNfse } from 'src/app/tax-invoice/nfse/application/usecases/issue-nfse/issue-nfse.service';
 import { TOKENS } from 'src/core/di/token';
 import { AppException } from 'src/core/filters/app.exception';
+import { Nfm } from '../../../domain/entities/nfm.entity';
+import { NfmWithoutServiceItemsError } from '../../../domain/errors/nfm-without-service-items.error';
+import { NfmFactory } from '../../../domain/factories/nfm.factory';
 import { NfmToIssueNfseMapper } from '../../mappers/nfm-to-issue-nfse.mapper';
 import type { INfmCronRunDao } from '../../persistence/dao/nfm-cron-run-dao.interface';
-import type { INfmDao } from '../../persistence/dao/nfm-dao.interface';
+import type { INfmRepository } from '../../persistence/repository/nfm-repository.interface';
 import { FindElegibleClients } from '../find-elegible-clients/find-elegible-clients.service';
 import {
   SaveElegibleNfmErrorDto,
@@ -15,7 +19,8 @@ import {
 @Injectable()
 export class SaveElegibleNfms {
   constructor(
-    @Inject(TOKENS.NfmDao) private readonly nfmDao: INfmDao,
+    @Inject(TOKENS.NfmRepository) private readonly nfmRepository: INfmRepository,
+    @Inject(TOKENS.NfseRepository) private readonly nfseRepository: INfseRepository,
     @Inject(TOKENS.NfmCronRunDao) private readonly nfmCronRunDao: INfmCronRunDao,
     private readonly findElegibleClients: FindElegibleClients,
     private readonly findCompanyNfsConfigByCompanyId: FindCompanyNfsConfigByCompanyId,
@@ -36,58 +41,63 @@ export class SaveElegibleNfms {
     const referenceMonth = now.getMonth() + 1;
     const referenceYear = now.getFullYear();
 
-    for (const nfm of elegibles) {
-      const cnaeNbsIndopId = nfm.clientItems[0]?.cnaeNbsIndop.id;
-      const clientId = nfm.client.id;
+    for (const elegible of elegibles) {
+      const cnaeNbsIndopId = elegible.clientItems[0]?.cnaeNbsIndop.id;
+      const clientId = elegible.client.id;
 
       if (!cnaeNbsIndopId) {
         result.failed += 1;
         result.errors.push({
           clientId,
           cnaeNbsIndopId: 0,
-          message: 'Grupo NFM sem itens de serviço.',
+          message: new NfmWithoutServiceItemsError().message,
         });
         continue;
       }
 
       try {
-        let nfmId: number;
-        const existing = await this.nfmDao.findByClientReferenceAndCnae(
+        const existing = await this.nfmRepository.findByClientReferenceAndCnae(
           clientId,
           referenceMonth,
           referenceYear,
           cnaeNbsIndopId,
         );
 
-        if (existing?.nfseId) {
+        if (existing?.hasNfse()) {
           result.skipped += 1;
           continue;
         }
 
+        let nfm: Nfm;
         if (existing) {
-          nfmId = existing.id;
+          nfm = existing;
         }
         else {
-          nfmId = await this.nfmDao.save({
+          const created = NfmFactory.create({
             clientId,
-            clientDocument: nfm.client.document,
-            companyName: nfm.client.companyName,
+            clientDocument: elegible.client.document,
+            companyName: elegible.client.companyName,
             referenceMonth,
             referenceYear,
-            totalValueInCents: nfm.clientItems.reduce((sum, item) => sum + item.totalValueInCents, 0),
+            totalValueInCents: elegible.clientItems.reduce((sum, item) => sum + item.totalValueInCents, 0),
             cnaeNbsIndopId,
-            nfseId: null,
-            data: nfm,
+            data: elegible as unknown as Record<string, unknown>,
           });
+          const id = await this.nfmRepository.save(created);
+          nfm = NfmFactory.load({ ...created.props, id });
         }
 
-        const providerConfig = await this.findCompanyNfsConfigByCompanyId.execute(nfm.client.company.id);
-        const issueInput = NfmToIssueNfseMapper.toIssueNfseInput(nfm, providerConfig);
+        const providerConfig = await this.findCompanyNfsConfigByCompanyId.execute(elegible.client.company.id);
+        const issueInput = NfmToIssueNfseMapper.toIssueNfseInput(elegible, providerConfig);
         const issued = await this.issueNfse.execute(issueInput);
 
-        await this.nfmDao.edit(nfmId, {
-          nfseId: issued.id,
-        });
+        const nfse = await this.nfseRepository.findById(issued.id);
+        if (!nfse) {
+          throw new AppException(`NFS-e ${issued.id} não encontrada após emissão.`);
+        }
+
+        nfm.linkNfse(nfse);
+        await this.nfmRepository.edit(nfm);
 
         result.created += 1;
       }

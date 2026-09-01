@@ -4,6 +4,7 @@ import { ClientItemDto } from 'src/app/client/client-item/application/dtos/clien
 import { ClientDto } from 'src/app/client/client/application/dtos/client.dto';
 import { CnaeNbsIndopDto } from 'src/app/global/taxation/cnae-nbs-indop/application/dtos/cnae-nbs-indop.dto';
 import { AppException } from 'src/core/filters/app.exception';
+import { NfmWithoutServiceItemsError } from '../../domain/errors/nfm-without-service-items.error';
 import { NfmDto } from '../dtos/nfm.dto';
 import { NfmToIssueNfseMapper } from './nfm-to-issue-nfse.mapper';
 
@@ -123,6 +124,13 @@ describe('NfmToIssueNfseMapper - Unit tests', () => {
     // Assert
     expect(result.service.issWithheld).toBe(true);
     expect(result.service.issRetentionResponsible).toBe(1);
+  });
+
+  it('should throw NfmWithoutServiceItemsError when clientItems is empty', () => {
+    const nfm = makeNfm({ items: [] });
+
+    expect(() => NfmToIssueNfseMapper.toIssueNfseInput(nfm, makeProviderConfig()))
+      .toThrow(NfmWithoutServiceItemsError);
   });
 
   it('should throw when serviceListItemCode is missing', () => {

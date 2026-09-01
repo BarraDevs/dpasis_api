@@ -2,6 +2,7 @@ import { Test } from '@nestjs/testing';
 import { NfseStatus } from 'src/app/tax-invoice/nfse/domain/enums/nfse-status.enum';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { NfmModule } from '../../../nfm.module';
+import { NfmNfseMissingError } from '../../../domain/errors/nfm-nfse-missing.error';
 import { NfmNotFoundError } from '../../../domain/errors/nfm-not-found.error';
 import { FindNfmById } from './find-nfm-by-id.service';
 
@@ -55,6 +56,24 @@ describe('FindNfmById - Integration tests', () => {
 
   it('should throw NfmNotFoundError when the nfm does not exist', async() => {
     await expect(sut.execute(999_999)).rejects.toThrow(NfmNotFoundError);
+  });
+
+  it('should throw NfmNfseMissingError when nfm has no linked nfse', async() => {
+    const nfm = await prisma.nfm.create({
+      data: {
+        clientId: 1,
+        clientDocument: '00000000000101',
+        companyName: 'Empresa Teste',
+        referenceMonth: 8,
+        referenceYear: 2026,
+        totalValueInCents: 10000,
+        cnaeNbsIndopId,
+        nfseId: null,
+        data: { client: { id: 1 } },
+      },
+    });
+
+    await expect(sut.execute(nfm.id)).rejects.toThrow(NfmNfseMissingError);
   });
 
   it('should return the nfm when it exists with linked nfse', async() => {

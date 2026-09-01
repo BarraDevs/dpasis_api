@@ -1,13 +1,14 @@
 import { CompanyNfsConfigDto } from 'src/app/company/company-nfs-config/application/dtos/company-nfs-config.dto';
 import { IssueNfseInputDto } from 'src/app/tax-invoice/nfse/application/usecases/issue-nfse/dtos/issue-nfse.dto';
 import { AppException } from 'src/core/filters/app.exception';
+import { NfmWithoutServiceItemsError } from '../../domain/errors/nfm-without-service-items.error';
 import { NfmDto } from '../dtos/nfm.dto';
 
 export class NfmToIssueNfseMapper {
   public static toIssueNfseInput(nfm: NfmDto, providerConfig: CompanyNfsConfigDto): IssueNfseInputDto {
     const firstItem = nfm.clientItems[0];
     if (!firstItem) {
-      throw new AppException('Grupo NFM sem itens de serviço.');
+      throw new NfmWithoutServiceItemsError();
     }
 
     const cnaeNbsIndop = firstItem.cnaeNbsIndop;

@@ -22,3 +22,8 @@ export class NfmWithNfseDto {
   updatedAt: Date;
   nfse: NfseDto;
 }
+
+/** Linha lida pelo DAO — NFS-e pode estar ausente (ex.: emissão incompleta). */
+export type NfmDaoRowDto = Omit<NfmWithNfseDto, 'nfse'> & {
+  nfse: NfseDto | null;
+};

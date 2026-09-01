@@ -9,8 +9,10 @@ import { NfsProviderEnvironment } from 'src/infra/nfs-generation/dtos/nfs-provid
 import type { INfsGenerationGateway } from 'src/infra/nfs-generation/nfs-generation.gateway';
 import { buildMinimalCompanyData } from 'src/test/fixtures/minimal-company';
 import { buildMinimalResaleData, nextResaleFixtureId } from 'src/test/fixtures/minimal-resale';
+import { NfmNfseMissingError } from '../../../domain/errors/nfm-nfse-missing.error';
 import { NfmNotFoundError } from '../../../domain/errors/nfm-not-found.error';
 import { NfmModule } from '../../../nfm.module';
+import { NfseNotIssuedError } from 'src/app/tax-invoice/nfse/domain/errors/nfse-not-issued.error';
 import { CancelNfm } from './cancel-nfm.service';
 
 async function seedCompany(prisma: PrismaService) {
@@ -186,5 +188,65 @@ describe('CancelNfm - Integration tests', () => {
       cancelReasonCode: 2,
     });
     expect(saved?.canceledAt).toEqual(new Date('2026-07-29T12:00:00.000Z'));
+  });
+
+  it('should throw NfmNfseMissingError when nfm has no linked nfse', async() => {
+    // Arrange
+    const client = await seedClient(prisma, Date.now() % 100_000);
+    const cnaeNbsIndopId = await seedCnaeNbsIndop(prisma);
+    const nfm = await prisma.nfm.create({
+      data: {
+        clientId: client.id,
+        clientDocument: client.document,
+        companyName: client.companyName,
+        referenceMonth: 8,
+        referenceYear: 2026,
+        totalValueInCents: 10000,
+        cnaeNbsIndopId,
+        nfseId: null,
+        data: { client: { id: client.id } },
+      },
+    });
+
+    // Act & Assert
+    await expect(sut.execute(nfm.id, { cancelReasonCode: 2 })).rejects.toThrow(NfmNfseMissingError);
+    expect(nfsGenerationGateway.cancelNfse).not.toHaveBeenCalled();
+  });
+
+  it('should throw NfseNotIssuedError when linked nfse is PENDING', async() => {
+    // Arrange
+    const company = await seedCompany(prisma);
+    const client = await seedClient(prisma, Date.now() % 100_000);
+    await seedProviderConfig(prisma, company.id);
+    const cnaeNbsIndopId = await seedCnaeNbsIndop(prisma);
+
+    const nfse = await prisma.nfse.create({
+      data: {
+        companyId: company.id,
+        clientId: client.id,
+        rpsNumber: Date.now() % 100_000,
+        rpsSeries: 'NFSE',
+        status: NfseStatus.PENDING,
+        data: { providerDocument: '12345678000199' },
+      },
+    });
+
+    const nfm = await prisma.nfm.create({
+      data: {
+        clientId: client.id,
+        clientDocument: client.document,
+        companyName: client.companyName,
+        referenceMonth: 8,
+        referenceYear: 2026,
+        totalValueInCents: 10000,
+        cnaeNbsIndopId,
+        nfseId: nfse.id,
+        data: { client: { id: client.id } },
+      },
+    });
+
+    // Act & Assert
+    await expect(sut.execute(nfm.id, { cancelReasonCode: 2 })).rejects.toThrow(NfseNotIssuedError);
+    expect(nfsGenerationGateway.cancelNfse).not.toHaveBeenCalled();
   });
 });
