@@ -65,7 +65,7 @@ export class InterCobrancaClient {
       };
     }
     catch (error) {
-      throw this.mapThrownError(error);
+      throw this.mapThrownError(this.asAlreadyExistsError(error) ?? error);
     }
   }
 
@@ -187,12 +187,7 @@ export class InterCobrancaClient {
           const message = this.extractInterErrorMessage(error.response?.data)
             ?? 'Requisição inválida na API de cobrança do Banco Inter.';
 
-          const existingRequestCode = this.extractDuplicateRequestCode(error.response?.data);
-          if (existingRequestCode) {
-            throw new BankPaymentAlreadyExistsError(existingRequestCode, message);
-          }
-
-          throw new BankPaymentRequestError(message);
+          throw new BankPaymentRequestError(message, this.extractInterErrorDetail(error.response?.data));
         }
       }
 
@@ -260,16 +255,36 @@ export class InterCobrancaClient {
     return null;
   }
 
-  private extractDuplicateRequestCode(data: unknown): string | null {
+  private extractInterErrorDetail(data: unknown): string | undefined {
     if (!data || typeof data !== 'object') {
-      return null;
+      return undefined;
     }
 
     const detail = (data as Record<string, unknown>).detail;
-    if (typeof detail !== 'string') {
+    return typeof detail === 'string' ? detail : undefined;
+  }
+
+  /**
+   * Dentro da janela de idempotência implícita de 30 min, o Inter recusa a segunda emissão com
+   * HTTP 400 e devolve o `codigoSolicitacao` da cobrança que já criou. Sem traduzir isso, o job
+   * morreria com erro permanente **depois** de o boleto existir, deixando uma cobrança viva e
+   * cobrável sem vínculo local.
+   *
+   * Vive aqui, chamado só por `issue`, e não no tratamento genérico de 4xx: é na emissão que "já
+   * existe" significa vincular em vez de falhar. Aplicado a toda operação, qualquer mensagem com um
+   * UUID — a recusa de cancelamento de uma cobrança já paga, por exemplo — viraria um 409
+   * "cobrança já emitida".
+   */
+  private asAlreadyExistsError(error: unknown): BankPaymentAlreadyExistsError | null {
+    if (!(error instanceof BankPaymentRequestError) || !error.detail) {
       return null;
     }
 
-    return InterCobrancaClient.DUPLICATE_REQUEST_CODE_PATTERN.exec(detail)?.[1] ?? null;
+    const existingRequestCode = InterCobrancaClient.DUPLICATE_REQUEST_CODE_PATTERN.exec(error.detail)?.[1];
+    if (!existingRequestCode) {
+      return null;
+    }
+
+    return new BankPaymentAlreadyExistsError(existingRequestCode, error.message);
   }
 }

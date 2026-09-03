@@ -345,23 +345,59 @@ describe('Nfse - Unit tests', () => {
     expect(() => sut.markCanceled(new Date(), 1)).toThrow('Nfse já está cancelada.');
   });
 
-  it('should allow markSubmitted, markProcessing and markFailed on a CANCELED Nfse', () => {
+  it('should refuse every state mutation on a CANCELED Nfse', () => {
     // Arrange
-    const sutSubmitted = Nfse._instantiate(makeNfseProps({ status: NfseStatus.CANCELED }));
-    const sutProcessing = Nfse._instantiate(makeNfseProps({ status: NfseStatus.CANCELED }));
-    const sutFailed = Nfse._instantiate(makeNfseProps({ status: NfseStatus.CANCELED }));
+    const sut = Nfse._instantiate(makeNfseProps({ status: NfseStatus.CANCELED }));
+
+    // Act & Assert
+    expect(() => sut.markSubmitted('protocol-from-canceled')).toThrow(NfseAlreadyCanceledError);
+    expect(() => sut.markProcessing()).toThrow(NfseAlreadyCanceledError);
+    expect(() => sut.markFailed('erro após cancelamento')).toThrow(NfseAlreadyCanceledError);
+    expect(() => sut.markIssued('1001', 'XYZ', new Date())).toThrow(NfseAlreadyCanceledError);
+    expect(() => sut.markAwaitingProvider('qualquer motivo')).toThrow(NfseAlreadyCanceledError);
+    expect(sut.props.status).toBe(NfseStatus.CANCELED);
+  });
+
+  it.each([
+    NfseStatus.FAILED,
+    NfseStatus.AWAITING_PROVIDER,
+  ])('should keep a %s Nfse mutable, because the target state machine reopens it', (status) => {
+    // Arrange
+    const sut = Nfse._instantiate(makeNfseProps({ status }));
 
     // Act
-    sutSubmitted.markSubmitted('protocol-from-canceled');
-    sutProcessing.markProcessing();
-    sutFailed.markFailed('erro após cancelamento');
+    sut.markSubmitted('protocol-reopened');
 
     // Assert
-    expect(sutSubmitted.props.status).toBe(NfseStatus.SUBMITTED);
-    expect(sutSubmitted.props.batchProtocol).toBe('protocol-from-canceled');
-    expect(sutProcessing.props.status).toBe(NfseStatus.PROCESSING);
-    expect(sutFailed.props.status).toBe(NfseStatus.FAILED);
-    expect(sutFailed.props.errorMessage).toBe('erro após cancelamento');
+    expect(sut.props.status).toBe(NfseStatus.SUBMITTED);
+    expect(sut.props.batchProtocol).toBe('protocol-reopened');
+  });
+
+  describe('canSubmitToProvider', () => {
+    it('should allow submitting a PENDING Nfse that never reached the provider', () => {
+      const sut = Nfse._instantiate(makeNfseProps({ status: NfseStatus.PENDING, batchProtocol: null }));
+
+      expect(sut.canSubmitToProvider()).toBe(true);
+    });
+
+    it.each([
+      NfseStatus.SUBMITTED,
+      NfseStatus.PROCESSING,
+      NfseStatus.AWAITING_PROVIDER,
+      NfseStatus.ISSUED,
+      NfseStatus.FAILED,
+      NfseStatus.CANCELED,
+    ])('should refuse to submit a Nfse with status %s', (status) => {
+      const sut = Nfse._instantiate(makeNfseProps({ status, batchProtocol: 'protocol-123' }));
+
+      expect(sut.canSubmitToProvider()).toBe(false);
+    });
+
+    it('should refuse to submit a PENDING Nfse that already carries a batchProtocol', () => {
+      const sut = Nfse._instantiate(makeNfseProps({ status: NfseStatus.PENDING, batchProtocol: 'protocol-123' }));
+
+      expect(sut.canSubmitToProvider()).toBe(false);
+    });
   });
 
   it('should allow markSubmitted from PROCESSING status', () => {

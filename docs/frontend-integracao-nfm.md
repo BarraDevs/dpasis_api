@@ -35,6 +35,13 @@ ItemListaServico (LC 116) na correspondência CNAE/NBS/INDOP: [frontend-integrac
 | `POST /admin/nfse/:id/cancel` (`:id` = NFS-e, claim `NFSE_WRITE`) | `POST /admin/nfm/:id/cancel` (`:id` = **NFM**, claim `NFM_WRITE`) — **breaking** |
 | `GET /admin/nfm/invoices` | **Removido.** Consulta de NFS-e no Giss saiu da API. Listar notas via `GET /admin/nfm`. |
 
+### Mudanças aditivas (não breaking)
+
+| O quê | Onde |
+|-------|------|
+| Novo valor `AWAITING_PROVIDER` em `nfse.status` | `GET /admin/nfm`, `GET /admin/nfm/:id` — ver [Status da NFS-e](#status-da-nfs-e-nfsestatus) |
+| Novos campos `bankPaymentCanceled` e `bankPaymentError` na resposta | `POST /admin/nfm/:id/cancel` |
+
 ### Fluxo sugerido na UI
 
 1. **Tela lista** — `GET /admin/nfm?dateStart&dateEnd` exibe NFMs com NFS-e vinculada no intervalo.
@@ -84,6 +91,45 @@ Não há endpoint novo: os campos vêm em `GET /admin/nfm` e `GET /admin/nfm/:id
 | Status | Quando |
 |--------|--------|
 | 400 | Formato de data inválido ou `dateStart > dateEnd` |
+
+---
+
+## Status da NFS-e (`nfse.status`)
+
+Vale para `GET /admin/nfm`, `GET /admin/nfm/:id` e para o `status` devolvido pelo cancelamento.
+
+| Valor | Significado | Terminal? | O que a UI faz |
+|-------|-------------|-----------|----------------|
+| `PENDING` | Criada localmente, ainda não enviada ao Giss | não | "Aguardando envio" |
+| `SUBMITTED` | Lote aceito pelo Giss, com protocolo; aguardando processamento | não | "Em processamento" |
+| `PROCESSING` | Consulta do lote em andamento (reagendada em backoff) | não | "Em processamento" |
+| `AWAITING_PROVIDER` | **Novo.** Não se sabe se o Giss emitiu a nota | não | Ver abaixo — **não** tratar como erro |
+| `ISSUED` | Emitida. `nfseNumber`, `verificationCode` e `issuedAt` preenchidos | sim | Habilita cancelar |
+| `FAILED` | Recusada pelo Giss por regra de negócio, ou erro determinístico de configuração. A nota **não** existe do outro lado | sim | Mostrar `errorMessage` |
+| `CANCELED` | Cancelada. `canceledAt` e `cancelReasonCode` preenchidos | sim | — |
+
+### `AWAITING_PROVIDER` — o status novo
+
+Status **aditivo**: uma tela que hoje trata qualquer coisa fora de `ISSUED`/`FAILED` como "em
+andamento" não quebra, mas passa a mostrar a mensagem errada.
+
+Significa: a requisição ao Giss terminou de forma ambígua — timeout, erro de rede, TLS, 5xx, ou o
+próprio Giss respondendo que **já conhece aquele RPS**. A nota provavelmente foi emitida, e só uma
+consulta ao provedor pode confirmar. Antes, esses casos viravam `FAILED`, o que fazia a operação
+parar de procurar por uma nota que existia.
+
+O motivo exato vem em `nfse.errorMessage`.
+
+Regras de UI:
+
+- **Não** é erro. Não usar cor/ícone de falha — usar estado de atenção ("aguardando confirmação do
+  provedor").
+- **Não** oferecer botão de reemitir. Reemitir às cegas duplica a nota fiscal.
+- Nada resolve esse estado automaticamente hoje: a reconciliação com o Giss ainda não existe. A
+  saída é consultar a nota no portal do provedor e resolver manualmente.
+- Não habilitar cancelamento (só `ISSUED` cancela).
+
+O backend já alerta por e-mail quando há notas nesse estado, então a UI não precisa notificar.
 
 ---
 
@@ -160,13 +206,36 @@ Exemplo:
 { "cancelReasonCode": 2 }
 ```
 
+### Cancelamento em cascata do boleto
+
+Cancelar a NFM passou a cancelar **também** a cobrança bancária vinculada, quando ela existe
+(`nfse.bankPaymentRequestCode` preenchido). O boleto é cancelado antes da nota, porque reemitir uma
+cobrança é reversível e cancelar uma NFS-e não é.
+
+A falha no cancelamento do boleto **não** aborta o cancelamento da nota: a rota conclui com 200, a
+NFS-e fica `CANCELED` e a pendência do boleto volta na resposta. É intencional — travar o
+cancelamento fiscal por causa da cobrança deixaria a operação sem saída.
+
 ### Response (200)
 
 ```json
 {
   "id": 42,
   "status": "CANCELED",
-  "canceledAt": "2026-07-29T12:00:00.000Z"
+  "canceledAt": "2026-07-29T12:00:00.000Z",
+  "bankPaymentCanceled": true
+}
+```
+
+Quando havia boleto e o cancelamento dele falhou:
+
+```json
+{
+  "id": 42,
+  "status": "CANCELED",
+  "canceledAt": "2026-07-29T12:00:00.000Z",
+  "bankPaymentCanceled": false,
+  "bankPaymentError": "Falha na comunicação com a API de cobrança do Banco Inter."
 }
 ```
 
@@ -175,6 +244,13 @@ Exemplo:
 | `id` | ID da **NFM** (igual ao path) |
 | `status` | Status da NFS-e após o cancelamento (`CANCELED`) |
 | `canceledAt` | Data/hora confirmada pelo provedor |
+| `bankPaymentCanceled` | **Aditivo.** `true` só quando havia boleto vinculado e ele foi cancelado. `false` tanto quando não havia boleto quanto quando o cancelamento falhou — use `bankPaymentError` para distinguir |
+| `bankPaymentError` | **Aditivo, opcional.** Presente **apenas** quando havia boleto e o cancelamento falhou. Exige tratamento manual: a cobrança continua viva e cobrável |
+
+**Na UI:** com `bankPaymentError` presente, mostrar aviso persistente (não toast) indicando que a
+NFS-e foi cancelada mas a cobrança **não**, e que ela precisa ser cancelada manualmente pelo
+provedor. `bankPaymentCanceled: false` sem `bankPaymentError` é o caso normal de nota sem boleto —
+não mostrar nada.
 
 ### Erros
 
@@ -250,6 +326,8 @@ HTTP **não** espera a GISS. Só persistência + enqueue.
 3. Detalhe: `GET /admin/nfm/:id` — mesmo `NfmWithNfseDto`; tratar **404**.
 4. **Breaking:** parar `POST /admin/nfse`, `GET /admin/nfse/:id` e `POST /admin/nfse/:id/cancel`. Claims `NFSE_READ` / `NFSE_WRITE` saíram. Emissão via `POST /admin/nfm`; detalhe via `GET /admin/nfm/:id`; cancelamento via `POST /admin/nfm/:id/cancel` (id da **NFM**, claim `NFM_WRITE`).
 5. Cancelar só quando `nfse.status === 'ISSUED'`; body `{ cancelReasonCode: 1 | 2 | 4 }`; após 200, refrescar detalhe.
+5.1. **Aditivo:** tratar `AWAITING_PROVIDER` em `nfse.status` — estado de atenção, não de erro; sem botão de reemitir; sem botão de cancelar. Ver [Status da NFS-e](#status-da-nfs-e-nfsestatus).
+5.2. **Aditivo:** na resposta do cancelamento, ler `bankPaymentCanceled` e `bankPaymentError`. Com `bankPaymentError` presente, avisar de forma persistente que a cobrança **não** foi cancelada e precisa de tratamento manual.
 6. Botão gerar → tela elegíveis → confirmar com `POST /admin/nfm`.
 7. `POST /admin/nfm`: exibir resumo `created` / `skipped` / `failed` + lista de `errors`.
 8. Garantir cadastro fiscal antes de emitir: LC 116 na correspondência, ISS/Simples/`municipalTaxCode` na config da empresa, `issWithheld` no invoice config do cliente.

@@ -32,7 +32,17 @@ export class ProcessIssueNfseBatch {
     if (!nfse) {
       throw new NfseNotFoundError();
     }
-    if (nfse.isIssued()) {
+    // A guarda é `canSubmitToProvider()`, não `isIssued()`: um job reentregue pelo BullMQ (worker
+    // morto entre o `issueBatch` e o `edit`, job "stalled") encontraria a nota em `SUBMITTED` ou
+    // `AWAITING_PROVIDER` e reenviaria o mesmo RPS — reenvio cego, que é o caminho para uma segunda
+    // NFS-e. Só o provedor pode afirmar que a nota não existe, e essa consulta ainda não existe.
+    if (!nfse.canSubmitToProvider()) {
+      this.logger.debug(LogContext.NFS_GENERATION, {
+        adapter: 'nfse',
+        action: 'processIssueNfseBatch',
+        nfseId: nfse.props.id,
+        errorMessage: `Envio ignorado: NFS-e em ${nfse.props.status} não pode ser reenviada por este caminho`,
+      });
       return;
     }
 

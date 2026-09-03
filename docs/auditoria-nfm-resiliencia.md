@@ -816,6 +816,26 @@ sequenceDiagram
 - **Correção proposta:** `isTerminal()` deve incluir `CANCELED`; substituir os guards ad-hoc por uma
   tabela de transições permitidas validada num único ponto da entidade.
 - **Esforço:** P
+- **Status:** ✅ resolvido, em duas etapas.
+
+  A Onda 1 incluiu `CANCELED` em `isTerminal()`. Só que `isTerminal()` tinha um consumidor único
+  (`canPoll()`), e os `mark*` continuavam com `ensureNotIssued()`, que só barra `ISSUED` — o
+  invariante passou a existir no caminho do poll e a não existir em mais nenhum. A revisão de
+  2026-09-03 fechou a segunda metade:
+
+  - `ensureNotIssued()` virou `ensureMutable()` e barra `ISSUED` **e** `CANCELED`, dentro da
+    entidade, para os cinco `mark*`. `FAILED` e `AWAITING_PROVIDER` continuam mutáveis de propósito
+    — a §2.4 prevê `REJECTED → DRAFT` depois de corrigir o cadastro e `AWAITING_PROVIDER → ISSUED`
+    quando a consulta ao provedor confirmar a nota.
+  - `ProcessIssueNfseBatch` deixou de guardar por `isIssued()` e passou a guardar por
+    `Nfse.canSubmitToProvider()` (`PENDING` sem protocolo). Era o buraco de verdade: um job
+    reentregue pelo BullMQ — worker morto entre o `issueBatch` e o `edit` — encontrava a nota em
+    `SUBMITTED` ou `AWAITING_PROVIDER` e **reenviava o mesmo RPS**, reenvio cego que o R2 proíbe.
+    Até aqui só o `E10` continha esse caminho; agora ele não é percorrido.
+
+  Ainda não é a "tabela de transições permitidas" da correção proposta — é o guard único na
+  entidade, que era o que faltava para a Onda 3 não ter que reimplementar a regra em cada chamador
+  novo (rota de reemissão, job de reconciliação).
 
 ### [P2-02] Número de RPS é consumido antes de qualquer garantia de uso: buracos na numeração
 
@@ -1007,6 +1027,50 @@ sequenceDiagram
 - **Prioridade revisada:** o item continua P2 pelo tipo de risco, mas tem prazo: a validação de
   `notAfter` deve entrar na Onda 1, antes de 2026-09-25, para que o vencimento do certificado de
   teste apareça como mensagem e não como incidente.
+
+### [P2-12] O alerta se perde em silêncio quando o Redis ou o SMTP falham
+
+> Achado da revisão pós-Onda 1 (2026-09-03). Não existia antes porque não existia canal de alerta;
+> nasce junto com o `AlertGateway`. **Pendente da Onda 1** — sem isso, o canal criado para acabar
+> com a dependência de alguém olhar por acaso volta a depender de alguém olhar por acaso.
+
+- **Onde:** `sweep-nfse-alerts.service.ts:93-105`; `cache-redis.gateway.ts:73-92`;
+  `alert-smtp.gateway.ts:20-45`
+- **O que acontece hoje:** são duas perdas silenciosas independentes, ambas na varredura periódica,
+  que é justamente onde ninguém está olhando.
+
+  1. **Redis fora do ar mata o alerta.** `send()` reivindica a janela de digest com
+     `cacheGateway.setIfAbsent` **antes** de mandar o e-mail e desiste se não ganhar a chave
+     (`sweep-nfse-alerts.service.ts:99-103`). O adapter Redis devolve `false` tanto quando outra
+     réplica já reivindicou quanto quando o Redis está fora do ar ou o client é nulo
+     (`cache-redis.gateway.ts:76,86-91`) — o `catch` devolve `false` de propósito, para que ninguém
+     trate falha de trava como permissão. A decisão está certa para uma trava; está errada para um
+     alerta: o chamador não distingue "outra instância já avisou" de "não consegui avisar", e trata
+     os dois como sucesso.
+  2. **SMTP fora do ar mata o alerta pela janela inteira.** A janela é reivindicada antes do envio,
+     e `AlertSmtpAdapterGateway.send` engole a exceção do `sendMail` de propósito
+     (`alert-smtp.gateway.ts:37-44`), para que um SMTP fora do ar não derrube a varredura. Só que a
+     chave já foi gravada com o TTL da janela: a próxima varredura encontra a chave ocupada e não
+     tenta de novo. Um `sendMail` que falha custa uma janela inteira de silêncio — 15 min para
+     `NfseStuck` e `NfseIssuedWithoutBankPayment`, **12h** para `NfseAwaitingProvider`, 23h para o
+     fechamento diário.
+- **Cenário de falha:** o Redis reinicia durante uma indisponibilidade do GISS. As notas se
+  acumulam em `AWAITING_PROVIDER`, a varredura roda a cada 15 min, `setIfAbsent` devolve `false` em
+  todas, e nenhum e-mail sai. O único rastro é `LogContext.CACHE` com `action: 'setIfAbsent'` — no
+  mesmo log que ninguém está lendo, porque o alerta é que deveria trazer a pessoa até ele.
+- **Impacto:** operacional — anula o R7 exatamente no incidente em que ele mais importa, porque
+  Redis e SMTP tendem a cair junto com o resto.
+- **Correção proposta:**
+  - Distinguir "não ganhei a janela" de "não consegui verificar". O caminho mais curto sem mudar a
+    semântica do `ICacheGateway` é o adapter Redis relançar no `catch` de `setIfAbsent` e o
+    `SweepNfseAlerts` decidir: numa falha de trava, **enviar assim mesmo**. Um e-mail duplicado por
+    réplica custa incômodo; um e-mail que não sai custa o incidente.
+  - Reivindicar a janela **depois** do envio bem-sucedido, não antes. Para isso o `IAlertGateway`
+    precisa dizer se entregou — `send(): Promise<boolean>` — em vez de engolir e retornar `void`.
+    Continua sem relançar (a varredura não pode cair), mas o chamador passa a saber.
+  - Alertar sobre o próprio canal: se o envio falhar N janelas seguidas, é um incidente por si só.
+    Depende de métricas (Onda 4); as duas correções acima não dependem de nada.
+- **Esforço:** P
 
 ---
 
@@ -1310,6 +1374,18 @@ Comando de CLI equivalente para os dois primeiros (`npm run nfse:status -- --nfm
 > rotação junto à AC e o purge do histórico **foram executados** em 2026-09-03, fechando o P0-07;
 > ver `docs/runbook-certificados.md`.
 >
+> **Revisão de 2026-09-03.** Três correções entraram depois da entrega, todas dentro do escopo da
+> onda: o guard de estado saiu dos chamadores e virou `ensureMutable()` + `canSubmitToProvider()` na
+> entidade, fechando um reenvio cego de RPS por reentrega de job (P2-01); a leitura da recusa por
+> duplicidade do Inter saiu do `request()` genérico e passou a valer só em `issue()`, onde "já
+> existe" significa vincular em vez de falhar (P0-02); e a mensagem de esgotamento do poll passou a
+> contar as 8 consultas que realmente acontecem, não os 7 degraus do ladder.
+>
+> **Pendente da onda (revisão de 2026-09-03).** A varredura de alertas perde o e-mail em silêncio
+> quando o Redis ou o SMTP falham: a janela de digest é reivindicada **antes** do envio, e uma falha
+> de trava é indistinguível de "outra réplica já avisou". Ver P2-12. É P de esforço e não depende de
+> nada — mas enquanto não entrar, o R7 continua aberto no cenário que importa.
+>
 > **O que a Onda 3 herda:** notas paradas em `AWAITING_PROVIDER` são o primeiro insumo do job de
 > reconciliação. Nesta onda nada as varre — a varredura depende de `ConsultarNfsePorRps` e o alerta
 > depende do `AlertGateway`, ambos fora do escopo —, então até lá elas só aparecem por SQL. É troca
@@ -1329,6 +1405,7 @@ Comando de CLI equivalente para os dois primeiros (`npm run nfse:status -- --nfm
 | ✅ Congelar `dataVencimento`/`valorNominal` entre tentativas do job de boleto | P0-02 | P | Sem schema: basta reusar o valor da primeira tentativa. Transforma a idempotência de 30 min do Inter de acaso em garantia. |
 | ✅ Vincular a cobrança pelo `codigoSolicitacao` que vem na recusa por duplicidade + corrigir a precedência de `extractInterErrorMessage` | P0-02 | P | O identificador da cobrança órfã já chega na resposta e é descartado (RR3). Fecha o cenário A sem migration e sem consulta nova. |
 | ✅ Tratar `E10` como sinal de "a nota existe", não como `FAILED`, **nos dois caminhos** — recepção (`giss-issue-batch.mapper.ts:248-254`) e situação 3 do poll (`process-poll-nfse-batch.service.ts:80-84`) | P0-03, R2, RRR3 | P | Hoje ambos fazem o oposto do que o `E10` significa. Preservar todas as mensagens, não só a primeira, e o código como campo. |
+| ⬜ **Pendente:** o alerta não pode sumir em silêncio quando o Redis ou o SMTP falham | P2-12 | P | Achado da revisão pós-entrega. O canal de alerta é a entrega que faz o resto da onda valer; do jeito que está, ele se cala justamente no incidente. |
 
 ### Onda 2 — impedir a duplicidade (depende da Onda 1)
 

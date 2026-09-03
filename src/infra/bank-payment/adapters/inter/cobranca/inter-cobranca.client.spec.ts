@@ -399,6 +399,27 @@ describe('InterCobrancaClient - Unit tests', () => {
     });
   });
 
+  it('should not read a duplicate rejection out of a 4xx from an operation other than issue', async() => {
+    // "já existe" só significa "vincular em vez de falhar" na emissão. Em `cancel`, um UUID no
+    // `detail` é só o identificador da cobrança que a mensagem está descrevendo.
+    httpService.axiosRef.request.mockRejectedValue(makeAxiosError(400, {
+      title: 'Requisição inválida',
+      detail: 'A cobrança com código de solicitação: ab3242a2-2205-4f5e-9f54-32caf508cfe5 já foi paga '
+        + 'e não pode ser cancelada.',
+    }));
+
+    await expect(sut.cancel({
+      provider: BankPaymentProvider.INTER,
+      requestCode: 'ab3242a2-2205-4f5e-9f54-32caf508cfe5',
+      reason: 'Cancelamento da NFS-e',
+    })).rejects.toBeInstanceOf(BankPaymentRequestError);
+    await expect(sut.cancel({
+      provider: BankPaymentProvider.INTER,
+      requestCode: 'ab3242a2-2205-4f5e-9f54-32caf508cfe5',
+      reason: 'Cancelamento da NFS-e',
+    })).rejects.toThrow('A cobrança com código de solicitação');
+  });
+
   it('should prefer detail over the generic title when building the 4xx message', async() => {
     httpService.axiosRef.request.mockRejectedValue(makeAxiosError(400, {
       title: 'Requisição inválida',

@@ -142,6 +142,34 @@ describe('ProcessIssueNfseBatch - Unit tests', () => {
     expect(queueProducer.addPollBatchJob).not.toHaveBeenCalled();
   });
 
+  // Um job reentregue pelo BullMQ encontra a nota nestes estados. Reenviar o RPS sem consultar o
+  // provedor antes é o caminho para uma segunda NFS-e.
+  it.each([
+    NfseStatus.SUBMITTED,
+    NfseStatus.PROCESSING,
+    NfseStatus.AWAITING_PROVIDER,
+    NfseStatus.FAILED,
+    NfseStatus.CANCELED,
+  ])('should refuse to resend the rps when the nfse is %s', async(status) => {
+    // Arrange
+    jest.spyOn(nfseRepository, 'findById').mockResolvedValue(
+      NfseFactory.load(makeNfseProps({ status, batchProtocol: 'protocol-123' })),
+    );
+
+    // Act
+    await sut.execute({ nfseId: 1 });
+
+    // Assert
+    expect(nfsGenerationGateway.issueBatch).not.toHaveBeenCalled();
+    expect(nfseRepository.edit).not.toHaveBeenCalled();
+    expect(queueProducer.addPollBatchJob).not.toHaveBeenCalled();
+    expect(logger.debug).toHaveBeenCalledWith(LogContext.NFS_GENERATION, expect.objectContaining({
+      action: 'processIssueNfseBatch',
+      nfseId: 1,
+      errorMessage: expect.stringContaining(status),
+    }));
+  });
+
   it('should throw CompanyNfsConfigNotFoundError when the company has no provider config', async() => {
     // Arrange
     jest.spyOn(nfseRepository, 'findById').mockResolvedValue(NfseFactory.load(makeNfseProps()));

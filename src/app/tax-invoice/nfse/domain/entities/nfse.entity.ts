@@ -60,19 +60,30 @@ export class Nfse {
     return !this.isTerminal() && !!this._props.batchProtocol;
   }
 
+  /**
+   * Só uma nota que nunca chegou ao provedor pode ser enviada pelo job de emissão. `SUBMITTED`,
+   * `PROCESSING` e `AWAITING_PROVIDER` já têm — ou podem ter — uma NFS-e do outro lado, e reenviar
+   * o mesmo RPS sem consultar antes é o caminho para uma segunda nota. `FAILED` fica de fora deste
+   * caminho de propósito: o reenvio depois de corrigir o cadastro é ação autorizada, não reentrega
+   * de job.
+   */
+  public canSubmitToProvider(): boolean {
+    return this._props.status === NfseStatus.PENDING && !this._props.batchProtocol;
+  }
+
   public markSubmitted(batchProtocol: string): void {
-    this.ensureNotIssued();
+    this.ensureMutable();
     this._props.status = NfseStatus.SUBMITTED;
     this._props.batchProtocol = batchProtocol;
   }
 
   public markProcessing(): void {
-    this.ensureNotIssued();
+    this.ensureMutable();
     this._props.status = NfseStatus.PROCESSING;
   }
 
   public markIssued(nfseNumber: string, verificationCode: string, issuedAt: Date): void {
-    this.ensureNotIssued();
+    this.ensureMutable();
     this._props.status = NfseStatus.ISSUED;
     this._props.nfseNumber = nfseNumber;
     this._props.verificationCode = verificationCode;
@@ -80,7 +91,7 @@ export class Nfse {
   }
 
   public markFailed(errorMessage: string): void {
-    this.ensureNotIssued();
+    this.ensureMutable();
     this._props.status = NfseStatus.FAILED;
     this._props.errorMessage = errorMessage;
   }
@@ -92,7 +103,7 @@ export class Nfse {
    * `FAILED` aqui faria a operação parar de procurar por uma nota que provavelmente foi emitida.
    */
   public markAwaitingProvider(reason: string): void {
-    this.ensureNotIssued();
+    this.ensureMutable();
     this._props.status = NfseStatus.AWAITING_PROVIDER;
     this._props.errorMessage = reason;
   }
@@ -121,9 +132,22 @@ export class Nfse {
     this._props.bankPaymentRequestCode = requestCode;
   }
 
-  private ensureNotIssued(): void {
+  /**
+   * `ISSUED` e `CANCELED` são os dois estados dos quais não se sai: a nota tem número junto ao
+   * provedor, ou foi cancelada lá. Antes esta guarda só barrava `ISSUED`, então uma nota cancelada
+   * podia voltar a `ISSUED` mantendo `canceledAt` preenchido — o invariante dependia de cada
+   * chamador lembrar de checar `isTerminal()`, e nem todos checavam.
+   *
+   * `FAILED` e `AWAITING_PROVIDER` continuam mutáveis de propósito: a máquina de estados alvo
+   * (§2.4 de `docs/auditoria-nfm-resiliencia.md`) prevê reemissão autorizada depois de corrigir o
+   * cadastro, e `AWAITING_PROVIDER → ISSUED` quando a consulta ao provedor confirmar a nota.
+   */
+  private ensureMutable(): void {
     if (this.isIssued()) {
       throw new NfseAlreadyIssuedError();
+    }
+    if (this.isCanceled()) {
+      throw new NfseAlreadyCanceledError();
     }
   }
 

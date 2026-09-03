@@ -29,6 +29,13 @@ export class ProcessPollNfseBatch {
     86_400_000, // 24h
   ];
 
+  /**
+   * O ladder agenda uma consulta a mais do que tem degraus: a primeira é agendada pelo envio do
+   * lote (`ProcessIssueNfseBatch.FIRST_POLL_DELAY_MS`) e cada degrau agenda a seguinte. Contar só
+   * os degraus subnotificaria a tentativa que de fato esgotou a janela.
+   */
+  private static readonly MAX_POLL_ATTEMPTS = ProcessPollNfseBatch.POLL_DELAYS_MS.length + 1;
+
   constructor(
     @Inject(TOKENS.LoggerGateway) private readonly logger: ILoggerGateway,
     @Inject(TOKENS.NfseRepository) private readonly nfseRepository: INfseRepository,
@@ -115,7 +122,7 @@ export class ProcessPollNfseBatch {
     await this.rescheduleOrFail(
       nfse,
       input.attempt,
-      `Excedeu ${ProcessPollNfseBatch.POLL_DELAYS_MS.length} tentativas de consulta de status sem retorno definitivo do Giss`,
+      `Excedeu ${ProcessPollNfseBatch.MAX_POLL_ATTEMPTS} tentativas de consulta de status sem retorno definitivo do Giss`,
     );
   }
 
