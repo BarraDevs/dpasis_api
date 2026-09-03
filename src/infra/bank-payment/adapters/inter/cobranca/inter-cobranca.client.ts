@@ -13,6 +13,7 @@ import { FindBankPaymentInputDto } from '../../../dtos/find-bank-payment.dto';
 import { IssueBankPaymentInputDto, IssueBankPaymentOutputDto } from '../../../dtos/issue-bank-payment.dto';
 import { ListBankPaymentInputDto, ListBankPaymentOutputDto } from '../../../dtos/list-bank-payment.dto';
 import { BankPaymentProvider } from '../../../enums/bank-payment-provider.enum';
+import { BankPaymentAlreadyExistsError } from '../../../errors/bank-payment-already-exists.error';
 import { BankPaymentNotFoundError } from '../../../errors/bank-payment-not-found.error';
 import { BankPaymentRequestError } from '../../../errors/bank-payment-request.error';
 import { InterCertLoader, type InterCertMaterial } from '../oauth/inter-cert.loader';
@@ -29,6 +30,12 @@ import { InterCobrancaMapper } from './inter-cobranca.mapper';
 @Injectable()
 export class InterCobrancaClient {
   public static readonly OAUTH_SCOPE = 'boleto-cobranca.read boleto-cobranca.write';
+
+  /**
+   * A recusa por duplicidade vem como prosa em português, não como campo — casar pela forma
+   * (`código de solicitação: <uuid>`) e nunca pelo texto exato, que o Inter pode reescrever.
+   */
+  private static readonly DUPLICATE_REQUEST_CODE_PATTERN = /c[óo]digo de solicita[çc][ãa]o:?\s*([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i;
 
   private certMaterial: InterCertMaterial | null = null;
 
@@ -179,6 +186,12 @@ export class InterCobrancaClient {
         if (status && status >= 400 && status < 500) {
           const message = this.extractInterErrorMessage(error.response?.data)
             ?? 'Requisição inválida na API de cobrança do Banco Inter.';
+
+          const existingRequestCode = this.extractDuplicateRequestCode(error.response?.data);
+          if (existingRequestCode) {
+            throw new BankPaymentAlreadyExistsError(existingRequestCode, message);
+          }
+
           throw new BankPaymentRequestError(message);
         }
       }
@@ -190,6 +203,7 @@ export class InterCobrancaClient {
   private mapThrownError(error: unknown): Error {
     if (
       error instanceof BankPaymentNotFoundError
+      || error instanceof BankPaymentAlreadyExistsError
       || error instanceof BankPaymentRequestError
       || error instanceof ExternalApiError
     ) {
@@ -217,6 +231,11 @@ export class InterCobrancaClient {
     return this.certMaterial;
   }
 
+  /**
+   * `detail` vem antes de `title` de propósito: o Inter preenche `title` com o genérico
+   * "Requisição inválida" e põe em `detail` o que efetivamente resolve o incidente — inclusive o
+   * código da cobrança já emitida. Na ordem anterior esse dado chegava à aplicação e era descartado.
+   */
   private extractInterErrorMessage(data: unknown): string | null {
     if (!data || typeof data !== 'object') {
       return null;
@@ -228,16 +247,29 @@ export class InterCobrancaClient {
         return first.razao;
       }
     }
-    if (typeof record.title === 'string' && record.title.trim()) {
-      return record.title;
-    }
     if (typeof record.detail === 'string' && record.detail.trim()) {
       return record.detail;
+    }
+    if (typeof record.title === 'string' && record.title.trim()) {
+      return record.title;
     }
     if (typeof record.message === 'string' && record.message.trim()) {
       return record.message;
     }
 
     return null;
+  }
+
+  private extractDuplicateRequestCode(data: unknown): string | null {
+    if (!data || typeof data !== 'object') {
+      return null;
+    }
+
+    const detail = (data as Record<string, unknown>).detail;
+    if (typeof detail !== 'string') {
+      return null;
+    }
+
+    return InterCobrancaClient.DUPLICATE_REQUEST_CODE_PATTERN.exec(detail)?.[1] ?? null;
   }
 }

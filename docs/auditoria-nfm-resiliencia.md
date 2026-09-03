@@ -4,6 +4,31 @@
 > Escopo: `src/app/tax-invoice/nfm`, `src/app/tax-invoice/nfse`, `src/app/bank-payment`,
 > `src/infra/nfs-generation` (GISS), `src/infra/bank-payment` (Inter), `src/infra/queue`, `prisma/schema`.
 > Nenhum código foi alterado. Toda afirmação sobre o comportamento atual cita `arquivo:linha`.
+>
+> **Revisão 2026-09-01:** as sete perguntas em aberto foram respondidas pela operação e a auditoria
+> foi atualizada — ver §9. As mudanças de maior alcance: o Inter tem idempotência implícita de 30
+> minutos e nenhum cabeçalho (R4), o que reescreve o P0-02 e adiciona o P1-08; o GISS passa a ser
+> tratado como capaz de aceitar RPS repetido (R2), o que torna a consulta prévia obrigatória em todo
+> reenvio; e não existe canal de alerta algum (R7), o que traz os alertas para a Onda 1.
+>
+> **Rodada 2 (mesma data):** pesquisa em `gissonline_docs/` fechou as pendências do GISS —
+> `ConsultarNfsePorRps` e mais seis operações existem no WSDL (a Onda 3 cai de G para M), o lote
+> aceita 50 RPS em vez de 1, `E10` documenta a rejeição de RPS repetido, e a recusa por duplicidade
+> do Inter entrega o `codigoSolicitacao` da cobrança órfã. Ver §9, RR1–RR5.
+>
+> **Rodada 3 (mesma data):** os XSD oficiais confirmaram que `RecepcionarLoteRpsSincrono` está
+> disponível — o laço de consulta sai do caminho feliz, ao custo de concentrar a ambiguidade num
+> timeout sem protocolo —, que `E10` pode chegar tanto na recepção quanto na consulta do lote (e os
+> dois caminhos hoje o tratam ao contrário), e que os alertas `A*` vêm num elemento
+> `ListaMensagemAlertaRetorno` que o parser nunca lê. A recusa por duplicidade do Inter é HTTP 400.
+> Ver §9, RRR1–RRR4. A rejeição de RPS repetido pelo GISS foi confirmada na prática.
+>
+> **Rodada 4 (mesma data):** o último item aberto foi fechado com teste ao vivo contra produção —
+> não existe limite de período em `ConsultarNfseServicoPrestado` (testado até 6.087 dias), o gargalo
+> é a página de 50, a consulta devolve **todas** as notas do prestador (a conciliação tem de casar
+> por RPS, não por contagem), o fim da paginação vem como erro `E212`, e **toda consulta exige
+> XMLDSig apesar do XSD dizer o contrário**. Ver §9, RRR2 e RRRR1, e
+> `gissonline_docs/consultar-servico-prestado-postman.md` §7.
 
 ---
 
@@ -21,10 +46,12 @@ propriedades explicam o risco:
    janela total de consulta do lote é de ~5 minutos (`process-poll-nfse-batch.service.ts:17-18`).
    Uma prefeitura fora do ar por horas produz notas `FAILED` localmente que **existem** no GISS.
 3. **Nenhuma chamada HTTP tem timeout** (`nfs-generation.module.ts:18`,
-   `bank-payment-inter.module.ts:11`), não há chave de idempotência no Inter
-   (`inter-cobranca.client.ts:42-63`) e o job de boleto tem `attempts: 5`
-   (`nfse-queue-bullmq.producer.ts:26-29`): um timeout depois de o boleto ter sido criado gera
-   **até cinco cobranças duplicadas** no cliente final.
+   `bank-payment-inter.module.ts:11`) e nada consulta o Inter antes de emitir
+   (`inter-cobranca.client.ts:42-63`). O Inter não oferece cabeçalho de idempotência: só uma chave
+   implícita de 30 minutos, montada a partir de `seuNumero` + `valorNominal` + `dataVencimento` +
+   `cpfCnpj` do pagador (§9, R4). Dentro dessa janela, a recusa por duplicidade mata o job **depois**
+   de o boleto existir e deixa uma cobrança viva sem vínculo local; fora dela — retry manual, DLQ,
+   varredura, retomada da fila — a duplicidade é real.
 
 Somam-se: cancelar a NFM **não cancela o boleto** (`cancel-nfm.service.ts:15-30`), não existe rota
 para reemitir o RPS de uma NFM (`nfm-admin.controller.ts:30-91`), `removeOnFail: true` apaga o job
@@ -33,8 +60,11 @@ scheduler algum, e o certificado digital A1 de produção está versionado no re
 (`resources/files/nfs-generation/giss/DPA_TEC_EQUIPAMENTOS_DE_PONTO_LTDA_02099923000178.pfx`).
 
 **Prioridade:** timeouts + `removeOnFail` + idempotência do boleto + cancelamento em cascata
-eliminam a maior parte do risco financeiro com esforço pequeno. A reconciliação com o GISS
-(consulta por RPS) é o item grande e o único que fecha o risco fiscal de verdade.
+eliminam a maior parte do risco financeiro com esforço pequeno. Entra junto um canal de alerta por
+SMTP: hoje não existe nenhum (§9, R7), e sem ele toda correção continua dependendo de alguém olhar.
+A reconciliação com o GISS (consulta por RPS) é o item grande e o único que fecha o risco fiscal de
+verdade — e, pela decisão registrada em R2, ela deixa de ser só reconciliação: passa a ser
+pré-requisito de qualquer reenvio.
 
 ---
 
@@ -344,7 +374,7 @@ sequenceDiagram
   vincular à NFM na mesma transação, e enfileirar por último.
 - **Esforço:** M
 
-### [P0-02] Retry do job de boleto emite cobrança duplicada no Inter (sem chave de idempotência)
+### [P0-02] Emissão do boleto não é idempotente do lado local: cobrança órfã dentro de 30 min, duplicada fora
 
 - **Onde:** `src/app/tax-invoice/nfse/application/usecases/process-issue-nfse-bank-payment/process-issue-nfse-bank-payment.service.ts:72-75`; `src/app/tax-invoice/nfse/infra/driven/queue/bullmq/nfse-queue-bullmq.producer.ts:26-29`; `src/infra/bank-payment/adapters/inter/cobranca/inter-cobranca.client.ts:42-63`
 - **O que acontece hoje:**
@@ -355,35 +385,81 @@ sequenceDiagram
   await this.nfseRepository.edit(nfse);                             // :75  só aqui persiste
   ```
 
-  O job é registrado com `attempts: 5` e backoff exponencial
-  (`nfse-queue-bullmq.producer.ts:27-28`). O `POST /cobrancas`
-  (`inter-cobranca.client.ts:46`) não envia nenhum cabeçalho de idempotência, e nada consulta o
-  Inter antes de emitir. O único identificador enviado é `seuNumero = String(nfseId).slice(0,15)`
-  (`nfse-to-issue-bank-payment.mapper.ts:37`), que a API trata como campo livre.
-  A guarda `nfse.hasBankPayment()` (`:33`) só é verdadeira **depois** de `:75`.
-- **Cenário de falha:**
+  O job é registrado com `attempts: 5` e backoff exponencial de base 5s
+  (`nfse-queue-bullmq.producer.ts:27-28`) — as tentativas caem em 5s, 10s, 20s e 40s, ~75 s no
+  total. O `POST /cobrancas` (`inter-cobranca.client.ts:46`) não envia cabeçalho de idempotência
+  (a API não tem um, §9 R4) e nada consulta o Inter antes de emitir. A guarda
+  `nfse.hasBankPayment()` (`:33`) só é verdadeira **depois** de `:75`.
+
+  O Inter aplica um controle de duplicidade próprio: `seuNumero` + `valorNominal` +
+  `dataVencimento` + `cpfCnpj` do pagador formam uma chave implícita com TTL de **30 minutos**
+  (OpenAPI da API Cobrança Bolepix v3, descrição de `POST /cobrancas`). Toda a escada de retry do
+  job cabe dentro dessa janela — o que muda o modo de falha, mas não o elimina.
+- **Cenário de falha A — cobrança órfã (dentro dos 30 min):**
   1. O Inter recebe o `POST`, cria o boleto e começa a responder.
   2. A conexão cai (ou simplesmente demora — não há timeout, ver P0-05). Axios lança;
      `request()` mapeia para `ExternalApiError` (`inter-cobranca.client.ts:186`).
   3. O job falha. BullMQ reagenda em 5s. `hasBankPayment()` continua `false`.
-  4. Segundo `POST` → segundo boleto para a mesma NFS-e. Repete-se até 5 vezes.
-  5. O mesmo acontece se o worker morrer entre `:72` e `:75`: o BullMQ reentrega o job "stalled".
-- **Impacto:** financeiro direto — até 5 cobranças para o mesmo serviço, com Pix e código de barras
-  válidos. Recuperação exige cancelar boletos um a um pelo `POST /admin/bank-payment/:codigo/cancel`
-  depois de descobrir quais existem (não há consulta por NFS-e).
-- **Correção proposta:** três camadas, nesta ordem:
-  1. Persistir a intenção **antes** da chamada: nova coluna
-     `bankPaymentIdempotencyKey` (por exemplo `nfse-{id}`) e `bankPaymentRequestedAt`, gravadas
-     antes de `:72`.
-  2. Em qualquer tentativa com `job.attemptsMade > 0`, consultar o Inter antes de emitir —
-     `InterCobrancaClient.list` (`inter-cobranca.client.ts:80`) já aceita filtro por período, e o
-     mapper já lê `seuNumero` (`inter-cobranca.mapper.ts:117`); basta procurar pelo `seuNumero` da
-     NFS-e antes de reemitir.
-  3. Enviar cabeçalho de idempotência se a API do Inter suportar (verificar na documentação —
-     ver §9, pergunta em aberto).
+  4. Segundo `POST`, payload idêntico → o Inter **recusa** por duplicidade. A recusa é 4xx, que
+     `inter-cobranca.client.ts:179-182` mapeia para `BankPaymentRequestError` — erro permanente de
+     negócio (P2-07). O job morre; `linkBankPayment` (`:74`) nunca roda.
+  5. Resultado: o boleto **existe** no Inter, cobrável, sem nenhum vínculo local. A NFS-e fica
+     `ISSUED` sem `bankPaymentRequestCode` — indistinguível de P1-03, mas com uma cobrança viva
+     solta que ninguém sabe que existe.
+- **Cenário de falha B — duplicidade real (chave instável ou fora dos 30 min):** a proteção do Inter
+  só vale enquanto os quatro campos forem idênticos, e eles não são estáveis:
+  - `issuedAt: nfse.props.issuedAt ?? new Date()`
+    (`process-issue-nfse-bank-payment.service.ts:58`) — com `issuedAt` nulo, cada tentativa usa um
+    instante diferente e, para `dueDateType = DEADLINE` (`invoice-calendar-due-date.vo.ts:52-62`),
+    uma retentativa que cruza a meia-noite em `America/Sao_Paulo` muda o `dataVencimento`;
+  - sem `bankPayment` no snapshot, o fallback deriva `referenceMonth`/`referenceYear` de
+    `DateTime.now()` (`process-issue-nfse-bank-payment.service.ts:83,90-91`) e, para vencimento
+    fixo (`invoice-calendar-due-date.vo.ts:64-107`), uma retentativa na virada do mês muda o
+    vencimento;
+  - P2-06 (NFM reaproveitada com valor divergente) muda `valorNominal`.
+
+  Fora dos 30 minutos não há proteção nenhuma, e é onde estão os caminhos de recuperação: retry
+  manual `POST /admin/bank-payment/nfm/:id` (P1-07), reprocessamento de DLQ, varredura do outbox e
+  retomada da fila depois de indisponibilidade longa (§7.2). O mesmo vale para o worker morto entre
+  `:72` e `:75`, se a reentrega do job "stalled" acontecer depois da janela.
+- **Impacto:** financeiro direto. No cenário A, uma cobrança emitida e invisível para o sistema — o
+  cliente recebe um boleto que a operação não sabe que existe. No cenário B, duas cobranças para o
+  mesmo serviço, com Pix e código de barras válidos. Recuperação exige cancelar boletos um a um pelo
+  `POST /admin/bank-payment/:codigo/cancel` depois de descobrir quais existem — e hoje **não há como
+  descobrir**: `toListQueryParams` (`inter-cobranca.mapper.ts:73-99`) não monta filtro por
+  `seuNumero`.
+- **Correção proposta:** quatro camadas, nesta ordem:
+  1. Persistir a intenção **antes** da chamada: nova coluna `bankPaymentIdempotencyKey` (por
+     exemplo `nfse-{id}`) e `bankPaymentRequestedAt`, gravadas antes de `:72`. É guarda local — o
+     Inter não aceita esse valor como cabeçalho.
+  2. **Congelar o payload.** Gravar `dataVencimento` e `valorNominal` calculados na primeira
+     tentativa e reusá-los em todas as seguintes, em vez de recalcular a partir de `new Date()` /
+     `DateTime.now()`. Sem isso, a proteção de 30 min do Inter é um acaso, não uma garantia.
+  3. Consulta prévia por `seuNumero` em toda tentativa com `job.attemptsMade > 0` **e** em todo
+     caminho manual. Exige acrescentar o filtro: `ListBankPaymentInputDto` não tem o campo e
+     `toListQueryParams` (`inter-cobranca.mapper.ts:73-99`) não o monta, embora a API aceite
+     `seuNumero` como query param. `dataInicial`/`dataFinal` são obrigatórios e filtram por
+     `dataVencimento` por padrão (`filtrarDataPor` = `VENCIMENTO`) — usar a data que está prestes a
+     ser enviada.
+  4. Tratar a recusa por duplicidade como **sinal**, não como erro permanente. A resposta do Inter
+     traz o `codigoSolicitacao` da cobrança que já existe (§9, RR3) — extraí-lo do `detail`,
+     confirmar com `GET /cobrancas/{codigoSolicitacao}` (`inter-cobranca.client.ts:65`) comparando
+     `seuNumero`/`valorNominal`/`dataVencimento`, vincular e completar o job com sucesso. É o que
+     fecha o cenário A, e não depende do item 3.
+  5. Corrigir a precedência de `extractInterErrorMessage` (`inter-cobranca.client.ts:220-242`):
+     hoje `title` ("Requisição inválida") vence `detail`, e o `detail` é justamente onde vem o
+     identificador da cobrança. Preservar os dois — o corpo inteiro vai para `NfseAttempt`
+     (P2-03).
 - **Esforço:** M
 
 ### [P0-03] Timeout ou erro transitório no envio do RPS marca a nota como FAILED terminal sem consultar o GISS
+
+> **Nota da rodada 3:** o mesmo caminho engole a rejeição de negócio da recepção. Quando o GISS
+> devolve `ListaMensagemRetorno` em vez de `Protocolo` (ramo previsto em
+> `enviar-lote-rps-resposta-v2_04.xsd`), `giss-issue-batch.mapper.ts:248-254` lê **apenas a
+> primeira** mensagem, monta uma string e lança `Error` genérico — que vira `ExternalApiError` e
+> `FAILED`. Para o código `E10` ("RPS já informado") isso é o oposto do correto: a nota existe.
+> Ver §9, RRR3.
 
 - **Onde:** `src/app/tax-invoice/nfse/application/usecases/process-issue-nfse-batch/process-issue-nfse-batch.service.ts:105-115`
 - **O que acontece hoje:**
@@ -424,6 +500,13 @@ sequenceDiagram
 - **Esforço:** G
 
 ### [P0-04] Janela de consulta do lote é de 5 minutos: prefeitura lenta produz nota FAILED que existe no GISS
+
+> **Nota da rodada 3:** ampliar a janela (Onda 1) trata o sintoma. A correção estrutural é
+> `RecepcionarLoteRpsSincrono` (§9, RRR1), que devolve a NFS-e na própria resposta do envio e
+> elimina o laço de consulta do caminho feliz. Ela troca este achado por um risco diferente e mais
+> concentrado — timeout numa chamada síncrona não deixa protocolo —, então só entra depois de
+> timeouts e de `ConsultarNfsePorRps`. A janela ampliada continua valendo para o caminho
+> assíncrono, que segue existindo como fallback.
 
 - **Onde:** `src/app/tax-invoice/nfse/application/usecases/process-poll-nfse-batch/process-poll-nfse-batch.service.ts:17-18`, `:62`, `:88`, `:91-96`
 - **O que acontece hoje:** `MAX_ATTEMPTS = 10` e `POLL_DELAY_MS = 30_000`, com o primeiro poll em
@@ -512,16 +595,22 @@ sequenceDiagram
   em `GISS_CERT_PASSWORD` (`giss-pfx-loader.ts:12`, com `.env.*` no `.gitignore:41-43`) — mas um
   arquivo PKCS#12 é atacável offline por força bruta, sem limite de tentativas e sem deixar rastro.
   A chave privada do Inter (`resources/files/bank-payment/inter/Sandbox_InterAPI_Chave.key`) também
-  está versionada; é sandbox, mas o padrão se repetirá em produção.
+  está versionada; é de teste, e **o certificado de produção do Inter ainda não foi emitido**
+  (§9, RR1). Essa metade do achado ainda pode ser evitada em vez de remediada: não há o que
+  rotacionar, só o que não repetir.
 - **Cenário de falha:** qualquer pessoa com acesso de leitura ao repositório (ou a um clone, um
   fork, um backup, um laptop) obtém o material criptográfico. Com a senha quebrada, emite NFS-e em
   nome da empresa.
 - **Impacto:** segurança — emissão fraudulenta de notas fiscais em nome da empresa.
-- **Correção proposta:** remover do índice e do histórico (`git filter-repo`), **rotacionar o
-  certificado junto à AC** (a exposição já ocorreu, remover não desfaz), e passar a entregar o
-  arquivo por volume montado ou secret manager, com `certFilePath` apontando para fora da árvore
-  do projeto. Mesmo tratamento para a chave do Inter.
+- **Correção proposta:** para o A1 do GISS, remover do índice e do histórico (`git filter-repo`) e
+  **rotacionar o certificado junto à AC** — a exposição já ocorreu, remover não desfaz. Para o
+  Inter, definir agora o caminho de entrega do certificado de produção que ainda vai ser emitido:
+  volume montado ou secret manager, `INTER_CERT_PATH`/`INTER_KEY_PATH` apontando para fora da
+  árvore do projeto, nunca commitado. Em ambos os casos, `certFilePath` sai do repositório.
 - **Esforço:** M
+- **Status:** ✅ resolvido. Remoção do índice e caminho por env entregues na Onda 1 (2026-09-02);
+  rotação do A1 junto à AC e purge do histórico executados em 2026-09-03. Ver
+  `docs/runbook-certificados.md`.
 
 ---
 
@@ -679,11 +768,37 @@ sequenceDiagram
   e chama o Inter **dentro da requisição HTTP**, sem fila, sem retry e sem timeout (P0-05). Entre a
   verificação e o `linkBankPayment` (`:74`) há a mesma janela do P0-02, sem nenhum lock.
 - **Cenário de falha:** dois operadores clicam em "gerar boleto" para a mesma NFM ao mesmo tempo, ou
-  um operador clica duas vezes porque a primeira requisição está pendurada. Dois boletos.
+  um operador clica duas vezes porque a primeira requisição está pendurada. Dois cliques em
+  segundos caem na janela de duplicidade do Inter (§9 R4) e viram a cobrança órfã do cenário A do
+  P0-02; um retry manual horas depois da falha original — que é o uso normal desta rota — está
+  **fora** da janela e produz o segundo boleto de verdade.
 - **Impacto:** financeiro.
 - **Correção proposta:** o mesmo mecanismo de idempotência do P0-02, mais um lock por `nfseId`.
   Considerar transformar a rota em enfileiramento (`202 Accepted`) para herdar o retry da fila.
 - **Esforço:** P (depois do P0-02)
+
+### [P1-08] `POST /cobrancas` é assíncrono e o sucesso da emissão nunca é confirmado
+
+- **Onde:** `src/infra/bank-payment/adapters/inter/cobranca/inter-cobranca.client.ts:42-63`; `src/infra/bank-payment/adapters/inter/cobranca/inter-cobranca.mapper.ts:32-45`
+- **O que acontece hoje:** a API Cobrança Bolepix v3 descreve `POST /cobrancas` como emissão
+  **assíncrona**: a resposta traz apenas `codigoSolicitacao` e a cobrança é produzida depois, com o
+  resultado chegando por webhook ou por `GET /cobrancas/{codigoSolicitacao}`. O código trata a
+  presença de `codigoSolicitacao` como emissão bem-sucedida (`:51-58`), grava
+  `linkBankPayment` e encerra. O mapa de status já prevê `FALHA` e `FALHA_EMISSAO`
+  (`inter-cobranca.mapper.ts:43-44`), mas **nada nunca lê a situação depois da emissão**, e não há
+  receptor de webhook no projeto (nenhuma ocorrência de "webhook" em `src/`).
+- **Cenário de falha:** o Inter aceita a solicitação, devolve `codigoSolicitacao`, e a produção da
+  cobrança falha (dados do pagador recusados, vencimento inválido, indisponibilidade interna). A
+  NFS-e fica `ISSUED` com `bankPaymentRequestCode` preenchido — aparentemente saudável, inclusive
+  para as consultas de conciliação propostas em §5.4 — e o cliente nunca recebe boleto.
+- **Impacto:** financeiro e silencioso: a inadimplência aparece como se fosse do cliente. Agravado
+  por §9 R6 — não existe nenhum processo externo que perceba a falta.
+- **Correção proposta:** registrar o webhook de cobrança (`PUT /cobrancas/webhook`) e tratar a
+  mudança de situação; enquanto ele não existir, uma varredura ativa: para toda NFS-e com
+  `bankPaymentRequestCode` gravado há mais de N minutos e situação ainda não confirmada, chamar
+  `GET /cobrancas/{codigoSolicitacao}` (`inter-cobranca.client.ts:65`, já implementado) e persistir
+  a situação. `FALHA_EMISSAO` vira alerta e reemissão, não silêncio.
+- **Esforço:** M
 
 ---
 
@@ -793,6 +908,13 @@ sequenceDiagram
 - **Correção proposta:** classificar por classe: `TransientProviderError` (408, 425, 429, 5xx,
   timeouts, `ECONNRESET`) com backoff que respeita `Retry-After`; `PermanentProviderError` (400,
   401, 403, 422) que vai direto para a DLQ sem retry.
+
+  **Ressalva da rodada 3 (§9, RRR4):** `400` não é uma classe única no Inter. Do mesmo status saem
+  uma validação de payload — permanente, sem cobrança criada — e a recusa por duplicidade, em que a
+  cobrança **existe** e o caminho certo é vincular, não descartar. A terceira classe é
+  `AlreadyExistsError`, e a distinção está no corpo, não no status: por isso a precedência de
+  `extractInterErrorMessage` (`:220-242`) precisa ser corrigida antes, para que o `detail` chegue ao
+  classificador.
 - **Esforço:** P
 
 ### [P2-08] Sem circuit breaker e sem degradação graciosa
@@ -821,6 +943,32 @@ sequenceDiagram
   conforme §5.4.
 - **Esforço:** M
 
+### [P2-11] Alertas do GISS (`A01`–`A30`) chegam com a nota emitida e são descartados
+
+- **Onde:** `src/app/tax-invoice/nfse/application/usecases/process-poll-nfse-batch/process-poll-nfse-batch.service.ts:66-78`; `src/infra/nfs-generation/adapters/giss/mappers/giss-batch-status.mapper.ts:59-73`
+- **O que acontece hoje:** pelo XSD oficial
+  (`consultar-lote-rps-resposta-v2_04.xsd`), o ramo de sucesso do `ConsultarLoteRpsResposta` é
+  `ListaNfse` contendo `CompNfse` 1-N **mais um `ListaMensagemAlertaRetorno` opcional** — elemento
+  próprio, distinto de `ListaMensagemRetorno` e de `ListaMensagemRetornoLote`. O mapper lê os dois
+  últimos (`:59-73`) e **nunca lê `ListaMensagemAlertaRetorno`**: os alertas não são só ignorados
+  pelo consumidor, eles nem chegam a ser extraídos do XML. Ainda que fossem, o consumidor só lê
+  `errors` no ramo `situation === Error` (`process-poll-nfse-batch.service.ts:80-84`); no ramo de
+  sucesso (`:66-77`) a lista é ignorada. Pela tabela oficial
+  (`gissonline_docs/Erros_e_Alertas.xlsx`), códigos `A` significam que **a NFS-e foi emitida** com
+  uma ressalva. O mesmo elemento aparece em `enviar-lote-rps-sincrono-resposta-v2_04.xsd`, então o
+  problema acompanha o modo síncrono (RRR1) se ele for adotado sem correção.
+- **Cenário de falha:** a nota é emitida com `A10` ("Inscrição municipal do prestador encontra-se
+  paralisada ou cancelada"), `A11` ("falta de elementos de qualificação do prestador"), `A13`
+  ("Prazo para a conversão do RPS em NFS-e vencido") ou `A21` ("Opção pelo SIMPLES Nacional não
+  consta do cadastro"). Todas exigem ação junto à Prefeitura. O sistema grava `ISSUED` e segue.
+  Ninguém fica sabendo até o problema virar autuação ou glosa.
+- **Impacto:** fiscal, diferido. É a categoria de erro que não quebra nada hoje e cobra caro depois.
+- **Correção proposta:** extrair `ListaMensagemAlertaRetorno` no mapper, persistir as mensagens
+  também no ramo de sucesso (campo próprio ou `NfseAttempt`, P2-03) e alertar (§5.4) em qualquer
+  nota emitida com ressalva. Distinguir `A` de `E` pelo prefixo do código já é suficiente para a
+  triagem.
+- **Esforço:** P
+
 ### [P2-10] Expiração do certificado só é descoberta quando a emissão quebra
 
 - **Onde:** `src/infra/nfs-generation/adapters/giss/signing/giss-pfx-loader.ts:25-48`; `src/infra/bank-payment/adapters/inter/oauth/inter-cert.loader.ts:10-35`
@@ -830,12 +978,35 @@ sequenceDiagram
   TLS dentro do `issueBatch`, vira `ExternalApiError` genérico
   (`nfs-generation-giss.gateway.ts:56`) e, pelo P0-03, marca `FAILED` **todas** as notas do dia.
   Para o Inter, o token OAuth em si está bem resolvido: cache com margem de 60s e coalescência de
-  requisições concorrentes (`inter-oauth.client.ts:21`, `:44-54`, `:61`).
+  requisições concorrentes (`inter-oauth.client.ts:21`, `:44-54`, `:61`) — o problema é o
+  certificado mTLS, não o token.
+
+  O risco aqui não é hipotético. O certificado do Inter versionado no repositório tem 30 dias de
+  validade e vence **em 2026-09-25**, 24 dias depois desta auditoria:
+
+  ```
+  resources/files/bank-payment/inter/Sandbox_InterAPI_Certificado.crt
+  subject= /C=BR/L=Minas Gerais/CN=DPASIS/OU=6a8edfb9f4ce7316ea4fd31e
+  notBefore=Aug 26 13:27:42 2026 GMT
+  notAfter=Sep 25 00:00:00 2026 GMT
+  ```
+
+  É o certificado de teste (`INTER_API_URL` aponta para `cdpj-sandbox` em `.env.example:53`) e o de
+  produção terá validade de 1 ano (§9, RR1), então o alerta D-30/D-15/D-7 serve. O problema é que o
+  `InterCertLoader` (`inter-cert.loader.ts:10-35`) não lê `notAfter` em ambiente nenhum: quando o de
+  teste vencer, em 24 dias, a falha vai aparecer como handshake TLS quebrado, virar
+  `ExternalApiError` (`inter-cobranca.client.ts:186`), o job esgotar as 5 tentativas e sumir
+  (P1-01), deixando a NFS-e `ISSUED` sem cobrança e sem registro (P1-03) — em homologação, com
+  diagnóstico caro e nenhuma mensagem útil.
 - **Impacto:** operacional e fiscal — vencimento de certificado é evento previsível que hoje causa
   incidente com perda de notas.
 - **Correção proposta:** validar `notAfter` no carregamento e recusar com erro explícito; expor a
-  data num healthcheck (`GET /health/certificates`); alertar em D-30, D-15 e D-7.
+  data num healthcheck (`GET /health/certificates`); alertar em D-30, D-15 e D-7 nos dois
+  provedores.
 - **Esforço:** P
+- **Prioridade revisada:** o item continua P2 pelo tipo de risco, mas tem prazo: a validação de
+  `notAfter` deve entrar na Onda 1, antes de 2026-09-25, para que o vencimento do certificado de
+  teste apareça como mensagem e não como incidente.
 
 ---
 
@@ -896,17 +1067,18 @@ sequenceDiagram
 | 2 | Timeout na chamada ao GISS; a nota pode ter sido criada | `catch` genérico → `markFailed` terminal (`process-issue-nfse-batch.service.ts:112`). Não reenvia (a NFM fica com `nfseId`), e também não consulta. Divergência silenciosa. | `SUBMIT_UNKNOWN` + `ConsultarNfsePorRps` pela chave natural antes de decidir. Reenvio só do **mesmo** RPS. | P0-03 |
 | 3 | GISS responde sucesso, processo morre antes de persistir o número | Job `poll-nfse-batch` tem `attempts: 1` (`nfse-queue-bullmq.producer.ts:22`) e `removeOnFail: true`: o job some. Nota fica `SUBMITTED`/`PROCESSING` para sempre. (Se o worker for morto — job "stalled" —, o BullMQ reentrega uma vez pelo default e o poll é idempotente.) | Retry com DLQ + varredura de estados não terminais que reenfileira o poll. | P1-01, P1-02 |
 | 4 | NFS-e emitida, criação do boleto falha | Se lançar: 5 tentativas e o job é apagado (`removeOnFail`). Se cair nos `catch` de `:44`/`:63`: `return null`, job **completa com sucesso** e a nota fica `ISSUED` sem boleto, sem registro. Retry manual existe (`POST /admin/bank-payment/nfm/:id`) mas ninguém é avisado. | Erro permanente → DLQ com motivo persistido; transitório → retry; alerta "ISSUED sem boleto há > 1h". | P1-03, P1-01 |
-| 5 | Boleto criado no Inter, falha ao persistir o ID | `linkBankPayment` + `edit` (`:74-75`) acontecem depois da chamada; se o `edit` falhar, o job falha e retenta → **segundo boleto**. | Gravar a chave de idempotência antes da chamada; na retentativa, consultar o Inter antes de emitir. | P0-02 |
-| 6 | Retry cego após falha ambígua gera segunda NFS-e | Não ocorre pelo retry do job (o job reusa o mesmo `nfseId` e o mesmo RPS — o GISS rejeita duplicidade). **Ocorre** pela reexecução de `POST /admin/nfm` quando o vínculo não foi gravado (`save-elegible-nfms.service.ts:100`), porque aí um RPS novo é reservado. | Vínculo atômico com a criação da NFS-e; reemissão sempre reaproveita o RPS já reservado. | P0-01 |
+| 5 | Boleto criado no Inter, falha ao persistir o ID | `linkBankPayment` + `edit` (`:74-75`) acontecem depois da chamada; o job retenta em ~75 s, dentro da janela de 30 min do Inter (R4): a segunda chamada é recusada por duplicidade, vira `BankPaymentRequestError` permanente e o job morre → **cobrança órfã, sem vínculo local**. Se o payload variar (`issuedAt` nulo, virada de mês, valor divergente) ou a retentativa ocorrer depois de 30 min → **segundo boleto**. | Congelar o payload; gravar a intenção antes da chamada; consultar por `seuNumero` na retentativa; tratar a recusa por duplicidade como vínculo, não como erro. | P0-02 |
+| 6 | Retry cego após falha ambígua gera segunda NFS-e | Pelo retry do job, depende de o GISS rejeitar RPS repetido — o que, por decisão de R2, **não se assume mais**. **Ocorre com certeza** pela reexecução de `POST /admin/nfm` quando o vínculo não foi gravado (`save-elegible-nfms.service.ts:100`), porque aí um RPS novo é reservado. | Vínculo atômico com a criação da NFS-e; reemissão sempre reaproveita o RPS já reservado **e sempre precedida de `ConsultarNfsePorRps`**. | P0-01, P0-03 |
 | 7 | Duas requisições simultâneas para a mesma NFM | Sem lock entre `:59` e `:100`: as duas veem `hasNfse() === false` e emitem. Duas NFS-e, dois boletos, uma NFS-e órfã. | Lock pessimista na linha da NFM ou índice único parcial `nfses(nfmId) WHERE status <> 'FAILED'`. | P1-05 |
 | 8 | Certificado expirado ou token OAuth inválido | Certificado: falha de handshake → `ExternalApiError` → `markFailed` em todas as notas do lote; nada valida `notAfter` (`giss-pfx-loader.ts:25-48`). OAuth do Inter: bem tratado — cache com margem de 60s e coalescência (`inter-oauth.client.ts:21,44-54,61`); credencial inválida → `ExternalApiError` → retry do job. | Validar `notAfter` no load; healthcheck e alerta em D-30/D-15/D-7; falha de credencial não deve marcar nota como `FAILED`. | P2-10, P0-03 |
 | 9 | Rate limit (429) no pico de fechamento | GISS: 429 → `ExternalApiError` → `markFailed` terminal. Inter: 429 → `BankPaymentRequestError` (4xx) → 5 retries sem ler `Retry-After`. | Classificar 429 como transitório, respeitar `Retry-After`, abrir breaker e pausar a fila. | P2-07, P2-08, P0-03 |
 | 10 | GISS rejeita o RPS por cadastro do tomador (permanente) | Situação 3 → `markFailed` com as mensagens concatenadas (`process-poll-nfse-batch.service.ts:81-83`). Correto marcar como falha — mas **não há como reemitir** depois de corrigir o cadastro. | Estado `REJECTED` distinto de falha de infra + rota `POST /admin/nfm/:id/reissue`. | P1-04 |
-| 11 | Deploy ou restart com processos em voo | HTTP: perde-se o que estava entre os commits → P0-01. Worker: job "stalled" é reentregue uma vez (default do BullMQ, não configurado no projeto) → reprocessamento seguro do GISS (mesmo RPS), **inseguro do Inter** (boleto duplicado). | `app.enableShutdownHooks()` + drain do worker; idempotência no Inter; outbox para o trecho HTTP. | P0-01, P0-02 |
+| 11 | Deploy ou restart com processos em voo | HTTP: perde-se o que estava entre os commits → P0-01. Worker: job "stalled" é reentregue uma vez (default do BullMQ, não configurado no projeto). No GISS, o reprocessamento reenvia o mesmo RPS — seguro **apenas se** o provedor rejeitar duplicidade, o que R2 manda não assumir. No Inter, se a reentrega cair depois dos 30 min, é boleto duplicado. | `app.enableShutdownHooks()` + drain do worker; consulta obrigatória antes de reenviar ao GISS; consulta por `seuNumero` antes de reemitir no Inter; outbox para o trecho HTTP. | P0-01, P0-02, P0-03 |
 | 12 | NFM cancelada depois da NFS-e e do boleto | `CancelNfm` cancela **só** a NFS-e (`cancel-nfm.service.ts:23`). O boleto continua ativo e cobrável. | Cancelar o boleto primeiro (reversível), a nota depois (irreversível); abortar se o boleto não cancelar. | P0-06 |
-| 13 | 500 NFMs pendentes, prefeitura volta ao ar | Não há 500 pendentes: elas já viraram `FAILED` na janela de 5 min (P0-04). Se houvesse, seriam processadas em série (concorrência 1, `nfse-bullmq.consumer.ts:14`) sem rate limit e sem timeout — uma nota lenta trava a fila inteira. | Notas sobrevivem em `AWAITING_PROVIDER`; ao voltar, reconciliação em lote com `limiter` e concorrência ajustada. | P0-04, P0-05, P2-08 |
+| 13 | 500 NFMs pendentes, prefeitura volta ao ar | Não há 500 pendentes: elas já viraram `FAILED` na janela de 5 min (P0-04). Se houvesse, seriam processadas em série (concorrência 1, `nfse-bullmq.consumer.ts:14`) sem rate limit e sem timeout — uma nota lenta trava a fila inteira. No volume real (centenas/dia, R3), o pior caso são ~3.000 `ConsultarLoteRps` concentrados (300 notas × 10 tentativas), em série. | Notas sobrevivem em `AWAITING_PROVIDER`; filas separadas por job com `limiter` e concorrência 4–8 na consulta (R3); reconciliação em lote ao voltar. | P0-04, P0-05, P2-08 |
 | 14 | Prefeitura devolve NFS-e com número diferente ou fora de ordem | `markIssued(issuedNote.nfseNumber, ...)` usa `issuedNotes?.[0]` (`process-poll-nfse-batch.service.ts:67,74`) **sem conferir se o `rpsNumber` da nota devolvida é o da NFS-e local**, embora `NfsIssuedNoteDto` traga `rpsNumber` e `rpsSeries` (`nfs-batch-status.dto.ts:16-22`). Num lote com mais de um RPS, o número errado seria gravado. Hoje o lote sempre tem um RPS (`process-issue-nfse-batch.service.ts:53`), então o risco está latente. | Casar `issuedNotes` por `rpsNumber` + `rpsSeries`; se não houver correspondência, não marcar `ISSUED` e escalar. | P2-01 (mesma família: guardas frouxas de estado) |
-| 15 | O boleto vence antes de a NFS-e ser emitida | Possível: o vencimento é calculado a partir de `dueDateDay`/`dueMonth` da competência (`invoice-calendar-due-date.vo.ts:64-107`), não da data de emissão — para `dueDateType = DEADLINE` usa `issuedAt + deadlineDays` (`:52-62`), que é seguro; para vencimento fixo, uma nota emitida com atraso pode gerar boleto com data no passado, que o Inter rejeita (4xx) → `BankPaymentRequestError` → 5 retries inúteis → nota `ISSUED` sem boleto. | Piso no vencimento (`max(vencimentoCalculado, hoje + N dias úteis)`) e erro de negócio explícito quando o piso for aplicado. | P1-03, P2-07 |
+| 15 | O boleto vence antes de a NFS-e ser emitida | Possível: o vencimento é calculado a partir de `dueDateDay`/`dueMonth` da competência (`invoice-calendar-due-date.vo.ts:64-107`), não da data de emissão — para `dueDateType = DEADLINE` usa `issuedAt + deadlineDays` (`:52-62`), que é seguro; para vencimento fixo, uma nota emitida com atraso pode gerar boleto com data no passado, que o Inter rejeita (4xx) → `BankPaymentRequestError` → 5 retries inúteis → nota `ISSUED` sem boleto. | Piso no vencimento (`max(vencimentoCalculado, hoje + N dias úteis)`) e erro de negócio explícito quando o piso for aplicado. O piso precisa considerar a **hora**: o Inter só aceita vencimento no dia corrente até 19h59 (descrição de `POST /cobrancas`). | P1-03, P2-07 |
+| 16 | Inter aceita a solicitação e a produção da cobrança falha | `POST /cobrancas` é assíncrono; o código trata `codigoSolicitacao` como sucesso (`inter-cobranca.client.ts:51-58`) e nunca confirma. A NFS-e fica `ISSUED` + vinculada, e o cliente não recebe boleto. `FALHA_EMISSAO` existe no mapper (`inter-cobranca.mapper.ts:44`) e nunca é lido. | Webhook `PUT /cobrancas/webhook`, ou varredura ativa por `GET /cobrancas/{codigoSolicitacao}` confirmando a situação antes de considerar o ciclo fechado. | P1-08 |
 
 ---
 
@@ -917,8 +1089,11 @@ sequenceDiagram
 1. **Nada de efeito externo dentro de transação, nada de estado local sem transação.** Toda escrita
    que precede uma chamada externa vai numa transação junto com a intenção (outbox). O despacho do
    job acontece depois do commit.
-2. **A chave natural manda.** GISS: `(prestador, rpsSeries, rpsNumber)`. Inter: `seuNumero` +
-   verificação prévia. Reenviar a mesma chave é seguro; criar chave nova é o que duplica.
+2. **A chave natural manda, mas só o provedor confirma.** GISS:
+   `(prestador, rpsSeries, rpsNumber)`. Inter: `seuNumero` + `valorNominal` + `dataVencimento` +
+   `cpfCnpj` (chave implícita de 30 min, §9 R4). Criar chave nova é o que duplica — mas, pela
+   decisão de R2, reenviar a mesma chave **não** é presumido seguro: todo reenvio é precedido de
+   consulta ao provedor.
 3. **Erro ambíguo nunca é erro final.** Só o provedor pode afirmar que a nota não existe.
 4. **Todo estado não terminal tem um dono.** Se existe um estado intermediário, existe um job que o
    varre.
@@ -933,7 +1108,8 @@ model Nfse {
   lastAttemptAt             DateTime?
   nextAttemptAt             DateTime?
   correlationId             String?
-  bankPaymentIdempotencyKey String?   @unique   // "nfse-{id}"
+  bankPaymentIdempotencyKey String?   @unique   // "nfse-{id}" — guarda local; o Inter não aceita
+                                      //   cabeçalho de idempotência (§9, R4)
   bankPaymentRequestedAt    DateTime?
   bankPaymentErrorMessage   String?
   bankPaymentFailedAt       DateTime?
@@ -983,11 +1159,12 @@ CREATE UNIQUE INDEX nfses_one_active_per_nfm
 
 | Chamada | Chave de idempotência | Retry | Backoff | Limite |
 |---|---|---|---|---|
-| `RecepcionarLoteRps` | `(prestador, rpsSeries, rpsNumber)` — reenviar o **mesmo** RPS | sim, para erro transitório | exponencial + jitter, 30s → 30min | 8 tentativas, depois `SUBMIT_UNKNOWN` |
+| `RecepcionarLoteRps` | `(prestador, rpsSeries, rpsNumber)` — reenviar o **mesmo** RPS | só depois de `ConsultarNfsePorRps` afirmar que a nota não existe (R2); nunca reenvio cego | exponencial + jitter, 30s → 30min | 8 tentativas, depois `SUBMIT_UNKNOWN` |
 | `ConsultarLoteRps` | protocolo (idempotente por natureza) | sim | 30s, 1min, 5min, 15min, 1h, 6h, 24h | 30 dias, depois escala para humano |
 | `ConsultarNfsePorRps` (a implementar) | chave natural do RPS | sim | igual ao acima | usado pela reconciliação |
+| `ConsultarNfseServicoPrestado` (a implementar) | `Prestador` + `PeriodoEmissao` + `Pagina` (idempotente por natureza) | sim | igual ao acima | janela de 1 dia na conciliação D+1; sem limite de período em Mauá, o teto é a página de 50 (§9, RRR2). Assinatura XMLDSig obrigatória (RRRR1) |
 | `CancelarNfse` | `nfseNumber` (o GISS rejeita cancelamento repetido) | sim | exponencial | 5 |
-| `POST /cobrancas` (Inter) | `bankPaymentIdempotencyKey` + consulta prévia por `seuNumero` em toda retentativa | sim | exponencial, 5s base | 5, depois DLQ |
+| `POST /cobrancas` (Inter) | sem cabeçalho: chave implícita `seuNumero` + `valorNominal` + `dataVencimento` + `cpfCnpj`, TTL 30 min (R4). Manter os quatro campos determinísticos **e** consultar `GET /cobrancas?seuNumero=…` em toda retentativa | sim, para erro transitório; recusa por duplicidade não é retry, é consulta | exponencial, 5s base | 5, depois DLQ |
 | `POST /cobrancas/{id}/cancelar` | `requestCode` | sim | exponencial | 5 |
 
 ### 5.4 Observabilidade
@@ -997,10 +1174,24 @@ Métricas: `nfse_status_total{status}`, `nfse_stuck_total{status}` (não termina
 `nfse_provider_call_duration_seconds{provider,operation}`,
 `nfse_provider_errors_total{provider,class}`, `nfse_queue_depth{job}`.
 
-Alertas: fila acima de N por mais de M minutos; qualquer NFS-e em estado não terminal há mais de 2h;
-qualquer NFS-e `ISSUED` sem `bankPaymentRequestCode` há mais de 1h; divergência entre a contagem de
-`ISSUED` e a de boletos no dia; breaker aberto; certificado a menos de 30 dias do vencimento; DLQ
-não vazia.
+Alertas: fila acima de N por mais de M minutos; qualquer NFS-e em estado não terminal há mais de 2h
+(e escalada imediata acima de 25 dias, R1); qualquer NFS-e `ISSUED` sem `bankPaymentRequestCode` há
+mais de 1h; qualquer cobrança em `FALHA_EMISSAO` (P1-08); divergência entre a contagem de `ISSUED` e
+a de boletos no dia — conciliação **diária obrigatória em D+1**, não opcional (R1), casando nota a
+nota pela chave natural do RPS e nunca por contagem, porque a consulta ao GISS devolve todas as notas
+do prestador e não só as deste sistema (RRR2); breaker aberto;
+certificado a menos de 30 dias do vencimento (D-7/D-3/D-1 para o mTLS do Inter, P2-10); DLQ não
+vazia.
+
+**Canal.** Hoje não existe nenhum: uma nota que falha só aparece quando o cliente reclama (R7). O
+caminho mais curto é SMTP, porque a configuração já está pronta e ociosa — `SMTP_HOST`…
+`SMTP_PASSWORD` em `config.service.ts:66-85`, `LogContext.SMTP` declarado em
+`logger.gateway.ts:10,23,61`, `nodemailer` e `nodemailer-express-handlebars` em `package.json:70-71`
+— **sem uma única referência a `nodemailer` em `src/`**. Proposta: um `AlertGateway` com
+implementação SMTP e digest por janela (no máximo um e-mail a cada 15 min por tipo de alerta), para
+que uma indisponibilidade do GISS não vire centenas de mensagens. Quando houver métricas, o SMTP
+passa a fallback e o alerta primário vai para o stack de observabilidade — e-mail é o piso, não o
+alvo.
 
 ---
 
@@ -1011,12 +1202,13 @@ com claim própria, registro em auditoria com `accountId` e `reason` obrigatóri
 
 | Ferramenta | Contrato | Proteções necessárias |
 |---|---|---|
-| **Reenviar RPS de uma NFM** | `POST /admin/nfm/:id/reissue` → `202 { nfseId, rpsNumber, status }` | Só quando a NFS-e estiver `REJECTED` ou `SUBMIT_UNKNOWN` **e** a reconciliação tiver confirmado que a nota não existe no GISS. Reaproveita o RPS já reservado (nunca reserva um novo). Bloqueia se o status for `ISSUED`/`CANCELED`. Exige `reason` e confirmação explícita (`confirm: true`). |
+| **Reenviar RPS de uma NFM** | `POST /admin/nfm/:id/reissue` → `202 { nfseId, rpsNumber, status }` | Só quando a NFS-e estiver `REJECTED` ou `SUBMIT_UNKNOWN` **e** a consulta ao GISS pela chave natural, feita pela própria rota no momento da chamada, afirmar que a nota não existe (R2 — não basta o operador dizer que consultou; a rota consulta). Reaproveita o RPS já reservado (nunca reserva um novo). Bloqueia se o status for `ISSUED`/`CANCELED`. Exige `reason` e confirmação explícita (`confirm: true`). |
 | **Consultar status no GISS** | `GET /admin/nfm/:id/provider-status` → `200 { situation, protocol, issuedNotes, errors, consultedAt }` | Somente leitura, sem efeito colateral no banco. Rate limit próprio (o GISS pune consulta em excesso). Resposta bruta gravada em `NfseAttempt`. |
 | **Reconciliar uma NFS-e** | `POST /admin/nfm/:id/reconcile` → `200 { previousStatus, newStatus, source }` | Consulta o GISS pela chave natural e **corrige o estado local**, inclusive tirando de `FAILED` para `ISSUED`. Nunca inventa dados: só grava o que o provedor devolveu. Exige `reason`. |
-| **Gerar boleto faltante** | já existe: `POST /admin/bank-payment/nfm/:id` (`bank-payment-admin.controller.ts:65`) | Adicionar lock por `nfseId` e a consulta prévia ao Inter por `seuNumero` (P0-02/P1-07); transformar em `202` enfileirado para herdar o retry. |
+| **Gerar boleto faltante** | já existe: `POST /admin/bank-payment/nfm/:id` (`bank-payment-admin.controller.ts:65`) | Adicionar lock por `nfseId` e a consulta prévia ao Inter por `seuNumero` (P0-02/P1-07) — que exige acrescentar o filtro `seuNumero` a `ListBankPaymentInputDto` e a `toListQueryParams` (`inter-cobranca.mapper.ts:73-99`), hoje inexistente. Este é o caminho que **sempre** cai fora da janela de 30 min do Inter (R4): sem a consulta, duplica. Transformar em `202` enfileirado para herdar o retry. |
 | **Cancelar em cascata** | `POST /admin/nfm/:id/cancel` (existente, `nfm-admin.controller.ts:76`) | Passar a cancelar o boleto **antes** da NFS-e e abortar se o boleto não cancelar (P0-06). Devolver no corpo o que foi cancelado em cada sistema. |
 | **Forçar transição de estado** | `POST /admin/nfse/:id/force-status` `{ status, reason, evidence }` → `200` | Última instância. Só um conjunto pequeno de transições permitidas (nunca `→ ISSUED` sem `nfseNumber` e `verificationCode` informados). `reason` e `evidence` (protocolo, print, número do chamado) obrigatórios, gravados em auditoria. Claim exclusiva, separada de `NFM_WRITE`. |
+| **Reconciliar o dia inteiro** | `POST /admin/nfse/reconcile-period` `{ dataInicial, dataFinal, dryRun }` → `200 { conferidas, divergentes[] }` | Usa `ConsultarNfseServicoPrestado` (§9, RR2): uma varredura por período em vez de N consultas por nota, até 50 `CompNfse` por página. É a implementação da conciliação diária D+1 de R1. Janela de 1 dia no uso diário (RRR2: não há limite de período em Mauá, mas cada página traz 50 notas e ~209 KB). Tratar `E212` como fim da paginação, não como erro. Casar por `IdentificacaoRps`, nunca por contagem. `dryRun` como padrão; a correção de estado reusa a mesma regra da reconciliação individual. |
 | **Listar presas** | `GET /admin/nfm?status=&stuckForHours=&missingBankPayment=` | Extensão de `FindGeneratedNfmsQueryDto`; leitura pura. É a consulta que hoje só existe como SQL manual. |
 | **Reprocessar DLQ** | `POST /admin/queues/nfse/dlq/:jobId/retry` | Reenfileira um job da DLQ; bloqueia se a NFS-e já estiver terminal. |
 
@@ -1049,9 +1241,14 @@ Comando de CLI equivalente para os dois primeiros (`npm run nfse:status -- --nfm
    o job é apagado. Pausar a fila se a indisponibilidade for longa.
 4. **Ao voltar**: listar NFS-e `ISSUED` sem `bankPaymentRequestCode` e rodar
    `POST /admin/bank-payment/nfm/:id` para cada uma.
-5. **Cuidado**: confirmar no Inter (`GET /cobrancas` filtrando por período e `seuNumero`) que a
-   cobrança não foi criada antes de reemitir — enquanto P0-02 não estiver corrigido, essa
-   verificação é **manual e obrigatória**.
+5. **Cuidado**: confirmar no Inter que a cobrança não foi criada antes de reemitir. A retomada
+   sempre acontece depois dos 30 min de idempotência implícita do Inter (R4), então **não há
+   nenhuma proteção do provedor neste caminho**. A verificação é **manual e obrigatória** enquanto
+   P0-02 não estiver corrigido — e hoje ela não pode ser feita pela API do projeto:
+   `toListQueryParams` (`inter-cobranca.mapper.ts:73-99`) não monta o filtro `seuNumero`. Fazer no
+   internet banking ou via `curl` direto:
+   `GET /cobranca/v3/cobrancas?dataInicial=<vencimento>&dataFinal=<vencimento>&seuNumero=<nfseId>`
+   (`dataInicial`/`dataFinal` são obrigatórios e filtram por vencimento por padrão).
 
 ### 7.3 Nota presa
 
@@ -1072,12 +1269,21 @@ Comando de CLI equivalente para os dois primeiros (`npm run nfse:status -- --nfm
    | `PENDING`, sem job na fila | o job foi apagado (P1-01) ou o Redis caiu | reenfileirar `issue-nfse-batch` para o `nfseId` |
    | `SUBMITTED`/`PROCESSING`, com protocolo | poll perdido ou esgotado | consultar o GISS pelo protocolo e corrigir o estado |
    | `FAILED` com `error_message` de rede/timeout | **provavelmente a nota existe no GISS** | consultar por RPS **antes** de qualquer coisa; nunca reemitir às cegas |
-   | `FAILED` com mensagem de negócio (situação 3) | rejeição legítima | corrigir o cadastro e reemitir com o mesmo RPS |
-   | `ISSUED` sem `bank_payment_request_code` | boleto não gerado | conferir no Inter por `seuNumero`; se não existir, `POST /admin/bank-payment/nfm/:id` |
+   | `FAILED` com mensagem de negócio (situação 3) | rejeição legítima | corrigir o cadastro, **consultar o GISS pelo RPS** e só então reemitir com o mesmo RPS (R2) |
+   | `ISSUED` sem `bank_payment_request_code` | boleto não gerado **ou** emitido e não vinculado (P0-02, cenário A) | conferir no Inter por `seuNumero` — hoje só fora da API do projeto, ver §7.2 passo 5; se não existir, `POST /admin/bank-payment/nfm/:id` |
+   | `ISSUED` com `bank_payment_request_code`, cliente sem boleto | produção da cobrança pode ter falhado (P1-08) | `GET /admin/bank-payment/{codigo}` e conferir a situação; `FALHA_EMISSAO` exige reemissão |
    | `CANCELED` com boleto ativo | cascata incompleta (P0-06) | cancelar o boleto manualmente |
 
-3. **Regra de ouro**: antes de qualquer reemissão, **consultar a prefeitura**. O único erro
-   irreversível deste fluxo é emitir uma nota que já existe.
+3. **Prazo**: o cancelamento de NFS-e tem 30 dias, contados **da emissão** (R1, RR4). Nota em
+   estado não terminal há mais de **25 dias** escala para decisão humana no mesmo dia. Atenção ao
+   marco: para uma nota que a reconciliação descobrir emitida no GISS sem que soubéssemos, o
+   relógio corre desde a `DataEmissao` devolvida pelo provedor
+   (`giss-batch-status.mapper.ts:84`), não desde a descoberta — uma nota achada no dia 28 tem 2
+   dias de margem, não 30. Passado o prazo, a correção deixa de ser cancelamento: é `SubstituirNfse`
+   (RR2), e o erro `E7` avisa que a substituição só pode ser feita uma vez.
+4. **Regra de ouro**: antes de qualquer reemissão, **consultar a prefeitura** — e, para boleto,
+   consultar o Inter por `seuNumero`. Não se assume que o provedor rejeita duplicidade (R2). O único
+   erro irreversível deste fluxo é emitir uma nota que já existe.
 
 ---
 
@@ -1085,14 +1291,44 @@ Comando de CLI equivalente para os dois primeiros (`npm run nfse:status -- --nfm
 
 ### Onda 1 — parar o sangramento (dias, sem alteração de schema)
 
+> **Entregue em 2026-09-02.** Decisões tomadas na execução: timeout global por módulo (GISS 60s,
+> Inter 30s); novo status `AWAITING_PROVIDER` — que saiu **sem migration**, porque `status` é
+> `String` no Prisma (`prisma/schema/nfse.prisma:7`), não enum de banco; cascata de cancelamento que
+> cancela a nota sempre e reporta a falha do boleto na resposta; e `nfseId` nos logs sem
+> `correlationId`.
+>
+> **Alertas.** Quatro, não três: acrescentou-se o de `AWAITING_PROVIDER`, com janela de 12h, porque
+> nesta onda nada resolve esse estado e a 15 min viraria ruído. Agendamento com `@nestjs/schedule`.
+> Como `@Cron` dispara em cada instância, a janela de digest é reivindicada de forma **atômica** via
+> `ICacheGateway.setIfAbsent` (`SET NX`, novo) — é isso que impede duas réplicas de mandarem o mesmo
+> e-mail. Instalar `@nestjs/schedule` exigiu subir `bullmq` para `^5.79.2` e `redis` para `^5`, o que
+> de quebra resolveu um conflito de peer dependency **pré-existente** com `@bull-board/api`; a
+> migração do `node-redis` custou duas linhas (o cursor de `SCAN` virou `string`).
+>
+> **Certificados.** Os três arquivos saíram do índice e continuam em disco, então nenhum ambiente
+> quebra. `GISS_CERT_PATH` passou a ser a fonte da verdade, com fallback para o caminho legado. A
+> rotação junto à AC e o purge do histórico **foram executados** em 2026-09-03, fechando o P0-07;
+> ver `docs/runbook-certificados.md`.
+>
+> **O que a Onda 3 herda:** notas paradas em `AWAITING_PROVIDER` são o primeiro insumo do job de
+> reconciliação. Nesta onda nada as varre — a varredura depende de `ConsultarNfsePorRps` e o alerta
+> depende do `AlertGateway`, ambos fora do escopo —, então até lá elas só aparecem por SQL. É troca
+> deliberada: um estado parado e honesto vale mais que um `FAILED` mentiroso, porque `FAILED` faz a
+> operação parar de procurar.
+
 | Item | Achado | Esforço | Por quê primeiro |
 |---|---|---|---|
-| Timeouts em `HttpModule` (GISS e Inter) | P0-05 | P | Uma linha por módulo; destrava a causa de metade dos outros problemas. |
-| `removeOnFail` com retenção + `attempts` nos jobs de lote e poll | P1-01 | P | Uma configuração; passa a existir rastro. |
-| Ampliar a janela de poll (backoff escalonado, sem `FAILED` com protocolo) | P0-04 | M | Impede que uma indisponibilidade curta destrua o fechamento. |
-| Cancelamento em cascata do boleto | P0-06 | M | Independente do resto; risco financeiro imediato. |
-| Remover certificados do repositório + rotacionar | P0-07 | M | Independente; quanto antes, menor a exposição. |
-| `nfseId`/`correlationId` nos logs; `isTerminal()` incluir `CANCELED` | P2-04, P2-01 | P | Barato e habilita o diagnóstico das ondas seguintes. |
+| ✅ Timeouts em `HttpModule` (GISS e Inter) | P0-05 | P | Uma linha por módulo; destrava a causa de metade dos outros problemas. |
+| ✅ `removeOnFail` com retenção + `attempts` nos jobs de lote e poll | P1-01 | P | Uma configuração; passa a existir rastro. |
+| ✅ Ampliar a janela de poll (backoff escalonado, sem `FAILED` com protocolo) | P0-04 | M | Impede que uma indisponibilidade curta destrua o fechamento. |
+| ✅ Cancelamento em cascata do boleto | P0-06 | M | Independente do resto; risco financeiro imediato. |
+| ✅ Remover certificados do índice + caminho por env; ✅ rotação junto à AC e purge do histórico em `docs/runbook-certificados.md` | P0-07 | M | Independente; quanto antes, menor a exposição. |
+| ✅ `nfseId`/`correlationId` nos logs; `isTerminal()` incluir `CANCELED` | P2-04, P2-01 | P | Barato e habilita o diagnóstico das ondas seguintes. |
+| ✅ `AlertGateway` SMTP + **quatro** alertas (§5.4) | P2-09, R7 | M | Não existe canal de alerta nenhum. Sem ele, todo o resto depende de alguém abrir o Bull Board por acaso. |
+| ✅ Validar `notAfter` no `InterCertLoader` e no `GissPfxLoader` | P2-10 | P | O certificado mTLS do Inter no repositório vence em **2026-09-25**. Tem data. |
+| ✅ Congelar `dataVencimento`/`valorNominal` entre tentativas do job de boleto | P0-02 | P | Sem schema: basta reusar o valor da primeira tentativa. Transforma a idempotência de 30 min do Inter de acaso em garantia. |
+| ✅ Vincular a cobrança pelo `codigoSolicitacao` que vem na recusa por duplicidade + corrigir a precedência de `extractInterErrorMessage` | P0-02 | P | O identificador da cobrança órfã já chega na resposta e é descartado (RR3). Fecha o cenário A sem migration e sem consulta nova. |
+| ✅ Tratar `E10` como sinal de "a nota existe", não como `FAILED`, **nos dois caminhos** — recepção (`giss-issue-batch.mapper.ts:248-254`) e situação 3 do poll (`process-poll-nfse-batch.service.ts:80-84`) | P0-03, R2, RRR3 | P | Hoje ambos fazem o oposto do que o `E10` significa. Preservar todas as mensagens, não só a primeira, e o código como campo. |
 
 ### Onda 2 — impedir a duplicidade (depende da Onda 1)
 
@@ -1102,6 +1338,10 @@ Comando de CLI equivalente para os dois primeiros (`npm run nfse:status -- --nfm
 | Transação única para NFM + RPS + NFS-e + vínculo, com outbox | P0-01 | M | migration |
 | Índice único parcial `nfses(nfm_id) WHERE status NOT IN (...)` + lock na linha da NFM | P1-05 | M | migration, P0-01 |
 | Idempotência do boleto (chave gravada antes, consulta prévia na retentativa) | P0-02, P1-07 | M | migration |
+| Filtro `seuNumero` em `ListBankPaymentInputDto` + `toListQueryParams` | P0-02, P1-07 | P | — |
+| Recusa por duplicidade do Inter passa a vincular a cobrança existente, não a falhar | P0-02 | P | filtro `seuNumero` |
+| Casar `issuedNotes` por `rpsNumber` + `rpsSeries` em vez de `[0]` | P2-01, cenário 14 | P | — |
+| Lote de até 50 RPS em `RecepcionarLoteRps` | RR5, P2-08 | M | casamento por RPS (pré-requisito) |
 | Classificação transitório × permanente nos dois provedores | P2-07 | P | — |
 | Persistir tentativas em `NfseAttempt` | P2-03 | M | migration |
 
@@ -1109,32 +1349,39 @@ Comando de CLI equivalente para os dois primeiros (`npm run nfse:status -- --nfm
 
 | Item | Achado | Esforço | Depende de |
 |---|---|---|---|
-| `ConsultarNfsePorRps` no gateway do GISS | P0-03 | G | — |
-| Estado `SUBMIT_UNKNOWN` + job de reconciliação | P0-03 | G | `ConsultarNfsePorRps`, migration |
+| `ConsultarNfsePorRps` no gateway do GISS — **com `signWholeDocument`** | P0-03, RRRR1 | **M** (era G — a operação existe no WSDL e o `GissSoapClient` é genérico, RR2) | — |
+| Estado `SUBMIT_UNKNOWN` + job de reconciliação | P0-03 | M | `ConsultarNfsePorRps`, migration |
+| `ConsultarNfseServicoPrestado` + reconciliação diária por período (D+1), com janela adaptativa | R1, RR2, RRR2, P2-09 | M | migration |
+| `RecepcionarLoteRpsSincrono`: emissão síncrona como caminho principal | RRR1, P0-04, P1-02 | M | timeouts (Onda 1) e `ConsultarNfsePorRps` — **nunca antes dos dois** |
 | Varredura de estados não terminais (outbox sweeper) | P1-02 | M | outbox, índices |
 | Rota de reemissão + rota de reconciliação | P1-04 | M | reconciliação |
 | Falha do boleto deixa de ser engolida (DLQ + motivo persistido) | P1-03 | M | migration |
+| Confirmação de emissão da cobrança (webhook do Inter ou varredura por `GET /cobrancas/{codigoSolicitacao}`) | P1-08 | M | — |
 
 ### Onda 4 — operação sustentável
 
 | Item | Achado | Esforço |
 |---|---|---|
 | Scheduler diário + elegibilidade `dueDateDay <= today` | P1-06 | M |
-| Circuit breaker + `limiter` na fila | P2-08 | M |
+| Separar as filas por job (`nfse-issue`, `nfse-poll`, `nfse-bank-payment`), concorrência 1–2 no envio e 4–8 na consulta e no boleto | P2-08, R3 | M |
+| Circuit breaker + `limiter` por fila | P2-08 | M |
+| Webhook de baixa do boleto (`PUT /cobrancas/webhook`) e conciliação de pagamento | R6, P1-08 | M |
 | Métricas e alertas (§5.4) | P2-09 | M |
+| Persistir e alertar os alertas `A*` do GISS na emissão bem-sucedida (extrair `ListaMensagemAlertaRetorno`) | P2-11 | P |
 | Validação de `notAfter` + healthcheck de certificados | P2-10 | P |
 | Filtros operacionais em `GET /admin/nfm` | P2-09 | P |
 | Teste de integração ponta a ponta com injeção de falhas | P3-01 | M |
 | Auditoria de erros e do caminho assíncrono | P2-05 | P |
 
 **Maior redução de risco pelo menor esforço:** os quatro primeiros itens da Onda 1
-(timeouts, `removeOnFail`, janela de poll, cascata do cancelamento). Juntos custam poucos dias e
-eliminam a perda em massa de notas numa indisponibilidade, a cobrança de nota cancelada e o
-travamento indefinido da fila.
+(timeouts, `removeOnFail`, janela de poll, cascata do cancelamento), mais o `AlertGateway` SMTP.
+Juntos custam poucos dias e eliminam a perda em massa de notas numa indisponibilidade, a cobrança
+de nota cancelada, o travamento indefinido da fila e — com o alerta — a dependência de alguém
+perceber por acaso. A validação de `notAfter` tem prazo próprio: antes de 2026-09-25.
 
 ---
 
-## 9. Suposições e perguntas em aberto
+## 9. Suposições, respostas e perguntas remanescentes
 
 ### Suposições
 
@@ -1143,32 +1390,522 @@ travamento indefinido da fila.
    análise assume os defaults da biblioteca: 1 tentativa, `maxStalledCount: 1`, `stalledInterval`
    de 30s, concorrência 1. Se algum deles for alterado por variável de ambiente fora do repositório,
    as conclusões sobre reentrega de job "stalled" (cenários 3 e 11) mudam.
-2. **Comportamento do `seuNumero` no Inter.** Assumi que a API de cobrança v3 aceita `seuNumero`
-   repetido e cria uma segunda cobrança. Se o Inter deduplicar por esse campo, o P0-02 cai de
-   crítico para médio. Não há documentação do Inter no repositório para confirmar.
-3. **Semântica das situações do GISS.** O mapa `1=NotReceived, 2=Pending, 3=Error, 4=Success`
-   (`giss-batch-status.mapper.ts:12-17`) foi tomado como correto conforme o XSD citado nos
-   comentários do próprio código.
-4. **`ConsultarNfsePorRps` está disponível no GISS de Mauá.** A operação é padrão ABRASF 2.04, mas o
-   WSDL real (citado em `giss-soap-client.ts:33-35`) não foi inspecionado nesta auditoria — o
-   `GissOperation` (`:8-12`) só declara `RecepcionarLoteRps`, `ConsultarLoteRps` e `CancelarNfse`.
-   Toda a Onda 3 depende dessa operação existir.
+2. ~~**Comportamento do `seuNumero` no Inter.**~~ **Resolvida** — ver R4. O Inter deduplica por
+   `seuNumero` + `valorNominal` + `dataVencimento` + `cpfCnpj`, com TTL de 30 min. O P0-02 continua
+   crítico, mas com outro modo de falha: cobrança órfã dentro da janela, duplicidade fora dela.
+3. ~~**Semântica das situações do GISS.**~~ **Confirmada** pelo Guia Rápido V1.5, §5.3
+   (`gissonline_docs/Manual_Tecnico_-_Servicos_Prestados_-_V1.5.pdf`): 1 = Não Recebido,
+   2 = Não Processado, 3 = Processado com Erro, 4 = Processado com Sucesso — exatamente o mapa de
+   `giss-batch-status.mapper.ts:12-17`.
+4. ~~**`ConsultarNfsePorRps` está disponível no GISS de Mauá.**~~ **Resolvida** — ver RR2. O WSDL
+   em `gissonline_docs/nfse-ws.xml` declara as dez operações ABRASF 2.04, incluindo
+   `ConsultarNfsePorRps`. O `GissOperation` (`giss-soap-client.ts:8-12`) é que só declara três.
 5. **Um RPS por lote.** `process-issue-nfse-batch.service.ts:53` sempre envia um único RPS, o que
-   torna o cenário 14 latente e não ativo hoje.
+   torna o cenário 14 latente e não ativo hoje. **Deixa de valer** se for adotado o lote de até 50
+   RPS que o GISS aceita (RR5): nesse momento o cenário 14 fica ativo e os alertas A12/E71
+   (RPS duplicado dentro do lote) passam a ser possíveis.
 
-### Perguntas em aberto
+### Respostas às perguntas em aberto
 
-1. Qual é o prazo legal de cancelamento de NFS-e no município de Mauá? Ele define quanto tempo a
-   operação tem para detectar uma nota duplicada — e portanto qual limiar de alerta é aceitável.
-2. O GISS rejeita explicitamente um RPS já enviado (mesmo número + série + prestador)? Toda a
-   estratégia de reenvio seguro depende disso. Se ele aceitar e emitir uma segunda nota, o reenvio
-   precisa ser sempre precedido de consulta.
-3. Qual o volume real por fechamento (dezenas ou centenas de NFMs por dia)? Isso decide se
-   concorrência 1 é aceitável e qual `limiter` configurar.
-4. A API do Inter oferece cabeçalho de idempotência? Se sim, é a correção mais barata do P0-02.
-5. O certificado A1 versionado é o mesmo usado em produção hoje, e qual a data de vencimento? Isso
-   define a urgência da rotação (P0-07) e o prazo do alerta (P2-10).
-6. Existe algum processo externo (planilha, ERP, conciliação manual) que hoje compensa a ausência do
-   webhook de baixa do boleto? A resposta muda a prioridade de implementá-lo.
-7. Quem é acionado hoje quando uma nota falha? Não encontrei nenhum canal de alerta no código — se
-   a resposta for "ninguém, até o cliente reclamar", os alertas da §5.4 sobem de prioridade.
+> Respondidas pela operação em 2026-09-01. Cada resposta traz o que muda na auditoria; as alterações
+> já foram aplicadas nas seções correspondentes.
+
+**R1 — Prazo de cancelamento da NFS-e: 30 dias.**
+
+A operação tem 30 dias para cancelar uma nota emitida por engano. Passado o prazo, a correção deixa
+de ser cancelamento e vira retificação ou nota de crédito — processo manual e visível para o cliente.
+
+O que muda:
+
+- O limiar de detecção precisa ser ordens de grandeza menor que o prazo. A conciliação
+  "contagem de `ISSUED` do dia = contagem de boletos do dia" (§5.4) passa a ser **diária e
+  obrigatória, em D+1**, e não um alerta opcional: é ela que garante que uma duplicidade seja
+  descoberta com 29 dias de margem, e não com zero.
+- A janela de reconciliação de 30 dias já prevista em §5.3 para `ConsultarLoteRps` deixa de ser
+  arbitrária — é exatamente o prazo dentro do qual o erro ainda é reversível. Depois disso a
+  reconciliação continua valendo para corrigir o estado local, mas não devolve mais a opção de
+  cancelar.
+- O runbook (§7.3) ganha um limite duro: NFS-e em estado não terminal há mais de **25 dias** escala
+  para decisão humana no mesmo dia.
+
+Registrado como prazo operacional dado pela operação; se ele contar da competência e não da emissão,
+o limite de 25 dias precisa ser recalculado.
+
+**R2 — Assumir que o GISS *não* rejeita RPS repetido.**
+
+Decisão explícita: trabalhar com o pior cenário. Um mesmo `(prestador, série, número)` reenviado pode
+gerar uma segunda NFS-e — e o mesmo vale para vendors futuros, cuja semântica não se conhece de
+antemão.
+
+*Atualização (rodada 2):* a tabela oficial de erros
+(`gissonline_docs/Erros_e_Alertas.xlsx`) **documenta a rejeição**:
+
+| Código | Mensagem | Solução |
+|---|---|---|
+| `E10` | RPS já informado. | Para essa Inscrição Municipal/CNPJ já existe um RPS informado com o mesmo número, série e tipo. |
+| `E71` | RPS em duplicidade no arquivo enviado. | Retire do lote o RPS duplicado ou altere sua identificação. |
+| `A12` | RPS em duplicata no lote foram ignorados. | A Prefeitura desconsiderou os RPS cujos elementos eram idênticos aos de RPS já processados. |
+
+**Confirmado na prática:** ao tentar gerar de novo um RPS já informado, o GISS devolve erro
+dizendo que o RPS já foi informado. A rejeição não é só documental.
+
+A política de R2 permanece — a decisão é do negócio e protege contra vendors futuros —, mas passa a
+ser defesa em profundidade e não a única barreira. E ganha uma consequência prática imediata:
+**`E10` é sinal, não falha.** Hoje ele chega como situação 3 e vira `markFailed`
+(`process-poll-nfse-batch.service.ts:80-84`), quando significa exatamente o contrário: a nota
+existe. O tratamento correto é disparar `ConsultarNfsePorRps` e reconciliar. O mapper já extrai o
+`IdentificacaoRps` de cada mensagem de retorno do lote (`giss-batch-status.mapper.ts:63-64`), então
+a atribuição do `E10` ao RPS certo é gratuita.
+
+O que muda: **consulta obrigatória antes de qualquer reenvio, sem exceção.** Concretamente:
+
+- §5.1, princípio 2, deixa de afirmar que reenviar a mesma chave é seguro.
+- `RecepcionarLoteRps` perde o retry automático cego (§5.3). Toda tentativa depois da primeira passa
+  por `ConsultarNfsePorRps`; só reenvia se o provedor afirmar que a nota não existe.
+- Isso promove `ConsultarNfsePorRps` de "peça da reconciliação" a **pré-requisito de qualquer retry
+  de envio**. Enquanto ela não existir (suposição 4), a política correta para erro ambíguo no envio
+  é **não reenviar**: marcar `SUBMIT_UNKNOWN` e escalar. Vale a pena inspecionar o WSDL de Mauá
+  antes de planejar a Onda 3, porque toda a estratégia depende disso.
+- A rota `POST /admin/nfm/:id/reissue` (§6) passa a consultar o provedor ela mesma, no momento da
+  chamada. Não basta o operador afirmar que consultou.
+- Cenários 6 e 11 da matriz foram reescritos: o retry do job de envio deixa de ser classificado como
+  seguro.
+
+**R3 — Volume: centenas de NFMs por fechamento.**
+
+Tomando 300 notas/dia como ordem de grandeza:
+
+- **Concorrência 1 não serve** (`nfse-bullmq.consumer.ts:14`). A fila `nfse` mistura três jobs
+  (envio, consulta, boleto) num único worker serial: uma conexão pendurada sem timeout (P0-05) trava
+  o fechamento inteiro, não uma nota.
+- O pior caso de consulta é grande: 300 notas × até 10 tentativas
+  (`process-poll-nfse-batch.service.ts:17`) = até **3.000 `ConsultarLoteRps`** concentrados, hoje em
+  série. A 1s por chamada isso já são ~50 min de fila, e o espaçamento de 30s (`:18`) deixa de ser
+  respeitado — a fila vira o gargalo antes do provedor.
+- O **Inter não é o limite**: 120 chamadas/min em produção para `POST /cobrancas` e `GET /cobrancas`
+  (OpenAPI da API Cobrança Bolepix v3). 300 boletos cabem em ~3 min.
+- O **GISS** não publica limite conhecido e o lote é sempre de 1 RPS
+  (`process-issue-nfse-batch.service.ts:53`). Enquanto não houver número confirmado, tratá-lo como o
+  recurso escasso.
+
+O que muda em §8, Onda 4: em vez de "circuit breaker + `limiter`" genérico, o alvo é **separar as
+filas por job** (`nfse-issue`, `nfse-poll`, `nfse-bank-payment`), com concorrência 1–2 no envio e
+4–8 na consulta e no boleto, e `limiter` explícito por fila. A separação também impede que a
+explosão de consultas de um dia ruim atrase a emissão do dia seguinte.
+
+**R4 — O Inter não tem cabeçalho de idempotência; tem uma chave implícita de 30 minutos.**
+
+Fonte: OpenAPI da API Cobrança (Boleto com Pix) v3
+(`https://developers.inter.co/redocusaurus/swagger-cobranca-bolepix-yaml.yaml`, descrição de
+`POST /cobrancas`), complementando o mapa em `.cursor/docs/banco-inter-api.md:221-241`, que não
+cobria idempotência.
+
+> "Para evitar emissão de cobranças em duplicidade, utilizamos os campos seuNumero, valorNominal,
+> dataVencimento e cpfCnpj do pagador para montar uma chave de idempotência, com duração de 30min.
+> Portanto, não será possível emitir mais de uma cobrança com todos estes campos idênticos em um
+> intervalo de 30 minutos entre as chamadas."
+
+O único parâmetro de cabeçalho de `POST /cobrancas` é `x-conta-corrente`. Não existe
+`Idempotency-Key` — a correção "mais barata" cogitada em P0-02 não está disponível.
+
+Consequências, em ordem de importância:
+
+1. **A afirmação "até cinco cobranças duplicadas" estava errada e foi corrigida** (§1, P0-02,
+   cenário 5). A escada de retry do job é 5s, 10s, 20s, 40s — ~75 s no total
+   (`nfse-queue-bullmq.producer.ts:26-29`), inteiramente dentro dos 30 min. Com payload idêntico, o
+   Inter recusa as tentativas 2 a 5.
+2. **Em compensação, aparece um modo de falha pior e não previsto.** A recusa por duplicidade é um
+   4xx, que `inter-cobranca.client.ts:179-182` mapeia para `BankPaymentRequestError` — erro
+   permanente de negócio (P2-07). O job morre, `linkBankPayment` (`:74`) nunca roda, e o boleto
+   **existe** no Inter, cobrável, sem vínculo local. É P1-03 com uma cobrança viva solta: pior que a
+   duplicidade, porque ninguém sabe que ela existe. A correção é tratar a recusa como sinal —
+   consultar por `seuNumero`, vincular a cobrança encontrada, completar o job.
+3. **A proteção só vale enquanto os quatro campos forem idênticos, e eles não são estáveis.**
+   `seuNumero` (`nfse-to-issue-bank-payment.mapper.ts:37`) e `cpfCnpj` (`:45`) são determinísticos;
+   `valorNominal` (`:25`) e `dataVencimento` (`:39-42`) não:
+   - `issuedAt: nfse.props.issuedAt ?? new Date()`
+     (`process-issue-nfse-bank-payment.service.ts:58`) — com `issuedAt` nulo, cada tentativa usa um
+     instante diferente e, para `dueDateType = DEADLINE` (`invoice-calendar-due-date.vo.ts:52-62`),
+     uma retentativa que cruza a meia-noite em `America/Sao_Paulo` muda o vencimento;
+   - sem `bankPayment` no snapshot, o fallback deriva `referenceMonth`/`referenceYear` de
+     `DateTime.now()` (`process-issue-nfse-bank-payment.service.ts:83,90-91`) e, para vencimento
+     fixo (`invoice-calendar-due-date.vo.ts:64-107`), uma retentativa na virada do mês muda o
+     vencimento;
+   - P2-06 (NFM reaproveitada com valor divergente) muda `valorNominal`.
+
+   Daí o item novo da Onda 1: **congelar o payload** entre tentativas. Custa pouco e converte a
+   proteção de 30 min de acaso em garantia.
+4. **Fora dos 30 minutos não há proteção nenhuma** — e é exatamente onde estão os caminhos de
+   recuperação: retry manual `POST /admin/bank-payment/nfm/:id` (P1-07), reprocessamento de DLQ,
+   varredura do outbox, retomada da fila depois de indisponibilidade longa (§7.2). Ou seja, a
+   duplicidade migra do caminho automático para o caminho de conserto, que é onde a Onda 3 vai
+   trabalhar.
+5. **A consulta prévia por `seuNumero` não está implementada.** `toListQueryParams`
+   (`inter-cobranca.mapper.ts:73-99`) monta apenas `dataInicial`, `dataFinal`, `paginacao.*`,
+   `situacao`, `pessoaPagadora` e `cpfCnpjPessoaPagadora`. A API aceita `seuNumero` como filtro de
+   query, mas `ListBankPaymentInputDto` não tem o campo. A correção 3 do P0-02 exige acrescentá-lo.
+   `dataInicial`/`dataFinal` são **obrigatórios** e filtram por `dataVencimento` por padrão
+   (`filtrarDataPor` = `VENCIMENTO`), então a consulta prévia deve usar a data que está prestes a
+   enviar.
+
+Dois achados adicionais da mesma leitura, fora do escopo original da pergunta:
+
+- **`POST /cobrancas` é assíncrono.** Devolve apenas `codigoSolicitacao`; a cobrança é produzida
+  depois e o resultado chega por webhook ou por `GET /cobrancas/{codigoSolicitacao}`. Hoje o código
+  trata `codigoSolicitacao` como sucesso (`inter-cobranca.client.ts:51-58`) e nunca confirma. O mapa
+  de status já prevê `FALHA_EMISSAO` (`inter-cobranca.mapper.ts:44`) e nada nunca o lê. Virou o
+  achado **P1-08** e o cenário 16 da matriz.
+- **Vencimento no mesmo dia só é aceito até 19h59** (descrição de `POST /cobrancas`). Confirma o
+  cenário 15 e refina a correção: o piso de vencimento precisa considerar a hora, não só a data.
+
+**R5 — O A1 versionado é o de produção e vence no meio de 2027.**
+
+Confirma P0-07 na leitura mais pessimista: o material criptográfico exposto no repositório é o mesmo
+que assina NFS-e em produção e continuará válido por mais ~10 meses. A exposição não expira sozinha
+— **rotacionar junto à AC é obrigatório**, remover do histórico não basta. O vencimento distante
+*aumenta* o risco em vez de reduzi-lo: são 10 meses de janela de uso indevido. P0-07 mantém
+severidade e urgência.
+
+Para P2-10 (alerta de vencimento), porém, o A1 do GISS não é o problema imediato. O problema imediato
+é o certificado mTLS do Inter, também versionado, com 30 dias de validade e vencendo **em
+2026-09-25 — 24 dias depois desta auditoria**:
+
+```
+resources/files/bank-payment/inter/Sandbox_InterAPI_Certificado.crt
+subject= /C=BR/L=Minas Gerais/CN=DPASIS/OU=6a8edfb9f4ce7316ea4fd31e
+notBefore=Aug 26 13:27:42 2026 GMT
+notAfter=Sep 25 00:00:00 2026 GMT
+```
+
+É o certificado de teste (`INTER_API_URL` aponta para `cdpj-sandbox` em `.env.example:53`), e o
+`InterCertLoader` (`inter-cert.loader.ts:10-35`) não lê `notAfter` em ambiente nenhum. A validade em
+produção foi respondida na rodada 2 — 1 ano, e o certificado de produção ainda nem foi emitido
+(RR1) —, então o alerta D-30/D-15/D-7 serve. A validação de `notAfter` continua na Onda 1 com
+data-limite, para que o vencimento do certificado de teste em 24 dias apareça como mensagem e não
+como incidente de handshake.
+
+**R6 — Não existe nada compensando a ausência do webhook de baixa.**
+
+Nem planilha, nem ERP, nem conciliação manual. O sistema **não sabe se um boleto foi pago**:
+`bankPaymentStatus` só muda se alguém chamar `GET /admin/bank-payment/:codigo` na mão, e não há
+receptor de webhook no projeto — nenhuma ocorrência de "webhook" em `src/`.
+
+O que muda: o webhook deixa de ser conveniência e passa a ter duas funções que se pagam juntas:
+
+1. **Baixa** — `PUT /cobrancas/webhook` registra a URL e os callbacks trazem a mudança de situação da
+   cobrança. É o que fecha o ciclo financeiro.
+2. **Confirmação de emissão** — como `POST /cobrancas` é assíncrono (R4), o mesmo callback é a forma
+   de descobrir que uma cobrança terminou em `FALHA_EMISSAO`. Sem ele, a alternativa é varredura
+   ativa: para toda NFS-e com `bankPaymentRequestCode` gravado há mais de N minutos, chamar
+   `GET /cobrancas/{codigoSolicitacao}` e comparar a situação.
+
+O Inter ainda oferece `GET /cobrancas/webhook/callbacks` (consulta dos callbacks enviados) e
+`POST /webhook/callbacks/retry` (reenvio) — um callback perdido é recuperável, o que torna o webhook
+uma fonte confiável e não um canal "best effort".
+
+**R7 — Não existe canal de alerta; SMTP é o caminho viável.**
+
+Hoje ninguém é acionado: uma nota que falha só aparece quando o cliente cobra. Isso confirma a
+leitura pessimista da pergunta e **sobe os alertas da §5.4 da Onda 4 para a Onda 1**, na parte que
+não depende de schema.
+
+A infraestrutura já está meio pronta e ociosa:
+
+- `SMTP_HOST`, `SMTP_PORT`, `SMTP_TO`, `SMTP_FROM`, `SMTP_USERNAME`, `SMTP_PASSWORD` em
+  `config.service.ts:66-85`;
+- `LogContext.SMTP` declarado em `logger.gateway.ts:10,23,61`;
+- `nodemailer` e `nodemailer-express-handlebars` em `package.json:70-71`.
+
+E **nada disso é usado**: não há uma única referência a `nodemailer` em `src/`, e `LogContext.SMTP`
+nunca é emitido. É o mesmo padrão do P3-03 — configuração morta sugerindo proteção inexistente —
+com o agravante de que aqui a proteção ausente é justamente a que faria o resto funcionar.
+
+Proposta mínima, dentro da Onda 1:
+
+1. `AlertGateway` com implementação SMTP usando o que já está configurado, e digest por janela
+   (no máximo um e-mail a cada 15 min por tipo), para que uma indisponibilidade do GISS não vire
+   centenas de mensagens.
+2. Três alertas que cobrem os modos de falha caros e não dependem de migration:
+   - qualquer NFS-e em estado não terminal há mais de 2h;
+   - qualquer NFS-e `ISSUED` sem `bankPaymentRequestCode` há mais de 1h;
+   - fechamento do dia: contagem de `ISSUED` diferente da contagem de boletos (R1).
+3. Quando houver métricas (Onda 4), o SMTP vira fallback e o alerta primário passa para o stack de
+   observabilidade. E-mail é o piso, não o alvo.
+
+### Rodada 2 — respostas às perguntas remanescentes
+
+> Respondidas em 2026-09-01, com pesquisa em `gissonline_docs/` (WSDL `nfse-ws.xml`, Guia Rápido
+> V1.5, `Erros_e_Alertas.xlsx`).
+
+**RR1 — Certificado mTLS do Inter: validade de 1 ano; o de produção ainda não existe.**
+
+O certificado do repositório, com 30 dias e vencendo em 2026-09-25 (R5), é de teste. O de produção
+terá validade anual, então o alerta D-30/D-15/D-7 do P2-10 serve — não é preciso ciclo semanal.
+
+Duas consequências, e a segunda é a que importa:
+
+- A validação de `notAfter` continua na Onda 1, mas por outro motivo: quando o certificado de teste
+  vencer em 24 dias, homologação vai quebrar como handshake TLS genérico
+  (`ExternalApiError`, `inter-cobranca.client.ts:186`) e o diagnóstico vai custar horas. Ler
+  `notAfter` no `InterCertLoader` (`inter-cert.loader.ts:10-35`) transforma isso numa mensagem de
+  uma linha.
+- **Metade do P0-07 ainda pode ser evitada em vez de remediada.** Não existe chave privada de
+  produção do Inter para rotacionar — ela ainda vai ser emitida. É a hora mais barata de acertar:
+  entregar por volume montado ou secret manager desde o primeiro dia, com `INTER_CERT_PATH`/
+  `INTER_KEY_PATH` apontando para fora da árvore do projeto, e nunca commitar. Para o A1 do GISS a
+  exposição já ocorreu e só resta rotacionar (R5); para o Inter, ainda dá para não errar.
+
+**RR2 — O WSDL declara as dez operações ABRASF 2.04. `ConsultarNfsePorRps` existe.**
+
+`gissonline_docs/nfse-ws.xml` (`targetNamespace="http://nfse.abrasf.org.br"`) declara:
+
+| Operação | Modo | Já implementada? |
+|---|---|---|
+| `RecepcionarLoteRps` | assíncrono | sim (`GissOperation`, `giss-soap-client.ts:9`) |
+| `ConsultarLoteRps` | síncrono | sim (`:10`) |
+| `CancelarNfse` | síncrono | sim (`:11`) |
+| `ConsultarNfsePorRps` | síncrono | **não** |
+| `ConsultarNfseServicoPrestado` | síncrono | **não** |
+| `ConsultarNfsePorFaixa` | síncrono | **não** |
+| `ConsultarNfseServicoTomado` | síncrono | **não** |
+| `RecepcionarLoteRpsSincrono` | síncrono | **não** |
+| `GerarNfse` | síncrono | **não** |
+| `SubstituirNfse` | síncrono | **não** |
+
+O que muda:
+
+- **A Onda 3 fica muito mais barata.** A estimativa "G" para `ConsultarNfsePorRps` partia da dúvida
+  sobre a operação existir. Ela existe, e o `GissSoapClient` é genérico por operação:
+  `buildEnvelope` monta `<{Operacao}Request>` com `nfseCabecMsg`/`nfseDadosMsg` e
+  `unwrapOutputXml` lê `{Operacao}Response/outputXML` (`giss-soap-client.ts:37-59`). Acrescentar uma
+  operação é: um valor no enum, o XML de negócio e o parser da resposta. **G → M.**
+- A mensagem é a chave natural exata que a auditoria pedia. Guia Rápido §7.1.5:
+  `ConsultarNfseRpsEnvio` = `IdentificacaoRps` (`Numero`, `Serie`, `Tipo`) + `Prestador`; a resposta
+  é um *choice* entre `CompNfse` (a nota existe) e `ListaMensagemRetorno` (não existe, ou erro).
+  Resposta binária, sem ambiguidade — exatamente o que o princípio 3 da §5.1 exige.
+- **`ConsultarNfseServicoPrestado` é a ferramenta de reconciliação em lote que faltava.**
+  `Prestador` + *choice* entre `NumeroNfse`, `PeriodoEmissao` e `PeriodoCompetencia`, com `Tomador`
+  e `Intermediario` opcionais e `Pagina` obrigatória; devolve até 50 `CompNfse` por página. A
+  conciliação diária de R1 deixa de ser N consultas (uma por nota) e vira uma varredura por período:
+  puxa o que o GISS emitiu no dia e compara com o que o banco local acha que emitiu. É o caminho
+  certo para a "divergência entre a contagem de `ISSUED` e a de boletos" da §5.4.
+- **`RecepcionarLoteRpsSincrono` pode eliminar o laço de consulta no caminho feliz**, encolhendo
+  P0-04 e P1-02 de uma vez. Não está documentado no Guia Rápido V1.5 (que cobre só seis operações),
+  então exige teste de compatibilidade em homologação antes de virar plano.
+- **`SubstituirNfse` é a saída depois dos 30 dias** (R1/RR4): passado o prazo de cancelamento, a
+  correção é substituição. `E7` avisa que "A NFS-e só pode ser substituída uma vez" — é bala única,
+  e por isso a detecção precoce continua sendo o que importa.
+
+**RR3 — A recusa por duplicidade do Inter entrega o `codigoSolicitacao` da cobrança existente.**
+
+Corpo real capturado:
+
+```json
+{
+  "title": "Requisição inválida",
+  "detail": "Não será possível emitir a cobrança. Pois, existe uma cobrança emitida há poucos minutos com os mesmos dados com a situação \"a receber\" com código de solicitação: ab3242a2-2205-4f5e-9f54-32caf508cfe5.",
+  "timestamp": "2026-09-01T14:47:36.342910498-03:00"
+}
+```
+
+Três leituras, em ordem de valor:
+
+1. **O identificador da cobrança órfã vem na própria resposta.** O cenário A do P0-02 — boleto criado
+   no Inter e sem vínculo local — deixa de exigir consulta prévia para ser resolvido: basta extrair
+   o `codigoSolicitacao` do `detail` e vincular. A consulta por `seuNumero` continua necessária para
+   os caminhos fora dos 30 minutos, mas o caminho automático fecha sozinho.
+2. **Hoje essa informação é jogada fora.** `extractInterErrorMessage`
+   (`inter-cobranca.client.ts:220-242`) testa `violacoes[0].razao`, depois **`title`**, depois
+   `detail`. Como `title` está preenchido com "Requisição inválida", é ele que vence — e o `detail`,
+   que carrega o UUID, nunca chega ao log nem à mensagem de erro. Ou seja: o dado que resolve o
+   incidente já está chegando na aplicação e é descartado por ordem de precedência.
+3. **A situação relatada é "a receber"** — `A_RECEBER` no mapa de status
+   (`inter-cobranca.mapper.ts:34`), isto é, boleto vivo e cobrável. Confirma o impacto descrito no
+   cenário A. E "emitida há poucos minutos" é a própria redação do Inter para a janela de 30 min de
+   R4.
+
+Cuidado de implementação: o `detail` é prosa em português, não contrato. A detecção deve casar pela
+forma (`detail` contendo `código de solicitação: <uuid>`), e o UUID extraído deve ser **confirmado**
+com `GET /cobrancas/{codigoSolicitacao}` (`inter-cobranca.client.ts:65`, já implementado),
+comparando `seuNumero`, `valorNominal` e `dataVencimento` antes de vincular. Nunca vincular só pela
+mensagem. O status HTTP não foi capturado, mas o corpo só chega a `extractInterErrorMessage` no ramo
+4xx (`:179-182`); registrar o código em `NfseAttempt` (P2-03) para não depender de inferência.
+
+**RR4 — Os 30 dias contam da emissão.**
+
+O limite de 25 dias do runbook §7.3 fica como está, ancorado em `issuedAt` — que o sistema já
+persiste (`process-poll-nfse-batch.service.ts:74`), então a consulta de notas próximas do prazo é
+implementável hoje, sem migration.
+
+Um ajuste importante na reconciliação: para uma nota presa em estado não terminal, o relógio **não**
+começa quando a descobrimos. Se a nota foi emitida no GISS dias atrás sem que soubéssemos (P0-03,
+P0-04), o prazo já está correndo desde a emissão do provedor. Portanto a reconciliação deve calcular
+a margem restante a partir da `DataEmissao` devolvida pelo `CompNfse` — dado que o parser já lê
+(`giss-batch-status.mapper.ts:84`) — e nunca a partir de `now()`. Uma nota "descoberta" no dia 28
+tem 2 dias, não 30.
+
+**RR5 — O GISS não documenta rate limit. Documenta limites estruturais, e um deles é uma alavanca.**
+
+Nem o Guia Rápido V1.5 nem `Erros_e_Alertas.xlsx` trazem limite de requisições por minuto/hora. O
+que existe:
+
+| Limite | Onde | Situação hoje |
+|---|---|---|
+| **50 RPS por lote** em `RecepcionarLoteRps` | Guia Rápido §5.2 | envia-se **1** (`process-issue-nfse-batch.service.ts:53`) |
+| 50 NFS-e por página em `ConsultarNfsePorFaixa` e `ConsultarNfseServicoPrestado`, com `Pagina` obrigatória | Guia Rápido §5.4 e §5.6 | operações não implementadas |
+| `E135` — "Período consultado superior ao permitido" | `Erros_e_Alertas.xlsx` | limite numérico não informado; medir em homologação |
+
+A alavanca é a primeira linha. Com o volume de R3 (centenas/dia), agrupar 50 RPS por lote transforma
+~300 chamadas de envio em ~6. É a redução de carga mais barata disponível e não depende de nada da
+Onda 2.
+
+Ela tem um custo que precisa ser aceito conscientemente: **o cenário 14 sai de latente para ativo.**
+Com mais de um RPS no lote, `markIssued(issuedNotes[0], ...)`
+(`process-poll-nfse-batch.service.ts:67,74`) grava o número errado. O conserto é pequeno — o parser
+já extrai `rpsNumber` e `rpsSeries` de cada `CompNfse` (`giss-batch-status.mapper.ts:80-81`), basta
+casar em vez de pegar o primeiro —, mas é **pré-requisito**, não item paralelo. O mesmo vale para
+`A12`/`E71` (RPS duplicado dentro do lote), que hoje não podem ocorrer e passam a poder.
+
+Sem número de rate limit publicado, o `limiter` da §8/Onda 4 continua sendo escolha conservadora a
+medir em homologação — mas com lote de 50 o volume de chamadas cai a ponto de o limiter deixar de
+ser o gargalo do caminho de envio.
+
+### Rodada 3 — respostas às perguntas remanescentes
+
+> Respondidas em 2026-09-01, com leitura dos XSD oficiais
+> (`gissonline_docs/Schemas_XSD-Servicos_Prestados.rar`).
+
+**RRR1 — `RecepcionarLoteRpsSincrono` funciona no GISS de Mauá.**
+
+`enviar-lote-rps-sincrono-resposta-v2_04.xsd` confirma o formato: `EnviarLoteRpsSincronoResposta`
+traz `NumeroLote`/`DataRecebimento`/`Protocolo` opcionais e um *choice* entre `ListaNfse`
+(`CompNfse` 1-N, mais `ListaMensagemAlertaRetorno` opcional), `ListaMensagemRetorno` e
+`ListaMensagemRetornoLote`. Ou seja: **a NFS-e emitida volta na própria resposta do envio.**
+
+O que muda — e o ganho é grande, mas não é de graça:
+
+- **O laço de consulta some do caminho feliz.** `PENDING` → chamada síncrona → `ISSUED`,
+  `REJECTED` ou ambíguo. Os estados `SUBMITTED`/`PROCESSING` passam a existir só no caminho
+  assíncrono. Isso corta a raiz de P0-04 (janela de 5 min) e de P1-02 (nota presa sem dono) para
+  todas as notas que forem pelo modo síncrono, e elimina de vez os até 3.000 `ConsultarLoteRps`
+  concentrados de R3.
+- **Em troca, concentra todo o risco num único ponto de ambiguidade, e o pior deles.** Um timeout
+  numa chamada síncrona é a falha mais perigosa possível: a nota pode ter sido emitida e **não há
+  protocolo** para consultar depois. O modo assíncrono ao menos deixa um protocolo como rastro. Logo:
+  - P0-05 (timeouts) deixa de ser higiene e vira pré-requisito do modo síncrono;
+  - `ConsultarNfsePorRps` (RR2) deixa de ser "recuperação" e vira **o único** caminho de saída da
+    ambiguidade, porque a chave natural do RPS é a única coisa que sobra;
+  - o `Protocolo` opcional da resposta deve ser persistido **quando vier**, para manter
+    `ConsultarLoteRps` como segunda via.
+- **Tensão com o volume (R3 + RR5).** Síncrono + lote de 50 RPS = ~6 chamadas por fechamento, cada
+  uma processando até 50 notas. São chamadas longas: o timeout precisa ser generoso e mesmo assim
+  limitado, e a concorrência baixa. Não dá para copiar o timeout do modo assíncrono.
+- **Ordem de adoção.** A ampliação da janela de poll (Onda 1, P0-04) continua necessária — ela
+  protege o caminho assíncrono, que segue existindo como fallback —, mas deixa de ser a alavanca
+  principal. O modo síncrono entra na Onda 3, depois de timeouts (Onda 1) e de
+  `ConsultarNfsePorRps`, nunca antes.
+
+**RRR2 — Não existe limite de período em Mauá. Medido contra produção.**
+
+Nem o Guia Rápido V1.5 nem `consultar-nfse-servico-prestado-envio-v2_04.xsd` limitam o intervalo, e
+o teste ao vivo confirmou que o limite sugerido pelo erro `E135` não está configurado. Chamadas de
+1, 31, 92, 365, 730, 2.435 e **6.087 dias** (quase 17 anos) voltaram todas `HTTP 200` com
+resultados, sem nenhum `E135`. Roteiro, script e tabela completa em
+`gissonline_docs/consultar-servico-prestado-postman.md`, §7.
+
+**O gargalo é a paginação, não o período.** Toda janela acima de ~31 dias devolve exatamente 50 — o
+teto de página. Julho/2026 do prestador tem 694 notas em 14 páginas, ~209 KB por página, ~2,9 MB no
+total. É esse número que dimensiona timeout e concorrência da reconciliação.
+
+A janela adaptativa (partir ao meio ao receber `E135`) continua valendo como defesa barata — outro
+município pode configurar o limite —, mas em Mauá nunca vai disparar. A janela de trabalho passa a
+ser escolhida pelo tamanho da resposta: **1 dia na conciliação D+1**, para manter cada varredura em
+poucas páginas.
+
+Três achados do teste que mudam o desenho da reconciliação:
+
+1. **A consulta devolve todas as notas do prestador, não só as deste sistema.** As 694 de julho
+   incluem o que foi emitido pelo portal, pela contabilidade e por outros sistemas. Comparar
+   *contagens* — como a §5.4 propunha — acusaria centenas de divergências falsas. A conciliação
+   precisa casar nota a nota pela chave natural do RPS
+   (`InfDeclaracaoPrestacaoServico/Rps/IdentificacaoRps`) e ignorar o que não tiver par local.
+2. **O fim da paginação é sinalizado por erro, não por lista vazia.** A página seguinte à última
+   devolve `ListaMensagemRetorno` com `E212` ("NFS-e não encontrada"). Um laço que trate
+   `ListaMensagemRetorno` como falha quebra na última página de toda consulta.
+3. **O código de erro real vem em `<Mensagem>`; `<Codigo>` traz `V999` genérico.** A classificação
+   de erros do GISS (P2-07) precisa ler os dois campos, não só `Codigo`.
+
+Alternativa que dispensa o período por completo: `ConsultarNfsePorFaixa` (RR2), que consulta por
+faixa de número de NFS-e. Útil para auditoria de numeração; não substitui a conciliação por data.
+
+**RRR3 — `E10` pode chegar pelos dois caminhos, e hoje os dois o tratam ao contrário.**
+
+`enviar-lote-rps-resposta-v2_04.xsd` mostra que `EnviarLoteRpsResposta` é um `xsd:choice`: **ou**
+`{NumeroLote, DataRecebimento, Protocolo}` **ou** `ListaMensagemRetorno`. Então a recepção pode
+rejeitar de forma síncrona, com código de erro. O Guia Rápido §5.2 diz que a recepção valida
+"erros de estrutura", o que sugere que `E10` — regra de negócio sobre RPS já processado — chega na
+situação 3 do `ConsultarLoteRps`. Mas o schema permite os dois, e o custo de cobrir ambos é o mesmo.
+
+O ponto que importa: **hoje os dois caminhos transformam `E10` em falha terminal**, quando `E10`
+significa que a nota existe.
+
+| Caminho | Código atual | Resultado |
+|---|---|---|
+| Recepção rejeita | `giss-issue-batch.mapper.ts:248-254` — sem `Protocolo`, monta `"Giss não retornou protocolo do lote (E10: RPS já informado.)"` e lança `Error` genérico | vira `ExternalApiError` → `markFailed` (P0-03) |
+| Situação 3 na consulta | `process-poll-nfse-batch.service.ts:80-84` — concatena as mensagens e `markFailed` | `FAILED` terminal |
+
+Dois detalhes do primeiro caminho que valem correção junto: ele lê **apenas a primeira** mensagem
+(`mensagens[0]`, `:250-251`), descartando as demais, e perde o código como dado estruturado — o
+`E10` vira substring de uma mensagem de erro em vez de um campo consultável. O tratamento correto é
+o mesmo nos dois pontos: reconhecer `E10` (e `E71`/`A12`, RR5), disparar `ConsultarNfsePorRps` e
+reconciliar, nunca `markFailed`.
+
+**RRR4 — A recusa por duplicidade do Inter é HTTP 400.**
+
+Fecha a cadeia descrita em RR3 e no P0-02: `400` cai no ramo `status >= 400 && status < 500`
+(`inter-cobranca.client.ts:179-182`), vira `BankPaymentRequestError` — erro permanente de negócio —
+e mata o job depois de o boleto existir.
+
+Consequência para a classificação de erros (P2-07): **`400` não pode ser tratado como uma classe
+única.** Do mesmo status saem uma validação de payload (permanente, sem retry, sem cobrança criada)
+e uma recusa por duplicidade (a cobrança **existe** e o caminho certo é vincular). A distinção não
+está no status, está no corpo — daí a correção 5 do P0-02, de preservar o `detail` em vez de deixar
+`title` vencer.
+
+**RRRR1 — Toda consulta do GISS exige XMLDSig, mesmo quando o XSD diz `minOccurs="0"`.**
+
+Descoberto ao executar o teste de RRR2. Sem assinatura, `ConsultarNfseServicoPrestado` devolve
+`V999`/`E174` ("RPS não assinado" — mensagem enganosa, não há RPS na requisição). Com
+`GissXmlSigner.signWholeDocument` (`giss-xml-signer.ts:47`), passa e devolve dados.
+
+É a **mesma armadilha** já documentada para `ConsultarLoteRps`: `dsig:Signature` declarado como
+opcional no XSD, obrigatório em runtime, e — por não haver atributo `Id` no elemento raiz — só
+assinável como documento inteiro.
+
+O que muda:
+
+- **`ConsultarNfsePorRps` vai bater na mesma parede.**
+  `consultar-nfse-rps-envio-v2_04.xsd` segue o mesmo padrão. Planejar a Onda 3 assumindo assinatura
+  obrigatória evita repetir a investigação que já custou semanas uma vez.
+- O custo é baixo e conhecido: o signer existe, está testado em produção e é o mesmo helper. Reforça
+  a reestimativa de RR2 (G → M) em vez de contradizê-la.
+- Vale registrar como regra do adapter: **nenhuma operação do GISS deve ser implementada assumindo
+  que o XSD descreve o que o servidor exige.** Os dois casos conhecidos até agora
+  (`ConsultarLoteRps` e `ConsultarNfseServicoPrestado`) foram exatamente isso.
+
+### Perguntas remanescentes
+
+Nenhuma bloqueante. Fica o registro do que só a operação continuada vai responder:
+
+1. ~~**O período máximo real de `ConsultarNfseServicoPrestado`**~~ — resolvido por desenho em RRR2 (a
+   janela adaptativa descobre sozinha), mas o número exato só aparece na primeira execução. Roteiro
+   — **respondida em RRR2**: não existe limite em Mauá (testado até 6.087 dias). Roteiro,
+   script e medições em `gissonline_docs/consultar-servico-prestado-postman.md`.
+2. **O limite existe em outros municípios?** Só aparece quando houver um segundo município em
+   produção. A janela adaptativa já cobre o caso.
+
+**Encerrada — o GISS rejeita RPS repetido.** Verificado na prática: ao tentar gerar novamente um RPS
+já informado, o GISS devolve erro dizendo exatamente isso — o `E10` documentado em R2. Confirma a
+tabela oficial e valida a premissa. O caminho exato (rejeição na recepção ou situação 3 da consulta)
+segue sem confirmação formal, mas deixou de importar: RRR3 trata os dois pontos, e o custo de cobrir
+ambos é o mesmo.

@@ -10,6 +10,7 @@ import { ConfigService } from 'src/core/config/config.service';
 import { TOKENS } from 'src/core/di/token';
 import { LogContext, type ILoggerGateway } from 'src/infra/logger/logger.gateway';
 import { ExternalApiError } from 'src/shared/errors/external-api.error';
+import { buildTestCertificatePem } from 'src/test/fixtures/test-certificate';
 import { InterOauthConfigError } from './errors/inter-oauth-config.error';
 import { InterOauthClient } from './inter-oauth.client';
 
@@ -36,7 +37,7 @@ describe('InterOauthClient - Unit tests', () => {
     mkdirSync(sutDir, { recursive: true });
     certPath = join(sutDir, 'inter.crt');
     keyPath = join(sutDir, 'inter.key');
-    writeFileSync(certPath, '-----BEGIN CERTIFICATE-----\nfake\n-----END CERTIFICATE-----\n');
+    writeFileSync(certPath, buildTestCertificatePem());
     writeFileSync(keyPath, '-----BEGIN PRIVATE KEY-----\nfake\n-----END PRIVATE KEY-----\n');
 
     httpService = {

@@ -48,8 +48,12 @@ export class Nfse {
     return this._props.status === NfseStatus.FAILED;
   }
 
+  public isCanceled(): boolean {
+    return this._props.status === NfseStatus.CANCELED;
+  }
+
   public isTerminal(): boolean {
-    return this.isIssued() || this.isFailed();
+    return this.isIssued() || this.isFailed() || this.isCanceled();
   }
 
   public canPoll(): boolean {
@@ -81,8 +85,20 @@ export class Nfse {
     this._props.errorMessage = errorMessage;
   }
 
+  /**
+   * Estado para quando não se sabe se o provedor emitiu a nota: timeout, erro de rede, ou o
+   * provedor respondendo que já conhece este RPS. Deliberadamente não terminal — só o provedor
+   * pode afirmar que a nota não existe, e essa consulta ainda não existe no fluxo. Marcar
+   * `FAILED` aqui faria a operação parar de procurar por uma nota que provavelmente foi emitida.
+   */
+  public markAwaitingProvider(reason: string): void {
+    this.ensureNotIssued();
+    this._props.status = NfseStatus.AWAITING_PROVIDER;
+    this._props.errorMessage = reason;
+  }
+
   public ensureCanCancel(): void {
-    if (this._props.status === NfseStatus.CANCELED) {
+    if (this.isCanceled()) {
       throw new NfseAlreadyCanceledError();
     }
     this.ensureIssued();

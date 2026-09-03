@@ -123,6 +123,17 @@ export class ConfigService {
     return this.nestConfigService.get<string>('NFEMAIL_API_KEY')!;
   }
 
+  // gissonline
+  get gissProviderEnabled(): boolean {
+    return this.nestConfigService.get<boolean>('GISS_PROVIDER_ENABLED') ?? false;
+  }
+  get gissCertPath(): string {
+    return this.nestConfigService.get<string>('GISS_CERT_PATH')!;
+  }
+  get gissCertPassword(): string {
+    return this.nestConfigService.get<string>('GISS_CERT_PASSWORD')!;
+  }
+
   // banco inter
   get interProviderEnabled(): boolean {
     return this.nestConfigService.get<boolean>('INTER_PROVIDER_ENABLED') ?? false;

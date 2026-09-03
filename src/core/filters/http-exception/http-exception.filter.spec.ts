@@ -58,6 +58,10 @@ describe('HttpExceptionFilter', () => {
         body: {
           username: 'user1',
           password: 'secret',
+          passwordHash: 'hash',
+          token: 'abc',
+          secret: 'shh',
+          accessPassword: 'do-not-log',
         },
       });
       const mockResponse = createMock<Response>();
@@ -75,6 +79,10 @@ describe('HttpExceptionFilter', () => {
       expect(sut['sanitizeBody'](mockRequest.body)).toEqual({
         username: 'user1',
         password: '****',
+        passwordHash: '****',
+        token: '****',
+        secret: '****',
+        accessPassword: '****',
       });
     });
 

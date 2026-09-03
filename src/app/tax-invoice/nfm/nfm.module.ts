@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AuthenticationGuardsModule } from 'src/app/authentication/application/guards/guards.module';
+import { BankPaymentCoreModule } from 'src/app/bank-payment/bank-payment-core.module';
 import { CompanyModule } from 'src/app/company/company/company.module';
 import { CompanyNfsConfigModule } from 'src/app/company/company-nfs-config/company-nfs-config.module';
 import { ClientModule } from 'src/app/client/client/client.module';
@@ -16,6 +17,7 @@ import { NfmAdminController } from './infra/drivers/http/admin/nfm-admin.control
 
 @Module({
   imports: [
+    BankPaymentCoreModule,
     ClientModule,
     ClientInvoiceConfigModule,
     ClientItemModule,

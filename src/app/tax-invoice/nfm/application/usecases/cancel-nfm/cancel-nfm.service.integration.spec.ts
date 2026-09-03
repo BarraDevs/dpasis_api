@@ -4,6 +4,8 @@ import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-inv
 import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum';
 import { NfseStatus } from 'src/app/tax-invoice/nfse/domain/enums/nfse-status.enum';
 import { TOKENS } from 'src/core/di/token';
+import { BankPaymentFakeAdapterGateway } from 'src/infra/bank-payment/adapters/fake/bank-payment-fake.gateway';
+import { BankPaymentProvider } from 'src/infra/bank-payment/enums/bank-payment-provider.enum';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { NfsProviderEnvironment } from 'src/infra/nfs-generation/dtos/nfs-provider-credentials.dto';
 import type { INfsGenerationGateway } from 'src/infra/nfs-generation/nfs-generation.gateway';
@@ -102,6 +104,7 @@ describe('CancelNfm - Integration tests', () => {
   let sut: CancelNfm;
   let prisma: PrismaService;
   let nfsGenerationGateway: INfsGenerationGateway;
+  let bankPaymentGateway: BankPaymentFakeAdapterGateway;
 
   beforeAll(async() => {
     const module = await Test.createTestingModule({
@@ -114,11 +117,14 @@ describe('CancelNfm - Integration tests', () => {
     sut = module.get(CancelNfm);
     prisma = module.get(PrismaService);
     nfsGenerationGateway = module.get(TOKENS.NfsGenerationGateway);
+    bankPaymentGateway = module.get(TOKENS.BankPaymentGateway);
   });
 
   beforeEach(async() => {
     await prisma.truncate();
     jest.clearAllMocks();
+    bankPaymentGateway.cancelCalls.length = 0;
+    bankPaymentGateway.cancelError = null;
   });
 
   afterAll(async() => {
@@ -180,6 +186,7 @@ describe('CancelNfm - Integration tests', () => {
       id: nfm.id,
       status: NfseStatus.CANCELED,
       canceledAt: new Date('2026-07-29T12:00:00.000Z'),
+      bankPaymentCanceled: false,
     });
 
     const saved = await prisma.nfse.findUnique({ where: { id: nfse.id } });
@@ -248,5 +255,122 @@ describe('CancelNfm - Integration tests', () => {
     // Act & Assert
     await expect(sut.execute(nfm.id, { cancelReasonCode: 2 })).rejects.toThrow(NfseNotIssuedError);
     expect(nfsGenerationGateway.cancelNfse).not.toHaveBeenCalled();
+  });
+
+  it('should cancel the linked boleto before canceling the nfse', async() => {
+    // Arrange
+    const company = await seedCompany(prisma);
+    const client = await seedClient(prisma, Date.now() % 100_000);
+    await seedProviderConfig(prisma, company.id);
+    const cnaeNbsIndopId = await seedCnaeNbsIndop(prisma);
+
+    const nfse = await prisma.nfse.create({
+      data: {
+        companyId: company.id,
+        clientId: client.id,
+        rpsNumber: Date.now() % 100_000,
+        rpsSeries: 'NFSE',
+        status: NfseStatus.ISSUED,
+        nfseNumber: '2000',
+        verificationCode: 'XYZ',
+        issuedAt: new Date('2026-07-20T10:00:00Z'),
+        bankPaymentProvider: BankPaymentProvider.INTER,
+        bankPaymentRequestCode: 'req-cancel-1',
+        data: { providerDocument: '12345678000199' },
+      },
+    });
+
+    const nfm = await prisma.nfm.create({
+      data: {
+        clientId: client.id,
+        clientDocument: client.document,
+        companyName: client.companyName,
+        referenceMonth: 8,
+        referenceYear: 2026,
+        totalValueInCents: 10000,
+        cnaeNbsIndopId,
+        nfseId: nfse.id,
+        data: { client: { id: client.id } },
+      },
+    });
+
+    jest.spyOn(nfsGenerationGateway, 'cancelNfse').mockResolvedValue({ confirmedAt: '2026-07-29T12:00:00.000Z' });
+
+    // Act
+    const result = await sut.execute(nfm.id, { cancelReasonCode: 2 });
+
+    // Assert
+    expect(bankPaymentGateway.cancelCalls).toEqual([
+      expect.objectContaining({
+        requestCode: 'req-cancel-1',
+        provider: BankPaymentProvider.INTER,
+        reason: 'Serviço não prestado',
+      }),
+    ]);
+    expect(result).toMatchObject({
+      id: nfm.id,
+      status: NfseStatus.CANCELED,
+      bankPaymentCanceled: true,
+    });
+    expect(result.bankPaymentError).toBeUndefined();
+
+    const saved = await prisma.nfse.findUnique({ where: { id: nfse.id } });
+    expect(saved?.status).toBe(NfseStatus.CANCELED);
+  });
+
+  it('should still cancel the nfse when the boleto cancel fails and report the error', async() => {
+    // Arrange
+    const company = await seedCompany(prisma);
+    const client = await seedClient(prisma, Date.now() % 100_000);
+    await seedProviderConfig(prisma, company.id);
+    const cnaeNbsIndopId = await seedCnaeNbsIndop(prisma);
+
+    const nfse = await prisma.nfse.create({
+      data: {
+        companyId: company.id,
+        clientId: client.id,
+        rpsNumber: Date.now() % 100_000,
+        rpsSeries: 'NFSE',
+        status: NfseStatus.ISSUED,
+        nfseNumber: '2001',
+        verificationCode: 'XYZ',
+        issuedAt: new Date('2026-07-20T10:00:00Z'),
+        bankPaymentProvider: BankPaymentProvider.INTER,
+        bankPaymentRequestCode: 'req-cancel-fail',
+        data: { providerDocument: '12345678000199' },
+      },
+    });
+
+    const nfm = await prisma.nfm.create({
+      data: {
+        clientId: client.id,
+        clientDocument: client.document,
+        companyName: client.companyName,
+        referenceMonth: 8,
+        referenceYear: 2026,
+        totalValueInCents: 10000,
+        cnaeNbsIndopId,
+        nfseId: nfse.id,
+        data: { client: { id: client.id } },
+      },
+    });
+
+    bankPaymentGateway.cancelError = new Error('Cobrança já paga');
+    jest.spyOn(nfsGenerationGateway, 'cancelNfse').mockResolvedValue({ confirmedAt: '2026-07-29T12:00:00.000Z' });
+
+    // Act
+    const result = await sut.execute(nfm.id, { cancelReasonCode: 1 });
+
+    // Assert
+    expect(result).toMatchObject({
+      id: nfm.id,
+      status: NfseStatus.CANCELED,
+      bankPaymentCanceled: false,
+      bankPaymentError: 'Cobrança já paga',
+    });
+    expect(nfsGenerationGateway.cancelNfse).toHaveBeenCalled();
+
+    const saved = await prisma.nfse.findUnique({ where: { id: nfse.id } });
+    expect(saved?.status).toBe(NfseStatus.CANCELED);
   });
 });

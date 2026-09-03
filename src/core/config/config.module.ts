@@ -46,6 +46,18 @@ import { Environment } from './environment.enum';
         NFEMAIL_CNPJ: Joi.string().required(),
         NFEMAIL_API_KEY: Joi.string().required(),
 
+        GISS_PROVIDER_ENABLED: Joi.boolean().truthy('true').falsy('false').default(false),
+        GISS_CERT_PATH: Joi.when('GISS_PROVIDER_ENABLED', {
+          is: true,
+          then: Joi.string().required(),
+          otherwise: Joi.string().optional().allow(''),
+        }),
+        GISS_CERT_PASSWORD: Joi.when('GISS_PROVIDER_ENABLED', {
+          is: true,
+          then: Joi.string().required(),
+          otherwise: Joi.string().optional().allow(''),
+        }),
+
         INTER_PROVIDER_ENABLED: Joi.boolean().truthy('true').falsy('false').default(false),
         INTER_API_URL: Joi.when('INTER_PROVIDER_ENABLED', {
           is: true,

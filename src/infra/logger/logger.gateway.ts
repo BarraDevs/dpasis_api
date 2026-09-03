@@ -90,6 +90,7 @@ type NfGenerationData = CommomData & {
 
 type NfsGenerationData = CommomData & {
   action: string;
+  nfseId?: number;
   batchProtocol?: string;
   batchNumber?: number;
   nfseNumber?: string;
@@ -98,6 +99,7 @@ type NfsGenerationData = CommomData & {
 
 type BankPaymentData = CommomData & {
   action: string;
+  nfseId?: number;
   scope?: string;
   requestCode?: string;
 }

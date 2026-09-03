@@ -364,6 +364,49 @@ describe('ConfigService', () => {
       });
     });
 
+    describe('gissProviderEnabled', () => {
+      it('should return the GISS_PROVIDER_ENABLED value as boolean', () => {
+        nestConfigService.get.mockReturnValue(true);
+
+        const result = sut.gissProviderEnabled;
+
+        expect(nestConfigService.get).toHaveBeenCalledWith('GISS_PROVIDER_ENABLED');
+        expect(result).toBe(true);
+      });
+
+      it('should return false when GISS_PROVIDER_ENABLED is undefined', () => {
+        nestConfigService.get.mockReturnValue(undefined);
+
+        const result = sut.gissProviderEnabled;
+
+        expect(result).toBe(false);
+      });
+    });
+
+    describe('gissCertPath', () => {
+      it('should return the GISS_CERT_PATH value', () => {
+        const mockPath = '/certs/giss.pfx';
+        nestConfigService.get.mockReturnValue(mockPath);
+
+        const result = sut.gissCertPath;
+
+        expect(nestConfigService.get).toHaveBeenCalledWith('GISS_CERT_PATH');
+        expect(result).toBe(mockPath);
+      });
+    });
+
+    describe('gissCertPassword', () => {
+      it('should return the GISS_CERT_PASSWORD value', () => {
+        const mockPassword = 'cert-password';
+        nestConfigService.get.mockReturnValue(mockPassword);
+
+        const result = sut.gissCertPassword;
+
+        expect(nestConfigService.get).toHaveBeenCalledWith('GISS_CERT_PASSWORD');
+        expect(result).toBe(mockPassword);
+      });
+    });
+
     describe('interProviderEnabled', () => {
       it('should return the INTER_PROVIDER_ENABLED value as boolean', () => {
         nestConfigService.get.mockReturnValue(true);

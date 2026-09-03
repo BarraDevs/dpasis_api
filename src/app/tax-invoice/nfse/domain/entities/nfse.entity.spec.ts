@@ -229,10 +229,58 @@ describe('Nfse - Unit tests', () => {
     expect(Nfse._instantiate(makeNfseProps({ status: NfseStatus.SUBMITTED })).isFailed()).toBe(false);
   });
 
-  it('should report isTerminal for ISSUED and FAILED', () => {
+  it('should report isTerminal for ISSUED, FAILED and CANCELED', () => {
     expect(Nfse._instantiate(makeNfseProps({ status: NfseStatus.ISSUED })).isTerminal()).toBe(true);
     expect(Nfse._instantiate(makeNfseProps({ status: NfseStatus.FAILED })).isTerminal()).toBe(true);
+    expect(Nfse._instantiate(makeNfseProps({ status: NfseStatus.CANCELED })).isTerminal()).toBe(true);
     expect(Nfse._instantiate(makeNfseProps({ status: NfseStatus.SUBMITTED })).isTerminal()).toBe(false);
+  });
+
+  it('should not report AWAITING_PROVIDER as terminal', () => {
+    expect(Nfse._instantiate(makeNfseProps({ status: NfseStatus.AWAITING_PROVIDER })).isTerminal()).toBe(false);
+  });
+
+  it('should not allow polling a canceled nfse even when a batchProtocol is present', () => {
+    expect(Nfse._instantiate(makeNfseProps({
+      status: NfseStatus.CANCELED,
+      batchProtocol: 'protocol-123',
+    })).canPoll()).toBe(false);
+  });
+
+  it('should keep an AWAITING_PROVIDER nfse pollable while it has a batchProtocol', () => {
+    expect(Nfse._instantiate(makeNfseProps({
+      status: NfseStatus.AWAITING_PROVIDER,
+      batchProtocol: 'protocol-123',
+    })).canPoll()).toBe(true);
+
+    expect(Nfse._instantiate(makeNfseProps({
+      status: NfseStatus.AWAITING_PROVIDER,
+      batchProtocol: null,
+    })).canPoll()).toBe(false);
+  });
+
+  describe('markAwaitingProvider', () => {
+    it('should set the status and keep the reason in errorMessage', () => {
+      // Arrange
+      const sut = Nfse._instantiate(makeNfseProps({ status: NfseStatus.SUBMITTED }));
+
+      // Act
+      sut.markAwaitingProvider('Provedor já conhece este RPS.');
+
+      // Assert
+      expect(sut.props).toMatchObject({
+        status: NfseStatus.AWAITING_PROVIDER,
+        errorMessage: 'Provedor já conhece este RPS.',
+      });
+    });
+
+    it('should refuse to downgrade an already issued nfse', () => {
+      // Arrange
+      const sut = Nfse._instantiate(makeNfseProps({ status: NfseStatus.ISSUED }));
+
+      // Act & Assert
+      expect(() => sut.markAwaitingProvider('qualquer motivo')).toThrow(NfseAlreadyIssuedError);
+    });
   });
 
   it('should report canPoll only when not terminal and batchProtocol is present', () => {

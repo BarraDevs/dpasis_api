@@ -12,4 +12,8 @@ export class CancelNfmOutputDto {
   id: number;
   status: NfseStatus;
   canceledAt: Date;
+  /** Falso quando não havia boleto vinculado ou quando o cancelamento dele falhou. */
+  bankPaymentCanceled: boolean;
+  /** Preenchido só quando havia boleto e o cancelamento falhou — exige tratamento manual. */
+  bankPaymentError?: string;
 }

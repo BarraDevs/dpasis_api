@@ -17,6 +17,8 @@ import { ProcessIssueNfseBankPayment } from '../usecases/process-issue-nfse-bank
 import { ProcessIssueNfseBatch } from '../usecases/process-issue-nfse-batch/process-issue-nfse-batch.service';
 import { ProcessPollNfseBatch } from '../usecases/process-poll-nfse-batch/process-poll-nfse-batch.service';
 
+const THIRTY_DAYS_IN_SECONDS = 2_592_000;
+
 @Module({})
 export class NfseQueueModule {
   static register(): DynamicModule {
@@ -30,7 +32,7 @@ export class NfseQueueModule {
             name: QueueName.Nfse,
             defaultJobOptions: {
               removeOnComplete: true,
-              removeOnFail: true,
+              removeOnFail: { age: THIRTY_DAYS_IN_SECONDS },
             },
           }),
           BullBoardModule.forFeature({

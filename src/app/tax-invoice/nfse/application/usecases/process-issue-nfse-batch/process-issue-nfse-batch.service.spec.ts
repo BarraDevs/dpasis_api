@@ -3,9 +3,13 @@ import { Test } from '@nestjs/testing';
 import { CompanyNfsConfigDto } from 'src/app/company/company-nfs-config/application/dtos/company-nfs-config.dto';
 import { FindCompanyNfsConfigByCompanyId } from 'src/app/company/company-nfs-config/application/usecases/find-company-nfs-config-by-company-id/find-company-nfs-config-by-company-id.service';
 import { CompanyNfsConfigNotFoundError } from 'src/app/company/company-nfs-config/domain/errors/company-nfs-config-not-found.error';
+import { SAO_PAULO_TIMEZONE } from 'src/core/constants/timezone.constant';
 import { TOKENS } from 'src/core/di/token';
 import { LogContext, type ILoggerGateway } from 'src/infra/logger/logger.gateway';
+import { NfsBatchErrorKind } from 'src/infra/nfs-generation/dtos/nfs-batch-status.dto';
 import { NfsProviderEnvironment } from 'src/infra/nfs-generation/dtos/nfs-provider-credentials.dto';
+import { NfsBatchRejectedError } from 'src/infra/nfs-generation/errors/nfs-batch-rejected.error';
+import { NfsProviderConfigError } from 'src/infra/nfs-generation/errors/nfs-provider-config.error';
 import type { INfsGenerationGateway } from 'src/infra/nfs-generation/nfs-generation.gateway';
 import { Nfse, NfseProps } from '../../../domain/entities/nfse.entity';
 import { NfseStatus } from '../../../domain/enums/nfse-status.enum';
@@ -149,7 +153,7 @@ describe('ProcessIssueNfseBatch - Unit tests', () => {
 
   it('should mark the nfse SUBMITTED and schedule a poll job on success', async() => {
     // Arrange
-    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: SAO_PAULO_TIMEZONE });
     const nfse = NfseFactory.load(makeNfseProps());
     jest.spyOn(nfseRepository, 'findById').mockResolvedValue(nfse);
     jest.spyOn(findCompanyNfsConfigByCompanyId, 'execute').mockResolvedValue(providerConfig);
@@ -258,7 +262,7 @@ describe('ProcessIssueNfseBatch - Unit tests', () => {
     }));
   });
 
-  it('should mark the nfse FAILED and not schedule a poll job when the gateway call fails', async() => {
+  it('should park the nfse in AWAITING_PROVIDER when the gateway call fails ambiguously', async() => {
     // Arrange
     const gatewayError = new Error('Giss indisponível');
     const nfse = NfseFactory.load(makeNfseProps());
@@ -274,11 +278,12 @@ describe('ProcessIssueNfseBatch - Unit tests', () => {
     expect(loggerSpy).toHaveBeenCalledWith(LogContext.NFS_GENERATION, {
       adapter: 'nfse',
       action: 'processIssueNfseBatch',
+      nfseId: 1,
       error: gatewayError,
     });
     expect(nfseRepository.edit).toHaveBeenCalledWith(nfse);
     expect(nfse.props).toMatchObject({
-      status: NfseStatus.FAILED,
+      status: NfseStatus.AWAITING_PROVIDER,
       errorMessage: 'Giss indisponível',
     });
     expect(queueProducer.addPollBatchJob).not.toHaveBeenCalled();
@@ -297,9 +302,85 @@ describe('ProcessIssueNfseBatch - Unit tests', () => {
     // Assert
     expect(nfseRepository.edit).toHaveBeenCalledWith(expect.any(Nfse));
     expect(nfse.props).toMatchObject({
-      status: NfseStatus.FAILED,
+      status: NfseStatus.AWAITING_PROVIDER,
       errorMessage: 'Erro desconhecido ao enviar lote ao provedor de NFS-e',
     });
     expect(queueProducer.addPollBatchJob).not.toHaveBeenCalled();
+  });
+
+  it('should mark the nfse FAILED when the provider configuration is invalid', async() => {
+    // Arrange
+    const nfse = NfseFactory.load(makeNfseProps());
+    jest.spyOn(nfseRepository, 'findById').mockResolvedValue(nfse);
+    jest.spyOn(findCompanyNfsConfigByCompanyId, 'execute').mockResolvedValue(providerConfig);
+    jest.spyOn(nfsGenerationGateway, 'issueBatch')
+      .mockRejectedValue(new NfsProviderConfigError('Certificado digital não encontrado'));
+
+    // Act
+    await sut.execute({ nfseId: 1 });
+
+    // Assert
+    expect(nfse.props).toMatchObject({
+      status: NfseStatus.FAILED,
+      errorMessage: 'Certificado digital não encontrado',
+    });
+    expect(queueProducer.addPollBatchJob).not.toHaveBeenCalled();
+  });
+
+  it('should mark the nfse FAILED when the batch is rejected for a business reason', async() => {
+    // Arrange
+    const nfse = NfseFactory.load(makeNfseProps());
+    jest.spyOn(nfseRepository, 'findById').mockResolvedValue(nfse);
+    jest.spyOn(findCompanyNfsConfigByCompanyId, 'execute').mockResolvedValue(providerConfig);
+    jest.spyOn(nfsGenerationGateway, 'issueBatch').mockRejectedValue(new NfsBatchRejectedError([
+      { code: 'E202', message: 'Código de tributação não informado', kind: NfsBatchErrorKind.BusinessRejection },
+    ]));
+
+    // Act
+    await sut.execute({ nfseId: 1 });
+
+    // Assert
+    expect(nfse.props).toMatchObject({
+      status: NfseStatus.FAILED,
+      errorMessage: 'E202: Código de tributação não informado',
+    });
+  });
+
+  it('should park the nfse in AWAITING_PROVIDER when the batch is rejected as already submitted', async() => {
+    // Arrange
+    const nfse = NfseFactory.load(makeNfseProps());
+    jest.spyOn(nfseRepository, 'findById').mockResolvedValue(nfse);
+    jest.spyOn(findCompanyNfsConfigByCompanyId, 'execute').mockResolvedValue(providerConfig);
+    jest.spyOn(nfsGenerationGateway, 'issueBatch').mockRejectedValue(new NfsBatchRejectedError([
+      // code is opaque — use case must branch on kind, not vendor code
+      { code: 'X', message: 'RPS já informado.', kind: NfsBatchErrorKind.AlreadySubmitted },
+    ]));
+
+    // Act
+    await sut.execute({ nfseId: 1 });
+
+    // Assert
+    expect(nfse.props).toMatchObject({
+      status: NfseStatus.AWAITING_PROVIDER,
+      errorMessage: 'X: RPS já informado.',
+    });
+    expect(queueProducer.addPollBatchJob).not.toHaveBeenCalled();
+  });
+
+  it('should park the nfse in AWAITING_PROVIDER when already-submitted is not the first rejection', async() => {
+    // Arrange
+    const nfse = NfseFactory.load(makeNfseProps());
+    jest.spyOn(nfseRepository, 'findById').mockResolvedValue(nfse);
+    jest.spyOn(findCompanyNfsConfigByCompanyId, 'execute').mockResolvedValue(providerConfig);
+    jest.spyOn(nfsGenerationGateway, 'issueBatch').mockRejectedValue(new NfsBatchRejectedError([
+      { code: 'A9', message: 'Inscrição municipal incorreta.', kind: NfsBatchErrorKind.BusinessRejection },
+      { code: 'X', message: 'RPS já informado.', kind: NfsBatchErrorKind.AlreadySubmitted },
+    ]));
+
+    // Act
+    await sut.execute({ nfseId: 1 });
+
+    // Assert
+    expect(nfse.props.status).toBe(NfseStatus.AWAITING_PROVIDER);
   });
 });

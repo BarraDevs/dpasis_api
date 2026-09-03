@@ -15,11 +15,18 @@ export class NfseQueueBullmqAdapterProducer implements INfseQueueProducer {
   ) {}
 
   public async addIssueBatchJob(data: IssueNfseBatchJobDto): Promise<void> {
-    await this.queue.add(JobName.IssueNfseBatch, data);
+    await this.queue.add(JobName.IssueNfseBatch, data, {
+      attempts: 5,
+      backoff: { type: 'exponential', delay: 30_000 },
+    });
   }
 
   public async addPollBatchJob(data: PollNfseBatchJobDto, options?: NfseQueueJobOptions): Promise<void> {
-    await this.queue.add(JobName.PollNfseBatch, data, { delay: options?.delayMs });
+    await this.queue.add(JobName.PollNfseBatch, data, {
+      attempts: 5,
+      backoff: { type: 'exponential', delay: 30_000 },
+      delay: options?.delayMs,
+    });
   }
 
   public async addIssueBankPaymentJob(data: IssueNfseBankPaymentJobDto): Promise<void> {

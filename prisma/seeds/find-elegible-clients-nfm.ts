@@ -45,10 +45,16 @@ export const SEED_NFM_ELEGIBLE_CLIENT_IDS = [9_500_001, 9_500_002, 9_999_999] as
 const SEED_NFSE_CURL_CLIENT_ID = 9_999_999;
 const SEED_NFSE_CURL_COMPANY_ID = 516;
 const SEED_NFSE_CURL_PROVIDER_CNPJ = '02099923000178';
-const SEED_NFSE_CURL_CERT_PATH = join(
+const LEGACY_CERT_PATH = join(
   __dirname,
   '../../resources/files/nfs-generation/giss/DPA_TEC_EQUIPAMENTOS_DE_PONTO_LTDA_02099923000178.pfx',
 );
+
+/**
+ * O certificado não é mais versionado (P0-07). `GISS_CERT_PATH` é a fonte da verdade; o caminho
+ * legado em `resources/` fica como fallback para quem ainda tem o arquivo lá.
+ */
+const SEED_NFSE_CURL_CERT_PATH = process.env.GISS_CERT_PATH ?? LEGACY_CERT_PATH;
 
 const SEED_GROUP_NAME = '__seed_nfm_elegivel_client_group';
 const SEED_BANK_CODE = '__SEED_NFM__';

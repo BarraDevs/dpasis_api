@@ -8,6 +8,13 @@ import { NfsGenerationGissAdapterGateway } from './adapters/giss/nfs-generation-
 
 @Module({})
 export class NfsGenerationModule {
+  /**
+   * O Giss é lento no fechamento e o `RecepcionarLoteRps` aceita até 50 RPS por lote, então a folga
+   * é generosa. Sem isso o axios roda com o default (nenhum timeout) e uma conexão pendurada segura
+   * o worker inteiro — a fila `nfse` roda com concorrência 1.
+   */
+  private static readonly HTTP_TIMEOUT_MS = 60_000;
+
   static register(): DynamicModule {
     const isTest = process.env.NODE_ENV === Environment.Test;
 
@@ -15,7 +22,7 @@ export class NfsGenerationModule {
       module: NfsGenerationModule,
       imports: [
         ConfigModule,
-        HttpModule,
+        HttpModule.register({ timeout: NfsGenerationModule.HTTP_TIMEOUT_MS }),
       ],
       providers: [
         {

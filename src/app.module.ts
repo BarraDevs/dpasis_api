@@ -14,6 +14,7 @@ import { SellerModule } from './app/seller/seller.module';
 import { ServiceModuleModule } from './app/service/service-module.module';
 import { UploadFileModule } from './app/upload-file/upload-file.module';
 import { VoucherModule } from './app/voucher/voucher.module';
+import { MaintenanceModule } from './app/maintenance/maintenance.module';
 import { CoreModule } from './core/core.module';
 import { InfraModule } from './infra/infra.module';
 import { TaxInvoiceModule } from './app/tax-invoice/tax-invoice.module';
@@ -30,6 +31,7 @@ import { BankPaymentModule } from './app/bank-payment/bank-payment.module';
     BankPaymentModule,
     CarrierModule,
     CompanyModuleModule,
+    MaintenanceModule.register(),
     ClientModuleModule,
     ResaleModuleModule,
     SellerModule,

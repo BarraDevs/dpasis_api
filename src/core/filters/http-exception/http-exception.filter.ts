@@ -1,16 +1,13 @@
 import { ArgumentsHost, Catch, ExceptionFilter, HttpStatus, Inject } from '@nestjs/common';
 import { BaseExceptionFilter } from '@nestjs/core';
 import { Request, Response } from 'express';
+import { SENSITIVE_FIELDS } from 'src/core/constants/sensitive-fields.constant';
 import { TOKENS } from 'src/core/di/token';
 import { type ILoggerGateway, LogContext } from 'src/infra/logger/logger.gateway';
 import { AppException } from '../app.exception';
 
 @Catch(AppException)
 export class HttpExceptionFilter extends BaseExceptionFilter implements ExceptionFilter {
-  private readonly SENSITIVE_FIELDS = [
-    'password',
-  ];
-
   constructor(@Inject(TOKENS.LoggerGateway) private readonly logger: ILoggerGateway) {
     super();
   }
@@ -59,7 +56,8 @@ export class HttpExceptionFilter extends BaseExceptionFilter implements Exceptio
   }
 
   private isSensitiveField(field: string): boolean {
-    return this.SENSITIVE_FIELDS.includes(field.toLowerCase());
+    const lower = field.toLowerCase();
+    return SENSITIVE_FIELDS.some((sensitive) => sensitive.toLowerCase() === lower);
   }
 }
 

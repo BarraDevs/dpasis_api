@@ -4,7 +4,10 @@ import { TOKENS } from 'src/core/di/token';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { LoggerModule } from 'src/infra/logger/logger.module';
 import { NfsGenerationFakeAdapterGateway } from 'src/infra/nfs-generation/adapters/fake/nfs-generation-fake.gateway';
+import { NfsBatchErrorKind } from 'src/infra/nfs-generation/dtos/nfs-batch-status.dto';
 import { NfsProviderEnvironment } from 'src/infra/nfs-generation/dtos/nfs-provider-credentials.dto';
+import { NfsBatchRejectedError } from 'src/infra/nfs-generation/errors/nfs-batch-rejected.error';
+import { NfsProviderConfigError } from 'src/infra/nfs-generation/errors/nfs-provider-config.error';
 import { NfseQueueFakeAdapterProducer } from '../../../infra/driven/queue/fake/nfse-queue-fake.producer';
 import { NfseStatus } from '../../../domain/enums/nfse-status.enum';
 import { NfseNotFoundError } from '../../../domain/errors/nfse-not-found.error';
@@ -181,7 +184,7 @@ describe('ProcessIssueNfseBatch - Integration tests', () => {
     await expect(sut.execute({ nfseId: nfse.id })).rejects.toThrow(CompanyNfsConfigNotFoundError);
   });
 
-  it('should persist FAILED status when the nfs generation gateway rejects the batch', async() => {
+  it('should persist AWAITING_PROVIDER when the gateway fails with an ambiguous error', async() => {
     // Arrange
     const company = await seedCompany(prisma);
     await seedProviderConfig(prisma, company.id);
@@ -193,8 +196,69 @@ describe('ProcessIssueNfseBatch - Integration tests', () => {
 
     // Assert
     const saved = await prisma.nfse.findUnique({ where: { id: nfse.id } });
-    expect(saved?.status).toBe(NfseStatus.FAILED);
+    // Erro genérico do gateway é ambíguo: o lote pode ter chegado. Ver P0-03 na auditoria.
+    expect(saved?.status).toBe(NfseStatus.AWAITING_PROVIDER);
     expect(saved?.errorMessage).toBe('Falha ao enviar lote');
+    expect(queueProducer.addedPollBatchJobs).toHaveLength(0);
+  });
+
+  it('should persist FAILED when the provider configuration is invalid', async() => {
+    // Arrange
+    const company = await seedCompany(prisma);
+    await seedProviderConfig(prisma, company.id);
+    const nfse = await seedNfse(prisma, company.id);
+    nfsGenerationGateway.issueBatchError = new NfsProviderConfigError('Certificado digital não encontrado');
+
+    // Act
+    await sut.execute({ nfseId: nfse.id });
+
+    // Assert
+    const saved = await prisma.nfse.findUnique({ where: { id: nfse.id } });
+    expect(saved).toMatchObject({
+      status: NfseStatus.FAILED,
+      errorMessage: 'Certificado digital não encontrado',
+    });
+    expect(queueProducer.addedPollBatchJobs).toHaveLength(0);
+  });
+
+  it('should persist FAILED when the batch is rejected for a business reason', async() => {
+    // Arrange
+    const company = await seedCompany(prisma);
+    await seedProviderConfig(prisma, company.id);
+    const nfse = await seedNfse(prisma, company.id);
+    nfsGenerationGateway.issueBatchError = new NfsBatchRejectedError([
+      { code: 'E202', message: 'Código de tributação não informado', kind: NfsBatchErrorKind.BusinessRejection },
+    ]);
+
+    // Act
+    await sut.execute({ nfseId: nfse.id });
+
+    // Assert
+    const saved = await prisma.nfse.findUnique({ where: { id: nfse.id } });
+    expect(saved).toMatchObject({
+      status: NfseStatus.FAILED,
+      errorMessage: 'E202: Código de tributação não informado',
+    });
+  });
+
+  it('should persist AWAITING_PROVIDER when the batch is rejected as already submitted', async() => {
+    // Arrange
+    const company = await seedCompany(prisma);
+    await seedProviderConfig(prisma, company.id);
+    const nfse = await seedNfse(prisma, company.id);
+    nfsGenerationGateway.issueBatchError = new NfsBatchRejectedError([
+      { code: 'E10', message: 'RPS já informado.', kind: NfsBatchErrorKind.AlreadySubmitted },
+    ]);
+
+    // Act
+    await sut.execute({ nfseId: nfse.id });
+
+    // Assert
+    const saved = await prisma.nfse.findUnique({ where: { id: nfse.id } });
+    expect(saved).toMatchObject({
+      status: NfseStatus.AWAITING_PROVIDER,
+      errorMessage: 'E10: RPS já informado.',
+    });
     expect(queueProducer.addedPollBatchJobs).toHaveLength(0);
   });
 });

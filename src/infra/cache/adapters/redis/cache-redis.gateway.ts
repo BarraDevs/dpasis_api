@@ -70,6 +70,26 @@ export class CacheRedisAdapterGateway implements ICacheGateway {
     }
   }
 
+  public async setIfAbsent<T>(key: string, value: T, ttlInSeconds: number): Promise<boolean> {
+    try {
+      const result = await this.client?.set(key, JSON.stringify(value), { NX: true, EX: ttlInSeconds });
+      return result === 'OK';
+    }
+    catch (error) {
+      this.logger.error(LogContext.CACHE, {
+        adapter: 'redis',
+        action: 'setIfAbsent',
+        key,
+        value,
+        ttlInSeconds,
+        error,
+      });
+      // Redis fora do ar não pode virar permissão implícita: quem usa isso como trava precisa
+      // assumir que não conseguiu a trava, não que conseguiu.
+      return false;
+    }
+  }
+
   public async get<T>(key: string): Promise<T | null> {
     try {
       const value = await this.client?.get(key);
@@ -108,15 +128,17 @@ export class CacheRedisAdapterGateway implements ICacheGateway {
   public async deleteContaining(key: string): Promise<void> {
     try {
       const keys: string[] = [];
-      let cursor = 0;
+      // node-redis v5 mudou o cursor de SCAN de number para string; '0' marca início e fim do ciclo.
+      let cursor = '0';
 
       do {
         const result = await this.client?.scan(cursor, { MATCH: `*${key}*`, COUNT: 100 });
-        if (result) {
-          cursor = result.cursor;
-          keys.push(...result.keys);
+        if (!result) {
+          break;
         }
-      } while (cursor !== 0);
+        cursor = result.cursor;
+        keys.push(...result.keys);
+      } while (cursor !== '0');
 
       if (keys.length > 0) {
         await this.client?.del(keys);

@@ -1,6 +1,7 @@
 import { XMLParser } from 'fast-xml-parser';
 import { GetNfsBatchStatusInputDto, NfsBatchErrorDto, NfsBatchSituation, NfsBatchStatusDto, NfsIssuedNoteDto } from '../../../dtos/nfs-batch-status.dto';
 import { GISS_CONSULTAR_LOTE_RPS_ENVIO_NAMESPACE, GISS_TIPOS_NAMESPACE } from '../constants/giss-namespaces';
+import { toNfsBatchErrorDto } from './giss-batch-error';
 
 export class GissBatchStatusMapper {
   private static readonly PARSER = new XMLParser({
@@ -57,19 +58,11 @@ export class GissBatchStatusMapper {
     }
 
     const errors: NfsBatchErrorDto[] = this.toArray(resposta.ListaMensagemRetornoLote?.MensagemRetorno)
-      .map((msg: any) => ({
-        code: String(msg.Codigo ?? ''),
-        message: String(msg.Mensagem ?? ''),
-        rpsNumber: msg.IdentificacaoRps?.Numero !== undefined ? Number(msg.IdentificacaoRps.Numero) : undefined,
-        rpsSeries: msg.IdentificacaoRps?.Serie !== undefined ? String(msg.IdentificacaoRps.Serie) : undefined,
-      }))
+      .map((msg: any) => toNfsBatchErrorDto(msg))
       .concat(
-        this.toArray(resposta.ListaMensagemRetorno?.MensagemRetorno).map((msg: any) => ({
-          code: String(msg.Codigo ?? ''),
-          message: String(msg.Mensagem ?? ''),
-          rpsNumber: undefined,
-          rpsSeries: undefined,
-        })),
+        this.toArray(resposta.ListaMensagemRetorno?.MensagemRetorno).map((msg: any) =>
+          toNfsBatchErrorDto(msg, { includeRpsIdentification: false }),
+        ),
       );
 
     const issuedNotes: NfsIssuedNoteDto[] = this.toArray(resposta.ListaNfse?.CompNfse).map((comp: any) => {

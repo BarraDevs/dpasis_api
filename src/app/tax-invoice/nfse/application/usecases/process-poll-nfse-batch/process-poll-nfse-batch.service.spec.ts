@@ -5,7 +5,7 @@ import { FindCompanyNfsConfigByCompanyId } from 'src/app/company/company-nfs-con
 import { CompanyNfsConfigNotFoundError } from 'src/app/company/company-nfs-config/domain/errors/company-nfs-config-not-found.error';
 import { TOKENS } from 'src/core/di/token';
 import { LogContext, type ILoggerGateway } from 'src/infra/logger/logger.gateway';
-import { NfsBatchSituation } from 'src/infra/nfs-generation/dtos/nfs-batch-status.dto';
+import { NfsBatchErrorKind, NfsBatchSituation } from 'src/infra/nfs-generation/dtos/nfs-batch-status.dto';
 import { NfsProviderEnvironment } from 'src/infra/nfs-generation/dtos/nfs-provider-credentials.dto';
 import type { INfsGenerationGateway } from 'src/infra/nfs-generation/nfs-generation.gateway';
 import { NfseProps } from '../../../domain/entities/nfse.entity';
@@ -167,13 +167,13 @@ describe('ProcessPollNfseBatch - Unit tests', () => {
     expect(queueProducer.addIssueBankPaymentJob).toHaveBeenCalledWith({ nfseId: 1 });
   });
 
-  it('should mark the nfse FAILED when Giss reports an error', async() => {
+  it('should mark the nfse FAILED when the provider reports an error', async() => {
     // Arrange
     const nfse = NfseFactory.load(makeNfseProps());
     jest.spyOn(nfseRepository, 'findById').mockResolvedValue(nfse);
     jest.spyOn(nfsGenerationGateway, 'getBatchStatus').mockResolvedValue({
       situation: NfsBatchSituation.Error,
-      errors: [{ code: 'E01', message: 'RPS inválido' }],
+      errors: [{ code: 'E01', message: 'RPS inválido', kind: NfsBatchErrorKind.BusinessRejection }],
     });
 
     // Act
@@ -223,7 +223,7 @@ describe('ProcessPollNfseBatch - Unit tests', () => {
     );
   });
 
-  it('should mark the nfse FAILED when Giss reports success without issued notes', async() => {
+  it('should park the nfse in AWAITING_PROVIDER when Giss reports success without issued notes', async() => {
     // Arrange
     const nfse = NfseFactory.load(makeNfseProps());
     jest.spyOn(nfseRepository, 'findById').mockResolvedValue(nfse);
@@ -238,7 +238,7 @@ describe('ProcessPollNfseBatch - Unit tests', () => {
     // Assert
     expect(nfseRepository.edit).toHaveBeenCalledWith(nfse);
     expect(nfse.props).toMatchObject({
-      status: NfseStatus.FAILED,
+      status: NfseStatus.AWAITING_PROVIDER,
       errorMessage: 'Giss retornou sucesso na consulta do lote, mas sem dados da NFS-e emitida',
     });
     expect(queueProducer.addPollBatchJob).not.toHaveBeenCalled();
@@ -260,6 +260,7 @@ describe('ProcessPollNfseBatch - Unit tests', () => {
     expect(loggerSpy).toHaveBeenCalledWith(LogContext.NFS_GENERATION, {
       adapter: 'nfse',
       action: 'processPollNfseBatch',
+      nfseId: 1,
       batchProtocol: 'protocol-123',
       error: gatewayError,
     });
@@ -271,36 +272,100 @@ describe('ProcessPollNfseBatch - Unit tests', () => {
     );
   });
 
-  it('should mark the nfse FAILED when the gateway call fails at max attempts', async() => {
+  it('should park the nfse in AWAITING_PROVIDER when the gateway call fails after the last ladder step', async() => {
     // Arrange
     const nfse = NfseFactory.load(makeNfseProps());
     jest.spyOn(nfseRepository, 'findById').mockResolvedValue(nfse);
     jest.spyOn(nfsGenerationGateway, 'getBatchStatus').mockRejectedValue(new Error('Giss indisponível'));
 
     // Act
-    await sut.execute({ nfseId: 1, attempt: 10 });
+    await sut.execute({ nfseId: 1, attempt: 8 });
 
     // Assert
     expect(nfseRepository.edit).toHaveBeenCalledWith(nfse);
     expect(nfse.props).toMatchObject({
-      status: NfseStatus.FAILED,
-      errorMessage: 'Erro ao consultar status do lote no Giss',
+      status: NfseStatus.AWAITING_PROVIDER,
+      errorMessage: 'Erro ao consultar status do lote no Giss: Giss indisponível',
     });
     expect(queueProducer.addPollBatchJob).not.toHaveBeenCalled();
   });
 
-  it('should mark the nfse FAILED after exceeding the max poll attempts', async() => {
+  it('should park the nfse in AWAITING_PROVIDER after exhausting the poll ladder', async() => {
     // Arrange
     const nfse = NfseFactory.load(makeNfseProps());
     jest.spyOn(nfseRepository, 'findById').mockResolvedValue(nfse);
     jest.spyOn(nfsGenerationGateway, 'getBatchStatus').mockResolvedValue({ situation: NfsBatchSituation.Pending });
 
     // Act
-    await sut.execute({ nfseId: 1, attempt: 10 });
+    await sut.execute({ nfseId: 1, attempt: 8 });
 
     // Assert
     expect(nfseRepository.edit).toHaveBeenCalledWith(nfse);
-    expect(nfse.props.status).toBe(NfseStatus.FAILED);
+    expect(nfse.props.status).toBe(NfseStatus.AWAITING_PROVIDER);
+    expect(queueProducer.addPollBatchJob).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    [1, 30_000],
+    [2, 60_000],
+    [3, 300_000],
+    [4, 900_000],
+    [5, 3_600_000],
+    [6, 21_600_000],
+    [7, 86_400_000],
+  ])('should schedule attempt %i of the ladder with a %i ms delay', async(attempt, expectedDelayMs) => {
+    // Arrange
+    const nfse = NfseFactory.load(makeNfseProps());
+    jest.spyOn(nfseRepository, 'findById').mockResolvedValue(nfse);
+    jest.spyOn(nfsGenerationGateway, 'getBatchStatus').mockResolvedValue({ situation: NfsBatchSituation.Pending });
+
+    // Act
+    await sut.execute({ nfseId: 1, attempt });
+
+    // Assert
+    expect(queueProducer.addPollBatchJob).toHaveBeenCalledWith(
+      { nfseId: 1, attempt: attempt + 1 },
+      { delayMs: expectedDelayMs },
+    );
+  });
+
+  it('should keep marking the nfse FAILED when the provider rejects the batch for a business reason', async() => {
+    // Arrange
+    const nfse = NfseFactory.load(makeNfseProps());
+    jest.spyOn(nfseRepository, 'findById').mockResolvedValue(nfse);
+    jest.spyOn(nfsGenerationGateway, 'getBatchStatus').mockResolvedValue({
+      situation: NfsBatchSituation.Error,
+      errors: [{ code: 'E202', message: 'Código de tributação não informado', kind: NfsBatchErrorKind.BusinessRejection }],
+    });
+
+    // Act
+    await sut.execute({ nfseId: 1, attempt: 1 });
+
+    // Assert
+    expect(nfse.props).toMatchObject({
+      status: NfseStatus.FAILED,
+      errorMessage: 'E202: Código de tributação não informado',
+    });
+  });
+
+  it('should park the nfse in AWAITING_PROVIDER when the provider reports already submitted', async() => {
+    // Arrange
+    const nfse = NfseFactory.load(makeNfseProps());
+    jest.spyOn(nfseRepository, 'findById').mockResolvedValue(nfse);
+    jest.spyOn(nfsGenerationGateway, 'getBatchStatus').mockResolvedValue({
+      situation: NfsBatchSituation.Error,
+      errors: [
+        { code: 'A9', message: 'Inscrição municipal incorreta.', kind: NfsBatchErrorKind.BusinessRejection },
+        // code is opaque — use case must branch on kind, not vendor code
+        { code: 'X', message: 'RPS já informado.', kind: NfsBatchErrorKind.AlreadySubmitted },
+      ],
+    });
+
+    // Act
+    await sut.execute({ nfseId: 1, attempt: 1 });
+
+    // Assert
+    expect(nfse.props.status).toBe(NfseStatus.AWAITING_PROVIDER);
     expect(queueProducer.addPollBatchJob).not.toHaveBeenCalled();
   });
 });

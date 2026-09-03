@@ -41,6 +41,7 @@ export class GissPfxLoader {
       }
 
       const chain = this.buildChain(certs);
+      this.ensureNotExpired(chain[0], certFilePath);
 
       return {
         certPem: chain.map((cert) => forge.pki.certificateToPem(cert)).join(''),
@@ -52,6 +53,21 @@ export class GissPfxLoader {
         throw error;
       }
       throw new NfsProviderConfigError(`Falha ao ler certificado digital em "${certFilePath}": senha incorreta ou arquivo corrompido`);
+    }
+  }
+
+  /**
+   * Vencimento de certificado é evento previsível, e sem esta checagem ele chega como falha de
+   * handshake TLS genérica — que o gateway converte em `ExternalApiError` e o job trata como
+   * indisponibilidade do provedor. Falhar aqui, com a data, troca um incidente por uma mensagem.
+   */
+  private static ensureNotExpired(leaf: forge.pki.Certificate, certFilePath: string): void {
+    const notAfter = leaf.validity.notAfter;
+
+    if (notAfter.getTime() <= Date.now()) {
+      throw new NfsProviderConfigError(
+        `Certificado digital em "${certFilePath}" venceu em ${notAfter.toISOString()}`,
+      );
     }
   }
 

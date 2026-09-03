@@ -1,4 +1,4 @@
-import { NfsBatchSituation } from '../../../dtos/nfs-batch-status.dto';
+import { NfsBatchErrorKind, NfsBatchSituation } from '../../../dtos/nfs-batch-status.dto';
 import { GissBatchStatusMapper } from './giss-batch-status.mapper';
 
 describe('GissBatchStatusMapper.buildConsultarLoteRpsXml - Unit tests', () => {
@@ -180,6 +180,7 @@ describe('GissBatchStatusMapper.parseConsultarLoteRpsResponse - Unit tests', () 
     expect(result.errors).toEqual([{
       code: 'E02',
       message: 'Data de competência inválida',
+      kind: NfsBatchErrorKind.BusinessRejection,
       rpsNumber: 7,
       rpsSeries: 'NFSE',
     }]);
@@ -204,8 +205,35 @@ describe('GissBatchStatusMapper.parseConsultarLoteRpsResponse - Unit tests', () 
     expect(result.errors).toEqual([{
       code: 'E99',
       message: 'Erro geral do lote',
+      kind: NfsBatchErrorKind.BusinessRejection,
       rpsNumber: undefined,
       rpsSeries: undefined,
+    }]);
+  });
+
+  it.each(['E10', 'E71', 'A12'])('should classify GISS code %s as AlreadySubmitted on status poll', (code) => {
+    // Arrange
+    const xml = `<ConsultarLoteRpsResposta>
+      <Situacao>3</Situacao>
+      <ListaMensagemRetornoLote>
+        <MensagemRetorno>
+          <IdentificacaoRps><Numero>7</Numero><Serie>NFSE</Serie></IdentificacaoRps>
+          <Codigo>${code}</Codigo>
+          <Mensagem>RPS duplicado</Mensagem>
+        </MensagemRetorno>
+      </ListaMensagemRetornoLote>
+    </ConsultarLoteRpsResposta>`;
+
+    // Act
+    const result = GissBatchStatusMapper.parseConsultarLoteRpsResponse(xml);
+
+    // Assert
+    expect(result.errors).toEqual([{
+      code,
+      message: 'RPS duplicado',
+      kind: NfsBatchErrorKind.AlreadySubmitted,
+      rpsNumber: 7,
+      rpsSeries: 'NFSE',
     }]);
   });
 

@@ -1,4 +1,5 @@
 import { DateTime } from 'luxon';
+import { SAO_PAULO_TIMEZONE } from 'src/core/constants/timezone.constant';
 import { Day } from 'src/shared/value-objects/day/day.vo';
 import { Enum } from 'src/shared/value-objects/enum/enum.vo';
 import { Month } from 'src/shared/value-objects/month/month.vo';
@@ -24,7 +25,6 @@ export type InvoiceCalendarDueDateProps = {
 };
 
 export class InvoiceCalendarDueDate {
-  private static readonly ZONE = 'America/Sao_Paulo';
   private readonly _value: string;
 
   constructor(props: InvoiceCalendarDueDateProps) {
@@ -56,7 +56,7 @@ export class InvoiceCalendarDueDate {
 
     const days = new PositiveInt(deadlineDays, 'deadlineDays', true).value;
 
-    return DateTime.fromJSDate(issuedAt, { zone: InvoiceCalendarDueDate.ZONE })
+    return DateTime.fromJSDate(issuedAt, { zone: SAO_PAULO_TIMEZONE })
       .plus({ days })
       .toFormat('yyyy-MM-dd');
   }
@@ -92,7 +92,7 @@ export class InvoiceCalendarDueDate {
 
     const competence = DateTime.fromObject(
       { year, month, day: 1 },
-      { zone: InvoiceCalendarDueDate.ZONE },
+      { zone: SAO_PAULO_TIMEZONE },
     );
 
     if (!competence.isValid || !competence.daysInMonth) {
@@ -102,7 +102,7 @@ export class InvoiceCalendarDueDate {
     const day = Math.min(dueDateDay, competence.daysInMonth);
     return DateTime.fromObject(
       { year, month, day },
-      { zone: InvoiceCalendarDueDate.ZONE },
+      { zone: SAO_PAULO_TIMEZONE },
     ).toFormat('yyyy-MM-dd');
   }
 }

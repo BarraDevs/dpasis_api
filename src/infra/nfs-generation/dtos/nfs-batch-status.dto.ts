@@ -21,9 +21,15 @@ export class NfsIssuedNoteDto {
   issueDate: string; // ISO datetime
 }
 
+export enum NfsBatchErrorKind {
+  AlreadySubmitted = 'ALREADY_SUBMITTED',
+  BusinessRejection = 'BUSINESS_REJECTION',
+}
+
 export class NfsBatchErrorDto {
-  code: string;
+  code: string; // opaco: só mensagem/log — branch de negócio usa `kind`
   message: string;
+  kind: NfsBatchErrorKind;
   rpsNumber?: number;
   rpsSeries?: string;
 }

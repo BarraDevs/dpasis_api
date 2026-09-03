@@ -5,10 +5,13 @@ import { BankPaymentInterStrategy } from './bank-payment-inter.strategy';
 import { InterCobrancaClient } from './cobranca/inter-cobranca.client';
 import { InterOauthClient } from './oauth/inter-oauth.client';
 
+/** A API do Inter responde rápido; 30s é folga para pico, não para conexão pendurada. */
+const HTTP_TIMEOUT_MS = 30_000;
+
 @Module({
   imports: [
     ConfigModule,
-    HttpModule,
+    HttpModule.register({ timeout: HTTP_TIMEOUT_MS }),
   ],
   providers: [
     InterOauthClient,

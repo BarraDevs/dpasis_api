@@ -6,6 +6,11 @@ import type { IssueNfseBatchJobDto } from '../../../../application/queue/jobs/is
 import type { PollNfseBatchJobDto } from '../../../../application/queue/jobs/poll-nfse-batch-job.dto';
 import { NfseQueueBullmqAdapterProducer } from './nfse-queue-bullmq.producer';
 
+const EXPECTED_RETRY = {
+  attempts: 5,
+  backoff: { type: 'exponential', delay: 30_000 },
+};
+
 function makeIssueBatchJob(overrides: Partial<IssueNfseBatchJobDto> = {}): IssueNfseBatchJobDto {
   return { nfseId: 1, ...overrides };
 }
@@ -39,7 +44,7 @@ describe('NfseQueueBullmqAdapterProducer', () => {
   });
 
   describe('addIssueBatchJob', () => {
-    it('should enqueue issue batch job with payload', async() => {
+    it('should enqueue issue batch job with payload and retry options', async() => {
       // Arrange
       const data = makeIssueBatchJob({ nfseId: 42 });
 
@@ -48,7 +53,7 @@ describe('NfseQueueBullmqAdapterProducer', () => {
 
       // Assert
       expect(queueAdd).toHaveBeenCalledTimes(1);
-      expect(queueAdd).toHaveBeenCalledWith(JobName.IssueNfseBatch, data);
+      expect(queueAdd).toHaveBeenCalledWith(JobName.IssueNfseBatch, data, EXPECTED_RETRY);
     });
 
     it('should propagate queue.add errors', async() => {
@@ -73,7 +78,7 @@ describe('NfseQueueBullmqAdapterProducer', () => {
 
       // Assert
       expect(queueAdd).toHaveBeenCalledTimes(1);
-      expect(queueAdd).toHaveBeenCalledWith(JobName.PollNfseBatch, data, { delay: 30_000 });
+      expect(queueAdd).toHaveBeenCalledWith(JobName.PollNfseBatch, data, { ...EXPECTED_RETRY, delay: 30_000 });
     });
 
     it('should enqueue poll batch job with undefined delay when options are omitted', async() => {
@@ -85,7 +90,7 @@ describe('NfseQueueBullmqAdapterProducer', () => {
 
       // Assert
       expect(queueAdd).toHaveBeenCalledTimes(1);
-      expect(queueAdd).toHaveBeenCalledWith(JobName.PollNfseBatch, data, { delay: undefined });
+      expect(queueAdd).toHaveBeenCalledWith(JobName.PollNfseBatch, data, { ...EXPECTED_RETRY, delay: undefined });
     });
 
     it('should propagate queue.add errors', async() => {

@@ -8,6 +8,7 @@ import { ConfigModule } from 'src/core/config/config.module';
 import { TOKENS } from 'src/core/di/token';
 import { BankPaymentFakeAdapterGateway } from 'src/infra/bank-payment/adapters/fake/bank-payment-fake.gateway';
 import { BankPaymentProvider } from 'src/infra/bank-payment/enums/bank-payment-provider.enum';
+import { BankPaymentAlreadyExistsError } from 'src/infra/bank-payment/errors/bank-payment-already-exists.error';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { LoggerModule } from 'src/infra/logger/logger.module';
 import { buildMinimalCompanyData } from 'src/test/fixtures/minimal-company';
@@ -199,7 +200,9 @@ describe('ProcessIssueNfseBankPayment - Integration tests', () => {
   beforeEach(async() => {
     await prisma.truncate();
     bankPaymentGateway.issueCalls.length = 0;
+    bankPaymentGateway.findCalls.length = 0;
     bankPaymentGateway.issueError = null;
+    bankPaymentGateway.findError = null;
     bankPaymentGateway.issueResult = {
       provider: BankPaymentProvider.INTER,
       requestCode: 'fake-request-code',
@@ -359,6 +362,55 @@ describe('ProcessIssueNfseBankPayment - Integration tests', () => {
     // Assert
     expect(result).toBeNull();
     expect(bankPaymentGateway.issueCalls).toHaveLength(0);
+    const saved = await prisma.nfse.findUnique({ where: { id: nfse.id } });
+    expect(saved?.bankPaymentProvider).toBeNull();
+    expect(saved?.bankPaymentRequestCode).toBeNull();
+  });
+
+  it('should link the existing charge when the provider reports a duplicate with matching yourNumber', async() => {
+    // Arrange
+    const company = await seedCompany(prisma);
+    const nfse = await seedNfse(prisma, company.id);
+    const existingRequestCode = 'existing-req-dup';
+    bankPaymentGateway.issueError = new BankPaymentAlreadyExistsError(existingRequestCode);
+    bankPaymentGateway.findResult = {
+      ...bankPaymentGateway.findResult,
+      requestCode: existingRequestCode,
+      yourNumber: String(nfse.id),
+    };
+
+    // Act
+    const result = await sut.execute({ nfseId: nfse.id });
+
+    // Assert
+    expect(result).toEqual({
+      provider: BankPaymentProvider.INTER,
+      requestCode: existingRequestCode,
+    });
+    expect(bankPaymentGateway.findCalls).toEqual([
+      expect.objectContaining({ requestCode: existingRequestCode }),
+    ]);
+    const saved = await prisma.nfse.findUnique({ where: { id: nfse.id } });
+    expect(saved).toMatchObject({
+      bankPaymentProvider: BankPaymentProvider.INTER,
+      bankPaymentRequestCode: existingRequestCode,
+    });
+  });
+
+  it('should rethrow when the existing charge belongs to another nfse', async() => {
+    // Arrange
+    const company = await seedCompany(prisma);
+    const nfse = await seedNfse(prisma, company.id);
+    const existingRequestCode = 'existing-req-other';
+    bankPaymentGateway.issueError = new BankPaymentAlreadyExistsError(existingRequestCode);
+    bankPaymentGateway.findResult = {
+      ...bankPaymentGateway.findResult,
+      requestCode: existingRequestCode,
+      yourNumber: '999999',
+    };
+
+    // Act & Assert
+    await expect(sut.execute({ nfseId: nfse.id })).rejects.toThrow(BankPaymentAlreadyExistsError);
     const saved = await prisma.nfse.findUnique({ where: { id: nfse.id } });
     expect(saved?.bankPaymentProvider).toBeNull();
     expect(saved?.bankPaymentRequestCode).toBeNull();

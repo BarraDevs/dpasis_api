@@ -1,0 +1,9 @@
+# Material criptográfico nunca é versionado: um PKCS#12 no repositório é atacável offline por força
+# bruta, sem limite de tentativas e sem deixar rastro. Entregar por volume montado ou secret manager,
+# com GISS_CERT_PATH apontando para fora da árvore do projeto.
+*.pfx
+*.p12
+*.pem
+*.key
+*.crt
+!.gitignore

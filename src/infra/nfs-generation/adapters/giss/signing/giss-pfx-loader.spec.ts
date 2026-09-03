@@ -8,13 +8,15 @@ import { GissPfxLoader } from './giss-pfx-loader';
 const PASSWORD_ENV_VAR = 'TEST_GISS_CERT_PASSWORD';
 const PASSWORD = 'super-secret';
 
-function buildTestPfx(): Buffer {
+const ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000;
+
+function buildTestPfx(notAfter: Date = new Date(Date.now() + ONE_YEAR_MS)): Buffer {
   const keys = forge.pki.rsa.generateKeyPair(1024);
   const cert = forge.pki.createCertificate();
   cert.publicKey = keys.publicKey;
   cert.serialNumber = '01';
-  cert.validity.notBefore = new Date();
-  cert.validity.notAfter = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
+  cert.validity.notBefore = new Date(notAfter.getTime() - ONE_YEAR_MS);
+  cert.validity.notAfter = notAfter;
   const attrs = [{ name: 'commonName', value: 'Test Provider' }];
   cert.setSubject(attrs);
   cert.setIssuer(attrs);
@@ -86,5 +88,14 @@ describe('GissPfxLoader.load - Unit tests', () => {
     // Act & Assert
     expect(() => GissPfxLoader.load(corruptedPath, PASSWORD_ENV_VAR)).toThrow(NfsProviderConfigError);
     expect(() => GissPfxLoader.load(corruptedPath, PASSWORD_ENV_VAR)).toThrow('senha incorreta ou arquivo corrompido');
+  });
+
+  it('should throw NfsProviderConfigError when the certificate has expired', () => {
+    // Arrange
+    writeFileSync(pfxPath, buildTestPfx(new Date(Date.now() - ONE_YEAR_MS)));
+
+    // Act & Assert
+    expect(() => GissPfxLoader.load(pfxPath, PASSWORD_ENV_VAR)).toThrow(NfsProviderConfigError);
+    expect(() => GissPfxLoader.load(pfxPath, PASSWORD_ENV_VAR)).toThrow(/venceu em/);
   });
 });

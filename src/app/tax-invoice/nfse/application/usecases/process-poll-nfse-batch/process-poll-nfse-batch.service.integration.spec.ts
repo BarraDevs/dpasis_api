@@ -4,7 +4,7 @@ import { TOKENS } from 'src/core/di/token';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { LoggerModule } from 'src/infra/logger/logger.module';
 import { NfsGenerationFakeAdapterGateway } from 'src/infra/nfs-generation/adapters/fake/nfs-generation-fake.gateway';
-import { NfsBatchSituation } from 'src/infra/nfs-generation/dtos/nfs-batch-status.dto';
+import { NfsBatchErrorKind, NfsBatchSituation } from 'src/infra/nfs-generation/dtos/nfs-batch-status.dto';
 import { NfsProviderEnvironment } from 'src/infra/nfs-generation/dtos/nfs-provider-credentials.dto';
 import { NfseQueueFakeAdapterProducer } from '../../../infra/driven/queue/fake/nfse-queue-fake.producer';
 import { NfseStatus } from '../../../domain/enums/nfse-status.enum';
@@ -199,7 +199,7 @@ describe('ProcessPollNfseBatch - Integration tests', () => {
     ]);
   });
 
-  it('should mark the nfse FAILED when the gateway fails at max attempts', async() => {
+  it('should mark the nfse AWAITING_PROVIDER when the gateway fails at max attempts', async() => {
     // Arrange
     const company = await seedCompany(prisma);
     await seedProviderConfig(prisma, company.id);
@@ -207,12 +207,57 @@ describe('ProcessPollNfseBatch - Integration tests', () => {
     nfsGenerationGateway.getBatchStatusError = new Error('timeout');
 
     // Act
-    await sut.execute({ nfseId: nfse.id, attempt: 10 });
+    await sut.execute({ nfseId: nfse.id, attempt: 8 });
 
     // Assert
     const saved = await prisma.nfse.findUnique({ where: { id: nfse.id } });
-    expect(saved?.status).toBe(NfseStatus.FAILED);
-    expect(saved?.errorMessage).toBe('Erro ao consultar status do lote no Giss');
+    // Existe protocolo: só uma consulta ao provedor pode afirmar que a nota não foi emitida.
+    expect(saved?.status).toBe(NfseStatus.AWAITING_PROVIDER);
+    expect(saved?.errorMessage).toBe('Erro ao consultar status do lote no Giss: timeout');
+    expect(queueProducer.addedPollBatchJobs).toHaveLength(0);
+  });
+
+  it('should park the nfse in AWAITING_PROVIDER when Giss reports success without issued notes', async() => {
+    // Arrange
+    const company = await seedCompany(prisma);
+    await seedProviderConfig(prisma, company.id);
+    const nfse = await seedNfse(prisma, company.id);
+    nfsGenerationGateway.getBatchStatusResult = {
+      situation: NfsBatchSituation.Success,
+      issuedNotes: [],
+    };
+
+    // Act
+    await sut.execute({ nfseId: nfse.id, attempt: 1 });
+
+    // Assert
+    const saved = await prisma.nfse.findUnique({ where: { id: nfse.id } });
+    expect(saved).toMatchObject({
+      status: NfseStatus.AWAITING_PROVIDER,
+      errorMessage: 'Giss retornou sucesso na consulta do lote, mas sem dados da NFS-e emitida',
+    });
+    expect(queueProducer.addedIssueBankPaymentJobs).toHaveLength(0);
+  });
+
+  it('should park the nfse in AWAITING_PROVIDER when the provider reports already submitted', async() => {
+    // Arrange
+    const company = await seedCompany(prisma);
+    await seedProviderConfig(prisma, company.id);
+    const nfse = await seedNfse(prisma, company.id);
+    nfsGenerationGateway.getBatchStatusResult = {
+      situation: NfsBatchSituation.Error,
+      errors: [
+        { code: 'E10', message: 'RPS já informado.', kind: NfsBatchErrorKind.AlreadySubmitted },
+      ],
+    };
+
+    // Act
+    await sut.execute({ nfseId: nfse.id, attempt: 1 });
+
+    // Assert
+    const saved = await prisma.nfse.findUnique({ where: { id: nfse.id } });
+    expect(saved?.status).toBe(NfseStatus.AWAITING_PROVIDER);
+    expect(saved?.errorMessage).toContain('RPS já informado');
     expect(queueProducer.addedPollBatchJobs).toHaveLength(0);
   });
 

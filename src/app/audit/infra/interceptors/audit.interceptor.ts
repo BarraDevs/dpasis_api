@@ -2,11 +2,11 @@ import { CallHandler, ExecutionContext, Inject, Injectable, NestInterceptor } fr
 import { Request, Response } from 'express';
 import { Observable, tap } from 'rxjs';
 import { Payload } from 'src/app/authentication/domain/types/payload.type';
+import { SENSITIVE_FIELDS } from 'src/core/constants/sensitive-fields.constant';
 import { TOKENS } from 'src/core/di/token';
 import type { IAuditLogDao } from '../../application/persistence/dao/audit-log-dao.interface';
 
 const MUTATING_METHODS = ['POST', 'PATCH', 'PUT', 'DELETE'];
-const SENSITIVE_FIELDS = ['password', 'passwordHash', 'token', 'secret', 'accessPassword'];
 
 @Injectable()
 export class AuditInterceptor implements NestInterceptor {

@@ -1,11 +1,14 @@
 import { XMLParser } from 'fast-xml-parser';
 import { IssueNfsBatchInputDto, IssueNfsBatchOutputDto } from '../../../dtos/issue-nfs-batch.dto';
+import { NfsBatchErrorDto } from '../../../dtos/nfs-batch-status.dto';
 import { NfsIbsCbsDto } from '../../../dtos/nfs-ibs-cbs.dto';
 import { NfsPartyDto } from '../../../dtos/nfs-party.dto';
 import { NfsRpsDto } from '../../../dtos/nfs-rps.dto';
 import { NfsServiceDto } from '../../../dtos/nfs-service.dto';
 import { NfsTakerDto } from '../../../dtos/nfs-taker.dto';
+import { NfsBatchRejectedError } from '../../../errors/nfs-batch-rejected.error';
 import { GISS_ENVIAR_LOTE_RPS_ENVIO_NAMESPACE, GISS_TIPOS_NAMESPACE } from '../constants/giss-namespaces';
+import { toNfsBatchErrorDto } from './giss-batch-error';
 import { XmlEscapeUtil } from './xml-escape.util';
 
 export class GissIssueBatchMapper {
@@ -247,12 +250,22 @@ export class GissIssueBatchMapper {
 
     const protocolo = resposta.Protocolo;
     if (!protocolo) {
-      const mensagens = resposta.ListaMensagemRetorno?.MensagemRetorno;
-      const mensagem = Array.isArray(mensagens) ? mensagens[0] : mensagens;
-      const detail = mensagem ? `${mensagem.Codigo}: ${mensagem.Mensagem}` : 'sem detalhes na resposta';
-      throw new Error(`Giss não retornou protocolo do lote (${detail})`);
+      throw new NfsBatchRejectedError(this.parseMensagensRetorno(resposta.ListaMensagemRetorno?.MensagemRetorno));
     }
 
     return { batchProtocol: String(protocolo) };
+  }
+
+  /**
+   * `EnviarLoteRpsResposta` é um `xsd:choice`: ou vem o protocolo, ou vem `ListaMensagemRetorno`.
+   * Todas as mensagens importam — o `kind` AlreadySubmitted pode não ser o primeiro da lista.
+   */
+  private static parseMensagensRetorno(mensagens: any): NfsBatchErrorDto[] {
+    if (mensagens === undefined || mensagens === null) {
+      return [];
+    }
+
+    const list = Array.isArray(mensagens) ? mensagens : [mensagens];
+    return list.map((mensagem: any) => toNfsBatchErrorDto(mensagem));
   }
 }

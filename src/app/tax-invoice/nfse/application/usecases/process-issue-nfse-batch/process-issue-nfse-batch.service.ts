@@ -1,10 +1,13 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { FindCompanyNfsConfigByCompanyId } from 'src/app/company/company-nfs-config/application/usecases/find-company-nfs-config-by-company-id/find-company-nfs-config-by-company-id.service';
+import { SAO_PAULO_TIMEZONE } from 'src/core/constants/timezone.constant';
 import { TOKENS } from 'src/core/di/token';
 import { LogContext, type ILoggerGateway } from 'src/infra/logger/logger.gateway';
 import { IssueNfsBatchOutputDto } from 'src/infra/nfs-generation/dtos/issue-nfs-batch.dto';
 import { NfsProviderCredentialsDto, NfsProviderEnvironment } from 'src/infra/nfs-generation/dtos/nfs-provider-credentials.dto';
 import { NfsRpsType } from 'src/infra/nfs-generation/dtos/nfs-rps.dto';
+import { NfsBatchRejectedError } from 'src/infra/nfs-generation/errors/nfs-batch-rejected.error';
+import { NfsProviderConfigError } from 'src/infra/nfs-generation/errors/nfs-provider-config.error';
 import type { INfsGenerationGateway } from 'src/infra/nfs-generation/nfs-generation.gateway';
 import { NfseNotFoundError } from '../../../domain/errors/nfse-not-found.error';
 import type { INfseRepository } from '../../persistence/repository/nfse-repository.interface';
@@ -36,7 +39,7 @@ export class ProcessIssueNfseBatch {
     const providerConfig = await this.findCompanyNfsConfigByCompanyId.execute(nfse.props.companyId);
 
     const snapshot = nfse.props.data as unknown as NfseIssueSnapshot;
-    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: SAO_PAULO_TIMEZONE });
 
     const provider: NfsProviderCredentialsDto = {
       certFilePath: providerConfig.certFilePath,
@@ -106,10 +109,19 @@ export class ProcessIssueNfseBatch {
       this.logger.error(LogContext.NFS_GENERATION, {
         adapter: 'nfse',
         action: 'processIssueNfseBatch',
+        nfseId: nfse.props.id,
         error,
       });
 
-      nfse.markFailed(error?.message ?? 'Erro desconhecido ao enviar lote ao provedor de NFS-e');
+      const message = error?.message ?? 'Erro desconhecido ao enviar lote ao provedor de NFS-e';
+
+      if (ProcessIssueNfseBatch.isPermanentFailure(error)) {
+        nfse.markFailed(message);
+      }
+      else {
+        nfse.markAwaitingProvider(message);
+      }
+
       await this.nfseRepository.edit(nfse);
       return;
     }
@@ -121,5 +133,24 @@ export class ProcessIssueNfseBatch {
       { nfseId: nfse.props.id, attempt: 1 },
       { delayMs: ProcessIssueNfseBatch.FIRST_POLL_DELAY_MS },
     );
+  }
+
+  /**
+   * Só marca `FAILED` o que se sabe que não gerou nota. Erro de configuração é determinístico e
+   * nunca chegou ao provedor; rejeição de negócio (`NfsBatchRejectedError` sem `alreadySubmitted`)
+   * também. Todo o resto — timeout, TLS, 5xx, conexão cortada, ou "RPS já informado" — é ambíguo,
+   * e afirmar `FAILED` num caso ambíguo é o único erro irreversível deste fluxo: a operação para
+   * de procurar por uma nota que pode existir.
+   */
+  private static isPermanentFailure(error: unknown): boolean {
+    if (error instanceof NfsProviderConfigError) {
+      return true;
+    }
+
+    if (error instanceof NfsBatchRejectedError) {
+      return !error.alreadySubmitted;
+    }
+
+    return false;
   }
 }

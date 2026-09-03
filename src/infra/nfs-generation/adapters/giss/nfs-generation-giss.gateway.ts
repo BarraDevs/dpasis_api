@@ -2,6 +2,7 @@ import { HttpService } from '@nestjs/axios';
 import { Inject, Injectable } from '@nestjs/common';
 import { LogContext, type ILoggerGateway } from 'src/infra/logger/logger.gateway';
 import { ExternalApiError } from 'src/shared/errors/external-api.error';
+import { NfsBatchRejectedError } from 'src/infra/nfs-generation/errors/nfs-batch-rejected.error';
 import { NfsProviderConfigError } from 'src/infra/nfs-generation/errors/nfs-provider-config.error';
 import { TOKENS } from 'src/core/di/token';
 import { CancelNfsInputDto, CancelNfsOutputDto } from '../../dtos/cancel-nfs.dto';
@@ -43,7 +44,7 @@ export class NfsGenerationGissAdapterGateway implements INfsGenerationGateway {
       return GissIssueBatchMapper.parseRecepcionarLoteRpsResponse(responseXml);
     }
     catch (error: any) {
-      if (error instanceof NfsProviderConfigError) {
+      if (error instanceof NfsProviderConfigError || error instanceof NfsBatchRejectedError) {
         throw error;
       }
       this.logger.error(LogContext.NFS_GENERATION, {

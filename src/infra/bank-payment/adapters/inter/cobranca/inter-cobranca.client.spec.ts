@@ -9,10 +9,12 @@ import { ConfigService } from 'src/core/config/config.service';
 import { TOKENS } from 'src/core/di/token';
 import { LogContext, type ILoggerGateway } from 'src/infra/logger/logger.gateway';
 import { ExternalApiError } from 'src/shared/errors/external-api.error';
+import { buildTestCertificatePem } from 'src/test/fixtures/test-certificate';
 import { BankPaymentPersonType } from '../../../enums/bank-payment-person-type.enum';
 import { BankPaymentProvider } from '../../../enums/bank-payment-provider.enum';
 import { BankPaymentStatus } from '../../../enums/bank-payment-status.enum';
 import { BankPaymentNotFoundError } from '../../../errors/bank-payment-not-found.error';
+import { BankPaymentAlreadyExistsError } from '../../../errors/bank-payment-already-exists.error';
 import { BankPaymentRequestError } from '../../../errors/bank-payment-request.error';
 import { InterOauthClient } from '../oauth/inter-oauth.client';
 import { InterCobrancaClient } from './inter-cobranca.client';
@@ -54,7 +56,7 @@ describe('InterCobrancaClient - Unit tests', () => {
     mkdirSync(sutDir, { recursive: true });
     const certPath = join(sutDir, 'inter.crt');
     const keyPath = join(sutDir, 'inter.key');
-    writeFileSync(certPath, '-----BEGIN CERTIFICATE-----\nfake\n-----END CERTIFICATE-----\n');
+    writeFileSync(certPath, buildTestCertificatePem());
     writeFileSync(keyPath, '-----BEGIN PRIVATE KEY-----\nfake\n-----END PRIVATE KEY-----\n');
 
     httpService = {
@@ -379,6 +381,40 @@ describe('InterCobrancaClient - Unit tests', () => {
 
     await expect(sut.issue(issueInput)).rejects.toBeInstanceOf(BankPaymentRequestError);
     await expect(sut.issue(issueInput)).rejects.toThrow('Dados inválidos');
+  });
+
+  it('should surface the existing requestCode when the 400 is a duplicate rejection', async() => {
+    // Corpo real capturado do Inter: `title` é genérico e `detail` traz o que resolve o incidente.
+    httpService.axiosRef.request.mockRejectedValue(makeAxiosError(400, {
+      title: 'Requisição inválida',
+      detail: 'Não será possível emitir a cobrança. Pois, existe uma cobrança emitida há poucos '
+        + 'minutos com os mesmos dados com a situação "a receber" com código de solicitação: '
+        + 'ab3242a2-2205-4f5e-9f54-32caf508cfe5.',
+      timestamp: '2026-09-01T14:47:36.342910498-03:00',
+    }));
+
+    await expect(sut.issue(issueInput)).rejects.toBeInstanceOf(BankPaymentAlreadyExistsError);
+    await expect(sut.issue(issueInput)).rejects.toMatchObject({
+      requestCode: 'ab3242a2-2205-4f5e-9f54-32caf508cfe5',
+    });
+  });
+
+  it('should prefer detail over the generic title when building the 4xx message', async() => {
+    httpService.axiosRef.request.mockRejectedValue(makeAxiosError(400, {
+      title: 'Requisição inválida',
+      detail: 'Data de vencimento anterior à data atual.',
+    }));
+
+    await expect(sut.issue(issueInput)).rejects.toThrow('Data de vencimento anterior à data atual.');
+  });
+
+  it('should keep treating a 400 without a request code as a plain request error', async() => {
+    httpService.axiosRef.request.mockRejectedValue(makeAxiosError(400, {
+      title: 'Requisição inválida',
+      detail: 'Não será possível emitir a cobrança.',
+    }));
+
+    await expect(sut.issue(issueInput)).rejects.toBeInstanceOf(BankPaymentRequestError);
   });
 
   it('should throw ExternalApiError on network failure', async() => {

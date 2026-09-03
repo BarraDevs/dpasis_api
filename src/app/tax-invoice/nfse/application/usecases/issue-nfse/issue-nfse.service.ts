@@ -5,6 +5,7 @@ import { FindClientInvoiceConfigByClientId } from 'src/app/client/client-invoice
 import { FindClientById } from 'src/app/client/client/application/usecases/find-client-by-id/find-client-by-id.service';
 import { FindCompanyNfsConfigByCompanyId } from 'src/app/company/company-nfs-config/application/usecases/find-company-nfs-config-by-company-id/find-company-nfs-config-by-company-id.service';
 import { FindCompanyById } from 'src/app/company/company/application/usecases/find-company-by-id/find-company-by-id.service';
+import { SAO_PAULO_TIMEZONE } from 'src/core/constants/timezone.constant';
 import { TOKENS } from 'src/core/di/token';
 import { DateTime } from 'luxon';
 import { ClientAddressForNfseNotFoundError } from '../../../domain/errors/client-address-for-nfse-not-found.error';
@@ -80,7 +81,7 @@ export class IssueNfse {
       throw new ClientAddressForNfseNotFoundError();
     }
 
-    const nowInSp = DateTime.now().setZone('America/Sao_Paulo');
+    const nowInSp = DateTime.now().setZone(SAO_PAULO_TIMEZONE);
     const rpsNumber = await this.rpsSequenceRepository.getAndIncrement(input.companyId);
 
     const snapshot: NfseIssueSnapshot = {

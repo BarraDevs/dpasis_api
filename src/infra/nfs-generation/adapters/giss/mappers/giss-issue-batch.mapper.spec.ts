@@ -2,6 +2,8 @@ import { IssueNfsBatchInputDto } from '../../../dtos/issue-nfs-batch.dto';
 import { NfsIssExigibility } from '../../../dtos/nfs-service.dto';
 import { NfsProviderEnvironment } from '../../../dtos/nfs-provider-credentials.dto';
 import { NfsRpsType } from '../../../dtos/nfs-rps.dto';
+import { NfsBatchRejectedError } from '../../../errors/nfs-batch-rejected.error';
+import { NfsBatchErrorKind } from '../../../dtos/nfs-batch-status.dto';
 import { GissIssueBatchMapper } from './giss-issue-batch.mapper';
 
 function makeDefaultService(overrides: Record<string, unknown> = {}) {
@@ -393,8 +395,20 @@ describe('GissIssueBatchMapper.parseRecepcionarLoteRpsResponse - Unit tests', ()
       </soap:Body>
     </soap:Envelope>`;
 
-    // Act & Assert
-    expect(() => GissIssueBatchMapper.parseRecepcionarLoteRpsResponse(xml)).toThrow('E01: Estrutura do lote inválida');
+    // Act
+    let thrown: NfsBatchRejectedError | undefined;
+    try {
+      GissIssueBatchMapper.parseRecepcionarLoteRpsResponse(xml);
+    }
+    catch (error) {
+      thrown = error as NfsBatchRejectedError;
+    }
+
+    // Assert
+    expect(thrown).toBeInstanceOf(NfsBatchRejectedError);
+    expect(thrown!.message).toBe('E01: Estrutura do lote inválida');
+    expect(thrown!.errors[0].kind).toBe(NfsBatchErrorKind.BusinessRejection);
+    expect(thrown!.alreadySubmitted).toBe(false);
   });
 
   it('should throw when the expected response element is missing', () => {
@@ -422,5 +436,77 @@ describe('GissIssueBatchMapper.parseRecepcionarLoteRpsResponse - Unit tests', ()
 
     // Act & Assert
     expect(() => GissIssueBatchMapper.parseRecepcionarLoteRpsResponse(xml)).toThrow('sem detalhes na resposta');
+  });
+
+  it('should keep every rejection message and classify already-submitted codes via kind', () => {
+    // Arrange
+    const xml = `<EnviarLoteRpsResposta xmlns="http://www.abrasf.org.br/nfse.xsd">
+      <ListaMensagemRetorno>
+        <MensagemRetorno>
+          <Codigo>A9</Codigo>
+          <Mensagem>Inscrição municipal incorreta.</Mensagem>
+        </MensagemRetorno>
+        <MensagemRetorno>
+          <Codigo>E10</Codigo>
+          <Mensagem>RPS já informado.</Mensagem>
+          <IdentificacaoRps><Numero>77</Numero><Serie>A1</Serie></IdentificacaoRps>
+        </MensagemRetorno>
+      </ListaMensagemRetorno>
+    </EnviarLoteRpsResposta>`;
+
+    // Act
+    let thrown: NfsBatchRejectedError | undefined;
+    try {
+      GissIssueBatchMapper.parseRecepcionarLoteRpsResponse(xml);
+    }
+    catch (error) {
+      thrown = error as NfsBatchRejectedError;
+    }
+
+    // Assert
+    expect(thrown).toBeInstanceOf(NfsBatchRejectedError);
+    expect(thrown!.errors).toEqual([
+      {
+        code: 'A9',
+        message: 'Inscrição municipal incorreta.',
+        kind: NfsBatchErrorKind.BusinessRejection,
+        rpsNumber: undefined,
+        rpsSeries: undefined,
+      },
+      {
+        code: 'E10',
+        message: 'RPS já informado.',
+        kind: NfsBatchErrorKind.AlreadySubmitted,
+        rpsNumber: 77,
+        rpsSeries: 'A1',
+      },
+    ]);
+    expect(thrown!.alreadySubmitted).toBe(true);
+    expect(thrown!.message).toBe('A9: Inscrição municipal incorreta.; E10: RPS já informado.');
+  });
+
+  it.each(['E10', 'E71', 'A12'])('should classify GISS code %s as AlreadySubmitted', (code) => {
+    // Arrange
+    const xml = `<EnviarLoteRpsResposta>
+      <ListaMensagemRetorno>
+        <MensagemRetorno>
+          <Codigo>${code}</Codigo>
+          <Mensagem>RPS duplicado</Mensagem>
+        </MensagemRetorno>
+      </ListaMensagemRetorno>
+    </EnviarLoteRpsResposta>`;
+
+    // Act
+    let thrown: NfsBatchRejectedError | undefined;
+    try {
+      GissIssueBatchMapper.parseRecepcionarLoteRpsResponse(xml);
+    }
+    catch (error) {
+      thrown = error as NfsBatchRejectedError;
+    }
+
+    // Assert
+    expect(thrown!.errors[0].kind).toBe(NfsBatchErrorKind.AlreadySubmitted);
+    expect(thrown!.alreadySubmitted).toBe(true);
   });
 });

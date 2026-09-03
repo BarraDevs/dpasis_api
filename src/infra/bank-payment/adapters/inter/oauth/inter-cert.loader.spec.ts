@@ -1,6 +1,7 @@
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
+import { ONE_YEAR_MS, buildTestCertificatePem } from 'src/test/fixtures/test-certificate';
 import { InterOauthConfigError } from './errors/inter-oauth-config.error';
 import { InterCertLoader } from './inter-cert.loader';
 
@@ -14,7 +15,7 @@ describe('InterCertLoader - Unit tests', () => {
     mkdirSync(sutDir, { recursive: true });
     certPath = join(sutDir, 'inter.crt');
     keyPath = join(sutDir, 'inter.key');
-    writeFileSync(certPath, '-----BEGIN CERTIFICATE-----\nfake\n-----END CERTIFICATE-----\n');
+    writeFileSync(certPath, buildTestCertificatePem(new Date(Date.now() + ONE_YEAR_MS)));
     writeFileSync(keyPath, '-----BEGIN PRIVATE KEY-----\nfake\n-----END PRIVATE KEY-----\n');
   });
 
@@ -81,5 +82,22 @@ describe('InterCertLoader - Unit tests', () => {
     expect(() => InterCertLoader.load(certPath, missing)).toThrow(
       `Chave privada Inter não encontrada em "${missing}"`,
     );
+  });
+
+  it('should throw InterOauthConfigError when the certificate has expired', () => {
+    // Arrange
+    writeFileSync(certPath, buildTestCertificatePem(new Date(Date.now() - ONE_YEAR_MS)));
+
+    // Act & Assert
+    expect(() => InterCertLoader.load(certPath, keyPath)).toThrow(InterOauthConfigError);
+    expect(() => InterCertLoader.load(certPath, keyPath)).toThrow(/venceu em/);
+  });
+
+  it('should throw InterOauthConfigError when the certificate is not a valid PEM', () => {
+    // Arrange
+    writeFileSync(certPath, '-----BEGIN CERTIFICATE-----\nfake\n-----END CERTIFICATE-----\n');
+
+    // Act & Assert
+    expect(() => InterCertLoader.load(certPath, keyPath)).toThrow('não é um PEM válido');
   });
 });

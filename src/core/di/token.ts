@@ -1,4 +1,5 @@
 const TOKENS = {
+  AlertGateway: Symbol.for('AlertGateway'),
   AuditLogDao: Symbol.for('AuditLogDao'),
 
   CacheGateway: Symbol.for('CacheGateway'),

@@ -13,10 +13,16 @@ const COMPANY_ID = 516;
 const CLIENT_ID = 9999999;
 const PROVIDER_CNPJ = '02099923000178';
 
-const certFilePath = join(
+const LEGACY_CERT_PATH = join(
   __dirname,
   '../../resources/files/nfs-generation/giss/DPA_TEC_EQUIPAMENTOS_DE_PONTO_LTDA_02099923000178.pfx',
 );
+
+/**
+ * O certificado não é mais versionado (P0-07). `GISS_CERT_PATH` é a fonte da verdade; o caminho
+ * legado em `resources/` fica como fallback para quem ainda tem o arquivo lá.
+ */
+const certFilePath = process.env.GISS_CERT_PATH ?? LEGACY_CERT_PATH;
 
 const prisma = new PrismaClient();
 
