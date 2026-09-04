@@ -6,12 +6,16 @@ import { CompanyNfsConfigModule } from 'src/app/company/company-nfs-config/compa
 import { ClientModule } from 'src/app/client/client/client.module';
 import { ClientInvoiceConfigModule } from 'src/app/client/client-invoice-config/client-invoice-config.module';
 import { ClientItemModule } from 'src/app/client/client-item/client-item.module';
+import { NfsGenerationModule } from 'src/infra/nfs-generation/nfs-generation.module';
 import { NfseModule } from 'src/app/tax-invoice/nfse/nfse.module';
 import { NfmPersistenceModule } from './application/persistence/nfm-persistence.module';
 import { CancelNfm } from './application/usecases/cancel-nfm/cancel-nfm.service';
 import { FindElegibleClients } from './application/usecases/find-elegible-clients/find-elegible-clients.service';
 import { FindGeneratedNfms } from './application/usecases/find-generated-nfms/find-generated-nfms.service';
 import { FindNfmById } from './application/usecases/find-nfm-by-id/find-nfm-by-id.service';
+import { FindNfmProviderStatus } from './application/usecases/find-nfm-provider-status/find-nfm-provider-status.service';
+import { ReconcileNfm } from './application/usecases/reconcile-nfm/reconcile-nfm.service';
+import { ReissueNfm } from './application/usecases/reissue-nfm/reissue-nfm.service';
 import { SaveElegibleNfms } from './application/usecases/save-elegible-nfms/save-elegible-nfms.service';
 import { NfmAdminController } from './infra/drivers/http/admin/nfm-admin.controller';
 
@@ -24,6 +28,7 @@ import { NfmAdminController } from './infra/drivers/http/admin/nfm-admin.control
     CompanyModule,
     CompanyNfsConfigModule,
     NfseModule,
+    NfsGenerationModule.register(),
     NfmPersistenceModule,
     AuthenticationGuardsModule,
   ],
@@ -36,6 +41,9 @@ import { NfmAdminController } from './infra/drivers/http/admin/nfm-admin.control
     FindNfmById,
     SaveElegibleNfms,
     CancelNfm,
+    FindNfmProviderStatus,
+    ReconcileNfm,
+    ReissueNfm,
   ],
   exports: [
     FindElegibleClients,
@@ -43,6 +51,9 @@ import { NfmAdminController } from './infra/drivers/http/admin/nfm-admin.control
     FindNfmById,
     SaveElegibleNfms,
     CancelNfm,
+    FindNfmProviderStatus,
+    ReconcileNfm,
+    ReissueNfm,
   ],
 })
 export class NfmModule {}

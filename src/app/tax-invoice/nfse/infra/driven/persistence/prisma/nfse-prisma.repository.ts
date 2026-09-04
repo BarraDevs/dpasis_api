@@ -19,6 +19,14 @@ import { PrismaService } from 'src/infra/database/prisma/prisma.service';
  */
 const ONE_ACTIVE_NFSE_PER_NFM_MARKERS = ['nfses_one_active_per_nfm', 'nfmId'];
 
+/**
+ * Toda NFS-e nasce com uma consulta ao provedor agendada. Se o caminho normal (fila → lote →
+ * consulta do lote) funcionar, a nota chega a `ISSUED` muito antes disso e o agendamento morre
+ * junto. Se não funcionar — job perdido, Redis reiniciado, worker morto —, é este relógio que
+ * garante que alguém pergunte ao Giss em vez de a nota ficar parada esperando um job que não existe.
+ */
+const FIRST_RECONCILE_DELAY_MS = 15 * 60_000;
+
 const NfseSelect = {
   id: true,
   companyId: true,
@@ -39,8 +47,13 @@ const NfseSelect = {
   bankPaymentRequestedAt: true,
   bankPaymentErrorMessage: true,
   bankPaymentFailedAt: true,
+  bankPaymentStatus: true,
+  bankPaymentConfirmedAt: true,
+  reconcileAttemptCount: true,
+  nextReconcileAt: true,
   nfmId: true,
   data: true,
+  createdAt: true,
 } satisfies Prisma.NfseSelect;
 
 @Injectable()
@@ -80,6 +93,7 @@ export class NfseRepositoryAdapterPrisma implements INfseRepository {
             rpsNumber,
             rpsSeries: input.rpsSeries,
             status: NfseStatus.PENDING,
+            nextReconcileAt: new Date(Date.now() + FIRST_RECONCILE_DELAY_MS),
             data: input.data as unknown as Prisma.InputJsonValue,
           },
           select: { id: true },
@@ -168,6 +182,10 @@ export class NfseRepositoryAdapterPrisma implements INfseRepository {
         bankPaymentRequestedAt: props.bankPaymentRequestedAt,
         bankPaymentErrorMessage: props.bankPaymentErrorMessage,
         bankPaymentFailedAt: props.bankPaymentFailedAt,
+        bankPaymentStatus: props.bankPaymentStatus,
+        bankPaymentConfirmedAt: props.bankPaymentConfirmedAt,
+        reconcileAttemptCount: props.reconcileAttemptCount,
+        nextReconcileAt: props.nextReconcileAt,
         data: props.data as unknown as Prisma.InputJsonValue,
       },
     });
@@ -203,7 +221,12 @@ export class NfseRepositoryAdapterPrisma implements INfseRepository {
       bankPaymentRequestedAt: row.bankPaymentRequestedAt,
       bankPaymentErrorMessage: row.bankPaymentErrorMessage,
       bankPaymentFailedAt: row.bankPaymentFailedAt,
+      bankPaymentStatus: row.bankPaymentStatus,
+      bankPaymentConfirmedAt: row.bankPaymentConfirmedAt,
+      reconcileAttemptCount: row.reconcileAttemptCount,
+      nextReconcileAt: row.nextReconcileAt,
       nfmId: row.nfmId,
+      createdAt: row.createdAt,
       data: row.data as Record<string, unknown>,
     });
   }

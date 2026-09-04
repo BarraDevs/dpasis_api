@@ -130,4 +130,29 @@ describe('NfseQueueBullmqAdapterProducer', () => {
       await expect(sut.addIssueBankPaymentJob(data)).rejects.toBe(err);
     });
   });
+  describe('addReconcileNfseJob', () => {
+    it('should enqueue reconcile-nfse with a short, spaced retry', async() => {
+      // Act — a consulta é idempotente; quem insiste de verdade é a varredura.
+      await sut.addReconcileNfseJob({ nfseId: 7 });
+
+      // Assert
+      expect(queueAdd).toHaveBeenCalledWith(JobName.ReconcileNfse, { nfseId: 7 }, {
+        attempts: 3,
+        backoff: { type: 'exponential', delay: 60_000 },
+      });
+    });
+  });
+
+  describe('addConfirmBankPaymentJob', () => {
+    it('should enqueue confirm-nfse-bank-payment with the same policy', async() => {
+      // Act
+      await sut.addConfirmBankPaymentJob({ nfseId: 9 });
+
+      // Assert
+      expect(queueAdd).toHaveBeenCalledWith(JobName.ConfirmNfseBankPayment, { nfseId: 9 }, {
+        attempts: 3,
+        backoff: { type: 'exponential', delay: 60_000 },
+      });
+    });
+  });
 });

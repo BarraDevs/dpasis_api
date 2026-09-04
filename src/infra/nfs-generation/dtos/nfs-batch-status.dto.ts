@@ -26,6 +26,8 @@ export class NfsIssuedNoteDto {
 export enum NfsBatchErrorKind {
   AlreadySubmitted = 'ALREADY_SUBMITTED',
   BusinessRejection = 'BUSINESS_REJECTION',
+  /** O provedor afirma que a nota não existe. Numa consulta é resposta, não falha. */
+  NotFound = 'NOT_FOUND',
 }
 
 export class NfsBatchErrorDto {

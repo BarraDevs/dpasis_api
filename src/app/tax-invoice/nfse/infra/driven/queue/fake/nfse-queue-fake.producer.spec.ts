@@ -100,4 +100,21 @@ describe('NfseQueueFakeAdapterProducer - Unit tests', () => {
       ]);
     });
   });
+  it('should record reconcile jobs', async() => {
+    // Act
+    await sut.addReconcileNfseJob({ nfseId: 7 });
+
+    // Assert
+    expect(sut.addedReconcileNfseJobs).toEqual([{ name: JobName.ReconcileNfse, data: { nfseId: 7 } }]);
+  });
+
+  it('should record bank payment confirmation jobs', async() => {
+    // Act
+    await sut.addConfirmBankPaymentJob({ nfseId: 9 });
+
+    // Assert
+    expect(sut.addedConfirmBankPaymentJobs).toEqual([
+      { name: JobName.ConfirmNfseBankPayment, data: { nfseId: 9 } },
+    ]);
+  });
 });

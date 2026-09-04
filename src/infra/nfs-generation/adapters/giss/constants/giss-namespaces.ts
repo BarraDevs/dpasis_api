@@ -11,3 +11,6 @@ export const GISS_ENVIAR_LOTE_RPS_ENVIO_NAMESPACE = 'http://www.giss.com.br/envi
 export const GISS_CONSULTAR_LOTE_RPS_ENVIO_NAMESPACE = 'http://www.giss.com.br/consultar-lote-rps-envio-v2_04.xsd';
 export const GISS_CABECALHO_NAMESPACE = 'http://www.giss.com.br/cabecalho-v2_04.xsd';
 export const GISS_CANCELAR_NFSE_ENVIO_NAMESPACE = 'http://www.giss.com.br/cancelar-nfse-envio-v2_04.xsd';
+export const GISS_CONSULTAR_NFSE_RPS_ENVIO_NAMESPACE = 'http://www.giss.com.br/consultar-nfse-rps-envio-v2_04.xsd';
+export const GISS_CONSULTAR_NFSE_SERVICO_PRESTADO_ENVIO_NAMESPACE =
+  'http://www.giss.com.br/consultar-nfse-servico-prestado-envio-v2_04.xsd';

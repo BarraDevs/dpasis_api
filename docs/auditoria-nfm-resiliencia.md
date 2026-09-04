@@ -23,6 +23,21 @@
 > `ListaMensagemAlertaRetorno` que o parser nunca lê. A recusa por duplicidade do Inter é HTTP 400.
 > Ver §9, RRR1–RRR4. A rejeição de RPS repetido pelo GISS foi confirmada na prática.
 >
+> **Rodada 5 (2026-09-04):** verificação ao vivo das duas consultas novas contra produção. RPS
+> conhecido devolve `CompNfse` normalmente (RPS 80550/NFSE → NFS-e 56037). **RPS desconhecido devolve
+> `E89`, não `E212`** — "Não existe na base de dados uma NFS-e emitida para o número de RPS
+> informado", conforme `Erros_e_Alertas.xlsx`. `E212` continua valendo para a consulta por
+> período/número. A `<Mensagem>` do `E89` vem sem texto descritivo (repete o próprio código), então o
+> `errorMessage` desse caminho não serve para o operador — mais um motivo para ele não virar estado
+> terminal. Julho/2026 página 1 devolveu 50 `CompNfse` com `endOfPages=false`, coerente com as 14
+> páginas medidas na rodada 4.
+>
+> **Onda 3 entregue em 2026-09-04:** `ConsultarNfsePorRps` e `ConsultarNfseServicoPrestado` no
+> gateway do GISS, estado `REJECTED`, job e varredura de reconciliação, conciliação diária D+1,
+> sweeper de outbox, quatro rotas administrativas, falha de boleto deixando de ser engolida,
+> confirmação ativa da cobrança no Inter e o fecho do P2-12. Fora do escopo, por decisão da operação:
+> `RecepcionarLoteRpsSincrono`. Ver §8.
+>
 > **Rodada 4 (mesma data):** o último item aberto foi fechado com teste ao vivo contra produção —
 > não existe limite de período em `ConsultarNfseServicoPrestado` (testado até 6.087 dias), o gargalo
 > é a página de 50, a consulta devolve **todas** as notas do prestador (a conciliação tem de casar
@@ -498,6 +513,10 @@ sequenceDiagram
      Essa chave é a idempotência real com a prefeitura: reenviar o **mesmo** RPS é seguro (o GISS
      rejeita duplicidade); criar um RPS **novo** é que duplica a nota.
 - **Esforço:** G
+- **Status:** ✅ resolvido na Onda 3 (2026-09-04). `ConsultarNfsePorRps` implementada no gateway
+  (`nfs-generation-giss.gateway.ts`, `giss-consultar-nfse-rps.mapper.ts`), com a classificação de
+  erro separando `AWAITING_PROVIDER` (ambíguo), `REJECTED` (rejeição de negócio) e `FAILED`
+  (configuração). O job `reconcile-nfse` e a varredura horária resolvem o estado ambíguo sozinhos.
 
 ### [P0-04] Janela de consulta do lote é de 5 minutos: prefeitura lenta produz nota FAILED que existe no GISS
 
@@ -669,6 +688,9 @@ sequenceDiagram
   reenfileira o job correspondente. Requer índice `(status, updatedAt)` em `nfses` — hoje
   inexistente (`prisma/schema/nfse.prisma` só tem `@@unique([companyId, rpsSeries, rpsNumber])`).
 - **Esforço:** M
+- **Status:** ✅ resolvido na Onda 3 (2026-09-04). `SweepNfseRecovery` varre as três janelas a cada 5
+  minutos: outbox pendente, reconciliação vencida e `ISSUED` sem job de boleto. Toda NFS-e nasce com
+  `nextReconcileAt` preenchido, então mesmo a nota criada e nunca enfileirada tem dono.
 
 ### [P1-03] Falha na emissão do boleto é engolida: o job termina com sucesso e a NFS-e fica sem cobrança
 
@@ -698,6 +720,10 @@ sequenceDiagram
   `bankPaymentFailedAt` em `nfses` (alteração de schema) para que o operador consiga listar. Alerta
   "NFS-e `ISSUED` há mais de 1h sem `bankPaymentRequestCode`".
 - **Esforço:** M
+- **Status:** ✅ resolvido na Onda 3 (2026-09-04). Os três caminhos que devolviam `null` passam a
+  lançar `PermanentProviderError` depois de gravar o motivo; o consumer converte em
+  `UnrecoverableError`, e o job fica retido 30 dias e visível no Bull Board. As duas guardas de
+  no-op (`!isIssued()`, `hasBankPayment()`) continuam devolvendo `null` — não são falha.
 
 ### [P1-04] Não existe rota para reemitir o RPS de uma NFM
 
@@ -713,6 +739,9 @@ sequenceDiagram
   feita sob pressão de prazo fiscal.
 - **Correção proposta:** `POST /admin/nfm/:id/reissue`, com as proteções descritas em §6.
 - **Esforço:** M
+- **Status:** ✅ resolvido na Onda 3 (2026-09-04). `POST /admin/nfm/:id/reissue` (a própria rota
+  consulta o Giss antes de decidir e reaproveita o RPS), `POST /admin/nfm/:id/reconcile`,
+  `GET /admin/nfm/:id/provider-status` e `POST /admin/nfm/reconcile-period`.
 
 ### [P1-05] Duas requisições concorrentes para a mesma NFM emitem duas NFS-e
 
@@ -799,6 +828,10 @@ sequenceDiagram
   `GET /cobrancas/{codigoSolicitacao}` (`inter-cobranca.client.ts:65`, já implementado) e persistir
   a situação. `FALHA_EMISSAO` vira alerta e reemissão, não silêncio.
 - **Esforço:** M
+- **Status:** ✅ resolvido por varredura ativa na Onda 3 (2026-09-04): `ConfirmNfseBankPayment` +
+  colunas `bankPaymentStatus`/`bankPaymentConfirmedAt` + alerta `NfseBankPaymentFailed`. O webhook
+  (`PUT /cobrancas/webhook`) segue na Onda 4. O vínculo **não** é apagado numa falha: reemitir é
+  decisão humana, e limpar `bankPaymentRequestCode` reabriria a duplicidade fechada na Onda 2.
 
 ---
 
@@ -1075,6 +1108,10 @@ sequenceDiagram
   - Alertar sobre o próprio canal: se o envio falhar N janelas seguidas, é um incidente por si só.
     Depende de métricas (Onda 4); as duas correções acima não dependem de nada.
 - **Esforço:** P
+- **Status:** ✅ resolvido na Onda 3 (2026-09-04). `setIfAbsent` relança em vez de devolver `false`
+  quando não consegue verificar, e `SweepNfseAlerts` envia assim mesmo nesse caso; `IAlertGateway.send`
+  devolve `boolean` e a janela é **liberada** quando a entrega falha, em vez de queimar 15 min — ou
+  12h no alerta de `AWAITING_PROVIDER`.
 
 ---
 
@@ -1270,13 +1307,13 @@ com claim própria, registro em auditoria com `accountId` e `reason` obrigatóri
 
 | Ferramenta | Contrato | Proteções necessárias |
 |---|---|---|
-| **Reenviar RPS de uma NFM** | `POST /admin/nfm/:id/reissue` → `202 { nfseId, rpsNumber, status }` | Só quando a NFS-e estiver `REJECTED` ou `SUBMIT_UNKNOWN` **e** a consulta ao GISS pela chave natural, feita pela própria rota no momento da chamada, afirmar que a nota não existe (R2 — não basta o operador dizer que consultou; a rota consulta). Reaproveita o RPS já reservado (nunca reserva um novo). Bloqueia se o status for `ISSUED`/`CANCELED`. Exige `reason` e confirmação explícita (`confirm: true`). |
-| **Consultar status no GISS** | `GET /admin/nfm/:id/provider-status` → `200 { situation, protocol, issuedNotes, errors, consultedAt }` | Somente leitura, sem efeito colateral no banco. Rate limit próprio (o GISS pune consulta em excesso). Resposta bruta gravada em `NfseAttempt`. |
-| **Reconciliar uma NFS-e** | `POST /admin/nfm/:id/reconcile` → `200 { previousStatus, newStatus, source }` | Consulta o GISS pela chave natural e **corrige o estado local**, inclusive tirando de `FAILED` para `ISSUED`. Nunca inventa dados: só grava o que o provedor devolveu. Exige `reason`. |
+| ✅ **Reenviar RPS de uma NFM** | `POST /admin/nfm/:id/reissue` → `202 { nfseId, rpsNumber, status }` | Só quando a NFS-e estiver `REJECTED` ou `SUBMIT_UNKNOWN` **e** a consulta ao GISS pela chave natural, feita pela própria rota no momento da chamada, afirmar que a nota não existe (R2 — não basta o operador dizer que consultou; a rota consulta). Reaproveita o RPS já reservado (nunca reserva um novo). Bloqueia se o status for `ISSUED`/`CANCELED`. Exige `reason` e confirmação explícita (`confirm: true`). |
+| ✅ **Consultar status no GISS** | `GET /admin/nfm/:id/provider-status` → `200 { situation, protocol, issuedNotes, errors, consultedAt }` | Somente leitura, sem efeito colateral no banco. Rate limit próprio (o GISS pune consulta em excesso). Resposta bruta gravada em `NfseAttempt`. |
+| ✅ **Reconciliar uma NFS-e** | `POST /admin/nfm/:id/reconcile` → `200 { previousStatus, newStatus, source }` | Consulta o GISS pela chave natural e **corrige o estado local**, inclusive tirando de `FAILED` para `ISSUED`. Nunca inventa dados: só grava o que o provedor devolveu. Exige `reason`. |
 | **Gerar boleto faltante** | já existe: `POST /admin/bank-payment/nfm/:id` (`bank-payment-admin.controller.ts:65`) | Adicionar lock por `nfseId` e a consulta prévia ao Inter por `seuNumero` (P0-02/P1-07) — que exige acrescentar o filtro `seuNumero` a `ListBankPaymentInputDto` e a `toListQueryParams` (`inter-cobranca.mapper.ts:73-99`), hoje inexistente. Este é o caminho que **sempre** cai fora da janela de 30 min do Inter (R4): sem a consulta, duplica. Transformar em `202` enfileirado para herdar o retry. |
 | **Cancelar em cascata** | `POST /admin/nfm/:id/cancel` (existente, `nfm-admin.controller.ts:76`) | Passar a cancelar o boleto **antes** da NFS-e e abortar se o boleto não cancelar (P0-06). Devolver no corpo o que foi cancelado em cada sistema. |
 | **Forçar transição de estado** | `POST /admin/nfse/:id/force-status` `{ status, reason, evidence }` → `200` | Última instância. Só um conjunto pequeno de transições permitidas (nunca `→ ISSUED` sem `nfseNumber` e `verificationCode` informados). `reason` e `evidence` (protocolo, print, número do chamado) obrigatórios, gravados em auditoria. Claim exclusiva, separada de `NFM_WRITE`. |
-| **Reconciliar o dia inteiro** | `POST /admin/nfse/reconcile-period` `{ dataInicial, dataFinal, dryRun }` → `200 { conferidas, divergentes[] }` | Usa `ConsultarNfseServicoPrestado` (§9, RR2): uma varredura por período em vez de N consultas por nota, até 50 `CompNfse` por página. É a implementação da conciliação diária D+1 de R1. Janela de 1 dia no uso diário (RRR2: não há limite de período em Mauá, mas cada página traz 50 notas e ~209 KB). Tratar `E212` como fim da paginação, não como erro. Casar por `IdentificacaoRps`, nunca por contagem. `dryRun` como padrão; a correção de estado reusa a mesma regra da reconciliação individual. |
+| ✅ **Reconciliar o dia inteiro** (entregue como `POST /admin/nfm/reconcile-period` `{ startDate, endDate, dryRun }` → `200 { checked, corrected, pagesRead, divergences[] }`; sem controller novo em `/admin/nfse`, que não existe) | Usa `ConsultarNfseServicoPrestado` (§9, RR2): uma varredura por período em vez de N consultas por nota, até 50 `CompNfse` por página. É a implementação da conciliação diária D+1 de R1. Janela de 1 dia no uso diário (RRR2: não há limite de período em Mauá, mas cada página traz 50 notas e ~209 KB). Tratar `E212` como fim da paginação, não como erro. Casar por `IdentificacaoRps`, nunca por contagem. `dryRun` como padrão; a correção de estado reusa a mesma regra da reconciliação individual. |
 | **Listar presas** | `GET /admin/nfm?status=&stuckForHours=&missingBankPayment=` | Extensão de `FindGeneratedNfmsQueryDto`; leitura pura. É a consulta que hoje só existe como SQL manual. |
 | **Reprocessar DLQ** | `POST /admin/queues/nfse/dlq/:jobId/retry` | Reenfileira um job da DLQ; bloqueia se a NFS-e já estiver terminal. |
 
@@ -1337,8 +1374,9 @@ Comando de CLI equivalente para os dois primeiros (`npm run nfse:status -- --nfm
    |---|---|---|
    | `PENDING`, sem job na fila | o job foi apagado (P1-01) ou o Redis caiu | reenfileirar `issue-nfse-batch` para o `nfseId` |
    | `SUBMITTED`/`PROCESSING`, com protocolo | poll perdido ou esgotado | consultar o GISS pelo protocolo e corrigir o estado |
-   | `FAILED` com `error_message` de rede/timeout | **provavelmente a nota existe no GISS** | consultar por RPS **antes** de qualquer coisa; nunca reemitir às cegas |
-   | `FAILED` com mensagem de negócio (situação 3) | rejeição legítima | corrigir o cadastro, **consultar o GISS pelo RPS** e só então reemitir com o mesmo RPS (R2) |
+   | `AWAITING_PROVIDER` | **provavelmente a nota existe no GISS** | a reconciliação já persegue sozinha; para forçar, `POST /admin/nfm/:id/reconcile`. Nunca reemitir às cegas |
+   | `FAILED` com `error_message` de rede/timeout | não deveria mais ocorrer (vira `AWAITING_PROVIDER`); se ocorrer, é configuração | `GET /admin/nfm/:id/provider-status` **antes** de qualquer coisa |
+   | `REJECTED` (rejeição de negócio do fisco) | rejeição legítima | corrigir o cadastro e `POST /admin/nfm/:id/reissue` — a rota consulta o GISS pelo RPS antes de reenviar (R2) |
    | `ISSUED` sem `bank_payment_request_code` | boleto não gerado **ou** emitido e não vinculado (P0-02, cenário A) | conferir no Inter por `seuNumero` — hoje só fora da API do projeto, ver §7.2 passo 5; se não existir, `POST /admin/bank-payment/nfm/:id` |
    | `ISSUED` com `bank_payment_request_code`, cliente sem boleto | produção da cobrança pode ter falhado (P1-08) | `GET /admin/bank-payment/{codigo}` e conferir a situação; `FALHA_EMISSAO` exige reemissão |
    | `CANCELED` com boleto ativo | cascata incompleta (P0-06) | cancelar o boleto manualmente |
@@ -1386,16 +1424,15 @@ Comando de CLI equivalente para os dois primeiros (`npm run nfse:status -- --nfm
 > existe" significa vincular em vez de falhar (P0-02); e a mensagem de esgotamento do poll passou a
 > contar as 8 consultas que realmente acontecem, não os 7 degraus do ladder.
 >
-> **Pendente da onda (revisão de 2026-09-03).** A varredura de alertas perde o e-mail em silêncio
-> quando o Redis ou o SMTP falham: a janela de digest é reivindicada **antes** do envio, e uma falha
-> de trava é indistinguível de "outra réplica já avisou". Ver P2-12. É P de esforço e não depende de
-> nada — mas enquanto não entrar, o R7 continua aberto no cenário que importa.
+> **Pendente da onda (revisão de 2026-09-03), fechado na Onda 3.** A varredura de alertas perdia o
+> e-mail em silêncio quando o Redis ou o SMTP falhavam: a janela de digest era reivindicada **antes**
+> do envio, e uma falha de trava era indistinguível de "outra réplica já avisou". Ver P2-12.
 >
-> **O que a Onda 3 herda:** notas paradas em `AWAITING_PROVIDER` são o primeiro insumo do job de
-> reconciliação. Nesta onda nada as varre — a varredura depende de `ConsultarNfsePorRps` e o alerta
-> depende do `AlertGateway`, ambos fora do escopo —, então até lá elas só aparecem por SQL. É troca
-> deliberada: um estado parado e honesto vale mais que um `FAILED` mentiroso, porque `FAILED` faz a
-> operação parar de procurar.
+> **O que a Onda 3 herdou:** notas paradas em `AWAITING_PROVIDER` viraram o primeiro insumo do job
+> de reconciliação. Nesta onda nada as varria — a varredura dependia de `ConsultarNfsePorRps` e o
+> alerta do `AlertGateway`, ambos fora do escopo —, então até a Onda 3 elas só apareciam por SQL. Foi
+> troca deliberada: um estado parado e honesto vale mais que um `FAILED` mentiroso, porque `FAILED`
+> faz a operação parar de procurar.
 
 | Item | Achado | Esforço | Por quê primeiro |
 |---|---|---|---|
@@ -1410,7 +1447,7 @@ Comando de CLI equivalente para os dois primeiros (`npm run nfse:status -- --nfm
 | ✅ Congelar `dataVencimento`/`valorNominal` entre tentativas do job de boleto | P0-02 | P | Sem schema: basta reusar o valor da primeira tentativa. Transforma a idempotência de 30 min do Inter de acaso em garantia. |
 | ✅ Vincular a cobrança pelo `codigoSolicitacao` que vem na recusa por duplicidade + corrigir a precedência de `extractInterErrorMessage` | P0-02 | P | O identificador da cobrança órfã já chega na resposta e é descartado (RR3). Fecha o cenário A sem migration e sem consulta nova. |
 | ✅ Tratar `E10` como sinal de "a nota existe", não como `FAILED`, **nos dois caminhos** — recepção (`giss-issue-batch.mapper.ts:248-254`) e situação 3 do poll (`process-poll-nfse-batch.service.ts:80-84`) | P0-03, R2, RRR3 | P | Hoje ambos fazem o oposto do que o `E10` significa. Preservar todas as mensagens, não só a primeira, e o código como campo. |
-| ⬜ **Pendente:** o alerta não pode sumir em silêncio quando o Redis ou o SMTP falham | P2-12 | P | Achado da revisão pós-entrega. O canal de alerta é a entrega que faz o resto da onda valer; do jeito que está, ele se cala justamente no incidente. |
+| ✅ O alerta não some mais em silêncio quando o Redis ou o SMTP falham (entregue na Onda 3) | P2-12 | P | Achado da revisão pós-entrega. O canal de alerta é a entrega que faz o resto da onda valer; do jeito que estava, ele se calava justamente no incidente. |
 
 ### Onda 2 — impedir a duplicidade (depende da Onda 1)
 
@@ -1469,16 +1506,66 @@ Comando de CLI equivalente para os dois primeiros (`npm run nfse:status -- --nfm
 
 ### Onda 3 — recuperação automática (depende da Onda 2)
 
+> **Entregue em 2026-09-04.** Decisões tomadas na execução:
+>
+> - **Não existe `SUBMIT_UNKNOWN`.** A §2.4 previa esse nome, mas a Onda 1 já entregou
+>   `AWAITING_PROVIDER` com exatamente a mesma semântica, documentado ao frontend e persistido em
+>   produção. Um segundo estado para a mesma coisa seria dívida nova. O que faltava não era o estado:
+>   era quem o resolvesse.
+> - **`REJECTED` entrou sem migration**, como o `AWAITING_PROVIDER` da Onda 1 — `status` é `String` no
+>   Prisma. O índice parcial `nfses_one_active_per_nfm` já listava `'REJECTED'` desde a Onda 2, então
+>   uma nota rejeitada libera a NFM para uma nova NFS-e sem recriar índice. `REJECTED` é terminal para
+>   os jobs automáticos e **continua mutável**: a reemissão autorizada precisa reescrever a nota.
+> - **A escada de reconciliação vive na nota, não na fila.** `nextReconcileAt`/`reconcileAttemptCount`
+>   em `nfses` — 5min, 15min, 1h, 6h, 24h, depois diário. O cron de 5 min só enfileira; nenhuma
+>   chamada externa acontece dentro dele, então uma prefeitura fora do ar não segura o agendador.
+>   Aos **25 dias** desde a criação a nota para de ser reagendada e o alerta assume: o prazo de
+>   cancelamento corre desde a emissão (RR4), e insistir depois disso não ajuda.
+> - **Toda NFS-e nasce com uma consulta agendada** (`reserve()` grava `nextReconcileAt = now + 15min`).
+>   É o que cobre a nota criada e nunca enfileirada mesmo quando o outbox falha junto.
+> - **A varredura de recuperação tem quatro braços**, não um: outbox pendente, reconciliação vencida,
+>   `ISSUED` sem job de boleto e cobrança não confirmada. O terceiro fecha a janela entre `markIssued`
+>   e `addIssueBankPaymentJob`, que o outbox não cobre — a linha de outbox só é gravada na criação.
+> - **A conciliação por período descobre as empresas pelo lado local**, a partir das notas não
+>   terminais da janela, em vez de varrer todas as configurações de provedor. O casamento é nota a
+>   nota pela chave natural do RPS: a consulta devolve **todas** as notas do prestador, inclusive as
+>   emitidas pelo portal e pela contabilidade (RRR2).
+> - **A correção em lote reusa a reconciliação individual.** A varredura por período só diz quem
+>   olhar; quem decide o estado é uma regra só, que reconsulta pela chave natural antes de gravar.
+> - **A rota de reemissão consulta o Giss ela mesma** (R2). Se a nota existir lá, responde `409` e
+>   reconcilia; se o lote ainda estiver em processamento, responde `409` também. Só reenvia quando o
+>   provedor afirma que não conhece o RPS — e sempre com o **mesmo** número.
+> - **Sem controller novo em `/admin/nfse` e sem rota de DLQ.** A conciliação por período entrou em
+>   `POST /admin/nfm/reconcile-period`; reprocessar job já é possível pelo Bull Board em
+>   `/admin/queues`. Auditoria em tabela e claim exclusiva seguem na Onda 4 (P2-05).
+> - **`E89` e `E212` viraram um `kind` próprio (`NotFound`)**, e a leitura do código passou a olhar
+>   `Mensagem` quando `Codigo` traz o `V999` genérico (RRR2). Sem isso, "não encontrada" passaria por
+>   erro desconhecido e o fim da paginação quebraria toda consulta por período.
+> - **Uma consulta nunca prova rejeição do fisco.** Correção feita depois do teste ao vivo: a regra
+>   original ("qualquer `BusinessRejection` na resposta de `ConsultarNfsePorRps` → `REJECTED`")
+>   marcaria terminal uma nota que o provedor apenas não conhece — o `FAILED` mentiroso outra vez.
+>   As mensagens desse ramo falam da **consulta** (inscrição municipal, prestador, indisponibilidade),
+>   não do conteúdo do RPS. Hoje só `found` e o par `E89`/`E212` movem a nota; qualquer outra
+>   mensagem devolve `PROVIDER_QUERY_FAILED`, mantém a nota não terminal e reagenda. Quem prova
+>   rejeição de negócio continua sendo a emissão: a recepção do lote e a situação 3 do
+>   `ConsultarLoteRps`.
+>
+> **Fora do escopo, por decisão da operação:** `RecepcionarLoteRpsSincrono`. Ele troca o caminho feliz
+> da emissão fiscal e só se valida emitindo nota real em produção — e a ordem que esta auditoria
+> exige (timeouts e `ConsultarNfsePorRps` primeiro) só agora ficou satisfeita. Fica para uma Onda 3b.
+> O lote de 50 RPS segue adiado desde a Onda 2.
+
 | Item | Achado | Esforço | Depende de |
 |---|---|---|---|
-| `ConsultarNfsePorRps` no gateway do GISS — **com `signWholeDocument`** | P0-03, RRRR1 | **M** (era G — a operação existe no WSDL e o `GissSoapClient` é genérico, RR2) | — |
-| Estado `SUBMIT_UNKNOWN` + job de reconciliação | P0-03 | M | `ConsultarNfsePorRps`, migration |
-| `ConsultarNfseServicoPrestado` + reconciliação diária por período (D+1), com janela adaptativa | R1, RR2, RRR2, P2-09 | M | migration |
-| `RecepcionarLoteRpsSincrono`: emissão síncrona como caminho principal | RRR1, P0-04, P1-02 | M | timeouts (Onda 1) e `ConsultarNfsePorRps` — **nunca antes dos dois** |
-| Varredura de estados não terminais (outbox sweeper) | P1-02 | M | outbox, índices |
-| Rota de reemissão + rota de reconciliação | P1-04 | M | reconciliação |
-| Falha do boleto deixa de ser engolida (DLQ + motivo persistido) | P1-03 | M | migration |
-| Confirmação de emissão da cobrança (webhook do Inter ou varredura por `GET /cobrancas/{codigoSolicitacao}`) | P1-08 | M | — |
+| ✅ `ConsultarNfsePorRps` no gateway do GISS — **com `signWholeDocument`** | P0-03, RRRR1 | **M** (era G — a operação existe no WSDL e o `GissSoapClient` é genérico, RR2) | — |
+| ✅ Estado `REJECTED` + job de reconciliação por RPS (o estado ambíguo continua sendo `AWAITING_PROVIDER`) | P0-03 | M | `ConsultarNfsePorRps`, migration |
+| ✅ `ConsultarNfseServicoPrestado` + reconciliação diária por período (D+1) | R1, RR2, RRR2, P2-09 | M | migration |
+| ⬜ **Adiado:** `RecepcionarLoteRpsSincrono` como caminho principal de emissão | RRR1, P0-04, P1-02 | M | timeouts (Onda 1) e `ConsultarNfsePorRps` — **ambos agora entregues** |
+| ✅ Varredura de estados não terminais (outbox sweeper + três braços de recuperação) | P1-02 | M | outbox, índices |
+| ✅ Rota de reemissão + rota de reconciliação + consulta ao provedor + conciliação por período | P1-04 | M | reconciliação |
+| ✅ Falha do boleto deixa de ser engolida (job falha com motivo persistido) | P1-03 | M | migration |
+| ✅ Confirmação de emissão da cobrança por varredura (`GET /cobrancas/{codigoSolicitacao}`) | P1-08 | M | migration |
+| ✅ O alerta não some em silêncio quando o Redis ou o SMTP falham (pendência da Onda 1) | P2-12 | P | — |
 
 ### Onda 4 — operação sustentável
 

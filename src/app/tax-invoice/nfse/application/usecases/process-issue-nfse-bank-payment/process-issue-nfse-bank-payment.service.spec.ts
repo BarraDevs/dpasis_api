@@ -103,6 +103,11 @@ function makeNfseProps(overrides: Partial<NfseProps> = {}): NfseProps {
     bankPaymentRequestedAt: null,
     bankPaymentErrorMessage: null,
     bankPaymentFailedAt: null,
+    bankPaymentStatus: null,
+    bankPaymentConfirmedAt: null,
+    reconcileAttemptCount: 0,
+    nextReconcileAt: null,
+    createdAt: new Date('2026-07-20T12:00:00Z'),
     nfmId: null,
     data: makeSnapshot() as unknown as Record<string, unknown>,
     ...overrides,
@@ -285,7 +290,7 @@ describe('ProcessIssueNfseBankPayment - Unit tests', () => {
     expect(nfse.props.bankPaymentRequestCode).toBeNull();
   });
 
-  it('should log and return when snapshot bankPayment is missing and fallback fails', async() => {
+  it('should log and throw PermanentProviderError when snapshot bankPayment is missing and fallback fails', async() => {
     // Arrange
     const nfse = NfseFactory.load(makeNfseProps({
       data: makeSnapshot({ bankPayment: undefined }) as unknown as Record<string, unknown>,
@@ -295,11 +300,8 @@ describe('ProcessIssueNfseBankPayment - Unit tests', () => {
     jest.spyOn(findClientInvoiceConfigByClientId, 'execute').mockRejectedValue(err);
     const loggerSpy = jest.spyOn(logger, 'error');
 
-    // Act
-    const result = await sut.execute({ nfseId: 1 });
-
-    // Assert
-    expect(result).toBeNull();
+    // Act & Assert — o job precisa falhar: devolver `null` completava com sucesso e o rastro sumia.
+    await expect(sut.execute({ nfseId: 1 })).rejects.toThrow(PermanentProviderError);
     expect(loggerSpy).toHaveBeenCalledWith(LogContext.BANK_PAYMENT, expect.objectContaining({
       adapter: 'nfse',
       action: 'processIssueNfseBankPayment',
@@ -308,7 +310,7 @@ describe('ProcessIssueNfseBankPayment - Unit tests', () => {
     expect(issueBankPayment.execute).not.toHaveBeenCalled();
   });
 
-  it('should log AppException and return when ClientInvoiceConfigNotFoundError on fallback', async() => {
+  it('should log AppException and throw when ClientInvoiceConfigNotFoundError on fallback', async() => {
     // Arrange
     const nfse = NfseFactory.load(makeNfseProps({
       data: makeSnapshot({ bankPayment: undefined }) as unknown as Record<string, unknown>,
@@ -317,11 +319,8 @@ describe('ProcessIssueNfseBankPayment - Unit tests', () => {
     jest.spyOn(findClientInvoiceConfigByClientId, 'execute').mockRejectedValue(new ClientInvoiceConfigNotFoundError());
     const loggerSpy = jest.spyOn(logger, 'error');
 
-    // Act
-    const result = await sut.execute({ nfseId: 1 });
-
-    // Assert
-    expect(result).toBeNull();
+    // Act & Assert
+    await expect(sut.execute({ nfseId: 1 })).rejects.toThrow(PermanentProviderError);
     expect(loggerSpy).toHaveBeenCalledWith(LogContext.BANK_PAYMENT, expect.objectContaining({
       adapter: 'nfse',
       action: 'processIssueNfseBankPayment',
@@ -337,7 +336,7 @@ describe('ProcessIssueNfseBankPayment - Unit tests', () => {
     expect(nfse.props.bankPaymentFailedAt).toBeInstanceOf(Date);
   });
 
-  it('should log and return when mapper fails without calling Inter', async() => {
+  it('should log and throw when mapper fails, without calling Inter', async() => {
     // Arrange
     const nfse = NfseFactory.load(makeNfseProps({
       data: makeSnapshot({
@@ -362,11 +361,8 @@ describe('ProcessIssueNfseBankPayment - Unit tests', () => {
     jest.spyOn(nfseRepository, 'findById').mockResolvedValue(nfse);
     const loggerSpy = jest.spyOn(logger, 'error');
 
-    // Act
-    const result = await sut.execute({ nfseId: 1 });
-
-    // Assert
-    expect(result).toBeNull();
+    // Act & Assert
+    await expect(sut.execute({ nfseId: 1 })).rejects.toThrow(PermanentProviderError);
     expect(loggerSpy).toHaveBeenCalledWith(LogContext.BANK_PAYMENT, expect.objectContaining({
       adapter: 'nfse',
       action: 'processIssueNfseBankPayment',
@@ -428,17 +424,14 @@ describe('ProcessIssueNfseBankPayment - Unit tests', () => {
       expect(second).toEqual(first);
     });
 
-    it('should log and return when the nfse has no issuedAt', async() => {
+    it('should log and throw when the nfse has no issuedAt', async() => {
       // Arrange
       const nfse = NfseFactory.load(makeNfseProps({ issuedAt: null }));
       jest.spyOn(nfseRepository, 'findById').mockResolvedValue(nfse);
       const loggerSpy = jest.spyOn(logger, 'error');
 
-      // Act
-      const result = await sut.execute({ nfseId: 1 });
-
-      // Assert
-      expect(result).toBeNull();
+      // Act & Assert
+      await expect(sut.execute({ nfseId: 1 })).rejects.toThrow(PermanentProviderError);
       expect(loggerSpy).toHaveBeenCalled();
       expect(issueBankPayment.execute).not.toHaveBeenCalled();
     });

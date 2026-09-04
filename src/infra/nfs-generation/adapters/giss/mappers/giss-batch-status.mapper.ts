@@ -2,6 +2,7 @@ import { XMLParser } from 'fast-xml-parser';
 import { GetNfsBatchStatusInputDto, NfsBatchErrorDto, NfsBatchSituation, NfsBatchStatusDto, NfsIssuedNoteDto } from '../../../dtos/nfs-batch-status.dto';
 import { GISS_CONSULTAR_LOTE_RPS_ENVIO_NAMESPACE, GISS_TIPOS_NAMESPACE } from '../constants/giss-namespaces';
 import { toNfsBatchErrorDto } from './giss-batch-error';
+import { toNfsIssuedNoteDto } from './giss-comp-nfse.reader';
 
 export class GissBatchStatusMapper {
   private static readonly PARSER = new XMLParser({
@@ -65,18 +66,7 @@ export class GissBatchStatusMapper {
         ),
       );
 
-    const issuedNotes: NfsIssuedNoteDto[] = this.toArray(resposta.ListaNfse?.CompNfse).map((comp: any) => {
-      const infNfse = comp.Nfse?.InfNfse;
-      const identificacaoRps = infNfse?.DeclaracaoPrestacaoServico?.InfDeclaracaoPrestacaoServico?.Rps?.IdentificacaoRps;
-
-      return {
-        rpsNumber: Number(identificacaoRps?.Numero ?? 0),
-        rpsSeries: String(identificacaoRps?.Serie ?? ''),
-        nfseNumber: String(infNfse?.Numero ?? ''),
-        verificationCode: String(infNfse?.CodigoVerificacao ?? ''),
-        issueDate: String(infNfse?.DataEmissao ?? ''),
-      };
-    });
+    const issuedNotes: NfsIssuedNoteDto[] = this.toArray(resposta.ListaNfse?.CompNfse).map(toNfsIssuedNoteDto);
 
     return {
       situation,

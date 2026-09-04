@@ -6,12 +6,12 @@ import {
   NfsBatchErrorKind,
   NfsBatchSituation,
   NfsBatchStatusDto,
-  NfsIssuedNoteDto,
 } from 'src/infra/nfs-generation/dtos/nfs-batch-status.dto';
 import { NfsProviderCredentialsDto, NfsProviderEnvironment } from 'src/infra/nfs-generation/dtos/nfs-provider-credentials.dto';
 import { NfsProviderConfigError } from 'src/infra/nfs-generation/errors/nfs-provider-config.error';
 import type { INfsGenerationGateway } from 'src/infra/nfs-generation/nfs-generation.gateway';
 import { Nfse } from '../../../domain/entities/nfse.entity';
+import { matchIssuedNote } from '../../helpers/match-issued-note';
 import { NfseNotFoundError } from '../../../domain/errors/nfse-not-found.error';
 import type { INfseRepository } from '../../persistence/repository/nfse-repository.interface';
 import type { INfseQueueProducer } from '../../queue/nfse-queue-producer.interface';
@@ -110,7 +110,7 @@ export class ProcessPollNfseBatch {
         return;
       }
 
-      const issuedNote = ProcessPollNfseBatch.matchIssuedNote(issuedNotes, nfse);
+      const issuedNote = matchIssuedNote(issuedNotes, nfse.props);
       if (!issuedNote) {
         // Gravar o número de outra nota é irreversível e silencioso: a NFS-e passaria a apontar
         // para um documento que não é dela. Melhor parar num estado não terminal e escalar.
@@ -136,7 +136,10 @@ export class ProcessPollNfseBatch {
         nfse.markAwaitingProvider(message);
       }
       else {
-        nfse.markFailed(message);
+        // Rejeição de negócio, não falha de infraestrutura: o fisco recusou o conteúdo do RPS. A
+        // saída é corrigir o cadastro e reemitir o mesmo RPS pela rota autorizada, e `REJECTED` é o
+        // estado que a rota exige — `FAILED` misturaria isto com erro de certificado ou de rede.
+        nfse.markRejected(message);
       }
 
       await this.nfseRepository.edit(nfse);
@@ -149,32 +152,6 @@ export class ProcessPollNfseBatch {
       input.attempt,
       `Excedeu ${ProcessPollNfseBatch.MAX_POLL_ATTEMPTS} tentativas de consulta de status sem retorno definitivo do Giss`,
     );
-  }
-
-  /**
-   * Casa a nota devolvida pela prefeitura com a NFS-e local pela chave natural do RPS. Pegar
-   * `issuedNotes[0]` só funcionava porque o lote sempre teve um RPS — com mais de um, grava o
-   * número errado, em silêncio e sem volta.
-   *
-   * A tolerância do fallback existe porque a identificação do RPS é opcional no XSD e o parser
-   * devolve `0`/`''` quando ela não vem: num lote de uma nota só, a correspondência é inequívoca
-   * mesmo sem o identificador. Com mais de uma, não é, e aí ninguém é escolhido.
-   */
-  private static matchIssuedNote(issuedNotes: NfsIssuedNoteDto[], nfse: Nfse): NfsIssuedNoteDto | null {
-    const normalizeSeries = (series: string) => series.trim().toUpperCase();
-    const expectedSeries = normalizeSeries(nfse.props.rpsSeries);
-
-    const matched = issuedNotes.find((note) => (
-      Number(note.rpsNumber) === nfse.props.rpsNumber
-      && normalizeSeries(note.rpsSeries) === expectedSeries
-    ));
-    if (matched) {
-      return matched;
-    }
-
-    const [onlyNote] = issuedNotes;
-    const hasNoRpsIdentification = issuedNotes.length === 1 && !onlyNote.rpsNumber && !onlyNote.rpsSeries.trim();
-    return hasNoRpsIdentification ? onlyNote : null;
   }
 
   /**

@@ -8,12 +8,16 @@ import { TOKENS } from 'src/core/di/token';
 import { ProviderAttemptOperation } from 'src/infra/provider-attempt/enums/provider-attempt-operation.enum';
 import type { IProviderAttemptRecorder } from 'src/infra/provider-attempt/provider-attempt.gateway';
 import { CancelNfsInputDto, CancelNfsOutputDto } from '../../dtos/cancel-nfs.dto';
+import { FindNfsByRpsInputDto, FindNfsByRpsOutputDto } from '../../dtos/find-nfs-by-rps.dto';
+import { ListIssuedNfsInputDto, ListIssuedNfsOutputDto } from '../../dtos/list-issued-nfs.dto';
 import { GetNfsBatchStatusInputDto, NfsBatchStatusDto } from '../../dtos/nfs-batch-status.dto';
 import { IssueNfsBatchInputDto, IssueNfsBatchOutputDto } from '../../dtos/issue-nfs-batch.dto';
 import { NfsProviderCredentialsDto } from '../../dtos/nfs-provider-credentials.dto';
 import { INfsGenerationGateway } from '../../nfs-generation.gateway';
 import { GissBatchStatusMapper } from './mappers/giss-batch-status.mapper';
 import { GissCancelNfseMapper } from './mappers/giss-cancel-nfse.mapper';
+import { GissConsultarNfseRpsMapper } from './mappers/giss-consultar-nfse-rps.mapper';
+import { GissConsultarServicoPrestadoMapper } from './mappers/giss-consultar-servico-prestado.mapper';
 import { GissIssueBatchMapper } from './mappers/giss-issue-batch.mapper';
 import { GissPfxLoader } from './signing/giss-pfx-loader';
 import { GissXmlSigner } from './signing/giss-xml-signer';
@@ -100,6 +104,90 @@ export class NfsGenerationGissAdapterGateway implements INfsGenerationGateway {
         errorMessage: error?.message,
       });
       throw new ExternalApiError(error?.message ?? 'Erro ao consultar status do lote no Giss');
+    }
+  }
+
+  /**
+   * Consulta pela chave natural do RPS. É a única operação capaz de afirmar que a nota **não**
+   * existe, e por isso o único caminho de saída de `AWAITING_PROVIDER`.
+   *
+   * Assinatura obrigatória apesar de o XSD declarar `dsig:Signature` como `minOccurs="0"`: sem ela
+   * o Giss responde `V999`/`E174` ("RPS não assinado"). `ConsultarNfseRpsEnvio` não tem atributo
+   * `Id`, então só pode ser assinado como documento inteiro — mesma armadilha do `ConsultarLoteRps`.
+   */
+  public async findNfseByRps(input: FindNfsByRpsInputDto): Promise<FindNfsByRpsOutputDto> {
+    const municipioSlug = this.getMunicipioSlug(input.provider);
+    const certMaterial = GissPfxLoader.load(input.provider.certFilePath, input.provider.certPasswordEnvVar);
+
+    try {
+      const xml = GissConsultarNfseRpsMapper.buildConsultarNfsePorRpsXml(input);
+      const signedXml = GissXmlSigner.signWholeDocument(xml, certMaterial);
+
+      const call = await GissSoapClient.postSoapRequest(
+        this.httpService,
+        municipioSlug,
+        GissOperation.ConsultarNfsePorRps,
+        signedXml,
+        certMaterial,
+      );
+      await this.recordAttempt(ProviderAttemptOperation.GissConsultarPorRps, input.nfseId, call);
+
+      return GissConsultarNfseRpsMapper.parseConsultarNfsePorRpsResponse(call.outputXml);
+    }
+    catch (error: any) {
+      await this.recordFailedAttempt(ProviderAttemptOperation.GissConsultarPorRps, input.nfseId, error);
+      error = GissSoapCallError.unwrap(error);
+      if (error instanceof NfsProviderConfigError) {
+        throw error;
+      }
+      this.logger.error(LogContext.NFS_GENERATION, {
+        adapter: 'giss',
+        action: 'findNfseByRps',
+        rpsNumber: input.rpsNumber,
+        error,
+        errorMessage: error?.message,
+      });
+      throw new ExternalApiError(error?.message ?? 'Erro ao consultar NFS-e por RPS no Giss');
+    }
+  }
+
+  /**
+   * Varredura por período: uma chamada por página de 50 notas, em vez de uma consulta por nota. A
+   * resposta traz **todas** as notas do prestador no período, inclusive as emitidas fora deste
+   * sistema — quem chama tem de casar pela chave natural do RPS, nunca por contagem.
+   */
+  public async listIssuedNfseByPeriod(input: ListIssuedNfsInputDto): Promise<ListIssuedNfsOutputDto> {
+    const municipioSlug = this.getMunicipioSlug(input.provider);
+    const certMaterial = GissPfxLoader.load(input.provider.certFilePath, input.provider.certPasswordEnvVar);
+
+    try {
+      const xml = GissConsultarServicoPrestadoMapper.buildConsultarNfseServicoPrestadoXml(input);
+      const signedXml = GissXmlSigner.signWholeDocument(xml, certMaterial);
+
+      const call = await GissSoapClient.postSoapRequest(
+        this.httpService,
+        municipioSlug,
+        GissOperation.ConsultarNfseServicoPrestado,
+        signedXml,
+        certMaterial,
+      );
+      await this.recordAttempt(ProviderAttemptOperation.GissConsultarServicoPrestado, undefined, call);
+
+      return GissConsultarServicoPrestadoMapper.parseConsultarNfseServicoPrestadoResponse(call.outputXml);
+    }
+    catch (error: any) {
+      await this.recordFailedAttempt(ProviderAttemptOperation.GissConsultarServicoPrestado, undefined, error);
+      error = GissSoapCallError.unwrap(error);
+      if (error instanceof NfsProviderConfigError) {
+        throw error;
+      }
+      this.logger.error(LogContext.NFS_GENERATION, {
+        adapter: 'giss',
+        action: 'listIssuedNfseByPeriod',
+        error,
+        errorMessage: error?.message,
+      });
+      throw new ExternalApiError(error?.message ?? 'Erro ao consultar NFS-e por período no Giss');
     }
   }
 

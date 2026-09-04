@@ -82,4 +82,61 @@ describe('toNfsBatchErrorDto - Unit tests', () => {
     expect(result.rpsNumber).toBe(42);
     expect(result.rpsSeries).toBe('1');
   });
+  describe('resolução do código real (RRR2)', () => {
+    it('should classify E89 as NotFound', () => {
+      // Arrange — tabela oficial: "Não existe na base de dados uma NFS-e emitida para o número de
+      // RPS informado". É a resposta de `ConsultarNfsePorRps` para RPS desconhecido, medida em
+      // produção. Classificar como rejeição marcaria `REJECTED` uma nota que só ainda não existe.
+      // Act
+      const result = toNfsBatchErrorDto({ Codigo: 'E89', Mensagem: 'E89' });
+
+      // Assert
+      expect(result.kind).toBe(NfsBatchErrorKind.NotFound);
+    });
+
+    it('should classify E212 as NotFound', () => {
+      // Act
+      const result = toNfsBatchErrorDto({ Codigo: 'E212', Mensagem: 'NFS-e não encontrada' });
+
+      // Assert
+      expect(result.kind).toBe(NfsBatchErrorKind.NotFound);
+    });
+
+    it('should read the real code from Mensagem when Codigo is the generic V999', () => {
+      // Arrange — medido em produção: o Giss devolve V999 e põe o código real na mensagem.
+      // Act
+      const result = toNfsBatchErrorDto({ Codigo: 'V999', Mensagem: 'E212 - NFS-e não encontrada' });
+
+      // Assert
+      expect(result.code).toBe('E212');
+      expect(result.kind).toBe(NfsBatchErrorKind.NotFound);
+    });
+
+    it('should read the real code from Mensagem when Codigo is empty', () => {
+      // Act
+      const result = toNfsBatchErrorDto({ Codigo: '', Mensagem: 'E10 RPS já informado.' });
+
+      // Assert
+      expect(result.code).toBe('E10');
+      expect(result.kind).toBe(NfsBatchErrorKind.AlreadySubmitted);
+    });
+
+    it('should keep the generic code when the message carries no recognisable one', () => {
+      // Act
+      const result = toNfsBatchErrorDto({ Codigo: 'V999', Mensagem: 'Erro interno' });
+
+      // Assert
+      expect(result.code).toBe('V999');
+      expect(result.kind).toBe(NfsBatchErrorKind.BusinessRejection);
+    });
+
+    it('should not override a specific code with something found in the message', () => {
+      // Act
+      const result = toNfsBatchErrorDto({ Codigo: 'E163', Mensagem: 'ver também E212' });
+
+      // Assert
+      expect(result.code).toBe('E163');
+      expect(result.kind).toBe(NfsBatchErrorKind.BusinessRejection);
+    });
+  });
 });

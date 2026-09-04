@@ -93,9 +93,13 @@ type NfGenerationData = CommomData & {
 type NfsGenerationData = CommomData & {
   action: string;
   nfseId?: number;
+  nfmId?: number;
   batchProtocol?: string;
   batchNumber?: number;
   nfseNumber?: string;
+  rpsNumber?: number;
+  rpsSeries?: string;
+  reason?: string;
   errorMessage?: string;
 }
 

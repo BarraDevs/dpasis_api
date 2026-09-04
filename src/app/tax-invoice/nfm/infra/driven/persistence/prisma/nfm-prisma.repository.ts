@@ -27,8 +27,13 @@ const NfseSelect = {
   bankPaymentRequestedAt: true,
   bankPaymentErrorMessage: true,
   bankPaymentFailedAt: true,
+  bankPaymentStatus: true,
+  bankPaymentConfirmedAt: true,
+  reconcileAttemptCount: true,
+  nextReconcileAt: true,
   nfmId: true,
   data: true,
+  createdAt: true,
 } satisfies Prisma.NfseSelect;
 
 const NfmSelect = {
@@ -144,7 +149,12 @@ export class NfmRepositoryAdapterPrisma implements INfmRepository {
         bankPaymentRequestedAt: row.nfse.bankPaymentRequestedAt,
         bankPaymentErrorMessage: row.nfse.bankPaymentErrorMessage,
         bankPaymentFailedAt: row.nfse.bankPaymentFailedAt,
+        bankPaymentStatus: row.nfse.bankPaymentStatus,
+        bankPaymentConfirmedAt: row.nfse.bankPaymentConfirmedAt,
+        reconcileAttemptCount: row.nfse.reconcileAttemptCount,
+        nextReconcileAt: row.nfse.nextReconcileAt,
         nfmId: row.nfse.nfmId,
+        createdAt: row.nfse.createdAt,
         data: row.nfse.data as Record<string, unknown>,
       })
       : null;

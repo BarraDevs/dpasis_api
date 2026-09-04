@@ -70,9 +70,20 @@ export class CacheRedisAdapterGateway implements ICacheGateway {
     }
   }
 
+  /**
+   * `false` significa **uma** coisa só: outro processo já tem a chave. Redis fora do ar relança, em
+   * vez de devolver `false`, porque os dois casos exigem decisões opostas de quem chama — uma trava
+   * perdida é motivo para desistir, uma trava que não pôde ser verificada não é. Engolir a falha
+   * aqui fazia a varredura de alertas tratar "não consegui avisar" como "outra réplica avisou", e o
+   * alerta sumia em silêncio justamente durante o incidente.
+   */
   public async setIfAbsent<T>(key: string, value: T, ttlInSeconds: number): Promise<boolean> {
+    if (!this.client) {
+      throw new Error('Cache indisponível: cliente Redis não conectado');
+    }
+
     try {
-      const result = await this.client?.set(key, JSON.stringify(value), { NX: true, EX: ttlInSeconds });
+      const result = await this.client.set(key, JSON.stringify(value), { NX: true, EX: ttlInSeconds });
       return result === 'OK';
     }
     catch (error) {
@@ -84,9 +95,7 @@ export class CacheRedisAdapterGateway implements ICacheGateway {
         ttlInSeconds,
         error,
       });
-      // Redis fora do ar não pode virar permissão implícita: quem usa isso como trava precisa
-      // assumir que não conseguiu a trava, não que conseguiu.
-      return false;
+      throw error;
     }
   }
 

@@ -25,6 +25,11 @@ function makeNfseProps(overrides: Partial<NfseProps> = {}): NfseProps {
     bankPaymentRequestedAt: null,
     bankPaymentErrorMessage: null,
     bankPaymentFailedAt: null,
+    bankPaymentStatus: null,
+    bankPaymentConfirmedAt: null,
+    reconcileAttemptCount: 0,
+    nextReconcileAt: null,
+    createdAt: new Date('2026-07-20T12:00:00Z'),
     nfmId: null,
     data: {},
     ...overrides,
@@ -583,5 +588,141 @@ describe('Nfse - Unit tests', () => {
     expect(sut.props.bankPaymentRequestCode).toBe('request-after-fail');
     expect(sut.props.bankPaymentErrorMessage).toBeNull();
     expect(sut.props.bankPaymentFailedAt).toBeNull();
+  });
+  describe('markRejected', () => {
+    it('should set REJECTED and keep the provider message', () => {
+      // Arrange
+      const sut = Nfse._instantiate(makeNfseProps({ status: NfseStatus.SUBMITTED }));
+
+      // Act
+      sut.markRejected('E202: Código de tributação não informado');
+
+      // Assert
+      expect(sut.props.status).toBe(NfseStatus.REJECTED);
+      expect(sut.props.errorMessage).toBe('E202: Código de tributação não informado');
+    });
+
+    it('should refuse to reject an already issued nfse', () => {
+      // Arrange
+      const sut = Nfse._instantiate(makeNfseProps({ status: NfseStatus.ISSUED }));
+
+      // Act & Assert
+      expect(() => sut.markRejected('tarde demais')).toThrow(NfseAlreadyIssuedError);
+    });
+
+    it('should report REJECTED as terminal for the automatic jobs', () => {
+      // Arrange & Act
+      const sut = Nfse._instantiate(makeNfseProps({ status: NfseStatus.REJECTED }));
+
+      // Assert
+      expect(sut.isRejected()).toBe(true);
+      expect(sut.isTerminal()).toBe(true);
+      expect(sut.canPoll()).toBe(false);
+      expect(sut.canSubmitToProvider()).toBe(false);
+    });
+
+    it('should keep a REJECTED nfse mutable, so the authorised reissue can rewrite it', () => {
+      // Arrange
+      const sut = Nfse._instantiate(makeNfseProps({ status: NfseStatus.REJECTED, batchProtocol: 'PROTO-1' }));
+
+      // Act
+      sut.resetForReissue();
+
+      // Assert
+      expect(sut.props.status).toBe(NfseStatus.PENDING);
+    });
+  });
+
+  describe('resetForReissue', () => {
+    it('should clear the stale batch protocol and error, keeping the same RPS', () => {
+      // Arrange
+      const sut = Nfse._instantiate(makeNfseProps({
+        status: NfseStatus.FAILED,
+        batchProtocol: 'PROTO-VELHO',
+        errorMessage: 'timeout',
+        rpsNumber: 41,
+      }));
+
+      // Act
+      sut.resetForReissue();
+
+      // Assert — o RPS é a chave de idempotência com a prefeitura; um número novo duplicaria a nota.
+      expect(sut.props).toMatchObject({
+        status: NfseStatus.PENDING,
+        batchProtocol: null,
+        errorMessage: null,
+        rpsNumber: 41,
+      });
+      expect(sut.canSubmitToProvider()).toBe(true);
+    });
+
+    it('should refuse to reset an issued nfse', () => {
+      // Arrange
+      const sut = Nfse._instantiate(makeNfseProps({ status: NfseStatus.ISSUED }));
+
+      // Act & Assert
+      expect(() => sut.resetForReissue()).toThrow(NfseAlreadyIssuedError);
+    });
+
+    it('should refuse to reset a canceled nfse', () => {
+      // Arrange
+      const sut = Nfse._instantiate(makeNfseProps({ status: NfseStatus.CANCELED }));
+
+      // Act & Assert
+      expect(() => sut.resetForReissue()).toThrow(NfseAlreadyCanceledError);
+    });
+  });
+
+  describe('scheduleNextReconcile', () => {
+    it('should count the attempt and store the next date', () => {
+      // Arrange
+      const sut = Nfse._instantiate(makeNfseProps({ reconcileAttemptCount: 2 }));
+      const next = new Date('2026-09-05T10:00:00Z');
+
+      // Act
+      sut.scheduleNextReconcile(next);
+
+      // Assert
+      expect(sut.props.reconcileAttemptCount).toBe(3);
+      expect(sut.props.nextReconcileAt).toBe(next);
+    });
+
+    it('should stop the schedule with null', () => {
+      // Arrange
+      const sut = Nfse._instantiate(makeNfseProps({ nextReconcileAt: new Date() }));
+
+      // Act
+      sut.scheduleNextReconcile(null);
+
+      // Assert
+      expect(sut.props.nextReconcileAt).toBeNull();
+    });
+  });
+
+  describe('markBankPaymentStatus', () => {
+    it('should record the provider situation and confirm when it is settled', () => {
+      // Arrange
+      const sut = Nfse._instantiate(makeNfseProps({ status: NfseStatus.ISSUED }));
+      const confirmedAt = new Date('2026-09-04T12:00:00Z');
+
+      // Act
+      sut.markBankPaymentStatus('EMITTED', confirmedAt);
+
+      // Assert
+      expect(sut.props.bankPaymentStatus).toBe('EMITTED');
+      expect(sut.props.bankPaymentConfirmedAt).toBe(confirmedAt);
+      expect(sut.hasConfirmedBankPayment()).toBe(true);
+    });
+
+    it('should keep the charge unconfirmed while the provider has not settled it', () => {
+      // Arrange
+      const sut = Nfse._instantiate(makeNfseProps({ status: NfseStatus.ISSUED }));
+
+      // Act
+      sut.markBankPaymentStatus('AWAITING_APPROVAL', null);
+
+      // Assert
+      expect(sut.hasConfirmedBankPayment()).toBe(false);
+    });
   });
 });

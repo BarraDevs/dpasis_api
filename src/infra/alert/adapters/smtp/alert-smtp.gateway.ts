@@ -15,7 +15,7 @@ export class AlertSmtpAdapterGateway implements IAlertGateway {
     @Inject(TOKENS.LoggerGateway) private readonly logger: ILoggerGateway,
   ) {}
 
-  public async send(alert: AlertDto): Promise<void> {
+  public async send(alert: AlertDto): Promise<boolean> {
     const body = alert.lines.join('\n');
 
     try {
@@ -31,16 +31,22 @@ export class AlertSmtpAdapterGateway implements IAlertGateway {
         action: 'sendAlert',
         body: { type: alert.type, subject: alert.subject, lineCount: alert.lines.length },
       });
+
+      return true;
     }
     catch (error) {
       // Deliberadamente sem rethrow: quem chama é uma varredura periódica, e um SMTP fora do ar não
-      // pode transformar um alerta perdido numa exceção que derruba a varredura inteira.
+      // pode transformar um alerta perdido numa exceção que derruba a varredura inteira. Mas o
+      // chamador precisa saber que não saiu — senão a janela de digest é queimada por um envio que
+      // nunca aconteceu, e o silêncio dura a janela inteira.
       this.logger.error(LogContext.SMTP, {
         adapter: 'smtp',
         action: 'sendAlert',
         body: { type: alert.type, subject: alert.subject },
         error,
       });
+
+      return false;
     }
   }
 

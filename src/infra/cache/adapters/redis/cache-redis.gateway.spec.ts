@@ -215,16 +215,14 @@ describe('CacheRedisAdapterGateway - Unit tests', () => {
       expect(result).toBe(false);
     });
 
-    it('should return false and log error when set throws', async() => {
+    it('should rethrow and log error when set throws', async() => {
       // Arrange
       const error = new Error('NX failed');
       await makeSut({ set: jest.fn().mockRejectedValue(error) });
 
-      // Act
-      const result = await sut.setIfAbsent('lock:a', 'v', 60);
-
-      // Assert
-      expect(result).toBe(false);
+      // Act & Assert — falha de trava não pode virar `false`: quem chama precisa distinguir
+      // "outro processo já reivindicou" de "não consegui verificar".
+      await expect(sut.setIfAbsent('lock:a', 'v', 60)).rejects.toThrow(error);
       expect(logger.error).toHaveBeenCalledWith(LogContext.CACHE, {
         adapter: 'redis',
         action: 'setIfAbsent',
@@ -235,16 +233,13 @@ describe('CacheRedisAdapterGateway - Unit tests', () => {
       });
     });
 
-    it('should return false without calling set when client is null after failed connect', async() => {
+    it('should throw without calling set when client is null after failed connect', async() => {
       // Arrange
       await makeSut({ connect: jest.fn().mockRejectedValue(new Error('down')) });
       jest.clearAllMocks();
 
-      // Act
-      const result = await sut.setIfAbsent('lock:a', 'v', 60);
-
-      // Assert
-      expect(result).toBe(false);
+      // Act & Assert
+      await expect(sut.setIfAbsent('lock:a', 'v', 60)).rejects.toThrow('Cache indisponível');
       expect(client.set).not.toHaveBeenCalled();
     });
   });

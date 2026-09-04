@@ -11,6 +11,8 @@ import type { PollNfseBatchJobDto } from '../../../../application/queue/jobs/pol
 import { ProcessIssueNfseBankPayment } from '../../../../application/usecases/process-issue-nfse-bank-payment/process-issue-nfse-bank-payment.service';
 import { ProcessIssueNfseBatch } from '../../../../application/usecases/process-issue-nfse-batch/process-issue-nfse-batch.service';
 import { ProcessPollNfseBatch } from '../../../../application/usecases/process-poll-nfse-batch/process-poll-nfse-batch.service';
+import { ConfirmNfseBankPayment } from '../../../../application/usecases/confirm-nfse-bank-payment/confirm-nfse-bank-payment.service';
+import { ReconcileNfse } from '../../../../application/usecases/reconcile-nfse/reconcile-nfse.service';
 import { NfseBullmqConsumer } from './nfse-bullmq.consumer';
 
 function makeJob<T>(name: string, data: T): Job<T> {
@@ -34,6 +36,8 @@ describe('NfseBullmqConsumer', () => {
   let processIssueNfseBatch: ProcessIssueNfseBatch;
   let processPollNfseBatch: ProcessPollNfseBatch;
   let processIssueNfseBankPayment: ProcessIssueNfseBankPayment;
+  let reconcileNfse: ReconcileNfse;
+  let confirmNfseBankPayment: ConfirmNfseBankPayment;
 
   beforeEach(async() => {
     const module = await Test.createTestingModule({
@@ -42,12 +46,16 @@ describe('NfseBullmqConsumer', () => {
         { provide: ProcessIssueNfseBatch, useValue: createMock<ProcessIssueNfseBatch>() },
         { provide: ProcessPollNfseBatch, useValue: createMock<ProcessPollNfseBatch>() },
         { provide: ProcessIssueNfseBankPayment, useValue: createMock<ProcessIssueNfseBankPayment>() },
+        { provide: ReconcileNfse, useValue: createMock<ReconcileNfse>() },
+        { provide: ConfirmNfseBankPayment, useValue: createMock<ConfirmNfseBankPayment>() },
       ],
     }).compile();
 
     sut = module.get(NfseBullmqConsumer);
     processIssueNfseBatch = module.get(ProcessIssueNfseBatch);
     processPollNfseBatch = module.get(ProcessPollNfseBatch);
+    reconcileNfse = module.get(ReconcileNfse);
+    confirmNfseBankPayment = module.get(ConfirmNfseBankPayment);
     processIssueNfseBankPayment = module.get(ProcessIssueNfseBankPayment);
   });
 
@@ -196,6 +204,37 @@ describe('NfseBullmqConsumer', () => {
       // Assert
       expect(error).toBeInstanceOf(UnrecoverableError);
       expect((error as Error).message).toBe('certificado recusado');
+    });
+  });
+  describe('process (jobs da Onda 3)', () => {
+    it('should delegate reconcile-nfse jobs to ReconcileNfse', async() => {
+      // Arrange
+      const job = makeJob(JobName.ReconcileNfse, { nfseId: 7 });
+
+      // Act
+      await sut.process(job);
+
+      // Assert
+      expect(reconcileNfse.execute).toHaveBeenCalledWith({ nfseId: 7 });
+    });
+
+    it('should delegate confirm-nfse-bank-payment jobs to ConfirmNfseBankPayment', async() => {
+      // Arrange
+      const job = makeJob(JobName.ConfirmNfseBankPayment, { nfseId: 9 });
+
+      // Act
+      await sut.process(job);
+
+      // Assert
+      expect(confirmNfseBankPayment.execute).toHaveBeenCalledWith({ nfseId: 9 });
+    });
+
+    it('should convert PermanentProviderError from the reconcile job into UnrecoverableError', async() => {
+      // Arrange
+      jest.spyOn(reconcileNfse, 'execute').mockRejectedValue(new PermanentProviderError('config inválida'));
+
+      // Act & Assert
+      await expect(sut.process(makeJob(JobName.ReconcileNfse, { nfseId: 7 }))).rejects.toThrow(UnrecoverableError);
     });
   });
 });

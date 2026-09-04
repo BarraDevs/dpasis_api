@@ -34,7 +34,12 @@ export class NfseFactory {
       bankPaymentRequestedAt: null,
       bankPaymentErrorMessage: null,
       bankPaymentFailedAt: null,
+      bankPaymentStatus: null,
+      bankPaymentConfirmedAt: null,
+      reconcileAttemptCount: 0,
+      nextReconcileAt: null,
       nfmId: null,
+      createdAt: new Date(),
     });
   }
 
@@ -70,7 +75,12 @@ export class NfseFactory {
       bankPaymentRequestedAt: props.bankPaymentRequestedAt,
       bankPaymentErrorMessage: props.bankPaymentErrorMessage,
       bankPaymentFailedAt: props.bankPaymentFailedAt,
+      bankPaymentStatus: props.bankPaymentStatus,
+      bankPaymentConfirmedAt: props.bankPaymentConfirmedAt,
+      reconcileAttemptCount: props.reconcileAttemptCount,
+      nextReconcileAt: props.nextReconcileAt,
       nfmId: props.nfmId,
+      createdAt: props.createdAt,
       data: props.data,
     });
   }

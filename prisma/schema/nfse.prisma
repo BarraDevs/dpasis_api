@@ -29,6 +29,14 @@ model Nfse {
   bankPaymentRequestedAt    DateTime?
   bankPaymentErrorMessage   String?
   bankPaymentFailedAt       DateTime?
+  // Situação da cobrança confirmada junto ao Inter. `POST /cobrancas` é assíncrono: receber
+  // `bankPaymentRequestCode` só diz que a solicitação foi aceita, não que o boleto foi produzido.
+  bankPaymentStatus         String?
+  bankPaymentConfirmedAt    DateTime?
+  // Agendamento da reconciliação com o provedor de NFS-e. `nextReconcileAt` nulo numa nota não
+  // terminal significa "consultar na próxima varredura"; numa nota terminal, "não consultar mais".
+  reconcileAttemptCount     Int       @default(0)
+  nextReconcileAt           DateTime?
   data                      Json
   createdAt                 DateTime  @default(now())
   updatedAt                 DateTime  @updatedAt
@@ -37,7 +45,9 @@ model Nfse {
 
   @@unique([companyId, rpsSeries, rpsNumber])
   @@index([status, updatedAt])
+  @@index([status, nextReconcileAt])
   @@index([nfmId])
+  @@index([bankPaymentRequestCode])
   @@map("nfses")
 }
 

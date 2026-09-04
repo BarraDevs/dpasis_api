@@ -14,6 +14,8 @@ import {
 export enum GissOperation {
   RecepcionarLoteRps = 'RecepcionarLoteRps',
   ConsultarLoteRps = 'ConsultarLoteRps',
+  ConsultarNfsePorRps = 'ConsultarNfsePorRps',
+  ConsultarNfseServicoPrestado = 'ConsultarNfseServicoPrestado',
   CancelarNfse = 'CancelarNfse',
 }
 

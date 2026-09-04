@@ -38,6 +38,11 @@ function makeNfseProps(overrides: Partial<NfseProps> = {}): NfseProps {
     bankPaymentRequestedAt: null,
     bankPaymentErrorMessage: null,
     bankPaymentFailedAt: null,
+    bankPaymentStatus: null,
+    bankPaymentConfirmedAt: null,
+    reconcileAttemptCount: 0,
+    nextReconcileAt: null,
+    createdAt: new Date('2026-07-20T12:00:00Z'),
     nfmId: null,
     data: { providerDocument: '12345678000199' },
     ...overrides,
@@ -252,7 +257,7 @@ describe('ProcessPollNfseBatch - Unit tests', () => {
     expect(queueProducer.addPollBatchJob).not.toHaveBeenCalled();
   });
 
-  it('should mark the nfse FAILED when the provider reports an error', async() => {
+  it('should mark the nfse REJECTED when the provider reports a business error', async() => {
     // Arrange
     const nfse = NfseFactory.load(makeNfseProps());
     jest.spyOn(nfseRepository, 'findById').mockResolvedValue(nfse);
@@ -266,7 +271,7 @@ describe('ProcessPollNfseBatch - Unit tests', () => {
 
     // Assert
     expect(nfseRepository.edit).toHaveBeenCalledWith(nfse);
-    expect(nfse.props.status).toBe(NfseStatus.FAILED);
+    expect(nfse.props.status).toBe(NfseStatus.REJECTED);
     expect(nfse.props.errorMessage).toContain('RPS inválido');
     expect(queueProducer.addPollBatchJob).not.toHaveBeenCalled();
     expect(queueProducer.addIssueBankPaymentJob).not.toHaveBeenCalled();
@@ -414,7 +419,7 @@ describe('ProcessPollNfseBatch - Unit tests', () => {
     );
   });
 
-  it('should keep marking the nfse FAILED when the provider rejects the batch for a business reason', async() => {
+  it('should mark the nfse REJECTED when the provider rejects the batch for a business reason', async() => {
     // Arrange
     const nfse = NfseFactory.load(makeNfseProps());
     jest.spyOn(nfseRepository, 'findById').mockResolvedValue(nfse);
@@ -428,7 +433,7 @@ describe('ProcessPollNfseBatch - Unit tests', () => {
 
     // Assert
     expect(nfse.props).toMatchObject({
-      status: NfseStatus.FAILED,
+      status: NfseStatus.REJECTED,
       errorMessage: 'E202: Código de tributação não informado',
     });
   });

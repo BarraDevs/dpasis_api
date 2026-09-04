@@ -126,7 +126,12 @@ export class ProcessIssueNfseBatch {
 
       const message = error?.message ?? 'Erro desconhecido ao enviar lote ao provedor de NFS-e';
 
-      if (ProcessIssueNfseBatch.isPermanentFailure(error)) {
+      if (error instanceof NfsBatchRejectedError && !error.alreadySubmitted) {
+        // O fisco recusou o conteúdo do RPS. Reemitir depois de corrigir o cadastro é a saída, e a
+        // rota de reemissão exige `REJECTED` — misturar isto com `FAILED` apagaria a distinção.
+        nfse.markRejected(message);
+      }
+      else if (ProcessIssueNfseBatch.isPermanentFailure(error)) {
         nfse.markFailed(message);
       }
       else {
@@ -147,11 +152,11 @@ export class ProcessIssueNfseBatch {
   }
 
   /**
-   * Só marca `FAILED` o que se sabe que não gerou nota. Erro de configuração é determinístico e
-   * nunca chegou ao provedor; rejeição de negócio (`NfsBatchRejectedError` sem `alreadySubmitted`)
-   * também. Todo o resto — timeout, TLS, 5xx, conexão cortada, ou "RPS já informado" — é ambíguo,
-   * e afirmar `FAILED` num caso ambíguo é o único erro irreversível deste fluxo: a operação para
-   * de procurar por uma nota que pode existir.
+   * Só marca estado terminal o que se sabe que não gerou nota. Erro de configuração é
+   * determinístico e nunca chegou ao provedor; rejeição de negócio (`NfsBatchRejectedError` sem
+   * `alreadySubmitted`) também — essa vira `REJECTED`, tratada antes. Todo o resto — timeout, TLS,
+   * 5xx, conexão cortada, ou "RPS já informado" — é ambíguo, e afirmar falha num caso ambíguo é o
+   * único erro irreversível deste fluxo: a operação para de procurar por uma nota que pode existir.
    */
   private static isPermanentFailure(error: unknown): boolean {
     if (error instanceof NfsProviderConfigError) {

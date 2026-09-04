@@ -20,6 +20,10 @@ export class NfseDto {
   bankPaymentRequestedAt: Date | null;
   bankPaymentErrorMessage: string | null;
   bankPaymentFailedAt: Date | null;
+  bankPaymentStatus: string | null;
+  bankPaymentConfirmedAt: Date | null;
+  reconcileAttemptCount: number;
+  nextReconcileAt: Date | null;
   nfmId: number | null;
   data: Record<string, unknown>;
   createdAt: Date;

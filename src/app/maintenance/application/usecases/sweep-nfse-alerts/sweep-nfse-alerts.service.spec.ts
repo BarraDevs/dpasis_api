@@ -7,6 +7,7 @@ import { TOKENS } from 'src/core/di/token';
 import type { IAlertGateway } from 'src/infra/alert/alert.gateway';
 import { AlertType } from 'src/infra/alert/enums/alert-type.enum';
 import type { ICacheGateway } from 'src/infra/cache/cache.gateway';
+import { LogContext, type ILoggerGateway } from 'src/infra/logger/logger.gateway';
 import { ALERT_WINDOW_IN_SECONDS, buildAlertWindowKey } from '../../alert-window';
 import { SweepNfseAlerts } from './sweep-nfse-alerts.service';
 
@@ -27,6 +28,7 @@ describe('SweepNfseAlerts - Unit tests', () => {
   let nfseDao: INfseDao;
   let alertGateway: IAlertGateway;
   let cacheGateway: ICacheGateway;
+  let logger: ILoggerGateway;
 
   beforeEach(async() => {
     const module = await Test.createTestingModule({
@@ -35,6 +37,7 @@ describe('SweepNfseAlerts - Unit tests', () => {
         { provide: TOKENS.NfseDao, useValue: createMock<INfseDao>() },
         { provide: TOKENS.AlertGateway, useValue: createMock<IAlertGateway>() },
         { provide: TOKENS.CacheGateway, useValue: createMock<ICacheGateway>() },
+        { provide: TOKENS.LoggerGateway, useValue: createMock<ILoggerGateway>() },
       ],
     }).compile();
 
@@ -42,9 +45,11 @@ describe('SweepNfseAlerts - Unit tests', () => {
     nfseDao = module.get(TOKENS.NfseDao);
     alertGateway = module.get(TOKENS.AlertGateway);
     cacheGateway = module.get(TOKENS.CacheGateway);
+    logger = module.get(TOKENS.LoggerGateway);
 
-    // Por padrão a janela está livre; os casos que testam a trava sobrescrevem.
+    // Por padrão a janela está livre e o canal entrega; os casos específicos sobrescrevem.
     jest.spyOn(cacheGateway, 'setIfAbsent').mockResolvedValue(true);
+    jest.spyOn(alertGateway, 'send').mockResolvedValue(true);
   });
 
   it('should be defined', () => {
@@ -257,6 +262,80 @@ describe('SweepNfseAlerts - Unit tests', () => {
         ALERT_WINDOW_IN_SECONDS[AlertType.NfseDailyClosing],
       );
       expect(alertGateway.send).not.toHaveBeenCalled();
+    });
+  });
+  describe('sweepBankPaymentFailed', () => {
+    it('should alert with the failed charges and warn against blind reissue', async() => {
+      // Arrange
+      jest.spyOn(nfseDao, 'findBankPaymentFailed').mockResolvedValue([
+        makeRow({ id: 77, status: NfseStatus.ISSUED, errorMessage: null }),
+      ]);
+
+      // Act
+      await sut.sweepBankPaymentFailed();
+
+      // Assert
+      expect(alertGateway.send).toHaveBeenCalledWith(expect.objectContaining({
+        type: AlertType.NfseBankPaymentFailed,
+        subject: '[NFS-e] 1 cobrança(s) com falha registrada',
+      }));
+      const [alert] = jest.mocked(alertGateway.send).mock.calls[0];
+      expect(alert.lines.at(-1)).toContain('o vínculo local não foi apagado');
+    });
+
+    it('should stay silent when no charge failed', async() => {
+      // Arrange
+      jest.spyOn(nfseDao, 'findBankPaymentFailed').mockResolvedValue([]);
+
+      // Act
+      await sut.sweepBankPaymentFailed();
+
+      // Assert
+      expect(alertGateway.send).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('resiliência do canal (P2-12)', () => {
+    it('should send anyway when claiming the digest window throws', async() => {
+      // Arrange — Redis fora do ar não pode ser lido como "outra réplica já avisou": um e-mail
+      // duplicado custa incômodo, um e-mail que não sai custa o incidente.
+      const error = new Error('redis down');
+      jest.spyOn(nfseDao, 'findStuck').mockResolvedValue([makeRow()]);
+      jest.spyOn(cacheGateway, 'setIfAbsent').mockRejectedValue(error);
+
+      // Act
+      await sut.sweepStuck();
+
+      // Assert
+      expect(alertGateway.send).toHaveBeenCalledTimes(1);
+      expect(logger.error).toHaveBeenCalledWith(LogContext.CACHE, expect.objectContaining({
+        action: 'setIfAbsent',
+        key: buildAlertWindowKey(AlertType.NfseStuck),
+        error,
+      }));
+    });
+
+    it('should release the digest window when delivery fails', async() => {
+      // Arrange — sem devolver a chave, um SMTP recusado custaria a janela inteira de silêncio.
+      jest.spyOn(nfseDao, 'findStuck').mockResolvedValue([makeRow()]);
+      jest.spyOn(alertGateway, 'send').mockResolvedValue(false);
+
+      // Act
+      await sut.sweepStuck();
+
+      // Assert
+      expect(cacheGateway.delete).toHaveBeenCalledWith(buildAlertWindowKey(AlertType.NfseStuck));
+    });
+
+    it('should keep the digest window when delivery succeeds', async() => {
+      // Arrange
+      jest.spyOn(nfseDao, 'findStuck').mockResolvedValue([makeRow()]);
+
+      // Act
+      await sut.sweepStuck();
+
+      // Assert
+      expect(cacheGateway.delete).not.toHaveBeenCalled();
     });
   });
 });

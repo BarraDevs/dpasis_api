@@ -86,6 +86,11 @@ function makeNfseProps(overrides: Partial<NfseProps> = {}): NfseProps {
     bankPaymentRequestedAt: null,
     bankPaymentErrorMessage: null,
     bankPaymentFailedAt: null,
+    bankPaymentStatus: null,
+    bankPaymentConfirmedAt: null,
+    reconcileAttemptCount: 0,
+    nextReconcileAt: null,
+    createdAt: new Date('2026-07-20T12:00:00Z'),
     nfmId: null,
     data: snapshot as unknown as Record<string, unknown>,
     ...overrides,
@@ -360,7 +365,7 @@ describe('ProcessIssueNfseBatch - Unit tests', () => {
     expect(queueProducer.addPollBatchJob).not.toHaveBeenCalled();
   });
 
-  it('should mark the nfse FAILED when the batch is rejected for a business reason', async() => {
+  it('should mark the nfse REJECTED when the batch is rejected for a business reason', async() => {
     // Arrange
     const nfse = NfseFactory.load(makeNfseProps());
     jest.spyOn(nfseRepository, 'findById').mockResolvedValue(nfse);
@@ -374,7 +379,7 @@ describe('ProcessIssueNfseBatch - Unit tests', () => {
 
     // Assert
     expect(nfse.props).toMatchObject({
-      status: NfseStatus.FAILED,
+      status: NfseStatus.REJECTED,
       errorMessage: 'E202: Código de tributação não informado',
     });
   });

@@ -57,6 +57,11 @@ function makeNfm(overrides: {
       bankPaymentRequestedAt: null,
       bankPaymentErrorMessage: null,
       bankPaymentFailedAt: null,
+      bankPaymentStatus: null,
+      bankPaymentConfirmedAt: null,
+      reconcileAttemptCount: 0,
+      nextReconcileAt: null,
+      createdAt: new Date('2026-07-20T12:00:00Z'),
       nfmId: null,
       data: {},
     }));
@@ -83,6 +88,11 @@ function makeNfm(overrides: {
       bankPaymentRequestedAt: null,
       bankPaymentErrorMessage: null,
       bankPaymentFailedAt: null,
+      bankPaymentStatus: null,
+      bankPaymentConfirmedAt: null,
+      reconcileAttemptCount: 0,
+      nextReconcileAt: null,
+      createdAt: new Date('2026-07-20T12:00:00Z'),
       nfmId: null,
       data: {},
     }));

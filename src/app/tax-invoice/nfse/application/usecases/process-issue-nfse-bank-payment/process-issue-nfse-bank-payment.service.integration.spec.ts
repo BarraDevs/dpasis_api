@@ -8,6 +8,7 @@ import { ConfigModule } from 'src/core/config/config.module';
 import { TOKENS } from 'src/core/di/token';
 import { BankPaymentFakeAdapterGateway } from 'src/infra/bank-payment/adapters/fake/bank-payment-fake.gateway';
 import { BankPaymentProvider } from 'src/infra/bank-payment/enums/bank-payment-provider.enum';
+import { PermanentProviderError } from 'src/shared/errors/permanent-provider.error';
 import { BankPaymentAlreadyExistsError } from 'src/infra/bank-payment/errors/bank-payment-already-exists.error';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { LoggerModule } from 'src/infra/logger/logger.module';
@@ -352,7 +353,7 @@ describe('ProcessIssueNfseBankPayment - Integration tests', () => {
     });
   });
 
-  it('should return without issuing when fallback invoice config is missing', async() => {
+  it('should fail the job and record the reason when fallback invoice config is missing', async() => {
     // Arrange
     const company = await seedCompany(prisma);
     const clientId = Date.now() % 100_000;
@@ -362,15 +363,16 @@ describe('ProcessIssueNfseBankPayment - Integration tests', () => {
       data: makeSnapshot({ bankPayment: undefined }),
     });
 
-    // Act
-    const result = await sut.execute({ nfseId: nfse.id });
+    // Act & Assert
+    await expect(sut.execute({ nfseId: nfse.id })).rejects.toThrow(PermanentProviderError);
 
-    // Assert
-    expect(result).toBeNull();
     expect(bankPaymentGateway.issueCalls).toHaveLength(0);
     const saved = await prisma.nfse.findUnique({ where: { id: nfse.id } });
     expect(saved?.bankPaymentProvider).toBeNull();
     expect(saved?.bankPaymentRequestCode).toBeNull();
+    // O motivo fica gravado: o alerta "ISSUED sem boleto" precisa dizer por quê.
+    expect(saved?.bankPaymentErrorMessage).toBe('Configuração de faturamento do cliente ausente para emissão do boleto.');
+    expect(saved?.bankPaymentFailedAt).toBeInstanceOf(Date);
   });
 
   it('should query by seuNumero and link instead of posting again when a previous attempt reached the provider', async() => {

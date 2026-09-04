@@ -4,5 +4,7 @@ export enum JobName {
   IssueNfseBatch = 'issue-nfse-batch',
   PollNfseBatch = 'poll-nfse-batch',
   IssueNfseBankPayment = 'issue-nfse-bank-payment',
+  ReconcileNfse = 'reconcile-nfse',
+  ConfirmNfseBankPayment = 'confirm-nfse-bank-payment',
   ResolveClientAddressIbgeCode = 'resolve-client-address-ibge-code',
 }

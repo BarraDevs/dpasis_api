@@ -221,7 +221,7 @@ describe('ProcessIssueNfseBatch - Integration tests', () => {
     expect(queueProducer.addedPollBatchJobs).toHaveLength(0);
   });
 
-  it('should persist FAILED when the batch is rejected for a business reason', async() => {
+  it('should persist REJECTED when the batch is rejected for a business reason', async() => {
     // Arrange
     const company = await seedCompany(prisma);
     await seedProviderConfig(prisma, company.id);
@@ -236,7 +236,7 @@ describe('ProcessIssueNfseBatch - Integration tests', () => {
     // Assert
     const saved = await prisma.nfse.findUnique({ where: { id: nfse.id } });
     expect(saved).toMatchObject({
-      status: NfseStatus.FAILED,
+      status: NfseStatus.REJECTED,
       errorMessage: 'E202: Código de tributação não informado',
     });
   });

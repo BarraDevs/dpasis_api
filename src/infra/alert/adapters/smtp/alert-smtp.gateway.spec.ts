@@ -92,7 +92,7 @@ describe('AlertSmtpAdapterGateway - Unit tests', () => {
     expect(sendMail).toHaveBeenCalledTimes(2);
   });
 
-  it('should log error and not rethrow when sendMail fails', async() => {
+  it('should log error, return false and not rethrow when sendMail fails', async() => {
     // Arrange
     const error = new Error('SMTP down');
     sendMail.mockRejectedValue(error);
@@ -102,7 +102,7 @@ describe('AlertSmtpAdapterGateway - Unit tests', () => {
       type: AlertType.NfseDailyClosing,
       subject: 'fechamento',
       lines: ['Emitidas: 1'],
-    })).resolves.toBeUndefined();
+    })).resolves.toBe(false);
 
     // Assert
     expect(logger.error).toHaveBeenCalledWith(LogContext.SMTP, {

@@ -168,6 +168,11 @@ describe('NfmRepositoryAdapterPrisma - Integration tests', () => {
         bankPaymentRequestedAt: null,
         bankPaymentErrorMessage: null,
         bankPaymentFailedAt: null,
+        bankPaymentStatus: null,
+        bankPaymentConfirmedAt: null,
+        reconcileAttemptCount: 0,
+        nextReconcileAt: null,
+        createdAt: new Date('2026-07-20T12:00:00Z'),
         nfmId: null,
         data: nfseRow.data as Record<string, unknown>,
       });
@@ -220,6 +225,11 @@ describe('NfmRepositoryAdapterPrisma - Integration tests', () => {
         bankPaymentRequestedAt: null,
         bankPaymentErrorMessage: null,
         bankPaymentFailedAt: null,
+        bankPaymentStatus: null,
+        bankPaymentConfirmedAt: null,
+        reconcileAttemptCount: 0,
+        nextReconcileAt: null,
+        createdAt: new Date('2026-07-20T12:00:00Z'),
         nfmId: null,
         data: { providerDocument: '12345678000199' },
       }));

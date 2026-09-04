@@ -7,6 +7,7 @@ import { TOKENS } from 'src/core/di/token';
 import type { IAlertGateway } from 'src/infra/alert/alert.gateway';
 import { AlertType } from 'src/infra/alert/enums/alert-type.enum';
 import type { ICacheGateway } from 'src/infra/cache/cache.gateway';
+import { LogContext, type ILoggerGateway } from 'src/infra/logger/logger.gateway';
 import { ALERT_WINDOW_IN_SECONDS, buildAlertWindowKey } from '../../alert-window';
 
 const STUCK_THRESHOLD_IN_MINUTES = 120;
@@ -18,6 +19,7 @@ export class SweepNfseAlerts {
     @Inject(TOKENS.NfseDao) private readonly nfseDao: INfseDao,
     @Inject(TOKENS.AlertGateway) private readonly alertGateway: IAlertGateway,
     @Inject(TOKENS.CacheGateway) private readonly cacheGateway: ICacheGateway,
+    @Inject(TOKENS.LoggerGateway) private readonly logger: ILoggerGateway,
   ) {}
 
   /** NFS-e presa em estado não terminal: enviada e sem desfecho. */
@@ -58,6 +60,22 @@ export class SweepNfseAlerts {
     );
   }
 
+  /**
+   * Cobranças que o provedor recusou produzir (`FALHA_EMISSAO`). A NFS-e está `ISSUED` e vinculada
+   * — parece saudável em toda consulta —, e o cliente nunca recebeu boleto. Sem alerta, a
+   * inadimplência resultante parece do cliente.
+   */
+  public async sweepBankPaymentFailed(): Promise<void> {
+    const rows = await this.nfseDao.findBankPaymentFailed();
+
+    await this.sendIfAny(
+      AlertType.NfseBankPaymentFailed,
+      `[NFS-e] ${rows.length} cobrança(s) com falha registrada`,
+      rows,
+      ['Conferir a situação no provedor antes de reemitir; o vínculo local não foi apagado.'],
+    );
+  }
+
   /** Fechamento D+1: emitidas no dia anterior contra as que têm boleto. */
   public async sweepDailyClosing(now: Date = new Date()): Promise<void> {
     const yesterday = DateTime.fromJSDate(now).setZone(SAO_PAULO_TIMEZONE).minus({ days: 1 });
@@ -89,19 +107,41 @@ export class SweepNfseAlerts {
   /**
    * A janela é reivindicada antes do envio, de forma atômica. É isso que impede duas instâncias de
    * mandarem o mesmo alerta: as duas consultam, mas só uma ganha a chave.
+   *
+   * Duas assimetrias deliberadas, porque um alerta que não sai custa o incidente inteiro:
+   *
+   * - **Falha ao reivindicar não é permissão negada.** Se o Redis está fora do ar, `setIfAbsent`
+   *   lança, e aqui isso vira "envia assim mesmo". Um e-mail duplicado por réplica é incômodo; um
+   *   e-mail que não sai durante uma indisponibilidade é o silêncio exato que o canal existe para
+   *   evitar — e Redis tende a cair junto com o resto.
+   * - **Envio que falhou devolve a janela.** Sem isso, um `sendMail` recusado queimaria a janela
+   *   inteira: 15 minutos de silêncio nos alertas curtos, 12h no de `AWAITING_PROVIDER`.
    */
   private async send(type: AlertType, subject: string, lines: string[]): Promise<void> {
-    const claimed = await this.cacheGateway.setIfAbsent(
-      buildAlertWindowKey(type),
-      new Date().toISOString(),
-      ALERT_WINDOW_IN_SECONDS[type],
-    );
+    const key = buildAlertWindowKey(type);
+    let claimed: boolean;
+
+    try {
+      claimed = await this.cacheGateway.setIfAbsent(key, new Date().toISOString(), ALERT_WINDOW_IN_SECONDS[type]);
+    }
+    catch (error: unknown) {
+      this.logger.error(LogContext.CACHE, {
+        adapter: 'redis',
+        action: 'setIfAbsent',
+        key,
+        error,
+      });
+      claimed = true;
+    }
 
     if (!claimed) {
       return;
     }
 
-    await this.alertGateway.send({ type, subject, lines });
+    const delivered = await this.alertGateway.send({ type, subject, lines });
+    if (!delivered) {
+      await this.cacheGateway.delete(key);
+    }
   }
 
   private static formatRow(row: NfseAlertRowDto): string {

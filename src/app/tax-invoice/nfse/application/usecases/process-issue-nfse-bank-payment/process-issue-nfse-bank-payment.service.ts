@@ -8,6 +8,7 @@ import { ClientInvoiceConfigNotFoundError } from 'src/app/client/client-invoice-
 import { SAO_PAULO_TIMEZONE } from 'src/core/constants/timezone.constant';
 import { TOKENS } from 'src/core/di/token';
 import { AppException } from 'src/core/filters/app.exception';
+import { PermanentProviderError } from 'src/shared/errors/permanent-provider.error';
 import { LogContext, type ILoggerGateway } from 'src/infra/logger/logger.gateway';
 import { BankPaymentProvider } from 'src/infra/bank-payment/enums/bank-payment-provider.enum';
 import { BankPaymentAlreadyExistsError } from 'src/infra/bank-payment/errors/bank-payment-already-exists.error';
@@ -48,11 +49,10 @@ export class ProcessIssueNfseBankPayment {
     // idempotência de 30 minutos do Inter justamente quando ela mais importa.
     const issuedAt = nfse.props.issuedAt;
     if (!issuedAt) {
-      await this.failBankPayment(
+      throw await this.failBankPayment(
         nfse,
         'NFS-e emitida sem data de emissão; não é possível calcular o vencimento do boleto.',
       );
-      return null;
     }
 
     const snapshot = nfse.props.data as unknown as NfseIssueSnapshot;
@@ -63,8 +63,7 @@ export class ProcessIssueNfseBankPayment {
         bankPayment = await this.loadBankPaymentFallback(nfse.props.clientId, issuedAt);
       }
       catch (error: unknown) {
-        await this.failBankPayment(nfse, this.resolveErrorMessage(error), error);
-        return null;
+        throw await this.failBankPayment(nfse, this.resolveErrorMessage(error), error);
       }
     }
 
@@ -78,8 +77,7 @@ export class ProcessIssueNfseBankPayment {
       });
     }
     catch (error: unknown) {
-      await this.failBankPayment(nfse, this.resolveErrorMessage(error), error);
-      return null;
+      throw await this.failBankPayment(nfse, this.resolveErrorMessage(error), error);
     }
 
     // Uma tentativa anterior já chegou ao provedor: consultar antes de repetir o POST. É o que
@@ -115,6 +113,9 @@ export class ProcessIssueNfseBankPayment {
         return this.linkExisting(nfse, result);
       }
 
+      // Relança o erro original, não o `PermanentProviderError` da gravação: só ele carrega a
+      // classificação transitório × permanente feita pelo adapter do provedor, e é ela que decide
+      // se a fila retenta ou desiste.
       await this.failBankPayment(nfse, this.resolveErrorMessage(error), error);
       throw error;
     }
@@ -129,11 +130,14 @@ export class ProcessIssueNfseBankPayment {
   }
 
   /**
-   * Os caminhos que devolvem `null` completam o job com sucesso — sem esta gravação, a NFS-e ficava
-   * `ISSUED` sem boleto e sem nenhum registro do motivo, e o alerta só sabia dizer que faltava
-   * cobrança. Fazer o job falhar (P1-03) é Onda 3; registrar o porquê é o que dá para fazer agora.
+   * Grava o motivo e devolve o erro para quem chama **lançar**. Antes estes caminhos devolviam
+   * `null`: o job completava com sucesso, `removeOnComplete` apagava o rastro e a NFS-e ficava
+   * `ISSUED` sem boleto, sem job e sem nada no Bull Board. Como são falhas determinísticas — dados
+   * inválidos, configuração ausente —, o erro é `PermanentProviderError`, que o consumer converte em
+   * `UnrecoverableError`: falha na hora, fica retida 30 dias e aparece para quem for investigar,
+   * sem queimar as cinco tentativas.
    */
-  private async failBankPayment(nfse: Nfse, message: string, error?: unknown): Promise<void> {
+  private async failBankPayment(nfse: Nfse, message: string, error?: unknown): Promise<PermanentProviderError> {
     this.logger.error(LogContext.BANK_PAYMENT, {
       adapter: 'nfse',
       action: 'processIssueNfseBankPayment',
@@ -143,6 +147,8 @@ export class ProcessIssueNfseBankPayment {
 
     nfse.markBankPaymentFailed(message);
     await this.nfseRepository.edit(nfse);
+
+    return new PermanentProviderError(message);
   }
 
   private resolveErrorMessage(error: unknown): string {

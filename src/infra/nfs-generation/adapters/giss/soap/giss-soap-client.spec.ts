@@ -97,6 +97,55 @@ describe('GissSoapClient.postSoapRequest - Unit tests', () => {
     expect(body).toContain('&lt;p:ConsultarLoteRpsEnvio');
   });
 
+  it('should post ConsultarNfsePorRps with the correct SOAPAction', async() => {
+    // Arrange
+    const dadosXml = '<p:ConsultarNfseRpsEnvio xmlns:p="http://www.giss.com.br/consultar-nfse-rps-envio-v2_04.xsd"/>';
+    const outputXml = '<ConsultarNfseRpsResposta><CompNfse/></ConsultarNfseRpsResposta>';
+    (httpService.axiosRef.post as jest.Mock).mockResolvedValue({
+      data: makeSoapResponse(GissOperation.ConsultarNfsePorRps, outputXml),
+    });
+
+    // Act
+    const result = await GissSoapClient.postSoapRequest(
+      httpService,
+      'maua',
+      GissOperation.ConsultarNfsePorRps,
+      dadosXml,
+      certMaterial,
+    );
+
+    // Assert
+    expect(result.outputXml).toBe(outputXml);
+    const [, body, config] = (httpService.axiosRef.post as jest.Mock).mock.calls[0];
+    expect(config.headers.SOAPAction).toBe('http://nfse.abrasf.org.br/ConsultarNfsePorRps');
+    expect(body).toContain('<ConsultarNfsePorRpsRequest xmlns="http://nfse.abrasf.org.br">');
+    expect(body).toContain('&lt;p:ConsultarNfseRpsEnvio');
+  });
+
+  it('should post ConsultarNfseServicoPrestado with the correct SOAPAction', async() => {
+    // Arrange
+    const dadosXml = '<p:ConsultarNfseServicoPrestadoEnvio xmlns:p="http://www.giss.com.br/consultar-nfse-servico-prestado-envio-v2_04.xsd"/>';
+    const outputXml = '<ConsultarNfseServicoPrestadoResposta><ListaNfse/></ConsultarNfseServicoPrestadoResposta>';
+    (httpService.axiosRef.post as jest.Mock).mockResolvedValue({
+      data: makeSoapResponse(GissOperation.ConsultarNfseServicoPrestado, outputXml),
+    });
+
+    // Act
+    const result = await GissSoapClient.postSoapRequest(
+      httpService,
+      'maua',
+      GissOperation.ConsultarNfseServicoPrestado,
+      dadosXml,
+      certMaterial,
+    );
+
+    // Assert
+    expect(result.outputXml).toBe(outputXml);
+    const [, body, config] = (httpService.axiosRef.post as jest.Mock).mock.calls[0];
+    expect(config.headers.SOAPAction).toBe('http://nfse.abrasf.org.br/ConsultarNfseServicoPrestado');
+    expect(body).toContain('<ConsultarNfseServicoPrestadoRequest xmlns="http://nfse.abrasf.org.br">');
+  });
+
   it('should unwrap outputXML from a response without SOAP envelope', async() => {
     // Arrange
     const outputXml = '<EnviarLoteRpsResposta><Protocolo>PROTO-DIRECT</Protocolo></EnviarLoteRpsResposta>';

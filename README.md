@@ -48,9 +48,22 @@ npm run db:seed
 
 ### Índices que o schema não expressa
 
-`nfses_one_active_per_nfm` é um índice único **parcial** (`WHERE status NOT IN (...)`), que o Prisma
-não representa no schema — ele vive apenas no SQL da migration
-`20260903120000_onda2_nfse_idempotencia`. Ao alterar os estados da NFS-e, revise esse índice junto.
+`nfses_one_active_per_nfm` é um índice único **parcial** (`WHERE status NOT IN ('FAILED',
+'REJECTED')`), que o Prisma não representa no schema — ele vive apenas no SQL da migration
+`20260903120000_nfse_idempotencia`. Ao alterar os estados da NFS-e, revise esse índice junto: é ele
+que decide quais estados liberam a NFM para uma nova NFS-e.
+
+### Ambientes que aplicaram a migration da Onda 2 sob o nome antigo
+
+A migration da Onda 2 foi renomeada antes do commit. Um banco que a aplicou como
+`20260903120000_onda2_nfse_idempotencia` vai reclamar de histórico divergente. O SQL é o mesmo, então
+basta registrar a versão commitada como aplicada — o comando **não** roda DDL, só grava a linha em
+`_prisma_migrations`:
+
+```bash
+npx dotenv -e .env.development -- npx prisma migrate resolve --applied 20260903120000_nfse_idempotencia
+npm run db:deploy
+```
 
 ## Running the app
 

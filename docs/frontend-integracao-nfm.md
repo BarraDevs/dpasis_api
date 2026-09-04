@@ -8,6 +8,10 @@ Este documento cobre as rotas admin de **NFM**:
 - `GET /admin/nfm/:id` — detalhe de uma NFM gerada (com NFS-e vinculada)
 - `POST /admin/nfm` — salva NFMs e dispara emissão de NFS-e (1:1)
 - `POST /admin/nfm/:id/cancel` — cancela a NFS-e vinculada à NFM (síncrono, Giss)
+- `GET /admin/nfm/:id/provider-status` — consulta o Giss pelo RPS desta NFM (somente leitura)
+- `POST /admin/nfm/:id/reconcile` — corrige o estado local com o que o Giss responder
+- `POST /admin/nfm/:id/reissue` — reenvia o RPS depois de corrigir o cadastro
+- `POST /admin/nfm/reconcile-period` — confere um período inteiro contra o Giss
 
 **Referência OpenAPI:** Swagger em `/swagger`, tag **NFM**.
 
@@ -40,14 +44,19 @@ ItemListaServico (LC 116) na correspondência CNAE/NBS/INDOP: [frontend-integrac
 | O quê | Onde |
 |-------|------|
 | Novo valor `AWAITING_PROVIDER` em `nfse.status` | `GET /admin/nfm`, `GET /admin/nfm/:id` — ver [Status da NFS-e](#status-da-nfs-e-nfsestatus) |
+| Novo valor `REJECTED` em `nfse.status` | idem — separa rejeição do fisco de falha de infraestrutura |
+| Quatro rotas novas: `provider-status`, `reconcile`, `reissue`, `reconcile-period` | ver [Ferramentas de conserto](#ferramentas-de-conserto) |
 | Novos campos `bankPaymentCanceled` e `bankPaymentError` na resposta | `POST /admin/nfm/:id/cancel` |
 | Novos campos em `nfse`: `bankPaymentErrorMessage`, `bankPaymentFailedAt`, `bankPaymentRequestedAt`, `bankPaymentIdempotencyKey`, `nfmId` | `GET /admin/nfm`, `GET /admin/nfm/:id` |
+| Novos campos em `nfse`: `bankPaymentStatus`, `bankPaymentConfirmedAt`, `reconcileAttemptCount`, `nextReconcileAt` | idem |
 
 ### Fluxo sugerido na UI
 
 1. **Tela lista** — `GET /admin/nfm?dateStart&dateEnd` exibe NFMs com NFS-e vinculada no intervalo.
 2. Clique no item → `GET /admin/nfm/:id` para tela/detalhe.
 3. Se NFS-e `ISSUED` → botão cancelar → `POST /admin/nfm/:id/cancel` com `cancelReasonCode`.
+3.1. Se NFS-e `REJECTED` → botão reemitir → `POST /admin/nfm/:id/reissue`.
+3.2. Se NFS-e `AWAITING_PROVIDER` → botões verificar/consultar; o backend já persegue sozinho.
 4. Botão **Gerar NFMs** → abre tela de elegíveis.
 5. **Tela elegíveis** — `GET /admin/nfm/elegible`; botão confirmar → `POST /admin/nfm`.
 
@@ -92,8 +101,16 @@ Cada item em `data` é `NfmWithNfseDto`:
   provedor. Uso interno (a partir dela o backend consulta o Inter antes de reemitir); a UI não
   precisa exibir
 - `nfmId` — a NFM de origem; redundante com o vínculo que a própria resposta já traz
+- `bankPaymentStatus` / `bankPaymentConfirmedAt` — situação da cobrança **confirmada junto ao Inter**.
+  Receber `bankPaymentRequestCode` só diz que a solicitação foi aceita; a produção do boleto é
+  assíncrona e pode falhar. Com `bankPaymentStatus === 'FAILED'`, o cliente **não** recebeu boleto,
+  ainda que a NFS-e pareça saudável. `bankPaymentConfirmedAt` nulo com código preenchido significa
+  "ainda confirmando" — a UI pode mostrar isso como pendente, não como erro
+- `reconcileAttemptCount` / `nextReconcileAt` — quantas vezes o backend já perguntou ao Giss sobre
+  esta nota e quando pergunta de novo. Uso interno; útil só numa tela de diagnóstico
 
-Não há endpoint novo: os campos vêm em `GET /admin/nfm` e `GET /admin/nfm/:id` dentro de `nfse`. Não é breaking.
+Não há endpoint novo para esses campos: eles vêm em `GET /admin/nfm` e `GET /admin/nfm/:id` dentro de
+`nfse`. Não é breaking.
 
 ### Erros
 
@@ -114,13 +131,25 @@ Vale para `GET /admin/nfm`, `GET /admin/nfm/:id` e para o `status` devolvido pel
 | `PROCESSING` | Consulta do lote em andamento (reagendada em backoff) | não | "Em processamento" |
 | `AWAITING_PROVIDER` | **Novo.** Não se sabe se o Giss emitiu a nota | não | Ver abaixo — **não** tratar como erro |
 | `ISSUED` | Emitida. `nfseNumber`, `verificationCode` e `issuedAt` preenchidos | sim | Habilita cancelar |
-| `FAILED` | Recusada pelo Giss por regra de negócio, ou erro determinístico de configuração. A nota **não** existe do outro lado | sim | Mostrar `errorMessage` |
+| `REJECTED` | **Novo.** O fisco recusou o conteúdo do RPS (cadastro do tomador, item de serviço, alíquota). A nota **não** existe do outro lado | sim | Mostrar `errorMessage` e habilitar **reemitir** |
+| `FAILED` | Erro determinístico de infraestrutura ou de configuração (certificado, `municipioSlug` ausente). A nota **não** chegou ao provedor | sim | Mostrar `errorMessage`; conserto é de configuração |
 | `CANCELED` | Cancelada. `canceledAt` e `cancelReasonCode` preenchidos | sim | — |
 
-### `AWAITING_PROVIDER` — o status novo
+### `REJECTED` — o status novo desta entrega
 
-Status **aditivo**: uma tela que hoje trata qualquer coisa fora de `ISSUED`/`FAILED` como "em
-andamento" não quebra, mas passa a mostrar a mensagem errada.
+Status **aditivo**. Antes, rejeição do fisco e falha de certificado eram o mesmo `FAILED`, e as duas
+exigem ações opostas: uma se resolve corrigindo o cadastro do cliente e reemitindo, a outra
+corrigindo a configuração da empresa. Uma tela que trate qualquer coisa fora de `ISSUED` como
+"problema" não quebra, mas perde a distinção que decide o que fazer.
+
+Regras de UI:
+
+- Mostrar `errorMessage` — é a mensagem do fisco, com o código (`E163`, `E202`…).
+- Habilitar o botão **Reemitir** (`POST /admin/nfm/:id/reissue`), que exige motivo e confirmação.
+- `FAILED`, por outro lado, **não** deve oferecer reemitir: o problema não está no cadastro do
+  cliente.
+
+### `AWAITING_PROVIDER` — não é erro
 
 Significa: a requisição ao Giss terminou de forma ambígua — timeout, erro de rede, TLS, 5xx, ou o
 próprio Giss respondendo que **já conhece aquele RPS**. A nota provavelmente foi emitida, e só uma
@@ -133,12 +162,51 @@ Regras de UI:
 
 - **Não** é erro. Não usar cor/ícone de falha — usar estado de atenção ("aguardando confirmação do
   provedor").
-- **Não** oferecer botão de reemitir. Reemitir às cegas duplica a nota fiscal.
-- Nada resolve esse estado automaticamente hoje: a reconciliação com o Giss ainda não existe. A
-  saída é consultar a nota no portal do provedor e resolver manualmente.
+- **Não** oferecer botão de reemitir às cegas. A reemissão às cegas duplica a nota fiscal — e a rota
+  de reemissão recusa (`409`) quando descobre a nota no provedor.
+- **O backend agora resolve esse estado sozinho**: uma varredura consulta o Giss pela chave natural
+  do RPS em intervalos crescentes (5min → 15min → 1h → 6h → 24h → diário). A UI pode oferecer
+  "Verificar agora" (`POST /admin/nfm/:id/reconcile`) para antecipar, e "Consultar no provedor"
+  (`GET /admin/nfm/:id/provider-status`) para ver a resposta bruta sem alterar nada.
 - Não habilitar cancelamento (só `ISSUED` cancela).
 
-O backend já alerta por e-mail quando há notas nesse estado, então a UI não precisa notificar.
+O backend também alerta por e-mail quando há notas nesse estado, então a UI não precisa notificar.
+
+---
+
+## Ferramentas de conserto
+
+Quatro rotas administrativas para quando algo trava. Todas exigem role Admin.
+
+| Rota | Claim | Corpo | Resposta | Quando usar |
+|------|-------|-------|----------|-------------|
+| `GET /admin/nfm/:id/provider-status` | `NFM_READ` | — | `200 { nfseId, rpsNumber, rpsSeries, found, note?, errors?, consultedAt }` | Ver o que o Giss sabe sobre o RPS. **Não altera nada.** |
+| `POST /admin/nfm/:id/reconcile` | `NFM_WRITE` | `{ reason }` | `200 { nfseId, previousStatus, newStatus, source }` | Corrigir o estado local com o que o Giss responder — inclusive tirar de `FAILED`/`AWAITING_PROVIDER` para `ISSUED`. |
+| `POST /admin/nfm/:id/reissue` | `NFM_WRITE` | `{ reason, confirm: true }` | `202 { nfseId, rpsNumber, rpsSeries, status }` | Reenviar depois de corrigir o cadastro. Reaproveita o **mesmo** RPS. |
+| `POST /admin/nfm/reconcile-period` | `NFM_WRITE` | `{ startDate, endDate, dryRun? }` | `200 { checked, corrected, pagesRead, divergences[], dryRun }` | Conferir um período inteiro. `dryRun` é **true** por padrão. |
+
+### Reemitir — o que a rota faz antes de reenviar
+
+A rota **consulta o Giss ela mesma**. Não basta o operador ter consultado antes: quem decide é a
+resposta do provedor no momento da chamada.
+
+| Situação | Resposta |
+|----------|----------|
+| Status ∉ `{REJECTED, AWAITING_PROVIDER}` | `409` — `ISSUED`/`CANCELED`/`FAILED`/em andamento não se reemite |
+| O Giss já tem a nota | `409` — o estado local é corrigido para `ISSUED` e **nada** é reenviado |
+| O lote ainda está em processamento | `409` — a consulta do lote foi reagendada |
+| A consulta não foi conclusiva (erro sobre a própria consulta, não sobre a nota) | `409` — resolver o motivo antes; reenviar sem resposta é apostar contra uma nota que pode existir |
+| O Giss confirma que não existe NFS-e para o RPS | `202` — a nota volta a `PENDING` com o mesmo RPS e entra na fila |
+
+`reason` é obrigatório (mínimo 5 caracteres) e `confirm` tem de ser exatamente `true`: reemitir
+produz documento fiscal.
+
+### Conciliação por período
+
+Roda automaticamente todo dia às 07:30 (D-1). A rota manual serve para conferir uma janela
+específica. `divergences[]` lista as notas locais não terminais do período e diz, para cada uma, se
+o provedor a tem (`foundAtProvider`). Notas do provedor sem par local são ignoradas — a consulta
+devolve tudo que o prestador emitiu, inclusive pelo portal e pela contabilidade.
 
 ---
 
@@ -324,7 +392,9 @@ HTTP **não** espera a GISS. Só persistência + enqueue.
 | Rota | Claim |
 |------|-------|
 | `GET /admin/nfm`, `GET /admin/nfm/elegible`, `GET /admin/nfm/:id` | `NFM_READ` |
+| `GET /admin/nfm/:id/provider-status` | `NFM_READ` |
 | `POST /admin/nfm`, `POST /admin/nfm/:id/cancel` | `NFM_WRITE` |
+| `POST /admin/nfm/:id/reconcile`, `POST /admin/nfm/:id/reissue`, `POST /admin/nfm/reconcile-period` | `NFM_WRITE` |
 
 ---
 
@@ -335,7 +405,10 @@ HTTP **não** espera a GISS. Só persistência + enqueue.
 3. Detalhe: `GET /admin/nfm/:id` — mesmo `NfmWithNfseDto`; tratar **404**.
 4. **Breaking:** parar `POST /admin/nfse`, `GET /admin/nfse/:id` e `POST /admin/nfse/:id/cancel`. Claims `NFSE_READ` / `NFSE_WRITE` saíram. Emissão via `POST /admin/nfm`; detalhe via `GET /admin/nfm/:id`; cancelamento via `POST /admin/nfm/:id/cancel` (id da **NFM**, claim `NFM_WRITE`).
 5. Cancelar só quando `nfse.status === 'ISSUED'`; body `{ cancelReasonCode: 1 | 2 | 4 }`; após 200, refrescar detalhe.
-5.1. **Aditivo:** tratar `AWAITING_PROVIDER` em `nfse.status` — estado de atenção, não de erro; sem botão de reemitir; sem botão de cancelar. Ver [Status da NFS-e](#status-da-nfs-e-nfsestatus).
+5.1. **Aditivo:** tratar `AWAITING_PROVIDER` em `nfse.status` — estado de atenção, não de erro; sem botão de reemitir às cegas; sem botão de cancelar. Ver [Status da NFS-e](#status-da-nfs-e-nfsestatus).
+5.3. **Aditivo:** tratar `REJECTED` em `nfse.status` — mostrar `errorMessage` e habilitar **Reemitir** (`POST /admin/nfm/:id/reissue`, body `{ reason, confirm: true }`, respostas `202` ou `409`). `FAILED` continua sem reemitir: é problema de configuração, não de cadastro.
+5.4. **Aditivo:** em `AWAITING_PROVIDER`, oferecer "Verificar agora" (`POST /admin/nfm/:id/reconcile`) e "Consultar no provedor" (`GET /admin/nfm/:id/provider-status`). Ver [Ferramentas de conserto](#ferramentas-de-conserto).
+5.5. **Aditivo:** ler `nfse.bankPaymentStatus`. Com `FAILED`, avisar que o cliente não recebeu boleto mesmo com a NFS-e emitida e vinculada.
 5.2. **Aditivo:** na resposta do cancelamento, ler `bankPaymentCanceled` e `bankPaymentError`. Com `bankPaymentError` presente, avisar de forma persistente que a cobrança **não** foi cancelada e precisa de tratamento manual.
 6. Botão gerar → tela elegíveis → confirmar com `POST /admin/nfm`.
 7. `POST /admin/nfm`: exibir resumo `created` / `skipped` / `failed` + lista de `errors`.

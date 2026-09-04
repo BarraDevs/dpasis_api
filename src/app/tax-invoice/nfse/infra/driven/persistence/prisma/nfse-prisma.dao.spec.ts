@@ -5,9 +5,27 @@ import { ConfigModule } from 'src/core/config/config.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { NfseDaoAdapterPrisma } from './nfse-prisma.dao';
 
+let rpsCounter = 0;
+
+async function seedNfse(prisma: PrismaService, overrides: Record<string, unknown> = {}) {
+  rpsCounter += 1;
+  return prisma.nfse.create({
+    data: {
+      companyId: 1,
+      clientId: 1,
+      rpsNumber: (Date.now() % 100_000) + rpsCounter,
+      rpsSeries: 'NFSE',
+      status: NfseStatus.PENDING,
+      data: { providerDocument: '12345678000199' },
+      ...overrides,
+    },
+  });
+}
+
 describe('NfseDaoAdapterPrisma - Integration tests', () => {
   let sut: NfseDaoAdapterPrisma;
   let prisma: PrismaService;
+  let seed: (overrides?: Record<string, unknown>)=> Promise<{ id: number; companyId: number; rpsNumber: number; rpsSeries: string }>;
 
   beforeAll(async() => {
     const module = await Test.createTestingModule({
@@ -17,6 +35,7 @@ describe('NfseDaoAdapterPrisma - Integration tests', () => {
 
     sut = module.get(NfseDaoAdapterPrisma);
     prisma = module.get(PrismaService);
+    seed = (overrides = {}) => seedNfse(prisma, overrides);
   });
 
   beforeEach(async() => {
@@ -533,6 +552,173 @@ describe('NfseDaoAdapterPrisma - Integration tests', () => {
 
       // Assert
       expect(result).toEqual({ issued: 2, withBankPayment: 1 });
+    });
+  });
+  describe('findBankPaymentFailed', () => {
+    it('should return issued notes whose charge failed', async() => {
+      // Arrange
+      await seed({ status: NfseStatus.ISSUED, bankPaymentFailedAt: new Date('2026-09-03T10:00:00Z') });
+      await seed({ status: NfseStatus.ISSUED });
+
+      // Act
+      const result = await sut.findBankPaymentFailed();
+
+      // Assert
+      expect(result).toHaveLength(1);
+    });
+  });
+
+  describe('findPendingReconciliation', () => {
+    it('should return non terminal notes whose consultation is due', async() => {
+      // Arrange
+      const due = await seed({ status: NfseStatus.AWAITING_PROVIDER, nextReconcileAt: new Date('2020-01-01T00:00:00Z') });
+      await seed({ status: NfseStatus.AWAITING_PROVIDER, nextReconcileAt: new Date('2999-01-01T00:00:00Z') });
+      await seed({ status: NfseStatus.AWAITING_PROVIDER, nextReconcileAt: null });
+
+      // Act
+      const result = await sut.findPendingReconciliation(200);
+
+      // Assert — `nextReconcileAt` nulo numa nota não terminal significa "não consultar mais".
+      expect(result.map((row) => row.id)).toEqual([due.id]);
+    });
+
+    it('should chase AWAITING_PROVIDER, which the stuck alert deliberately ignores', async() => {
+      // Arrange
+      await seed({ status: NfseStatus.AWAITING_PROVIDER, nextReconcileAt: new Date('2020-01-01T00:00:00Z') });
+
+      // Act
+      const result = await sut.findPendingReconciliation(200);
+
+      // Assert
+      expect(result[0].status).toBe(NfseStatus.AWAITING_PROVIDER);
+    });
+
+    it.each([NfseStatus.ISSUED, NfseStatus.CANCELED, NfseStatus.FAILED, NfseStatus.REJECTED])(
+      'should never return a %s note',
+      async(status) => {
+        // Arrange
+        await seed({ status, nextReconcileAt: new Date('2020-01-01T00:00:00Z') });
+
+        // Act
+        const result = await sut.findPendingReconciliation(200);
+
+        // Assert
+        expect(result).toHaveLength(0);
+      },
+    );
+
+    it('should respect the limit', async() => {
+      // Arrange
+      await seed({ status: NfseStatus.PENDING, nextReconcileAt: new Date('2020-01-01T00:00:00Z') });
+      await seed({ status: NfseStatus.PENDING, nextReconcileAt: new Date('2020-01-02T00:00:00Z') });
+
+      // Act
+      const result = await sut.findPendingReconciliation(1);
+
+      // Assert
+      expect(result).toHaveLength(1);
+    });
+  });
+
+  describe('findPendingByPeriod', () => {
+    it('should return non terminal notes created inside the window', async() => {
+      // Arrange
+      const inside = await seed({ status: NfseStatus.AWAITING_PROVIDER, createdAt: new Date('2026-09-03T12:00:00Z') });
+      await seed({ status: NfseStatus.AWAITING_PROVIDER, createdAt: new Date('2026-09-05T12:00:00Z') });
+      await seed({ status: NfseStatus.ISSUED, createdAt: new Date('2026-09-03T12:00:00Z') });
+
+      // Act
+      const result = await sut.findPendingByPeriod(
+        new Date('2026-09-03T00:00:00Z'),
+        new Date('2026-09-04T00:00:00Z'),
+      );
+
+      // Assert
+      expect(result.map((row) => row.id)).toEqual([inside.id]);
+    });
+
+    it('should carry the RPS natural key, which is what the matching needs', async() => {
+      // Arrange
+      const row = await seed({ status: NfseStatus.AWAITING_PROVIDER, createdAt: new Date('2026-09-03T12:00:00Z') });
+
+      // Act
+      const [result] = await sut.findPendingByPeriod(
+        new Date('2026-09-03T00:00:00Z'),
+        new Date('2026-09-04T00:00:00Z'),
+      );
+
+      // Assert
+      expect(result).toEqual({
+        id: row.id,
+        companyId: row.companyId,
+        rpsNumber: row.rpsNumber,
+        rpsSeries: row.rpsSeries,
+        status: NfseStatus.AWAITING_PROVIDER,
+      });
+    });
+  });
+
+  describe('findIssuedWithoutBankPaymentJob', () => {
+    it('should return issued notes with neither charge nor recorded failure', async() => {
+      // Arrange
+      const pending = await seed({ status: NfseStatus.ISSUED });
+      await seed({ status: NfseStatus.ISSUED, bankPaymentRequestCode: 'req-1' });
+      await seed({ status: NfseStatus.ISSUED, bankPaymentFailedAt: new Date() });
+
+      // Act
+      const result = await sut.findIssuedWithoutBankPaymentJob(200);
+
+      // Assert — quem já falhou tem motivo gravado e alerta próprio; reenfileirar seria laço infinito.
+      expect(result.map((row) => row.id)).toEqual([pending.id]);
+    });
+  });
+
+  describe('findBankPaymentUnconfirmed', () => {
+    it('should return charges requested before the threshold and not yet confirmed', async() => {
+      // Arrange
+      const old = await seed({
+        status: NfseStatus.ISSUED,
+        bankPaymentRequestCode: 'req-old',
+        bankPaymentRequestedAt: new Date(Date.now() - 60 * 60_000),
+      });
+      await seed({
+        status: NfseStatus.ISSUED,
+        bankPaymentRequestCode: 'req-new',
+        bankPaymentRequestedAt: new Date(),
+      });
+      await seed({
+        status: NfseStatus.ISSUED,
+        bankPaymentRequestCode: 'req-confirmed',
+        bankPaymentRequestedAt: new Date(Date.now() - 60 * 60_000),
+        bankPaymentConfirmedAt: new Date(),
+      });
+
+      // Act
+      const result = await sut.findBankPaymentUnconfirmed(10, 200);
+
+      // Assert
+      expect(result.map((row) => row.id)).toEqual([old.id]);
+    });
+
+    it('should exclude charges whose Inter GET already recorded FALHA_EMISSAO', async() => {
+      // Arrange — confirmedAt nulo é correto (boleto não cobrável), mas o GET eterno não.
+      const pending = await seed({
+        status: NfseStatus.ISSUED,
+        bankPaymentRequestCode: 'req-pending',
+        bankPaymentRequestedAt: new Date(Date.now() - 60 * 60_000),
+      });
+      await seed({
+        status: NfseStatus.ISSUED,
+        bankPaymentRequestCode: 'req-failed',
+        bankPaymentRequestedAt: new Date(Date.now() - 60 * 60_000),
+        bankPaymentFailedAt: new Date(),
+      });
+
+      // Act
+      const result = await sut.findBankPaymentUnconfirmed(10, 200);
+
+      // Assert
+      expect(result.map((row) => row.id)).toEqual([pending.id]);
     });
   });
 });

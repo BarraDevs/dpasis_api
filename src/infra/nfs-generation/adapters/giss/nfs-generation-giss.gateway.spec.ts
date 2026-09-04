@@ -9,6 +9,8 @@ import { GissSoapCallError } from './soap/giss-soap-call.error';
 import { NfsProviderEnvironment } from '../../dtos/nfs-provider-credentials.dto';
 import { GissBatchStatusMapper } from './mappers/giss-batch-status.mapper';
 import { GissCancelNfseMapper } from './mappers/giss-cancel-nfse.mapper';
+import { GissConsultarNfseRpsMapper } from './mappers/giss-consultar-nfse-rps.mapper';
+import { GissConsultarServicoPrestadoMapper } from './mappers/giss-consultar-servico-prestado.mapper';
 import { GissIssueBatchMapper } from './mappers/giss-issue-batch.mapper';
 import { NfsGenerationGissAdapterGateway } from './nfs-generation-giss.gateway';
 import { GissPfxLoader } from './signing/giss-pfx-loader';
@@ -18,6 +20,8 @@ import { GissSoapClient } from './soap/giss-soap-client';
 jest.mock('./mappers/giss-issue-batch.mapper');
 jest.mock('./mappers/giss-batch-status.mapper');
 jest.mock('./mappers/giss-cancel-nfse.mapper');
+jest.mock('./mappers/giss-consultar-nfse-rps.mapper');
+jest.mock('./mappers/giss-consultar-servico-prestado.mapper');
 jest.mock('./signing/giss-pfx-loader');
 jest.mock('./signing/giss-xml-signer');
 jest.mock('./soap/giss-soap-client');
@@ -28,6 +32,10 @@ const mockedBuildConsultar = GissBatchStatusMapper.buildConsultarLoteRpsXml as j
 const mockedParseConsultar = GissBatchStatusMapper.parseConsultarLoteRpsResponse as jest.Mock;
 const mockedBuildCancelar = GissCancelNfseMapper.buildCancelarNfseXml as jest.Mock;
 const mockedParseCancelar = GissCancelNfseMapper.parseCancelarNfseResponse as jest.Mock;
+const mockedBuildConsultarPorRps = GissConsultarNfseRpsMapper.buildConsultarNfsePorRpsXml as jest.Mock;
+const mockedParseConsultarPorRps = GissConsultarNfseRpsMapper.parseConsultarNfsePorRpsResponse as jest.Mock;
+const mockedBuildServicoPrestado = GissConsultarServicoPrestadoMapper.buildConsultarNfseServicoPrestadoXml as jest.Mock;
+const mockedParseServicoPrestado = GissConsultarServicoPrestadoMapper.parseConsultarNfseServicoPrestadoResponse as jest.Mock;
 const mockedLoadCert = GissPfxLoader.load as jest.Mock;
 const mockedSign = GissXmlSigner.signElementById as jest.Mock;
 const mockedSignWholeDocument = GissXmlSigner.signWholeDocument as jest.Mock;
@@ -49,6 +57,24 @@ const provider = {
 const batchStatusInput = {
   batchProtocol: 'PROTO-123',
   providerDocument: '12345678000199',
+  provider,
+};
+
+const findByRpsInput = {
+  nfseId: 7,
+  rpsNumber: 41,
+  rpsSeries: 'A',
+  providerDocument: '12345678000199',
+  providerMunicipalRegistration: '16895',
+  provider,
+};
+
+const listIssuedInput = {
+  startDate: '2026-09-03',
+  endDate: '2026-09-03',
+  page: 1,
+  providerDocument: '12345678000199',
+  providerMunicipalRegistration: '16895',
   provider,
 };
 
@@ -483,6 +509,158 @@ describe('NfsGenerationGissAdapterGateway - Unit tests', () => {
         durationMs: 12,
         errorClass: null,
       }]);
+    });
+  });
+  describe('findNfseByRps', () => {
+    it('should sign the whole document — the XSD says optional, the provider requires it', async() => {
+      // Arrange
+      mockedBuildConsultarPorRps.mockReturnValue('<consulta/>');
+      mockedSignWholeDocument.mockReturnValue('<consulta assinada/>');
+      mockedPostSoap.mockResolvedValue(soapCall());
+      mockedParseConsultarPorRps.mockReturnValue({ found: false });
+
+      // Act
+      await sut.findNfseByRps(findByRpsInput);
+
+      // Assert
+      expect(mockedSignWholeDocument).toHaveBeenCalledWith('<consulta/>', certMaterial);
+      expect(mockedSign).not.toHaveBeenCalled();
+      expect(mockedPostSoap).toHaveBeenCalledWith(
+        httpService,
+        'demonstracao',
+        'ConsultarNfsePorRps',
+        '<consulta assinada/>',
+        certMaterial,
+      );
+    });
+
+    it('should return what the mapper read from the provider', async() => {
+      // Arrange
+      const parsed = { found: true, note: { rpsNumber: 41, rpsSeries: 'A', nfseNumber: '1', verificationCode: 'V', issueDate: 'D' } };
+      mockedBuildConsultarPorRps.mockReturnValue('<consulta/>');
+      mockedSignWholeDocument.mockReturnValue('<assinada/>');
+      mockedPostSoap.mockResolvedValue(soapCall('<resposta/>'));
+      mockedParseConsultarPorRps.mockReturnValue(parsed);
+
+      // Act
+      const result = await sut.findNfseByRps(findByRpsInput);
+
+      // Assert
+      expect(result).toBe(parsed);
+      expect(mockedParseConsultarPorRps).toHaveBeenCalledWith('<resposta/>');
+    });
+
+    it('should record the attempt under CONSULTAR_POR_RPS', async() => {
+      // Arrange
+      mockedBuildConsultarPorRps.mockReturnValue('<consulta/>');
+      mockedSignWholeDocument.mockReturnValue('<assinada/>');
+      mockedPostSoap.mockResolvedValue(soapCall());
+      mockedParseConsultarPorRps.mockReturnValue({ found: false });
+
+      // Act
+      await sut.findNfseByRps(findByRpsInput);
+
+      // Assert
+      expect(attemptRecorder.attempts).toEqual([expect.objectContaining({
+        nfseId: 7,
+        operation: 'CONSULTAR_POR_RPS',
+        httpStatus: 200,
+      })]);
+    });
+
+    it('should wrap unexpected failures in ExternalApiError and log them', async() => {
+      // Arrange
+      mockedBuildConsultarPorRps.mockReturnValue('<consulta/>');
+      mockedSignWholeDocument.mockReturnValue('<assinada/>');
+      mockedPostSoap.mockRejectedValue(new GissSoapCallError(new Error('timeout'), {
+        requestBody: '<req/>', responseBody: null, httpStatus: null, durationMs: 5,
+      }));
+
+      // Act & Assert
+      await expect(sut.findNfseByRps(findByRpsInput)).rejects.toThrow(ExternalApiError);
+      expect(logger.error).toHaveBeenCalledWith(LogContext.NFS_GENERATION, expect.objectContaining({
+        adapter: 'giss',
+        action: 'findNfseByRps',
+        rpsNumber: 41,
+      }));
+    });
+
+    it('should let NfsProviderConfigError through untouched', async() => {
+      // Arrange
+      const error = new NfsProviderConfigError('certificado vencido');
+      mockedLoadCert.mockImplementation(() => { throw error; });
+
+      // Act & Assert
+      await expect(sut.findNfseByRps(findByRpsInput)).rejects.toBe(error);
+    });
+
+    it('should throw NfsProviderConfigError when municipioSlug is missing', async() => {
+      // Act & Assert
+      await expect(sut.findNfseByRps({
+        ...findByRpsInput,
+        provider: { ...provider, vendorConfig: {} },
+      })).rejects.toThrow(NfsProviderConfigError);
+    });
+  });
+
+  describe('listIssuedNfseByPeriod', () => {
+    it('should sign the whole document and post ConsultarNfseServicoPrestado', async() => {
+      // Arrange
+      mockedBuildServicoPrestado.mockReturnValue('<periodo/>');
+      mockedSignWholeDocument.mockReturnValue('<periodo assinado/>');
+      mockedPostSoap.mockResolvedValue(soapCall('<resposta/>'));
+      mockedParseServicoPrestado.mockReturnValue({ notes: [], endOfPages: true });
+
+      // Act
+      const result = await sut.listIssuedNfseByPeriod(listIssuedInput);
+
+      // Assert
+      expect(result).toEqual({ notes: [], endOfPages: true });
+      expect(mockedSignWholeDocument).toHaveBeenCalledWith('<periodo/>', certMaterial);
+      expect(mockedPostSoap).toHaveBeenCalledWith(
+        httpService,
+        'demonstracao',
+        'ConsultarNfseServicoPrestado',
+        '<periodo assinado/>',
+        certMaterial,
+      );
+    });
+
+    it('should not anchor the attempt to any nfse — the query is not about one note', async() => {
+      // Arrange
+      mockedBuildServicoPrestado.mockReturnValue('<periodo/>');
+      mockedSignWholeDocument.mockReturnValue('<assinado/>');
+      mockedPostSoap.mockResolvedValue(soapCall());
+      mockedParseServicoPrestado.mockReturnValue({ notes: [], endOfPages: true });
+
+      // Act
+      await sut.listIssuedNfseByPeriod(listIssuedInput);
+
+      // Assert
+      expect(attemptRecorder.attempts).toEqual([]);
+    });
+
+    it('should wrap unexpected failures in ExternalApiError and log them', async() => {
+      // Arrange
+      mockedBuildServicoPrestado.mockReturnValue('<periodo/>');
+      mockedSignWholeDocument.mockReturnValue('<assinado/>');
+      mockedPostSoap.mockRejectedValue(new Error('502'));
+
+      // Act & Assert
+      await expect(sut.listIssuedNfseByPeriod(listIssuedInput)).rejects.toThrow(ExternalApiError);
+      expect(logger.error).toHaveBeenCalledWith(LogContext.NFS_GENERATION, expect.objectContaining({
+        adapter: 'giss',
+        action: 'listIssuedNfseByPeriod',
+      }));
+    });
+
+    it('should let NfsProviderConfigError through untouched', async() => {
+      // Arrange
+      const error = new NfsProviderConfigError('senha do certificado ausente');
+      mockedLoadCert.mockImplementation(() => { throw error; });
+
+      // Act & Assert
+      await expect(sut.listIssuedNfseByPeriod(listIssuedInput)).rejects.toBe(error);
     });
   });
 });
