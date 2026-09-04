@@ -88,6 +88,10 @@ export class InterCobrancaMapper {
       params.situacao = situacao;
     }
 
+    if (input.yourNumber?.trim()) {
+      params.seuNumero = input.yourNumber.trim();
+    }
+
     if (input.payerName?.trim()) {
       params.pessoaPagadora = input.payerName.trim();
     }

@@ -69,4 +69,23 @@ describe('IssueBankPaymentInputDto', () => {
       expectMessageToContain(error.getResponse().message, 'provider');
     });
   });
+
+  describe('nfseId', () => {
+    it('should accept when nfseId is omitted', async() => {
+      const result = await target.transform(makeValidInput(), metadata);
+      expect(result.nfseId).toBeUndefined();
+    });
+
+    it('should accept a positive nfseId', async() => {
+      const result = await target.transform(makeValidInput({ nfseId: 1 }), metadata);
+      expect(result.nfseId).toBe(1);
+    });
+
+    it.each([0, -1])('should reject non-positive nfseId (%s)', async(value: number) => {
+      expect.assertions(1);
+      return target.transform(makeValidInput({ nfseId: value }), metadata).catch((error) => {
+        expectMessageToContain(error.getResponse().message, 'nfseId');
+      });
+    });
+  });
 });

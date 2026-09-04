@@ -16,6 +16,11 @@ export class NfseDto {
   cancelReasonCode: number | null;
   bankPaymentProvider: string | null;
   bankPaymentRequestCode: string | null;
+  bankPaymentIdempotencyKey: string | null;
+  bankPaymentRequestedAt: Date | null;
+  bankPaymentErrorMessage: string | null;
+  bankPaymentFailedAt: Date | null;
+  nfmId: number | null;
   data: Record<string, unknown>;
   createdAt: Date;
   updatedAt: Date;

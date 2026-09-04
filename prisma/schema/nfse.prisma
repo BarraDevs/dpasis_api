@@ -1,26 +1,43 @@
 model Nfse {
-  id                      Int       @id @default(autoincrement())
-  companyId               Int
-  clientId                Int
-  rpsNumber               Int
-  rpsSeries               String
-  status                  String
-  batchProtocol           String?
-  nfseNumber              String?
-  verificationCode        String?
-  issuedAt                DateTime?
-  errorMessage            String?
-  canceledAt              DateTime?
-  cancelReasonCode        Int?
-  bankPaymentProvider     String?
-  bankPaymentRequestCode  String?
-  data                    Json
-  createdAt               DateTime  @default(now())
-  updatedAt               DateTime  @updatedAt
+  id                        Int       @id @default(autoincrement())
+  companyId                 Int
+  clientId                  Int
+  // Vínculo com a NFM em escalar puro, sem `@relation`: `Nfm.nfseId` já declara a relação 1:1 e uma
+  // segunda relação entre os mesmos models exigiria nomear as duas nos dois lados. As duas colunas
+  // são escritas na mesma transação (`INfseRepository.reserve`), e é sobre esta que vive o índice
+  // único parcial `nfses_one_active_per_nfm` — a garantia de banco de que uma NFM não tem duas
+  // NFS-e vivas.
+  //
+  // Sem FK de propósito: `nfms.nfseId` já aponta para cá, e uma FK de volta fecharia um ciclo entre
+  // as duas tabelas — nenhuma das duas linhas poderia ser inserida primeiro sem constraint
+  // deferrable. É justamente essa ausência que permite criar a NFS-e e só então atualizar a NFM
+  // dentro da mesma transação.
+  nfmId                     Int?
+  rpsNumber                 Int
+  rpsSeries                 String
+  status                    String
+  batchProtocol             String?
+  nfseNumber                String?
+  verificationCode          String?
+  issuedAt                  DateTime?
+  errorMessage              String?
+  canceledAt                DateTime?
+  cancelReasonCode          Int?
+  bankPaymentProvider       String?
+  bankPaymentRequestCode    String?
+  bankPaymentIdempotencyKey String?   @unique
+  bankPaymentRequestedAt    DateTime?
+  bankPaymentErrorMessage   String?
+  bankPaymentFailedAt       DateTime?
+  data                      Json
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
 
   nfm Nfm?
 
   @@unique([companyId, rpsSeries, rpsNumber])
+  @@index([status, updatedAt])
+  @@index([nfmId])
   @@map("nfses")
 }
 
@@ -30,4 +47,38 @@ model NfseRpsSequence {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("nfse_rps_sequences")
+}
+
+/// Trilha de diagnóstico das chamadas a provedor (GISS e Inter). Sem ela uma rejeição só pode ser
+/// investigada reproduzindo contra a produção. Os corpos carregam dados do tomador — não há job de
+/// purga ainda, é dívida conhecida registrada na auditoria.
+model NfseAttempt {
+  id           Int      @id @default(autoincrement())
+  nfseId       Int
+  operation    String
+  requestBody  String?  @db.Text
+  responseBody String?  @db.Text
+  httpStatus   Int?
+  errorClass   String?
+  durationMs   Int?
+  createdAt    DateTime @default(now())
+
+  @@index([nfseId, createdAt])
+  @@map("nfse_attempts")
+}
+
+/// Outbox: a intenção de despachar o job é gravada na mesma transação que cria a NFS-e, e só é
+/// marcada como despachada depois de o job entrar no Redis. Uma linha com `dispatchedAt` nulo é uma
+/// NFS-e que existe e nunca foi enfileirada — o insumo do sweeper da Onda 3.
+model NfseOutbox {
+  id           Int       @id @default(autoincrement())
+  nfseId       Int
+  jobName      String
+  payload      Json
+  availableAt  DateTime  @default(now())
+  dispatchedAt DateTime?
+  createdAt    DateTime  @default(now())
+
+  @@index([dispatchedAt, availableAt])
+  @@map("nfse_outbox")
 }

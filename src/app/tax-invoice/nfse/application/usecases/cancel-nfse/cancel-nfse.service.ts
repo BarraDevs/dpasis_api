@@ -35,6 +35,7 @@ export class CancelNfse {
     };
 
     const result = await this.nfsGenerationGateway.cancelNfse({
+      nfseId: nfse.props.id,
       nfseNumber: nfse.props.nfseNumber!,
       providerDocument: snapshot.providerDocument,
       providerMunicipalCodeIbge: providerConfig.municipalCodeIbge,

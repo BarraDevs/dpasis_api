@@ -1,10 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { FindCompanyNfsConfigByCompanyId } from 'src/app/company/company-nfs-config/application/usecases/find-company-nfs-config-by-company-id/find-company-nfs-config-by-company-id.service';
-import type { INfseRepository } from 'src/app/tax-invoice/nfse/application/persistence/repository/nfse-repository.interface';
 import { IssueNfse } from 'src/app/tax-invoice/nfse/application/usecases/issue-nfse/issue-nfse.service';
 import { TOKENS } from 'src/core/di/token';
 import { AppException } from 'src/core/filters/app.exception';
 import { Nfm } from '../../../domain/entities/nfm.entity';
+import { NfmAlreadyHasActiveNfseError } from '../../../domain/errors/nfm-already-has-active-nfse.error';
 import { NfmWithoutServiceItemsError } from '../../../domain/errors/nfm-without-service-items.error';
 import { NfmFactory } from '../../../domain/factories/nfm.factory';
 import { NfmToIssueNfseMapper } from '../../mappers/nfm-to-issue-nfse.mapper';
@@ -20,7 +20,6 @@ import {
 export class SaveElegibleNfms {
   constructor(
     @Inject(TOKENS.NfmRepository) private readonly nfmRepository: INfmRepository,
-    @Inject(TOKENS.NfseRepository) private readonly nfseRepository: INfseRepository,
     @Inject(TOKENS.NfmCronRunDao) private readonly nfmCronRunDao: INfmCronRunDao,
     private readonly findElegibleClients: FindElegibleClients,
     private readonly findCompanyNfsConfigByCompanyId: FindCompanyNfsConfigByCompanyId,
@@ -89,19 +88,22 @@ export class SaveElegibleNfms {
 
         const providerConfig = await this.findCompanyNfsConfigByCompanyId.execute(elegible.client.company.id);
         const issueInput = NfmToIssueNfseMapper.toIssueNfseInput(elegible, providerConfig);
-        const issued = await this.issueNfse.execute(issueInput);
 
-        const nfse = await this.nfseRepository.findById(issued.id);
-        if (!nfse) {
-          throw new AppException(`NFS-e ${issued.id} não encontrada após emissão.`);
-        }
-
-        nfm.linkNfse(nfse);
-        await this.nfmRepository.edit(nfm);
+        // O vínculo NFM -> NFS-e agora nasce dentro da transação de `IssueNfse`; não há mais uma
+        // janela entre "NFS-e criada" e "NFM sabe da NFS-e" para um crash aproveitar.
+        await this.issueNfse.execute({ ...issueInput, nfmId: nfm.props.id });
 
         result.created += 1;
       }
       catch (error: unknown) {
+        // O índice único parcial recusou porque já existe NFS-e viva para esta NFM — é a corrida do
+        // P1-05 perdendo, não um erro de emissão. Contar como falha faria o relatório acusar um
+        // problema onde a guarda funcionou.
+        if (error instanceof NfmAlreadyHasActiveNfseError) {
+          result.skipped += 1;
+          continue;
+        }
+
         const message = this.resolveErrorMessage(error);
         const errorDto: SaveElegibleNfmErrorDto = { clientId, cnaeNbsIndopId, message };
         result.failed += 1;

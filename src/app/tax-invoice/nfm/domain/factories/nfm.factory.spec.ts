@@ -103,6 +103,11 @@ describe('NfmFactory - Unit tests', () => {
         cancelReasonCode: null,
         bankPaymentProvider: null,
         bankPaymentRequestCode: null,
+        bankPaymentIdempotencyKey: null,
+        bankPaymentRequestedAt: null,
+        bankPaymentErrorMessage: null,
+        bankPaymentFailedAt: null,
+        nfmId: null,
         data: {},
       });
 

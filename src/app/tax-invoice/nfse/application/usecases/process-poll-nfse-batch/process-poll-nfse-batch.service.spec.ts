@@ -5,6 +5,7 @@ import { FindCompanyNfsConfigByCompanyId } from 'src/app/company/company-nfs-con
 import { CompanyNfsConfigNotFoundError } from 'src/app/company/company-nfs-config/domain/errors/company-nfs-config-not-found.error';
 import { TOKENS } from 'src/core/di/token';
 import { LogContext, type ILoggerGateway } from 'src/infra/logger/logger.gateway';
+import { NfsProviderConfigError } from 'src/infra/nfs-generation/errors/nfs-provider-config.error';
 import { NfsBatchErrorKind, NfsBatchSituation } from 'src/infra/nfs-generation/dtos/nfs-batch-status.dto';
 import { NfsProviderEnvironment } from 'src/infra/nfs-generation/dtos/nfs-provider-credentials.dto';
 import type { INfsGenerationGateway } from 'src/infra/nfs-generation/nfs-generation.gateway';
@@ -33,6 +34,11 @@ function makeNfseProps(overrides: Partial<NfseProps> = {}): NfseProps {
     cancelReasonCode: null,
     bankPaymentProvider: null,
     bankPaymentRequestCode: null,
+    bankPaymentIdempotencyKey: null,
+    bankPaymentRequestedAt: null,
+    bankPaymentErrorMessage: null,
+    bankPaymentFailedAt: null,
+    nfmId: null,
     data: { providerDocument: '12345678000199' },
     ...overrides,
   };
@@ -165,6 +171,85 @@ describe('ProcessPollNfseBatch - Unit tests', () => {
     });
     expect(queueProducer.addPollBatchJob).not.toHaveBeenCalled();
     expect(queueProducer.addIssueBankPaymentJob).toHaveBeenCalledWith({ nfseId: 1 });
+  });
+
+  it('should pick the note whose RPS matches, not the first one in the batch', async() => {
+    // Arrange
+    const nfse = NfseFactory.load(makeNfseProps());
+    jest.spyOn(nfseRepository, 'findById').mockResolvedValue(nfse);
+    jest.spyOn(nfsGenerationGateway, 'getBatchStatus').mockResolvedValue({
+      situation: NfsBatchSituation.Success,
+      issuedNotes: [
+        { rpsNumber: 5, rpsSeries: 'NFSE', nfseNumber: '998', verificationCode: 'XXX', issueDate: '2026-07-20T10:00:00' },
+        { rpsNumber: 7, rpsSeries: ' nfse ', nfseNumber: '1000', verificationCode: 'ABC123', issueDate: '2026-07-20T10:00:00' },
+        { rpsNumber: 9, rpsSeries: 'NFSE', nfseNumber: '1002', verificationCode: 'ZZZ', issueDate: '2026-07-20T10:00:00' },
+      ],
+    });
+
+    // Act
+    await sut.execute({ nfseId: 1, attempt: 1 });
+
+    // Assert
+    expect(nfse.props).toMatchObject({
+      status: NfseStatus.ISSUED,
+      nfseNumber: '1000',
+      verificationCode: 'ABC123',
+    });
+  });
+
+  it('should not mark ISSUED when no returned note matches the local RPS', async() => {
+    // Arrange
+    const nfse = NfseFactory.load(makeNfseProps());
+    jest.spyOn(nfseRepository, 'findById').mockResolvedValue(nfse);
+    jest.spyOn(nfsGenerationGateway, 'getBatchStatus').mockResolvedValue({
+      situation: NfsBatchSituation.Success,
+      issuedNotes: [
+        { rpsNumber: 5, rpsSeries: 'NFSE', nfseNumber: '998', verificationCode: 'XXX', issueDate: '2026-07-20T10:00:00' },
+        { rpsNumber: 9, rpsSeries: 'NFSE', nfseNumber: '1002', verificationCode: 'ZZZ', issueDate: '2026-07-20T10:00:00' },
+      ],
+    });
+
+    // Act
+    await sut.execute({ nfseId: 1, attempt: 1 });
+
+    // Assert
+    expect(nfse.props.status).toBe(NfseStatus.AWAITING_PROVIDER);
+    expect(nfse.props.nfseNumber).toBeNull();
+    expect(nfse.props.errorMessage).toContain('nenhuma corresponde ao RPS 7/NFSE');
+    expect(queueProducer.addIssueBankPaymentJob).not.toHaveBeenCalled();
+  });
+
+  it('should accept a single note without RPS identification (lote de 1 RPS)', async() => {
+    // Arrange
+    const nfse = NfseFactory.load(makeNfseProps());
+    jest.spyOn(nfseRepository, 'findById').mockResolvedValue(nfse);
+    jest.spyOn(nfsGenerationGateway, 'getBatchStatus').mockResolvedValue({
+      situation: NfsBatchSituation.Success,
+      issuedNotes: [
+        { rpsNumber: 0, rpsSeries: '', nfseNumber: '1000', verificationCode: 'ABC123', issueDate: '2026-07-20T10:00:00' },
+      ],
+    });
+
+    // Act
+    await sut.execute({ nfseId: 1, attempt: 1 });
+
+    // Assert
+    expect(nfse.props).toMatchObject({ status: NfseStatus.ISSUED, nfseNumber: '1000' });
+  });
+
+  it('should stop polling without burning a ladder step on a provider config error', async() => {
+    // Arrange
+    const nfse = NfseFactory.load(makeNfseProps());
+    jest.spyOn(nfseRepository, 'findById').mockResolvedValue(nfse);
+    jest.spyOn(nfsGenerationGateway, 'getBatchStatus')
+      .mockRejectedValue(new NfsProviderConfigError('certificado expirado'));
+
+    // Act
+    await sut.execute({ nfseId: 1, attempt: 1 });
+
+    // Assert
+    expect(nfse.props.status).toBe(NfseStatus.AWAITING_PROVIDER);
+    expect(queueProducer.addPollBatchJob).not.toHaveBeenCalled();
   });
 
   it('should mark the nfse FAILED when the provider reports an error', async() => {

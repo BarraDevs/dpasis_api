@@ -2,13 +2,13 @@ import { createMock } from '@golevelup/ts-jest';
 import { Test } from '@nestjs/testing';
 import { FindCompanyNfsConfigByCompanyId } from 'src/app/company/company-nfs-config/application/usecases/find-company-nfs-config-by-company-id/find-company-nfs-config-by-company-id.service';
 import { CompanyNfsConfigDto } from 'src/app/company/company-nfs-config/application/dtos/company-nfs-config.dto';
-import type { INfseRepository } from 'src/app/tax-invoice/nfse/application/persistence/repository/nfse-repository.interface';
 import { IssueNfse } from 'src/app/tax-invoice/nfse/application/usecases/issue-nfse/issue-nfse.service';
 import { NfseStatus } from 'src/app/tax-invoice/nfse/domain/enums/nfse-status.enum';
 import { NfseFactory } from 'src/app/tax-invoice/nfse/domain/factories/nfse.factory';
 import { TOKENS } from 'src/core/di/token';
 import { AppException } from 'src/core/filters/app.exception';
 import { Nfm } from '../../../domain/entities/nfm.entity';
+import { NfmAlreadyHasActiveNfseError } from '../../../domain/errors/nfm-already-has-active-nfse.error';
 import { NfmFactory } from '../../../domain/factories/nfm.factory';
 import { NfmDto } from '../../dtos/nfm.dto';
 import type { INfmCronRunDao } from '../../persistence/dao/nfm-cron-run-dao.interface';
@@ -170,6 +170,11 @@ function makePersistedNfm(overrides: { id?: number; withNfse?: boolean } = {}): 
       cancelReasonCode: null,
       bankPaymentProvider: null,
       bankPaymentRequestCode: null,
+      bankPaymentIdempotencyKey: null,
+      bankPaymentRequestedAt: null,
+      bankPaymentErrorMessage: null,
+      bankPaymentFailedAt: null,
+      nfmId: null,
       data: {},
     }));
   }
@@ -177,32 +182,11 @@ function makePersistedNfm(overrides: { id?: number; withNfse?: boolean } = {}): 
   return entity;
 }
 
-function makeIssuedNfseEntity(id: number) {
-  return NfseFactory.load({
-    id,
-    companyId: 1,
-    clientId: 1,
-    rpsNumber: 1,
-    rpsSeries: '1',
-    status: NfseStatus.PENDING,
-    batchProtocol: null,
-    nfseNumber: null,
-    verificationCode: null,
-    issuedAt: null,
-    errorMessage: null,
-    canceledAt: null,
-    cancelReasonCode: null,
-    bankPaymentProvider: null,
-    bankPaymentRequestCode: null,
-    data: {},
-  });
-}
 
 describe('SaveElegibleNfms - Unit tests', () => {
   let sut: SaveElegibleNfms;
   let findElegibleClients: jest.Mocked<FindElegibleClients>;
   let nfmRepository: jest.Mocked<INfmRepository>;
-  let nfseRepository: jest.Mocked<INfseRepository>;
   let nfmCronRunDao: jest.Mocked<INfmCronRunDao>;
   let findCompanyNfsConfigByCompanyId: jest.Mocked<FindCompanyNfsConfigByCompanyId>;
   let issueNfse: jest.Mocked<IssueNfse>;
@@ -210,7 +194,6 @@ describe('SaveElegibleNfms - Unit tests', () => {
   beforeEach(async() => {
     findElegibleClients = createMock<FindElegibleClients>();
     nfmRepository = createMock<INfmRepository>();
-    nfseRepository = createMock<INfseRepository>();
     nfmCronRunDao = createMock<INfmCronRunDao>();
     findCompanyNfsConfigByCompanyId = createMock<FindCompanyNfsConfigByCompanyId>();
     issueNfse = createMock<IssueNfse>();
@@ -220,7 +203,6 @@ describe('SaveElegibleNfms - Unit tests', () => {
         SaveElegibleNfms,
         { provide: FindElegibleClients, useValue: findElegibleClients },
         { provide: TOKENS.NfmRepository, useValue: nfmRepository },
-        { provide: TOKENS.NfseRepository, useValue: nfseRepository },
         { provide: TOKENS.NfmCronRunDao, useValue: nfmCronRunDao },
         { provide: FindCompanyNfsConfigByCompanyId, useValue: findCompanyNfsConfigByCompanyId },
         { provide: IssueNfse, useValue: issueNfse },
@@ -254,7 +236,7 @@ describe('SaveElegibleNfms - Unit tests', () => {
     });
   });
 
-  it('should create nfm, issue nfse and link nfse', async() => {
+  it('should create nfm and hand the nfmId to IssueNfse so the link is written in the same transaction', async() => {
     // Arrange
     const nfm = makeNfmDto();
     findElegibleClients.execute.mockResolvedValue([nfm]);
@@ -262,7 +244,6 @@ describe('SaveElegibleNfms - Unit tests', () => {
     nfmRepository.save.mockResolvedValue(99);
     findCompanyNfsConfigByCompanyId.execute.mockResolvedValue(makeProviderConfig());
     issueNfse.execute.mockResolvedValue({ id: 55, status: NfseStatus.PENDING });
-    nfseRepository.findById.mockResolvedValue(makeIssuedNfseEntity(55));
 
     // Act
     const result = await sut.execute();
@@ -271,10 +252,8 @@ describe('SaveElegibleNfms - Unit tests', () => {
     expect(result).toEqual({ created: 1, skipped: 0, failed: 0, errors: [] });
     expect(nfmRepository.save).toHaveBeenCalledWith(expect.any(Nfm));
     expect(issueNfse.execute).toHaveBeenCalledTimes(1);
-    expect(nfseRepository.findById).toHaveBeenCalledWith(55);
-    const edited = nfmRepository.edit.mock.calls[0][0] as Nfm;
-    expect(edited.props.id).toBe(99);
-    expect(edited.props.nfse?.props.id).toBe(55);
+    expect(issueNfse.execute).toHaveBeenCalledWith(expect.objectContaining({ nfmId: 99 }));
+    expect(nfmRepository.edit).not.toHaveBeenCalled();
     expect(nfmCronRunDao.save).toHaveBeenCalledWith({
       created: 1,
       skipped: 0,
@@ -313,7 +292,6 @@ describe('SaveElegibleNfms - Unit tests', () => {
     );
     findCompanyNfsConfigByCompanyId.execute.mockResolvedValue(makeProviderConfig());
     issueNfse.execute.mockResolvedValue({ id: 77, status: NfseStatus.PENDING });
-    nfseRepository.findById.mockResolvedValue(makeIssuedNfseEntity(77));
 
     // Act
     const result = await sut.execute();
@@ -321,10 +299,24 @@ describe('SaveElegibleNfms - Unit tests', () => {
     // Assert
     expect(result.created).toBe(1);
     expect(nfmRepository.save).not.toHaveBeenCalled();
-    const edited = nfmRepository.edit.mock.calls[0][0] as Nfm;
-    expect(edited.props.id).toBe(10);
-    expect(edited.props.nfse?.props.id).toBe(77);
+    expect(issueNfse.execute).toHaveBeenCalledWith(expect.objectContaining({ nfmId: 10 }));
     expect(nfmCronRunDao.save).toHaveBeenCalledTimes(1);
+  });
+
+  it('should count as skipped when the partial unique index refuses a second active nfse', async() => {
+    // Arrange
+    findElegibleClients.execute.mockResolvedValue([makeNfmDto()]);
+    nfmRepository.findByClientReferenceAndCnae.mockResolvedValue(
+      makePersistedNfm({ id: 10, withNfse: false }),
+    );
+    findCompanyNfsConfigByCompanyId.execute.mockResolvedValue(makeProviderConfig());
+    issueNfse.execute.mockRejectedValue(new NfmAlreadyHasActiveNfseError(10));
+
+    // Act
+    const result = await sut.execute();
+
+    // Assert
+    expect(result).toEqual({ created: 0, skipped: 1, failed: 0, errors: [] });
   });
 
   it('should continue after one failure and count failed', async() => {
@@ -348,7 +340,6 @@ describe('SaveElegibleNfms - Unit tests', () => {
       .mockRejectedValueOnce(new AppException('Config NFS-e não encontrada'))
       .mockResolvedValueOnce(makeProviderConfig());
     issueNfse.execute.mockResolvedValue({ id: 55, status: NfseStatus.PENDING });
-    nfseRepository.findById.mockResolvedValue(makeIssuedNfseEntity(55));
 
     // Act
     const result = await sut.execute();
@@ -362,7 +353,7 @@ describe('SaveElegibleNfms - Unit tests', () => {
       cnaeNbsIndopId: 2,
       message: 'Config NFS-e não encontrada',
     });
-    expect(nfmRepository.edit).toHaveBeenCalledTimes(1);
+    expect(issueNfse.execute).toHaveBeenCalledTimes(1);
     expect(nfmCronRunDao.save).toHaveBeenCalledWith({
       created: 1,
       skipped: 0,
@@ -422,26 +413,6 @@ describe('SaveElegibleNfms - Unit tests', () => {
     });
     expect(nfmRepository.save).not.toHaveBeenCalled();
     expect(issueNfse.execute).not.toHaveBeenCalled();
-    expect(nfmCronRunDao.save).toHaveBeenCalledTimes(1);
-  });
-
-  it('should mark failed when nfse is missing after issue', async() => {
-    // Arrange
-    findElegibleClients.execute.mockResolvedValue([makeNfmDto()]);
-    nfmRepository.findByClientReferenceAndCnae.mockResolvedValue(null);
-    nfmRepository.save.mockResolvedValue(99);
-    findCompanyNfsConfigByCompanyId.execute.mockResolvedValue(makeProviderConfig());
-    issueNfse.execute.mockResolvedValue({ id: 55, status: NfseStatus.PENDING });
-    nfseRepository.findById.mockResolvedValue(null);
-
-    // Act
-    const result = await sut.execute();
-
-    // Assert
-    expect(result.created).toBe(0);
-    expect(result.failed).toBe(1);
-    expect(result.errors[0].message).toContain('não encontrada após emissão');
-    expect(nfmRepository.edit).not.toHaveBeenCalled();
     expect(nfmCronRunDao.save).toHaveBeenCalledTimes(1);
   });
 

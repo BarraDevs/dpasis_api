@@ -15,6 +15,11 @@ export type NfseProps = NfseCreateProps & {
   cancelReasonCode: number | null;
   bankPaymentProvider: string | null;
   bankPaymentRequestCode: string | null;
+  bankPaymentIdempotencyKey: string | null;
+  bankPaymentRequestedAt: Date | null;
+  bankPaymentErrorMessage: string | null;
+  bankPaymentFailedAt: Date | null;
+  nfmId: number | null;
 };
 
 export type NfseCreateProps = {
@@ -126,10 +131,39 @@ export class Nfse {
     return !!this._props.bankPaymentRequestCode;
   }
 
+  /**
+   * Diz que uma tentativa anterior já chegou ao provedor. O Inter não aceita cabeçalho de
+   * idempotência — só uma chave implícita de 30 minutos —, então esta marca, gravada **antes** da
+   * chamada, é o que faz a tentativa seguinte consultar por `seuNumero` em vez de repetir o POST.
+   * É ela que protege o retry manual, que sempre acontece fora daqueles 30 minutos.
+   */
+  public hasRequestedBankPayment(): boolean {
+    return !!this._props.bankPaymentRequestedAt;
+  }
+
+  public markBankPaymentRequested(idempotencyKey: string): void {
+    this.ensureIssued();
+    this._props.bankPaymentIdempotencyKey = idempotencyKey;
+    this._props.bankPaymentRequestedAt = new Date();
+    this._props.bankPaymentErrorMessage = null;
+    this._props.bankPaymentFailedAt = null;
+  }
+
+  /**
+   * Registra por que o boleto não saiu. Não mexe em `status`: a nota continua `ISSUED` — o que
+   * falta é a cobrança, e sem esta coluna o alerta "ISSUED sem boleto" não tem como dizer o motivo.
+   */
+  public markBankPaymentFailed(errorMessage: string): void {
+    this._props.bankPaymentErrorMessage = errorMessage;
+    this._props.bankPaymentFailedAt = new Date();
+  }
+
   public linkBankPayment(provider: string, requestCode: string): void {
     this.ensureIssued();
     this._props.bankPaymentProvider = provider;
     this._props.bankPaymentRequestCode = requestCode;
+    this._props.bankPaymentErrorMessage = null;
+    this._props.bankPaymentFailedAt = null;
   }
 
   /**

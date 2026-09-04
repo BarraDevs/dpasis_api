@@ -157,6 +157,7 @@ async function seedNfse(
     clientId?: number;
     bankPaymentProvider?: string | null;
     bankPaymentRequestCode?: string | null;
+    bankPaymentRequestedAt?: Date | null;
     data?: NfseIssueSnapshot;
   } = {},
 ) {
@@ -173,6 +174,8 @@ async function seedNfse(
       issuedAt: overrides.status === NfseStatus.PENDING ? null : new Date('2026-08-20T12:00:00-03:00'),
       bankPaymentProvider: overrides.bankPaymentProvider ?? null,
       bankPaymentRequestCode: overrides.bankPaymentRequestCode ?? null,
+      bankPaymentRequestedAt: overrides.bankPaymentRequestedAt ?? null,
+      bankPaymentIdempotencyKey: overrides.bankPaymentRequestedAt ? `nfse-key-${Date.now()}` : null,
       data: (overrides.data ?? makeSnapshot()) as unknown as object,
     },
   });
@@ -201,8 +204,11 @@ describe('ProcessIssueNfseBankPayment - Integration tests', () => {
     await prisma.truncate();
     bankPaymentGateway.issueCalls.length = 0;
     bankPaymentGateway.findCalls.length = 0;
+    bankPaymentGateway.listCalls.length = 0;
     bankPaymentGateway.issueError = null;
     bankPaymentGateway.findError = null;
+    bankPaymentGateway.listError = null;
+    bankPaymentGateway.listResult = { items: [], total: 0 };
     bankPaymentGateway.issueResult = {
       provider: BankPaymentProvider.INTER,
       requestCode: 'fake-request-code',
@@ -367,6 +373,57 @@ describe('ProcessIssueNfseBankPayment - Integration tests', () => {
     expect(saved?.bankPaymentRequestCode).toBeNull();
   });
 
+  it('should query by seuNumero and link instead of posting again when a previous attempt reached the provider', async() => {
+    // Arrange
+    const company = await seedCompany(prisma);
+    const nfse = await seedNfse(prisma, company.id, {
+      bankPaymentRequestedAt: new Date('2026-08-20T15:05:00-03:00'),
+    });
+    bankPaymentGateway.listResult = {
+      items: [{
+        ...bankPaymentGateway.findResult,
+        requestCode: 'existing-by-seunumero',
+        yourNumber: String(nfse.id),
+        amount: 1000,
+        dueDate: '2026-08-15',
+      }],
+      total: 1,
+    };
+
+    // Act
+    const result = await sut.execute({ nfseId: nfse.id });
+
+    // Assert
+    expect(bankPaymentGateway.listCalls).toEqual([
+      expect.objectContaining({
+        yourNumber: String(nfse.id),
+        startDate: '2026-08-15',
+        endDate: '2026-08-15',
+      }),
+    ]);
+    expect(bankPaymentGateway.issueCalls).toHaveLength(0);
+    expect(result).toEqual({
+      provider: BankPaymentProvider.INTER,
+      requestCode: 'existing-by-seunumero',
+    });
+    const saved = await prisma.nfse.findUnique({ where: { id: nfse.id } });
+    expect(saved?.bankPaymentRequestCode).toBe('existing-by-seunumero');
+  });
+
+  it('should persist the idempotency key before calling the provider', async() => {
+    // Arrange
+    const company = await seedCompany(prisma);
+    const nfse = await seedNfse(prisma, company.id);
+
+    // Act
+    await sut.execute({ nfseId: nfse.id });
+
+    // Assert
+    const saved = await prisma.nfse.findUnique({ where: { id: nfse.id } });
+    expect(saved?.bankPaymentIdempotencyKey).toBe(`nfse-${nfse.id}`);
+    expect(saved?.bankPaymentRequestedAt).toBeInstanceOf(Date);
+  });
+
   it('should link the existing charge when the provider reports a duplicate with matching yourNumber', async() => {
     // Arrange
     const company = await seedCompany(prisma);
@@ -377,6 +434,8 @@ describe('ProcessIssueNfseBankPayment - Integration tests', () => {
       ...bankPaymentGateway.findResult,
       requestCode: existingRequestCode,
       yourNumber: String(nfse.id),
+      amount: 1000,
+      dueDate: '2026-08-15',
     };
 
     // Act

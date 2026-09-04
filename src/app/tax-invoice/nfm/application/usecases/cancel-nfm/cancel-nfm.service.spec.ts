@@ -53,6 +53,11 @@ function makeNfm(overrides: {
       cancelReasonCode: null,
       bankPaymentProvider: overrides.bankPaymentRequestCode ? BankPaymentProvider.INTER : null,
       bankPaymentRequestCode: overrides.bankPaymentRequestCode ?? null,
+      bankPaymentIdempotencyKey: null,
+      bankPaymentRequestedAt: null,
+      bankPaymentErrorMessage: null,
+      bankPaymentFailedAt: null,
+      nfmId: null,
       data: {},
     }));
   }
@@ -74,6 +79,11 @@ function makeNfm(overrides: {
       cancelReasonCode: null,
       bankPaymentProvider: null,
       bankPaymentRequestCode: null,
+      bankPaymentIdempotencyKey: null,
+      bankPaymentRequestedAt: null,
+      bankPaymentErrorMessage: null,
+      bankPaymentFailedAt: null,
+      nfmId: null,
       data: {},
     }));
   }

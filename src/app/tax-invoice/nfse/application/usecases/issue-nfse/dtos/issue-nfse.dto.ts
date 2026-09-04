@@ -105,6 +105,12 @@ export class IssueNfseInputDto {
   @IsPositive({ message: '$property deve ser positivo' })
   clientId: number;
 
+  @ApiPropertyOptional({ example: 1, description: 'NFM de origem; o vínculo é gravado na mesma transação da NFS-e' })
+  @IsOptional()
+  @IsInt({ message: '$property deve ser um número inteiro' })
+  @IsPositive({ message: '$property deve ser positivo' })
+  nfmId?: number;
+
   @ApiProperty({ example: false })
   @IsBoolean({ message: '$property deve ser um booleano' })
   simpleNationalOptant: boolean;

@@ -203,6 +203,7 @@ describe('CancelNfse - Integration tests', () => {
     await sut.execute(nfse.id, { cancelReasonCode: 2 });
 
     expect(nfsGenerationGateway.cancelNfse).toHaveBeenCalledWith({
+      nfseId: expect.any(Number),
       nfseNumber: '1000',
       providerDocument: '12345678000199',
       providerMunicipalCodeIbge: '3529401',

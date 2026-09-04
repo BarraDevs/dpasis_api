@@ -1,10 +1,23 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import { INfseRepository } from 'src/app/tax-invoice/nfse/application/persistence/repository/nfse-repository.interface';
+import { NfmAlreadyHasActiveNfseError } from 'src/app/tax-invoice/nfm/domain/errors/nfm-already-has-active-nfse.error';
+import {
+  INfseRepository,
+  ReserveNfseInput,
+  ReserveNfseOutput,
+} from 'src/app/tax-invoice/nfse/application/persistence/repository/nfse-repository.interface';
 import { Nfse } from 'src/app/tax-invoice/nfse/domain/entities/nfse.entity';
 import { NfseStatus } from 'src/app/tax-invoice/nfse/domain/enums/nfse-status.enum';
 import { NfseFactory } from 'src/app/tax-invoice/nfse/domain/factories/nfse.factory';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
+
+/**
+ * O índice único parcial é criado por migration e não existe no schema Prisma. A violação chega
+ * como P2002 genérico, e o `meta.target` traz ora o nome do índice, ora a lista de colunas — por
+ * isso os dois identificadores. Nenhuma outra restrição única de `nfses` envolve `nfmId`, então
+ * casar por qualquer um dos dois não confunde este índice com o de RPS duplicado.
+ */
+const ONE_ACTIVE_NFSE_PER_NFM_MARKERS = ['nfses_one_active_per_nfm', 'nfmId'];
 
 const NfseSelect = {
   id: true,
@@ -22,12 +35,100 @@ const NfseSelect = {
   cancelReasonCode: true,
   bankPaymentProvider: true,
   bankPaymentRequestCode: true,
+  bankPaymentIdempotencyKey: true,
+  bankPaymentRequestedAt: true,
+  bankPaymentErrorMessage: true,
+  bankPaymentFailedAt: true,
+  nfmId: true,
   data: true,
 } satisfies Prisma.NfseSelect;
 
 @Injectable()
 export class NfseRepositoryAdapterPrisma implements INfseRepository {
   constructor(private readonly prisma: PrismaService) {}
+
+  /**
+   * Uma transação só para: travar a NFM, consumir o número de RPS, criar a NFS-e, gravar o vínculo
+   * dos dois lados e registrar o despacho no outbox.
+   *
+   * A ordem importa. O `FOR UPDATE` na linha da NFM serializa duas requisições concorrentes para a
+   * mesma NFM (P1-05) — sem ele as duas leem `nfseId = NULL` e as duas emitem. O `getAndIncrement`
+   * do RPS entra aqui dentro para que o rollback devolva o número (P2-02): fora da transação, toda
+   * falha posterior queimava um número que a prefeitura depois cobra explicação.
+   */
+  public async reserve(input: ReserveNfseInput): Promise<ReserveNfseOutput> {
+    try {
+      return await this.prisma.$transaction(async(tx) => {
+        if (input.nfmId !== null) {
+          await tx.$executeRaw`SELECT id FROM nfms WHERE id = ${input.nfmId} FOR UPDATE`;
+        }
+
+        const sequence = await tx.$queryRaw<[{ next_id: bigint }]>`
+          INSERT INTO nfse_rps_sequences (company_id, next_id, updated_at)
+          VALUES (${input.companyId}, 2, NOW())
+          ON CONFLICT (company_id)
+          DO UPDATE SET next_id = nfse_rps_sequences.next_id + 1, updated_at = NOW()
+          RETURNING next_id - 1 AS next_id
+        `;
+        const rpsNumber = Number(sequence[0].next_id);
+
+        const nfse = await tx.nfse.create({
+          data: {
+            companyId: input.companyId,
+            clientId: input.clientId,
+            nfmId: input.nfmId,
+            rpsNumber,
+            rpsSeries: input.rpsSeries,
+            status: NfseStatus.PENDING,
+            data: input.data as unknown as Prisma.InputJsonValue,
+          },
+          select: { id: true },
+        });
+
+        if (input.nfmId !== null) {
+          await tx.nfm.update({
+            where: { id: input.nfmId },
+            data: { nfseId: nfse.id },
+          });
+        }
+
+        const outbox = await tx.nfseOutbox.create({
+          data: {
+            nfseId: nfse.id,
+            jobName: input.jobName,
+            payload: { nfseId: nfse.id } as Prisma.InputJsonValue,
+          },
+          select: { id: true },
+        });
+
+        return { nfseId: nfse.id, rpsNumber, outboxId: outbox.id };
+      });
+    }
+    catch (error: unknown) {
+      if (input.nfmId !== null && NfseRepositoryAdapterPrisma.isActiveNfsePerNfmViolation(error)) {
+        throw new NfmAlreadyHasActiveNfseError(input.nfmId);
+      }
+      throw error;
+    }
+  }
+
+  public async markOutboxDispatched(outboxId: number): Promise<void> {
+    await this.prisma.nfseOutbox.update({
+      where: { id: outboxId },
+      data: { dispatchedAt: new Date() },
+    });
+  }
+
+  /** Ver `ONE_ACTIVE_NFSE_PER_NFM_MARKERS`. */
+  private static isActiveNfsePerNfmViolation(error: unknown): boolean {
+    if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== 'P2002') {
+      return false;
+    }
+
+    const target = error.meta?.target;
+    const entries = Array.isArray(target) ? target.map(String) : [String(target ?? '')];
+    return entries.some((entry) => ONE_ACTIVE_NFSE_PER_NFM_MARKERS.some((marker) => entry.includes(marker)));
+  }
 
   public async save(entity: Nfse): Promise<number> {
     const props = entity.props;
@@ -63,6 +164,10 @@ export class NfseRepositoryAdapterPrisma implements INfseRepository {
         cancelReasonCode: props.cancelReasonCode,
         bankPaymentProvider: props.bankPaymentProvider,
         bankPaymentRequestCode: props.bankPaymentRequestCode,
+        bankPaymentIdempotencyKey: props.bankPaymentIdempotencyKey,
+        bankPaymentRequestedAt: props.bankPaymentRequestedAt,
+        bankPaymentErrorMessage: props.bankPaymentErrorMessage,
+        bankPaymentFailedAt: props.bankPaymentFailedAt,
         data: props.data as unknown as Prisma.InputJsonValue,
       },
     });
@@ -94,6 +199,11 @@ export class NfseRepositoryAdapterPrisma implements INfseRepository {
       cancelReasonCode: row.cancelReasonCode,
       bankPaymentProvider: row.bankPaymentProvider,
       bankPaymentRequestCode: row.bankPaymentRequestCode,
+      bankPaymentIdempotencyKey: row.bankPaymentIdempotencyKey,
+      bankPaymentRequestedAt: row.bankPaymentRequestedAt,
+      bankPaymentErrorMessage: row.bankPaymentErrorMessage,
+      bankPaymentFailedAt: row.bankPaymentFailedAt,
+      nfmId: row.nfmId,
       data: row.data as Record<string, unknown>,
     });
   }

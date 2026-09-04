@@ -10,6 +10,8 @@ import { ConfigService } from 'src/core/config/config.service';
 import { TOKENS } from 'src/core/di/token';
 import { LogContext, type ILoggerGateway } from 'src/infra/logger/logger.gateway';
 import { ExternalApiError } from 'src/shared/errors/external-api.error';
+import { PermanentProviderError } from 'src/shared/errors/permanent-provider.error';
+import { TransientProviderError } from 'src/shared/errors/transient-provider.error';
 import { buildTestCertificatePem } from 'src/test/fixtures/test-certificate';
 import { InterOauthConfigError } from './errors/inter-oauth-config.error';
 import { InterOauthClient } from './inter-oauth.client';
@@ -293,7 +295,7 @@ describe('InterOauthClient - Unit tests', () => {
     httpService.axiosRef.post.mockRejectedValue(networkError);
 
     // Act
-    await expect(sut.getAccessToken(SCOPE_A)).rejects.toBeInstanceOf(ExternalApiError);
+    await expect(sut.getAccessToken(SCOPE_A)).rejects.toBeInstanceOf(TransientProviderError);
     await expect(sut.getAccessToken(SCOPE_A)).rejects.toThrow('Falha ao obter token OAuth no Banco Inter.');
 
     // Assert
@@ -309,6 +311,25 @@ describe('InterOauthClient - Unit tests', () => {
     const logged = (logger.error as jest.Mock).mock.calls[0][1];
     expect(JSON.stringify(logged)).not.toContain('client-secret');
     expect(JSON.stringify(logged)).not.toContain('access-token-abc');
+  });
+
+  it.each([400, 403])('should classify OAuth HTTP %s as PermanentProviderError', async(status) => {
+    // Arrange
+    const axiosError = new AxiosError(`Request failed with status code ${status}`);
+    axiosError.response = {
+      status,
+      data: { error: 'invalid_client' },
+      statusText: 'Error',
+      headers: {},
+      config: {} as never,
+    };
+    httpService.axiosRef.post.mockRejectedValue(axiosError);
+
+    // Act / Assert
+    await expect(sut.getAccessToken(SCOPE_A)).rejects.toBeInstanceOf(PermanentProviderError);
+    await expect(sut.getAccessToken(SCOPE_A)).rejects.toThrow(
+      `Credencial OAuth do Banco Inter recusada (HTTP ${status}). Verifique INTER_CLIENT_ID/INTER_CLIENT_SECRET e o escopo.`,
+    );
   });
 
   it('should log axios failure without certs, private key or authorization', async() => {
@@ -335,7 +356,7 @@ describe('InterOauthClient - Unit tests', () => {
     httpService.axiosRef.post.mockRejectedValue(axiosError);
 
     // Act
-    await expect(sut.getAccessToken(SCOPE_A)).rejects.toBeInstanceOf(ExternalApiError);
+    await expect(sut.getAccessToken(SCOPE_A)).rejects.toBeInstanceOf(PermanentProviderError);
 
     // Assert
     const logged = (logger.error as jest.Mock).mock.calls[0][1];

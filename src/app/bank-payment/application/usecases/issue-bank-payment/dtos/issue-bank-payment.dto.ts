@@ -2,6 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   IsEnum,
+  IsInt,
   IsNotEmpty,
   IsNumber,
   IsOptional,
@@ -108,6 +109,12 @@ export class IssueBankPaymentPayerInputDto {
 }
 
 export class IssueBankPaymentInputDto {
+  @ApiPropertyOptional({ example: 1, description: 'NFS-e de origem; usado só na trilha de tentativas' })
+  @IsOptional()
+  @IsInt({ message: '$property deve ser um número inteiro' })
+  @IsPositive({ message: '$property deve ser positivo' })
+  nfseId?: number;
+
   @ApiProperty({ enum: BankPaymentProvider, example: BankPaymentProvider.INTER })
   @IsEnum(BankPaymentProvider, { message: '$property deve ser um provedor válido' })
   provider: BankPaymentProvider;

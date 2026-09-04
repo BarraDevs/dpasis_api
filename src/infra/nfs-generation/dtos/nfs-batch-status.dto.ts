@@ -8,6 +8,8 @@ export enum NfsBatchSituation {
 }
 
 export class GetNfsBatchStatusInputDto {
+  /** Só para a trilha de tentativas; o provedor não recebe este campo. */
+  nfseId?: number;
   batchProtocol: string;
   providerDocument: string; // CNPJ/CPF do prestador, exigido pra consultar o lote
   provider: NfsProviderCredentialsDto;

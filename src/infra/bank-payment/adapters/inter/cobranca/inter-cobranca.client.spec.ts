@@ -9,6 +9,9 @@ import { ConfigService } from 'src/core/config/config.service';
 import { TOKENS } from 'src/core/di/token';
 import { LogContext, type ILoggerGateway } from 'src/infra/logger/logger.gateway';
 import { ExternalApiError } from 'src/shared/errors/external-api.error';
+import { PermanentProviderError } from 'src/shared/errors/permanent-provider.error';
+import { TransientProviderError } from 'src/shared/errors/transient-provider.error';
+import { ProviderAttemptFakeAdapterGateway } from 'src/infra/provider-attempt/adapters/fake/provider-attempt-fake.gateway';
 import { buildTestCertificatePem } from 'src/test/fixtures/test-certificate';
 import { BankPaymentPersonType } from '../../../enums/bank-payment-person-type.enum';
 import { BankPaymentProvider } from '../../../enums/bank-payment-provider.enum';
@@ -33,6 +36,7 @@ function makeAxiosError(status: number, data?: unknown): AxiosError {
 
 describe('InterCobrancaClient - Unit tests', () => {
   let sut: InterCobrancaClient;
+  let attemptRecorder: ProviderAttemptFakeAdapterGateway;
   let httpService: { axiosRef: { request: jest.Mock } };
   let oauthClient: jest.Mocked<InterOauthClient>;
   let logger: jest.Mocked<ILoggerGateway>;
@@ -78,6 +82,8 @@ describe('InterCobrancaClient - Unit tests', () => {
       error: jest.fn(),
     });
 
+    attemptRecorder = new ProviderAttemptFakeAdapterGateway();
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         InterCobrancaClient,
@@ -92,6 +98,7 @@ describe('InterCobrancaClient - Unit tests', () => {
         },
         { provide: InterOauthClient, useValue: oauthClient },
         { provide: TOKENS.LoggerGateway, useValue: logger },
+        { provide: TOKENS.ProviderAttemptRecorder, useValue: attemptRecorder },
       ],
     }).compile();
 
@@ -136,6 +143,53 @@ describe('InterCobrancaClient - Unit tests', () => {
       provider: BankPaymentProvider.INTER,
       requestCode: 'req-123',
     });
+  });
+
+  it('should record the issue attempt when the input carries an nfseId', async() => {
+    // Arrange
+    httpService.axiosRef.request.mockResolvedValue({
+      data: { codigoSolicitacao: 'req-123' },
+      status: 201,
+    });
+
+    // Act
+    await sut.issue({ ...issueInput, nfseId: 77 });
+
+    // Assert
+    expect(attemptRecorder.attempts).toEqual([expect.objectContaining({
+      nfseId: 77,
+      operation: 'INTER_ISSUE',
+      httpStatus: 201,
+      errorClass: null,
+    })]);
+    expect(attemptRecorder.attempts[0].requestBody).toContain('seuNumero');
+  });
+
+  it('should record the failed issue attempt with the provider response body', async() => {
+    // Arrange
+    httpService.axiosRef.request.mockRejectedValue(makeAxiosError(422, { detail: 'Vencimento inválido' }));
+
+    // Act
+    await expect(sut.issue({ ...issueInput, nfseId: 77 })).rejects.toBeInstanceOf(PermanentProviderError);
+
+    // Assert
+    expect(attemptRecorder.attempts).toEqual([expect.objectContaining({
+      nfseId: 77,
+      operation: 'INTER_ISSUE',
+      httpStatus: 422,
+      responseBody: JSON.stringify({ detail: 'Vencimento inválido' }),
+    })]);
+  });
+
+  it('should not record anything when the call has no nfseId', async() => {
+    // Arrange
+    httpService.axiosRef.request.mockResolvedValue({ data: { codigoSolicitacao: 'req-123' }, status: 201 });
+
+    // Act
+    await sut.issue(issueInput);
+
+    // Assert
+    expect(attemptRecorder.attempts).toHaveLength(0);
   });
 
   it('should GET /cobrancas/{codigoSolicitacao}', async() => {
@@ -253,7 +307,7 @@ describe('InterCobrancaClient - Unit tests', () => {
     expect(httpService.axiosRef.request).not.toHaveBeenCalled();
   });
 
-  it('should throw BankPaymentRequestError on 4xx for list', async() => {
+  it('should throw PermanentProviderError on 4xx for list', async() => {
     httpService.axiosRef.request.mockRejectedValue(
       makeAxiosError(422, { message: 'Período inválido' }),
     );
@@ -262,7 +316,7 @@ describe('InterCobrancaClient - Unit tests', () => {
       provider: BankPaymentProvider.INTER,
       startDate: '2026-01-01',
       endDate: '2026-01-31',
-    })).rejects.toBeInstanceOf(BankPaymentRequestError);
+    })).rejects.toBeInstanceOf(PermanentProviderError);
     await expect(sut.list({
       provider: BankPaymentProvider.INTER,
       startDate: '2026-01-01',
@@ -374,12 +428,12 @@ describe('InterCobrancaClient - Unit tests', () => {
     }));
   });
 
-  it('should throw BankPaymentRequestError on 4xx', async() => {
+  it('should throw PermanentProviderError on 4xx', async() => {
     httpService.axiosRef.request.mockRejectedValue(
       makeAxiosError(422, { message: 'Dados inválidos' }),
     );
 
-    await expect(sut.issue(issueInput)).rejects.toBeInstanceOf(BankPaymentRequestError);
+    await expect(sut.issue(issueInput)).rejects.toBeInstanceOf(PermanentProviderError);
     await expect(sut.issue(issueInput)).rejects.toThrow('Dados inválidos');
   });
 
@@ -412,7 +466,7 @@ describe('InterCobrancaClient - Unit tests', () => {
       provider: BankPaymentProvider.INTER,
       requestCode: 'ab3242a2-2205-4f5e-9f54-32caf508cfe5',
       reason: 'Cancelamento da NFS-e',
-    })).rejects.toBeInstanceOf(BankPaymentRequestError);
+    })).rejects.toBeInstanceOf(PermanentProviderError);
     await expect(sut.cancel({
       provider: BankPaymentProvider.INTER,
       requestCode: 'ab3242a2-2205-4f5e-9f54-32caf508cfe5',
@@ -435,7 +489,7 @@ describe('InterCobrancaClient - Unit tests', () => {
       detail: 'Não será possível emitir a cobrança.',
     }));
 
-    await expect(sut.issue(issueInput)).rejects.toBeInstanceOf(BankPaymentRequestError);
+    await expect(sut.issue(issueInput)).rejects.toBeInstanceOf(PermanentProviderError);
   });
 
   it('should throw ExternalApiError on network failure', async() => {
@@ -462,30 +516,77 @@ describe('InterCobrancaClient - Unit tests', () => {
     httpService.axiosRef.request.mockRejectedValue(makeAxiosError(422, data));
 
     // Act / Assert
-    await expect(sut.issue(issueInput)).rejects.toBeInstanceOf(BankPaymentRequestError);
+    await expect(sut.issue(issueInput)).rejects.toBeInstanceOf(PermanentProviderError);
     await expect(sut.issue(issueInput)).rejects.toThrow(expectedMessage);
   });
 
-  it('should throw BankPaymentRequestError with default message when 4xx body has no extractable text', async() => {
+  it('should throw PermanentProviderError with default message when 4xx body has no extractable text', async() => {
     // Arrange
     httpService.axiosRef.request.mockRejectedValue(makeAxiosError(400, { code: 'X' }));
 
     // Act / Assert
-    await expect(sut.issue(issueInput)).rejects.toBeInstanceOf(BankPaymentRequestError);
+    await expect(sut.issue(issueInput)).rejects.toBeInstanceOf(PermanentProviderError);
     await expect(sut.issue(issueInput)).rejects.toThrow(
       'Requisição inválida na API de cobrança do Banco Inter.',
     );
   });
 
-  it('should throw ExternalApiError on 5xx', async() => {
+  it('should classify 5xx as transient', async() => {
     // Arrange
     httpService.axiosRef.request.mockRejectedValue(makeAxiosError(500, { message: 'erro interno' }));
 
     // Act / Assert
-    await expect(sut.issue(issueInput)).rejects.toBeInstanceOf(ExternalApiError);
-    await expect(sut.issue(issueInput)).rejects.toThrow(
-      'Falha na comunicação com a API de cobrança do Banco Inter.',
+    await expect(sut.issue(issueInput)).rejects.toBeInstanceOf(TransientProviderError);
+    await expect(sut.issue(issueInput)).rejects.toThrow('Banco Inter respondeu com erro 500.');
+  });
+
+  it('should classify 429 as transient and read Retry-After', async() => {
+    // Arrange
+    const error = makeAxiosError(429, { title: 'Too many requests' });
+    error.response!.headers = { 'retry-after': '30' } as never;
+    httpService.axiosRef.request.mockRejectedValue(error);
+
+    // Act / Assert
+    await expect(sut.issue(issueInput)).rejects.toMatchObject({
+      name: 'TransientProviderError',
+      retryAfterSeconds: 30,
+    });
+  });
+
+  it.each([408, 425])('should classify %s as transient', async(status) => {
+    // Arrange
+    httpService.axiosRef.request.mockRejectedValue(makeAxiosError(status, { title: 'tempo' }));
+
+    // Act / Assert
+    await expect(sut.issue(issueInput)).rejects.toBeInstanceOf(TransientProviderError);
+  });
+
+  it('should classify a network failure without response as transient', async() => {
+    // Arrange
+    httpService.axiosRef.request.mockRejectedValue(Object.assign(new Error('socket hang up'), { isAxiosError: true }));
+
+    // Act / Assert
+    await expect(sut.issue(issueInput)).rejects.toBeInstanceOf(TransientProviderError);
+  });
+
+  it('should keep 422 as a permanent provider error', async() => {
+    // Arrange
+    httpService.axiosRef.request.mockRejectedValue(makeAxiosError(422, { detail: 'Vencimento inválido' }));
+
+    // Act / Assert
+    await expect(sut.issue(issueInput)).rejects.toBeInstanceOf(PermanentProviderError);
+  });
+
+  it('should not wrap PermanentProviderError from OAuth into ExternalApiError', async() => {
+    // Arrange — getAccessToken lança fora do try do axios; mapThrownError tem de deixar passar.
+    const oauthError = new PermanentProviderError(
+      'Credencial OAuth do Banco Inter recusada (HTTP 401). Verifique INTER_CLIENT_ID/INTER_CLIENT_SECRET e o escopo.',
     );
+    oauthClient.getAccessToken.mockRejectedValue(oauthError);
+
+    // Act / Assert
+    await expect(sut.issue(issueInput)).rejects.toBe(oauthError);
+    expect(httpService.axiosRef.request).not.toHaveBeenCalled();
   });
 
   it('should encode requestCode in find URL', async() => {
@@ -607,7 +708,7 @@ describe('InterCobrancaClient - Unit tests', () => {
     httpService.axiosRef.request.mockRejectedValue(axiosError);
 
     // Act
-    await expect(sut.issue(issueInput)).rejects.toBeInstanceOf(BankPaymentRequestError);
+    await expect(sut.issue(issueInput)).rejects.toBeInstanceOf(PermanentProviderError);
 
     // Assert
     const logged = (logger.error as jest.Mock).mock.calls[0][1];

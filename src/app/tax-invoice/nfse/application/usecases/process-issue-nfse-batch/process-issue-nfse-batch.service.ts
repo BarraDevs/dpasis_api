@@ -61,6 +61,7 @@ export class ProcessIssueNfseBatch {
     let result: IssueNfsBatchOutputDto;
     try {
       result = await this.nfsGenerationGateway.issueBatch({
+        nfseId: nfse.props.id,
         batchNumber: nfse.props.rpsNumber,
         provider,
         rpsList: [

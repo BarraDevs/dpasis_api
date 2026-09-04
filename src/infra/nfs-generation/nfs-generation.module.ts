@@ -3,6 +3,7 @@ import { DynamicModule, Module } from '@nestjs/common';
 import { ConfigModule } from 'src/core/config/config.module';
 import { Environment } from 'src/core/config/environment.enum';
 import { TOKENS } from 'src/core/di/token';
+import { ProviderAttemptModule } from 'src/infra/provider-attempt/provider-attempt.module';
 import { NfsGenerationFakeAdapterGateway } from './adapters/fake/nfs-generation-fake.gateway';
 import { NfsGenerationGissAdapterGateway } from './adapters/giss/nfs-generation-giss.gateway';
 
@@ -23,6 +24,7 @@ export class NfsGenerationModule {
       imports: [
         ConfigModule,
         HttpModule.register({ timeout: NfsGenerationModule.HTTP_TIMEOUT_MS }),
+        ProviderAttemptModule,
       ],
       providers: [
         {

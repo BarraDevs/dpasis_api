@@ -23,6 +23,11 @@ function makeIssuedNfse(overrides: Partial<Parameters<typeof NfseFactory.load>[0
     cancelReasonCode: null,
     bankPaymentProvider: null,
     bankPaymentRequestCode: null,
+    bankPaymentIdempotencyKey: null,
+    bankPaymentRequestedAt: null,
+    bankPaymentErrorMessage: null,
+    bankPaymentFailedAt: null,
+    nfmId: null,
     data: {},
     ...overrides,
   });

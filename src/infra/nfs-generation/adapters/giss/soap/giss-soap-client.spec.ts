@@ -56,7 +56,7 @@ describe('GissSoapClient.postSoapRequest - Unit tests', () => {
     );
 
     // Assert
-    expect(result).toBe(outputXml);
+    expect(result.outputXml).toBe(outputXml);
     const [endpoint, body, config] = (httpService.axiosRef.post as jest.Mock).mock.calls[0];
     expect(endpoint).toBe('https://ws-maua.giss.com.br/service-ws/nf/nfse-ws');
     expect(config.httpsAgent).toBeDefined();
@@ -90,7 +90,7 @@ describe('GissSoapClient.postSoapRequest - Unit tests', () => {
     );
 
     // Assert
-    expect(result).toBe(outputXml);
+    expect(result.outputXml).toBe(outputXml);
     const [, body, config] = (httpService.axiosRef.post as jest.Mock).mock.calls[0];
     expect(config.headers.SOAPAction).toBe('http://nfse.abrasf.org.br/ConsultarLoteRps');
     expect(body).toContain('<ConsultarLoteRpsRequest xmlns="http://nfse.abrasf.org.br">');
@@ -113,7 +113,7 @@ describe('GissSoapClient.postSoapRequest - Unit tests', () => {
     );
 
     // Assert
-    expect(result).toBe(outputXml);
+    expect(result.outputXml).toBe(outputXml);
   });
 
   it('should throw when outputXML is missing from the SOAP response', async() => {
@@ -135,5 +135,77 @@ describe('GissSoapClient.postSoapRequest - Unit tests', () => {
     await expect(
       GissSoapClient.postSoapRequest(httpService, 'maua', GissOperation.ConsultarLoteRps, '<xml/>', certMaterial),
     ).rejects.toThrow('ConsultarLoteRpsResponse/outputXML não encontrado');
+  });
+
+  it('should return requestBody, httpStatus and durationMs on success', async() => {
+    // Arrange
+    const outputXml = '<EnviarLoteRpsResposta><Protocolo>PROTO-TRACE</Protocolo></EnviarLoteRpsResposta>';
+    (httpService.axiosRef.post as jest.Mock).mockResolvedValue({
+      data: makeSoapResponse(GissOperation.RecepcionarLoteRps, outputXml),
+      status: 200,
+    });
+
+    // Act
+    const result = await GissSoapClient.postSoapRequest(
+      httpService,
+      'maua',
+      GissOperation.RecepcionarLoteRps,
+      '<xml/>',
+      certMaterial,
+    );
+
+    // Assert
+    expect(result.outputXml).toBe(outputXml);
+    expect(result.requestBody).toContain('<RecepcionarLoteRpsRequest');
+    expect(result.httpStatus).toBe(200);
+    expect(typeof result.durationMs).toBe('number');
+    expect(result.durationMs).toBeGreaterThanOrEqual(0);
+  });
+
+  it('should post CancelarNfse with the correct SOAPAction', async() => {
+    // Arrange
+    const dadosXml = '<p:CancelarNfseEnvio xmlns:p="http://www.giss.com.br/cancelar-nfse-envio-v2_04.xsd"/>';
+    const outputXml = '<CancelarNfseResposta><DataHora>2026-01-01</DataHora></CancelarNfseResposta>';
+    (httpService.axiosRef.post as jest.Mock).mockResolvedValue({
+      data: makeSoapResponse(GissOperation.CancelarNfse, outputXml),
+      status: 200,
+    });
+
+    // Act
+    const result = await GissSoapClient.postSoapRequest(
+      httpService,
+      'maua',
+      GissOperation.CancelarNfse,
+      dadosXml,
+      certMaterial,
+    );
+
+    // Assert
+    expect(result.outputXml).toBe(outputXml);
+    const [, body, config] = (httpService.axiosRef.post as jest.Mock).mock.calls[0];
+    expect(config.headers.SOAPAction).toBe('http://nfse.abrasf.org.br/CancelarNfse');
+    expect(body).toContain('<CancelarNfseRequest xmlns="http://nfse.abrasf.org.br">');
+  });
+
+  it('should wrap HTTP rejections as GissSoapCallError with trace fields', async() => {
+    // Arrange
+    const httpError = Object.assign(new Error('Request failed with status code 503'), {
+      response: { status: 503, data: '<fault>indisponivel</fault>' },
+    });
+    (httpService.axiosRef.post as jest.Mock).mockRejectedValue(httpError);
+
+    // Act & Assert
+    await expect(
+      GissSoapClient.postSoapRequest(httpService, 'maua', GissOperation.RecepcionarLoteRps, '<xml/>', certMaterial),
+    ).rejects.toMatchObject({
+      name: 'GissSoapCallError',
+      message: 'Request failed with status code 503',
+      cause: httpError,
+      trace: expect.objectContaining({
+        requestBody: expect.stringContaining('<RecepcionarLoteRpsRequest'),
+        responseBody: '<fault>indisponivel</fault>',
+        httpStatus: 503,
+      }),
+    });
   });
 });

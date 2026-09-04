@@ -7,6 +7,8 @@ export class ListBankPaymentInputDto {
   startDate: string;
   endDate: string;
   status?: BankPaymentStatus;
+  /** `seuNumero` no Inter — a chave que amarra a cobrança à NFS-e que a originou. */
+  yourNumber?: string;
   payerName?: string;
   payerDocument?: string;
   page?: number;

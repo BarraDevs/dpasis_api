@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { IssueBankPaymentOutputDto } from 'src/app/bank-payment/application/usecases/issue-bank-payment/dtos/issue-bank-payment.dto';
+import { FindBankPaymentByYourNumber } from 'src/app/bank-payment/application/usecases/find-bank-payment-by-your-number/find-bank-payment-by-your-number.service';
 import { FindBankPayment } from 'src/app/bank-payment/application/usecases/find-bank-payment/find-bank-payment.service';
+import { IssueBankPaymentOutputDto } from 'src/app/bank-payment/application/usecases/issue-bank-payment/dtos/issue-bank-payment.dto';
 import { IssueBankPayment } from 'src/app/bank-payment/application/usecases/issue-bank-payment/issue-bank-payment.service';
 import { FindClientInvoiceConfigByClientId } from 'src/app/client/client-invoice-config/application/usecases/find-client-invoice-config-by-client-id/find-client-invoice-config-by-client-id.service';
 import { ClientInvoiceConfigNotFoundError } from 'src/app/client/client-invoice-config/domain/errors/client-invoice-config-not-found.error';
@@ -10,6 +11,8 @@ import { AppException } from 'src/core/filters/app.exception';
 import { LogContext, type ILoggerGateway } from 'src/infra/logger/logger.gateway';
 import { BankPaymentProvider } from 'src/infra/bank-payment/enums/bank-payment-provider.enum';
 import { BankPaymentAlreadyExistsError } from 'src/infra/bank-payment/errors/bank-payment-already-exists.error';
+import { IssueBankPaymentInputDto } from 'src/infra/bank-payment/dtos/issue-bank-payment.dto';
+import { Nfse } from '../../../domain/entities/nfse.entity';
 import { NfseNotFoundError } from '../../../domain/errors/nfse-not-found.error';
 import { NfseToIssueBankPaymentMapper } from '../../mappers/nfse-to-issue-bank-payment.mapper';
 import type { INfseRepository } from '../../persistence/repository/nfse-repository.interface';
@@ -24,6 +27,7 @@ export class ProcessIssueNfseBankPayment {
     @Inject(TOKENS.NfseRepository) private readonly nfseRepository: INfseRepository,
     private readonly issueBankPayment: IssueBankPayment,
     private readonly findBankPayment: FindBankPayment,
+    private readonly findBankPaymentByYourNumber: FindBankPaymentByYourNumber,
     private readonly findClientInvoiceConfigByClientId: FindClientInvoiceConfigByClientId,
   ) {}
 
@@ -44,12 +48,10 @@ export class ProcessIssueNfseBankPayment {
     // idempotência de 30 minutos do Inter justamente quando ela mais importa.
     const issuedAt = nfse.props.issuedAt;
     if (!issuedAt) {
-      this.logger.error(LogContext.BANK_PAYMENT, {
-        adapter: 'nfse',
-        action: 'processIssueNfseBankPayment',
-        nfseId: nfse.props.id,
-        error: new AppException('NFS-e emitida sem data de emissão; não é possível calcular o vencimento do boleto.'),
-      });
+      await this.failBankPayment(
+        nfse,
+        'NFS-e emitida sem data de emissão; não é possível calcular o vencimento do boleto.',
+      );
       return null;
     }
 
@@ -61,12 +63,7 @@ export class ProcessIssueNfseBankPayment {
         bankPayment = await this.loadBankPaymentFallback(nfse.props.clientId, issuedAt);
       }
       catch (error: unknown) {
-        this.logger.error(LogContext.BANK_PAYMENT, {
-          adapter: 'nfse',
-          action: 'processIssueNfseBankPayment',
-          nfseId: nfse.props.id,
-          error,
-        });
+        await this.failBankPayment(nfse, this.resolveErrorMessage(error), error);
         return null;
       }
     }
@@ -81,13 +78,31 @@ export class ProcessIssueNfseBankPayment {
       });
     }
     catch (error: unknown) {
-      this.logger.error(LogContext.BANK_PAYMENT, {
-        adapter: 'nfse',
-        action: 'processIssueNfseBankPayment',
-        nfseId: nfse.props.id,
-        error,
-      });
+      await this.failBankPayment(nfse, this.resolveErrorMessage(error), error);
       return null;
+    }
+
+    // Uma tentativa anterior já chegou ao provedor: consultar antes de repetir o POST. É o que
+    // protege os caminhos de conserto (retry manual, DLQ, retomada de fila), que sempre acontecem
+    // fora da janela de idempotência implícita de 30 minutos do Inter — lá, sem consulta, o
+    // segundo POST é um segundo boleto de verdade.
+    if (nfse.hasRequestedBankPayment()) {
+      const existing = await this.findBankPaymentByYourNumber.execute({
+        provider: BankPaymentProvider.INTER,
+        yourNumber: issueInput.yourNumber,
+        amount: issueInput.amount,
+        dueDate: issueInput.dueDate,
+      });
+
+      if (existing) {
+        return this.linkExisting(nfse, { provider: existing.provider, requestCode: existing.requestCode });
+      }
+    }
+    else {
+      // A intenção é gravada ANTES da chamada. Se o processo morrer no meio, a tentativa seguinte
+      // encontra esta marca e consulta em vez de emitir às cegas.
+      nfse.markBankPaymentRequested(`nfse-${nfse.props.id}`);
+      await this.nfseRepository.edit(nfse);
     }
 
     let result: IssueBankPaymentOutputDto;
@@ -95,16 +110,43 @@ export class ProcessIssueNfseBankPayment {
       result = await this.issueBankPayment.execute(issueInput);
     }
     catch (error: unknown) {
-      if (!(error instanceof BankPaymentAlreadyExistsError)) {
-        throw error;
+      if (error instanceof BankPaymentAlreadyExistsError) {
+        result = await this.resolveExistingBankPayment(error, nfse.props.id, issueInput);
+        return this.linkExisting(nfse, result);
       }
-      result = await this.resolveExistingBankPayment(error, nfse.props.id, issueInput.yourNumber);
+
+      await this.failBankPayment(nfse, this.resolveErrorMessage(error), error);
+      throw error;
     }
 
+    return this.linkExisting(nfse, result);
+  }
+
+  private async linkExisting(nfse: Nfse, result: IssueBankPaymentOutputDto): Promise<IssueBankPaymentOutputDto> {
     nfse.linkBankPayment(result.provider, result.requestCode);
     await this.nfseRepository.edit(nfse);
-
     return result;
+  }
+
+  /**
+   * Os caminhos que devolvem `null` completam o job com sucesso — sem esta gravação, a NFS-e ficava
+   * `ISSUED` sem boleto e sem nenhum registro do motivo, e o alerta só sabia dizer que faltava
+   * cobrança. Fazer o job falhar (P1-03) é Onda 3; registrar o porquê é o que dá para fazer agora.
+   */
+  private async failBankPayment(nfse: Nfse, message: string, error?: unknown): Promise<void> {
+    this.logger.error(LogContext.BANK_PAYMENT, {
+      adapter: 'nfse',
+      action: 'processIssueNfseBankPayment',
+      nfseId: nfse.props.id,
+      error: error ?? new AppException(message),
+    });
+
+    nfse.markBankPaymentFailed(message);
+    await this.nfseRepository.edit(nfse);
+  }
+
+  private resolveErrorMessage(error: unknown): string {
+    return error instanceof Error ? error.message : 'Erro desconhecido ao emitir o boleto.';
   }
 
   /**
@@ -118,11 +160,17 @@ export class ProcessIssueNfseBankPayment {
   private async resolveExistingBankPayment(
     error: BankPaymentAlreadyExistsError,
     nfseId: number,
-    expectedYourNumber: string,
+    expected: IssueBankPaymentInputDto,
   ): Promise<IssueBankPaymentOutputDto> {
     const existing = await this.findBankPayment.execute(error.requestCode, BankPaymentProvider.INTER);
 
-    if (existing.yourNumber !== expectedYourNumber) {
+    // Os três campos que formam a chave implícita do Inter junto com o pagador. Conferir só o
+    // `seuNumero` deixaria passar uma cobrança de outro valor ou vencimento para a mesma NFS-e.
+    const matches = existing.yourNumber === expected.yourNumber
+      && existing.amount === expected.amount
+      && existing.dueDate === expected.dueDate;
+
+    if (!matches) {
       throw error;
     }
 

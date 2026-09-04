@@ -41,6 +41,7 @@ ItemListaServico (LC 116) na correspondência CNAE/NBS/INDOP: [frontend-integrac
 |-------|------|
 | Novo valor `AWAITING_PROVIDER` em `nfse.status` | `GET /admin/nfm`, `GET /admin/nfm/:id` — ver [Status da NFS-e](#status-da-nfs-e-nfsestatus) |
 | Novos campos `bankPaymentCanceled` e `bankPaymentError` na resposta | `POST /admin/nfm/:id/cancel` |
+| Novos campos em `nfse`: `bankPaymentErrorMessage`, `bankPaymentFailedAt`, `bankPaymentRequestedAt`, `bankPaymentIdempotencyKey`, `nfmId` | `GET /admin/nfm`, `GET /admin/nfm/:id` |
 
 ### Fluxo sugerido na UI
 
@@ -83,6 +84,14 @@ Cada item em `data` é `NfmWithNfseDto`:
 **Campos aditivos em `nfse` (boleto Inter):**
 - `bankPaymentProvider` — provedor do boleto (ex.: `INTER`); `null` enquanto a emissão do boleto não concluiu
 - `bankPaymentRequestCode` — código da cobrança no Inter; `null` enquanto a fila/Inter estiver pendente
+- `bankPaymentErrorMessage` / `bankPaymentFailedAt` — motivo e momento da última falha de emissão do
+  boleto. Antes essas falhas eram silenciosas: a nota ficava `ISSUED` sem cobrança e sem explicação.
+  Com `bankPaymentErrorMessage` preenchido **e** `bankPaymentRequestCode` nulo, a UI deve mostrar o
+  motivo junto do botão de gerar boleto (`POST /admin/bank-payment/nfm/:id`)
+- `bankPaymentRequestedAt` / `bankPaymentIdempotencyKey` — marca de que uma tentativa já chegou ao
+  provedor. Uso interno (a partir dela o backend consulta o Inter antes de reemitir); a UI não
+  precisa exibir
+- `nfmId` — a NFM de origem; redundante com o vínculo que a própria resposta já traz
 
 Não há endpoint novo: os campos vêm em `GET /admin/nfm` e `GET /admin/nfm/:id` dentro de `nfse`. Não é breaking.
 

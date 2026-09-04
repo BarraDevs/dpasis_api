@@ -32,6 +32,26 @@
 $ npm install
 ```
 
+## Banco de dados (Prisma)
+
+O schema vive em `prisma/schema/` (um arquivo por contexto, preview `prismaSchemaFolder`) e é
+aplicado por **migrations versionadas**, não mais por `db push`.
+
+```bash
+npm run db:migration          # cria e aplica uma migration em desenvolvimento
+npm run db:migration:create    # só gera o SQL, para editar à mão (índices parciais, backfill)
+npm run db:status              # o que já foi aplicado neste banco
+npm run db:deploy              # aplica as migrations pendentes (produção)
+npm run db:reset               # recria o banco de desenvolvimento e roda o seed
+npm run db:seed
+```
+
+### Índices que o schema não expressa
+
+`nfses_one_active_per_nfm` é um índice único **parcial** (`WHERE status NOT IN (...)`), que o Prisma
+não representa no schema — ele vive apenas no SQL da migration
+`20260903120000_onda2_nfse_idempotencia`. Ao alterar os estados da NFS-e, revise esse índice junto.
+
 ## Running the app
 
 ```bash

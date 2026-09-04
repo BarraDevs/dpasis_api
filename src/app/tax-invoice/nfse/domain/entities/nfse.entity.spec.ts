@@ -21,6 +21,11 @@ function makeNfseProps(overrides: Partial<NfseProps> = {}): NfseProps {
     cancelReasonCode: null,
     bankPaymentProvider: null,
     bankPaymentRequestCode: null,
+    bankPaymentIdempotencyKey: null,
+    bankPaymentRequestedAt: null,
+    bankPaymentErrorMessage: null,
+    bankPaymentFailedAt: null,
+    nfmId: null,
     data: {},
     ...overrides,
   };
@@ -227,6 +232,12 @@ describe('Nfse - Unit tests', () => {
   it('should report isFailed only for FAILED status', () => {
     expect(Nfse._instantiate(makeNfseProps({ status: NfseStatus.FAILED })).isFailed()).toBe(true);
     expect(Nfse._instantiate(makeNfseProps({ status: NfseStatus.SUBMITTED })).isFailed()).toBe(false);
+  });
+
+  it('should report isCanceled only for CANCELED status', () => {
+    expect(Nfse._instantiate(makeNfseProps({ status: NfseStatus.CANCELED })).isCanceled()).toBe(true);
+    expect(Nfse._instantiate(makeNfseProps({ status: NfseStatus.ISSUED })).isCanceled()).toBe(false);
+    expect(Nfse._instantiate(makeNfseProps({ status: NfseStatus.PENDING })).isCanceled()).toBe(false);
   });
 
   it('should report isTerminal for ISSUED, FAILED and CANCELED', () => {
@@ -466,5 +477,111 @@ describe('Nfse - Unit tests', () => {
     // Act & Assert
     expect(() => sut.linkBankPayment('INTER', 'request-code-123')).toThrow(NfseNotIssuedError);
     expect(sut.hasBankPayment()).toBe(false);
+  });
+
+  it('should report hasRequestedBankPayment as false when requestedAt is null', () => {
+    // Arrange
+    const sut = Nfse._instantiate(makeNfseProps({
+      status: NfseStatus.ISSUED,
+      nfseNumber: '1000',
+      bankPaymentRequestedAt: null,
+    }));
+
+    // Assert
+    expect(sut.hasRequestedBankPayment()).toBe(false);
+  });
+
+  it('should report hasRequestedBankPayment as true when requestedAt is set', () => {
+    // Arrange
+    const sut = Nfse._instantiate(makeNfseProps({
+      status: NfseStatus.ISSUED,
+      nfseNumber: '1000',
+      bankPaymentRequestedAt: new Date('2026-08-01T10:00:00Z'),
+    }));
+
+    // Assert
+    expect(sut.hasRequestedBankPayment()).toBe(true);
+  });
+
+  it('should set key and requestedAt and clear prior failure fields on markBankPaymentRequested', () => {
+    // Arrange
+    const sut = Nfse._instantiate(makeNfseProps({
+      status: NfseStatus.ISSUED,
+      nfseNumber: '1000',
+      verificationCode: 'ABC',
+      issuedAt: new Date('2026-07-20T10:00:00Z'),
+      bankPaymentErrorMessage: 'falha anterior',
+      bankPaymentFailedAt: new Date('2026-07-21T10:00:00Z'),
+    }));
+
+    // Act
+    sut.markBankPaymentRequested('nfse-1');
+
+    // Assert
+    expect(sut.props.bankPaymentIdempotencyKey).toBe('nfse-1');
+    expect(sut.props.bankPaymentRequestedAt).toBeInstanceOf(Date);
+    expect(sut.props.bankPaymentErrorMessage).toBeNull();
+    expect(sut.props.bankPaymentFailedAt).toBeNull();
+    expect(sut.hasRequestedBankPayment()).toBe(true);
+  });
+
+  it('should throw NfseNotIssuedError when markBankPaymentRequested is called on PENDING', () => {
+    // Arrange
+    const sut = Nfse._instantiate(makeNfseProps({ status: NfseStatus.PENDING }));
+
+    // Act & Assert
+    expect(() => sut.markBankPaymentRequested('nfse-1')).toThrow(NfseNotIssuedError);
+  });
+
+  it('should record failure fields without changing status on markBankPaymentFailed when ISSUED', () => {
+    // Arrange
+    const sut = Nfse._instantiate(makeNfseProps({
+      status: NfseStatus.ISSUED,
+      nfseNumber: '1000',
+      verificationCode: 'ABC',
+      issuedAt: new Date('2026-07-20T10:00:00Z'),
+    }));
+
+    // Act
+    sut.markBankPaymentFailed('Inter recusou o payload');
+
+    // Assert
+    expect(sut.props.status).toBe(NfseStatus.ISSUED);
+    expect(sut.props.bankPaymentErrorMessage).toBe('Inter recusou o payload');
+    expect(sut.props.bankPaymentFailedAt).toBeInstanceOf(Date);
+  });
+
+  it('should allow markBankPaymentFailed on PENDING without requiring ISSUED', () => {
+    // Arrange
+    const sut = Nfse._instantiate(makeNfseProps({ status: NfseStatus.PENDING }));
+
+    // Act
+    sut.markBankPaymentFailed('falha sem emissão');
+
+    // Assert
+    expect(sut.props.status).toBe(NfseStatus.PENDING);
+    expect(sut.props.bankPaymentErrorMessage).toBe('falha sem emissão');
+    expect(sut.props.bankPaymentFailedAt).toBeInstanceOf(Date);
+  });
+
+  it('should clear prior bank payment failure fields when linking bank payment', () => {
+    // Arrange
+    const sut = Nfse._instantiate(makeNfseProps({
+      status: NfseStatus.ISSUED,
+      nfseNumber: '1000',
+      verificationCode: 'ABC',
+      issuedAt: new Date('2026-07-20T10:00:00Z'),
+      bankPaymentErrorMessage: 'falha anterior',
+      bankPaymentFailedAt: new Date('2026-07-21T10:00:00Z'),
+    }));
+
+    // Act
+    sut.linkBankPayment('INTER', 'request-after-fail');
+
+    // Assert
+    expect(sut.props.bankPaymentProvider).toBe('INTER');
+    expect(sut.props.bankPaymentRequestCode).toBe('request-after-fail');
+    expect(sut.props.bankPaymentErrorMessage).toBeNull();
+    expect(sut.props.bankPaymentFailedAt).toBeNull();
   });
 });

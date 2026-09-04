@@ -7,12 +7,12 @@ import { FindCompanyNfsConfigByCompanyId } from 'src/app/company/company-nfs-con
 import { FindCompanyById } from 'src/app/company/company/application/usecases/find-company-by-id/find-company-by-id.service';
 import { SAO_PAULO_TIMEZONE } from 'src/core/constants/timezone.constant';
 import { TOKENS } from 'src/core/di/token';
+import { JobName } from 'src/infra/queue/enums/job-name.enum';
 import { DateTime } from 'luxon';
 import { ClientAddressForNfseNotFoundError } from '../../../domain/errors/client-address-for-nfse-not-found.error';
 import { NfseStatus } from '../../../domain/enums/nfse-status.enum';
 import { NfseFactory } from '../../../domain/factories/nfse.factory';
 import type { INfseRepository } from '../../persistence/repository/nfse-repository.interface';
-import type { INfseRpsSequenceRepository } from '../../persistence/repository/nfse-rps-sequence-repository.interface';
 import type { INfseQueueProducer } from '../../queue/nfse-queue-producer.interface';
 import { IssueNfseInputDto, IssueNfseOutputDto } from './dtos/issue-nfse.dto';
 
@@ -55,7 +55,6 @@ export class IssueNfse {
     private readonly findClientAddressByClientIdAndType: FindClientAddressByClientIdAndType,
     private readonly findClientInvoiceConfigByClientId: FindClientInvoiceConfigByClientId,
     @Inject(TOKENS.NfseRepository) private readonly nfseRepository: INfseRepository,
-    @Inject(TOKENS.NfseRpsSequenceRepository) private readonly rpsSequenceRepository: INfseRpsSequenceRepository,
     @Inject(TOKENS.NfseQueueProducer) private readonly queueProducer: INfseQueueProducer,
   ) {}
 
@@ -82,7 +81,6 @@ export class IssueNfse {
     }
 
     const nowInSp = DateTime.now().setZone(SAO_PAULO_TIMEZONE);
-    const rpsNumber = await this.rpsSequenceRepository.getAndIncrement(input.companyId);
 
     const snapshot: NfseIssueSnapshot = {
       input,
@@ -112,17 +110,27 @@ export class IssueNfse {
       },
     };
 
-    const entity = NfseFactory.create({
+    const reservation = {
       companyId: input.companyId,
       clientId: input.clientId,
-      rpsNumber,
       rpsSeries: providerConfig.serieRps,
       data: snapshot as unknown as Record<string, unknown>,
+    };
+    NfseFactory.validateReservation(reservation);
+
+    // Reserva do RPS, criação da NFS-e, vínculo com a NFM e registro no outbox acontecem numa
+    // transação só. Antes eram três commits separados e o vínculo vinha por último: um crash no
+    // meio deixava a NFM sem NFS-e vinculada e a execução seguinte emitia uma segunda nota.
+    const { nfseId, outboxId } = await this.nfseRepository.reserve({
+      ...reservation,
+      nfmId: input.nfmId ?? null,
+      jobName: JobName.IssueNfseBatch,
     });
 
-    const nfseId = await this.nfseRepository.save(entity);
-
+    // Só depois do commit. Se o Redis estiver fora, a linha de outbox fica com `dispatchedAt` nulo
+    // e o erro sobe — a NFS-e existe e é recuperável, em vez de existir e ser invisível.
     await this.queueProducer.addIssueBatchJob({ nfseId });
+    await this.nfseRepository.markOutboxDispatched(outboxId);
 
     return { id: nfseId, status: NfseStatus.PENDING };
   }

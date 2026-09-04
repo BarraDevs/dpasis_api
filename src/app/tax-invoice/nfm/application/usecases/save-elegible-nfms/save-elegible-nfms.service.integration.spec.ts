@@ -372,6 +372,26 @@ describe('SaveElegibleNfms - Integration tests', () => {
     expect(row?.nfseId).not.toBeNull();
   });
 
+  it('should not issue a second nfse when the link was lost but the nfse exists (P0-01)', async() => {
+    // Arrange — reproduz a janela do crash antigo: a NFS-e existe e aponta para a NFM, mas
+    // `nfms.nfseId` ficou nulo. Antes, `hasNfse()` era falso e a execução seguinte emitia outra
+    // nota; agora o índice único parcial recusa e a execução conta como pulada.
+    const base = await seedBase(prisma);
+    await createClientWithConfig(prisma, base, 1, '00000000000101', { withItem: true });
+    const first = await sut.execute();
+    expect(first.created).toBe(1);
+    await prisma.nfm.updateMany({ data: { nfseId: null } });
+    queueProducer.addedIssueBatchJobs.length = 0;
+
+    // Act
+    const second = await sut.execute();
+
+    // Assert
+    expect(second).toEqual({ created: 0, skipped: 1, failed: 0, errors: [] });
+    expect(await prisma.nfse.count()).toBe(1);
+    expect(queueProducer.addedIssueBatchJobs).toHaveLength(0);
+  });
+
   it('should not persist client without active items', async() => {
     // Arrange
     const base = await seedBase(prisma);

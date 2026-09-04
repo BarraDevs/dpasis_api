@@ -261,4 +261,29 @@ describe('ProcessIssueNfseBatch - Integration tests', () => {
     });
     expect(queueProducer.addedPollBatchJobs).toHaveLength(0);
   });
+
+  it('should persist SUBMITTED and enqueue a delayed poll job on success', async() => {
+    // Arrange
+    const company = await seedCompany(prisma);
+    await seedProviderConfig(prisma, company.id);
+    const nfse = await seedNfse(prisma, company.id);
+    nfsGenerationGateway.issueBatchResult = { batchProtocol: 'fake-protocol' };
+
+    // Act
+    await sut.execute({ nfseId: nfse.id });
+
+    // Assert
+    const saved = await prisma.nfse.findUnique({ where: { id: nfse.id } });
+    expect(saved).toMatchObject({
+      status: NfseStatus.SUBMITTED,
+      batchProtocol: 'fake-protocol',
+    });
+    expect(nfsGenerationGateway.issueBatchCalls).toHaveLength(1);
+    expect(queueProducer.addedPollBatchJobs).toEqual([
+      expect.objectContaining({
+        data: { nfseId: nfse.id, attempt: 1 },
+        options: { delayMs: 30_000 },
+      }),
+    ]);
+  });
 });

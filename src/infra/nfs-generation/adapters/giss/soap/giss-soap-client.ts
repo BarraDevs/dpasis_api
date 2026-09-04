@@ -4,6 +4,12 @@ import { XMLParser } from 'fast-xml-parser';
 import { XmlEscapeUtil } from '../mappers/xml-escape.util';
 import { GISS_CABECALHO_NAMESPACE } from '../constants/giss-namespaces';
 import { GissCertMaterial } from '../signing/giss-pfx-loader';
+import {
+  extractHttpStatus,
+  extractResponseBody,
+  GissSoapCallError,
+  type GissSoapCallResult,
+} from './giss-soap-call.error';
 
 export enum GissOperation {
   RecepcionarLoteRps = 'RecepcionarLoteRps',
@@ -64,7 +70,7 @@ export class GissSoapClient {
     operation: GissOperation,
     dadosMsgXml: string,
     certMaterial: GissCertMaterial,
-  ): Promise<string> {
+  ): Promise<GissSoapCallResult> {
     const agent = new Agent({
       cert: certMaterial.certPem,
       key: certMaterial.keyPem,
@@ -73,17 +79,37 @@ export class GissSoapClient {
     });
 
     const endpoint = `https://ws-${municipioSlug}.giss.com.br/service-ws/nf/nfse-ws`;
+    const envelope = this.buildEnvelope(operation, dadosMsgXml);
+    const startedAt = Date.now();
 
-    const result = await httpService.axiosRef.post<string>(endpoint, this.buildEnvelope(operation, dadosMsgXml), {
-      httpsAgent: agent,
-      headers: {
-        'Content-Type': 'text/xml; charset=utf-8',
-        SOAPAction: `${this.WRAPPER_NAMESPACE}/${operation}`,
-      },
-      responseType: 'text',
-      transformResponse: (data) => data,
-    });
+    try {
+      const result = await httpService.axiosRef.post<string>(endpoint, envelope, {
+        httpsAgent: agent,
+        headers: {
+          'Content-Type': 'text/xml; charset=utf-8',
+          SOAPAction: `${this.WRAPPER_NAMESPACE}/${operation}`,
+        },
+        responseType: 'text',
+        transformResponse: (data) => data,
+      });
 
-    return this.unwrapOutputXml(operation, result.data);
+      return {
+        outputXml: this.unwrapOutputXml(operation, result.data),
+        requestBody: envelope,
+        responseBody: typeof result.data === 'string' ? result.data : String(result.data),
+        httpStatus: result.status,
+        durationMs: Date.now() - startedAt,
+      };
+    }
+    catch (error: unknown) {
+      // O corpo enviado e o recebido só existem aqui. Anexá-los ao erro é o que permite o gateway
+      // gravar a tentativa também quando ela falha — que é justamente quando o rastro importa.
+      throw new GissSoapCallError(error, {
+        requestBody: envelope,
+        responseBody: extractResponseBody(error),
+        httpStatus: extractHttpStatus(error),
+        durationMs: Date.now() - startedAt,
+      });
+    }
   }
 }

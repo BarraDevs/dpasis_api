@@ -34,6 +34,7 @@ export class NfseToIssueBankPaymentMapper {
 
     return {
       provider: BankPaymentProvider.INTER,
+      nfseId: params.nfseId,
       yourNumber: String(params.nfseId).slice(0, 15),
       amount,
       dueDate: new InvoiceCalendarDueDate({

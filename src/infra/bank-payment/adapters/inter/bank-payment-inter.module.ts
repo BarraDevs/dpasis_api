@@ -1,6 +1,7 @@
 import { HttpModule } from '@nestjs/axios';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from 'src/core/config/config.module';
+import { ProviderAttemptModule } from 'src/infra/provider-attempt/provider-attempt.module';
 import { BankPaymentInterStrategy } from './bank-payment-inter.strategy';
 import { InterCobrancaClient } from './cobranca/inter-cobranca.client';
 import { InterOauthClient } from './oauth/inter-oauth.client';
@@ -12,6 +13,7 @@ const HTTP_TIMEOUT_MS = 30_000;
   imports: [
     ConfigModule,
     HttpModule.register({ timeout: HTTP_TIMEOUT_MS }),
+    ProviderAttemptModule,
   ],
   providers: [
     InterOauthClient,

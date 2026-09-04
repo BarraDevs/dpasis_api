@@ -1,5 +1,6 @@
 import { createMock } from '@golevelup/ts-jest';
 import { Test } from '@nestjs/testing';
+import { FindBankPaymentByYourNumber } from 'src/app/bank-payment/application/usecases/find-bank-payment-by-your-number/find-bank-payment-by-your-number.service';
 import { FindBankPayment } from 'src/app/bank-payment/application/usecases/find-bank-payment/find-bank-payment.service';
 import { IssueBankPayment } from 'src/app/bank-payment/application/usecases/issue-bank-payment/issue-bank-payment.service';
 import { ClientInvoiceConfigDto } from 'src/app/client/client-invoice-config/application/dtos/client-invoice-config.dto';
@@ -12,7 +13,10 @@ import { TOKENS } from 'src/core/di/token';
 import { AppException } from 'src/core/filters/app.exception';
 import { BankPaymentDto } from 'src/infra/bank-payment/dtos/bank-payment.dto';
 import { BankPaymentProvider } from 'src/infra/bank-payment/enums/bank-payment-provider.enum';
+import { BankPaymentStatus } from 'src/infra/bank-payment/enums/bank-payment-status.enum';
 import { BankPaymentAlreadyExistsError } from 'src/infra/bank-payment/errors/bank-payment-already-exists.error';
+import { PermanentProviderError } from 'src/shared/errors/permanent-provider.error';
+import { TransientProviderError } from 'src/shared/errors/transient-provider.error';
 import { LogContext, type ILoggerGateway } from 'src/infra/logger/logger.gateway';
 import { NfseProps } from '../../../domain/entities/nfse.entity';
 import { NfseStatus } from '../../../domain/enums/nfse-status.enum';
@@ -95,6 +99,11 @@ function makeNfseProps(overrides: Partial<NfseProps> = {}): NfseProps {
     cancelReasonCode: null,
     bankPaymentProvider: null,
     bankPaymentRequestCode: null,
+    bankPaymentIdempotencyKey: null,
+    bankPaymentRequestedAt: null,
+    bankPaymentErrorMessage: null,
+    bankPaymentFailedAt: null,
+    nfmId: null,
     data: makeSnapshot() as unknown as Record<string, unknown>,
     ...overrides,
   };
@@ -106,6 +115,7 @@ describe('ProcessIssueNfseBankPayment - Unit tests', () => {
   let nfseRepository: INfseRepository;
   let issueBankPayment: IssueBankPayment;
   let findBankPayment: FindBankPayment;
+  let findBankPaymentByYourNumber: FindBankPaymentByYourNumber;
   let findClientInvoiceConfigByClientId: FindClientInvoiceConfigByClientId;
 
   beforeEach(async() => {
@@ -116,6 +126,7 @@ describe('ProcessIssueNfseBankPayment - Unit tests', () => {
         { provide: TOKENS.NfseRepository, useValue: createMock<INfseRepository>() },
         { provide: IssueBankPayment, useValue: createMock<IssueBankPayment>() },
         { provide: FindBankPayment, useValue: createMock<FindBankPayment>() },
+        { provide: FindBankPaymentByYourNumber, useValue: createMock<FindBankPaymentByYourNumber>() },
         { provide: FindClientInvoiceConfigByClientId, useValue: createMock<FindClientInvoiceConfigByClientId>() },
       ],
     }).compile();
@@ -125,6 +136,7 @@ describe('ProcessIssueNfseBankPayment - Unit tests', () => {
     nfseRepository = module.get(TOKENS.NfseRepository);
     issueBankPayment = module.get(IssueBankPayment);
     findBankPayment = module.get(FindBankPayment);
+    findBankPaymentByYourNumber = module.get(FindBankPaymentByYourNumber);
     findClientInvoiceConfigByClientId = module.get(FindClientInvoiceConfigByClientId);
   });
 
@@ -266,7 +278,11 @@ describe('ProcessIssueNfseBankPayment - Unit tests', () => {
 
     // Act & Assert
     await expect(sut.execute({ nfseId: 1 })).rejects.toBe(err);
-    expect(nfseRepository.edit).not.toHaveBeenCalled();
+    // A intenção fica gravada antes da chamada: é ela que faz a retentativa consultar em vez de
+    // repetir o POST.
+    expect(nfse.props.bankPaymentRequestedAt).toBeInstanceOf(Date);
+    expect(nfse.props.bankPaymentIdempotencyKey).toBe('nfse-1');
+    expect(nfse.props.bankPaymentRequestCode).toBeNull();
   });
 
   it('should log and return when snapshot bankPayment is missing and fallback fails', async() => {
@@ -315,7 +331,10 @@ describe('ProcessIssueNfseBankPayment - Unit tests', () => {
       'Configuração de faturamento do cliente ausente para emissão do boleto.',
     );
     expect(issueBankPayment.execute).not.toHaveBeenCalled();
-    expect(nfseRepository.edit).not.toHaveBeenCalled();
+    expect(nfse.props.bankPaymentErrorMessage).toBe(
+      'Configuração de faturamento do cliente ausente para emissão do boleto.',
+    );
+    expect(nfse.props.bankPaymentFailedAt).toBeInstanceOf(Date);
   });
 
   it('should log and return when mapper fails without calling Inter', async() => {
@@ -354,7 +373,10 @@ describe('ProcessIssueNfseBankPayment - Unit tests', () => {
       error: expect.any(AppException),
     }));
     expect(issueBankPayment.execute).not.toHaveBeenCalled();
-    expect(nfseRepository.edit).not.toHaveBeenCalled();
+    expect(nfse.props.bankPaymentErrorMessage).toBe('Valor dos serviços inválido para emissão do boleto.');
+    expect(nfse.props.bankPaymentFailedAt).toBeInstanceOf(Date);
+    // O provedor nunca foi chamado, então a intenção não deve ter sido gravada.
+    expect(nfse.props.bankPaymentRequestedAt).toBeNull();
   });
 
   describe('payload determinism (Inter 30-minute idempotency key)', () => {
@@ -422,6 +444,113 @@ describe('ProcessIssueNfseBankPayment - Unit tests', () => {
     });
   });
 
+  describe('transient vs permanent classification', () => {
+    it('should rethrow PermanentProviderError after recording the bank-payment failure', async() => {
+      // Arrange
+      const nfse = NfseFactory.load(makeNfseProps());
+      const err = new PermanentProviderError('Vencimento inválido.');
+      jest.spyOn(nfseRepository, 'findById').mockResolvedValue(nfse);
+      jest.spyOn(issueBankPayment, 'execute').mockRejectedValue(err);
+
+      // Act & Assert
+      await expect(sut.execute({ nfseId: 1 })).rejects.toBe(err);
+      expect(nfse.props.bankPaymentErrorMessage).toBe('Vencimento inválido.');
+      expect(nfse.props.bankPaymentFailedAt).toBeInstanceOf(Date);
+    });
+
+    it('should keep a transient provider error retryable', async() => {
+      // Arrange
+      const nfse = NfseFactory.load(makeNfseProps());
+      const err = new TransientProviderError('Banco Inter respondeu com erro 500.');
+      jest.spyOn(nfseRepository, 'findById').mockResolvedValue(nfse);
+      jest.spyOn(issueBankPayment, 'execute').mockRejectedValue(err);
+
+      // Act & Assert
+      await expect(sut.execute({ nfseId: 1 })).rejects.toBe(err);
+    });
+  });
+
+  describe('pre-flight lookup when a previous attempt already reached the provider', () => {
+    const REQUESTED_AT = new Date('2026-08-20T15:05:00.000Z');
+
+    function makeExisting(overrides: Partial<BankPaymentDto> = {}): BankPaymentDto {
+      return createMock<BankPaymentDto>({
+        provider: BankPaymentProvider.INTER,
+        requestCode: 'existing-code',
+        yourNumber: '1',
+        amount: 1000,
+        dueDate: '2026-08-15',
+        status: BankPaymentStatus.EMITTED,
+        ...overrides,
+      });
+    }
+
+    it('should link the charge found by seuNumero instead of posting again', async() => {
+      // Arrange
+      const nfse = NfseFactory.load(makeNfseProps({
+        bankPaymentRequestedAt: REQUESTED_AT,
+        bankPaymentIdempotencyKey: 'nfse-1',
+      }));
+      jest.spyOn(nfseRepository, 'findById').mockResolvedValue(nfse);
+      jest.spyOn(findBankPaymentByYourNumber, 'execute').mockResolvedValue(makeExisting());
+
+      // Act
+      const result = await sut.execute({ nfseId: 1 });
+
+      // Assert
+      expect(findBankPaymentByYourNumber.execute).toHaveBeenCalledWith({
+        provider: BankPaymentProvider.INTER,
+        yourNumber: '1',
+        amount: 1000,
+        dueDate: '2026-08-15',
+      });
+      expect(issueBankPayment.execute).not.toHaveBeenCalled();
+      expect(result).toEqual({ provider: BankPaymentProvider.INTER, requestCode: 'existing-code' });
+      expect(nfse.props.bankPaymentRequestCode).toBe('existing-code');
+    });
+
+    it('should issue when the lookup finds nothing', async() => {
+      // Arrange
+      const nfse = NfseFactory.load(makeNfseProps({
+        bankPaymentRequestedAt: REQUESTED_AT,
+        bankPaymentIdempotencyKey: 'nfse-1',
+      }));
+      jest.spyOn(nfseRepository, 'findById').mockResolvedValue(nfse);
+      jest.spyOn(findBankPaymentByYourNumber, 'execute').mockResolvedValue(null);
+      jest.spyOn(issueBankPayment, 'execute').mockResolvedValue({
+        provider: BankPaymentProvider.INTER,
+        requestCode: 'req-new',
+      });
+
+      // Act
+      const result = await sut.execute({ nfseId: 1 });
+
+      // Assert
+      expect(issueBankPayment.execute).toHaveBeenCalledTimes(1);
+      expect(result).toEqual({ provider: BankPaymentProvider.INTER, requestCode: 'req-new' });
+      // A marca da primeira tentativa é preservada — regravá-la não muda nada e apagá-la
+      // reabriria a janela de emissão às cegas.
+      expect(nfse.props.bankPaymentRequestedAt).toEqual(REQUESTED_AT);
+    });
+
+    it('should not query the provider on the first attempt', async() => {
+      // Arrange
+      const nfse = NfseFactory.load(makeNfseProps());
+      jest.spyOn(nfseRepository, 'findById').mockResolvedValue(nfse);
+      jest.spyOn(issueBankPayment, 'execute').mockResolvedValue({
+        provider: BankPaymentProvider.INTER,
+        requestCode: 'req-first',
+      });
+
+      // Act
+      await sut.execute({ nfseId: 1 });
+
+      // Assert
+      expect(findBankPaymentByYourNumber.execute).not.toHaveBeenCalled();
+      expect(nfse.props.bankPaymentIdempotencyKey).toBe('nfse-1');
+    });
+  });
+
   describe('duplicate rejection from the provider', () => {
     const EXISTING_REQUEST_CODE = 'ab3242a2-2205-4f5e-9f54-32caf508cfe5';
 
@@ -430,6 +559,9 @@ describe('ProcessIssueNfseBankPayment - Unit tests', () => {
         provider: BankPaymentProvider.INTER,
         requestCode: EXISTING_REQUEST_CODE,
         yourNumber: '1',
+        amount: 1000,
+        dueDate: '2026-08-15',
+        status: BankPaymentStatus.EMITTED,
         ...overrides,
       });
     }

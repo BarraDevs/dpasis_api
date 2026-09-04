@@ -1,9 +1,11 @@
 import { Test } from '@nestjs/testing';
+import { NfmAlreadyHasActiveNfseError } from 'src/app/tax-invoice/nfm/domain/errors/nfm-already-has-active-nfse.error';
 import { NfseCreateProps } from 'src/app/tax-invoice/nfse/domain/entities/nfse.entity';
 import { NfseStatus } from 'src/app/tax-invoice/nfse/domain/enums/nfse-status.enum';
 import { NfseFactory } from 'src/app/tax-invoice/nfse/domain/factories/nfse.factory';
 import { ConfigModule } from 'src/core/config/config.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
+import { JobName } from 'src/infra/queue/enums/job-name.enum';
 import { NfseRepositoryAdapterPrisma } from './nfse-prisma.repository';
 
 function makeNfseCreateProps(overrides: Partial<NfseCreateProps> = {}): NfseCreateProps {
@@ -284,6 +286,30 @@ describe('NfseRepositoryAdapterPrisma - Integration tests', () => {
       });
     });
 
+    it('should persist and rehydrate bankPaymentRequestedAt and bankPaymentFailedAt', async() => {
+      // Arrange
+      const id = await sut.save(NfseFactory.create(makeNfseCreateProps()));
+      const issuedAt = new Date('2026-07-20T10:00:00.000Z');
+      let entity = await sut.findById(id);
+      entity!.markIssued('6006', 'VER-6006', issuedAt);
+      await sut.edit(entity!);
+
+      entity = await sut.findById(id);
+      entity!.markBankPaymentRequested(`nfse-${id}`);
+      entity!.markBankPaymentFailed('Inter recusou');
+
+      // Act
+      await sut.edit(entity!);
+      const result = await sut.findById(id);
+
+      // Assert
+      expect(result?.props.bankPaymentIdempotencyKey).toBe(`nfse-${id}`);
+      expect(result?.props.bankPaymentRequestedAt).toBeInstanceOf(Date);
+      expect(result?.props.bankPaymentErrorMessage).toBe('Inter recusou');
+      expect(result?.props.bankPaymentFailedAt).toBeInstanceOf(Date);
+      expect(result?.props.status).toBe(NfseStatus.ISSUED);
+    });
+
     it('should persist PROCESSING status after markProcessing', async() => {
       // Arrange
       const id = await sut.save(NfseFactory.create(makeNfseCreateProps()));
@@ -345,6 +371,11 @@ describe('NfseRepositoryAdapterPrisma - Integration tests', () => {
         cancelReasonCode: null,
         bankPaymentProvider: null,
         bankPaymentRequestCode: null,
+        bankPaymentIdempotencyKey: null,
+        bankPaymentRequestedAt: null,
+        bankPaymentErrorMessage: null,
+        bankPaymentFailedAt: null,
+        nfmId: null,
         data: {},
       });
       entity.markSubmitted('protocol-missing');
@@ -353,4 +384,130 @@ describe('NfseRepositoryAdapterPrisma - Integration tests', () => {
       await expect(sut.edit(entity)).rejects.toThrow();
     });
   });
+
+  describe('reserve', () => {
+    let cnaeNbsIndopId: number;
+
+    async function seedTaxation(): Promise<number> {
+      const suffix = String(Date.now()).slice(-8) + String(Math.floor(Math.random() * 1000));
+      const cnae = await prisma.cnae.create({ data: { code: `C${suffix}`, description: 'CNAE RESERVE' } });
+      const nbs = await prisma.nbs.create({ data: { code: `N${suffix}`, description: 'NBS RESERVE' } });
+      const indop = await prisma.indop.create({ data: { code: `I${suffix}`, description: 'INDOP RESERVE' } });
+      const correlation = await prisma.cnaeNbsIndop.create({
+        data: { cnaeId: cnae.id, nbsId: nbs.id, indopId: indop.id, serviceListItemCode: '01.07' },
+      });
+      return correlation.id;
+    }
+
+    async function seedNfm(): Promise<number> {
+      const row = await prisma.nfm.create({
+        data: {
+          clientId: 1,
+          clientDocument: '00000000000101',
+          companyName: 'Empresa Teste',
+          referenceMonth: 1,
+          referenceYear: 2026,
+          totalValueInCents: 10000,
+          cnaeNbsIndopId,
+          data: {},
+        },
+        select: { id: true },
+      });
+      return row.id;
+    }
+
+    function makeReserveInput(nfmId: number | null) {
+      return {
+        companyId: 1,
+        clientId: 1,
+        rpsSeries: 'NFSE',
+        data: { providerDocument: '12345678000199' },
+        nfmId,
+        jobName: JobName.IssueNfseBatch,
+      };
+    }
+
+    beforeEach(async() => {
+      cnaeNbsIndopId = await seedTaxation();
+    });
+
+    it('should create the nfse, link the nfm on both sides and register the outbox row in one transaction', async() => {
+      // Arrange
+      const nfmId = await seedNfm();
+
+      // Act
+      const result = await sut.reserve(makeReserveInput(nfmId));
+
+      // Assert
+      expect(result.rpsNumber).toBe(1);
+      const nfse = await prisma.nfse.findUnique({ where: { id: result.nfseId } });
+      expect(nfse).toMatchObject({ status: NfseStatus.PENDING, rpsNumber: 1, rpsSeries: 'NFSE', nfmId });
+      const nfm = await prisma.nfm.findUnique({ where: { id: nfmId } });
+      expect(nfm?.nfseId).toBe(result.nfseId);
+      const outbox = await prisma.nfseOutbox.findUnique({ where: { id: result.outboxId } });
+      expect(outbox).toMatchObject({
+        nfseId: result.nfseId,
+        jobName: JobName.IssueNfseBatch,
+        payload: { nfseId: result.nfseId },
+        dispatchedAt: null,
+      });
+    });
+
+    it('should refuse a second active nfse for the same nfm', async() => {
+      // Arrange
+      const nfmId = await seedNfm();
+      await sut.reserve(makeReserveInput(nfmId));
+
+      // Act & Assert
+      await expect(sut.reserve(makeReserveInput(nfmId))).rejects.toThrow(NfmAlreadyHasActiveNfseError);
+    });
+
+    it('should allow a new nfse when the previous one for the same nfm is FAILED', async() => {
+      // Arrange — reemissão autorizada depois de uma rejeição de negócio.
+      const nfmId = await seedNfm();
+      const first = await sut.reserve(makeReserveInput(nfmId));
+      await prisma.nfse.update({ where: { id: first.nfseId }, data: { status: NfseStatus.FAILED } });
+
+      // Act
+      const second = await sut.reserve(makeReserveInput(nfmId));
+
+      // Assert
+      expect(second.nfseId).not.toBe(first.nfseId);
+      expect(second.rpsNumber).toBe(2);
+    });
+
+    it('should refuse a new nfse when the previous one for the same nfm is CANCELED', async() => {
+      // Arrange — CANCELED permanece no índice parcial (só FAILED/REJECTED saem).
+      const nfmId = await seedNfm();
+      const first = await sut.reserve(makeReserveInput(nfmId));
+      await prisma.nfse.update({ where: { id: first.nfseId }, data: { status: NfseStatus.CANCELED } });
+
+      // Act & Assert
+      await expect(sut.reserve(makeReserveInput(nfmId))).rejects.toThrow(NfmAlreadyHasActiveNfseError);
+    });
+
+    it('should give the rps number back when the transaction rolls back', async() => {
+      // Arrange — nfmId inexistente faz o UPDATE da NFM falhar depois de o RPS ter sido consumido.
+      await expect(sut.reserve(makeReserveInput(999_999))).rejects.toThrow();
+
+      // Act
+      const afterRollback = await sut.reserve(makeReserveInput(null));
+
+      // Assert
+      expect(afterRollback.rpsNumber).toBe(1);
+    });
+
+    it('should mark the outbox row as dispatched', async() => {
+      // Arrange
+      const reserved = await sut.reserve(makeReserveInput(null));
+
+      // Act
+      await sut.markOutboxDispatched(reserved.outboxId);
+
+      // Assert
+      const outbox = await prisma.nfseOutbox.findUnique({ where: { id: reserved.outboxId } });
+      expect(outbox?.dispatchedAt).toBeInstanceOf(Date);
+    });
+  });
+
 });

@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { BankPaymentModule as BankPaymentModuleInfra } from 'src/infra/bank-payment/bank-payment.module';
 import { CancelBankPayment } from './application/usecases/cancel-bank-payment/cancel-bank-payment.service';
 import { FindAllBankPayment } from './application/usecases/find-all-bank-payment/find-all-bank-payment.service';
+import { FindBankPaymentByYourNumber } from './application/usecases/find-bank-payment-by-your-number/find-bank-payment-by-your-number.service';
 import { FindBankPayment } from './application/usecases/find-bank-payment/find-bank-payment.service';
 import { GetBankPaymentPdf } from './application/usecases/get-bank-payment-pdf/get-bank-payment-pdf.service';
 import { IssueBankPayment } from './application/usecases/issue-bank-payment/issue-bank-payment.service';
@@ -18,6 +19,7 @@ import { IssueBankPayment } from './application/usecases/issue-bank-payment/issu
     IssueBankPayment,
     FindAllBankPayment,
     FindBankPayment,
+    FindBankPaymentByYourNumber,
     GetBankPaymentPdf,
     CancelBankPayment,
   ],
@@ -25,6 +27,7 @@ import { IssueBankPayment } from './application/usecases/issue-bank-payment/issu
     IssueBankPayment,
     FindAllBankPayment,
     FindBankPayment,
+    FindBankPaymentByYourNumber,
     GetBankPaymentPdf,
     CancelBankPayment,
   ],

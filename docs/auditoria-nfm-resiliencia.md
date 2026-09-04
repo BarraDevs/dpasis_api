@@ -864,6 +864,10 @@ sequenceDiagram
   `httpStatus`, `durationMs`, `errorClass`, `createdAt`), escrita pelo gateway em toda tentativa,
   com retenção definida (o XML contém dados do tomador).
 - **Esforço:** M
+- **Status:** ✅ resolvido na Onda 2, com uma ressalva. A tabela existe e é escrita pelos dois
+  adapters (`IProviderAttemptRecorder`, gravação que nunca lança). **A retenção não entrou** — por
+  decisão da operação, os corpos são guardados inteiros e não há job de purga. Fica registrado como
+  dívida: `nfse_attempts` cresce sem limite e carrega dados do tomador.
 
 ### [P2-04] Logs do fluxo não carregam o identificador da nota, e não existe correlation ID
 
@@ -1318,13 +1322,14 @@ Comando de CLI equivalente para os dois primeiros (`npm run nfse:status -- --nfm
 
 1. **Identificar o estado** — hoje, via SQL:
    ```sql
-   SELECT n.id AS nfm_id, f.id AS nfse_id, f.status, f.rps_number, f.rps_series,
-          f.batch_protocol, f.nfse_number, f.error_message,
-          f.bank_payment_request_code, f.updated_at
-   FROM nfms n JOIN nfses f ON f.id = n.nfse_id
+   -- as colunas são camelCase entre aspas no Postgres; só `nfse_rps_sequences` usa snake_case
+   SELECT n.id AS nfm_id, f.id AS nfse_id, f.status, f."rpsNumber", f."rpsSeries",
+          f."batchProtocol", f."nfseNumber", f."errorMessage",
+          f."bankPaymentRequestCode", f."bankPaymentErrorMessage", f."updatedAt"
+   FROM nfms n JOIN nfses f ON f.id = n."nfseId"
    WHERE f.status NOT IN ('ISSUED','CANCELED')
-      OR (f.status = 'ISSUED' AND f.bank_payment_request_code IS NULL)
-   ORDER BY f.updated_at;
+      OR (f.status = 'ISSUED' AND f."bankPaymentRequestCode" IS NULL)
+   ORDER BY f."updatedAt";
    ```
 2. **Decidir pelo estado**:
 
@@ -1409,18 +1414,58 @@ Comando de CLI equivalente para os dois primeiros (`npm run nfse:status -- --nfm
 
 ### Onda 2 — impedir a duplicidade (depende da Onda 1)
 
+> **Entregue em 2026-09-03.** Decisões tomadas na execução:
+>
+> - **O projeto passou a usar `prisma migrate`.** Até aqui o schema era aplicado com `prisma db push`
+>   e não havia `prisma/migrations/`. O índice único parcial não é expressável no schema Prisma, e
+>   sem histórico versionado não havia onde colocá-lo. Ficaram duas migrations: `0_init` (baseline do
+>   schema que já estava em produção) e `20260903120000_onda2_nfse_idempotencia`. **Todo ambiente já
+>   existente precisa de `prisma migrate resolve --applied 0_init` antes do primeiro `migrate
+>   deploy`** — ver `README.md`.
+> - **`nfmId` é escalar puro em `nfses`, sem `@relation`.** `Nfm.nfseId` já declara a relação 1:1, e
+>   uma segunda relação entre os mesmos models exigiria nomear as duas nos dois lados. As duas
+>   colunas são escritas na mesma transação, e é sobre `nfses("nfmId")` que vive
+>   `nfses_one_active_per_nfm`. A migration faz o backfill a partir de `nfms."nfseId"` antes de criar
+>   o índice.
+> - **O lock e o RPS entraram no repositório, não no use case.** `INfseRepository.reserve()` abre uma
+>   transação e faz `SELECT ... FOR UPDATE` na NFM, consome o RPS, cria a NFS-e, grava o vínculo dos
+>   dois lados e registra o outbox. É o primeiro `Prisma.TransactionClient` do projeto; segue o
+>   padrão de `admin-prisma.repository.ts` (a transação nasce e morre dentro do método).
+>   `getAndIncrement` sair de fora fechou o P2-02 de quebra: o rollback devolve o número.
+> - **A violação do índice parcial chega como P2002 com `meta.target = ['nfmId']`**, não com o nome
+>   do índice. `SaveElegibleNfms` traduz para `NfmAlreadyHasActiveNfseError` e conta como `skipped`.
+> - **A consulta prévia ao Inter é disparada por `bankPaymentRequestedAt`, não por
+>   `job.attemptsMade`.** O flag vem do banco, então o retry manual `POST /admin/bank-payment/nfm/:id`
+>   — que é o caminho que sempre cai fora dos 30 min — herda a proteção sem nenhuma alteração.
+> - **O outbox entrou com escrita e marcação de despacho, sem sweeper.** A varredura é Onda 3; até
+>   lá, uma linha com `dispatchedAt` nulo é o rastro de uma NFS-e criada e não enfileirada.
+> - **`NfseAttempt` guarda os corpos inteiros e não tem purga** (decisão da operação). É dívida
+>   conhecida: o XML carrega dados do tomador. A gravação é feita pelos adapters via
+>   `IProviderAttemptRecorder` e **nunca lança**.
+> - **`ProcessIssueNfseBankPayment` deixou de engolir falha em silêncio.** Os três `return null`
+>   passam a gravar `bankPaymentErrorMessage`/`bankPaymentFailedAt`. Fazer o job falhar continua
+>   sendo P1-03 (Onda 3); registrar o motivo não dependia disso.
+>
+> **Adiado para depois (decisão da operação):** o lote de 50 RPS (RR5). O pré-requisito — casar
+> `issuedNotes` por RPS — entrou; o agrupamento em si reestrutura o modelo de job/protocolo (N NFS-e
+> por `batchProtocol`) e a Onda 3 traz `RecepcionarLoteRpsSincrono`, que pode torná-lo obsoleto.
+> `GissIssueBatchMapper` e `IssueNfsBatchInputDto` já aceitam até 50 RPS: falta só o agrupamento.
+>
+> **Continua pendente da Onda 1:** P2-12 (o alerta some em silêncio quando o Redis ou o SMTP falham).
+> Ficou fora desta entrega por decisão da operação.
+
 | Item | Achado | Esforço | Depende de |
 |---|---|---|---|
-| Migration: `nfmId`, chave de idempotência, índices, `NfseAttempt` | — | M | — |
-| Transação única para NFM + RPS + NFS-e + vínculo, com outbox | P0-01 | M | migration |
-| Índice único parcial `nfses(nfm_id) WHERE status NOT IN (...)` + lock na linha da NFM | P1-05 | M | migration, P0-01 |
-| Idempotência do boleto (chave gravada antes, consulta prévia na retentativa) | P0-02, P1-07 | M | migration |
-| Filtro `seuNumero` em `ListBankPaymentInputDto` + `toListQueryParams` | P0-02, P1-07 | P | — |
-| Recusa por duplicidade do Inter passa a vincular a cobrança existente, não a falhar | P0-02 | P | filtro `seuNumero` |
-| Casar `issuedNotes` por `rpsNumber` + `rpsSeries` em vez de `[0]` | P2-01, cenário 14 | P | — |
-| Lote de até 50 RPS em `RecepcionarLoteRps` | RR5, P2-08 | M | casamento por RPS (pré-requisito) |
-| Classificação transitório × permanente nos dois provedores | P2-07 | P | — |
-| Persistir tentativas em `NfseAttempt` | P2-03 | M | migration |
+| ✅ Migration: `nfmId`, chave de idempotência, índices, `NfseAttempt` (+ adoção de `prisma migrate` e baseline `0_init`) | — | M | — |
+| ✅ Transação única para NFM + RPS + NFS-e + vínculo, com outbox | P0-01, P2-02 | M | migration |
+| ✅ Índice único parcial `nfses("nfmId") WHERE status NOT IN (...)` + lock na linha da NFM | P1-05 | M | migration, P0-01 |
+| ✅ Idempotência do boleto (chave gravada antes, consulta prévia na retentativa) | P0-02, P1-07 | M | migration |
+| ✅ Filtro `seuNumero` em `ListBankPaymentInputDto` + `toListQueryParams` | P0-02, P1-07 | P | — |
+| ✅ Recusa por duplicidade do Inter vincula a cobrança existente, conferindo `seuNumero` **e** `valorNominal` **e** `dataVencimento` | P0-02 | P | filtro `seuNumero` |
+| ✅ Casar `issuedNotes` por `rpsNumber` + `rpsSeries` em vez de `[0]` | P2-01, cenário 14 | P | — |
+| ⬜ **Adiado:** lote de até 50 RPS em `RecepcionarLoteRps` | RR5, P2-08 | M | casamento por RPS (entregue) |
+| ✅ Classificação transitório × permanente nos dois provedores | P2-07 | P | — |
+| ✅ Persistir tentativas em `NfseAttempt` | P2-03 | M | migration |
 
 ### Onda 3 — recuperação automática (depende da Onda 2)
 

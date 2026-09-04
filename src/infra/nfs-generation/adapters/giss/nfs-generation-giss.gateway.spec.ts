@@ -4,6 +4,8 @@ import { LogContext, type ILoggerGateway } from 'src/infra/logger/logger.gateway
 import { ExternalApiError } from 'src/shared/errors/external-api.error';
 import { NfsProviderConfigError } from 'src/infra/nfs-generation/errors/nfs-provider-config.error';
 import { NfsBatchSituation } from '../../dtos/nfs-batch-status.dto';
+import { ProviderAttemptFakeAdapterGateway } from 'src/infra/provider-attempt/adapters/fake/provider-attempt-fake.gateway';
+import { GissSoapCallError } from './soap/giss-soap-call.error';
 import { NfsProviderEnvironment } from '../../dtos/nfs-provider-credentials.dto';
 import { GissBatchStatusMapper } from './mappers/giss-batch-status.mapper';
 import { GissCancelNfseMapper } from './mappers/giss-cancel-nfse.mapper';
@@ -30,6 +32,10 @@ const mockedLoadCert = GissPfxLoader.load as jest.Mock;
 const mockedSign = GissXmlSigner.signElementById as jest.Mock;
 const mockedSignWholeDocument = GissXmlSigner.signWholeDocument as jest.Mock;
 const mockedPostSoap = GissSoapClient.postSoapRequest as jest.Mock;
+
+function soapCall(outputXml = '<response/>') {
+  return { outputXml, requestBody: '<envelope/>', responseBody: '<raw/>', httpStatus: 200, durationMs: 12 };
+}
 
 const certMaterial = { certPem: 'cert', keyPem: 'key' };
 
@@ -58,12 +64,14 @@ describe('NfsGenerationGissAdapterGateway - Unit tests', () => {
   let sut: NfsGenerationGissAdapterGateway;
   let httpService: HttpService;
   let logger: ILoggerGateway;
+  let attemptRecorder: ProviderAttemptFakeAdapterGateway;
 
   beforeEach(() => {
     jest.clearAllMocks();
     httpService = createMock<HttpService>();
     logger = createMock<ILoggerGateway>();
-    sut = new NfsGenerationGissAdapterGateway(logger, httpService);
+    attemptRecorder = new ProviderAttemptFakeAdapterGateway();
+    sut = new NfsGenerationGissAdapterGateway(logger, attemptRecorder, httpService);
     mockedLoadCert.mockReturnValue(certMaterial);
   });
 
@@ -108,7 +116,7 @@ describe('NfsGenerationGissAdapterGateway - Unit tests', () => {
       // Arrange
       mockedBuildIssueBatch.mockReturnValue({ xml: '<xml/>', loteId: 'lote1', rpsIds: ['rps1'] });
       mockedSign.mockReturnValue('<signed-xml/>');
-      mockedPostSoap.mockResolvedValue('<response/>');
+      mockedPostSoap.mockResolvedValue(soapCall());
       mockedParseIssueBatch.mockReturnValue({ batchProtocol: 'PROTO-123' });
 
       // Act
@@ -123,7 +131,7 @@ describe('NfsGenerationGissAdapterGateway - Unit tests', () => {
       // Arrange
       mockedBuildIssueBatch.mockReturnValue({ xml: '<xml/>', loteId: 'lote1', rpsIds: ['rps1'] });
       mockedSign.mockReturnValue('<signed-xml/>');
-      mockedPostSoap.mockResolvedValue('<response/>');
+      mockedPostSoap.mockResolvedValue(soapCall());
       mockedParseIssueBatch.mockReturnValue({ batchProtocol: 'PROTO-123' });
 
       // Act
@@ -140,7 +148,7 @@ describe('NfsGenerationGissAdapterGateway - Unit tests', () => {
       // Arrange
       mockedBuildIssueBatch.mockReturnValue({ xml: '<xml/>', loteId: 'lote1', rpsIds: ['rps1', 'rps2'] });
       mockedSign.mockImplementation((xml: string, id: string) => `${xml}-${id}`);
-      mockedPostSoap.mockResolvedValue('<response/>');
+      mockedPostSoap.mockResolvedValue(soapCall());
       mockedParseIssueBatch.mockReturnValue({ batchProtocol: 'PROTO-123' });
 
       // Act
@@ -168,6 +176,65 @@ describe('NfsGenerationGissAdapterGateway - Unit tests', () => {
         batchNumber: 1,
         errorMessage: 'timeout',
       }));
+    });
+
+    it('should record the attempt with the raw bodies when nfseId is given', async() => {
+      // Arrange
+      mockedBuildIssueBatch.mockReturnValue({ xml: '<xml/>', loteId: 'lote1', rpsIds: ['rps1'] });
+      mockedSign.mockReturnValue('<signed-xml/>');
+      mockedPostSoap.mockResolvedValue(soapCall());
+      mockedParseIssueBatch.mockReturnValue({ batchProtocol: 'PROTO-123' });
+
+      // Act
+      await sut.issueBatch({ nfseId: 55, batchNumber: 1, provider, rpsList: [] });
+
+      // Assert
+      expect(attemptRecorder.attempts).toEqual([{
+        nfseId: 55,
+        operation: 'RECEPCIONAR_LOTE',
+        requestBody: '<envelope/>',
+        responseBody: '<raw/>',
+        httpStatus: 200,
+        durationMs: 12,
+        errorClass: null,
+      }]);
+    });
+
+    it('should record the attempt when the call fails, with the error class', async() => {
+      // Arrange
+      mockedBuildIssueBatch.mockReturnValue({ xml: '<xml/>', loteId: 'lote1', rpsIds: ['rps1'] });
+      mockedSign.mockReturnValue('<signed-xml/>');
+      mockedPostSoap.mockRejectedValue(new GissSoapCallError(new Error('timeout'), {
+        requestBody: '<envelope/>',
+        responseBody: null,
+        httpStatus: null,
+        durationMs: 9,
+      }));
+
+      // Act
+      await expect(sut.issueBatch({ nfseId: 55, batchNumber: 1, provider, rpsList: [] })).rejects.toThrow(ExternalApiError);
+
+      // Assert
+      expect(attemptRecorder.attempts).toEqual([expect.objectContaining({
+        nfseId: 55,
+        operation: 'RECEPCIONAR_LOTE',
+        errorClass: 'Error',
+        httpStatus: null,
+      })]);
+    });
+
+    it('should skip the attempt trail when there is no nfseId to anchor it to', async() => {
+      // Arrange
+      mockedBuildIssueBatch.mockReturnValue({ xml: '<xml/>', loteId: 'lote1', rpsIds: ['rps1'] });
+      mockedSign.mockReturnValue('<signed-xml/>');
+      mockedPostSoap.mockResolvedValue(soapCall());
+      mockedParseIssueBatch.mockReturnValue({ batchProtocol: 'PROTO-123' });
+
+      // Act
+      await sut.issueBatch({ batchNumber: 1, provider, rpsList: [] });
+
+      // Assert
+      expect(attemptRecorder.attempts).toHaveLength(0);
     });
 
     it('should use the default ExternalApiError message when the caught error has no message', async() => {
@@ -217,7 +284,7 @@ describe('NfsGenerationGissAdapterGateway - Unit tests', () => {
       // Arrange
       mockedBuildConsultar.mockReturnValue('<consulta/>');
       mockedSignWholeDocument.mockReturnValue('<consulta-assinada/>');
-      mockedPostSoap.mockResolvedValue('<response/>');
+      mockedPostSoap.mockResolvedValue(soapCall());
       mockedParseConsultar.mockReturnValue({ situation: NfsBatchSituation.Success, issuedNotes: [] });
 
       // Act
@@ -232,7 +299,7 @@ describe('NfsGenerationGissAdapterGateway - Unit tests', () => {
       // Arrange
       mockedBuildConsultar.mockReturnValue('<consulta/>');
       mockedSignWholeDocument.mockReturnValue('<consulta-assinada/>');
-      mockedPostSoap.mockResolvedValue('<response/>');
+      mockedPostSoap.mockResolvedValue(soapCall());
       mockedParseConsultar.mockReturnValue({ situation: NfsBatchSituation.Success, issuedNotes: [] });
 
       // Act
@@ -281,6 +348,28 @@ describe('NfsGenerationGissAdapterGateway - Unit tests', () => {
       await expect(sut.getBatchStatus(batchStatusInput)).rejects.toThrow(NfsProviderConfigError);
       expect(logger.error).not.toHaveBeenCalled();
     });
+
+    it('should record the attempt with CONSULTAR_LOTE when nfseId is given', async() => {
+      // Arrange
+      mockedBuildConsultar.mockReturnValue('<consulta/>');
+      mockedSignWholeDocument.mockReturnValue('<consulta-assinada/>');
+      mockedPostSoap.mockResolvedValue(soapCall());
+      mockedParseConsultar.mockReturnValue({ situation: NfsBatchSituation.Success, issuedNotes: [] });
+
+      // Act
+      await sut.getBatchStatus({ ...batchStatusInput, nfseId: 77 });
+
+      // Assert
+      expect(attemptRecorder.attempts).toEqual([{
+        nfseId: 77,
+        operation: 'CONSULTAR_LOTE',
+        requestBody: '<envelope/>',
+        responseBody: '<raw/>',
+        httpStatus: 200,
+        durationMs: 12,
+        errorClass: null,
+      }]);
+    });
   });
 
   describe('cancelNfse', () => {
@@ -308,7 +397,7 @@ describe('NfsGenerationGissAdapterGateway - Unit tests', () => {
       // Arrange
       mockedBuildCancelar.mockReturnValue({ xml: '<cancel/>', infId: 'cancelamento1' });
       mockedSign.mockReturnValue('<cancel-assinado/>');
-      mockedPostSoap.mockResolvedValue('<response/>');
+      mockedPostSoap.mockResolvedValue(soapCall());
       mockedParseCancelar.mockReturnValue({ confirmedAt: '2026-07-29T12:00:00' });
 
       // Act
@@ -323,7 +412,7 @@ describe('NfsGenerationGissAdapterGateway - Unit tests', () => {
       // Arrange
       mockedBuildCancelar.mockReturnValue({ xml: '<cancel/>', infId: 'cancelamento1' });
       mockedSign.mockReturnValue('<cancel-assinado/>');
-      mockedPostSoap.mockResolvedValue('<response/>');
+      mockedPostSoap.mockResolvedValue(soapCall());
       mockedParseCancelar.mockReturnValue({ confirmedAt: '2026-07-29T12:00:00' });
 
       // Act
@@ -372,6 +461,28 @@ describe('NfsGenerationGissAdapterGateway - Unit tests', () => {
       // Act & Assert
       await expect(sut.cancelNfse(cancelNfseInput)).rejects.toThrow(NfsProviderConfigError);
       expect(logger.error).not.toHaveBeenCalled();
+    });
+
+    it('should record the attempt with CANCELAR when nfseId is given', async() => {
+      // Arrange
+      mockedBuildCancelar.mockReturnValue({ xml: '<cancel/>', infId: 'cancelamento1' });
+      mockedSign.mockReturnValue('<cancel-assinado/>');
+      mockedPostSoap.mockResolvedValue(soapCall());
+      mockedParseCancelar.mockReturnValue({ confirmedAt: '2026-07-29T12:00:00' });
+
+      // Act
+      await sut.cancelNfse({ ...cancelNfseInput, nfseId: 88 });
+
+      // Assert
+      expect(attemptRecorder.attempts).toEqual([{
+        nfseId: 88,
+        operation: 'CANCELAR',
+        requestBody: '<envelope/>',
+        responseBody: '<raw/>',
+        httpStatus: 200,
+        durationMs: 12,
+        errorClass: null,
+      }]);
     });
   });
 });

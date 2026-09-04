@@ -82,6 +82,11 @@ function makeNfseProps(overrides: Partial<NfseProps> = {}): NfseProps {
     cancelReasonCode: null,
     bankPaymentProvider: null,
     bankPaymentRequestCode: null,
+    bankPaymentIdempotencyKey: null,
+    bankPaymentRequestedAt: null,
+    bankPaymentErrorMessage: null,
+    bankPaymentFailedAt: null,
+    nfmId: null,
     data: snapshot as unknown as Record<string, unknown>,
     ...overrides,
   };

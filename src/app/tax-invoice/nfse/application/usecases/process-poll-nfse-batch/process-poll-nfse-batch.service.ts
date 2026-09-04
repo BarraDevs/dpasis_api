@@ -2,8 +2,14 @@ import { Inject, Injectable } from '@nestjs/common';
 import { FindCompanyNfsConfigByCompanyId } from 'src/app/company/company-nfs-config/application/usecases/find-company-nfs-config-by-company-id/find-company-nfs-config-by-company-id.service';
 import { TOKENS } from 'src/core/di/token';
 import { LogContext, type ILoggerGateway } from 'src/infra/logger/logger.gateway';
-import { NfsBatchErrorKind, NfsBatchSituation, NfsBatchStatusDto } from 'src/infra/nfs-generation/dtos/nfs-batch-status.dto';
+import {
+  NfsBatchErrorKind,
+  NfsBatchSituation,
+  NfsBatchStatusDto,
+  NfsIssuedNoteDto,
+} from 'src/infra/nfs-generation/dtos/nfs-batch-status.dto';
 import { NfsProviderCredentialsDto, NfsProviderEnvironment } from 'src/infra/nfs-generation/dtos/nfs-provider-credentials.dto';
+import { NfsProviderConfigError } from 'src/infra/nfs-generation/errors/nfs-provider-config.error';
 import type { INfsGenerationGateway } from 'src/infra/nfs-generation/nfs-generation.gateway';
 import { Nfse } from '../../../domain/entities/nfse.entity';
 import { NfseNotFoundError } from '../../../domain/errors/nfse-not-found.error';
@@ -66,6 +72,7 @@ export class ProcessPollNfseBatch {
     let status: NfsBatchStatusDto;
     try {
       status = await this.nfsGenerationGateway.getBatchStatus({
+        nfseId: nfse.props.id,
         batchProtocol: nfse.props.batchProtocol!, // canPoll() ensures batchProtocol is not null
         providerDocument: snapshot.providerDocument,
         provider,
@@ -79,20 +86,38 @@ export class ProcessPollNfseBatch {
         batchProtocol: nfse.props.batchProtocol!, // canPoll() ensures batchProtocol is not null
         error,
       });
-      await this.rescheduleOrFail(
-        nfse,
-        input.attempt,
-        `Erro ao consultar status do lote no Giss: ${error?.message ?? 'sem detalhes'}`,
-      );
+      const message = `Erro ao consultar status do lote no Giss: ${error?.message ?? 'sem detalhes'}`;
+
+      // Configuração quebrada é determinística: gastar degraus do ladder atrasa a próxima consulta
+      // de verdade em horas sem nenhuma chance de o resultado mudar.
+      if (error instanceof NfsProviderConfigError) {
+        nfse.markAwaitingProvider(message);
+        await this.nfseRepository.edit(nfse);
+        return;
+      }
+
+      await this.rescheduleOrFail(nfse, input.attempt, message);
       return;
     }
 
     if (status.situation === NfsBatchSituation.Success) {
-      const issuedNote = status.issuedNotes?.[0];
-      if (!issuedNote) {
+      const issuedNotes = status.issuedNotes ?? [];
+      if (issuedNotes.length === 0) {
         // O lote foi processado com sucesso, então a nota existe do outro lado — o que falta são os
         // dados dela. `FAILED` aqui afirmaria o contrário do que o provedor acabou de responder.
         nfse.markAwaitingProvider('Giss retornou sucesso na consulta do lote, mas sem dados da NFS-e emitida');
+        await this.nfseRepository.edit(nfse);
+        return;
+      }
+
+      const issuedNote = ProcessPollNfseBatch.matchIssuedNote(issuedNotes, nfse);
+      if (!issuedNote) {
+        // Gravar o número de outra nota é irreversível e silencioso: a NFS-e passaria a apontar
+        // para um documento que não é dela. Melhor parar num estado não terminal e escalar.
+        nfse.markAwaitingProvider(
+          `Giss devolveu ${issuedNotes.length} nota(s) e nenhuma corresponde ao RPS `
+          + `${nfse.props.rpsNumber}/${nfse.props.rpsSeries}`,
+        );
         await this.nfseRepository.edit(nfse);
         return;
       }
@@ -124,6 +149,32 @@ export class ProcessPollNfseBatch {
       input.attempt,
       `Excedeu ${ProcessPollNfseBatch.MAX_POLL_ATTEMPTS} tentativas de consulta de status sem retorno definitivo do Giss`,
     );
+  }
+
+  /**
+   * Casa a nota devolvida pela prefeitura com a NFS-e local pela chave natural do RPS. Pegar
+   * `issuedNotes[0]` só funcionava porque o lote sempre teve um RPS — com mais de um, grava o
+   * número errado, em silêncio e sem volta.
+   *
+   * A tolerância do fallback existe porque a identificação do RPS é opcional no XSD e o parser
+   * devolve `0`/`''` quando ela não vem: num lote de uma nota só, a correspondência é inequívoca
+   * mesmo sem o identificador. Com mais de uma, não é, e aí ninguém é escolhido.
+   */
+  private static matchIssuedNote(issuedNotes: NfsIssuedNoteDto[], nfse: Nfse): NfsIssuedNoteDto | null {
+    const normalizeSeries = (series: string) => series.trim().toUpperCase();
+    const expectedSeries = normalizeSeries(nfse.props.rpsSeries);
+
+    const matched = issuedNotes.find((note) => (
+      Number(note.rpsNumber) === nfse.props.rpsNumber
+      && normalizeSeries(note.rpsSeries) === expectedSeries
+    ));
+    if (matched) {
+      return matched;
+    }
+
+    const [onlyNote] = issuedNotes;
+    const hasNoRpsIdentification = issuedNotes.length === 1 && !onlyNote.rpsNumber && !onlyNote.rpsSeries.trim();
+    return hasNoRpsIdentification ? onlyNote : null;
   }
 
   /**

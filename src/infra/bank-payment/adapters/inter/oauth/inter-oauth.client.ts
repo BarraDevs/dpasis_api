@@ -1,10 +1,13 @@
 import { HttpService } from '@nestjs/axios';
 import { Inject, Injectable } from '@nestjs/common';
+import { isAxiosError } from 'axios';
 import { Agent } from 'node:https';
 import { ConfigService } from 'src/core/config/config.service';
 import { TOKENS } from 'src/core/di/token';
 import { LogContext, type ILoggerGateway } from 'src/infra/logger/logger.gateway';
 import { ExternalApiError } from 'src/shared/errors/external-api.error';
+import { PermanentProviderError } from 'src/shared/errors/permanent-provider.error';
+import { TransientProviderError } from 'src/shared/errors/transient-provider.error';
 import { toLoggableHttpError } from '../to-loggable-http-error';
 import { InterOauthTokenDto } from './dtos/inter-oauth-token.dto';
 import { InterTokenResponseDto } from './dtos/inter-token-response.dto';
@@ -113,7 +116,17 @@ export class InterOauthClient {
         scope,
         error: toLoggableHttpError(error),
       });
-      throw new ExternalApiError('Falha ao obter token OAuth no Banco Inter.');
+
+      // Credencial recusada não melhora com retry: são cinco tentativas gastas e o incidente real
+      // (client_id/secret ou escopo errados) chegando cinco vezes mais tarde ao operador.
+      const status = isAxiosError(error) ? error.response?.status : undefined;
+      if (status === 400 || status === 401 || status === 403) {
+        throw new PermanentProviderError(
+          `Credencial OAuth do Banco Inter recusada (HTTP ${status}). Verifique INTER_CLIENT_ID/INTER_CLIENT_SECRET e o escopo.`,
+        );
+      }
+
+      throw new TransientProviderError('Falha ao obter token OAuth no Banco Inter.');
     }
   }
 

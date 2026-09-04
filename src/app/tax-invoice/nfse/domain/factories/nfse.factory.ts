@@ -30,7 +30,23 @@ export class NfseFactory {
       cancelReasonCode: null,
       bankPaymentProvider: null,
       bankPaymentRequestCode: null,
+      bankPaymentIdempotencyKey: null,
+      bankPaymentRequestedAt: null,
+      bankPaymentErrorMessage: null,
+      bankPaymentFailedAt: null,
+      nfmId: null,
     });
+  }
+
+  /**
+   * Valida o que dá para validar antes de o número de RPS existir. A reserva do RPS acontece dentro
+   * da transação do repositório (`INfseRepository.reserve`), então `create()` deixou de ser o
+   * caminho de inserção — sem esta checagem a validação sumiria do fluxo de emissão.
+   */
+  static validateReservation(props: Omit<NfseCreateProps, 'rpsNumber'>): void {
+    new PositiveInt(props.companyId, 'companyId');
+    new PositiveInt(props.clientId, 'clientId');
+    new NonEmptyString(props.rpsSeries, 'rpsSeries');
   }
 
   static load(props: NfseProps): Nfse {
@@ -50,6 +66,11 @@ export class NfseFactory {
       cancelReasonCode: props.cancelReasonCode,
       bankPaymentProvider: props.bankPaymentProvider,
       bankPaymentRequestCode: props.bankPaymentRequestCode,
+      bankPaymentIdempotencyKey: props.bankPaymentIdempotencyKey,
+      bankPaymentRequestedAt: props.bankPaymentRequestedAt,
+      bankPaymentErrorMessage: props.bankPaymentErrorMessage,
+      bankPaymentFailedAt: props.bankPaymentFailedAt,
+      nfmId: props.nfmId,
       data: props.data,
     });
   }

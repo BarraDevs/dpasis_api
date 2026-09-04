@@ -14,6 +14,7 @@ export enum LogContext {
   NF_GENERATION = 'nf-generation',
   NFS_GENERATION = 'nfs-generation',
   BANK_PAYMENT = 'bank-payment',
+  PROVIDER_ATTEMPT = 'provider-attempt',
 }
 
 type LogContextDataMap = {
@@ -27,6 +28,7 @@ type LogContextDataMap = {
   [LogContext.NF_GENERATION]: NfGenerationData
   [LogContext.NFS_GENERATION]: NfsGenerationData
   [LogContext.BANK_PAYMENT]: BankPaymentData
+  [LogContext.PROVIDER_ATTEMPT]: ProviderAttemptData
 }
 
 type CommomData = {
@@ -102,4 +104,10 @@ type BankPaymentData = CommomData & {
   nfseId?: number;
   scope?: string;
   requestCode?: string;
+}
+
+type ProviderAttemptData = CommomData & {
+  action: string;
+  nfseId?: number;
+  operation?: string;
 }

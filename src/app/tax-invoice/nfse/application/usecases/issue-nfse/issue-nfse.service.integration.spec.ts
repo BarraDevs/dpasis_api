@@ -5,9 +5,11 @@ import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum'
 import { ClientInvoiceConfigNotFoundError } from 'src/app/client/client-invoice-config/domain/errors/client-invoice-config-not-found.error';
 import { ClientInvoiceConfigType } from 'src/app/client/client-invoice-config/domain/enums/client-invoice-config-type.enum';
 import { ClientInvoiceConfigDueDateType } from 'src/app/client/client-invoice-config/domain/enums/client-invoice-config-due-date-type.enum';
+import { NfmAlreadyHasActiveNfseError } from 'src/app/tax-invoice/nfm/domain/errors/nfm-already-has-active-nfse.error';
 import { TOKENS } from 'src/core/di/token';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { NfsProviderEnvironment } from 'src/infra/nfs-generation/dtos/nfs-provider-credentials.dto';
+import { JobName } from 'src/infra/queue/enums/job-name.enum';
 import { buildMinimalResaleData, nextResaleFixtureId } from 'src/test/fixtures/minimal-resale';
 import { buildMinimalCompanyData } from 'src/test/fixtures/minimal-company';
 import { NfseQueueFakeAdapterProducer } from '../../../infra/driven/queue/fake/nfse-queue-fake.producer';
@@ -122,6 +124,30 @@ async function seedInvoiceConfig(
       message: null,
     },
   });
+}
+
+async function seedNfm(prisma: PrismaService, clientId: number): Promise<number> {
+  const suffix = String(Date.now()).slice(-8) + String(Math.floor(Math.random() * 1000));
+  const cnae = await prisma.cnae.create({ data: { code: `C${suffix}`, description: 'CNAE ISSUE' } });
+  const nbs = await prisma.nbs.create({ data: { code: `N${suffix}`, description: 'NBS ISSUE' } });
+  const indop = await prisma.indop.create({ data: { code: `I${suffix}`, description: 'INDOP ISSUE' } });
+  const correlation = await prisma.cnaeNbsIndop.create({
+    data: { cnaeId: cnae.id, nbsId: nbs.id, indopId: indop.id, serviceListItemCode: '01.07' },
+  });
+  const nfm = await prisma.nfm.create({
+    data: {
+      clientId,
+      clientDocument: String(clientId).padStart(14, '0'),
+      companyName: 'Cliente LTDA',
+      referenceMonth: 1,
+      referenceYear: 2026,
+      totalValueInCents: 10000,
+      cnaeNbsIndopId: correlation.id,
+      data: {},
+    },
+    select: { id: true },
+  });
+  return nfm.id;
 }
 
 describe('IssueNfse - Integration tests', () => {
@@ -289,5 +315,106 @@ describe('IssueNfse - Integration tests', () => {
     expect(queueProducer.addedIssueBatchJobs).toEqual([
       expect.objectContaining({ data: { nfseId: result.id } }),
     ]);
+
+    const outbox = await prisma.nfseOutbox.findFirst({ where: { nfseId: result.id } });
+    expect(outbox).toMatchObject({
+      nfseId: result.id,
+      jobName: JobName.IssueNfseBatch,
+      payload: { nfseId: result.id },
+    });
+    expect(outbox?.dispatchedAt).toBeInstanceOf(Date);
+  });
+
+  it('should link nfmId bilaterally and dispatch the outbox when nfmId is provided', async() => {
+    // Arrange
+    const company = await seedCompany(prisma);
+    const clientId = Date.now() % 100_000;
+    const client = await seedClient(prisma, clientId);
+    await prisma.nfsProviderConfig.create({
+      data: {
+        companyId: company.id,
+        vendor: 'giss',
+        municipalRegistration: '12345',
+        municipalCodeIbge: '3529401',
+        serieRps: 'NFSE',
+        environment: NfsProviderEnvironment.Demonstration,
+        certFilePath: '/certs/x.pfx',
+        certPasswordEnvVar: 'X_PASS',
+        vendorConfig: { municipioSlug: 'demonstracao' },
+      },
+    });
+    const bank = await seedBank(prisma);
+    const billingAddress = await prisma.clientAddress.create({
+      data: {
+        clientId: client.id,
+        type: ClientAddressType.BILLING,
+        zipCode: '01310-100',
+        street: 'Av. Paulista',
+        number: '500',
+        complement: 'Sala 301',
+        neighborhood: 'Bela Vista',
+        city: 'São Paulo',
+        cityCodeIbge: '3550308',
+        state: 'SP',
+        active: true,
+      },
+    });
+    await seedInvoiceConfig(prisma, client.id, billingAddress.id, bank.id);
+    const nfmId = await seedNfm(prisma, client.id);
+
+    // Act
+    const result = await sut.execute({ ...makeIssueNfseInput(company.id, client.id), nfmId });
+
+    // Assert
+    const saved = await prisma.nfse.findUnique({ where: { id: result.id } });
+    expect(saved?.nfmId).toBe(nfmId);
+    const nfm = await prisma.nfm.findUnique({ where: { id: nfmId } });
+    expect(nfm?.nfseId).toBe(result.id);
+
+    const outbox = await prisma.nfseOutbox.findFirst({ where: { nfseId: result.id } });
+    expect(outbox?.dispatchedAt).toBeInstanceOf(Date);
+  });
+
+  it('should refuse a second active nfse for the same nfm', async() => {
+    // Arrange
+    const company = await seedCompany(prisma);
+    const clientId = Date.now() % 100_000;
+    const client = await seedClient(prisma, clientId);
+    await prisma.nfsProviderConfig.create({
+      data: {
+        companyId: company.id,
+        vendor: 'giss',
+        municipalRegistration: '12345',
+        municipalCodeIbge: '3529401',
+        serieRps: 'NFSE',
+        environment: NfsProviderEnvironment.Demonstration,
+        certFilePath: '/certs/x.pfx',
+        certPasswordEnvVar: 'X_PASS',
+        vendorConfig: { municipioSlug: 'demonstracao' },
+      },
+    });
+    const bank = await seedBank(prisma);
+    const billingAddress = await prisma.clientAddress.create({
+      data: {
+        clientId: client.id,
+        type: ClientAddressType.BILLING,
+        zipCode: '01310-100',
+        street: 'Av. Paulista',
+        number: '500',
+        complement: 'Sala 301',
+        neighborhood: 'Bela Vista',
+        city: 'São Paulo',
+        cityCodeIbge: '3550308',
+        state: 'SP',
+        active: true,
+      },
+    });
+    await seedInvoiceConfig(prisma, client.id, billingAddress.id, bank.id);
+    const nfmId = await seedNfm(prisma, client.id);
+    await sut.execute({ ...makeIssueNfseInput(company.id, client.id), nfmId });
+
+    // Act & Assert
+    await expect(sut.execute({ ...makeIssueNfseInput(company.id, client.id), nfmId }))
+      .rejects.toThrow(NfmAlreadyHasActiveNfseError);
   });
 });

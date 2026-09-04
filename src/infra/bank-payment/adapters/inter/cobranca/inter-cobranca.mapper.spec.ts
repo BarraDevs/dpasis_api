@@ -333,6 +333,32 @@ describe('InterCobrancaMapper - Unit tests', () => {
     });
   });
 
+  it('should map yourNumber to seuNumero and trim it', () => {
+    const result = InterCobrancaMapper.toListQueryParams({
+      provider: BankPaymentProvider.INTER,
+      startDate: '2026-08-15',
+      endDate: '2026-08-15',
+      yourNumber: ' 42 ',
+    });
+
+    expect(result).toMatchObject({
+      dataInicial: '2026-08-15',
+      dataFinal: '2026-08-15',
+      seuNumero: '42',
+    });
+  });
+
+  it('should omit seuNumero when yourNumber is blank', () => {
+    const result = InterCobrancaMapper.toListQueryParams({
+      provider: BankPaymentProvider.INTER,
+      startDate: '2026-08-15',
+      endDate: '2026-08-15',
+      yourNumber: '   ',
+    });
+
+    expect(result).not.toHaveProperty('seuNumero');
+  });
+
   it('should map optional list filters including status', () => {
     const result = InterCobrancaMapper.toListQueryParams({
       provider: BankPaymentProvider.INTER,

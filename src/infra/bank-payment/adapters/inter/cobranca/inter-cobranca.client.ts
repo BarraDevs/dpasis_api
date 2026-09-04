@@ -6,6 +6,10 @@ import { ConfigService } from 'src/core/config/config.service';
 import { TOKENS } from 'src/core/di/token';
 import { LogContext, type ILoggerGateway } from 'src/infra/logger/logger.gateway';
 import { ExternalApiError } from 'src/shared/errors/external-api.error';
+import { PermanentProviderError } from 'src/shared/errors/permanent-provider.error';
+import { TransientProviderError } from 'src/shared/errors/transient-provider.error';
+import { ProviderAttemptOperation } from 'src/infra/provider-attempt/enums/provider-attempt-operation.enum';
+import type { IProviderAttemptRecorder } from 'src/infra/provider-attempt/provider-attempt.gateway';
 import { BankPaymentDto } from '../../../dtos/bank-payment.dto';
 import { BankPaymentPdfDto } from '../../../dtos/bank-payment-pdf.dto';
 import { CancelBankPaymentInputDto } from '../../../dtos/cancel-bank-payment.dto';
@@ -44,6 +48,7 @@ export class InterCobrancaClient {
     private readonly configService: ConfigService,
     private readonly oauthClient: InterOauthClient,
     @Inject(TOKENS.LoggerGateway) private readonly logger: ILoggerGateway,
+    @Inject(TOKENS.ProviderAttemptRecorder) private readonly attemptRecorder: IProviderAttemptRecorder,
   ) {}
 
   public async issue(input: IssueBankPaymentInputDto): Promise<IssueBankPaymentOutputDto> {
@@ -53,6 +58,7 @@ export class InterCobrancaClient {
       const result = await this.request<InterEmitirCobrancaResponseDto>('POST', '/cobrancas', {
         body,
         action: 'issue',
+        attempt: { nfseId: input.nfseId, operation: ProviderAttemptOperation.InterIssue },
       });
 
       if (!result?.codigoSolicitacao) {
@@ -65,7 +71,7 @@ export class InterCobrancaClient {
       };
     }
     catch (error) {
-      throw this.mapThrownError(this.asAlreadyExistsError(error) ?? error);
+      throw this.mapThrownError(error);
     }
   }
 
@@ -148,11 +154,13 @@ export class InterCobrancaClient {
       requestCode?: string;
       accept?: string;
       params?: Record<string, string | number>;
+      attempt?: { nfseId?: number; operation: ProviderAttemptOperation };
     },
   ): Promise<T> {
     const token = await this.oauthClient.getAccessToken(InterCobrancaClient.OAUTH_SCOPE);
     const agent = this.createHttpsAgent();
     const url = `${this.configService.interApiUrl}/cobranca/v3${path}`;
+    const startedAt = Date.now();
 
     try {
       const result = await this.httpService.axiosRef.request<T>({
@@ -168,9 +176,24 @@ export class InterCobrancaClient {
         },
       });
 
+      await this.recordAttempt(options.attempt, {
+        requestBody: options.body,
+        responseBody: result.data,
+        httpStatus: result.status,
+        durationMs: Date.now() - startedAt,
+      });
+
       return result.data;
     }
     catch (error) {
+      await this.recordAttempt(options.attempt, {
+        requestBody: options.body,
+        responseBody: isAxiosError(error) ? error.response?.data : undefined,
+        httpStatus: isAxiosError(error) ? error.response?.status : undefined,
+        durationMs: Date.now() - startedAt,
+        errorClass: error instanceof Error ? error.name : 'UnknownError',
+      });
+
       this.logger.error(LogContext.BANK_PAYMENT, {
         adapter: 'inter',
         action: options.action,
@@ -183,16 +206,84 @@ export class InterCobrancaClient {
         if (status === 404) {
           throw new BankPaymentNotFoundError(options.requestCode);
         }
+        if (status && InterCobrancaClient.TRANSIENT_STATUSES.includes(status)) {
+          throw new TransientProviderError(
+            `Banco Inter indisponível no momento (HTTP ${status}).`,
+            InterCobrancaClient.parseRetryAfter(error.response?.headers),
+          );
+        }
+        if (status && status >= 500) {
+          throw new TransientProviderError(`Banco Inter respondeu com erro ${status}.`);
+        }
         if (status && status >= 400 && status < 500) {
           const message = this.extractInterErrorMessage(error.response?.data)
             ?? 'Requisição inválida na API de cobrança do Banco Inter.';
+          const detail = this.extractInterErrorDetail(error.response?.data);
 
-          throw new BankPaymentRequestError(message, this.extractInterErrorDetail(error.response?.data));
+          // Só na emissão "já existe" significa vincular em vez de falhar. Em cancel/list, um UUID
+          // no detail é prosa — não um 409 de cobrança duplicada.
+          if (options.action === 'issue' && detail) {
+            const existingRequestCode = InterCobrancaClient.DUPLICATE_REQUEST_CODE_PATTERN.exec(detail)?.[1];
+            if (existingRequestCode) {
+              throw new BankPaymentAlreadyExistsError(existingRequestCode, message);
+            }
+          }
+
+          throw new PermanentProviderError(message);
         }
       }
 
-      throw new ExternalApiError('Falha na comunicação com a API de cobrança do Banco Inter.');
+      // Sem resposta HTTP: timeout, DNS, conexão cortada. Ambíguo por natureza — pode ter chegado.
+      throw new TransientProviderError('Falha na comunicação com a API de cobrança do Banco Inter.');
     }
+  }
+
+  /**
+   * Sem `nfseId` não há onde ancorar a linha — é o caso das rotas administrativas genéricas, que
+   * consultam cobranças sem partir de uma NFS-e.
+   */
+  private async recordAttempt(
+    attempt: { nfseId?: number; operation: ProviderAttemptOperation } | undefined,
+    call: {
+      requestBody?: unknown;
+      responseBody?: unknown;
+      httpStatus?: number;
+      durationMs: number;
+      errorClass?: string;
+    },
+  ): Promise<void> {
+    if (!attempt?.nfseId) {
+      return;
+    }
+
+    await this.attemptRecorder.record({
+      nfseId: attempt.nfseId,
+      operation: attempt.operation,
+      requestBody: InterCobrancaClient.stringifyBody(call.requestBody),
+      responseBody: InterCobrancaClient.stringifyBody(call.responseBody),
+      httpStatus: call.httpStatus ?? null,
+      durationMs: call.durationMs,
+      errorClass: call.errorClass ?? null,
+    });
+  }
+
+  private static stringifyBody(body: unknown): string | null {
+    if (body === undefined || body === null) {
+      return null;
+    }
+    return typeof body === 'string' ? body : JSON.stringify(body);
+  }
+
+  /**
+   * `429` e `408`/`425` são recusas de ritmo, não de conteúdo: o mesmo payload passa depois. A faixa
+   * 4xx restante é o oposto — repetir só gasta tentativa.
+   */
+  private static readonly TRANSIENT_STATUSES = [408, 425, 429];
+
+  private static parseRetryAfter(headers: unknown): number | undefined {
+    const raw = (headers as Record<string, unknown> | undefined)?.['retry-after'];
+    const seconds = Number(raw);
+    return Number.isFinite(seconds) && seconds > 0 ? seconds : undefined;
   }
 
   private mapThrownError(error: unknown): Error {
@@ -200,6 +291,7 @@ export class InterCobrancaClient {
       error instanceof BankPaymentNotFoundError
       || error instanceof BankPaymentAlreadyExistsError
       || error instanceof BankPaymentRequestError
+      || error instanceof PermanentProviderError
       || error instanceof ExternalApiError
     ) {
       return error;
@@ -262,29 +354,5 @@ export class InterCobrancaClient {
 
     const detail = (data as Record<string, unknown>).detail;
     return typeof detail === 'string' ? detail : undefined;
-  }
-
-  /**
-   * Dentro da janela de idempotência implícita de 30 min, o Inter recusa a segunda emissão com
-   * HTTP 400 e devolve o `codigoSolicitacao` da cobrança que já criou. Sem traduzir isso, o job
-   * morreria com erro permanente **depois** de o boleto existir, deixando uma cobrança viva e
-   * cobrável sem vínculo local.
-   *
-   * Vive aqui, chamado só por `issue`, e não no tratamento genérico de 4xx: é na emissão que "já
-   * existe" significa vincular em vez de falhar. Aplicado a toda operação, qualquer mensagem com um
-   * UUID — a recusa de cancelamento de uma cobrança já paga, por exemplo — viraria um 409
-   * "cobrança já emitida".
-   */
-  private asAlreadyExistsError(error: unknown): BankPaymentAlreadyExistsError | null {
-    if (!(error instanceof BankPaymentRequestError) || !error.detail) {
-      return null;
-    }
-
-    const existingRequestCode = InterCobrancaClient.DUPLICATE_REQUEST_CODE_PATTERN.exec(error.detail)?.[1];
-    if (!existingRequestCode) {
-      return null;
-    }
-
-    return new BankPaymentAlreadyExistsError(existingRequestCode, error.message);
   }
 }

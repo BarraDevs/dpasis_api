@@ -32,6 +32,11 @@ function makeNfseProps(overrides: Partial<NfseProps> = {}): NfseProps {
     cancelReasonCode: null,
     bankPaymentProvider: null,
     bankPaymentRequestCode: null,
+    bankPaymentIdempotencyKey: null,
+    bankPaymentRequestedAt: null,
+    bankPaymentErrorMessage: null,
+    bankPaymentFailedAt: null,
+    nfmId: null,
     data: {},
     ...overrides,
   };
@@ -70,6 +75,11 @@ describe('NfseFactory - Unit tests', () => {
         cancelReasonCode: null,
         bankPaymentProvider: null,
         bankPaymentRequestCode: null,
+        bankPaymentIdempotencyKey: null,
+        bankPaymentRequestedAt: null,
+        bankPaymentErrorMessage: null,
+        bankPaymentFailedAt: null,
+        nfmId: null,
         data: { foo: 'bar' },
       });
     });
@@ -133,6 +143,43 @@ describe('NfseFactory - Unit tests', () => {
       // Act & Assert
       expect(() => NfseFactory.create(props)).toThrow(AppException);
       expect(() => NfseFactory.create(props)).toThrow('O campo rpsSeries não pode ser vazio');
+    });
+  });
+
+  describe('validateReservation', () => {
+    it('should accept valid props without requiring rpsNumber', () => {
+      // Arrange
+      const props = { companyId: 1, clientId: 2, rpsSeries: 'NFSE', data: {} };
+
+      // Act & Assert
+      expect(() => NfseFactory.validateReservation(props)).not.toThrow();
+    });
+
+    it.each([0, -1, 1.5])('should reject invalid companyId (%s)', (companyId) => {
+      // Arrange
+      const props = { companyId, clientId: 1, rpsSeries: 'NFSE', data: {} };
+
+      // Act & Assert
+      expect(() => NfseFactory.validateReservation(props)).toThrow(NumberMustBePositiveAndInt);
+      expect(() => NfseFactory.validateReservation(props)).toThrow('O campo companyId deve ser um número inteiro positivo');
+    });
+
+    it.each([0, -1, 1.5])('should reject invalid clientId (%s)', (clientId) => {
+      // Arrange
+      const props = { companyId: 1, clientId, rpsSeries: 'NFSE', data: {} };
+
+      // Act & Assert
+      expect(() => NfseFactory.validateReservation(props)).toThrow(NumberMustBePositiveAndInt);
+      expect(() => NfseFactory.validateReservation(props)).toThrow('O campo clientId deve ser um número inteiro positivo');
+    });
+
+    it.each(['', '   '])('should reject empty rpsSeries (%s)', (rpsSeries) => {
+      // Arrange
+      const props = { companyId: 1, clientId: 1, rpsSeries, data: {} };
+
+      // Act & Assert
+      expect(() => NfseFactory.validateReservation(props)).toThrow(AppException);
+      expect(() => NfseFactory.validateReservation(props)).toThrow('O campo rpsSeries não pode ser vazio');
     });
   });
 

@@ -69,6 +69,39 @@ describe('IssueNfseInputDto', () => {
     });
   });
 
+  describe('nfmId', () => {
+    it('should accept when nfmId is omitted', async() => {
+      const result = await target.transform(makeValidInputDto(), metadata);
+      expect(result.nfmId).toBeUndefined();
+    });
+
+    it('should accept a positive nfmId', async() => {
+      const result = await target.transform(makeValidInputDto({ nfmId: 1 }), metadata);
+      expect(result.nfmId).toBe(1);
+    });
+
+    it.each([0, -1])('should reject non-positive nfmId (%s)', async(value: number) => {
+      expect.assertions(1);
+      return target.transform(makeValidInputDto({ nfmId: value }), metadata).catch((error) => {
+        expectMessageToContain(error.getResponse().message, 'nfmId');
+      });
+    });
+
+    it('should reject non-integer nfmId', async() => {
+      expect.assertions(1);
+      return target.transform(makeValidInputDto({ nfmId: 'abc' as unknown as number }), metadata).catch((error) => {
+        expectMessageToContain(error.getResponse().message, 'nfmId');
+      });
+    });
+  });
+
+  describe('additionalInformation', () => {
+    it('should trim whitespace', async() => {
+      const result = await target.transform(makeValidInputDto({ additionalInformation: '  contrato 123  ' }), metadata);
+      expect(result.additionalInformation).toBe('contrato 123');
+    });
+  });
+
   describe('service', () => {
     it('should reject when service fields are missing', async() => {
       expect.assertions(1);

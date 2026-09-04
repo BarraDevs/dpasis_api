@@ -11,6 +11,7 @@ const TOKENS = {
   BankPaymentGateway: Symbol.for('BankPaymentGateway'),
   BankPaymentStrategies: Symbol.for('BankPaymentStrategies'),
   LoggerGateway: Symbol.for('LoggerGateway'),
+  ProviderAttemptRecorder: Symbol.for('ProviderAttemptRecorder'),
 
   UploadFileGateway: Symbol.for('UploadFileGateway'),
   UploadFileQueueProducer: Symbol.for('UploadFileQueueProducer'),

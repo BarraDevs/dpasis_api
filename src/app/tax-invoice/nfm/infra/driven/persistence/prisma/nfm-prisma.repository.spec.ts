@@ -164,6 +164,11 @@ describe('NfmRepositoryAdapterPrisma - Integration tests', () => {
         cancelReasonCode: null,
         bankPaymentProvider: null,
         bankPaymentRequestCode: null,
+        bankPaymentIdempotencyKey: null,
+        bankPaymentRequestedAt: null,
+        bankPaymentErrorMessage: null,
+        bankPaymentFailedAt: null,
+        nfmId: null,
         data: nfseRow.data as Record<string, unknown>,
       });
       nfm!.linkNfse(nfse);
@@ -211,6 +216,11 @@ describe('NfmRepositoryAdapterPrisma - Integration tests', () => {
         cancelReasonCode: null,
         bankPaymentProvider: null,
         bankPaymentRequestCode: null,
+        bankPaymentIdempotencyKey: null,
+        bankPaymentRequestedAt: null,
+        bankPaymentErrorMessage: null,
+        bankPaymentFailedAt: null,
+        nfmId: null,
         data: { providerDocument: '12345678000199' },
       }));
       const id = await sut.save(entity);

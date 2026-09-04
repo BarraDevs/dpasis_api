@@ -33,6 +33,11 @@ function makeNfseProps(overrides: Partial<NfseProps> = {}): NfseProps {
     cancelReasonCode: null,
     bankPaymentProvider: null,
     bankPaymentRequestCode: null,
+    bankPaymentIdempotencyKey: null,
+    bankPaymentRequestedAt: null,
+    bankPaymentErrorMessage: null,
+    bankPaymentFailedAt: null,
+    nfmId: null,
     data: { providerDocument: '12345678000199' },
     ...overrides,
   };
@@ -122,6 +127,7 @@ describe('CancelNfse - Unit tests', () => {
     const result = await sut.execute(1, input);
 
     expect(nfsGenerationGateway.cancelNfse).toHaveBeenCalledWith({
+      nfseId: 1,
       nfseNumber: '1000',
       providerDocument: '12345678000199',
       providerMunicipalCodeIbge: '3529401',

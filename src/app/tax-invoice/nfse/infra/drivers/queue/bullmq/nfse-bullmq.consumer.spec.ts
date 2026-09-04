@@ -1,8 +1,10 @@
 import { createMock } from '@golevelup/ts-jest';
 import { Test } from '@nestjs/testing';
-import { Job } from 'bullmq';
+import { Job, UnrecoverableError } from 'bullmq';
 import { AppException } from 'src/core/filters/app.exception';
 import { JobName } from 'src/infra/queue/enums/job-name.enum';
+import { PermanentProviderError } from 'src/shared/errors/permanent-provider.error';
+import { TransientProviderError } from 'src/shared/errors/transient-provider.error';
 import type { IssueNfseBankPaymentJobDto } from '../../../../application/queue/jobs/issue-nfse-bank-payment-job.dto';
 import type { IssueNfseBatchJobDto } from '../../../../application/queue/jobs/issue-nfse-batch-job.dto';
 import type { PollNfseBatchJobDto } from '../../../../application/queue/jobs/poll-nfse-batch-job.dto';
@@ -142,6 +144,58 @@ describe('NfseBullmqConsumer', () => {
 
       // Act & Assert
       await expect(sut.process(makeJob(JobName.IssueNfseBankPayment, payload))).rejects.toBe(err);
+    });
+
+    it('should convert PermanentProviderError from the bank-payment job into UnrecoverableError', async() => {
+      // Arrange
+      const payload = makeIssueBankPaymentJob();
+      jest.spyOn(processIssueNfseBankPayment, 'execute')
+        .mockRejectedValue(new PermanentProviderError('Vencimento inválido.'));
+
+      // Act
+      const error = await sut.process(makeJob(JobName.IssueNfseBankPayment, payload)).catch((e: unknown) => e);
+
+      // Assert
+      expect(error).toBeInstanceOf(UnrecoverableError);
+      expect((error as Error).message).toBe('Vencimento inválido.');
+    });
+
+    it('should keep TransientProviderError retryable', async() => {
+      // Arrange
+      const payload = makeIssueBankPaymentJob();
+      const err = new TransientProviderError('Banco Inter respondeu com erro 500.');
+      jest.spyOn(processIssueNfseBankPayment, 'execute').mockRejectedValue(err);
+
+      // Act & Assert
+      await expect(sut.process(makeJob(JobName.IssueNfseBankPayment, payload))).rejects.toBe(err);
+    });
+
+    it('should convert PermanentProviderError from the issue-batch job into UnrecoverableError', async() => {
+      // Arrange
+      jest.spyOn(processIssueNfseBatch, 'execute')
+        .mockRejectedValue(new PermanentProviderError('certificado recusado'));
+
+      // Act
+      const error = await sut.process(makeJob(JobName.IssueNfseBatch, makeIssueBatchJob()))
+        .catch((e: unknown) => e);
+
+      // Assert
+      expect(error).toBeInstanceOf(UnrecoverableError);
+      expect((error as Error).message).toBe('certificado recusado');
+    });
+
+    it('should convert PermanentProviderError from the poll-batch job into UnrecoverableError', async() => {
+      // Arrange
+      jest.spyOn(processPollNfseBatch, 'execute')
+        .mockRejectedValue(new PermanentProviderError('certificado recusado'));
+
+      // Act
+      const error = await sut.process(makeJob(JobName.PollNfseBatch, makePollBatchJob()))
+        .catch((e: unknown) => e);
+
+      // Assert
+      expect(error).toBeInstanceOf(UnrecoverableError);
+      expect((error as Error).message).toBe('certificado recusado');
     });
   });
 });
