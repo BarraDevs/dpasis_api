@@ -5,6 +5,8 @@ import { EditCompanyNfsConfigInputDto } from '../../usecases/edit-company-nfs-co
 export interface ICompanyNfsConfigDao {
   findById(id: number): Promise<CompanyNfsConfigDto | null>;
   findByCompanyId(companyId: number): Promise<CompanyNfsConfigDto | null>;
+  /** Todas as configurações de prestador. Usado pelo healthcheck de certificados. */
+  findAll(): Promise<CompanyNfsConfigDto[]>;
   save(data: CreateCompanyNfsConfigInputDto): Promise<number>;
   edit(id: number, data: EditCompanyNfsConfigInputDto): Promise<void>;
 }

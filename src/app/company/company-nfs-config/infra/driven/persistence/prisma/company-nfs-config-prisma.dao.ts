@@ -46,6 +46,15 @@ export class CompanyNfsConfigDaoAdapterPrisma implements ICompanyNfsConfigDao {
     return row ? this.mapToDto(row) : null;
   }
 
+  public async findAll(): Promise<CompanyNfsConfigDto[]> {
+    const rows = await this.prisma.nfsProviderConfig.findMany({
+      select: CompanyNfsConfigSelect,
+      orderBy: { companyId: 'asc' },
+    });
+
+    return rows.map((row) => this.mapToDto(row));
+  }
+
   public async save(data: CreateCompanyNfsConfigInputDto): Promise<number> {
     const result = await this.prisma.nfsProviderConfig.create({
       data: {

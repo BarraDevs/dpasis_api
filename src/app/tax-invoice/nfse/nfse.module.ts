@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { AuthenticationGuardsModule } from 'src/app/authentication/application/guards/guards.module';
 import { ClientAddressModule } from 'src/app/client/client-address/client-address.module';
 import { ClientInvoiceConfigModule } from 'src/app/client/client-invoice-config/client-invoice-config.module';
 import { ClientModule } from 'src/app/client/client/client.module';
@@ -9,7 +10,9 @@ import { NfsePersistenceModule } from './application/persistence/nfse-persistenc
 import { NfseQueueModule } from './application/queue/nfse-queue.module';
 import { CancelNfse } from './application/usecases/cancel-nfse/cancel-nfse.service';
 import { FindNfseById } from './application/usecases/find-nfse-by-id/find-nfse-by-id.service';
+import { GetNfseMetrics } from './application/usecases/get-nfse-metrics/get-nfse-metrics.service';
 import { IssueNfse } from './application/usecases/issue-nfse/issue-nfse.service';
+import { NfseMetricsAdminController } from './infra/drivers/http/admin/nfse-metrics-admin.controller';
 import { BankPaymentModule } from 'src/infra/bank-payment/bank-payment.module';
 
 @Module({
@@ -23,15 +26,21 @@ import { BankPaymentModule } from 'src/infra/bank-payment/bank-payment.module';
     BankPaymentModule.register(),
     NfseQueueModule.register(),
     NfsGenerationModule.register(),
+    AuthenticationGuardsModule,
+  ],
+  controllers: [
+    NfseMetricsAdminController,
   ],
   providers: [
     CancelNfse,
     FindNfseById,
+    GetNfseMetrics,
     IssueNfse,
   ],
   exports: [
     CancelNfse,
     FindNfseById,
+    GetNfseMetrics,
     IssueNfse,
     NfsePersistenceModule,
     NfseQueueModule,

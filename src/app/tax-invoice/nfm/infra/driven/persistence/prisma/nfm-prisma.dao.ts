@@ -6,6 +6,16 @@ import { FindGeneratedNfmsQueryDto } from 'src/app/tax-invoice/nfm/application/u
 import { NfseStatus } from 'src/app/tax-invoice/nfse/domain/enums/nfse-status.enum';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 
+const ONE_HOUR_IN_MS = 60 * 60 * 1000;
+
+/** Estados dos quais a nota não sai sozinha: nenhum deles é "preso". */
+const TERMINAL_NFSE_STATUSES = [
+  NfseStatus.ISSUED,
+  NfseStatus.REJECTED,
+  NfseStatus.FAILED,
+  NfseStatus.CANCELED,
+] satisfies NfseStatus[];
+
 const NfseSelect = {
   id: true,
   companyId: true,
@@ -57,8 +67,10 @@ export class NfmDaoAdapterPrisma implements INfmDao {
   public async findAll(queries: FindGeneratedNfmsQueryDto): Promise<[NfmWithNfseDto[], number]> {
     const pagination = this.prisma.paginationFactory(queries.page, queries.size);
 
+    // `nfse: { isNot: null }` em vez de só `nfseId: { not: null }`: o filtro por campos da NFS-e
+    // precisa do join, e sem ele a contagem incluía linhas que a página descartava depois.
     const conditions: Prisma.NfmWhereInput[] = [
-      { nfseId: { not: null } },
+      { nfseId: { not: null }, nfse: { isNot: null } },
     ];
 
     if (queries.dateStart) {
@@ -70,6 +82,28 @@ export class NfmDaoAdapterPrisma implements INfmDao {
     if (queries.dateEnd) {
       conditions.push({
         createdAt: { lte: new Date(`${queries.dateEnd}T23:59:59.999-03:00`) },
+      });
+    }
+
+    if (queries.status) {
+      conditions.push({ nfse: { status: queries.status } });
+    }
+
+    if (queries.stuckForHours != null) {
+      // Presa = não terminal e sem movimento. É a consulta que hoje só existe como SQL manual.
+      conditions.push({
+        nfse: {
+          status: { notIn: TERMINAL_NFSE_STATUSES },
+          updatedAt: { lte: new Date(Date.now() - queries.stuckForHours * ONE_HOUR_IN_MS) },
+        },
+      });
+    }
+
+    if (queries.missingBankPayment != null) {
+      conditions.push({
+        nfse: queries.missingBankPayment
+          ? { status: NfseStatus.ISSUED, bankPaymentRequestCode: null }
+          : { bankPaymentRequestCode: { not: null } },
       });
     }
 
@@ -86,7 +120,8 @@ export class NfmDaoAdapterPrisma implements INfmDao {
       this.prisma.nfm.count({ where }),
     ]);
 
-    // findAll filtra nfseId not null — linhas sem join de nfse são descartadas sem lançar domínio.
+    // O `where` já exige a NFS-e, então o filtro aqui só satisfaz o tipo — nenhuma linha cai fora
+    // dele, e por isso `total` e a página passam a contar a mesma coisa.
     const mapped = rows
       .map((row) => this.mapToRow(row))
       .filter((row): row is NfmWithNfseDto => row.nfse !== null);

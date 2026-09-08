@@ -13,7 +13,11 @@ Este documento cobre as rotas admin de **NFM**:
 - `POST /admin/nfm/:id/reissue` — reenvia o RPS depois de corrigir o cadastro
 - `POST /admin/nfm/reconcile-period` — confere um período inteiro contra o Giss
 
-**Referência OpenAPI:** Swagger em `/swagger`, tag **NFM**.
+E duas rotas de operação, fora do prefixo `/admin/nfm`:
+- `GET /admin/metrics/nfse` — números do fluxo (status, presas, cobranças, filas)
+- `GET /admin/health/certificates` — validade dos certificados digitais
+
+**Referência OpenAPI:** Swagger em `/swagger`, tags **NFM** e **Manutenção**.
 
 Config fiscal da empresa: [frontend-integracao-company-nfs-config.md](./frontend-integracao-company-nfs-config.md).  
 ItemListaServico (LC 116) na correspondência CNAE/NBS/INDOP: [frontend-integracao-cnae-nbs-indop.md](./frontend-integracao-cnae-nbs-indop.md).
@@ -49,6 +53,10 @@ ItemListaServico (LC 116) na correspondência CNAE/NBS/INDOP: [frontend-integrac
 | Novos campos `bankPaymentCanceled` e `bankPaymentError` na resposta | `POST /admin/nfm/:id/cancel` |
 | Novos campos em `nfse`: `bankPaymentErrorMessage`, `bankPaymentFailedAt`, `bankPaymentRequestedAt`, `bankPaymentIdempotencyKey`, `nfmId` | `GET /admin/nfm`, `GET /admin/nfm/:id` |
 | Novos campos em `nfse`: `bankPaymentStatus`, `bankPaymentConfirmedAt`, `reconcileAttemptCount`, `nextReconcileAt` | idem |
+| Novos campos em `nfse`: `providerAlerts`, `providerAlertedAt` — ressalvas do fisco numa nota **emitida** | idem |
+| Novos filtros em `GET /admin/nfm`: `status`, `stuckForHours`, `missingBankPayment` | ver [Listar NFMs geradas](#listar-nfms-geradas-get-adminnfm) |
+| Duas rotas novas de operação: `GET /admin/metrics/nfse` e `GET /admin/health/certificates` | ver [Operação](#operação-métricas-e-certificados) |
+| **A emissão passou a acontecer sozinha, todo dia às 06:00 (America/Sao_Paulo)** | ver [Emissão automática](#emissão-automática) |
 
 ### Fluxo sugerido na UI
 
@@ -59,6 +67,24 @@ ItemListaServico (LC 116) na correspondência CNAE/NBS/INDOP: [frontend-integrac
 3.2. Se NFS-e `AWAITING_PROVIDER` → botões verificar/consultar; o backend já persegue sozinho.
 4. Botão **Gerar NFMs** → abre tela de elegíveis.
 5. **Tela elegíveis** — `GET /admin/nfm/elegible`; botão confirmar → `POST /admin/nfm`.
+
+### Emissão automática
+
+O fechamento deixou de depender de alguém apertar o botão: um agendamento diário às **06:00**
+(America/Sao_Paulo) roda o mesmo `SaveElegibleNfms` do `POST /admin/nfm`.
+
+O que muda para a UI:
+
+- **A elegibilidade agora é `dueDateDay <= hoje` dentro do mês corrente**, não mais igualdade com o
+  dia. `GET /admin/nfm/elegible` usa a mesma regra, então a tela mostra exatamente o que o
+  agendamento vai emitir — inclusive contratos de dias já passados que ninguém faturou.
+- **NFM atrasada nasce com a data de hoje**: competência do mês corrente, e o vencimento do boleto
+  nunca no passado (um contrato de vencimento 15 faturado no dia 20 gera boleto para o dia 20).
+- `POST /admin/nfm` continua existindo e continua idempotente por competência — é o caminho de
+  exceção, para quando a operação quiser antecipar ou refazer o fechamento. Rodá-lo depois do
+  agendamento não duplica nada: as NFMs do dia voltam como `skipped`.
+- Quando o fechamento automático termina com falhas, a operação recebe e-mail com os clientes que
+  falharam. A tela não precisa fazer nada, mas convém não estranhar NFMs que apareceram sozinhas.
 
 ---
 
@@ -73,10 +99,18 @@ Filtro de data usa `createdAt` da NFM (UTC, dias inclusivos).
 |-------|-------------|------|------------|
 | `dateStart` | não | string `YYYY-MM-DD` | `createdAt >= início do dia` |
 | `dateEnd` | não | string `YYYY-MM-DD` | `createdAt <= fim do dia` |
+| `status` | não | `NfseStatus` | Status da NFS-e vinculada (`PENDING`, `SUBMITTED`, `PROCESSING`, `AWAITING_PROVIDER`, `ISSUED`, `REJECTED`, `FAILED`, `CANCELED`) |
+| `stuckForHours` | não | number > 0 | Só o que está **preso**: NFS-e não terminal sem movimento há mais de N horas |
+| `missingBankPayment` | não | boolean | `true` = emitidas sem cobrança vinculada; `false` = só as que já têm cobrança |
 | `page` | não | number | Paginação |
 | `size` | não | number | Paginação |
 
 `dateStart` e `dateEnd` são **independentes**. Se ambos e `dateStart > dateEnd` → **400**.
+
+Os três filtros novos combinam entre si e com o período. São eles que substituem o SQL manual do
+runbook: `?status=AWAITING_PROVIDER` lista o que o backend ainda persegue,
+`?stuckForHours=2` lista o que parou de andar, e `?missingBankPayment=true` lista nota emitida com
+cliente sem boleto. `totalItems` passou a contar exatamente as linhas que a página devolve.
 
 ### Response (200)
 
@@ -108,6 +142,11 @@ Cada item em `data` é `NfmWithNfseDto`:
   "ainda confirmando" — a UI pode mostrar isso como pendente, não como erro
 - `reconcileAttemptCount` / `nextReconcileAt` — quantas vezes o backend já perguntou ao Giss sobre
   esta nota e quando pergunta de novo. Uso interno; útil só numa tela de diagnóstico
+- `providerAlerts` / `providerAlertedAt` — **ressalvas do fisco numa nota que foi emitida**. Códigos
+  `A*` do Giss (`A10` inscrição municipal paralisada, `A13` prazo de conversão do RPS vencido, `A21`
+  Simples fora do cadastro) chegam junto com a emissão e exigem regularização junto à Prefeitura. A
+  nota é válida: mostre como aviso, nunca como erro. `providerAlertedAt` só diz que a operação já
+  recebeu o e-mail sobre ela
 
 Não há endpoint novo para esses campos: eles vêm em `GET /admin/nfm` e `GET /admin/nfm/:id` dentro de
 `nfse`. Não é breaking.
@@ -387,6 +426,38 @@ HTTP **não** espera a GISS. Só persistência + enqueue.
 
 ---
 
+## Operação (métricas e certificados)
+
+Duas rotas de leitura pura, fora do prefixo `/admin/nfm`. Servem a uma tela de diagnóstico; nenhuma
+delas é necessária no fluxo normal de emissão.
+
+### `GET /admin/metrics/nfse` — números do fluxo
+
+Claim `NFM_READ`. Resposta (`GetNfseMetricsOutputDto`):
+
+| Campo | O que é |
+|---|---|
+| `generatedAt` | Instante da coleta (ISO) |
+| `byStatus[]` | `{ key, count }` — NFS-e por status |
+| `stuck` | Não terminais sem movimento há mais de 2h |
+| `issuedWithoutBankPayment` | Emitidas sem cobrança há mais de 1h |
+| `bankPaymentByStatus[]` | Cobranças por situação confirmada; `UNCONFIRMED` = solicitada e ainda não confirmada |
+| `providerCalls[]` | `{ operation, calls, errors, averageDurationMs, maxDurationMs }` nas últimas 24h |
+| `queues[]` | `{ queue, waiting, active, delayed, failed }` — `failed` é a fila de jobs que desistiram |
+
+Os limiares de `stuck` (2h) e `issuedWithoutBankPayment` (1h) são os mesmos dos alertas por e-mail:
+o número da tela e o do e-mail nunca discordam.
+
+### `GET /admin/health/certificates` — validade dos certificados
+
+Claim `COMPANY_NFS_CONFIG_READ`. Uma linha por certificado (A1 do Giss por empresa, mTLS do Inter),
+com `notAfter`, `daysToExpire` e `status` (`OK` / `EXPIRING` / `EXPIRED` / `ERROR`); o `status` do
+topo é o pior deles. `EXPIRING` significa 30 dias ou menos — prazo apertado para emitir um
+certificado novo junto à AC. Detalhes e procedimento de troca em
+[`runbook-certificados.md`](./runbook-certificados.md).
+
+---
+
 ## Autenticação e claims
 
 | Rota | Claim |
@@ -395,6 +466,8 @@ HTTP **não** espera a GISS. Só persistência + enqueue.
 | `GET /admin/nfm/:id/provider-status` | `NFM_READ` |
 | `POST /admin/nfm`, `POST /admin/nfm/:id/cancel` | `NFM_WRITE` |
 | `POST /admin/nfm/:id/reconcile`, `POST /admin/nfm/:id/reissue`, `POST /admin/nfm/reconcile-period` | `NFM_WRITE` |
+| `GET /admin/metrics/nfse` | `NFM_READ` |
+| `GET /admin/health/certificates` | `COMPANY_NFS_CONFIG_READ` |
 
 ---
 
@@ -415,3 +488,10 @@ HTTP **não** espera a GISS. Só persistência + enqueue.
 8. Garantir cadastro fiscal antes de emitir: LC 116 na correspondência, ISS/Simples/`municipalTaxCode` na config da empresa, `issWithheld` no invoice config do cliente.
 9. **Breaking:** `GET /admin/nfm/invoices` saiu. Parar de chamar a rota; regenerar tipos OpenAPI.
 10. Atualizar mocks/tipos E2E (`GET /admin/nfm/:id`, `POST /admin/nfm/:id/cancel`).
+11. **Aditivo:** usar os filtros novos de `GET /admin/nfm` (`status`, `stuckForHours`,
+    `missingBankPayment`) numa visão "o que precisa de atenção" — hoje isso só existia como SQL.
+12. **Aditivo:** exibir `nfse.providerAlerts` como **aviso** na nota emitida (ressalva do fisco, exige
+    regularização junto à Prefeitura), nunca como erro.
+13. **Aditivo:** a emissão passou a ser automática às 06:00; a tela de elegíveis agora mostra também
+    contratos de dias já passados no mês (`dueDateDay <= hoje`). Rodar `POST /admin/nfm` continua
+    seguro — o que já foi emitido volta como `skipped`.

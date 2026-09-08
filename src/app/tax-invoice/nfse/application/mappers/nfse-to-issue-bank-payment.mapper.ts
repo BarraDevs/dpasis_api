@@ -1,9 +1,11 @@
+import { DateTime } from 'luxon';
 import { IssueBankPaymentInputDto } from 'src/app/bank-payment/application/usecases/issue-bank-payment/dtos/issue-bank-payment.dto';
 import { InvoiceCalendarDueDate } from 'src/app/client/client-invoice-config/domain/value-objects/invoice-calendar-due-date/invoice-calendar-due-date.vo';
 import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum';
 import { AppException } from 'src/core/filters/app.exception';
 import { BankPaymentPersonType } from 'src/infra/bank-payment/enums/bank-payment-person-type.enum';
 import { BankPaymentProvider } from 'src/infra/bank-payment/enums/bank-payment-provider.enum';
+import { SAO_PAULO_TIMEZONE } from 'src/core/constants/timezone.constant';
 import type { NfseBankPaymentSnapshot, NfseIssueSnapshot } from '../usecases/issue-nfse/issue-nfse.service';
 
 export type NfseToIssueBankPaymentParams = {
@@ -15,6 +17,10 @@ export type NfseToIssueBankPaymentParams = {
 
 export class NfseToIssueBankPaymentMapper {
   private static readonly DAYS_AFTER_DUE = 30;
+
+  /** O Inter só aceita vencimento no próprio dia até 19h59. */
+  private static readonly SAME_DAY_CUTOFF_HOUR = 19;
+  private static readonly SAME_DAY_CUTOFF_MINUTE = 59;
 
   public static toIssueBankPaymentInput(params: NfseToIssueBankPaymentParams): IssueBankPaymentInputDto {
     const bankPayment = params.bankPayment ?? params.snapshot.bankPayment;
@@ -37,10 +43,13 @@ export class NfseToIssueBankPaymentMapper {
       nfseId: params.nfseId,
       yourNumber: String(params.nfseId).slice(0, 15),
       amount,
-      dueDate: new InvoiceCalendarDueDate({
-        ...bankPayment,
-        issuedAt: params.issuedAt,
-      }).value,
+      dueDate: this.applyDueDateFloor(
+        new InvoiceCalendarDueDate({
+          ...bankPayment,
+          issuedAt: params.issuedAt,
+        }).value,
+        params.issuedAt,
+      ),
       daysAfterDue: this.DAYS_AFTER_DUE,
       payer: {
         document: params.snapshot.clientDocument,
@@ -55,6 +64,26 @@ export class NfseToIssueBankPaymentMapper {
         zipCode: takerAddress.zipCode?.replace(/\D/g, '').slice(0, 8),
       },
     };
+  }
+
+  /**
+   * Vencimento fixo é calculado a partir da competência, não da emissão: um contrato de vencimento
+   * dia 15 faturado no dia 20 produz uma data no passado, que o Inter recusa com 4xx — e a NFS-e fica
+   * emitida sem cobrança. Com o faturamento diário alcançando dias já vencidos (`dueDateDay <= hoje`),
+   * isso deixa de ser exceção.
+   *
+   * O piso vem de `issuedAt`, **nunca** de `new Date()`: o payload do boleto precisa ser idêntico em
+   * toda retentativa, senão a chave implícita de 30 minutos do Inter deixa de valer e a retentativa
+   * vira uma segunda cobrança.
+   */
+  private static applyDueDateFloor(dueDate: string, issuedAt: Date): string {
+    const issued = DateTime.fromJSDate(issuedAt, { zone: SAO_PAULO_TIMEZONE });
+    const afterCutoff = issued.hour > this.SAME_DAY_CUTOFF_HOUR
+      || (issued.hour === this.SAME_DAY_CUTOFF_HOUR && issued.minute > this.SAME_DAY_CUTOFF_MINUTE);
+    const floor = afterCutoff ? issued.plus({ days: 1 }) : issued;
+    const floorDate = floor.toFormat('yyyy-MM-dd');
+
+    return dueDate < floorDate ? floorDate : dueDate;
   }
 
   private static resolvePersonType(clientType: string): BankPaymentPersonType {

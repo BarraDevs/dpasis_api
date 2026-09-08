@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, statSync } from 'node:fs';
 import * as forge from 'node-forge';
 import { NfsProviderConfigError } from 'src/infra/nfs-generation/errors/nfs-provider-config.error';
 
@@ -7,13 +7,58 @@ export type GissCertMaterial = {
   keyPem: string;
 };
 
+export type GissCertDetails = GissCertMaterial & {
+  /** Vencimento do certificado folha — o que o healthcheck expõe e o alerta persegue. */
+  notAfter: Date;
+};
+
 export class GissPfxLoader {
-  public static load(certFilePath: string, certPasswordEnvVar: string): GissCertMaterial {
+  /**
+   * Ler o PKCS#12 do disco e rodar `pkcs12FromAsn1` custa caro, e o gateway fazia isso a cada
+   * operação — três vezes numa emissão. A chave inclui `mtime` e tamanho do arquivo: trocar o
+   * certificado no disco invalida o cache sozinho, sem reiniciar o processo.
+   */
+  private static readonly cache = new Map<string, GissCertDetails>();
+
+  public static load(certFilePath: string, certPasswordEnvVar: string): GissCertDetails {
     const password = process.env[certPasswordEnvVar];
     if (!password) {
       throw new NfsProviderConfigError(`Variável de ambiente "${certPasswordEnvVar}" com a senha do certificado não está definida`);
     }
 
+    const cacheKey = this.buildCacheKey(certFilePath, certPasswordEnvVar);
+    const cached = cacheKey ? this.cache.get(cacheKey) : undefined;
+    if (cached) {
+      // A validade é conferida fora do cache: um certificado carregado hoje vence amanhã com o
+      // processo ainda de pé.
+      this.ensureNotExpired(cached.notAfter, certFilePath);
+      return cached;
+    }
+
+    const material = this.parse(certFilePath, password);
+    if (cacheKey) {
+      this.cache.set(cacheKey, material);
+    }
+    return material;
+  }
+
+  /** Descarta o material em memória. Existe para os testes e para uma troca manual de certificado. */
+  public static clearCache(): void {
+    this.cache.clear();
+  }
+
+  private static buildCacheKey(certFilePath: string, certPasswordEnvVar: string): string | null {
+    try {
+      const stats = statSync(certFilePath);
+      return `${certFilePath}|${certPasswordEnvVar}|${stats.mtimeMs}|${stats.size}`;
+    }
+    catch {
+      // Arquivo ausente: deixa `parse` lançar o erro de configuração com a mensagem certa.
+      return null;
+    }
+  }
+
+  private static parse(certFilePath: string, password: string): GissCertDetails {
     let pfxBuffer: Buffer;
     try {
       pfxBuffer = readFileSync(certFilePath);
@@ -41,11 +86,12 @@ export class GissPfxLoader {
       }
 
       const chain = this.buildChain(certs);
-      this.ensureNotExpired(chain[0], certFilePath);
+      this.ensureNotExpired(chain[0].validity.notAfter, certFilePath);
 
       return {
         certPem: chain.map((cert) => forge.pki.certificateToPem(cert)).join(''),
         keyPem: forge.pki.privateKeyToPem(key),
+        notAfter: chain[0].validity.notAfter,
       };
     }
     catch (error) {
@@ -61,9 +107,7 @@ export class GissPfxLoader {
    * handshake TLS genérica — que o gateway converte em `ExternalApiError` e o job trata como
    * indisponibilidade do provedor. Falhar aqui, com a data, troca um incidente por uma mensagem.
    */
-  private static ensureNotExpired(leaf: forge.pki.Certificate, certFilePath: string): void {
-    const notAfter = leaf.validity.notAfter;
-
+  private static ensureNotExpired(notAfter: Date, certFilePath: string): void {
     if (notAfter.getTime() <= Date.now()) {
       throw new NfsProviderConfigError(
         `Certificado digital em "${certFilePath}" venceu em ${notAfter.toISOString()}`,

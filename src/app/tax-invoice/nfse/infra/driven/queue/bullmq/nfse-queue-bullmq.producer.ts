@@ -10,21 +10,31 @@ import type { PollNfseBatchJobDto } from '../../../../application/queue/jobs/pol
 import type { ReconcileNfseJobDto } from '../../../../application/queue/jobs/reconcile-nfse-job.dto';
 import type { INfseQueueProducer, NfseQueueJobOptions } from '../../../../application/queue/nfse-queue-producer.interface';
 
+/**
+ * Três filas, uma por tipo de trabalho: envio, consulta e boleto.
+ *
+ * Na fila única, uma consulta pendurada segurava a emissão do dia seguinte e uma indisponibilidade
+ * do banco segurava a emissão fiscal — tudo com concorrência 1. A separação também deixa cada fila
+ * ter concorrência e limite próprios, que é o que os provedores pedem: o Giss é o recurso escasso,
+ * o Inter aguenta 120 chamadas/min.
+ */
 @Injectable()
 export class NfseQueueBullmqAdapterProducer implements INfseQueueProducer {
   constructor(
-    @InjectQueue(QueueName.Nfse) private readonly queue: Queue,
+    @InjectQueue(QueueName.NfseIssue) private readonly issueQueue: Queue,
+    @InjectQueue(QueueName.NfsePoll) private readonly pollQueue: Queue,
+    @InjectQueue(QueueName.NfseBankPayment) private readonly bankPaymentQueue: Queue,
   ) {}
 
   public async addIssueBatchJob(data: IssueNfseBatchJobDto): Promise<void> {
-    await this.queue.add(JobName.IssueNfseBatch, data, {
+    await this.issueQueue.add(JobName.IssueNfseBatch, data, {
       attempts: 5,
       backoff: { type: 'exponential', delay: 30_000 },
     });
   }
 
   public async addPollBatchJob(data: PollNfseBatchJobDto, options?: NfseQueueJobOptions): Promise<void> {
-    await this.queue.add(JobName.PollNfseBatch, data, {
+    await this.pollQueue.add(JobName.PollNfseBatch, data, {
       attempts: 5,
       backoff: { type: 'exponential', delay: 30_000 },
       delay: options?.delayMs,
@@ -32,7 +42,7 @@ export class NfseQueueBullmqAdapterProducer implements INfseQueueProducer {
   }
 
   public async addIssueBankPaymentJob(data: IssueNfseBankPaymentJobDto): Promise<void> {
-    await this.queue.add(JobName.IssueNfseBankPayment, data, {
+    await this.bankPaymentQueue.add(JobName.IssueNfseBankPayment, data, {
       attempts: 5,
       backoff: { type: 'exponential', delay: 5000 },
     });
@@ -43,14 +53,14 @@ export class NfseQueueBullmqAdapterProducer implements INfseQueueProducer {
    * espaçamento largo bastam — quem insiste de verdade é a varredura, que reagenda a nota inteira.
    */
   public async addReconcileNfseJob(data: ReconcileNfseJobDto): Promise<void> {
-    await this.queue.add(JobName.ReconcileNfse, data, {
+    await this.pollQueue.add(JobName.ReconcileNfse, data, {
       attempts: 3,
       backoff: { type: 'exponential', delay: 60_000 },
     });
   }
 
   public async addConfirmBankPaymentJob(data: ConfirmNfseBankPaymentJobDto): Promise<void> {
-    await this.queue.add(JobName.ConfirmNfseBankPayment, data, {
+    await this.bankPaymentQueue.add(JobName.ConfirmNfseBankPayment, data, {
       attempts: 3,
       backoff: { type: 'exponential', delay: 60_000 },
     });

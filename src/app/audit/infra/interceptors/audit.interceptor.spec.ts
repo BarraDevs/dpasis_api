@@ -208,6 +208,43 @@ describe('AuditInterceptor - Unit tests', () => {
       });
     });
 
+    it('should save the log of a mutation that failed', (done) => {
+      // Arrange — o ramo de erro estava comentado: a trilha só guardava o que deu certo.
+      const ctx = buildContext({ method: 'POST', url: '/admin/nfm/1/cancel' });
+      const next = createMock<CallHandler>();
+      const error = Object.assign(new Error('Nota já cancelada'), { status: 409 });
+      next.handle.mockReturnValue(throwError(() => error));
+
+      // Act
+      sut.intercept(ctx, next).subscribe({
+        error: () => {
+          // Assert
+          expect(auditLogDao.save).toHaveBeenCalledWith(expect.objectContaining({
+            method: 'POST',
+            url: '/admin/nfm/1/cancel',
+            statusCode: 409,
+          }));
+          done();
+        },
+      });
+    });
+
+    it('should record 500 when the error carries no status', (done) => {
+      // Arrange
+      const ctx = buildContext({ method: 'DELETE' });
+      const next = createMock<CallHandler>();
+      next.handle.mockReturnValue(throwError(() => new Error('boom')));
+
+      // Act
+      sut.intercept(ctx, next).subscribe({
+        error: () => {
+          // Assert
+          expect(auditLogDao.save).toHaveBeenCalledWith(expect.objectContaining({ statusCode: 500 }));
+          done();
+        },
+      });
+    });
+
     it('should re-throw the error after saving log', (done) => {
       const ctx = buildContext({ method: 'POST' });
       const next = createMock<CallHandler>();

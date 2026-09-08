@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { RecordJobAudit } from 'src/app/audit/application/usecases/record-job-audit/record-job-audit.service';
 import { FindCompanyNfsConfigByCompanyId } from 'src/app/company/company-nfs-config/application/usecases/find-company-nfs-config-by-company-id/find-company-nfs-config-by-company-id.service';
 import { TOKENS } from 'src/core/di/token';
 import { LogContext, type ILoggerGateway } from 'src/infra/logger/logger.gateway';
@@ -48,6 +49,7 @@ export class ProcessPollNfseBatch {
     @Inject(TOKENS.NfsGenerationGateway) private readonly nfsGenerationGateway: INfsGenerationGateway,
     @Inject(TOKENS.NfseQueueProducer) private readonly queueProducer: INfseQueueProducer,
     private readonly findCompanyNfsConfigByCompanyId: FindCompanyNfsConfigByCompanyId,
+    private readonly recordJobAudit: RecordJobAudit,
   ) {}
 
   public async execute(input: ProcessPollNfseBatchInputDto): Promise<void> {
@@ -58,6 +60,8 @@ export class ProcessPollNfseBatch {
     if (!nfse.canPoll()) {
       return;
     }
+
+    const previousStatus = nfse.props.status;
 
     const providerConfig = await this.findCompanyNfsConfigByCompanyId.execute(nfse.props.companyId);
 
@@ -123,7 +127,23 @@ export class ProcessPollNfseBatch {
       }
 
       nfse.markIssued(issuedNote.nfseNumber, issuedNote.verificationCode, new Date(issuedNote.issueDate));
+
+      // Ressalvas do fisco vêm no mesmo ramo de sucesso: a nota foi emitida **e** tem pendência
+      // (inscrição municipal paralisada, prazo de conversão vencido, Simples fora do cadastro).
+      // Antes eram descartadas — é o erro que não quebra nada hoje e vira autuação depois.
+      const providerAlerts = status.alerts?.map(alert => `${alert.code}: ${alert.message}`).join('; ');
+      if (providerAlerts) {
+        nfse.markProviderAlerts(providerAlerts);
+      }
+
       await this.nfseRepository.edit(nfse);
+      this.recordJobAudit.record({
+        jobName: 'poll-nfse-batch',
+        nfseId: nfse.props.id,
+        from: previousStatus,
+        to: nfse.props.status,
+        reason: `NFS-e ${issuedNote.nfseNumber}${providerAlerts ? ` · ressalvas: ${providerAlerts}` : ''}`,
+      });
       await this.queueProducer.addIssueBankPaymentJob({ nfseId: nfse.props.id });
       return;
     }
@@ -143,6 +163,14 @@ export class ProcessPollNfseBatch {
       }
 
       await this.nfseRepository.edit(nfse);
+      this.recordJobAudit.record({
+        jobName: 'poll-nfse-batch',
+        nfseId: nfse.props.id,
+        from: previousStatus,
+        to: nfse.props.status,
+        reason: message,
+        succeeded: false,
+      });
       return;
     }
 

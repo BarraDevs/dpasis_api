@@ -5,15 +5,13 @@ import { DynamicModule, Global, Module } from '@nestjs/common';
 import basicAuth from 'express-basic-auth';
 import { ConfigModule } from 'src/core/config/config.module';
 import { ConfigService } from 'src/core/config/config.service';
-import { Environment } from 'src/core/config/environment.enum';
+import { isQueueEnabled } from './queue-environment';
 
 @Global()
 @Module({})
 export class QueueModule {
   static register(): DynamicModule {
-    const isTest = process.env.NODE_ENV === Environment.Test;
-
-    if (isTest) {
+    if (!isQueueEnabled()) {
       return {
         module: QueueModule,
       };

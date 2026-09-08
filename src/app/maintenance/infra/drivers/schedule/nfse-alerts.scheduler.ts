@@ -27,6 +27,8 @@ export class NfseAlertsScheduler {
       this.sweepNfseAlerts.sweepIssuedWithoutBankPayment(),
       this.sweepNfseAlerts.sweepAwaitingProvider(),
       this.sweepNfseAlerts.sweepBankPaymentFailed(),
+      this.sweepNfseAlerts.sweepProviderAlerts(),
+      this.sweepNfseAlerts.sweepQueues(),
     ]);
   }
 
@@ -58,5 +60,14 @@ export class NfseAlertsScheduler {
   @Cron('0 8 * * *', { name: 'nfse-daily-closing', timeZone: SAO_PAULO_TIMEZONE })
   public async runDailyClosing(): Promise<void> {
     await this.sweepNfseAlerts.sweepDailyClosing();
+  }
+
+  /**
+   * Certificados uma vez por dia: vencimento é evento de dias, não de minutos. Antes do fechamento
+   * das 08:00, para que um certificado vencido apareça como aviso e não como a emissão quebrando.
+   */
+  @Cron('0 7 * * *', { name: 'certificate-expiry', timeZone: SAO_PAULO_TIMEZONE })
+  public async runCertificateCheck(): Promise<void> {
+    await this.sweepNfseAlerts.sweepCertificates();
   }
 }

@@ -21,6 +21,7 @@ const TOKENS = {
   NfseRepository: Symbol.for('NfseRepository'),
   NfseRpsSequenceRepository: Symbol.for('NfseRpsSequenceRepository'),
   NfseQueueProducer: Symbol.for('NfseQueueProducer'),
+  NfseQueueMonitor: Symbol.for('NfseQueueMonitor'),
 
   AccountDao: Symbol.for('AccountDao'),
   FaqDao: Symbol.for('FaqDao'),

@@ -721,4 +721,100 @@ describe('NfseDaoAdapterPrisma - Integration tests', () => {
       expect(result.map((row) => row.id)).toEqual([pending.id]);
     });
   });
+
+  describe('métricas', () => {
+    it('should count notes by status', async() => {
+      // Arrange
+      await seed({ status: NfseStatus.ISSUED });
+      await seed({ status: NfseStatus.ISSUED });
+      await seed({ status: NfseStatus.AWAITING_PROVIDER });
+
+      // Act
+      const result = await sut.countByStatus();
+
+      // Assert
+      expect(result).toEqual(expect.arrayContaining([
+        { key: NfseStatus.ISSUED, count: 2 },
+        { key: NfseStatus.AWAITING_PROVIDER, count: 1 },
+      ]));
+    });
+
+    it('should count charges by confirmed status, treating not-yet-confirmed as its own bucket', async() => {
+      // Arrange
+      await seed({ status: NfseStatus.ISSUED, bankPaymentRequestCode: 'a', bankPaymentStatus: 'EMITTED' });
+      await seed({ status: NfseStatus.ISSUED, bankPaymentRequestCode: 'b' });
+      await seed({ status: NfseStatus.ISSUED });
+
+      // Act
+      const result = await sut.countByBankPaymentStatus();
+
+      // Assert — a nota sem `bankPaymentRequestCode` não é cobrança nenhuma e fica fora.
+      expect(result).toEqual(expect.arrayContaining([
+        { key: 'EMITTED', count: 1 },
+        { key: 'UNCONFIRMED', count: 1 },
+      ]));
+      expect(result).toHaveLength(2);
+    });
+
+    it('should count what is stuck and what is issued without a charge', async() => {
+      // Arrange
+      const old = new Date(Date.now() - 5 * 60 * 60 * 1000);
+      await seed({ status: NfseStatus.SUBMITTED, updatedAt: old });
+      await seed({ status: NfseStatus.SUBMITTED });
+      await seed({ status: NfseStatus.ISSUED, issuedAt: old });
+
+      // Act
+      const [stuck, withoutCharge] = await Promise.all([
+        sut.countStuck(120),
+        sut.countIssuedWithoutBankPayment(60),
+      ]);
+
+      // Assert
+      expect(stuck).toBe(1);
+      expect(withoutCharge).toBe(1);
+    });
+
+    it('should summarize provider calls from the attempt trail', async() => {
+      // Arrange
+      const nfse = await seed();
+      await prisma.nfseAttempt.createMany({
+        data: [
+          { nfseId: nfse.id, operation: 'GISS_CONSULTAR_LOTE', durationMs: 100, errorClass: null },
+          { nfseId: nfse.id, operation: 'GISS_CONSULTAR_LOTE', durationMs: 300, errorClass: 'TransientProviderError' },
+          { nfseId: nfse.id, operation: 'INTER_ISSUE', durationMs: 50, errorClass: null },
+        ],
+      });
+
+      // Act
+      const result = await sut.findProviderCallStats(60);
+
+      // Assert
+      expect(result[0]).toEqual({
+        operation: 'GISS_CONSULTAR_LOTE',
+        calls: 2,
+        errors: 1,
+        averageDurationMs: 200,
+        maxDurationMs: 300,
+      });
+    });
+
+    it('should ignore attempts older than the window', async() => {
+      // Arrange
+      const nfse = await seed();
+      await prisma.nfseAttempt.create({
+        data: {
+          nfseId: nfse.id,
+          operation: 'GISS_RECEPCIONAR_LOTE',
+          durationMs: 100,
+          createdAt: new Date(Date.now() - 3 * 60 * 60 * 1000),
+        },
+      });
+
+      // Act
+      const result = await sut.findProviderCallStats(60);
+
+      // Assert
+      expect(result).toEqual([]);
+    });
+  });
 });

@@ -25,5 +25,10 @@ export interface INfseRepository {
   markOutboxDispatched(outboxId: number): Promise<void>;
   save(entity: Nfse): Promise<number>;
   edit(entity: Nfse): Promise<void>;
+  /**
+   * Marca em bloco que a operação já foi avisada das ressalvas do fisco. Em bloco porque o alerta é
+   * um digest: carregar e regravar 200 notas uma a uma para gravar um timestamp seria absurdo.
+   */
+  markProviderAlertsNotified(ids: number[], notifiedAt: Date): Promise<void>;
   findById(id: number): Promise<Nfse | null>;
 }

@@ -1,4 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { DateTime } from 'luxon';
+import { SAO_PAULO_TIMEZONE } from 'src/core/constants/timezone.constant';
 import { FindCompanyNfsConfigByCompanyId } from 'src/app/company/company-nfs-config/application/usecases/find-company-nfs-config-by-company-id/find-company-nfs-config-by-company-id.service';
 import { IssueNfse } from 'src/app/tax-invoice/nfse/application/usecases/issue-nfse/issue-nfse.service';
 import { TOKENS } from 'src/core/di/token';
@@ -36,9 +38,15 @@ export class SaveElegibleNfms {
       errors: [],
     };
 
-    const now = new Date();
-    const referenceMonth = now.getMonth() + 1;
-    const referenceYear = now.getFullYear();
+    // Competência pelo fuso de Brasília: em UTC, a virada do mês aconteceria três horas antes e o
+    // fechamento do dia 30 à noite gravaria a competência do mês seguinte.
+    //
+    // Uma NFM atrasada — vencimento 15 faturado no dia 20 — nasce com a competência do mês corrente e
+    // a data de hoje, como decidido pela operação. Quem cuida de o boleto não vencer no passado é o
+    // piso de vencimento em `NfseToIssueBankPaymentMapper`.
+    const now = DateTime.now().setZone(SAO_PAULO_TIMEZONE);
+    const referenceMonth = now.month;
+    const referenceYear = now.year;
 
     for (const elegible of elegibles) {
       const cnaeNbsIndopId = elegible.clientItems[0]?.cnaeNbsIndop.id;

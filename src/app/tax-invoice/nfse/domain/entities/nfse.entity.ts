@@ -23,6 +23,13 @@ export type NfseProps = NfseCreateProps & {
   bankPaymentConfirmedAt: Date | null;
   reconcileAttemptCount: number;
   nextReconcileAt: Date | null;
+  /**
+   * Opcionais na entrada porque são sempre nulos numa nota nova, e porque quem carrega a nota de
+   * fora do banco (testes, fixtures) não deveria precisar declarar campos que só a consulta do lote
+   * preenche. Internamente são sempre `string | null` / `Date | null`.
+   */
+  providerAlerts?: string | null;
+  providerAlertedAt?: Date | null;
   nfmId: number | null;
   /** Idade da nota. Ancora o prazo de 30 dias do cancelamento, que corre desde a emissão. */
   createdAt: Date;
@@ -224,6 +231,26 @@ export class Nfse {
 
   public hasConfirmedBankPayment(): boolean {
     return !!this._props.bankPaymentConfirmedAt;
+  }
+
+  /**
+   * Ressalvas do fisco que vieram junto com a nota **emitida** (códigos `A*`). Sem `ensureMutable()`
+   * de propósito: elas chegam na mesma resposta que marca a nota como `ISSUED`, então a nota já está
+   * num estado imutável quando isto roda. Gravá-las não muda o ciclo de vida da nota — só registra o
+   * que a Prefeitura disse.
+   */
+  public markProviderAlerts(alerts: string): void {
+    this._props.providerAlerts = alerts;
+    this._props.providerAlertedAt = null;
+  }
+
+  public hasPendingProviderAlerts(): boolean {
+    return !!this._props.providerAlerts && !this._props.providerAlertedAt;
+  }
+
+  /** A operação já foi avisada; a próxima janela de alerta não repete esta nota. */
+  public markProviderAlertsNotified(notifiedAt: Date = new Date()): void {
+    this._props.providerAlertedAt = notifiedAt;
   }
 
   /**

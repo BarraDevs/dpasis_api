@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { RecordJobAudit } from 'src/app/audit/application/usecases/record-job-audit/record-job-audit.service';
 import { FindBankPayment } from 'src/app/bank-payment/application/usecases/find-bank-payment/find-bank-payment.service';
 import { TOKENS } from 'src/core/di/token';
 import { BankPaymentProvider } from 'src/infra/bank-payment/enums/bank-payment-provider.enum';
@@ -27,6 +28,7 @@ export class ConfirmNfseBankPayment {
     @Inject(TOKENS.LoggerGateway) private readonly logger: ILoggerGateway,
     @Inject(TOKENS.NfseRepository) private readonly nfseRepository: INfseRepository,
     private readonly findBankPayment: FindBankPayment,
+    private readonly recordJobAudit: RecordJobAudit,
   ) {}
 
   /**
@@ -65,6 +67,15 @@ export class ConfirmNfseBankPayment {
       action: 'confirmNfseBankPayment',
       nfseId: nfse.props.id,
       requestCode,
+    });
+
+    this.recordJobAudit.record({
+      jobName: 'confirm-nfse-bank-payment',
+      nfseId: nfse.props.id,
+      from: null,
+      to: bankPayment.status,
+      reason: `Cobrança ${requestCode} · confirmada=${confirmed}`,
+      succeeded: bankPayment.status !== BankPaymentStatus.FAILED,
     });
 
     return { nfseId: nfse.props.id, status: bankPayment.status, confirmed };

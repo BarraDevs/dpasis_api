@@ -5,6 +5,8 @@ import { InterOauthConfigError } from './errors/inter-oauth-config.error';
 export type InterCertMaterial = {
   cert: Buffer;
   key: Buffer;
+  /** Vencimento do certificado mTLS — o que o healthcheck expõe e o alerta persegue. */
+  notAfter: Date;
 };
 
 export class InterCertLoader {
@@ -32,9 +34,9 @@ export class InterCertLoader {
       throw new InterOauthConfigError(`Chave privada Inter não encontrada em "${keyPath}"`);
     }
 
-    this.ensureNotExpired(cert, certPath);
+    const notAfter = this.ensureNotExpired(cert, certPath);
 
-    return { cert, key };
+    return { cert, key, notAfter };
   }
 
   /**
@@ -42,7 +44,7 @@ export class InterCertLoader {
    * colapsa em `ExternalApiError` genérico — indistinguível de instabilidade de rede. O job esgota
    * as tentativas e a NFS-e fica emitida sem boleto, sem ninguém saber por quê.
    */
-  private static ensureNotExpired(cert: Buffer, certPath: string): void {
+  private static ensureNotExpired(cert: Buffer, certPath: string): Date {
     let notAfter: Date;
 
     try {
@@ -57,5 +59,7 @@ export class InterCertLoader {
         `Certificado Inter em "${certPath}" venceu em ${notAfter.toISOString()}`,
       );
     }
+
+    return notAfter;
   }
 }

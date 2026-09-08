@@ -31,6 +31,10 @@ describe('GissPfxLoader.load - Unit tests', () => {
   let dir: string;
   let pfxPath: string;
 
+  beforeEach(() => {
+    GissPfxLoader.clearCache();
+  });
+
   beforeAll(() => {
     dir = mkdtempSync(join(tmpdir(), 'giss-pfx-test-'));
     pfxPath = join(dir, 'test.pfx');
@@ -97,5 +101,73 @@ describe('GissPfxLoader.load - Unit tests', () => {
     // Act & Assert
     expect(() => GissPfxLoader.load(pfxPath, PASSWORD_ENV_VAR)).toThrow(NfsProviderConfigError);
     expect(() => GissPfxLoader.load(pfxPath, PASSWORD_ENV_VAR)).toThrow(/venceu em/);
+  });
+});
+
+describe('GissPfxLoader.load - cache', () => {
+  let dir: string;
+  let pfxPath: string;
+
+  beforeEach(() => {
+    GissPfxLoader.clearCache();
+    dir = mkdtempSync(join(tmpdir(), 'giss-pfx-cache-'));
+    pfxPath = join(dir, 'test.pfx');
+    writeFileSync(pfxPath, buildTestPfx());
+    process.env[PASSWORD_ENV_VAR] = PASSWORD;
+  });
+
+  afterEach(() => {
+    delete process.env[PASSWORD_ENV_VAR];
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('should read and parse the PKCS#12 only once for the same file', () => {
+    // Arrange — o gateway carrega o certificado a cada operação; parsear de novo é o custo que o
+    // cache existe para evitar.
+    const first = GissPfxLoader.load(pfxPath, PASSWORD_ENV_VAR);
+
+    // Act
+    const second = GissPfxLoader.load(pfxPath, PASSWORD_ENV_VAR);
+
+    // Assert
+    expect(second).toBe(first);
+  });
+
+  it('should reload when the certificate file changes on disk', () => {
+    // Arrange
+    const first = GissPfxLoader.load(pfxPath, PASSWORD_ENV_VAR);
+
+    // Act — troca de certificado sem reiniciar o processo.
+    writeFileSync(pfxPath, buildTestPfx(new Date(Date.now() + 2 * ONE_YEAR_MS)));
+    const second = GissPfxLoader.load(pfxPath, PASSWORD_ENV_VAR);
+
+    // Assert
+    expect(second).not.toBe(first);
+    expect(second.notAfter.getTime()).toBeGreaterThan(first.notAfter.getTime());
+  });
+
+  it('should expose the leaf certificate expiry date', () => {
+    // Arrange
+    const notAfter = new Date(Date.now() + ONE_YEAR_MS);
+    writeFileSync(pfxPath, buildTestPfx(notAfter));
+    GissPfxLoader.clearCache();
+
+    // Act
+    const material = GissPfxLoader.load(pfxPath, PASSWORD_ENV_VAR);
+
+    // Assert — segundos, porque o X.509 não guarda milissegundos.
+    expect(Math.floor(material.notAfter.getTime() / 1000)).toBe(Math.floor(notAfter.getTime() / 1000));
+  });
+
+  it('should still refuse an expired certificate that is already cached', () => {
+    // Arrange — o certificado é carregado válido e vence com o processo de pé.
+    const notAfter = new Date(Date.now() + 60_000);
+    writeFileSync(pfxPath, buildTestPfx(notAfter));
+    GissPfxLoader.load(pfxPath, PASSWORD_ENV_VAR);
+    jest.spyOn(Date, 'now').mockReturnValue(notAfter.getTime() + 1_000);
+
+    // Act & Assert
+    expect(() => GissPfxLoader.load(pfxPath, PASSWORD_ENV_VAR)).toThrow(NfsProviderConfigError);
+    jest.restoreAllMocks();
   });
 });

@@ -272,3 +272,83 @@ describe('GissBatchStatusMapper.parseConsultarLoteRpsResponse - Unit tests', () 
     expect(() => GissBatchStatusMapper.parseConsultarLoteRpsResponse(xml)).toThrow('ConsultarLoteRpsResposta não encontrado');
   });
 });
+
+describe('GissBatchStatusMapper.parseConsultarLoteRpsResponse - ressalvas do fisco', () => {
+  const successWithAlerts = `<ConsultarLoteRpsResposta>
+      <Situacao>4</Situacao>
+      <ListaNfse>
+        <CompNfse>
+          <Nfse>
+            <InfNfse>
+              <Numero>56037</Numero>
+              <CodigoVerificacao>ABC123</CodigoVerificacao>
+              <DataEmissao>2026-09-01T10:00:00</DataEmissao>
+              <DeclaracaoPrestacaoServico>
+                <InfDeclaracaoPrestacaoServico>
+                  <Rps><IdentificacaoRps><Numero>41</Numero><Serie>NFSE</Serie></IdentificacaoRps></Rps>
+                </InfDeclaracaoPrestacaoServico>
+              </DeclaracaoPrestacaoServico>
+            </InfNfse>
+          </Nfse>
+        </CompNfse>
+      </ListaNfse>
+      <ListaMensagemAlertaRetorno>
+        <MensagemRetorno>
+          <Codigo>A10</Codigo>
+          <Mensagem>Inscrição municipal do prestador encontra-se paralisada ou cancelada</Mensagem>
+        </MensagemRetorno>
+        <MensagemRetorno>
+          <Codigo>A13</Codigo>
+          <Mensagem>Prazo para a conversão do RPS em NFS-e vencido</Mensagem>
+        </MensagemRetorno>
+      </ListaMensagemAlertaRetorno>
+    </ConsultarLoteRpsResposta>`;
+
+  it('should read the alert list that comes alongside an issued note', () => {
+    // Act
+    const result = GissBatchStatusMapper.parseConsultarLoteRpsResponse(successWithAlerts);
+
+    // Assert — a nota foi emitida; as ressalvas exigem ação junto à Prefeitura.
+    expect(result.situation).toBe(NfsBatchSituation.Success);
+    expect(result.issuedNotes).toHaveLength(1);
+    expect(result.alerts).toEqual([
+      expect.objectContaining({ code: 'A10' }),
+      expect.objectContaining({ code: 'A13' }),
+    ]);
+  });
+
+  it('should keep alerts separate from errors', () => {
+    // Act
+    const result = GissBatchStatusMapper.parseConsultarLoteRpsResponse(successWithAlerts);
+
+    // Assert
+    expect(result.errors).toBeUndefined();
+  });
+
+  it('should read a single alert, which the parser sees as an object and not a list', () => {
+    // Arrange
+    const xml = `<ConsultarLoteRpsResposta>
+      <Situacao>4</Situacao>
+      <ListaMensagemAlertaRetorno>
+        <MensagemRetorno><Codigo>A21</Codigo><Mensagem>Opção pelo SIMPLES Nacional não consta do cadastro</Mensagem></MensagemRetorno>
+      </ListaMensagemAlertaRetorno>
+    </ConsultarLoteRpsResposta>`;
+
+    // Act
+    const result = GissBatchStatusMapper.parseConsultarLoteRpsResponse(xml);
+
+    // Assert
+    expect(result.alerts).toEqual([expect.objectContaining({ code: 'A21' })]);
+  });
+
+  it('should leave alerts undefined when the provider sent none', () => {
+    // Arrange
+    const xml = '<ConsultarLoteRpsResposta><Situacao>4</Situacao></ConsultarLoteRpsResposta>';
+
+    // Act
+    const result = GissBatchStatusMapper.parseConsultarLoteRpsResponse(xml);
+
+    // Assert
+    expect(result.alerts).toBeUndefined();
+  });
+});

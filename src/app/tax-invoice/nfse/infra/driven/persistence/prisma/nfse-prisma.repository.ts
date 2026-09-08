@@ -51,6 +51,8 @@ const NfseSelect = {
   bankPaymentConfirmedAt: true,
   reconcileAttemptCount: true,
   nextReconcileAt: true,
+  providerAlerts: true,
+  providerAlertedAt: true,
   nfmId: true,
   data: true,
   createdAt: true,
@@ -186,8 +188,21 @@ export class NfseRepositoryAdapterPrisma implements INfseRepository {
         bankPaymentConfirmedAt: props.bankPaymentConfirmedAt,
         reconcileAttemptCount: props.reconcileAttemptCount,
         nextReconcileAt: props.nextReconcileAt,
+        providerAlerts: props.providerAlerts,
+        providerAlertedAt: props.providerAlertedAt,
         data: props.data as unknown as Prisma.InputJsonValue,
       },
+    });
+  }
+
+  public async markProviderAlertsNotified(ids: number[], notifiedAt: Date): Promise<void> {
+    if (ids.length === 0) {
+      return;
+    }
+
+    await this.prisma.nfse.updateMany({
+      where: { id: { in: ids }, providerAlertedAt: null },
+      data: { providerAlertedAt: notifiedAt },
     });
   }
 
@@ -225,6 +240,8 @@ export class NfseRepositoryAdapterPrisma implements INfseRepository {
       bankPaymentConfirmedAt: row.bankPaymentConfirmedAt,
       reconcileAttemptCount: row.reconcileAttemptCount,
       nextReconcileAt: row.nextReconcileAt,
+      providerAlerts: row.providerAlerts,
+      providerAlertedAt: row.providerAlertedAt,
       nfmId: row.nfmId,
       createdAt: row.createdAt,
       data: row.data as Record<string, unknown>,

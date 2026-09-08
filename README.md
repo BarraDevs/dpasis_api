@@ -78,18 +78,47 @@ $ npm run start:dev
 $ npm run start:prod
 ```
 
+## Filas
+
+O fluxo de NFS-e usa três filas BullMQ, uma por tipo de trabalho:
+
+| Fila | Jobs | Concorrência | Limite |
+|---|---|---|---|
+| `nfse-issue` | `issue-nfse-batch` | 2 | 30/min |
+| `nfse-poll` | `poll-nfse-batch`, `reconcile-nfse` | 6 | 120/min |
+| `nfse-bank-payment` | `issue-nfse-bank-payment`, `confirm-nfse-bank-payment` | 6 | 100/min |
+
+A fila única antiga (`nfse`) foi removida junto com as filas novas. No deploy pode haver jobs em voo
+nela — eles não são processados, e quem os recupera são as varreduras da Onda 3
+(`SweepNfseRecovery`, a cada 5 min): nota criada e não despachada volta pelo outbox, nota sem
+desfecho volta pela reconciliação agendada, nota emitida sem cobrança volta pelo braço de boleto.
+A recuperação leva minutos, não exige ação manual, e não há caminho sem `limiter` sobrando no código.
+
+Se sobrar lixo no Redis, a chave é `bull:nfse:*` e pode ser apagada depois que
+`GET /admin/metrics/nfse` mostrar as três filas novas trabalhando.
+
 ## Test
 
 ```bash
-# unit tests
+# unit + integration (precisa do Postgres de desenvolvimento no ar)
 $ npm run test
 
-# e2e tests
+# ponta a ponta do fluxo de NFS-e (precisa de Postgres e Redis no ar)
 $ npm run test:e2e
 
 # test coverage
 $ npm run test:cov
 ```
+
+`npm run test:e2e` roda `src/app/tax-invoice/nfse/nfse-flow.e2e.integration.spec.ts` com
+`QUEUE_E2E=true`, o interruptor que liga o BullMQ real dentro do ambiente de teste — na suíte normal
+as filas são fakes em memória, para que ninguém precise de Redis para rodar os testes. O spec
+atravessa transação, fila, worker e gateways falsos, e injeta falha em cada ponto de commit: crash
+entre commit e despacho, duas emissões simultâneas para a mesma NFM, timeout ambíguo no envio e
+recusa por duplicidade do banco.
+
+Confira `REDIS_URL` no `.env.test` antes de rodar: ele precisa apontar para um Redis que esteja
+mesmo no ar.
 
 ## Support
 

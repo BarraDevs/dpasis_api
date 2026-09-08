@@ -35,6 +35,11 @@ async function bootstrap() {
   app.use(compression());
   app.enableCors();
 
+  // Sem isto o Nest ignora `SIGTERM`: o processo morre com jobs em execução, e cada job morto no
+  // meio é uma NFS-e ou um boleto em estado ambíguo. Com os hooks ligados, os workers do BullMQ
+  // fecham drenando o que está em voo.
+  app.enableShutdownHooks();
+
   await app.listen(process.env.PORT as string);
 }
 bootstrap();

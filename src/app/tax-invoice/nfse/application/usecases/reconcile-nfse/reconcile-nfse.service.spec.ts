@@ -1,4 +1,5 @@
 import { createMock } from '@golevelup/ts-jest';
+import { RecordJobAudit } from 'src/app/audit/application/usecases/record-job-audit/record-job-audit.service';
 import { Test } from '@nestjs/testing';
 import { CompanyNfsConfigDto } from 'src/app/company/company-nfs-config/application/dtos/company-nfs-config.dto';
 import { FindCompanyNfsConfigByCompanyId } from 'src/app/company/company-nfs-config/application/usecases/find-company-nfs-config-by-company-id/find-company-nfs-config-by-company-id.service';
@@ -80,6 +81,7 @@ describe('ReconcileNfse - Unit tests', () => {
         { provide: TOKENS.NfsGenerationGateway, useValue: createMock<INfsGenerationGateway>() },
         { provide: TOKENS.NfseQueueProducer, useValue: createMock<INfseQueueProducer>() },
         { provide: FindCompanyNfsConfigByCompanyId, useValue: createMock<FindCompanyNfsConfigByCompanyId>() },
+        { provide: RecordJobAudit, useValue: createMock<RecordJobAudit>() },
       ],
     }).compile();
 

@@ -121,7 +121,7 @@ describe('FindAllAuditLogQueryDto', () => {
       expect(result.method).toBeUndefined();
     });
 
-    it.each(['POST', 'PATCH', 'PUT', 'DELETE'])('should accept method %s', async(method: string) => {
+    it.each(['POST', 'PATCH', 'PUT', 'DELETE', 'JOB'])('should accept method %s', async(method: string) => {
       // Arrange
       const data = makeValidQueryDto({ method });
 
@@ -150,7 +150,7 @@ describe('FindAllAuditLogQueryDto', () => {
       // Act / Assert
       expect.assertions(1);
       await target.transform(data, metadata).catch((error) => {
-        expect(error.getResponse().message).toContain('method deve ser POST, PATCH, PUT ou DELETE');
+        expect(error.getResponse().message).toContain('method deve ser POST, PATCH, PUT, DELETE ou JOB');
       });
     });
 

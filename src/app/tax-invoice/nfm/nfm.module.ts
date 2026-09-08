@@ -1,4 +1,6 @@
 import { Module } from '@nestjs/common';
+import { Environment } from 'src/core/config/environment.enum';
+import { AlertModule } from 'src/infra/alert/alert.module';
 import { AuthenticationGuardsModule } from 'src/app/authentication/application/guards/guards.module';
 import { BankPaymentCoreModule } from 'src/app/bank-payment/bank-payment-core.module';
 import { CompanyModule } from 'src/app/company/company/company.module';
@@ -16,8 +18,12 @@ import { FindNfmById } from './application/usecases/find-nfm-by-id/find-nfm-by-i
 import { FindNfmProviderStatus } from './application/usecases/find-nfm-provider-status/find-nfm-provider-status.service';
 import { ReconcileNfm } from './application/usecases/reconcile-nfm/reconcile-nfm.service';
 import { ReissueNfm } from './application/usecases/reissue-nfm/reissue-nfm.service';
+import { RunDailyNfmIssuance } from './application/usecases/run-daily-nfm-issuance/run-daily-nfm-issuance.service';
 import { SaveElegibleNfms } from './application/usecases/save-elegible-nfms/save-elegible-nfms.service';
 import { NfmAdminController } from './infra/drivers/http/admin/nfm-admin.controller';
+import { NfmIssuanceScheduler } from './infra/drivers/schedule/nfm-issuance.scheduler';
+
+const isTest = process.env.NODE_ENV === Environment.Test;
 
 @Module({
   imports: [
@@ -31,6 +37,7 @@ import { NfmAdminController } from './infra/drivers/http/admin/nfm-admin.control
     NfsGenerationModule.register(),
     NfmPersistenceModule,
     AuthenticationGuardsModule,
+    AlertModule.register(),
   ],
   controllers: [
     NfmAdminController,
@@ -44,6 +51,9 @@ import { NfmAdminController } from './infra/drivers/http/admin/nfm-admin.control
     FindNfmProviderStatus,
     ReconcileNfm,
     ReissueNfm,
+    RunDailyNfmIssuance,
+    // O agendador fica de fora em teste: `@Cron` dispararia durante a suíte.
+    ...(isTest ? [] : [NfmIssuanceScheduler]),
   ],
   exports: [
     FindElegibleClients,
@@ -54,6 +64,7 @@ import { NfmAdminController } from './infra/drivers/http/admin/nfm-admin.control
     FindNfmProviderStatus,
     ReconcileNfm,
     ReissueNfm,
+    RunDailyNfmIssuance,
   ],
 })
 export class NfmModule {}

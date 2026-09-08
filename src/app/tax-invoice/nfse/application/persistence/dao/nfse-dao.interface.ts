@@ -1,4 +1,8 @@
 import { NfseAlertRowDto, NfseDailyClosingDto } from '../../dtos/nfse-alert-row.dto';
+import {
+  NfseCountByKeyDto,
+  NfseProviderCallStatsDto,
+} from '../../usecases/get-nfse-metrics/dtos/get-nfse-metrics.dto';
 import { NfseReconcileTargetDto } from '../../dtos/nfse-reconcile-target.dto';
 import { NfseDto } from '../../dtos/nfse.dto';
 
@@ -12,6 +16,8 @@ export interface INfseDao {
   findIssuedWithoutBankPayment(olderThanMinutes: number): Promise<NfseAlertRowDto[]>;
   /** Cobranças cuja produção o provedor recusou (P1-08) e que ninguém reemitiu ainda. */
   findBankPaymentFailed(): Promise<NfseAlertRowDto[]>;
+  /** Emitidas com ressalva do fisco (`A*`) sobre as quais a operação ainda não foi avisada. */
+  findIssuedWithProviderAlerts(): Promise<NfseAlertRowDto[]>;
   /** Fechamento de um dia: quantas foram emitidas e quantas têm boleto. */
   countIssuedByDay(dayStart: Date, dayEnd: Date): Promise<NfseDailyClosingDto>;
 
@@ -32,4 +38,18 @@ export interface INfseDao {
    * `codigoSolicitacao` diz que a solicitação foi aceita, não que o boleto existe.
    */
   findBankPaymentUnconfirmed(olderThanMinutes: number, limit: number): Promise<NfseReconcileTargetDto[]>;
+
+  /** Contagem de NFS-e por status. */
+  countByStatus(): Promise<NfseCountByKeyDto[]>;
+  /** Contagem de cobranças por situação confirmada no provedor. */
+  countByBankPaymentStatus(): Promise<NfseCountByKeyDto[]>;
+  /** Quantas notas estão presas (não terminais sem movimento) acima do limiar. */
+  countStuck(olderThanMinutes: number): Promise<number>;
+  /** Quantas notas estão emitidas sem cobrança vinculada acima do limiar. */
+  countIssuedWithoutBankPayment(olderThanMinutes: number): Promise<number>;
+  /**
+   * Chamadas aos provedores na janela, a partir de `nfse_attempts`. É o primeiro leitor da tabela
+   * que a Onda 2 criou: até aqui o rastro era gravado e só consultado por SQL manual.
+   */
+  findProviderCallStats(sinceMinutes: number): Promise<NfseProviderCallStatsDto[]>;
 }

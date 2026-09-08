@@ -1,5 +1,7 @@
 import { createMock } from '@golevelup/ts-jest';
 import { Test } from '@nestjs/testing';
+import { DateTime } from 'luxon';
+import { SAO_PAULO_TIMEZONE } from 'src/core/constants/timezone.constant';
 import { ClientAddressType } from 'src/app/client/client-address/domain/enums/client-address-type.enum';
 import { FindAllClientInvoiceConfig } from 'src/app/client/client-invoice-config/application/usecases/find-all-client-invoice-config/find-all-client-invoice-config.service';
 import { ClientInvoiceConfigDto } from 'src/app/client/client-invoice-config/application/dtos/client-invoice-config.dto';
@@ -145,9 +147,9 @@ describe('FindElegibleClients - Unit tests', () => {
     expect(sut).toBeDefined();
   });
 
-  it('should call findAllClientInvoiceConfig with dueDateDay=today and generateNf=true', async() => {
-    // Arrange
-    const today = new Date().getDate();
+  it('should call findAllClientInvoiceConfig with every due date up to today, in Sao Paulo time', async() => {
+    // Arrange — `<=` em vez de `=`: um dia sem execução não deixa a competência para trás.
+    const today = DateTime.now().setZone(SAO_PAULO_TIMEZONE).day;
     const invoiceConfigSpy = jest.spyOn(findAllClientInvoiceConfig, 'execute').mockResolvedValue(makePagination([]));
     jest.spyOn(searchClient, 'execute').mockResolvedValue(makePagination([]));
 
@@ -156,7 +158,7 @@ describe('FindElegibleClients - Unit tests', () => {
 
     // Assert
     expect(invoiceConfigSpy).toHaveBeenCalledTimes(1);
-    expect(invoiceConfigSpy).toHaveBeenCalledWith({ dueDateDay: today, generateNf: true });
+    expect(invoiceConfigSpy).toHaveBeenCalledWith({ dueDateDayMax: today, generateNf: true });
   });
 
   it('should call searchClient with client IDs from invoice configs, invoiceType=CONTRACT, active=true, generateInvoice=true', async() => {

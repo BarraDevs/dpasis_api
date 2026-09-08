@@ -42,4 +42,11 @@ export class NfsBatchStatusDto {
   situation: NfsBatchSituation;
   issuedNotes?: NfsIssuedNoteDto[];
   errors?: NfsBatchErrorDto[];
+  /**
+   * Ressalvas do fisco (`A01`–`A30`) que acompanham uma nota **emitida**: inscrição municipal
+   * paralisada, prazo de conversão do RPS vencido, opção pelo Simples ausente do cadastro. Vêm em
+   * `ListaMensagemAlertaRetorno`, elemento separado das mensagens de erro, e não impedem a emissão —
+   * exigem ação junto à Prefeitura.
+   */
+  alerts?: NfsBatchErrorDto[];
 }

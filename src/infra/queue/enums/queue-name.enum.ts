@@ -1,5 +1,7 @@
 export enum QueueName {
   UploadFile = 'upload-file',
-  Nfse = 'nfse',
+  NfseIssue = 'nfse-issue',
+  NfsePoll = 'nfse-poll',
+  NfseBankPayment = 'nfse-bank-payment',
   ClientAddress = 'client-address',
 }

@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { RecordJobAudit } from 'src/app/audit/application/usecases/record-job-audit/record-job-audit.service';
 import { FindCompanyNfsConfigByCompanyId } from 'src/app/company/company-nfs-config/application/usecases/find-company-nfs-config-by-company-id/find-company-nfs-config-by-company-id.service';
 import { TOKENS } from 'src/core/di/token';
 import { LogContext, type ILoggerGateway } from 'src/infra/logger/logger.gateway';
@@ -44,14 +45,37 @@ export class ReconcileNfse {
     @Inject(TOKENS.NfsGenerationGateway) private readonly nfsGenerationGateway: INfsGenerationGateway,
     @Inject(TOKENS.NfseQueueProducer) private readonly queueProducer: INfseQueueProducer,
     private readonly findCompanyNfsConfigByCompanyId: FindCompanyNfsConfigByCompanyId,
+    private readonly recordJobAudit: RecordJobAudit,
   ) {}
+
+  /**
+   * Toda reconciliação vira uma linha de auditoria, inclusive a que não muda nada: a pergunta
+   * operacional costuma ser "o sistema chegou a olhar esta nota?", e a resposta não pode depender de
+   * ler log.
+   */
+  public async execute(input: ReconcileNfseInputDto): Promise<ReconcileNfseOutputDto> {
+    const result = await this.resolve(input);
+
+    this.recordJobAudit.record({
+      jobName: 'reconcile-nfse',
+      nfseId: result.nfseId,
+      from: result.previousStatus,
+      to: result.newStatus,
+      reason: [result.source, result.nfseNumber ? `NFS-e ${result.nfseNumber}` : null, result.message]
+        .filter(Boolean)
+        .join(' · '),
+      succeeded: result.source !== ReconcileNfseSource.ProviderQueryFailed,
+    });
+
+    return result;
+  }
 
   /**
    * Pergunta ao provedor, pela chave natural do RPS, o que aconteceu com a nota — e grava só o que
    * ele responder. É o único caminho de saída de `AWAITING_PROVIDER`: nem o estado local nem o
    * tempo decorrido autorizam afirmar que a nota não existe.
    */
-  public async execute(input: ReconcileNfseInputDto): Promise<ReconcileNfseOutputDto> {
+  private async resolve(input: ReconcileNfseInputDto): Promise<ReconcileNfseOutputDto> {
     const nfse = await this.nfseRepository.findById(input.nfseId);
     if (!nfse) {
       throw new NfseNotFoundError();

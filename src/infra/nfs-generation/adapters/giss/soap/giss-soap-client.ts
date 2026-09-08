@@ -1,9 +1,11 @@
 import { HttpService } from '@nestjs/axios';
 import { Agent } from 'node:https';
 import { XMLParser } from 'fast-xml-parser';
+import { CircuitBreaker } from 'src/shared/circuit-breaker/circuit-breaker';
 import { XmlEscapeUtil } from '../mappers/xml-escape.util';
 import { GISS_CABECALHO_NAMESPACE } from '../constants/giss-namespaces';
 import { GissCertMaterial } from '../signing/giss-pfx-loader';
+import { isTransientGissError } from './giss-error-classifier';
 import {
   extractHttpStatus,
   extractResponseBody,
@@ -82,6 +84,23 @@ export class GissSoapClient {
 
     const endpoint = `https://ws-${municipioSlug}.giss.com.br/service-ws/nf/nfse-ws`;
     const envelope = this.buildEnvelope(operation, dadosMsgXml);
+
+    // Disjuntor por município: com a prefeitura fora do ar, cada chamada paga TLS + o timeout de 60s
+    // antes de falhar, e a fila de um fechamento inteiro paga isso nota a nota. Aberto o circuito, o
+    // job volta imediatamente para a escada de reagendamento. Só falha de infraestrutura conta —
+    // rejeição de negócio significa que o provedor está de pé.
+    return CircuitBreaker.run(`giss:${municipioSlug}`, () => this.post(httpService, endpoint, operation, envelope, agent), {
+      shouldTrip: isTransientGissError,
+    });
+  }
+
+  private static async post(
+    httpService: HttpService,
+    endpoint: string,
+    operation: GissOperation,
+    envelope: string,
+    agent: Agent,
+  ): Promise<GissSoapCallResult> {
     const startedAt = Date.now();
 
     try {

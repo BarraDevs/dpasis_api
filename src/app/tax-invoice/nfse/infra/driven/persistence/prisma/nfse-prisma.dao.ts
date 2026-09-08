@@ -2,6 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { INfseDao } from 'src/app/tax-invoice/nfse/application/persistence/dao/nfse-dao.interface';
 import { NfseAlertRowDto, NfseDailyClosingDto } from 'src/app/tax-invoice/nfse/application/dtos/nfse-alert-row.dto';
+import {
+  NfseCountByKeyDto,
+  NfseProviderCallStatsDto,
+} from 'src/app/tax-invoice/nfse/application/usecases/get-nfse-metrics/dtos/get-nfse-metrics.dto';
 import { NfseReconcileTargetDto } from 'src/app/tax-invoice/nfse/application/dtos/nfse-reconcile-target.dto';
 import { NfseDto } from 'src/app/tax-invoice/nfse/application/dtos/nfse.dto';
 import { NfseStatus } from 'src/app/tax-invoice/nfse/domain/enums/nfse-status.enum';
@@ -44,6 +48,7 @@ const NfseAlertRowSelect = {
   errorMessage: true,
   issuedAt: true,
   updatedAt: true,
+  providerAlerts: true,
 } satisfies Prisma.NfseSelect;
 
 const NfseReconcileTargetSelect = {
@@ -116,6 +121,22 @@ export class NfseDaoAdapterPrisma implements INfseDao {
         status: NfseStatus.ISSUED,
         bankPaymentRequestCode: null,
         issuedAt: { lt: NfseDaoAdapterPrisma.minutesAgo(olderThanMinutes) },
+      },
+      ...ALERT_QUERY_OPTIONS,
+    });
+
+    return rows.map((row) => this.mapToAlertRow(row));
+  }
+
+  /**
+   * Notas emitidas com ressalva do fisco que ninguém viu ainda. Sem limite de tempo: um `A13`
+   * ("prazo para conversão do RPS vencido") não fica menos grave por ser de ontem.
+   */
+  public async findIssuedWithProviderAlerts(): Promise<NfseAlertRowDto[]> {
+    const rows = await this.prisma.nfse.findMany({
+      where: {
+        providerAlerts: { not: null },
+        providerAlertedAt: null,
       },
       ...ALERT_QUERY_OPTIONS,
     });
@@ -208,6 +229,76 @@ export class NfseDaoAdapterPrisma implements INfseDao {
 
   private static minutesAgo(minutes: number): Date {
     return new Date(Date.now() - minutes * 60_000);
+  }
+
+  public async countByStatus(): Promise<NfseCountByKeyDto[]> {
+    const rows = await this.prisma.nfse.groupBy({
+      by: ['status'],
+      _count: { _all: true },
+    });
+
+    return rows.map((row) => ({ key: row.status, count: row._count._all }));
+  }
+
+  public async countByBankPaymentStatus(): Promise<NfseCountByKeyDto[]> {
+    const rows = await this.prisma.nfse.groupBy({
+      by: ['bankPaymentStatus'],
+      where: { bankPaymentRequestCode: { not: null } },
+      _count: { _all: true },
+    });
+
+    // `null` é situação: cobrança solicitada e ainda não confirmada pelo provedor.
+    return rows.map((row) => ({ key: row.bankPaymentStatus ?? 'UNCONFIRMED', count: row._count._all }));
+  }
+
+  public async countStuck(olderThanMinutes: number): Promise<number> {
+    return this.prisma.nfse.count({
+      where: {
+        status: { in: NON_TERMINAL_STATUSES },
+        updatedAt: { lt: NfseDaoAdapterPrisma.minutesAgo(olderThanMinutes) },
+      },
+    });
+  }
+
+  public async countIssuedWithoutBankPayment(olderThanMinutes: number): Promise<number> {
+    return this.prisma.nfse.count({
+      where: {
+        status: NfseStatus.ISSUED,
+        bankPaymentRequestCode: null,
+        issuedAt: { lt: NfseDaoAdapterPrisma.minutesAgo(olderThanMinutes) },
+      },
+    });
+  }
+
+  public async findProviderCallStats(sinceMinutes: number): Promise<NfseProviderCallStatsDto[]> {
+    const since = NfseDaoAdapterPrisma.minutesAgo(sinceMinutes);
+
+    const [grouped, errors] = await Promise.all([
+      this.prisma.nfseAttempt.groupBy({
+        by: ['operation'],
+        where: { createdAt: { gte: since } },
+        _count: { _all: true },
+        _avg: { durationMs: true },
+        _max: { durationMs: true },
+      }),
+      this.prisma.nfseAttempt.groupBy({
+        by: ['operation'],
+        where: { createdAt: { gte: since }, errorClass: { not: null } },
+        _count: { _all: true },
+      }),
+    ]);
+
+    const errorsByOperation = new Map(errors.map((row) => [row.operation, row._count._all]));
+
+    return grouped
+      .map((row) => ({
+        operation: row.operation,
+        calls: row._count._all,
+        errors: errorsByOperation.get(row.operation) ?? 0,
+        averageDurationMs: row._avg.durationMs === null ? null : Math.round(row._avg.durationMs),
+        maxDurationMs: row._max.durationMs,
+      }))
+      .sort((a, b) => b.calls - a.calls);
   }
 
   private mapToAlertRow(row: Prisma.NfseGetPayload<{ select: typeof NfseAlertRowSelect }>): NfseAlertRowDto {

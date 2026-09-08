@@ -1,4 +1,5 @@
 import { createMock } from '@golevelup/ts-jest';
+import { RecordJobAudit } from 'src/app/audit/application/usecases/record-job-audit/record-job-audit.service';
 import { Test } from '@nestjs/testing';
 import { CompanyNfsConfigDto } from 'src/app/company/company-nfs-config/application/dtos/company-nfs-config.dto';
 import { FindCompanyNfsConfigByCompanyId } from 'src/app/company/company-nfs-config/application/usecases/find-company-nfs-config-by-company-id/find-company-nfs-config-by-company-id.service';
@@ -71,6 +72,7 @@ describe('ProcessPollNfseBatch - Unit tests', () => {
         { provide: TOKENS.LoggerGateway, useValue: createMock<ILoggerGateway>() },
         { provide: TOKENS.NfseRepository, useValue: createMock<INfseRepository>() },
         { provide: FindCompanyNfsConfigByCompanyId, useValue: createMock<FindCompanyNfsConfigByCompanyId>() },
+        { provide: RecordJobAudit, useValue: createMock<RecordJobAudit>() },
         { provide: TOKENS.NfsGenerationGateway, useValue: createMock<INfsGenerationGateway>() },
         { provide: TOKENS.NfseQueueProducer, useValue: createMock<INfseQueueProducer>() },
       ],
@@ -457,5 +459,72 @@ describe('ProcessPollNfseBatch - Unit tests', () => {
     // Assert
     expect(nfse.props.status).toBe(NfseStatus.AWAITING_PROVIDER);
     expect(queueProducer.addPollBatchJob).not.toHaveBeenCalled();
+  });
+
+  describe('ressalvas do fisco na emissão', () => {
+    const issuedNote = {
+      rpsNumber: 7,
+      rpsSeries: 'NFSE',
+      nfseNumber: '1000',
+      verificationCode: 'ABC123',
+      issueDate: '2026-07-20T10:00:00',
+    };
+
+    it('should persist the provider warnings that came with the issued note', async() => {
+      // Arrange — códigos `A*` significam nota emitida COM pendência junto à Prefeitura.
+      const nfse = NfseFactory.load(makeNfseProps());
+      jest.spyOn(nfseRepository, 'findById').mockResolvedValue(nfse);
+      jest.spyOn(nfsGenerationGateway, 'getBatchStatus').mockResolvedValue({
+        situation: NfsBatchSituation.Success,
+        issuedNotes: [issuedNote],
+        alerts: [
+          { code: 'A10', message: 'Inscrição municipal paralisada', kind: NfsBatchErrorKind.BusinessRejection },
+          { code: 'A13', message: 'Prazo para conversão vencido', kind: NfsBatchErrorKind.BusinessRejection },
+        ],
+      });
+
+      // Act
+      await sut.execute({ nfseId: 1, attempt: 1 });
+
+      // Assert
+      expect(nfse.props).toMatchObject({
+        status: NfseStatus.ISSUED,
+        providerAlerts: 'A10: Inscrição municipal paralisada; A13: Prazo para conversão vencido',
+        providerAlertedAt: null,
+      });
+    });
+
+    it('should leave the warning field untouched when the provider sent none', async() => {
+      // Arrange
+      const nfse = NfseFactory.load(makeNfseProps());
+      jest.spyOn(nfseRepository, 'findById').mockResolvedValue(nfse);
+      jest.spyOn(nfsGenerationGateway, 'getBatchStatus').mockResolvedValue({
+        situation: NfsBatchSituation.Success,
+        issuedNotes: [issuedNote],
+      });
+
+      // Act
+      await sut.execute({ nfseId: 1, attempt: 1 });
+
+      // Assert
+      expect(nfse.props.providerAlerts).toBeNull();
+    });
+
+    it('should still issue the note and enqueue the bank payment job', async() => {
+      // Arrange — a ressalva não impede a emissão nem o ciclo financeiro.
+      const nfse = NfseFactory.load(makeNfseProps());
+      jest.spyOn(nfseRepository, 'findById').mockResolvedValue(nfse);
+      jest.spyOn(nfsGenerationGateway, 'getBatchStatus').mockResolvedValue({
+        situation: NfsBatchSituation.Success,
+        issuedNotes: [issuedNote],
+        alerts: [{ code: 'A21', message: 'Simples fora do cadastro', kind: NfsBatchErrorKind.BusinessRejection }],
+      });
+
+      // Act
+      await sut.execute({ nfseId: 1, attempt: 1 });
+
+      // Assert
+      expect(queueProducer.addIssueBankPaymentJob).toHaveBeenCalledWith({ nfseId: 1 });
+    });
   });
 });

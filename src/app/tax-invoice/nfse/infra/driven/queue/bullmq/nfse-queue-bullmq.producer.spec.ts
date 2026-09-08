@@ -29,8 +29,18 @@ describe('NfseQueueBullmqAdapterProducer', () => {
     const module = await Test.createTestingModule({
       providers: [
         NfseQueueBullmqAdapterProducer,
+        // As três filas compartilham o mesmo mock aqui: estes casos verificam payload e retry.
+        // Quem verifica em qual fila cada job cai é o bloco "roteamento por fila".
         {
-          provide: getQueueToken(QueueName.Nfse),
+          provide: getQueueToken(QueueName.NfseIssue),
+          useValue: { add: queueAdd },
+        },
+        {
+          provide: getQueueToken(QueueName.NfsePoll),
+          useValue: { add: queueAdd },
+        },
+        {
+          provide: getQueueToken(QueueName.NfseBankPayment),
           useValue: { add: queueAdd },
         },
       ],
@@ -153,6 +163,71 @@ describe('NfseQueueBullmqAdapterProducer', () => {
         attempts: 3,
         backoff: { type: 'exponential', delay: 60_000 },
       });
+    });
+  });
+
+  describe('roteamento por fila', () => {
+    async function buildWithSeparateQueues(): Promise<{
+      producer: NfseQueueBullmqAdapterProducer;
+      issueAdd: jest.Mock;
+      pollAdd: jest.Mock;
+      bankPaymentAdd: jest.Mock;
+    }> {
+      const issueAdd = jest.fn().mockResolvedValue(undefined);
+      const pollAdd = jest.fn().mockResolvedValue(undefined);
+      const bankPaymentAdd = jest.fn().mockResolvedValue(undefined);
+
+      const module = await Test.createTestingModule({
+        providers: [
+          NfseQueueBullmqAdapterProducer,
+          { provide: getQueueToken(QueueName.NfseIssue), useValue: { add: issueAdd } },
+          { provide: getQueueToken(QueueName.NfsePoll), useValue: { add: pollAdd } },
+          { provide: getQueueToken(QueueName.NfseBankPayment), useValue: { add: bankPaymentAdd } },
+        ],
+      }).compile();
+
+      return { producer: module.get(NfseQueueBullmqAdapterProducer), issueAdd, pollAdd, bankPaymentAdd };
+    }
+
+    it('should send the RPS batch to the issue queue only', async() => {
+      // Arrange
+      const { producer, issueAdd, pollAdd, bankPaymentAdd } = await buildWithSeparateQueues();
+
+      // Act
+      await producer.addIssueBatchJob(makeIssueBatchJob());
+
+      // Assert
+      expect(issueAdd).toHaveBeenCalledTimes(1);
+      expect(pollAdd).not.toHaveBeenCalled();
+      expect(bankPaymentAdd).not.toHaveBeenCalled();
+    });
+
+    it('should send batch polling and reconciliation to the poll queue', async() => {
+      // Arrange
+      const { producer, issueAdd, pollAdd, bankPaymentAdd } = await buildWithSeparateQueues();
+
+      // Act
+      await producer.addPollBatchJob(makePollBatchJob());
+      await producer.addReconcileNfseJob({ nfseId: 1 });
+
+      // Assert
+      expect(pollAdd).toHaveBeenCalledTimes(2);
+      expect(issueAdd).not.toHaveBeenCalled();
+      expect(bankPaymentAdd).not.toHaveBeenCalled();
+    });
+
+    it('should send both bank payment jobs to the bank payment queue', async() => {
+      // Arrange
+      const { producer, issueAdd, pollAdd, bankPaymentAdd } = await buildWithSeparateQueues();
+
+      // Act
+      await producer.addIssueBankPaymentJob({ nfseId: 1 });
+      await producer.addConfirmBankPaymentJob({ nfseId: 1 });
+
+      // Assert
+      expect(bankPaymentAdd).toHaveBeenCalledTimes(2);
+      expect(issueAdd).not.toHaveBeenCalled();
+      expect(pollAdd).not.toHaveBeenCalled();
     });
   });
 });

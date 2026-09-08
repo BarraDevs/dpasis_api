@@ -11,6 +11,8 @@ export class NfseAlertRowDto {
   errorMessage: string | null;
   issuedAt: Date | null;
   updatedAt: Date;
+  /** Ressalvas `A*` do provedor, quando houver. Nota emitida com pendência junto à Prefeitura. */
+  providerAlerts?: string | null;
 }
 
 export class NfseDailyClosingDto {

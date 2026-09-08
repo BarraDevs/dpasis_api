@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { RecordJobAudit } from 'src/app/audit/application/usecases/record-job-audit/record-job-audit.service';
 import { FindBankPaymentByYourNumber } from 'src/app/bank-payment/application/usecases/find-bank-payment-by-your-number/find-bank-payment-by-your-number.service';
 import { FindBankPayment } from 'src/app/bank-payment/application/usecases/find-bank-payment/find-bank-payment.service';
 import { IssueBankPaymentOutputDto } from 'src/app/bank-payment/application/usecases/issue-bank-payment/dtos/issue-bank-payment.dto';
@@ -30,6 +31,7 @@ export class ProcessIssueNfseBankPayment {
     private readonly findBankPayment: FindBankPayment,
     private readonly findBankPaymentByYourNumber: FindBankPaymentByYourNumber,
     private readonly findClientInvoiceConfigByClientId: FindClientInvoiceConfigByClientId,
+    private readonly recordJobAudit: RecordJobAudit,
   ) {}
 
   public async execute(input: ProcessIssueNfseBankPaymentInputDto): Promise<IssueBankPaymentOutputDto | null> {
@@ -126,6 +128,15 @@ export class ProcessIssueNfseBankPayment {
   private async linkExisting(nfse: Nfse, result: IssueBankPaymentOutputDto): Promise<IssueBankPaymentOutputDto> {
     nfse.linkBankPayment(result.provider, result.requestCode);
     await this.nfseRepository.edit(nfse);
+
+    this.recordJobAudit.record({
+      jobName: 'issue-nfse-bank-payment',
+      nfseId: nfse.props.id,
+      from: nfse.props.status,
+      to: nfse.props.status,
+      reason: `Cobrança ${result.requestCode} vinculada (${result.provider})`,
+    });
+
     return result;
   }
 
@@ -147,6 +158,15 @@ export class ProcessIssueNfseBankPayment {
 
     nfse.markBankPaymentFailed(message);
     await this.nfseRepository.edit(nfse);
+
+    this.recordJobAudit.record({
+      jobName: 'issue-nfse-bank-payment',
+      nfseId: nfse.props.id,
+      from: nfse.props.status,
+      to: nfse.props.status,
+      reason: message,
+      succeeded: false,
+    });
 
     return new PermanentProviderError(message);
   }

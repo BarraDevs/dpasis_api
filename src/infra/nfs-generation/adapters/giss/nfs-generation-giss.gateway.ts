@@ -2,6 +2,7 @@ import { HttpService } from '@nestjs/axios';
 import { Inject, Injectable } from '@nestjs/common';
 import { LogContext, type ILoggerGateway } from 'src/infra/logger/logger.gateway';
 import { ExternalApiError } from 'src/shared/errors/external-api.error';
+import { TransientProviderError } from 'src/shared/errors/transient-provider.error';
 import { NfsBatchRejectedError } from 'src/infra/nfs-generation/errors/nfs-batch-rejected.error';
 import { NfsProviderConfigError } from 'src/infra/nfs-generation/errors/nfs-provider-config.error';
 import { TOKENS } from 'src/core/di/token';
@@ -21,6 +22,7 @@ import { GissConsultarServicoPrestadoMapper } from './mappers/giss-consultar-ser
 import { GissIssueBatchMapper } from './mappers/giss-issue-batch.mapper';
 import { GissPfxLoader } from './signing/giss-pfx-loader';
 import { GissXmlSigner } from './signing/giss-xml-signer';
+import { extractGissRetryAfterSeconds, isTransientGissError } from './soap/giss-error-classifier';
 import { GissSoapCallError, type GissSoapCallTrace } from './soap/giss-soap-call.error';
 import { GissOperation, GissSoapClient } from './soap/giss-soap-client';
 
@@ -52,9 +54,9 @@ export class NfsGenerationGissAdapterGateway implements INfsGenerationGateway {
 
       return GissIssueBatchMapper.parseRecepcionarLoteRpsResponse(call.outputXml);
     }
-    catch (error: any) {
-      await this.recordFailedAttempt(ProviderAttemptOperation.GissRecepcionarLote, input.nfseId, error);
-      error = GissSoapCallError.unwrap(error);
+    catch (rawError: any) {
+      await this.recordFailedAttempt(ProviderAttemptOperation.GissRecepcionarLote, input.nfseId, rawError);
+      const error = GissSoapCallError.unwrap(rawError) as any;
       if (error instanceof NfsProviderConfigError || error instanceof NfsBatchRejectedError) {
         throw error;
       }
@@ -65,7 +67,7 @@ export class NfsGenerationGissAdapterGateway implements INfsGenerationGateway {
         error,
         errorMessage: error?.message,
       });
-      throw new ExternalApiError(error?.message ?? 'Erro ao enviar lote de RPS ao Giss');
+      throw this.toProviderError(rawError, error, 'Erro ao enviar lote de RPS ao Giss');
     }
   }
 
@@ -90,9 +92,9 @@ export class NfsGenerationGissAdapterGateway implements INfsGenerationGateway {
 
       return GissBatchStatusMapper.parseConsultarLoteRpsResponse(call.outputXml);
     }
-    catch (error: any) {
-      await this.recordFailedAttempt(ProviderAttemptOperation.GissConsultarLote, input.nfseId, error);
-      error = GissSoapCallError.unwrap(error);
+    catch (rawError: any) {
+      await this.recordFailedAttempt(ProviderAttemptOperation.GissConsultarLote, input.nfseId, rawError);
+      const error = GissSoapCallError.unwrap(rawError) as any;
       if (error instanceof NfsProviderConfigError) {
         throw error;
       }
@@ -103,7 +105,7 @@ export class NfsGenerationGissAdapterGateway implements INfsGenerationGateway {
         error,
         errorMessage: error?.message,
       });
-      throw new ExternalApiError(error?.message ?? 'Erro ao consultar status do lote no Giss');
+      throw this.toProviderError(rawError, error, 'Erro ao consultar status do lote no Giss');
     }
   }
 
@@ -134,9 +136,9 @@ export class NfsGenerationGissAdapterGateway implements INfsGenerationGateway {
 
       return GissConsultarNfseRpsMapper.parseConsultarNfsePorRpsResponse(call.outputXml);
     }
-    catch (error: any) {
-      await this.recordFailedAttempt(ProviderAttemptOperation.GissConsultarPorRps, input.nfseId, error);
-      error = GissSoapCallError.unwrap(error);
+    catch (rawError: any) {
+      await this.recordFailedAttempt(ProviderAttemptOperation.GissConsultarPorRps, input.nfseId, rawError);
+      const error = GissSoapCallError.unwrap(rawError) as any;
       if (error instanceof NfsProviderConfigError) {
         throw error;
       }
@@ -147,7 +149,7 @@ export class NfsGenerationGissAdapterGateway implements INfsGenerationGateway {
         error,
         errorMessage: error?.message,
       });
-      throw new ExternalApiError(error?.message ?? 'Erro ao consultar NFS-e por RPS no Giss');
+      throw this.toProviderError(rawError, error, 'Erro ao consultar NFS-e por RPS no Giss');
     }
   }
 
@@ -175,9 +177,9 @@ export class NfsGenerationGissAdapterGateway implements INfsGenerationGateway {
 
       return GissConsultarServicoPrestadoMapper.parseConsultarNfseServicoPrestadoResponse(call.outputXml);
     }
-    catch (error: any) {
-      await this.recordFailedAttempt(ProviderAttemptOperation.GissConsultarServicoPrestado, undefined, error);
-      error = GissSoapCallError.unwrap(error);
+    catch (rawError: any) {
+      await this.recordFailedAttempt(ProviderAttemptOperation.GissConsultarServicoPrestado, undefined, rawError);
+      const error = GissSoapCallError.unwrap(rawError) as any;
       if (error instanceof NfsProviderConfigError) {
         throw error;
       }
@@ -187,7 +189,7 @@ export class NfsGenerationGissAdapterGateway implements INfsGenerationGateway {
         error,
         errorMessage: error?.message,
       });
-      throw new ExternalApiError(error?.message ?? 'Erro ao consultar NFS-e por período no Giss');
+      throw this.toProviderError(rawError, error, 'Erro ao consultar NFS-e por período no Giss');
     }
   }
 
@@ -210,9 +212,9 @@ export class NfsGenerationGissAdapterGateway implements INfsGenerationGateway {
 
       return GissCancelNfseMapper.parseCancelarNfseResponse(call.outputXml);
     }
-    catch (error: any) {
-      await this.recordFailedAttempt(ProviderAttemptOperation.GissCancelar, input.nfseId, error);
-      error = GissSoapCallError.unwrap(error);
+    catch (rawError: any) {
+      await this.recordFailedAttempt(ProviderAttemptOperation.GissCancelar, input.nfseId, rawError);
+      const error = GissSoapCallError.unwrap(rawError) as any;
       if (error instanceof NfsProviderConfigError) {
         throw error;
       }
@@ -223,8 +225,28 @@ export class NfsGenerationGissAdapterGateway implements INfsGenerationGateway {
         error,
         errorMessage: error?.message,
       });
-      throw new ExternalApiError(error?.message ?? 'Erro ao cancelar NFS-e no Giss');
+      throw this.toProviderError(rawError, error, 'Erro ao cancelar NFS-e no Giss');
     }
+  }
+
+  /**
+   * Até a Onda 3, todo erro do Giss virava `ExternalApiError` — timeout, 429 e XML inválido eram a
+   * mesma coisa para a fila, que gastava as cinco tentativas contra qualquer um deles. `rawError`
+   * ainda carrega o status HTTP e o código de rede; a causa desembrulhada carrega a mensagem útil.
+   */
+  private toProviderError(rawError: unknown, cause: any, fallbackMessage: string): Error {
+    const message = cause?.message ?? fallbackMessage;
+
+    // Circuito aberto já chega classificado, e com o tempo de espera calculado.
+    if (rawError instanceof TransientProviderError) {
+      return rawError;
+    }
+
+    if (isTransientGissError(rawError)) {
+      return new TransientProviderError(message, extractGissRetryAfterSeconds(rawError));
+    }
+
+    return new ExternalApiError(message);
   }
 
   private async recordAttempt(operation: ProviderAttemptOperation, nfseId: number | undefined, call: GissSoapCallTrace, errorClass?: string): Promise<void> {

@@ -2,17 +2,23 @@ import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
 import { BullBoardModule } from '@bull-board/nestjs';
 import { BullModule } from '@nestjs/bullmq';
 import { DynamicModule, Module } from '@nestjs/common';
+import { AuditModule } from 'src/app/audit/audit.module';
 import { BankPaymentCoreModule } from 'src/app/bank-payment/bank-payment-core.module';
 import { ClientInvoiceConfigModule } from 'src/app/client/client-invoice-config/client-invoice-config.module';
 import { CompanyNfsConfigModule } from 'src/app/company/company-nfs-config/company-nfs-config.module';
 import { CompanyModule } from 'src/app/company/company/company.module';
-import { Environment } from 'src/core/config/environment.enum';
 import { TOKENS } from 'src/core/di/token';
 import { NfsGenerationModule } from 'src/infra/nfs-generation/nfs-generation.module';
 import { QueueName } from 'src/infra/queue/enums/queue-name.enum';
+import { isQueueEnabled } from 'src/infra/queue/queue-environment';
+import { NfseQueueBullmqAdapterMonitor } from '../../infra/driven/queue/bullmq/nfse-queue-bullmq.monitor';
 import { NfseQueueBullmqAdapterProducer } from '../../infra/driven/queue/bullmq/nfse-queue-bullmq.producer';
+import { NfseQueueFakeAdapterMonitor } from '../../infra/driven/queue/fake/nfse-queue-fake.monitor';
 import { NfseQueueFakeAdapterProducer } from '../../infra/driven/queue/fake/nfse-queue-fake.producer';
-import { NfseBullmqConsumer } from '../../infra/drivers/queue/bullmq/nfse-bullmq.consumer';
+import { NfseBankPaymentBullmqConsumer } from '../../infra/drivers/queue/bullmq/nfse-bank-payment-bullmq.consumer';
+import { NfseIssueBullmqConsumer } from '../../infra/drivers/queue/bullmq/nfse-issue-bullmq.consumer';
+import { NfseJobRouter } from '../../infra/drivers/queue/bullmq/nfse-job.router';
+import { NfsePollBullmqConsumer } from '../../infra/drivers/queue/bullmq/nfse-poll-bullmq.consumer';
 import { NfsePersistenceModule } from '../persistence/nfse-persistence.module';
 import { ProcessIssueNfseBankPayment } from '../usecases/process-issue-nfse-bank-payment/process-issue-nfse-bank-payment.service';
 import { ProcessIssueNfseBatch } from '../usecases/process-issue-nfse-batch/process-issue-nfse-batch.service';
@@ -23,33 +29,43 @@ import { ReconcileNfse } from '../usecases/reconcile-nfse/reconcile-nfse.service
 
 const THIRTY_DAYS_IN_SECONDS = 2_592_000;
 
+/**
+ * Uma fila por tipo de trabalho, todas com a mesma retenção: o job que falhou fica 30 dias no Redis,
+ * porque foi ele que apagou o rastro na Onda 1.
+ */
+const NFSE_QUEUE_NAMES = [
+  QueueName.NfseIssue,
+  QueueName.NfsePoll,
+  QueueName.NfseBankPayment,
+] as const;
+
 @Module({})
 export class NfseQueueModule {
   static register(): DynamicModule {
-    const isTest = process.env.NODE_ENV === Environment.Test;
+    const queueEnabled = isQueueEnabled();
 
     return {
       module: NfseQueueModule,
       imports: [
-        ...(isTest ? [] : [
-          BullModule.registerQueue({
-            name: QueueName.Nfse,
-            defaultJobOptions: {
-              removeOnComplete: true,
-              removeOnFail: { age: THIRTY_DAYS_IN_SECONDS },
-            },
-          }),
-          BullBoardModule.forFeature({
-            name: QueueName.Nfse,
-            adapter: BullMQAdapter,
-          }),
-        ]),
+        ...(queueEnabled
+          ? NFSE_QUEUE_NAMES.flatMap((name) => [
+            BullModule.registerQueue({
+              name,
+              defaultJobOptions: {
+                removeOnComplete: true,
+                removeOnFail: { age: THIRTY_DAYS_IN_SECONDS },
+              },
+            }),
+            BullBoardModule.forFeature({ name, adapter: BullMQAdapter }),
+          ])
+          : []),
         CompanyNfsConfigModule,
         CompanyModule,
         NfsePersistenceModule,
         NfsGenerationModule.register(),
         BankPaymentCoreModule,
         ClientInvoiceConfigModule,
+        AuditModule,
       ],
       providers: [
         ProcessIssueNfseBatch,
@@ -60,12 +76,24 @@ export class NfseQueueModule {
         ConfirmNfseBankPayment,
         {
           provide: TOKENS.NfseQueueProducer,
-          useClass: isTest ? NfseQueueFakeAdapterProducer : NfseQueueBullmqAdapterProducer,
+          useClass: queueEnabled ? NfseQueueBullmqAdapterProducer : NfseQueueFakeAdapterProducer,
         },
-        ...(isTest ? [] : [NfseBullmqConsumer]),
+        {
+          provide: TOKENS.NfseQueueMonitor,
+          useClass: queueEnabled ? NfseQueueBullmqAdapterMonitor : NfseQueueFakeAdapterMonitor,
+        },
+        ...(queueEnabled
+          ? [
+            NfseJobRouter,
+            NfseIssueBullmqConsumer,
+            NfsePollBullmqConsumer,
+            NfseBankPaymentBullmqConsumer,
+          ]
+          : []),
       ],
       exports: [
         TOKENS.NfseQueueProducer,
+        TOKENS.NfseQueueMonitor,
         ProcessIssueNfseBankPayment,
         ReconcileNfse,
         ReconcileNfsePeriod,

@@ -68,10 +68,17 @@ export class GissBatchStatusMapper {
 
     const issuedNotes: NfsIssuedNoteDto[] = this.toArray(resposta.ListaNfse?.CompNfse).map(toNfsIssuedNoteDto);
 
+    // `ListaMensagemAlertaRetorno` é elemento próprio no XSD, ao lado de `ListaNfse` no ramo de
+    // sucesso — e vinha sendo descartado no parse. São códigos `A*`: a nota **foi** emitida, com uma
+    // ressalva que só cobra caro depois (autuação, glosa). Ler no ramo de sucesso é o ponto todo.
+    const alerts: NfsBatchErrorDto[] = this.toArray(resposta.ListaMensagemAlertaRetorno?.MensagemRetorno)
+      .map((msg: any) => toNfsBatchErrorDto(msg));
+
     return {
       situation,
       issuedNotes: issuedNotes.length > 0 ? issuedNotes : undefined,
       errors: errors.length > 0 ? errors : undefined,
+      alerts: alerts.length > 0 ? alerts : undefined,
     };
   }
 }

@@ -1,4 +1,6 @@
 import { Injectable } from '@nestjs/common';
+import { DateTime } from 'luxon';
+import { SAO_PAULO_TIMEZONE } from 'src/core/constants/timezone.constant';
 import { SearchClient } from 'src/app/client/client/application/usecases/search-client/search-client.service';
 import { FindAllClientInvoiceConfig } from 'src/app/client/client-invoice-config/application/usecases/find-all-client-invoice-config/find-all-client-invoice-config.service';
 import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
@@ -15,13 +17,20 @@ export class FindElegibleClients {
   ) {}
 
   public async execute(): Promise<NfmDto[]> {
-    const today = new Date().getDate();
+    // Dia no fuso de Brasília, não o do relógio do servidor: em UTC, todo dia entre 21h e 00h o
+    // faturamento enxergaria o dia seguinte.
+    const today = DateTime.now().setZone(SAO_PAULO_TIMEZONE).day;
 
     // search all clients with invoice config where:
-    // - due date day equal to today
+    // - due date day is today or already past in the current month
     // - generate nf is true
+    //
+    // O filtro era igualdade com o dia de hoje: um dia sem execução — feriado, férias, esquecimento —
+    // deixava aqueles contratos sem faturar, e no dia seguinte eles não voltavam mais a aparecer. Com
+    // `<=`, a competência atrasada entra na varredura do dia seguinte; a `@@unique` da NFM
+    // (cliente + competência + cnae) é o que garante que ela não seja emitida duas vezes.
     const invoices = await this.findAllClientInvoiceConfig.execute({
-      dueDateDay: today,
+      dueDateDayMax: today,
       generateNf: true,
     });
 

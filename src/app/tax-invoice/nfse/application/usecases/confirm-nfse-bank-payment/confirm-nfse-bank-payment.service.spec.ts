@@ -1,4 +1,5 @@
 import { createMock } from '@golevelup/ts-jest';
+import { RecordJobAudit } from 'src/app/audit/application/usecases/record-job-audit/record-job-audit.service';
 import { Test } from '@nestjs/testing';
 import { FindBankPayment } from 'src/app/bank-payment/application/usecases/find-bank-payment/find-bank-payment.service';
 import { TOKENS } from 'src/core/di/token';
@@ -61,6 +62,7 @@ describe('ConfirmNfseBankPayment - Unit tests', () => {
         { provide: TOKENS.LoggerGateway, useValue: createMock<ILoggerGateway>() },
         { provide: TOKENS.NfseRepository, useValue: createMock<INfseRepository>() },
         { provide: FindBankPayment, useValue: createMock<FindBankPayment>() },
+        { provide: RecordJobAudit, useValue: createMock<RecordJobAudit>() },
       ],
     }).compile();
 

@@ -2,13 +2,17 @@ import { createMock } from '@golevelup/ts-jest';
 import { Test } from '@nestjs/testing';
 import { NfseAlertRowDto } from 'src/app/tax-invoice/nfse/application/dtos/nfse-alert-row.dto';
 import type { INfseDao } from 'src/app/tax-invoice/nfse/application/persistence/dao/nfse-dao.interface';
+import type { INfseRepository } from 'src/app/tax-invoice/nfse/application/persistence/repository/nfse-repository.interface';
+import type { INfseQueueMonitor } from 'src/app/tax-invoice/nfse/application/queue/nfse-queue-monitor.interface';
 import { NfseStatus } from 'src/app/tax-invoice/nfse/domain/enums/nfse-status.enum';
 import { TOKENS } from 'src/core/di/token';
 import type { IAlertGateway } from 'src/infra/alert/alert.gateway';
 import { AlertType } from 'src/infra/alert/enums/alert-type.enum';
 import type { ICacheGateway } from 'src/infra/cache/cache.gateway';
 import { LogContext, type ILoggerGateway } from 'src/infra/logger/logger.gateway';
-import { ALERT_WINDOW_IN_SECONDS, buildAlertWindowKey } from '../../alert-window';
+import { ALERT_WINDOW_IN_SECONDS, buildAlertWindowKey } from 'src/infra/alert/alert-window';
+import { CheckCertificates } from '../check-certificates/check-certificates.service';
+import { CertificateHealthStatus } from '../check-certificates/dtos/check-certificates.dto';
 import { SweepNfseAlerts } from './sweep-nfse-alerts.service';
 
 function makeRow(overrides: Partial<NfseAlertRowDto> = {}): NfseAlertRowDto {
@@ -26,8 +30,11 @@ function makeRow(overrides: Partial<NfseAlertRowDto> = {}): NfseAlertRowDto {
 describe('SweepNfseAlerts - Unit tests', () => {
   let sut: SweepNfseAlerts;
   let nfseDao: INfseDao;
+  let nfseRepository: INfseRepository;
   let alertGateway: IAlertGateway;
   let cacheGateway: ICacheGateway;
+  let checkCertificates: CheckCertificates;
+  let queueMonitor: INfseQueueMonitor;
   let logger: ILoggerGateway;
 
   beforeEach(async() => {
@@ -35,17 +42,24 @@ describe('SweepNfseAlerts - Unit tests', () => {
       providers: [
         SweepNfseAlerts,
         { provide: TOKENS.NfseDao, useValue: createMock<INfseDao>() },
+        { provide: TOKENS.NfseRepository, useValue: createMock<INfseRepository>() },
         { provide: TOKENS.AlertGateway, useValue: createMock<IAlertGateway>() },
         { provide: TOKENS.CacheGateway, useValue: createMock<ICacheGateway>() },
         { provide: TOKENS.LoggerGateway, useValue: createMock<ILoggerGateway>() },
+        { provide: CheckCertificates, useValue: createMock<CheckCertificates>() },
+        { provide: TOKENS.NfseQueueMonitor, useValue: createMock<INfseQueueMonitor>() },
       ],
     }).compile();
 
     sut = module.get(SweepNfseAlerts);
     nfseDao = module.get(TOKENS.NfseDao);
+    nfseRepository = module.get(TOKENS.NfseRepository);
     alertGateway = module.get(TOKENS.AlertGateway);
     cacheGateway = module.get(TOKENS.CacheGateway);
     logger = module.get(TOKENS.LoggerGateway);
+    checkCertificates = module.get(CheckCertificates);
+    queueMonitor = module.get(TOKENS.NfseQueueMonitor);
+    jest.spyOn(queueMonitor, 'getDepth').mockResolvedValue([]);
 
     // Por padrão a janela está livre e o canal entrega; os casos específicos sobrescrevem.
     jest.spyOn(cacheGateway, 'setIfAbsent').mockResolvedValue(true);
@@ -336,6 +350,198 @@ describe('SweepNfseAlerts - Unit tests', () => {
 
       // Assert
       expect(cacheGateway.delete).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('sweepProviderAlerts', () => {
+    const rowsWithAlerts = [
+      makeRow({ id: 30, status: NfseStatus.ISSUED, nfseNumber: '56037', providerAlerts: 'A10: Inscrição municipal paralisada' }),
+      makeRow({ id: 31, status: NfseStatus.ISSUED, nfseNumber: '56038', providerAlerts: 'A13: Prazo para conversão do RPS vencido' }),
+    ];
+
+    it('should alert about notes issued with a tax authority warning', async() => {
+      // Arrange
+      jest.spyOn(nfseDao, 'findIssuedWithProviderAlerts').mockResolvedValue(rowsWithAlerts);
+
+      // Act
+      await sut.sweepProviderAlerts();
+
+      // Assert
+      expect(alertGateway.send).toHaveBeenCalledWith(expect.objectContaining({
+        type: AlertType.NfseIssuedWithProviderAlert,
+        lines: expect.arrayContaining([expect.stringContaining('A10: Inscrição municipal paralisada')]),
+      }));
+    });
+
+    it('should mark the notes as notified so the same warning does not repeat every window', async() => {
+      // Arrange
+      jest.spyOn(nfseDao, 'findIssuedWithProviderAlerts').mockResolvedValue(rowsWithAlerts);
+
+      // Act
+      await sut.sweepProviderAlerts();
+
+      // Assert
+      expect(nfseRepository.markProviderAlertsNotified).toHaveBeenCalledWith([30, 31], expect.any(Date));
+    });
+
+    it('should not mark anything as notified when the alert was not delivered', async() => {
+      // Arrange — sem isso, um SMTP fora do ar apagaria a ressalva para sempre.
+      jest.spyOn(nfseDao, 'findIssuedWithProviderAlerts').mockResolvedValue(rowsWithAlerts);
+      jest.spyOn(alertGateway, 'send').mockResolvedValue(false);
+
+      // Act
+      await sut.sweepProviderAlerts();
+
+      // Assert
+      expect(nfseRepository.markProviderAlertsNotified).not.toHaveBeenCalled();
+    });
+
+    it('should not mark anything as notified when another replica owns the window', async() => {
+      // Arrange
+      jest.spyOn(nfseDao, 'findIssuedWithProviderAlerts').mockResolvedValue(rowsWithAlerts);
+      jest.spyOn(cacheGateway, 'setIfAbsent').mockResolvedValue(false);
+
+      // Act
+      await sut.sweepProviderAlerts();
+
+      // Assert — quem enviou marca; marcar aqui apagaria a ressalva sem ninguém ter sido avisado.
+      expect(nfseRepository.markProviderAlertsNotified).not.toHaveBeenCalled();
+    });
+
+    it('should stay quiet when no note has warnings', async() => {
+      // Arrange
+      jest.spyOn(nfseDao, 'findIssuedWithProviderAlerts').mockResolvedValue([]);
+
+      // Act
+      await sut.sweepProviderAlerts();
+
+      // Assert
+      expect(alertGateway.send).not.toHaveBeenCalled();
+      expect(nfseRepository.markProviderAlertsNotified).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('sweepCertificates', () => {
+    it('should alert about a certificate close to expiry', async() => {
+      // Arrange
+      jest.spyOn(checkCertificates, 'execute').mockResolvedValue({
+        status: CertificateHealthStatus.Expiring,
+        certificates: [
+          {
+            provider: 'INTER',
+            owner: 'mTLS da API de cobrança',
+            path: '/certs/inter.crt',
+            notAfter: '2026-09-25T00:00:00.000Z',
+            daysToExpire: 21,
+            status: CertificateHealthStatus.Expiring,
+            message: null,
+          },
+        ],
+      });
+
+      // Act
+      await sut.sweepCertificates();
+
+      // Assert
+      expect(alertGateway.send).toHaveBeenCalledWith(expect.objectContaining({
+        type: AlertType.CertificateExpiring,
+        lines: expect.arrayContaining([expect.stringContaining('dias=21')]),
+      }));
+    });
+
+    it('should alert when a certificate cannot even be read', async() => {
+      // Arrange
+      jest.spyOn(checkCertificates, 'execute').mockResolvedValue({
+        status: CertificateHealthStatus.Error,
+        certificates: [
+          {
+            provider: 'GISS',
+            owner: 'companyId=1 · IM 16895',
+            path: '/certs/missing.pfx',
+            notAfter: null,
+            daysToExpire: null,
+            status: CertificateHealthStatus.Error,
+            message: 'Certificado digital não encontrado em "/certs/missing.pfx"',
+          },
+        ],
+      });
+
+      // Act
+      await sut.sweepCertificates();
+
+      // Assert
+      expect(alertGateway.send).toHaveBeenCalledWith(expect.objectContaining({
+        lines: expect.arrayContaining([expect.stringContaining('não encontrado')]),
+      }));
+    });
+
+    it('should stay quiet while every certificate is healthy', async() => {
+      // Arrange
+      jest.spyOn(checkCertificates, 'execute').mockResolvedValue({
+        status: CertificateHealthStatus.Ok,
+        certificates: [
+          {
+            provider: 'GISS',
+            owner: 'companyId=1',
+            path: '/certs/a1.pfx',
+            notAfter: '2027-06-30T00:00:00.000Z',
+            daysToExpire: 299,
+            status: CertificateHealthStatus.Ok,
+            message: null,
+          },
+        ],
+      });
+
+      // Act
+      await sut.sweepCertificates();
+
+      // Assert
+      expect(alertGateway.send).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('sweepQueues', () => {
+    function depth(overrides: Partial<{ queue: string; waiting: number; active: number; delayed: number; failed: number }> = {}) {
+      return { queue: 'nfse-issue', waiting: 0, active: 0, delayed: 0, failed: 0, ...overrides };
+    }
+
+    it('should alert when a queue turns into a dam', async() => {
+      // Arrange
+      jest.spyOn(queueMonitor, 'getDepth').mockResolvedValue([depth({ waiting: 180, delayed: 40 })]);
+
+      // Act
+      await sut.sweepQueues();
+
+      // Assert
+      expect(alertGateway.send).toHaveBeenCalledWith(expect.objectContaining({
+        type: AlertType.QueueBacklog,
+        lines: expect.arrayContaining([expect.stringContaining('aguardando=180')]),
+      }));
+    });
+
+    it('should alert about jobs that gave up, which today only show in the Bull Board', async() => {
+      // Arrange
+      jest.spyOn(queueMonitor, 'getDepth').mockResolvedValue([depth({ queue: 'nfse-bank-payment', failed: 3 })]);
+
+      // Act
+      await sut.sweepQueues();
+
+      // Assert
+      expect(alertGateway.send).toHaveBeenCalledWith(expect.objectContaining({
+        type: AlertType.QueueFailed,
+        subject: expect.stringContaining('3 job(s)'),
+      }));
+    });
+
+    it('should stay quiet while the queues are healthy', async() => {
+      // Arrange
+      jest.spyOn(queueMonitor, 'getDepth').mockResolvedValue([depth({ waiting: 12, active: 2 })]);
+
+      // Act
+      await sut.sweepQueues();
+
+      // Assert
+      expect(alertGateway.send).not.toHaveBeenCalled();
     });
   });
 });

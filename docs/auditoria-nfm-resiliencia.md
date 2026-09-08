@@ -38,6 +38,13 @@
 > confirmação ativa da cobrança no Inter e o fecho do P2-12. Fora do escopo, por decisão da operação:
 > `RecepcionarLoteRpsSincrono`. Ver §8.
 >
+> **Onda 4 entregue em 2026-09-04:** filas separadas por tipo de job com concorrência e limite,
+> disjuntor e classificação transitório × permanente no Giss, fechamento diário automático com
+> elegibilidade `dueDateDay <= hoje`, alertas `A*` do fisco deixando de ser descartados, healthcheck e
+> alerta de vencimento de certificado, filtros operacionais em `GET /admin/nfm`, endpoint de métricas
+> em JSON, auditoria do caminho assíncrono e teste ponta a ponta com injeção de falhas. Fora do
+> escopo, por decisão da operação: o webhook do Inter. Ver §8.
+>
 > **Rodada 4 (mesma data):** o último item aberto foi fechado com teste ao vivo contra produção —
 > não existe limite de período em `ConsultarNfseServicoPrestado` (testado até 6.087 dias), o gargalo
 > é a página de 50, a consulta devolve **todas** as notas do prestador (a conciliação tem de casar
@@ -93,6 +100,10 @@ pré-requisito de qualquer reenvio.
 (busca sem resultado). A tabela `NfmCronRun` (`prisma/schema/nfm.prisma:22`) registra o resultado
 de uma execução que hoje é sempre manual.
 
+> **Desatualizado desde a Onda 1 e, para o gatilho, desde a Onda 4.** O `ScheduleModule` entrou com o
+> canal de alerta (`NfseAlertsScheduler`), e o fechamento passou a rodar sozinho às 06:00 pelo
+> `NfmIssuanceScheduler` (P1-06). A rota manual continua existindo, agora como caminho de exceção.
+
 | # | Passo | Arquivo:linha | Tipo |
 |---|-------|---------------|------|
 | 1 | `SaveElegibleNfms.execute()` | `save-elegible-nfms.service.ts:30` | entrada |
@@ -110,6 +121,10 @@ de uma execução que hoje é sempre manual.
 
 Worker (`NfseBullmqConsumer.process`, `nfse-bullmq.consumer.ts:25`; `@Processor(QueueName.Nfse)`
 sem opções → concorrência default 1, sem `limiter`):
+
+> **Desatualizado desde a Onda 4.** A fila única virou três (`nfse-issue`, `nfse-poll`,
+> `nfse-bank-payment`), cada uma com concorrência e `limiter` próprios; o roteamento saiu do consumer
+> e virou `NfseJobRouter`. O `NfseBullmqConsumer` e `QueueName.Nfse` não existem mais.
 
 | # | Passo | Arquivo:linha | Tipo |
 |---|-------|---------------|------|
@@ -788,6 +803,12 @@ sequenceDiagram
   tem NFM para a competência (a `@@unique` de `nfm.prisma:18` já garante a idempotência dessa
   varredura).
 - **Esforço:** M
+- **Status:** ✅ resolvido na Onda 4 (2026-09-04). `@Cron('0 6 * * *')` em `NfmIssuanceScheduler`
+  chamando `RunDailyNfmIssuance`, com o dia reivindicado no Redis de forma **fail-closed** — sem
+  certeza de exclusividade não emite, porque emissão duplicada é o único erro irreversível do fluxo.
+  A elegibilidade passou a `dueDateDayMax`, e o dia e a competência vêm do fuso de Brasília, não do
+  relógio do servidor. As NFMs atrasadas nascem com a data de hoje (decisão da operação), o que
+  exigiu o piso de vencimento do boleto — ver cenário 15.
 
 ### [P1-07] Retry manual do boleto roda síncrono no HTTP e repete a janela de duplicidade
 
@@ -927,6 +948,11 @@ sequenceDiagram
 - **Correção proposta:** reativar o ramo de erro; registrar eventos de domínio para as transições
   assíncronas (quem/quando/qual resultado).
 - **Esforço:** P
+- **Status:** ✅ resolvido na Onda 4 (2026-09-04). O ramo `catchError` voltou (mutação que falha
+  agora deixa rastro, com o status do erro), e `RecordJobAudit` grava as transições do caminho
+  assíncrono na mesma `audit_logs`, com `method: 'JOB'` e `url: 'job:{jobName}'` — envio, consulta do
+  lote, reconciliação, emissão e confirmação da cobrança. `GET /admin/audit-log?method=JOB` lista só
+  essas.
 
 ### [P2-06] Divergência de valores entre NFM, NFS-e e boleto quando a NFM é reaproveitada
 
@@ -973,6 +999,11 @@ sequenceDiagram
   `extractInterErrorMessage` (`:220-242`) precisa ser corrigida antes, para que o `detail` chegue ao
   classificador.
 - **Esforço:** P
+- **Status:** ✅ resolvido, em duas etapas. A Onda 2 classificou o Inter (`TransientProviderError` ×
+  `PermanentProviderError`) e a Onda 4 fechou as duas metades que faltavam: o Giss passou a
+  classificar igual (408/425/429/5xx e códigos de rede são transitórios; resposta que o parser não
+  entendeu **não** é — o provedor respondeu), e o `Retry-After`, preenchido desde a Onda 2 e nunca
+  lido, passou a reagendar o job em vez de queimar tentativa.
 
 ### [P2-08] Sem circuit breaker e sem degradação graciosa
 
@@ -987,6 +1018,12 @@ sequenceDiagram
   `POST /admin/nfm` só grava e enfileira, então já funciona com o GISS fora — desde que P0-04 pare
   de marcar `FAILED`.
 - **Esforço:** M
+- **Status:** ✅ resolvido na Onda 4 (2026-09-04). Três filas (`nfse-issue`, `nfse-poll`,
+  `nfse-bank-payment`) com concorrência 2/6/6 e `limiter` próprio, mais o disjuntor por município no
+  `GissSoapClient` (abre em 5 falhas transitórias seguidas, 60s aberto, meia-abertura com sonda
+  única). Circuito aberto lança `TransientProviderError`, que o fluxo já trata como ambíguo →
+  `AWAITING_PROVIDER`, nunca `FAILED`. O estado do breaker é por processo, e isso está documentado no
+  próprio arquivo: o alvo é não pagar o timeout de 60s por job, não coordenar réplicas.
 
 ### [P2-09] Nenhum alerta, e a consulta operacional não enxerga o que está preso
 
@@ -999,6 +1036,11 @@ sequenceDiagram
 - **Correção proposta:** filtro `status` e `hasBankPayment` em `GET /admin/nfm`; métricas e alertas
   conforme §5.4.
 - **Esforço:** M
+- **Status:** ✅ resolvido em duas ondas. A Onda 1 criou o canal de alerta; a Onda 4 fechou a parte de
+  consulta: `GET /admin/nfm` ganhou `status`, `stuckForHours` e `missingBankPayment` (e a contagem
+  passou a bater com a página), e `GET /admin/metrics/nfse` devolve os números da §5.4 em JSON —
+  incluindo a profundidade das filas, que virou alerta de backlog e de DLQ não vazia. Sem stack de
+  coleta, por decisão da operação: o e-mail continua sendo o canal primário.
 
 ### [P2-11] Alertas do GISS (`A01`–`A30`) chegam com a nota emitida e são descartados
 
@@ -1025,6 +1067,10 @@ sequenceDiagram
   nota emitida com ressalva. Distinguir `A` de `E` pelo prefixo do código já é suficiente para a
   triagem.
 - **Esforço:** P
+- **Status:** ✅ resolvido na Onda 4 (2026-09-04). O mapper passou a ler `ListaMensagemAlertaRetorno`
+  no ramo de sucesso, as ressalvas são gravadas em `nfses.providerAlerts` junto com o `markIssued`, e
+  a varredura de 15 min alerta uma vez por nota — `providerAlertedAt` só é marcado **depois** de o
+  e-mail sair, então um SMTP fora do ar não apaga a ressalva.
 
 ### [P2-10] Expiração do certificado só é descoberta quando a emissão quebra
 
@@ -1064,6 +1110,10 @@ sequenceDiagram
 - **Prioridade revisada:** o item continua P2 pelo tipo de risco, mas tem prazo: a validação de
   `notAfter` deve entrar na Onda 1, antes de 2026-09-25, para que o vencimento do certificado de
   teste apareça como mensagem e não como incidente.
+- **Status:** ✅ resolvido em duas ondas. A Onda 1 fez os dois loaders recusarem certificado vencido
+  com a data na mensagem; a Onda 4 expôs a validade em `GET /admin/health/certificates` e criou o
+  alerta diário D-30/D-15/D-7 (`AlertType.CertificateExpiring`). Procedimento de troca e rotação em
+  `docs/runbook-certificados.md`.
 
 ### [P2-12] O alerta se perde em silêncio quando o Redis ou o SMTP falham
 
@@ -1131,6 +1181,12 @@ sequenceDiagram
 - **Correção proposta:** um teste de integração com Redis e Postgres reais que rode
   `SaveElegibleNfms` → worker → gateways fake, com injeção de falha em cada ponto de commit.
 - **Esforço:** M
+- **Status:** ✅ resolvido na Onda 4 (2026-09-04). `src/app/tax-invoice/nfse/nfse-flow.e2e.integration.spec.ts`
+  atravessa transação, fila, worker e gateways falsos com Postgres e Redis reais, cobrindo cinco
+  cenários: caminho feliz até a cobrança vinculada, crash entre commit e despacho (recuperado pelo
+  outbox), duas emissões simultâneas para a mesma NFM, timeout ambíguo no envio recuperado por
+  `ConsultarNfsePorRps`, e recusa por duplicidade do banco virando vínculo. Roda com
+  `npm run test:e2e` (`QUEUE_E2E=true`); a suíte normal continua sem depender de Redis.
 
 ### [P3-02] PFX é relido e reparseado a cada chamada; um `https.Agent` novo por requisição
 
@@ -1142,6 +1198,10 @@ sequenceDiagram
 - **Correção proposta:** cachear `GissCertMaterial` por `certFilePath` com invalidação por `mtime`;
   um `Agent` singleton com `keepAlive: true` por provedor.
 - **Esforço:** P
+- **Status:** ✅ metade resolvida na Onda 4 (2026-09-04). `GissPfxLoader` cacheia o material parseado
+  por caminho + `mtime` + tamanho, e a validade continua sendo conferida a cada chamada (um
+  certificado carregado hoje vence amanhã com o processo de pé). O `https.Agent` com `keepAlive`
+  continua pendente.
 
 ### [P3-03] Variáveis de ambiente mortas sugerem proteções inexistentes
 
@@ -1569,18 +1629,65 @@ Comando de CLI equivalente para os dois primeiros (`npm run nfse:status -- --nfm
 
 ### Onda 4 — operação sustentável
 
-| Item | Achado | Esforço |
-|---|---|---|
-| Scheduler diário + elegibilidade `dueDateDay <= today` | P1-06 | M |
-| Separar as filas por job (`nfse-issue`, `nfse-poll`, `nfse-bank-payment`), concorrência 1–2 no envio e 4–8 na consulta e no boleto | P2-08, R3 | M |
-| Circuit breaker + `limiter` por fila | P2-08 | M |
-| Webhook de baixa do boleto (`PUT /cobrancas/webhook`) e conciliação de pagamento | R6, P1-08 | M |
-| Métricas e alertas (§5.4) | P2-09 | M |
-| Persistir e alertar os alertas `A*` do GISS na emissão bem-sucedida (extrair `ListaMensagemAlertaRetorno`) | P2-11 | P |
-| Validação de `notAfter` + healthcheck de certificados | P2-10 | P |
-| Filtros operacionais em `GET /admin/nfm` | P2-09 | P |
-| Teste de integração ponta a ponta com injeção de falhas | P3-01 | M |
-| Auditoria de erros e do caminho assíncrono | P2-05 | P |
+> **Entregue em 2026-09-04.** Decisões tomadas na execução:
+>
+>  - **A fila antiga saiu junto.** A primeira versão manteve `QueueName.Nfse` e um consumer de
+>   drenagem por um release, para os jobs em voo no momento do deploy. Removidos por decisão da
+>   operação: quem recupera esses jobs são as varreduras da Onda 3, que não dependem da fila antiga —
+>   nota criada e não despachada volta pelo outbox, nota sem desfecho volta pela reconciliação
+>   agendada (`nextReconcileAt`), `ISSUED` sem cobrança volta pelo braço de boleto e cobrança não
+>   confirmada pelo de confirmação. A alternativa custava um consumer sem concorrência nem `limiter`
+>   vivo no código, que é o caminho serial de antes esperando alguém enfileirar ali por engano.
+> - **O roteamento saiu do consumer e virou `NfseJobRouter`.** Quatro consumers com o mesmo `switch`
+>   seria a mesma regra em quatro lugares; os consumers agora são só a declaração de concorrência e
+>   limite.
+> - **`Retry-After` passou a ser respeitado**, fechando a metade do P2-07 que faltava: o campo era
+>   preenchido desde a Onda 2 e nunca lido. O consumer reagenda o job (`moveToDelayed` +
+>   `DelayedError`) em vez de queimar tentativa.
+> - **O disjuntor vive no `GissSoapClient`, por município, e é por processo.** Coordenar réplicas
+>   exigiria contador atômico no Redis, e o objetivo não é decidir em conjunto: é não pagar o timeout
+>   de 60s em cada job de um fechamento inteiro. Só falha de infraestrutura abre o circuito —
+>   rejeição de negócio significa que o provedor está de pé.
+> - **O Giss ganhou classificação transitório × permanente**, que só o Inter tinha. Sem ela o breaker
+>   não teria o que contar, e a fila gastava as cinco tentativas contra um 429 tanto quanto contra um
+>   XML inválido.
+> - **A trava do fechamento diário é fail-closed**, ao contrário da usada nos alertas: sem certeza de
+>   exclusividade, não emite — avisa e sai. Emissão duplicada é o único erro irreversível do fluxo.
+> - **`dueDateDay <= hoje` exigiu um piso de vencimento.** Faturar no dia 20 um contrato de vencimento
+>   15 produzia boleto com data no passado, que o Inter recusa (cenário 15). O piso é derivado de
+>   `issuedAt`, nunca de `now()`: o payload precisa ser idêntico em toda retentativa, senão a chave
+>   implícita de 30 min do Inter deixa de valer.
+> - **As ressalvas `A*` ganharam colunas próprias** (`providerAlerts`, `providerAlertedAt`) e são
+>   marcadas como avisadas **depois** do envio bem-sucedido. Sem isso o mesmo `A10` voltaria a cada 15
+>   minutos até alguém resolver com a Prefeitura, e alerta repetido treina as pessoas a ignorar o
+>   canal.
+> - **Métricas em JSON, não Prometheus** (decisão da operação): `GET /admin/metrics/nfse` devolve
+>   contagens por status, presas, emitidas sem cobrança, situação das cobranças, chamadas por
+>   provedor nas últimas 24h (primeiro leitor de `nfse_attempts` desde a Onda 2) e profundidade das
+>   filas. Os limiares são os mesmos dos alertas, para tela e e-mail não discordarem.
+> - **A auditoria do caminho assíncrono reusa `audit_logs`**, com `method: 'JOB'` e
+>   `url: 'job:{jobName}'`. Tabela nova seria dívida sem necessidade; o filtro da rota que já existe
+>   passou a aceitar `JOB`.
+> - **O teste ponta a ponta precisou de um interruptor.** Em teste o BullMQ fica de fora por padrão;
+>   `QUEUE_E2E=true` (`npm run test:e2e`) liga as filas reais para o spec do fluxo, e só para ele.
+>
+> **Fora do escopo, por decisão da operação:** o webhook do Inter (`PUT /cobrancas/webhook`). Depende
+> de URL pública, registro junto ao provedor e validação do callback; a metade urgente do P1-08 — a
+> confirmação de emissão — já é coberta pela varredura ativa da Onda 3.
+
+| Item | Achado | Esforço | Situação |
+|---|---|---|---|
+| ✅ Scheduler diário + elegibilidade `dueDateDay <= today` + piso de vencimento | P1-06, cenário 15 | M | trava fail-closed no Redis; alerta `NfmDailyIssuance` |
+| ✅ Separar as filas por job (`nfse-issue`, `nfse-poll`, `nfse-bank-payment`) | P2-08, R3 | M | concorrência 2/6/6; `nfse` legada em drenagem |
+| ✅ Circuit breaker + `limiter` por fila + `Retry-After` | P2-08, P2-07 | M | breaker por município, em memória |
+| ⬜ **Adiado:** webhook de baixa do boleto (`PUT /cobrancas/webhook`) e conciliação de pagamento | R6, P1-08 | M | exige URL pública e registro junto ao Inter |
+| ✅ Métricas (`GET /admin/metrics/nfse`) + alertas de fila e de DLQ | P2-09 | M | JSON, sem stack de coleta |
+| ✅ Persistir e alertar os alertas `A*` do Giss (`ListaMensagemAlertaRetorno`) | P2-11 | P | migration `20260904180000_onda4_alertas_e_observabilidade` |
+| ✅ Healthcheck de certificados (`GET /admin/health/certificates`) + alerta D-30/D-15/D-7 | P2-10 | P | ver `docs/runbook-certificados.md` |
+| ✅ Filtros operacionais em `GET /admin/nfm` (`status`, `stuckForHours`, `missingBankPayment`) | P2-09 | P | contagem e página passam a bater |
+| ✅ Teste de integração ponta a ponta com injeção de falhas | P3-01 | M | `npm run test:e2e`, Postgres e Redis reais |
+| ✅ Auditoria de erros e do caminho assíncrono | P2-05 | P | ramo de erro reativado + `method: 'JOB'` |
+| ✅ **Extra:** `app.enableShutdownHooks()` e cache do PFX por `mtime` | cenário 11, P3-02 | P | drenagem no `SIGTERM`; uma leitura de PKCS#12 por arquivo |
 
 **Maior redução de risco pelo menor esforço:** os quatro primeiros itens da Onda 1
 (timeouts, `removeOnFail`, janela de poll, cascata do cancelamento), mais o `AlertGateway` SMTP.

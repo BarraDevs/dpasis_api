@@ -1,6 +1,6 @@
 import { CallHandler, ExecutionContext, Inject, Injectable, NestInterceptor } from '@nestjs/common';
 import { Request, Response } from 'express';
-import { Observable, tap } from 'rxjs';
+import { catchError, Observable, tap, throwError } from 'rxjs';
 import { Payload } from 'src/app/authentication/domain/types/payload.type';
 import { SENSITIVE_FIELDS } from 'src/core/constants/sensitive-fields.constant';
 import { TOKENS } from 'src/core/di/token';
@@ -38,12 +38,21 @@ export class AuditInterceptor implements NestInterceptor {
         const statusCode = response.statusCode;
         this.saveLog({ accountId, method, url, params: sanitizedParams, body: sanitizedBody, statusCode, ip });
       }),
-      // catchError((err: unknown) => {
-      //   const statusCode = (err as any)?.code ?? (err as any)?.status ?? 500;
-      //   this.saveLog({ accountId, method, url, params: sanitizedParams, body: sanitizedBody, statusCode, ip });
-      //   return throwError(() => err);
-      // }),
+      // Sem este ramo, a trilha só guardava o que deu certo — e a pergunta que a auditoria costuma
+      // ter de responder é justamente quem tentou o que falhou.
+      catchError((error: unknown) => {
+        const statusCode = AuditInterceptor.resolveStatusCode(error);
+        this.saveLog({ accountId, method, url, params: sanitizedParams, body: sanitizedBody, statusCode, ip });
+        return throwError(() => error);
+      }),
     );
+  }
+
+  private static resolveStatusCode(error: unknown): number {
+    const candidate = (error as { status?: unknown; code?: unknown })?.status
+      ?? (error as { code?: unknown })?.code;
+
+    return typeof candidate === 'number' ? candidate : 500;
   }
 
   private saveLog(data: Parameters<IAuditLogDao['save']>[0]): void {

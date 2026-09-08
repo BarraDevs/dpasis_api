@@ -1,4 +1,5 @@
 import { createMock } from '@golevelup/ts-jest';
+import { RecordJobAudit } from 'src/app/audit/application/usecases/record-job-audit/record-job-audit.service';
 import { Test } from '@nestjs/testing';
 import { FindBankPaymentByYourNumber } from 'src/app/bank-payment/application/usecases/find-bank-payment-by-your-number/find-bank-payment-by-your-number.service';
 import { FindBankPayment } from 'src/app/bank-payment/application/usecases/find-bank-payment/find-bank-payment.service';
@@ -133,6 +134,7 @@ describe('ProcessIssueNfseBankPayment - Unit tests', () => {
         { provide: FindBankPayment, useValue: createMock<FindBankPayment>() },
         { provide: FindBankPaymentByYourNumber, useValue: createMock<FindBankPaymentByYourNumber>() },
         { provide: FindClientInvoiceConfigByClientId, useValue: createMock<FindClientInvoiceConfigByClientId>() },
+        { provide: RecordJobAudit, useValue: createMock<RecordJobAudit>() },
       ],
     }).compile();
 
@@ -472,7 +474,9 @@ describe('ProcessIssueNfseBankPayment - Unit tests', () => {
         requestCode: 'existing-code',
         yourNumber: '1',
         amount: 1000,
-        dueDate: '2026-08-15',
+        // Nota emitida no dia 20 com vencimento configurado no dia 15: o piso de vencimento manda a
+        // data para o dia da emissão, porque o Inter recusa boleto vencido.
+        dueDate: '2026-08-20',
         status: BankPaymentStatus.EMITTED,
         ...overrides,
       });
@@ -495,7 +499,7 @@ describe('ProcessIssueNfseBankPayment - Unit tests', () => {
         provider: BankPaymentProvider.INTER,
         yourNumber: '1',
         amount: 1000,
-        dueDate: '2026-08-15',
+        dueDate: '2026-08-20',
       });
       expect(issueBankPayment.execute).not.toHaveBeenCalled();
       expect(result).toEqual({ provider: BankPaymentProvider.INTER, requestCode: 'existing-code' });
@@ -553,7 +557,9 @@ describe('ProcessIssueNfseBankPayment - Unit tests', () => {
         requestCode: EXISTING_REQUEST_CODE,
         yourNumber: '1',
         amount: 1000,
-        dueDate: '2026-08-15',
+        // Nota emitida no dia 20 com vencimento configurado no dia 15: o piso de vencimento manda a
+        // data para o dia da emissão, porque o Inter recusa boleto vencido.
+        dueDate: '2026-08-20',
         status: BankPaymentStatus.EMITTED,
         ...overrides,
       });

@@ -13,6 +13,18 @@ export class FindAllClientInvoiceConfigQueryDto extends Queries {
   @Max(31, { message: '$property deve ser entre 1 e 31' })
   dueDateDay?: number;
 
+  @ApiPropertyOptional({
+    example: 15,
+    description: 'Dia de vencimento máximo (inclusivo). É o filtro do faturamento diário: no dia 20 '
+      + 'ele alcança também os contratos de vencimento 15 que ninguém faturou.',
+  })
+  @IsOptional()
+  @StringToNumber()
+  @IsInt({ message: '$property deve ser um número inteiro' })
+  @Min(1, { message: '$property deve ser entre 1 e 31' })
+  @Max(31, { message: '$property deve ser entre 1 e 31' })
+  dueDateDayMax?: number;
+
   @ApiPropertyOptional({ example: true })
   @IsOptional()
   @StringToBoolean()

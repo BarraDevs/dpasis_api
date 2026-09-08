@@ -38,6 +38,8 @@ export class NfseFactory {
       bankPaymentConfirmedAt: null,
       reconcileAttemptCount: 0,
       nextReconcileAt: null,
+      providerAlerts: null,
+      providerAlertedAt: null,
       nfmId: null,
       createdAt: new Date(),
     });
@@ -79,6 +81,8 @@ export class NfseFactory {
       bankPaymentConfirmedAt: props.bankPaymentConfirmedAt,
       reconcileAttemptCount: props.reconcileAttemptCount,
       nextReconcileAt: props.nextReconcileAt,
+      providerAlerts: props.providerAlerts ?? null,
+      providerAlertedAt: props.providerAlertedAt ?? null,
       nfmId: props.nfmId,
       createdAt: props.createdAt,
       data: props.data,

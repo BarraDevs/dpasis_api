@@ -387,7 +387,8 @@ describe('ProcessIssueNfseBankPayment - Integration tests', () => {
         requestCode: 'existing-by-seunumero',
         yourNumber: String(nfse.id),
         amount: 1000,
-        dueDate: '2026-08-15',
+        // Emitida no dia 20: o piso de vencimento impede o boleto de nascer vencido no dia 15.
+        dueDate: '2026-08-20',
       }],
       total: 1,
     };
@@ -399,8 +400,8 @@ describe('ProcessIssueNfseBankPayment - Integration tests', () => {
     expect(bankPaymentGateway.listCalls).toEqual([
       expect.objectContaining({
         yourNumber: String(nfse.id),
-        startDate: '2026-08-15',
-        endDate: '2026-08-15',
+        startDate: '2026-08-20',
+        endDate: '2026-08-20',
       }),
     ]);
     expect(bankPaymentGateway.issueCalls).toHaveLength(0);
@@ -437,7 +438,7 @@ describe('ProcessIssueNfseBankPayment - Integration tests', () => {
       requestCode: existingRequestCode,
       yourNumber: String(nfse.id),
       amount: 1000,
-      dueDate: '2026-08-15',
+      dueDate: '2026-08-20',
     };
 
     // Act

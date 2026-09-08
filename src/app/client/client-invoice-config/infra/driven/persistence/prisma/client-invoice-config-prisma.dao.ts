@@ -85,6 +85,10 @@ export class ClientInvoiceConfigDaoAdapterPrisma implements IClientInvoiceConfig
       conditions.push({ dueDateDay: queries.dueDateDay });
     }
 
+    if (queries.dueDateDayMax != null) {
+      conditions.push({ dueDateDay: { lte: queries.dueDateDayMax } });
+    }
+
     if (queries.generateNf != null) {
       conditions.push({ generateNf: queries.generateNf });
     }

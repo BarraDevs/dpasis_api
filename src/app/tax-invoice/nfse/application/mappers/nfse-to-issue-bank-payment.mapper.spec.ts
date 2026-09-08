@@ -304,3 +304,73 @@ describe('NfseToIssueBankPaymentMapper - Unit tests', () => {
     expect(result.payer.zipCode).toBe('01310100');
   });
 });
+
+describe('NfseToIssueBankPaymentMapper - piso de vencimento', () => {
+  it('should never send a due date in the past', () => {
+    // Arrange — contrato de vencimento 15 faturado no dia 20, que é o caso que o faturamento
+    // diário com `dueDateDay <= hoje` cria de propósito.
+    const snapshot = makeSnapshot({
+      bankPayment: makeBankPayment({ dueDateDay: 15, referenceMonth: 9, referenceYear: 2026 }),
+    });
+
+    // Act
+    const result = NfseToIssueBankPaymentMapper.toIssueBankPaymentInput({
+      nfseId: 42,
+      issuedAt: new Date('2026-09-20T09:00:00-03:00'),
+      snapshot,
+    });
+
+    // Assert
+    expect(result.dueDate).toBe('2026-09-20');
+  });
+
+  it('should push the due date to the next day when the note is issued after the Inter cutoff', () => {
+    // Arrange — o Inter só aceita vencimento no próprio dia até 19h59.
+    const snapshot = makeSnapshot({
+      bankPayment: makeBankPayment({ dueDateDay: 15, referenceMonth: 9, referenceYear: 2026 }),
+    });
+
+    // Act
+    const result = NfseToIssueBankPaymentMapper.toIssueBankPaymentInput({
+      nfseId: 42,
+      issuedAt: new Date('2026-09-20T20:30:00-03:00'),
+      snapshot,
+    });
+
+    // Assert
+    expect(result.dueDate).toBe('2026-09-21');
+  });
+
+  it('should leave a future due date untouched', () => {
+    // Arrange
+    const snapshot = makeSnapshot({
+      bankPayment: makeBankPayment({ dueDateDay: 25, referenceMonth: 9, referenceYear: 2026 }),
+    });
+
+    // Act
+    const result = NfseToIssueBankPaymentMapper.toIssueBankPaymentInput({
+      nfseId: 42,
+      issuedAt: new Date('2026-09-20T09:00:00-03:00'),
+      snapshot,
+    });
+
+    // Assert
+    expect(result.dueDate).toBe('2026-09-25');
+  });
+
+  it('should produce the same due date on every retry of the same note', () => {
+    // Arrange — o congelamento do payload é o que faz a chave implícita de 30 min do Inter valer;
+    // um piso calculado a partir de `now` mudaria o vencimento na virada do dia.
+    const snapshot = makeSnapshot({
+      bankPayment: makeBankPayment({ dueDateDay: 15, referenceMonth: 9, referenceYear: 2026 }),
+    });
+    const issuedAt = new Date('2026-09-20T09:00:00-03:00');
+
+    // Act
+    const first = NfseToIssueBankPaymentMapper.toIssueBankPaymentInput({ nfseId: 42, issuedAt, snapshot });
+    const second = NfseToIssueBankPaymentMapper.toIssueBankPaymentInput({ nfseId: 42, issuedAt, snapshot });
+
+    // Assert
+    expect(second.dueDate).toBe(first.dueDate);
+  });
+});

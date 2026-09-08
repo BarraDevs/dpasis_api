@@ -37,6 +37,11 @@ model Nfse {
   // terminal significa "consultar na próxima varredura"; numa nota terminal, "não consultar mais".
   reconcileAttemptCount     Int       @default(0)
   nextReconcileAt           DateTime?
+  // Ressalvas `A*` que o Giss devolve junto com a nota emitida (inscrição paralisada, prazo de
+  // conversão vencido). Não impedem a emissão e exigem ação junto à Prefeitura; `providerAlertedAt`
+  // marca que a operação já foi avisada, para o alerta não repetir a mesma nota toda janela.
+  providerAlerts            String?
+  providerAlertedAt         DateTime?
   data                      Json
   createdAt                 DateTime  @default(now())
   updatedAt                 DateTime  @updatedAt

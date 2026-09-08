@@ -1,6 +1,6 @@
 import { createMock } from '@golevelup/ts-jest';
 import { Test } from '@nestjs/testing';
-import { Job, UnrecoverableError } from 'bullmq';
+import { DelayedError, Job, UnrecoverableError } from 'bullmq';
 import { AppException } from 'src/core/filters/app.exception';
 import { JobName } from 'src/infra/queue/enums/job-name.enum';
 import { PermanentProviderError } from 'src/shared/errors/permanent-provider.error';
@@ -13,7 +13,7 @@ import { ProcessIssueNfseBatch } from '../../../../application/usecases/process-
 import { ProcessPollNfseBatch } from '../../../../application/usecases/process-poll-nfse-batch/process-poll-nfse-batch.service';
 import { ConfirmNfseBankPayment } from '../../../../application/usecases/confirm-nfse-bank-payment/confirm-nfse-bank-payment.service';
 import { ReconcileNfse } from '../../../../application/usecases/reconcile-nfse/reconcile-nfse.service';
-import { NfseBullmqConsumer } from './nfse-bullmq.consumer';
+import { NfseJobRouter } from './nfse-job.router';
 
 function makeJob<T>(name: string, data: T): Job<T> {
   return { name, data } as Job<T>;
@@ -31,8 +31,8 @@ function makeIssueBankPaymentJob(overrides: Partial<IssueNfseBankPaymentJobDto> 
   return { nfseId: 1, ...overrides };
 }
 
-describe('NfseBullmqConsumer', () => {
-  let sut: NfseBullmqConsumer;
+describe('NfseJobRouter', () => {
+  let sut: NfseJobRouter;
   let processIssueNfseBatch: ProcessIssueNfseBatch;
   let processPollNfseBatch: ProcessPollNfseBatch;
   let processIssueNfseBankPayment: ProcessIssueNfseBankPayment;
@@ -42,7 +42,7 @@ describe('NfseBullmqConsumer', () => {
   beforeEach(async() => {
     const module = await Test.createTestingModule({
       providers: [
-        NfseBullmqConsumer,
+        NfseJobRouter,
         { provide: ProcessIssueNfseBatch, useValue: createMock<ProcessIssueNfseBatch>() },
         { provide: ProcessPollNfseBatch, useValue: createMock<ProcessPollNfseBatch>() },
         { provide: ProcessIssueNfseBankPayment, useValue: createMock<ProcessIssueNfseBankPayment>() },
@@ -51,7 +51,7 @@ describe('NfseBullmqConsumer', () => {
       ],
     }).compile();
 
-    sut = module.get(NfseBullmqConsumer);
+    sut = module.get(NfseJobRouter);
     processIssueNfseBatch = module.get(ProcessIssueNfseBatch);
     processPollNfseBatch = module.get(ProcessPollNfseBatch);
     reconcileNfse = module.get(ReconcileNfse);
@@ -63,14 +63,14 @@ describe('NfseBullmqConsumer', () => {
     expect(sut).toBeDefined();
   });
 
-  describe('process', () => {
+  describe('run', () => {
     it('should delegate issue-nfse-batch jobs to ProcessIssueNfseBatch', async() => {
       // Arrange
       const payload = makeIssueBatchJob({ nfseId: 42 });
       const executeSpy = jest.spyOn(processIssueNfseBatch, 'execute').mockResolvedValue();
 
       // Act
-      await sut.process(makeJob(JobName.IssueNfseBatch, payload));
+      await sut.run(makeJob(JobName.IssueNfseBatch, payload));
 
       // Assert
       expect(executeSpy).toHaveBeenCalledTimes(1);
@@ -85,7 +85,7 @@ describe('NfseBullmqConsumer', () => {
       const executeSpy = jest.spyOn(processPollNfseBatch, 'execute').mockResolvedValue();
 
       // Act
-      await sut.process(makeJob(JobName.PollNfseBatch, payload));
+      await sut.run(makeJob(JobName.PollNfseBatch, payload));
 
       // Assert
       expect(executeSpy).toHaveBeenCalledTimes(1);
@@ -100,7 +100,7 @@ describe('NfseBullmqConsumer', () => {
       const executeSpy = jest.spyOn(processIssueNfseBankPayment, 'execute').mockResolvedValue(null);
 
       // Act
-      await sut.process(makeJob(JobName.IssueNfseBankPayment, payload));
+      await sut.run(makeJob(JobName.IssueNfseBankPayment, payload));
 
       // Assert
       expect(executeSpy).toHaveBeenCalledTimes(1);
@@ -114,7 +114,7 @@ describe('NfseBullmqConsumer', () => {
       const job = { name: 'unknown-job', data: {} } as Job<IssueNfseBatchJobDto | PollNfseBatchJobDto | IssueNfseBankPaymentJobDto>;
 
       // Act
-      const error = await sut.process(job).catch((e: unknown) => e);
+      const error = await sut.run(job).catch((e: unknown) => e);
 
       // Assert
       expect(error).toBeInstanceOf(AppException);
@@ -131,7 +131,7 @@ describe('NfseBullmqConsumer', () => {
       jest.spyOn(processIssueNfseBatch, 'execute').mockRejectedValue(err);
 
       // Act & Assert
-      await expect(sut.process(makeJob(JobName.IssueNfseBatch, payload))).rejects.toBe(err);
+      await expect(sut.run(makeJob(JobName.IssueNfseBatch, payload))).rejects.toBe(err);
     });
 
     it('should propagate ProcessPollNfseBatch errors', async() => {
@@ -141,7 +141,7 @@ describe('NfseBullmqConsumer', () => {
       jest.spyOn(processPollNfseBatch, 'execute').mockRejectedValue(err);
 
       // Act & Assert
-      await expect(sut.process(makeJob(JobName.PollNfseBatch, payload))).rejects.toBe(err);
+      await expect(sut.run(makeJob(JobName.PollNfseBatch, payload))).rejects.toBe(err);
     });
 
     it('should propagate ProcessIssueNfseBankPayment errors', async() => {
@@ -151,7 +151,7 @@ describe('NfseBullmqConsumer', () => {
       jest.spyOn(processIssueNfseBankPayment, 'execute').mockRejectedValue(err);
 
       // Act & Assert
-      await expect(sut.process(makeJob(JobName.IssueNfseBankPayment, payload))).rejects.toBe(err);
+      await expect(sut.run(makeJob(JobName.IssueNfseBankPayment, payload))).rejects.toBe(err);
     });
 
     it('should convert PermanentProviderError from the bank-payment job into UnrecoverableError', async() => {
@@ -161,7 +161,7 @@ describe('NfseBullmqConsumer', () => {
         .mockRejectedValue(new PermanentProviderError('Vencimento inválido.'));
 
       // Act
-      const error = await sut.process(makeJob(JobName.IssueNfseBankPayment, payload)).catch((e: unknown) => e);
+      const error = await sut.run(makeJob(JobName.IssueNfseBankPayment, payload)).catch((e: unknown) => e);
 
       // Assert
       expect(error).toBeInstanceOf(UnrecoverableError);
@@ -175,7 +175,7 @@ describe('NfseBullmqConsumer', () => {
       jest.spyOn(processIssueNfseBankPayment, 'execute').mockRejectedValue(err);
 
       // Act & Assert
-      await expect(sut.process(makeJob(JobName.IssueNfseBankPayment, payload))).rejects.toBe(err);
+      await expect(sut.run(makeJob(JobName.IssueNfseBankPayment, payload))).rejects.toBe(err);
     });
 
     it('should convert PermanentProviderError from the issue-batch job into UnrecoverableError', async() => {
@@ -184,7 +184,7 @@ describe('NfseBullmqConsumer', () => {
         .mockRejectedValue(new PermanentProviderError('certificado recusado'));
 
       // Act
-      const error = await sut.process(makeJob(JobName.IssueNfseBatch, makeIssueBatchJob()))
+      const error = await sut.run(makeJob(JobName.IssueNfseBatch, makeIssueBatchJob()))
         .catch((e: unknown) => e);
 
       // Assert
@@ -198,7 +198,7 @@ describe('NfseBullmqConsumer', () => {
         .mockRejectedValue(new PermanentProviderError('certificado recusado'));
 
       // Act
-      const error = await sut.process(makeJob(JobName.PollNfseBatch, makePollBatchJob()))
+      const error = await sut.run(makeJob(JobName.PollNfseBatch, makePollBatchJob()))
         .catch((e: unknown) => e);
 
       // Assert
@@ -206,13 +206,13 @@ describe('NfseBullmqConsumer', () => {
       expect((error as Error).message).toBe('certificado recusado');
     });
   });
-  describe('process (jobs da Onda 3)', () => {
+  describe('run (jobs da Onda 3)', () => {
     it('should delegate reconcile-nfse jobs to ReconcileNfse', async() => {
       // Arrange
       const job = makeJob(JobName.ReconcileNfse, { nfseId: 7 });
 
       // Act
-      await sut.process(job);
+      await sut.run(job);
 
       // Assert
       expect(reconcileNfse.execute).toHaveBeenCalledWith({ nfseId: 7 });
@@ -223,7 +223,7 @@ describe('NfseBullmqConsumer', () => {
       const job = makeJob(JobName.ConfirmNfseBankPayment, { nfseId: 9 });
 
       // Act
-      await sut.process(job);
+      await sut.run(job);
 
       // Assert
       expect(confirmNfseBankPayment.execute).toHaveBeenCalledWith({ nfseId: 9 });
@@ -234,7 +234,43 @@ describe('NfseBullmqConsumer', () => {
       jest.spyOn(reconcileNfse, 'execute').mockRejectedValue(new PermanentProviderError('config inválida'));
 
       // Act & Assert
-      await expect(sut.process(makeJob(JobName.ReconcileNfse, { nfseId: 7 }))).rejects.toThrow(UnrecoverableError);
+      await expect(sut.run(makeJob(JobName.ReconcileNfse, { nfseId: 7 }))).rejects.toThrow(UnrecoverableError);
+    });
+  });
+
+  describe('run (Retry-After)', () => {
+    function makeDelayableJob(name: string): { job: Job<IssueNfseBankPaymentJobDto>; moveToDelayed: jest.Mock } {
+      const moveToDelayed = jest.fn().mockResolvedValue(undefined);
+      return {
+        job: { name, data: makeIssueBankPaymentJob(), moveToDelayed } as unknown as Job<IssueNfseBankPaymentJobDto>,
+        moveToDelayed,
+      };
+    }
+
+    it('should reschedule the job instead of burning an attempt when the provider sent Retry-After', async() => {
+      // Arrange
+      const { job, moveToDelayed } = makeDelayableJob(JobName.IssueNfseBankPayment);
+      jest.spyOn(processIssueNfseBankPayment, 'execute')
+        .mockRejectedValue(new TransientProviderError('Banco Inter respondeu com 429.', 90));
+      jest.spyOn(Date, 'now').mockReturnValue(1_000_000);
+
+      // Act
+      const error = await sut.run(job, 'token-1').catch((e: unknown) => e);
+
+      // Assert
+      expect(moveToDelayed).toHaveBeenCalledWith(1_000_000 + 90_000, 'token-1');
+      expect(error).toBeInstanceOf(DelayedError);
+    });
+
+    it('should keep burning attempts when there is no token to hold the job lock', async() => {
+      // Arrange
+      const { job, moveToDelayed } = makeDelayableJob(JobName.IssueNfseBankPayment);
+      const err = new TransientProviderError('Banco Inter respondeu com 429.', 90);
+      jest.spyOn(processIssueNfseBankPayment, 'execute').mockRejectedValue(err);
+
+      // Act & Assert
+      await expect(sut.run(job)).rejects.toBe(err);
+      expect(moveToDelayed).not.toHaveBeenCalled();
     });
   });
 });

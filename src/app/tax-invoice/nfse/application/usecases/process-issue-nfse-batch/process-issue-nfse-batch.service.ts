@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { RecordJobAudit } from 'src/app/audit/application/usecases/record-job-audit/record-job-audit.service';
 import { FindCompanyNfsConfigByCompanyId } from 'src/app/company/company-nfs-config/application/usecases/find-company-nfs-config-by-company-id/find-company-nfs-config-by-company-id.service';
 import { SAO_PAULO_TIMEZONE } from 'src/core/constants/timezone.constant';
 import { TOKENS } from 'src/core/di/token';
@@ -25,6 +26,7 @@ export class ProcessIssueNfseBatch {
     @Inject(TOKENS.NfsGenerationGateway) private readonly nfsGenerationGateway: INfsGenerationGateway,
     @Inject(TOKENS.NfseQueueProducer) private readonly queueProducer: INfseQueueProducer,
     private readonly findCompanyNfsConfigByCompanyId: FindCompanyNfsConfigByCompanyId,
+    private readonly recordJobAudit: RecordJobAudit,
   ) {}
 
   public async execute(input: ProcessIssueNfseBatchInputDto): Promise<void> {
@@ -125,6 +127,7 @@ export class ProcessIssueNfseBatch {
       });
 
       const message = error?.message ?? 'Erro desconhecido ao enviar lote ao provedor de NFS-e';
+      const previousStatus = nfse.props.status;
 
       if (error instanceof NfsBatchRejectedError && !error.alreadySubmitted) {
         // O fisco recusou o conteúdo do RPS. Reemitir depois de corrigir o cadastro é a saída, e a
@@ -139,11 +142,27 @@ export class ProcessIssueNfseBatch {
       }
 
       await this.nfseRepository.edit(nfse);
+      this.recordJobAudit.record({
+        jobName: 'issue-nfse-batch',
+        nfseId: nfse.props.id,
+        from: previousStatus,
+        to: nfse.props.status,
+        reason: message,
+        succeeded: false,
+      });
       return;
     }
 
+    const previousStatus = nfse.props.status;
     nfse.markSubmitted(result.batchProtocol);
     await this.nfseRepository.edit(nfse);
+    this.recordJobAudit.record({
+      jobName: 'issue-nfse-batch',
+      nfseId: nfse.props.id,
+      from: previousStatus,
+      to: nfse.props.status,
+      reason: `Protocolo ${result.batchProtocol}`,
+    });
 
     await this.queueProducer.addPollBatchJob(
       { nfseId: nfse.props.id, attempt: 1 },

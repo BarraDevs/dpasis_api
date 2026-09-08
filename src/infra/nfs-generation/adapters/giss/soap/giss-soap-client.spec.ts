@@ -1,5 +1,6 @@
 import { createMock } from '@golevelup/ts-jest';
 import { HttpService } from '@nestjs/axios';
+import { CircuitBreaker } from 'src/shared/circuit-breaker/circuit-breaker';
 import { GissCertMaterial } from '../signing/giss-pfx-loader';
 import { GissOperation, GissSoapClient } from './giss-soap-client';
 
@@ -30,6 +31,9 @@ describe('GissSoapClient.postSoapRequest - Unit tests', () => {
   let httpService: HttpService;
 
   beforeEach(() => {
+    // O disjuntor guarda estado por município entre chamadas; sem reset, um caso de erro deixaria o
+    // circuito aberto para o seguinte.
+    CircuitBreaker.reset();
     httpService = createMock<HttpService>();
     Object.assign(httpService, { axiosRef: { post: jest.fn() } });
   });

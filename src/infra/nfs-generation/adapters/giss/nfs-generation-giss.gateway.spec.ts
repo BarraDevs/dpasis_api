@@ -2,6 +2,8 @@ import { createMock } from '@golevelup/ts-jest';
 import { HttpService } from '@nestjs/axios';
 import { LogContext, type ILoggerGateway } from 'src/infra/logger/logger.gateway';
 import { ExternalApiError } from 'src/shared/errors/external-api.error';
+import { CircuitOpenError } from 'src/shared/circuit-breaker/circuit-breaker';
+import { TransientProviderError } from 'src/shared/errors/transient-provider.error';
 import { NfsProviderConfigError } from 'src/infra/nfs-generation/errors/nfs-provider-config.error';
 import { NfsBatchSituation } from '../../dtos/nfs-batch-status.dto';
 import { ProviderAttemptFakeAdapterGateway } from 'src/infra/provider-attempt/adapters/fake/provider-attempt-fake.gateway';
@@ -661,6 +663,97 @@ describe('NfsGenerationGissAdapterGateway - Unit tests', () => {
 
       // Act & Assert
       await expect(sut.listIssuedNfseByPeriod(listIssuedInput)).rejects.toBe(error);
+    });
+  });
+
+  describe('classificação de erro do provedor', () => {
+    function soapError(cause: unknown, httpStatus: number | null): GissSoapCallError {
+      return new GissSoapCallError(cause, {
+        requestBody: '<envelope/>',
+        responseBody: '<raw/>',
+        httpStatus,
+        durationMs: 30,
+      });
+    }
+
+    function axiosError(status: number | null, headers: Record<string, string> = {}, code?: string): Error {
+      const error = new Error('Giss indisponível') as Error & { response?: unknown; code?: string };
+      if (status !== null) {
+        error.response = { status, headers };
+      }
+      if (code) {
+        error.code = code;
+      }
+      return error;
+    }
+
+    beforeEach(() => {
+      mockedBuildIssueBatch.mockReturnValue({ xml: '<lote/>', loteId: 'lote-1', rpsIds: ['rps-1'] });
+      mockedSign.mockImplementation((xml: string) => xml);
+    });
+
+    it('should classify a 503 from the provider as transient, so the note is not marked FAILED', async() => {
+      // Arrange
+      mockedPostSoap.mockRejectedValue(soapError(axiosError(503), 503));
+
+      // Act
+      const error = await sut.issueBatch({ nfseId: 1, batchNumber: 1, provider, rpsList: [] })
+        .catch((e: unknown) => e);
+
+      // Assert
+      expect(error).toBeInstanceOf(TransientProviderError);
+    });
+
+    it('should carry Retry-After from a 429 so the queue reschedules instead of retrying blind', async() => {
+      // Arrange
+      mockedPostSoap.mockRejectedValue(soapError(axiosError(429, { 'retry-after': '45' }), 429));
+
+      // Act
+      const error = await sut.issueBatch({ nfseId: 1, batchNumber: 1, provider, rpsList: [] })
+        .catch((e: unknown) => e);
+
+      // Assert
+      expect(error).toBeInstanceOf(TransientProviderError);
+      expect((error as TransientProviderError).retryAfterSeconds).toBe(45);
+    });
+
+    it('should classify a connection reset as transient', async() => {
+      // Arrange
+      mockedPostSoap.mockRejectedValue(soapError(axiosError(null, {}, 'ECONNRESET'), null));
+
+      // Act
+      const error = await sut.issueBatch({ nfseId: 1, batchNumber: 1, provider, rpsList: [] })
+        .catch((e: unknown) => e);
+
+      // Assert
+      expect(error).toBeInstanceOf(TransientProviderError);
+    });
+
+    it('should keep a 400 as a plain ExternalApiError', async() => {
+      // Arrange — o provedor respondeu; repetir devolve o mesmo erro.
+      mockedPostSoap.mockRejectedValue(soapError(axiosError(400), 400));
+
+      // Act
+      const error = await sut.issueBatch({ nfseId: 1, batchNumber: 1, provider, rpsList: [] })
+        .catch((e: unknown) => e);
+
+      // Assert
+      expect(error).toBeInstanceOf(ExternalApiError);
+      expect(error).not.toBeInstanceOf(TransientProviderError);
+    });
+
+    it('should let an open circuit through untouched, keeping its retry hint', async() => {
+      // Arrange
+      const circuitOpen = new CircuitOpenError('Circuito aberto para "giss:demonstracao"', 30);
+      mockedPostSoap.mockRejectedValue(circuitOpen);
+
+      // Act
+      const error = await sut.issueBatch({ nfseId: 1, batchNumber: 1, provider, rpsList: [] })
+        .catch((e: unknown) => e);
+
+      // Assert
+      expect(error).toBe(circuitOpen);
+      expect((error as CircuitOpenError).retryAfterSeconds).toBe(30);
     });
   });
 });

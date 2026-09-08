@@ -12,10 +12,14 @@ export class FindAllAuditLogQueryDto extends Queries {
   @StringToNumber()
   accountId?: number;
 
-  @ApiPropertyOptional({ enum: ['POST', 'PATCH', 'PUT', 'DELETE'], description: 'Filtrar por método HTTP' })
+  @ApiPropertyOptional({
+    enum: ['POST', 'PATCH', 'PUT', 'DELETE', 'JOB'],
+    description: 'Filtrar por método HTTP, ou `JOB` para as transições do caminho assíncrono '
+      + '(envio ao provedor, consulta do lote, reconciliação, boleto).',
+  })
   @IsOptional()
   @IsString({ message: '$property deve ser uma string' })
-  @IsIn(['POST', 'PATCH', 'PUT', 'DELETE'], { message: '$property deve ser POST, PATCH, PUT ou DELETE' })
+  @IsIn(['POST', 'PATCH', 'PUT', 'DELETE', 'JOB'], { message: '$property deve ser POST, PATCH, PUT, DELETE ou JOB' })
   @Trim()
   method?: string;
 
