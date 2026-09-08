@@ -20,7 +20,7 @@ import { BankPaymentProvider } from '../../../enums/bank-payment-provider.enum';
 import { BankPaymentAlreadyExistsError } from '../../../errors/bank-payment-already-exists.error';
 import { BankPaymentNotFoundError } from '../../../errors/bank-payment-not-found.error';
 import { BankPaymentRequestError } from '../../../errors/bank-payment-request.error';
-import { InterCertLoader, type InterCertMaterial } from '../oauth/inter-cert.loader';
+import { InterCertLoader } from '../oauth/inter-cert.loader';
 import { InterOauthClient } from '../oauth/inter-oauth.client';
 import { toLoggableHttpError } from '../to-loggable-http-error';
 import type {
@@ -40,8 +40,6 @@ export class InterCobrancaClient {
    * (`código de solicitação: <uuid>`) e nunca pelo texto exato, que o Inter pode reescrever.
    */
   private static readonly DUPLICATE_REQUEST_CODE_PATTERN = /c[óo]digo de solicita[çc][ãa]o:?\s*([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i;
-
-  private certMaterial: InterCertMaterial | null = null;
 
   constructor(
     private readonly httpService: HttpService,
@@ -299,23 +297,22 @@ export class InterCobrancaClient {
     return new ExternalApiError('Falha na comunicação com a API de cobrança do Banco Inter.');
   }
 
+  /**
+   * O cache vive no `InterCertLoader`, com chave por `mtime`+tamanho: sobrescrever o certificado em
+   * disco passa a valer sem reiniciar. Guardá-lo aqui, no campo da instância, tornava a troca a
+   * quente impossível — e o certificado de sandbox vence dentro da janela de homologação.
+   */
   private createHttpsAgent(): Agent {
-    const material = this.getCertMaterial();
+    const material = InterCertLoader.load(
+      this.configService.interCertPath,
+      this.configService.interKeyPath,
+    );
+
     return new Agent({
       cert: material.cert,
       key: material.key,
       minVersion: 'TLSv1.2',
     });
-  }
-
-  private getCertMaterial(): InterCertMaterial {
-    if (!this.certMaterial) {
-      this.certMaterial = InterCertLoader.load(
-        this.configService.interCertPath,
-        this.configService.interKeyPath,
-      );
-    }
-    return this.certMaterial;
   }
 
   /**

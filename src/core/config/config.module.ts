@@ -28,7 +28,10 @@ import { Environment } from './environment.enum';
         AWS_BUCKET_NAME: Joi.string().required(),
 
         SMTP_HOST: Joi.string().required(),
-        SMTP_PORT: Joi.string().required(),
+        // Numérica, não string: um valor de fachada passava na validação, virava `NaN` dentro do
+        // nodemailer e derrubava todo envio em silêncio — `send()` devolvia `false` e o alerta
+        // ficava só no log. Falhar no boot troca um canal morto por uma mensagem.
+        SMTP_PORT: Joi.number().port().required(),
         SMTP_TO: Joi.string().required(),
         SMTP_FROM: Joi.string().required(),
         SMTP_USERNAME: Joi.string().required(),

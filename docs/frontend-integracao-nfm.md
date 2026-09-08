@@ -171,7 +171,7 @@ Vale para `GET /admin/nfm`, `GET /admin/nfm/:id` e para o `status` devolvido pel
 | `AWAITING_PROVIDER` | **Novo.** Não se sabe se o Giss emitiu a nota | não | Ver abaixo — **não** tratar como erro |
 | `ISSUED` | Emitida. `nfseNumber`, `verificationCode` e `issuedAt` preenchidos | sim | Habilita cancelar |
 | `REJECTED` | **Novo.** O fisco recusou o conteúdo do RPS (cadastro do tomador, item de serviço, alíquota). A nota **não** existe do outro lado | sim | Mostrar `errorMessage` e habilitar **reemitir** |
-| `FAILED` | Erro determinístico de infraestrutura ou de configuração (certificado, `municipioSlug` ausente). A nota **não** chegou ao provedor | sim | Mostrar `errorMessage`; conserto é de configuração |
+| `FAILED` | Erro determinístico de infraestrutura ou de configuração (certificado, `municipioSlug` ausente). A nota **não** chegou ao provedor | sim | Mostrar `errorMessage` e habilitar **reemitir**, depois de a configuração ser corrigida |
 | `CANCELED` | Cancelada. `canceledAt` e `cancelReasonCode` preenchidos | sim | — |
 
 ### `REJECTED` — o status novo desta entrega
@@ -185,8 +185,10 @@ Regras de UI:
 
 - Mostrar `errorMessage` — é a mensagem do fisco, com o código (`E163`, `E202`…).
 - Habilitar o botão **Reemitir** (`POST /admin/nfm/:id/reissue`), que exige motivo e confirmação.
-- `FAILED`, por outro lado, **não** deve oferecer reemitir: o problema não está no cadastro do
-  cliente.
+- `FAILED` **também** oferece reemitir, mas o texto de apoio muda: em `REJECTED` o operador corrige o
+  cadastro do cliente, em `FAILED` corrige a configuração da empresa (caminho ou senha do
+  certificado, `municipioSlug`, código de tributação municipal). Reemitir antes de corrigir devolve o
+  mesmo erro.
 
 ### `AWAITING_PROVIDER` — não é erro
 
@@ -231,7 +233,7 @@ resposta do provedor no momento da chamada.
 
 | Situação | Resposta |
 |----------|----------|
-| Status ∉ `{REJECTED, AWAITING_PROVIDER}` | `409` — `ISSUED`/`CANCELED`/`FAILED`/em andamento não se reemite |
+| Status ∉ `{REJECTED, AWAITING_PROVIDER, FAILED}` | `409` — `ISSUED`, `CANCELED` e os estados em andamento (`PENDING`, `SUBMITTED`, `PROCESSING`) não se reemitem |
 | O Giss já tem a nota | `409` — o estado local é corrigido para `ISSUED` e **nada** é reenviado |
 | O lote ainda está em processamento | `409` — a consulta do lote foi reagendada |
 | A consulta não foi conclusiva (erro sobre a própria consulta, não sobre a nota) | `409` — resolver o motivo antes; reenviar sem resposta é apostar contra uma nota que pode existir |

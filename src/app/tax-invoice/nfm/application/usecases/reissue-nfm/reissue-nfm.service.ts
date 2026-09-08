@@ -15,10 +15,24 @@ import { NfmNotFoundError } from '../../../domain/errors/nfm-not-found.error';
 import type { INfmRepository } from '../../persistence/repository/nfm-repository.interface';
 import { ReissueNfmInputDto, ReissueNfmOutputDto } from './dtos/reissue-nfm.dto';
 
-/** Estados em que reemitir é uma decisão possível — §6: REJECTED ou AWAITING_PROVIDER. */
+/**
+ * Estados em que reemitir é uma decisão possível.
+ *
+ * `FAILED` entrou depois de a auditoria de pré-homologação mostrar que ele era um beco sem saída:
+ * a NFM continua com `nfseId` preenchido, então o fechamento diário a pula para sempre
+ * (`SaveElegibleNfms` checa `hasNfse()`, não o status); a reconciliação não devolve `FAILED` ao
+ * início do fluxo; e a rota recusava. Uma configuração errada no primeiro fechamento — caminho de
+ * certificado, senha do PKCS#12, código de tributação ausente — prendia a rodada inteira, com
+ * `UPDATE` no banco como única saída.
+ *
+ * Reabrir é seguro pelo mesmo motivo que torna `REJECTED` seguro: a rota consulta o provedor antes
+ * e só reenvia quando ele afirma que não conhece o RPS, sempre com o mesmo número. `ISSUED` e
+ * `CANCELED` seguem fora — reemitir ali é o único erro irreversível deste fluxo.
+ */
 const REISSUABLE_STATUSES: NfseStatus[] = [
   NfseStatus.REJECTED,
   NfseStatus.AWAITING_PROVIDER,
+  NfseStatus.FAILED,
 ];
 
 @Injectable()

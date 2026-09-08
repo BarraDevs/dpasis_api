@@ -47,50 +47,32 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    # Todas as variáveis vêm do `.env.production` do host (gitignored), como o compose de
+    # desenvolvimento já fazia. A lista manual anterior omitia `INTER_*`, `GISS_CERT_PATH` e as duas
+    # flags `*_PROVIDER_ENABLED`: o boot passava — as flags têm `default(false)` no Joi — e a emissão
+    # do boleto só falhava depois, em runtime, sem nada apontar para a causa.
+    env_file:
+      - .env.production
     environment:
+      # Só o que precisa apontar para a rede do compose sobrescreve o arquivo.
       NODE_ENV: ${NODE_ENV:-production}
       PORT: ${PORT:-3000}
-
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-password}@postgres:5432/${POSTGRES_DB:-dpasis}?schema=public
       REDIS_URL: redis://redis:6379
-
-      SSL_KEY: ${SSL_KEY}
-      SSL_CERT: ${SSL_CERT}
-      SSL_CA: ${SSL_CA}
-
-      CORS_ORIGIN: ${CORS_ORIGIN}
-      JWT_SECRET: ${JWT_SECRET}
-
-      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
-      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
-      AWS_REGION: ${AWS_REGION}
-      AWS_BUCKET_NAME: ${AWS_BUCKET_NAME}
-
-      SMTP_HOST: ${SMTP_HOST}
-      SMTP_PORT: ${SMTP_PORT}
-      SMTP_TO: ${SMTP_TO}
-      SMTP_FROM: ${SMTP_FROM}
-      SMTP_USERNAME: ${SMTP_USERNAME}
-      SMTP_PASSWORD: ${SMTP_PASSWORD}
-
-      QUEUE_DASHBOARD_USERNAME: ${QUEUE_DASHBOARD_USERNAME}
-      QUEUE_DASHBOARD_PASSWORD: ${QUEUE_DASHBOARD_PASSWORD}
-
-      CNPJA_API_URL: ${CNPJA_API_URL:-https://open.cnpja.com/office}
-      VIACEP_API_URL: ${VIACEP_API_URL:-https://viacep.com.br/ws}
-
-      NFEMAIL_API_URL: ${NFEMAIL_API_URL}
-      NFEMAIL_CNPJ: ${NFEMAIL_CNPJ}
-      NFEMAIL_API_KEY: ${NFEMAIL_API_KEY}
-
-      GISS_CERT_PASSWORD: ${GISS_CERT_PASSWORD:-}
     ports:
       - "${PORT:-3000}:3000"
     networks:
       - dpasis-network
     volumes:
-      - ./resources:/app/resources
-    command: sh -c "npx prisma db push && node dist/src/main"
+      # Só os segredos vêm do host, e somente leitura. Montar `./resources` inteiro sombreava
+      # `resources/templates`, que é versionado e legítimo; e o `:ro` garante que o container não
+      # reescreva um certificado. Os arquivos ficam fora da imagem (ver .dockerignore).
+      - ./resources/files:/app/resources/files:ro
+    # `migrate deploy`, não `db push`: o índice único parcial `nfses_one_active_per_nfm` — a garantia
+    # de banco de que uma NFM não tem duas NFS-e vivas — não é expressável no schema Prisma e existe
+    # só no SQL da migration. Com `db push` o banco nasce sem ele, e a proteção contra nota duplicada
+    # passa a existir apenas no código.
+    command: sh -c "npx prisma migrate deploy && node dist/src/main"
 
 networks:
   dpasis-network:

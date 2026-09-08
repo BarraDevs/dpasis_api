@@ -7,6 +7,20 @@ coverage
 .env
 .env.*
 !.env.example
+
+# Certificados: nunca entram na imagem. O `COPY . .` do builder e o
+# `COPY --from=builder /app/resources` levariam o A1 do Giss e o par mTLS do Inter para dentro de
+# uma camada — de onde eles não saem mais. Em runtime os arquivos chegam pelo volume que o
+# docker-compose monta em /app/resources/files. Ver docs/runbook-certificados.md.
+#
+# O prefixo `**/` é obrigatório: no .dockerignore o `*` não atravessa `/`, então `*.pfx` sozinho
+# casaria só a raiz do contexto e deixaria passar `resources/files/.../cert.pfx`.
+**/*.pfx
+**/*.p12
+**/*.pem
+**/*.key
+**/*.crt
+**/*.cer
 logs
 *.log
 npm-debug.log*

@@ -12,4 +12,9 @@ export class AlertFakeAdapterGateway implements IAlertGateway {
     this.sentAlerts.push(alert);
     return this.deliver;
   }
+
+  /** Acompanha `deliver`: um canal que o teste declarou fora do ar também não verifica. */
+  public async verify(): Promise<boolean> {
+    return this.deliver;
+  }
 }

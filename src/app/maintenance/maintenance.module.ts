@@ -7,6 +7,7 @@ import { NfsePersistenceModule } from 'src/app/tax-invoice/nfse/application/pers
 import { NfseModule } from 'src/app/tax-invoice/nfse/nfse.module';
 import { Environment } from 'src/core/config/environment.enum';
 import { AlertModule } from 'src/infra/alert/alert.module';
+import { CheckAlertChannel } from './application/usecases/check-alert-channel/check-alert-channel.service';
 import { CheckCertificates } from './application/usecases/check-certificates/check-certificates.service';
 import { SweepNfseAlerts } from './application/usecases/sweep-nfse-alerts/sweep-nfse-alerts.service';
 import { SweepNfseRecovery } from './application/usecases/sweep-nfse-recovery/sweep-nfse-recovery.service';
@@ -36,12 +37,14 @@ export class MaintenanceModule {
         HealthAdminController,
       ],
       providers: [
+        CheckAlertChannel,
         CheckCertificates,
         SweepNfseAlerts,
         SweepNfseRecovery,
         ...(isTest ? [] : [NfseAlertsScheduler]),
       ],
       exports: [
+        CheckAlertChannel,
         CheckCertificates,
         SweepNfseAlerts,
         SweepNfseRecovery,

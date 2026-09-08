@@ -12,7 +12,7 @@ import { toLoggableHttpError } from '../to-loggable-http-error';
 import { InterOauthTokenDto } from './dtos/inter-oauth-token.dto';
 import { InterTokenResponseDto } from './dtos/inter-token-response.dto';
 import { InterOauthConfigError } from './errors/inter-oauth-config.error';
-import { InterCertLoader, type InterCertMaterial } from './inter-cert.loader';
+import { InterCertLoader } from './inter-cert.loader';
 
 type CachedToken = {
   token: InterOauthTokenDto;
@@ -25,7 +25,6 @@ export class InterOauthClient {
 
   private readonly cache = new Map<string, CachedToken>();
   private readonly inflight = new Map<string, Promise<InterOauthTokenDto>>();
-  private certMaterial: InterCertMaterial | null = null;
 
   constructor(
     private readonly httpService: HttpService,
@@ -69,7 +68,11 @@ export class InterOauthClient {
   private async requestToken(scope: string): Promise<InterOauthTokenDto> {
     this.assertConfig();
 
-    const material = this.getCertMaterial();
+    // Cache com invalidação por `mtime` vive no loader; ver InterCertLoader.
+    const material = InterCertLoader.load(
+      this.configService.interCertPath,
+      this.configService.interKeyPath,
+    );
     const agent = new Agent({
       cert: material.cert,
       key: material.key,
@@ -140,16 +143,6 @@ export class InterOauthClient {
     if (!this.configService.interClientSecret?.trim()) {
       throw new InterOauthConfigError('Variável de ambiente "INTER_CLIENT_SECRET" não está definida');
     }
-  }
-
-  private getCertMaterial(): InterCertMaterial {
-    if (!this.certMaterial) {
-      this.certMaterial = InterCertLoader.load(
-        this.configService.interCertPath,
-        this.configService.interKeyPath,
-      );
-    }
-    return this.certMaterial;
   }
 
   private normalizeScope(scope: string): string {

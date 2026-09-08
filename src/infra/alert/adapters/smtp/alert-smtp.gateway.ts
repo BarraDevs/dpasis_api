@@ -50,13 +50,39 @@ export class AlertSmtpAdapterGateway implements IAlertGateway {
     }
   }
 
+  /**
+   * `transporter.verify()` abre a conexão e autentica, sem enviar mensagem. É o que transforma
+   * "o SMTP está configurado?" numa resposta, em vez de uma suposição que só se confirma no
+   * incidente seguinte.
+   */
+  public async verify(): Promise<boolean> {
+    try {
+      await this.getTransporter().verify();
+      return true;
+    }
+    catch (error) {
+      this.logger.error(LogContext.SMTP, {
+        adapter: 'smtp',
+        action: 'verify',
+        body: { host: this.configService.smtpHost, port: this.configService.smtpPort },
+        error,
+      });
+
+      return false;
+    }
+  }
+
   /** Criado sob demanda e reusado: o transporter mantém o pool de conexões SMTP. */
   private getTransporter(): Transporter {
     if (!this.transporter) {
+      // `smtpPort` já chega numérica: o Joi valida com `Joi.number().port()`, então não há mais
+      // `NaN` silencioso vindo de um valor de fachada no `.env`.
+      const port = this.configService.smtpPort;
+
       this.transporter = createTransport({
         host: this.configService.smtpHost,
-        port: Number(this.configService.smtpPort),
-        secure: Number(this.configService.smtpPort) === 465,
+        port,
+        secure: port === 465,
         auth: {
           user: this.configService.smtpUsername,
           pass: this.configService.smtpPassword,

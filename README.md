@@ -53,6 +53,43 @@ npm run db:seed
 `20260903120000_nfse_idempotencia`. Ao alterar os estados da NFS-e, revise esse índice junto: é ele
 que decide quais estados liberam a NFM para uma nova NFS-e.
 
+Consequência prática: **`prisma db push` não cria esse índice**, porque `db push` deriva o banco do
+schema e o schema não o expressa. Todo ambiente tem de ser provisionado por `migrate deploy`. Depois
+de subir, dá para conferir:
+
+```sql
+SELECT indexdef FROM pg_indexes WHERE indexname = 'nfses_one_active_per_nfm';
+```
+
+Zero linhas significa que a garantia de banco contra NFS-e duplicada não existe naquele ambiente.
+
+### Banco de teste
+
+`.env.test` aponta para um banco **separado**, cujo nome termina em `_test`. A suíte de integração
+trunca todas as tabelas, e `PrismaService.truncate()` recusa qualquer banco fora dessa convenção —
+sem isso, um `npm test` numa máquina apontada para o banco de trabalho (ou de homologação) apaga tudo
+sem perguntar. Criar uma vez:
+
+```bash
+createdb dpasis_test    # ou: docker exec postgres createdb -U postgres dpasis_test
+npx dotenv -e .env.test -- npx prisma migrate deploy
+```
+
+### Bancos que já existiam sob `db push`
+
+Até a Onda 2 o schema era aplicado com `prisma db push`, que não grava nada em `_prisma_migrations`.
+Num banco assim, o primeiro `migrate deploy` tenta rodar `0_init` do zero e quebra em cima de tabelas
+que já existem. `0_init` é a baseline do schema que já estava em produção, então basta registrá-la
+como aplicada — o comando **não** roda DDL:
+
+```bash
+npx dotenv -e .env.production -- npx prisma migrate resolve --applied 0_init
+npm run db:deploy
+```
+
+Só depois disso o `docker-compose.yml` (que sobe com `prisma migrate deploy`) funciona nesse banco.
+Banco novo não precisa de nada: `migrate deploy` aplica as quatro migrations em ordem.
+
 ### Ambientes que aplicaram a migration da Onda 2 sob o nome antigo
 
 A migration da Onda 2 foi renomeada antes do commit. Um banco que a aplicou como

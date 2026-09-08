@@ -16,10 +16,12 @@ describe('AlertSmtpAdapterGateway - Unit tests', () => {
   let configService: ConfigService;
   let logger: ILoggerGateway;
   let sendMail: jest.Mock;
+  let verify: jest.Mock;
 
   beforeEach(() => {
     sendMail = jest.fn().mockResolvedValue({ messageId: '1' });
-    mockedCreateTransport.mockReset().mockReturnValue({ sendMail } as any);
+    verify = jest.fn().mockResolvedValue(true);
+    mockedCreateTransport.mockReset().mockReturnValue({ sendMail, verify } as any);
 
     configService = createMock<ConfigService>({
       smtpHost: 'smtp.example.com',
@@ -111,5 +113,32 @@ describe('AlertSmtpAdapterGateway - Unit tests', () => {
       body: { type: AlertType.NfseDailyClosing, subject: 'fechamento' },
       error,
     });
+  });
+
+  it('should verify the channel without sending anything', async() => {
+    // Act — a rota de health precisa responder "o SMTP entrega?" sem poluir a caixa de ninguém.
+    const result = await sut.verify();
+
+    // Assert
+    expect(result).toBe(true);
+    expect(verify).toHaveBeenCalledTimes(1);
+    expect(sendMail).not.toHaveBeenCalled();
+  });
+
+  it('should log error, return false and not rethrow when verify fails', async() => {
+    // Arrange — canal fora do ar: quem chama é um healthcheck, que não pode cair junto.
+    const error = new Error('ECONNREFUSED');
+    verify.mockRejectedValue(error);
+
+    // Act
+    const result = await sut.verify();
+
+    // Assert
+    expect(result).toBe(false);
+    expect(logger.error).toHaveBeenCalledWith(LogContext.SMTP, expect.objectContaining({
+      adapter: 'smtp',
+      action: 'verify',
+      error,
+    }));
   });
 });

@@ -5,6 +5,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import { ConfigService } from './core/config/config.service';
 import { Environment } from './core/config/environment.enum';
 import { pipeOptions } from './infra/validators/class/config';
 
@@ -33,7 +34,11 @@ async function bootstrap() {
 
   app.use(helmet());
   app.use(compression());
-  app.enableCors();
+
+  // `CORS_ORIGIN` é obrigatória no Joi e tem leitor no `ConfigService`, mas ninguém a usava: o
+  // `enableCors()` sem argumento libera qualquer origem. Proteção que só existe no `.env` é a mesma
+  // classe de problema do P3-03 — parece configurada e não configura nada.
+  app.enableCors({ origin: app.get(ConfigService).corsOrigin });
 
   // Sem isto o Nest ignora `SIGTERM`: o processo morre com jobs em execução, e cada job morto no
   // meio é uma NFS-e ou um boleto em estado ambíguo. Com os hooks ligados, os workers do BullMQ

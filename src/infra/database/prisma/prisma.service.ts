@@ -18,7 +18,17 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
     };
   }
 
+  /**
+   * Apaga o banco inteiro entre specs de integração.
+   *
+   * A guarda existe porque `.env.test` e `.env.development` já apontaram para o **mesmo** banco: um
+   * `npm test` numa máquina configurada para trabalho — ou para homologação — apagava tudo sem
+   * perguntar, e a única defesa era alguém lembrar. O nome do banco terminar em `_test` é a
+   * convenção; quem não a segue não roda a suíte de integração.
+   */
   public async truncate() {
+    PrismaService.ensureTestDatabase();
+
     await this.$transaction(async(tx) => {
       await tx.auditLog.deleteMany();
       await tx.nfmCronRun.deleteMany();
@@ -71,5 +81,33 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
       await tx.nbs.deleteMany();
       await tx.indop.deleteMany();
     });
+  }
+
+  /**
+   * O nome sai da própria `DATABASE_URL` — a mesma string que o Prisma usou para conectar —, e não
+   * de uma variável separada que poderia discordar dela.
+   */
+  private static ensureTestDatabase(): void {
+    const databaseUrl = process.env.DATABASE_URL;
+
+    if (!databaseUrl) {
+      throw new Error('DATABASE_URL não está definida: truncate() recusado.');
+    }
+
+    let databaseName: string;
+    try {
+      databaseName = new URL(databaseUrl).pathname.replace(/^\//, '');
+    }
+    catch {
+      throw new Error('DATABASE_URL inválida: truncate() recusado.');
+    }
+
+    if (!databaseName.endsWith('_test')) {
+      throw new Error(
+        `truncate() recusado: o banco "${databaseName}" não termina em "_test". A suíte de `
+        + 'integração apaga todas as tabelas — aponte DATABASE_URL para um banco de teste dedicado '
+        + '(ver README, "Banco de teste").',
+      );
+    }
   }
 }

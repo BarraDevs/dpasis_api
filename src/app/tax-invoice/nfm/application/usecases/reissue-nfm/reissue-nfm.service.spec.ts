@@ -127,11 +127,10 @@ describe('ReissueNfm - Unit tests', () => {
     NfseStatus.PENDING,
     NfseStatus.SUBMITTED,
     NfseStatus.PROCESSING,
-    NfseStatus.FAILED,
   ])(
     'should refuse to reissue a %s nfse without touching the provider',
     async(status) => {
-      // Arrange — §6: só REJECTED ou AWAITING_PROVIDER. FAILED é configuração, não cadastro.
+      // Arrange — emitida, cancelada ou ainda em andamento: nada a reemitir.
       jest.spyOn(nfmRepository, 'findById').mockResolvedValue(makeNfm(NfseFactory.load(makeNfseProps({ status }))));
 
       // Act & Assert
@@ -230,6 +229,48 @@ describe('ReissueNfm - Unit tests', () => {
     expect(nfse.props).toMatchObject({ status: NfseStatus.PENDING, batchProtocol: null, rpsNumber: 41 });
     expect(queueProducer.addIssueBatchJob).toHaveBeenCalledWith({ nfseId: 99 });
     expect(result.status).toBe(NfseStatus.PENDING);
+  });
+
+  it('should reuse the reserved RPS when the provider does not know a FAILED note', async() => {
+    // Arrange — configuração corrigida (caminho do certificado, senha, municipioSlug) e a nota
+    // presa em FAILED. Sem esta saída a NFM ficava inalcançável: o fechamento diário a pula porque
+    // `hasNfse()` continua verdadeiro, e nenhuma varredura devolve FAILED ao início do fluxo.
+    const nfse = NfseFactory.load(makeNfseProps({ status: NfseStatus.FAILED, batchProtocol: null }));
+    jest.spyOn(nfmRepository, 'findById').mockResolvedValue(makeNfm(nfse));
+    jest.spyOn(nfseRepository, 'findById').mockResolvedValue(nfse);
+    jest.spyOn(reconcileNfse, 'execute').mockResolvedValue({
+      nfseId: 99,
+      previousStatus: NfseStatus.FAILED,
+      newStatus: NfseStatus.FAILED,
+      source: ReconcileNfseSource.ProviderNotFound,
+    });
+
+    // Act
+    const result = await sut.execute(10, INPUT);
+
+    // Assert — o mesmo RPS volta para a fila; um número novo é o que produziria a segunda NFS-e.
+    expect(reconcileNfse.execute).toHaveBeenCalledWith({ nfseId: 99 });
+    expect(nfse.props).toMatchObject({ status: NfseStatus.PENDING, batchProtocol: null, rpsNumber: 41 });
+    expect(queueProducer.addIssueBatchJob).toHaveBeenCalledWith({ nfseId: 99 });
+    expect(result.status).toBe(NfseStatus.PENDING);
+  });
+
+  it('should refuse a FAILED note the provider turns out to have issued', async() => {
+    // Arrange — FAILED mentiroso: a nota existe no Giss. Reenviar aqui seria a segunda NFS-e.
+    const nfse = NfseFactory.load(makeNfseProps({ status: NfseStatus.FAILED }));
+    jest.spyOn(nfmRepository, 'findById').mockResolvedValue(makeNfm(nfse));
+    jest.spyOn(nfseRepository, 'findById').mockResolvedValue(nfse);
+    jest.spyOn(reconcileNfse, 'execute').mockResolvedValue({
+      nfseId: 99,
+      previousStatus: NfseStatus.FAILED,
+      newStatus: NfseStatus.ISSUED,
+      source: ReconcileNfseSource.ProviderIssued,
+      nfseNumber: '56037',
+    });
+
+    // Act & Assert
+    await expect(sut.execute(10, INPUT)).rejects.toThrow(NfseAlreadyIssuedAtProviderError);
+    expect(queueProducer.addIssueBatchJob).not.toHaveBeenCalled();
   });
 
   it('should not enqueue twice when the reconciliation already resent the RPS', async() => {

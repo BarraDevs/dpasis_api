@@ -1,4 +1,3 @@
-import { join } from 'node:path';
 import { Prisma, PrismaClient } from '@prisma/client';
 import { ClientAddressType } from '../../src/app/client/client-address/domain/enums/client-address-type.enum';
 import { ClientInvoiceConfigDueDateType } from '../../src/app/client/client-invoice-config/domain/enums/client-invoice-config-due-date-type.enum';
@@ -7,6 +6,7 @@ import { ClientInvoiceType } from '../../src/app/client/client/domain/enums/clie
 import { ClientType } from '../../src/app/client/client/domain/enums/client-type.enum';
 import { NfsProviderEnvironment } from '../../src/infra/nfs-generation/dtos/nfs-provider-credentials.dto';
 import { ClientSequenceSeed } from './client-sequence';
+import { requireGissCertPath } from './giss-cert-path';
 import { ResaleSequenceSeed } from './resale-sequence';
 
 /**
@@ -45,17 +45,6 @@ export const SEED_NFM_ELEGIBLE_CLIENT_IDS = [9_500_001, 9_500_002, 9_999_999] as
 const SEED_NFSE_CURL_CLIENT_ID = 9_999_999;
 const SEED_NFSE_CURL_COMPANY_ID = 516;
 const SEED_NFSE_CURL_PROVIDER_CNPJ = '02099923000178';
-const LEGACY_CERT_PATH = join(
-  __dirname,
-  '../../resources/files/nfs-generation/giss/DPA_TEC_EQUIPAMENTOS_DE_PONTO_LTDA_02099923000178.pfx',
-);
-
-/**
- * O certificado não é mais versionado (P0-07). `GISS_CERT_PATH` é a fonte da verdade; o caminho
- * legado em `resources/` fica como fallback para quem ainda tem o arquivo lá.
- */
-const SEED_NFSE_CURL_CERT_PATH = process.env.GISS_CERT_PATH ?? LEGACY_CERT_PATH;
-
 const SEED_GROUP_NAME = '__seed_nfm_elegivel_client_group';
 const SEED_BANK_CODE = '__SEED_NFM__';
 const SEED_BANK_AGENCY = '0001';
@@ -459,6 +448,8 @@ export class FindElegibleClientsNfmSeed {
       'SELECT setval(pg_get_serial_sequence(\'companies\', \'id\'), (SELECT MAX(id) FROM companies))',
     );
 
+    const certFilePath = requireGissCertPath();
+
     await prisma.nfsProviderConfig.upsert({
       where: { companyId: SEED_NFSE_CURL_COMPANY_ID },
       create: {
@@ -468,7 +459,7 @@ export class FindElegibleClientsNfmSeed {
         municipalCodeIbge: '3529401',
         serieRps: 'NFSE',
         environment: NfsProviderEnvironment.Production,
-        certFilePath: SEED_NFSE_CURL_CERT_PATH,
+        certFilePath,
         certPasswordEnvVar: 'GISS_CERT_PASSWORD',
         vendorConfig: { municipioSlug: 'maua' },
         municipalTaxCode: '620230001',
@@ -480,7 +471,7 @@ export class FindElegibleClientsNfmSeed {
         municipalCodeIbge: '3529401',
         serieRps: 'NFSE',
         environment: NfsProviderEnvironment.Production,
-        certFilePath: SEED_NFSE_CURL_CERT_PATH,
+        certFilePath,
         certPasswordEnvVar: 'GISS_CERT_PASSWORD',
         vendorConfig: { municipioSlug: 'maua' },
         municipalTaxCode: '620230001',

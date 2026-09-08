@@ -2,31 +2,22 @@
  * Dados mínimos para o curl em curl.md (companyId 516, clientId 9999999).
  * Uso: dotenv -e .env.development -- ts-node prisma/seeds/nfse-curl-manual-test.ts
  */
-import { join } from 'node:path';
 import { PrismaClient } from '@prisma/client';
 import { ClientAddressType } from '../../src/app/client/client-address/domain/enums/client-address-type.enum';
 import { ClientInvoiceType } from '../../src/app/client/client/domain/enums/client-invoice-type.enum';
 import { ClientType } from '../../src/app/client/client/domain/enums/client-type.enum';
 import { NfsProviderEnvironment } from '../../src/infra/nfs-generation/dtos/nfs-provider-credentials.dto';
+import { requireGissCertPath } from './giss-cert-path';
 
 const COMPANY_ID = 516;
 const CLIENT_ID = 9999999;
 const PROVIDER_CNPJ = '02099923000178';
 
-const LEGACY_CERT_PATH = join(
-  __dirname,
-  '../../resources/files/nfs-generation/giss/DPA_TEC_EQUIPAMENTOS_DE_PONTO_LTDA_02099923000178.pfx',
-);
-
-/**
- * O certificado não é mais versionado (P0-07). `GISS_CERT_PATH` é a fonte da verdade; o caminho
- * legado em `resources/` fica como fallback para quem ainda tem o arquivo lá.
- */
-const certFilePath = process.env.GISS_CERT_PATH ?? LEGACY_CERT_PATH;
-
 const prisma = new PrismaClient();
 
 async function main() {
+  const certFilePath = requireGissCertPath();
+
   const [group, resale] = await Promise.all([
     prisma.clientGroup.findFirst({ select: { id: true } }),
     prisma.resale.findFirst({ select: { id: true } }),
