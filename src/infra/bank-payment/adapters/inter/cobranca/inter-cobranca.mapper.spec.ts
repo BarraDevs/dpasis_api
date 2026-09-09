@@ -62,6 +62,127 @@ describe('InterCobrancaMapper - Unit tests', () => {
     });
   });
 
+  it('should map percent charges to Inter multa and mora', () => {
+    const input = {
+      provider: BankPaymentProvider.INTER,
+      yourNumber: 'INV-1',
+      amount: 150.5,
+      dueDate: '2026-09-01',
+      daysAfterDue: 30,
+      payer: {
+        document: '11122233344',
+        personType: BankPaymentPersonType.INDIVIDUAL,
+        name: 'João',
+      },
+      fineRate: 2,
+      moraRate: 1,
+    };
+
+    const result = InterCobrancaMapper.toIssueRequest(input);
+
+    expect(result.multa).toEqual({ codigo: 'PERCENTUAL', taxa: 2 });
+    expect(result.mora).toEqual({ codigo: 'TAXAMENSAL', taxa: 1 });
+    expect(result).not.toHaveProperty('desconto');
+  });
+
+  it('should omit Inter charge fields when rates are null', () => {
+    const input = {
+      provider: BankPaymentProvider.INTER,
+      yourNumber: 'INV-1',
+      amount: 10,
+      dueDate: '2026-09-01',
+      daysAfterDue: 30,
+      payer: {
+        document: '11122233344',
+        personType: BankPaymentPersonType.INDIVIDUAL,
+        name: 'João',
+      },
+      fineRate: null,
+      moraRate: null,
+    };
+
+    const result = InterCobrancaMapper.toIssueRequest(input);
+
+    expect(result.multa).toBeUndefined();
+    expect(result.mora).toBeUndefined();
+    expect(result).not.toHaveProperty('desconto');
+  });
+
+  it('should map fineRate 0 to Inter multa', () => {
+    // Arrange
+    const input = {
+      provider: BankPaymentProvider.INTER,
+      yourNumber: 'INV-1',
+      amount: 10,
+      dueDate: '2026-09-01',
+      daysAfterDue: 30,
+      payer: {
+        document: '11122233344',
+        personType: BankPaymentPersonType.INDIVIDUAL,
+        name: 'João',
+      },
+      fineRate: 0,
+    };
+
+    // Act
+    const result = InterCobrancaMapper.toIssueRequest(input);
+
+    // Assert
+    expect(result.multa).toEqual({ codigo: 'PERCENTUAL', taxa: 0 });
+    expect(result.mora).toBeUndefined();
+    expect(result).not.toHaveProperty('desconto');
+  });
+
+  it('should map only fineRate when moraRate is omitted', () => {
+    // Arrange
+    const input = {
+      provider: BankPaymentProvider.INTER,
+      yourNumber: 'INV-1',
+      amount: 10,
+      dueDate: '2026-09-01',
+      daysAfterDue: 30,
+      payer: {
+        document: '11122233344',
+        personType: BankPaymentPersonType.INDIVIDUAL,
+        name: 'João',
+      },
+      fineRate: 2,
+    };
+
+    // Act
+    const result = InterCobrancaMapper.toIssueRequest(input);
+
+    // Assert
+    expect(result.multa).toEqual({ codigo: 'PERCENTUAL', taxa: 2 });
+    expect(result.mora).toBeUndefined();
+    expect(result).not.toHaveProperty('desconto');
+  });
+
+  it('should map only moraRate when fineRate is omitted', () => {
+    // Arrange
+    const input = {
+      provider: BankPaymentProvider.INTER,
+      yourNumber: 'INV-1',
+      amount: 10,
+      dueDate: '2026-09-01',
+      daysAfterDue: 30,
+      payer: {
+        document: '11122233344',
+        personType: BankPaymentPersonType.INDIVIDUAL,
+        name: 'João',
+      },
+      moraRate: 1,
+    };
+
+    // Act
+    const result = InterCobrancaMapper.toIssueRequest(input);
+
+    // Assert
+    expect(result.mora).toEqual({ codigo: 'TAXAMENSAL', taxa: 1 });
+    expect(result.multa).toBeUndefined();
+    expect(result).not.toHaveProperty('desconto');
+  });
+
   it('should map COMPANY payer to JURIDICA', () => {
     // Arrange
     const input = {

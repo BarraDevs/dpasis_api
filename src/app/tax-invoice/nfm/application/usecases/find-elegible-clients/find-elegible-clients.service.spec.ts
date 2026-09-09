@@ -78,6 +78,8 @@ function makeInvoiceConfigDto(overrides: Partial<ClientInvoiceConfigDto> = {}): 
     bankCode: '001',
     bankName: 'Banco Teste',
     paymentLocation: null,
+    fineRate: null,
+    moraRate: null,
     active: true,
     createdAt: baseDate,
     updatedAt: baseDate,

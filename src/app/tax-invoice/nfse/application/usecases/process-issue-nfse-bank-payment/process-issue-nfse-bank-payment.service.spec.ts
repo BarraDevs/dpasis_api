@@ -79,6 +79,10 @@ function makeInvoiceConfig(overrides: Partial<ClientInvoiceConfigDto> = {}): Cli
     dueDateDay: 15,
     dueMonth: null,
     deadlineDays: null,
+    bank: {
+      fineRate: null,
+      moraRate: null,
+    } as ClientInvoiceConfigDto['bank'],
     ...overrides,
   });
 }
@@ -232,6 +236,8 @@ describe('ProcessIssueNfseBankPayment - Unit tests', () => {
       provider: BankPaymentProvider.INTER,
       yourNumber: '1',
       amount: 1000,
+      fineRate: null,
+      moraRate: null,
     }));
     expect(nfseRepository.edit).toHaveBeenCalledWith(nfse);
     expect(nfse.props).toMatchObject({
@@ -268,6 +274,8 @@ describe('ProcessIssueNfseBankPayment - Unit tests', () => {
     expect(issueBankPayment.execute).toHaveBeenCalledWith(expect.objectContaining({
       amount: 1000,
       yourNumber: '1',
+      fineRate: null,
+      moraRate: null,
     }));
     expect(nfseRepository.edit).toHaveBeenCalledWith(nfse);
     expect(nfse.props).toMatchObject({
@@ -335,6 +343,77 @@ describe('ProcessIssueNfseBankPayment - Unit tests', () => {
     expect(nfse.props.bankPaymentErrorMessage).toBe(
       'Configuração de faturamento do cliente ausente para emissão do boleto.',
     );
+    expect(nfse.props.bankPaymentFailedAt).toBeInstanceOf(Date);
+  });
+
+  it('should pass bank charges from invoice config when issuing', async() => {
+    // Arrange
+    const nfse = NfseFactory.load(makeNfseProps());
+    jest.spyOn(nfseRepository, 'findById').mockResolvedValue(nfse);
+    jest.spyOn(findClientInvoiceConfigByClientId, 'execute').mockResolvedValue(makeInvoiceConfig({
+      bank: {
+        fineRate: 2,
+        moraRate: 1,
+      } as ClientInvoiceConfigDto['bank'],
+    }));
+    jest.spyOn(issueBankPayment, 'execute').mockResolvedValue({
+      provider: BankPaymentProvider.INTER,
+      requestCode: 'req-charges',
+    });
+
+    // Act
+    await sut.execute({ nfseId: 1 });
+
+    // Assert
+    expect(issueBankPayment.execute).toHaveBeenCalledWith(expect.objectContaining({
+      fineRate: 2,
+      moraRate: 1,
+    }));
+  });
+
+  it('should issue without charges when snapshot has bankPayment and invoice config is missing', async() => {
+    // Arrange
+    const nfse = NfseFactory.load(makeNfseProps());
+    jest.spyOn(nfseRepository, 'findById').mockResolvedValue(nfse);
+    jest.spyOn(findClientInvoiceConfigByClientId, 'execute').mockRejectedValue(new ClientInvoiceConfigNotFoundError());
+    jest.spyOn(issueBankPayment, 'execute').mockResolvedValue({
+      provider: BankPaymentProvider.INTER,
+      requestCode: 'req-snapshot',
+    });
+    const loggerSpy = jest.spyOn(logger, 'error');
+
+    // Act
+    const result = await sut.execute({ nfseId: 1 });
+
+    // Assert
+    expect(result).toEqual({
+      provider: BankPaymentProvider.INTER,
+      requestCode: 'req-snapshot',
+    });
+    expect(issueBankPayment.execute).toHaveBeenCalledWith(expect.objectContaining({
+      fineRate: null,
+      moraRate: null,
+    }));
+    expect(loggerSpy).not.toHaveBeenCalled();
+    expect(nfseRepository.edit).toHaveBeenCalledWith(nfse);
+  });
+
+  it('should fail the job when snapshot has bankPayment and invoice config lookup fails with a generic error', async() => {
+    // Arrange
+    const nfse = NfseFactory.load(makeNfseProps());
+    const err = new Error('database down');
+    jest.spyOn(nfseRepository, 'findById').mockResolvedValue(nfse);
+    jest.spyOn(findClientInvoiceConfigByClientId, 'execute').mockRejectedValue(err);
+    const loggerSpy = jest.spyOn(logger, 'error');
+
+    // Act & Assert
+    await expect(sut.execute({ nfseId: 1 })).rejects.toThrow(PermanentProviderError);
+    expect(loggerSpy).toHaveBeenCalledWith(LogContext.BANK_PAYMENT, expect.objectContaining({
+      adapter: 'nfse',
+      action: 'processIssueNfseBankPayment',
+      error: err,
+    }));
+    expect(issueBankPayment.execute).not.toHaveBeenCalled();
     expect(nfse.props.bankPaymentFailedAt).toBeInstanceOf(Date);
   });
 

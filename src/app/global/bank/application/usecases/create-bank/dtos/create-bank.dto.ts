@@ -1,5 +1,13 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Max,
+  MaxLength,
+  Min,
+} from 'class-validator';
 import { Trim } from 'src/infra/validators/class/decorators/trim/trim';
 
 export class CreateBankInputDto {
@@ -50,6 +58,20 @@ export class CreateBankInputDto {
   @IsString({ message: '$property deve ser uma string' })
   @Trim()
   paymentLocation: string | null;
+
+  @ApiPropertyOptional({ example: 2, description: 'Percentual de multa após o vencimento (ex.: 2 = 2%)' })
+  @IsOptional()
+  @IsNumber({ maxDecimalPlaces: 2 }, { message: '$property deve ser um número com até 2 casas decimais' })
+  @Min(0, { message: '$property deve ser maior ou igual a 0' })
+  @Max(100, { message: '$property deve ser menor ou igual a 100' })
+  fineRate?: number | null;
+
+  @ApiPropertyOptional({ example: 1, description: 'Percentual de mora ao mês (ex.: 1 = 1% a.m.)' })
+  @IsOptional()
+  @IsNumber({ maxDecimalPlaces: 2 }, { message: '$property deve ser um número com até 2 casas decimais' })
+  @Min(0, { message: '$property deve ser maior ou igual a 0' })
+  @Max(100, { message: '$property deve ser menor ou igual a 100' })
+  moraRate?: number | null;
 }
 
 export class CreateBankOutputDto {

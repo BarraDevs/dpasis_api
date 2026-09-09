@@ -43,6 +43,37 @@ describe('IssueBankPaymentInputDto', () => {
     expect(result.payer.name).toBe('João da Silva');
   });
 
+  it('should accept optional charge fields', async() => {
+    const result = await target.transform(makeValidInput({
+      fineRate: 2,
+      moraRate: 1,
+    }), metadata);
+
+    expect(result.fineRate).toBe(2);
+    expect(result.moraRate).toBe(1);
+  });
+
+  it('should reject fineRate greater than 100', async() => {
+    expect.assertions(1);
+    return target.transform(makeValidInput({ fineRate: 101 }), metadata).catch((error) => {
+      expectMessageToContain(error.getResponse().message, 'fineRate');
+    });
+  });
+
+  it('should reject moraRate greater than 100', async() => {
+    expect.assertions(1);
+    return target.transform(makeValidInput({ moraRate: 101 }), metadata).catch((error) => {
+      expectMessageToContain(error.getResponse().message, 'moraRate');
+    });
+  });
+
+  it('should reject fineRate with more than 2 decimal places', async() => {
+    expect.assertions(1);
+    return target.transform(makeValidInput({ fineRate: 2.001 }), metadata).catch((error) => {
+      expectMessageToContain(error.getResponse().message, 'fineRate deve ser um número com até 2 casas decimais');
+    });
+  });
+
   it('should reject missing payer name', async() => {
     expect.assertions(1);
     return target.transform(makeValidInput({

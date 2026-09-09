@@ -4,8 +4,10 @@ import { FindBankPaymentByYourNumber } from 'src/app/bank-payment/application/us
 import { FindBankPayment } from 'src/app/bank-payment/application/usecases/find-bank-payment/find-bank-payment.service';
 import { IssueBankPaymentOutputDto } from 'src/app/bank-payment/application/usecases/issue-bank-payment/dtos/issue-bank-payment.dto';
 import { IssueBankPayment } from 'src/app/bank-payment/application/usecases/issue-bank-payment/issue-bank-payment.service';
+import { ClientInvoiceConfigDto } from 'src/app/client/client-invoice-config/application/dtos/client-invoice-config.dto';
 import { FindClientInvoiceConfigByClientId } from 'src/app/client/client-invoice-config/application/usecases/find-client-invoice-config-by-client-id/find-client-invoice-config-by-client-id.service';
 import { ClientInvoiceConfigNotFoundError } from 'src/app/client/client-invoice-config/domain/errors/client-invoice-config-not-found.error';
+import { bankChargesFromDto } from 'src/app/global/bank/application/mappers/to-bank.dto';
 import { SAO_PAULO_TIMEZONE } from 'src/core/constants/timezone.constant';
 import { TOKENS } from 'src/core/di/token';
 import { AppException } from 'src/core/filters/app.exception';
@@ -59,13 +61,27 @@ export class ProcessIssueNfseBankPayment {
 
     const snapshot = nfse.props.data as unknown as NfseIssueSnapshot;
     let bankPayment = snapshot.bankPayment;
+    let fineRate: number | null = null;
+    let moraRate: number | null = null;
 
-    if (!bankPayment) {
-      try {
-        bankPayment = await this.loadBankPaymentFallback(nfse.props.clientId, issuedAt);
+    try {
+      const invoiceConfig = await this.findClientInvoiceConfigByClientId.execute(nfse.props.clientId);
+      if (!invoiceConfig) {
+        throw new ClientInvoiceConfigNotFoundError();
       }
-      catch (error: unknown) {
-        throw await this.failBankPayment(nfse, this.resolveErrorMessage(error), error);
+      const charges = bankChargesFromDto(invoiceConfig.bank);
+      fineRate = charges.fineRate;
+      moraRate = charges.moraRate;
+      if (!bankPayment) {
+        bankPayment = this.toBankPaymentSnapshot(invoiceConfig, issuedAt);
+      }
+    }
+    catch (error: unknown) {
+      if (!(bankPayment && error instanceof ClientInvoiceConfigNotFoundError)) {
+        const wrapped = error instanceof ClientInvoiceConfigNotFoundError
+          ? new AppException('Configuração de faturamento do cliente ausente para emissão do boleto.')
+          : error;
+        throw await this.failBankPayment(nfse, this.resolveErrorMessage(wrapped), wrapped);
       }
     }
 
@@ -76,6 +92,8 @@ export class ProcessIssueNfseBankPayment {
         issuedAt,
         snapshot,
         bankPayment,
+        fineRate,
+        moraRate,
       });
     }
     catch (error: unknown) {
@@ -216,25 +234,16 @@ export class ProcessIssueNfseBankPayment {
    * retentativa que cruza a virada do mês calcular outro vencimento, abrindo uma chave de
    * idempotência nova no Inter e emitindo um segundo boleto.
    */
-  private async loadBankPaymentFallback(clientId: number, issuedAt: Date): Promise<NfseBankPaymentSnapshot> {
-    try {
-      const invoiceConfig = await this.findClientInvoiceConfigByClientId.execute(clientId);
-      const issuedAtInSp = DateTime.fromJSDate(issuedAt).setZone(SAO_PAULO_TIMEZONE);
-      return {
-        invoiceType: invoiceConfig.type,
-        dueDateType: invoiceConfig.dueDateType,
-        dueDateDay: invoiceConfig.dueDateDay,
-        dueMonth: invoiceConfig.dueMonth,
-        deadlineDays: invoiceConfig.deadlineDays,
-        referenceMonth: issuedAtInSp.month,
-        referenceYear: issuedAtInSp.year,
-      };
-    }
-    catch (error: unknown) {
-      if (error instanceof ClientInvoiceConfigNotFoundError) {
-        throw new AppException('Configuração de faturamento do cliente ausente para emissão do boleto.');
-      }
-      throw error;
-    }
+  private toBankPaymentSnapshot(invoiceConfig: ClientInvoiceConfigDto, issuedAt: Date): NfseBankPaymentSnapshot {
+    const issuedAtInSp = DateTime.fromJSDate(issuedAt).setZone(SAO_PAULO_TIMEZONE);
+    return {
+      invoiceType: invoiceConfig.type,
+      dueDateType: invoiceConfig.dueDateType,
+      dueDateDay: invoiceConfig.dueDateDay,
+      dueMonth: invoiceConfig.dueMonth,
+      deadlineDays: invoiceConfig.deadlineDays,
+      referenceMonth: issuedAtInSp.month,
+      referenceYear: issuedAtInSp.year,
+    };
   }
 }

@@ -73,6 +73,8 @@ describe('CreateBank - Integration tests', () => {
       bankCode: input.bankCode,
       bankName: input.bankName,
       paymentLocation: null,
+      fineRate: null,
+      moraRate: null,
       active: true,
       createdAt: expect.any(Date),
       updatedAt: expect.any(Date),

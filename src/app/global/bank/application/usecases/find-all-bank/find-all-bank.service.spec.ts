@@ -197,6 +197,8 @@ describe('FindAllBank - Integration tests', () => {
       bankCode: bank.bankCode,
       bankName: bank.bankName,
       paymentLocation: bank.paymentLocation,
+      fineRate: null,
+      moraRate: null,
       active: bank.active,
       createdAt: bank.createdAt,
       updatedAt: bank.updatedAt,

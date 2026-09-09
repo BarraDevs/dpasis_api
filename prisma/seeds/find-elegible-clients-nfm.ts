@@ -16,7 +16,7 @@ import { ResaleSequenceSeed } from './resale-sequence';
  * - `emissionDay` ajustado para manter `dueDateDay - emissionDay >= 15` quando possível.
  * - IDs na faixa `9_500_0xx` e CNPJs `88.888.888/000x-xx` só para seed.
  * - `9_999_999` = cliente do curl NFSe (`nfse-curl-manual-test.ts`, company 516 / GISS).
- * - Sequência RPS da company 516 sobe para piso `80_560` no seed (evita E10 no GISS após resets locais).
+ * - Sequência RPS da company 516 sobe para piso `80_630` no seed (evita E10 no GISS após resets locais).
  *
  * Se mudar o dia do calendário e a lista vier vazia, rode o seed de novo (`npm run db:seed`).
  * Use o mesmo fuso do servidor da API.
@@ -361,7 +361,7 @@ export class FindElegibleClientsNfmSeed {
           description: splitCnae
             ? `Item seed NFM — grupo CNAE/NBS/INDOP #1 (${profile.fantasyName})`
             : `Item seed NFM — serviço (${profile.fantasyName})`,
-          quantity: 14,
+          quantity: 20,
           unitValueInCents: 100,
           cnaeNbsIndopId: deps.cnaeNbsIndopId,
           active: itemActive,
@@ -371,7 +371,7 @@ export class FindElegibleClientsNfmSeed {
           description: splitCnae
             ? `Item seed NFM — grupo CNAE/NBS/INDOP #2 (${profile.fantasyName})`
             : `Item seed NFM — manutenção (${profile.fantasyName})`,
-          quantity: 25,
+          quantity: 31,
           unitValueInCents: 50,
           cnaeNbsIndopId: splitCnae ? deps.cnaeNbsIndopId2 : deps.cnaeNbsIndopId,
           active: itemActive,
@@ -482,7 +482,7 @@ export class FindElegibleClientsNfmSeed {
     // GISS rejeita RPS duplicado (E10). Sequência local costuma recomeçar em 1 após reset,
     // enquanto o GISS já consumiu números em testes anteriores. Piso alto evita colisão;
     // nota real 55363 usou RPS 73468 (série 1) — margem acima disso.
-    const rpsSequenceFloor = 80_560;
+    const rpsSequenceFloor = 80_630;
     const existingSeq = await prisma.nfseRpsSequence.findUnique({
       where: { companyId: SEED_NFSE_CURL_COMPANY_ID },
       select: { nextId: true },
