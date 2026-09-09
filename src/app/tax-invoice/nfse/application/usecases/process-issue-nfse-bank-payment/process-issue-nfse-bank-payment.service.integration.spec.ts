@@ -107,7 +107,10 @@ async function seedClient(prisma: PrismaService, clientId: number) {
   });
 }
 
-async function seedBank(prisma: PrismaService) {
+async function seedBank(prisma: PrismaService, charges?: {
+  fineRate?: number | null;
+  moraRate?: number | null;
+}) {
   return prisma.bank.create({
     data: {
       drawer: 'Test Drawer',
@@ -117,6 +120,8 @@ async function seedBank(prisma: PrismaService) {
       bankCode: '001',
       bankName: 'Test Bank',
       paymentLocation: null,
+      fineRate: charges?.fineRate ?? null,
+      moraRate: charges?.moraRate ?? null,
       active: true,
     },
   });
@@ -343,6 +348,46 @@ describe('ProcessIssueNfseBankPayment - Integration tests', () => {
     });
   });
 
+  it('should send bank fineRate and moraRate when issuing', async() => {
+    const company = await seedCompany(prisma);
+    const clientId = Date.now() % 100_000;
+    const client = await seedClient(prisma, clientId);
+    const bank = await seedBank(prisma, {
+      fineRate: 2,
+      moraRate: 1,
+    });
+    const billingAddress = await prisma.clientAddress.create({
+      data: {
+        clientId: client.id,
+        type: ClientAddressType.BILLING,
+        zipCode: '01310-100',
+        street: 'Av Paulista',
+        number: '500',
+        complement: null,
+        neighborhood: 'Bela Vista',
+        city: 'São Paulo',
+        cityCodeIbge: '3550308',
+        state: 'SP',
+        active: true,
+      },
+    });
+    await seedInvoiceConfig(prisma, client.id, billingAddress.id, bank.id);
+    const nfse = await seedNfse(prisma, company.id, {
+      clientId: client.id,
+    });
+    bankPaymentGateway.issueResult = {
+      provider: BankPaymentProvider.INTER,
+      requestCode: 'req-charges',
+    };
+
+    await sut.execute({ nfseId: nfse.id });
+
+    expect(bankPaymentGateway.issueCalls[0]).toMatchObject({
+      fineRate: 2,
+      moraRate: 1,
+    });
+  });
+
   it('should return without issuing when fallback invoice config is missing', async() => {
     // Arrange
     const company = await seedCompany(prisma);
@@ -362,5 +407,36 @@ describe('ProcessIssueNfseBankPayment - Integration tests', () => {
     const saved = await prisma.nfse.findUnique({ where: { id: nfse.id } });
     expect(saved?.bankPaymentProvider).toBeNull();
     expect(saved?.bankPaymentRequestCode).toBeNull();
+  });
+
+  it('should issue without charges when snapshot has calendar and invoice config is missing', async() => {
+    // Arrange
+    const company = await seedCompany(prisma);
+    const clientId = Date.now() % 100_000;
+    await seedClient(prisma, clientId);
+    const nfse = await seedNfse(prisma, company.id, { clientId });
+    bankPaymentGateway.issueResult = {
+      provider: BankPaymentProvider.INTER,
+      requestCode: 'req-snapshot-no-config',
+    };
+
+    // Act
+    const result = await sut.execute({ nfseId: nfse.id });
+
+    // Assert
+    expect(result).toEqual({
+      provider: BankPaymentProvider.INTER,
+      requestCode: 'req-snapshot-no-config',
+    });
+    expect(bankPaymentGateway.issueCalls).toHaveLength(1);
+    expect(bankPaymentGateway.issueCalls[0]).toMatchObject({
+      fineRate: null,
+      moraRate: null,
+    });
+    const saved = await prisma.nfse.findUnique({ where: { id: nfse.id } });
+    expect(saved).toMatchObject({
+      bankPaymentProvider: BankPaymentProvider.INTER,
+      bankPaymentRequestCode: 'req-snapshot-no-config',
+    });
   });
 });

@@ -55,13 +55,29 @@ const STATUS_TO_INTER: Partial<Record<BankPaymentStatus, string>> = {
 
 export class InterCobrancaMapper {
   public static toIssueRequest(input: IssueBankPaymentInputDto): InterEmitirCobrancaRequestDto {
-    return {
+    const request: InterEmitirCobrancaRequestDto = {
       seuNumero: input.yourNumber,
       valorNominal: input.amount,
       dataVencimento: input.dueDate,
       numDiasAgenda: input.daysAfterDue,
       pagador: this.toInterPayer(input.payer),
     };
+
+    if (input.fineRate != null) {
+      request.multa = {
+        codigo: 'PERCENTUAL',
+        taxa: input.fineRate,
+      };
+    }
+
+    if (input.moraRate != null) {
+      request.mora = {
+        codigo: 'TAXAMENSAL',
+        taxa: input.moraRate,
+      };
+    }
+
+    return request;
   }
 
   public static toCancelRequest(input: CancelBankPaymentInputDto): InterCancelarCobrancaRequestDto {

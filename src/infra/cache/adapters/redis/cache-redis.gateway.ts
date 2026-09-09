@@ -108,7 +108,7 @@ export class CacheRedisAdapterGateway implements ICacheGateway {
   public async deleteContaining(key: string): Promise<void> {
     try {
       const keys: string[] = [];
-      let cursor = 0;
+      let cursor = '0';
 
       do {
         const result = await this.client?.scan(cursor, { MATCH: `*${key}*`, COUNT: 100 });
@@ -116,7 +116,7 @@ export class CacheRedisAdapterGateway implements ICacheGateway {
           cursor = result.cursor;
           keys.push(...result.keys);
         }
-      } while (cursor !== 0);
+      } while (cursor !== '0');
 
       if (keys.length > 0) {
         await this.client?.del(keys);

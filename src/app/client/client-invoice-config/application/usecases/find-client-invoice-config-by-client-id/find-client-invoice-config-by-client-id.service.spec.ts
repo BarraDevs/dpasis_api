@@ -51,6 +51,8 @@ describe('FindClientInvoiceConfigByClientId - Integration tests', () => {
       bankCode: '001',
       bankName: 'Test Bank',
       paymentLocation: null,
+      fineRate: null,
+      moraRate: null,
       active: true,
       createdAt: bankRow.createdAt,
       updatedAt: bankRow.updatedAt,

@@ -85,6 +85,8 @@ function makeNfmDto(overrides: Partial<NfmDto> = {}): NfmDto {
         bankCode: '001',
         bankName: 'Banco',
         paymentLocation: null,
+        fineRate: null,
+        moraRate: null,
         active: true,
         createdAt: new Date(),
         updatedAt: new Date(),

@@ -24,6 +24,8 @@ export type InterEmitirCobrancaRequestDto = {
   dataVencimento: string;
   numDiasAgenda: number;
   pagador: InterPagadorDto;
+  multa?: InterCobrancaMultaDto;
+  mora?: InterCobrancaMoraDto;
 };
 
 export type InterEmitirCobrancaResponseDto = {

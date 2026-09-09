@@ -303,4 +303,56 @@ describe('NfseToIssueBankPaymentMapper - Unit tests', () => {
     expect(result.payer.complement).toBe('Apto 12');
     expect(result.payer.zipCode).toBe('01310100');
   });
+
+  it('should propagate bank charges when provided', () => {
+    // Arrange
+    const snapshot = makeSnapshot();
+
+    // Act
+    const result = NfseToIssueBankPaymentMapper.toIssueBankPaymentInput({
+      nfseId: 7,
+      issuedAt: new Date('2026-08-20T15:00:00-03:00'),
+      snapshot,
+      fineRate: 2,
+      moraRate: 1,
+    });
+
+    // Assert
+    expect(result.fineRate).toBe(2);
+    expect(result.moraRate).toBe(1);
+  });
+
+  it('should default charge fields to null when omitted', () => {
+    // Arrange
+    const snapshot = makeSnapshot();
+
+    // Act
+    const result = NfseToIssueBankPaymentMapper.toIssueBankPaymentInput({
+      nfseId: 7,
+      issuedAt: new Date('2026-08-20T15:00:00-03:00'),
+      snapshot,
+    });
+
+    // Assert
+    expect(result.fineRate).toBeNull();
+    expect(result.moraRate).toBeNull();
+  });
+
+  it('should keep fineRate 0 instead of coercing to null', () => {
+    // Arrange
+    const snapshot = makeSnapshot();
+
+    // Act
+    const result = NfseToIssueBankPaymentMapper.toIssueBankPaymentInput({
+      nfseId: 7,
+      issuedAt: new Date('2026-08-20T15:00:00-03:00'),
+      snapshot,
+      fineRate: 0,
+      moraRate: 0,
+    });
+
+    // Assert
+    expect(result.fineRate).toBe(0);
+    expect(result.moraRate).toBe(0);
+  });
 });

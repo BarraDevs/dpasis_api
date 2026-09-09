@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { BankDto } from 'src/app/global/bank/application/dtos/bank.dto';
+import { toBankDto } from 'src/app/global/bank/application/mappers/to-bank.dto';
 import { IBankDao } from 'src/app/global/bank/application/persistence/dao/bank-dao.interface';
 import { CreateBankInputDto } from 'src/app/global/bank/application/usecases/create-bank/dtos/create-bank.dto';
 import { EditBankInputDto } from 'src/app/global/bank/application/usecases/edit-bank/dtos/edit-bank.dto';
@@ -16,6 +17,8 @@ const BankSelect = {
   bankCode: true,
   bankName: true,
   paymentLocation: true,
+  fineRate: true,
+  moraRate: true,
   active: true,
   createdAt: true,
   updatedAt: true,
@@ -57,14 +60,16 @@ export class BankDaoAdapterPrisma implements IBankDao {
       this.prisma.bank.count({ where }),
     ]);
 
-    return [banks, total];
+    return [banks.map(row => toBankDto(row)), total];
   }
 
   public async findById(id: number): Promise<BankDto | null> {
-    return this.prisma.bank.findUnique({
+    const row = await this.prisma.bank.findUnique({
       where: { id },
       select: BankSelect,
     });
+
+    return row ? toBankDto(row) : null;
   }
 
   public async findByBankCodeAgencyAccount(
@@ -72,7 +77,7 @@ export class BankDaoAdapterPrisma implements IBankDao {
     agency: string,
     account: string,
   ): Promise<BankDto | null> {
-    return this.prisma.bank.findFirst({
+    const row = await this.prisma.bank.findFirst({
       where: {
         bankCode: { equals: bankCode.trim(), mode: 'insensitive' },
         agency: { equals: agency.trim(), mode: 'insensitive' },
@@ -80,6 +85,8 @@ export class BankDaoAdapterPrisma implements IBankDao {
       },
       select: BankSelect,
     });
+
+    return row ? toBankDto(row) : null;
   }
 
   public async save(data: CreateBankInputDto): Promise<number> {
@@ -92,6 +99,7 @@ export class BankDaoAdapterPrisma implements IBankDao {
         bankCode: data.bankCode.trim(),
         bankName: data.bankName.trim(),
         paymentLocation: data.paymentLocation?.trim() ?? null,
+        ...this.chargePersistence(data),
       },
     });
 
@@ -109,6 +117,7 @@ export class BankDaoAdapterPrisma implements IBankDao {
         bankCode: data.bankCode.trim(),
         bankName: data.bankName.trim(),
         paymentLocation: data.paymentLocation?.trim() ?? null,
+        ...this.chargePersistence(data),
       },
     });
   }
@@ -130,5 +139,15 @@ export class BankDaoAdapterPrisma implements IBankDao {
     return this.prisma.clientInvoiceConfig.count({
       where: { bankId },
     });
+  }
+
+  private chargePersistence(data: CreateBankInputDto | EditBankInputDto): Pick<
+    Prisma.BankCreateInput,
+    'fineRate' | 'moraRate'
+  > {
+    return {
+      fineRate: data.fineRate ?? null,
+      moraRate: data.moraRate ?? null,
+    };
   }
 }

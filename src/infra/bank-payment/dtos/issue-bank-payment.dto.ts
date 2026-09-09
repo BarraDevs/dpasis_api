@@ -8,6 +8,8 @@ export class IssueBankPaymentInputDto {
   dueDate: string;
   daysAfterDue: number;
   payer: BankPaymentPayerDto;
+  fineRate?: number | null;
+  moraRate?: number | null;
 }
 
 export class IssueBankPaymentOutputDto {

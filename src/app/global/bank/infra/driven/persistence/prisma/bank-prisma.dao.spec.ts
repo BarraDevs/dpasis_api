@@ -190,6 +190,8 @@ describe('BankDaoAdapterPrisma - Integration tests', () => {
         bankCode: created.bankCode,
         bankName: created.bankName,
         paymentLocation: created.paymentLocation,
+        fineRate: null,
+        moraRate: null,
         active: created.active,
         createdAt: created.createdAt,
         updatedAt: created.updatedAt,
@@ -323,6 +325,28 @@ describe('BankDaoAdapterPrisma - Integration tests', () => {
       const saved = await prisma.bank.findUnique({ where: { id } });
       expect(saved?.paymentLocation).toBe(data.paymentLocation);
     });
+
+    it('should persist and return fineRate and moraRate as numbers', async() => {
+      // Arrange
+      const data: CreateBankInputDto = {
+        ...baseBankData,
+        fineRate: 2,
+        moraRate: 1,
+      };
+
+      // Act
+      const id = await sut.save(data);
+      const result = await sut.findById(id);
+
+      // Assert
+      expect(result).toMatchObject({
+        id,
+        fineRate: 2,
+        moraRate: 1,
+      });
+      expect(typeof result?.fineRate).toBe('number');
+      expect(typeof result?.moraRate).toBe('number');
+    });
   });
 
   describe('edit', () => {
@@ -353,6 +377,27 @@ describe('BankDaoAdapterPrisma - Integration tests', () => {
       expect(updated?.bankCode).toBe('033');
       expect(updated?.bankName).toBe('Santander');
       expect(updated?.active).toBe(true);
+    });
+
+    it('should update and clear charge fields', async() => {
+      const bank = await prisma.bank.create({
+        data: {
+          ...baseBankData,
+          fineRate: 2,
+          moraRate: 1,
+        },
+      });
+
+      await sut.edit(bank.id, {
+        ...baseBankData,
+        bankName: 'Santander',
+        fineRate: null,
+        moraRate: null,
+      });
+
+      const result = await sut.findById(bank.id);
+      expect(result?.fineRate).toBeNull();
+      expect(result?.moraRate).toBeNull();
     });
   });
 

@@ -7,6 +7,8 @@ export class BankDto {
   bankCode: string;
   bankName: string;
   paymentLocation: string | null;
+  fineRate: number | null;
+  moraRate: number | null;
   active: boolean;
   createdAt: Date;
   updatedAt: Date;

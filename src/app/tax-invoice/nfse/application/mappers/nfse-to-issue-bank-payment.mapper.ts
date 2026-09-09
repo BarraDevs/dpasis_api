@@ -11,6 +11,8 @@ export type NfseToIssueBankPaymentParams = {
   issuedAt: Date;
   snapshot: NfseIssueSnapshot;
   bankPayment?: NfseBankPaymentSnapshot;
+  fineRate?: number | null;
+  moraRate?: number | null;
 };
 
 export class NfseToIssueBankPaymentMapper {
@@ -53,6 +55,8 @@ export class NfseToIssueBankPaymentMapper {
         state: takerAddress.state,
         zipCode: takerAddress.zipCode?.replace(/\D/g, '').slice(0, 8),
       },
+      fineRate: params.fineRate ?? null,
+      moraRate: params.moraRate ?? null,
     };
   }
 

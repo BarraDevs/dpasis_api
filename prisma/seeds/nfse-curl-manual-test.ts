@@ -116,7 +116,7 @@ async function main() {
     },
   });
 
-  const rpsSequenceFloor = 80_560;
+  const rpsSequenceFloor = 80_630;
   const existingSeq = await prisma.nfseRpsSequence.findUnique({
     where: { companyId: COMPANY_ID },
     select: { nextId: true },

@@ -1,8 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { IssueBankPaymentOutputDto } from 'src/app/bank-payment/application/usecases/issue-bank-payment/dtos/issue-bank-payment.dto';
 import { IssueBankPayment } from 'src/app/bank-payment/application/usecases/issue-bank-payment/issue-bank-payment.service';
+import { ClientInvoiceConfigDto } from 'src/app/client/client-invoice-config/application/dtos/client-invoice-config.dto';
 import { FindClientInvoiceConfigByClientId } from 'src/app/client/client-invoice-config/application/usecases/find-client-invoice-config-by-client-id/find-client-invoice-config-by-client-id.service';
 import { ClientInvoiceConfigNotFoundError } from 'src/app/client/client-invoice-config/domain/errors/client-invoice-config-not-found.error';
+import { bankChargesFromDto } from 'src/app/global/bank/application/mappers/to-bank.dto';
 import { TOKENS } from 'src/core/di/token';
 import { AppException } from 'src/core/filters/app.exception';
 import { LogContext, type ILoggerGateway } from 'src/infra/logger/logger.gateway';
@@ -36,16 +38,32 @@ export class ProcessIssueNfseBankPayment {
 
     const snapshot = nfse.props.data as unknown as NfseIssueSnapshot;
     let bankPayment = snapshot.bankPayment;
+    let fineRate: number | null = null;
+    let moraRate: number | null = null;
 
-    if (!bankPayment) {
-      try {
-        bankPayment = await this.loadBankPaymentFallback(nfse.props.clientId);
+    try {
+      const invoiceConfig = await this.findClientInvoiceConfigByClientId.execute(nfse.props.clientId);
+      if (!invoiceConfig) {
+        throw new ClientInvoiceConfigNotFoundError();
       }
-      catch (error: unknown) {
+      const charges = bankChargesFromDto(invoiceConfig.bank);
+      fineRate = charges.fineRate;
+      moraRate = charges.moraRate;
+      if (!bankPayment) {
+        bankPayment = this.toBankPaymentSnapshot(invoiceConfig);
+      }
+    }
+    catch (error: unknown) {
+      if (bankPayment && error instanceof ClientInvoiceConfigNotFoundError) {
+        // snapshot already has calendar; emit without bank charges
+      }
+      else {
         this.logger.error(LogContext.BANK_PAYMENT, {
           adapter: 'nfse',
           action: 'processIssueNfseBankPayment',
-          error,
+          error: error instanceof ClientInvoiceConfigNotFoundError
+            ? new AppException('Configuração de faturamento do cliente ausente para emissão do boleto.')
+            : error,
         });
         return null;
       }
@@ -58,6 +76,8 @@ export class ProcessIssueNfseBankPayment {
         issuedAt: nfse.props.issuedAt ?? new Date(),
         snapshot,
         bankPayment,
+        fineRate,
+        moraRate,
       });
     }
     catch (error: unknown) {
@@ -77,25 +97,16 @@ export class ProcessIssueNfseBankPayment {
     return result;
   }
 
-  private async loadBankPaymentFallback(clientId: number): Promise<NfseBankPaymentSnapshot> {
-    try {
-      const invoiceConfig = await this.findClientInvoiceConfigByClientId.execute(clientId);
-      const nowInSp = DateTime.now().setZone('America/Sao_Paulo');
-      return {
-        invoiceType: invoiceConfig.type,
-        dueDateType: invoiceConfig.dueDateType,
-        dueDateDay: invoiceConfig.dueDateDay,
-        dueMonth: invoiceConfig.dueMonth,
-        deadlineDays: invoiceConfig.deadlineDays,
-        referenceMonth: nowInSp.month,
-        referenceYear: nowInSp.year,
-      };
-    }
-    catch (error: unknown) {
-      if (error instanceof ClientInvoiceConfigNotFoundError) {
-        throw new AppException('Configuração de faturamento do cliente ausente para emissão do boleto.');
-      }
-      throw error;
-    }
+  private toBankPaymentSnapshot(invoiceConfig: ClientInvoiceConfigDto): NfseBankPaymentSnapshot {
+    const nowInSp = DateTime.now().setZone('America/Sao_Paulo');
+    return {
+      invoiceType: invoiceConfig.type,
+      dueDateType: invoiceConfig.dueDateType,
+      dueDateDay: invoiceConfig.dueDateDay,
+      dueMonth: invoiceConfig.dueMonth,
+      deadlineDays: invoiceConfig.deadlineDays,
+      referenceMonth: nowInSp.month,
+      referenceYear: nowInSp.year,
+    };
   }
 }
