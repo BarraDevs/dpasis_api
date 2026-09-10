@@ -26,6 +26,7 @@ import { ProcessPollNfseBatch } from '../usecases/process-poll-nfse-batch/proces
 import { ConfirmNfseBankPayment } from '../usecases/confirm-nfse-bank-payment/confirm-nfse-bank-payment.service';
 import { ReconcileNfsePeriod } from '../usecases/reconcile-nfse-period/reconcile-nfse-period.service';
 import { ReconcileNfse } from '../usecases/reconcile-nfse/reconcile-nfse.service';
+import { ReissueNfseBankPayment } from '../usecases/reissue-nfse-bank-payment/reissue-nfse-bank-payment.service';
 
 const THIRTY_DAYS_IN_SECONDS = 2_592_000;
 
@@ -74,6 +75,7 @@ export class NfseQueueModule {
         ReconcileNfse,
         ReconcileNfsePeriod,
         ConfirmNfseBankPayment,
+        ReissueNfseBankPayment,
         {
           provide: TOKENS.NfseQueueProducer,
           useClass: queueEnabled ? NfseQueueBullmqAdapterProducer : NfseQueueFakeAdapterProducer,
@@ -98,6 +100,7 @@ export class NfseQueueModule {
         ReconcileNfse,
         ReconcileNfsePeriod,
         ConfirmNfseBankPayment,
+        ReissueNfseBankPayment,
       ],
     };
   }

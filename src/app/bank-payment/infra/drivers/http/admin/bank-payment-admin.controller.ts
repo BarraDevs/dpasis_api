@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Query } from '@nestjs/common';
 import { AccountRole } from 'src/app/account/domain/enums/account-role.enum';
 import { Claim } from 'src/app/authentication/domain/authorization/claim';
 import { RequiredClaims } from 'src/app/authentication/infra/decorators/required-claims.decorator';
@@ -25,6 +25,11 @@ import {
   IssueBankPaymentOutputDto,
 } from '../../../../application/usecases/issue-bank-payment/dtos/issue-bank-payment.dto';
 import { IssueBankPayment } from '../../../../application/usecases/issue-bank-payment/issue-bank-payment.service';
+import {
+  ReissueBankPaymentByNfmIdInputDto,
+  ReissueBankPaymentByNfmIdOutputDto,
+} from '../../../../application/usecases/reissue-bank-payment-by-nfm-id/dtos/reissue-bank-payment-by-nfm-id.dto';
+import { ReissueBankPaymentByNfmId } from '../../../../application/usecases/reissue-bank-payment-by-nfm-id/reissue-bank-payment-by-nfm-id.service';
 
 @Controller('admin/bank-payment')
 @RequiredRoles(AccountRole.ADMIN)
@@ -32,6 +37,7 @@ export class BankPaymentAdminController {
   constructor(
     private readonly issueBankPayment: IssueBankPayment,
     private readonly issueBankPaymentByNfmId: IssueBankPaymentByNfmId,
+    private readonly reissueBankPaymentByNfmId: ReissueBankPaymentByNfmId,
     private readonly findAllBankPayment: FindAllBankPayment,
     private readonly findBankPayment: FindBankPayment,
     private readonly getBankPaymentPdf: GetBankPaymentPdf,
@@ -64,6 +70,25 @@ export class BankPaymentAdminController {
   })
   public issueByNfm(@Param() params: Params): Promise<IssueBankPaymentOutputDto> {
     return this.issueBankPaymentByNfmId.execute(params.id);
+  }
+
+  @Post('nfm/:id/reissue')
+  @RequiredClaims(Claim.BANK_PAYMENT_WRITE)
+  @HttpCode(HttpStatus.ACCEPTED)
+  @Swagger({
+    tags: ['Cobrança bancária'],
+    summary: 'Reemitir o boleto de uma NFM cuja cobrança falhou no provedor (FALHA_EMISSAO)',
+    applyBadRequest: true,
+    applyNotFound: true,
+    applyConflict: true,
+    applyServiceUnavailable: true,
+    okResponse: ReissueBankPaymentByNfmIdOutputDto,
+  })
+  public reissueByNfm(
+    @Param() params: Params,
+    @Body() body: ReissueBankPaymentByNfmIdInputDto,
+  ): Promise<ReissueBankPaymentByNfmIdOutputDto> {
+    return this.reissueBankPaymentByNfmId.execute(params.id, body);
   }
 
   @Get()

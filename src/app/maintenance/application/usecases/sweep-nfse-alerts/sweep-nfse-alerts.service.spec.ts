@@ -279,7 +279,7 @@ describe('SweepNfseAlerts - Unit tests', () => {
     });
   });
   describe('sweepBankPaymentFailed', () => {
-    it('should alert with the failed charges and warn against blind reissue', async() => {
+    it('should alert with the failed charges and point to the repair route of each case', async() => {
       // Arrange
       jest.spyOn(nfseDao, 'findBankPaymentFailed').mockResolvedValue([
         makeRow({ id: 77, status: NfseStatus.ISSUED, errorMessage: null }),
@@ -294,7 +294,10 @@ describe('SweepNfseAlerts - Unit tests', () => {
         subject: '[NFS-e] 1 cobrança(s) com falha registrada',
       }));
       const [alert] = jest.mocked(alertGateway.send).mock.calls[0];
-      expect(alert.lines.at(-1)).toContain('o vínculo local não foi apagado');
+      expect(alert.lines).toEqual(expect.arrayContaining([
+        expect.stringContaining('FALHA_EMISSAO: reemitir por POST /admin/bank-payment/nfm/:id/reissue'),
+        expect.stringContaining('Sem cobrança vinculada: conferir o motivo e emitir por POST /admin/bank-payment/nfm/:id.'),
+      ]));
     });
 
     it('should stay silent when no charge failed', async() => {

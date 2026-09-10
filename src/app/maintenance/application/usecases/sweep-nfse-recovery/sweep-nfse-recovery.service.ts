@@ -22,6 +22,13 @@ const SWEEP_LIMIT = 200;
 const BANK_PAYMENT_CONFIRMATION_MIN_AGE_IN_MINUTES = 10;
 
 /**
+ * Quanto tempo uma nota reivindicada para retentativa do boleto fica fora da varredura. Cobre o job
+ * inteiro com folga: se ele falhar de novo, grava a data do degrau seguinte por cima do lease; se
+ * nunca chegar a rodar — Redis fora, worker morto —, a nota volta quando o lease vencer.
+ */
+const BANK_PAYMENT_RETRY_LEASE_IN_MS = 15 * 60_000;
+
+/**
  * Recoloca em movimento tudo que ficou parado. As três varreduras cobrem as três janelas em que o
  * estado é gravado e o job seguinte é enfileirado em seguida, sem atomicidade — se o processo morre
  * no meio, é aqui que a nota volta a andar.
@@ -35,7 +42,7 @@ export class SweepNfseRecovery {
     @Inject(TOKENS.LoggerGateway) private readonly logger: ILoggerGateway,
     @Inject(TOKENS.NfseDao) private readonly nfseDao: INfseDao,
     @Inject(TOKENS.NfseOutboxDao) private readonly nfseOutboxDao: INfseOutboxDao,
-    @Inject(TOKENS.NfseRepository) private readonly nfseRepository: INfseRepositoryOutbox,
+    @Inject(TOKENS.NfseRepository) private readonly nfseRepository: INfseRepositoryRecovery,
     @Inject(TOKENS.NfseQueueProducer) private readonly queueProducer: INfseQueueProducer,
   ) {}
 
@@ -82,6 +89,35 @@ export class SweepNfseRecovery {
 
     this.log('sweepMissingBankPayment', targets.length);
     return targets.length;
+  }
+
+  /**
+   * Boleto com falha transitória e retentativa vencida. Diferente das outras varreduras, esta
+   * reivindica cada nota antes de enfileirar: o `UPDATE` condicional só passa para uma réplica e
+   * empurra a data para frente, então a mesma nota não volta à fila a cada cinco minutos enquanto a
+   * rodada anterior ainda não terminou.
+   */
+  public async sweepBankPaymentRetry(): Promise<number> {
+    const targets = await this.nfseDao.findBankPaymentRetryDue(SWEEP_LIMIT);
+    let enqueued = 0;
+
+    for (const target of targets) {
+      const now = new Date();
+      const claimed = await this.nfseRepository.claimBankPaymentRetry(
+        target.id,
+        now,
+        new Date(now.getTime() + BANK_PAYMENT_RETRY_LEASE_IN_MS),
+      );
+      if (!claimed) {
+        continue;
+      }
+
+      await this.queueProducer.addIssueBankPaymentJob({ nfseId: target.id });
+      enqueued += 1;
+    }
+
+    this.log('sweepBankPaymentRetry', enqueued);
+    return enqueued;
   }
 
   /** Cobranças solicitadas e ainda não confirmadas pelo provedor (P1-08). */
@@ -134,6 +170,7 @@ export class SweepNfseRecovery {
 }
 
 /** Só o que a varredura usa do repositório — evita arrastar a porta inteira para cá. */
-type INfseRepositoryOutbox = {
+type INfseRepositoryRecovery = {
   markOutboxDispatched(outboxId: number): Promise<void>;
+  claimBankPaymentRetry(nfseId: number, now: Date, leaseUntil: Date): Promise<boolean>;
 };

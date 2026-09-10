@@ -42,6 +42,7 @@ export class NfseAlertsScheduler {
       this.sweepNfseRecovery.sweepOutbox(),
       this.sweepNfseRecovery.sweepReconciliation(),
       this.sweepNfseRecovery.sweepMissingBankPayment(),
+      this.sweepNfseRecovery.sweepBankPaymentRetry(),
       this.sweepNfseRecovery.sweepBankPaymentConfirmation(),
     ]);
   }

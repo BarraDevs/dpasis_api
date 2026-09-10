@@ -33,6 +33,8 @@ const NfseSelect = {
   bankPaymentFailedAt: true,
   bankPaymentStatus: true,
   bankPaymentConfirmedAt: true,
+  bankPaymentRetryCount: true,
+  bankPaymentNextRetryAt: true,
   reconcileAttemptCount: true,
   nextReconcileAt: true,
   nfmId: true,
@@ -157,16 +159,36 @@ export class NfseDaoAdapterPrisma implements INfseDao {
     return { issued, withBankPayment };
   }
 
+  /**
+   * Só o que exige humano: com retentativa agendada, o sistema ainda está cuidando da nota, e o
+   * alerta de "emitida sem cobrança" já sinaliza a demora.
+   */
   public async findBankPaymentFailed(): Promise<NfseAlertRowDto[]> {
     const rows = await this.prisma.nfse.findMany({
       where: {
         status: NfseStatus.ISSUED,
         bankPaymentFailedAt: { not: null },
+        bankPaymentNextRetryAt: null,
       },
       ...ALERT_QUERY_OPTIONS,
     });
 
     return rows.map((row) => this.mapToAlertRow(row));
+  }
+
+  public async findBankPaymentRetryDue(limit: number): Promise<NfseReconcileTargetDto[]> {
+    const rows = await this.prisma.nfse.findMany({
+      where: {
+        status: NfseStatus.ISSUED,
+        bankPaymentRequestCode: null,
+        bankPaymentNextRetryAt: { not: null, lte: new Date() },
+      },
+      select: NfseReconcileTargetSelect,
+      orderBy: { bankPaymentNextRetryAt: 'asc' },
+      take: limit,
+    });
+
+    return rows.map((row) => this.mapToReconcileTarget(row));
   }
 
   public async findPendingReconciliation(limit: number): Promise<NfseReconcileTargetDto[]> {

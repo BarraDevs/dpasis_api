@@ -566,6 +566,41 @@ describe('NfseDaoAdapterPrisma - Integration tests', () => {
       // Assert
       expect(result).toHaveLength(1);
     });
+
+    it('should leave out notes that still have an automatic retry scheduled', async() => {
+      // Arrange — o sistema ainda está cuidando delas; o alerta é para o que exige humano.
+      await seed({
+        status: NfseStatus.ISSUED,
+        bankPaymentFailedAt: new Date('2026-09-03T10:00:00Z'),
+        bankPaymentNextRetryAt: new Date('2026-09-03T10:05:00Z'),
+      });
+
+      // Act
+      const result = await sut.findBankPaymentFailed();
+
+      // Assert
+      expect(result).toHaveLength(0);
+    });
+  });
+
+  describe('findBankPaymentRetryDue', () => {
+    it('should return only issued notes without a charge whose retry is due', async() => {
+      // Arrange
+      const due = await seed({ status: NfseStatus.ISSUED, bankPaymentNextRetryAt: new Date('2020-01-01T00:00:00Z') });
+      await seed({ status: NfseStatus.ISSUED, bankPaymentNextRetryAt: new Date('2999-01-01T00:00:00Z') });
+      await seed({ status: NfseStatus.ISSUED, bankPaymentFailedAt: new Date('2026-09-03T10:00:00Z') });
+      await seed({
+        status: NfseStatus.ISSUED,
+        bankPaymentNextRetryAt: new Date('2020-01-01T00:00:00Z'),
+        bankPaymentRequestCode: 'req-linked',
+      });
+
+      // Act
+      const result = await sut.findBankPaymentRetryDue(200);
+
+      // Assert
+      expect(result.map((row) => row.id)).toEqual([due.id]);
+    });
   });
 
   describe('findPendingReconciliation', () => {

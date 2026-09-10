@@ -144,6 +144,34 @@ describe('SweepNfseRecovery - Integration tests', () => {
     ]);
   });
 
+  it('should claim and enqueue a note whose bank payment retry is due, exactly once', async() => {
+    // Arrange — a falha transitória deixou retentativa agendada; a outra nota ainda não venceu.
+    const due = await seedNfse(prisma, {
+      status: NfseStatus.ISSUED,
+      bankPaymentFailedAt: new Date(Date.now() - 10 * 60_000),
+      bankPaymentNextRetryAt: new Date(Date.now() - 60_000),
+    });
+    await seedNfse(prisma, {
+      status: NfseStatus.ISSUED,
+      bankPaymentFailedAt: new Date(),
+      bankPaymentNextRetryAt: new Date(Date.now() + 60 * 60_000),
+    });
+
+    // Act — duas voltas seguidas: o lease tira a nota da segunda.
+    const first = await sut.sweepBankPaymentRetry();
+    const second = await sut.sweepBankPaymentRetry();
+
+    // Assert
+    expect(first).toBe(1);
+    expect(second).toBe(0);
+    expect(queueProducer.addedIssueBankPaymentJobs).toEqual([
+      { name: JobName.IssueNfseBankPayment, data: { nfseId: due.id } },
+    ]);
+    const saved = await prisma.nfse.findUnique({ where: { id: due.id } });
+    expect(saved?.bankPaymentRetryCount).toBe(1);
+    expect(saved?.bankPaymentNextRetryAt?.getTime()).toBeGreaterThan(Date.now());
+  });
+
   it('should enqueue a confirmation job for a charge requested long ago', async() => {
     // Arrange
     const nfse = await seedNfse(prisma, {

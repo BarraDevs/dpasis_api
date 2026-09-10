@@ -17,6 +17,7 @@ import { BankPaymentProvider } from 'src/infra/bank-payment/enums/bank-payment-p
 import { BankPaymentStatus } from 'src/infra/bank-payment/enums/bank-payment-status.enum';
 import { BankPaymentAlreadyExistsError } from 'src/infra/bank-payment/errors/bank-payment-already-exists.error';
 import { PermanentProviderError } from 'src/shared/errors/permanent-provider.error';
+import { RetryScheduledError } from 'src/shared/errors/retry-scheduled.error';
 import { TransientProviderError } from 'src/shared/errors/transient-provider.error';
 import { LogContext, type ILoggerGateway } from 'src/infra/logger/logger.gateway';
 import { NfseProps } from '../../../domain/entities/nfse.entity';
@@ -530,10 +531,12 @@ describe('ProcessIssueNfseBankPayment - Unit tests', () => {
       await expect(sut.execute({ nfseId: 1 })).rejects.toBe(err);
       expect(nfse.props.bankPaymentErrorMessage).toBe('Vencimento inválido.');
       expect(nfse.props.bankPaymentFailedAt).toBeInstanceOf(Date);
+      // Permanente não entra na escada: é o alerta de cobrança com falha que chama o humano.
+      expect(nfse.props.bankPaymentNextRetryAt).toBeNull();
     });
 
-    it('should keep a transient provider error retryable', async() => {
-      // Arrange
+    it('should hand the transient error back to the queue once the due date can no longer be issued', async() => {
+      // Arrange — o relógio real já passou do vencimento do fixture (20/08/2026): não há degrau possível.
       const nfse = NfseFactory.load(makeNfseProps());
       const err = new TransientProviderError('Banco Inter respondeu com erro 500.');
       jest.spyOn(nfseRepository, 'findById').mockResolvedValue(nfse);
@@ -541,6 +544,166 @@ describe('ProcessIssueNfseBankPayment - Unit tests', () => {
 
       // Act & Assert
       await expect(sut.execute({ nfseId: 1 })).rejects.toBe(err);
+      expect(nfse.props.bankPaymentNextRetryAt).toBeNull();
+      expect(nfse.props.bankPaymentErrorMessage).toContain('Retentativa automática encerrada');
+    });
+  });
+
+  describe('automatic retry ladder after a transient provider failure', () => {
+    // Emitida 20/08/2026 12:00 com vencimento configurado no dia 15: o piso manda o vencimento para
+    // o próprio dia 20, e o Inter aceita emitir até 19h59 de Brasília (22:59:59Z).
+    const NOW = new Date('2026-08-20T16:00:00Z');
+
+    beforeEach(() => {
+      jest.useFakeTimers({ now: NOW });
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('should schedule the first rung and hand the job a RetryScheduledError', async() => {
+      // Arrange
+      const nfse = NfseFactory.load(makeNfseProps());
+      jest.spyOn(nfseRepository, 'findById').mockResolvedValue(nfse);
+      jest.spyOn(issueBankPayment, 'execute')
+        .mockRejectedValue(new TransientProviderError('Banco Inter respondeu com erro 500.'));
+
+      // Act
+      const error = await sut.execute({ nfseId: 1 }).catch((e: unknown) => e);
+
+      // Assert
+      expect(error).toBeInstanceOf(RetryScheduledError);
+      expect((error as RetryScheduledError).nextAttemptAt).toEqual(new Date('2026-08-20T16:05:00Z'));
+      expect((error as Error).message)
+        .toBe('Banco Inter respondeu com erro 500. Nova tentativa automática em 20/08/2026 13:05.');
+      expect(nfse.props).toMatchObject({
+        bankPaymentRequestCode: null,
+        bankPaymentNextRetryAt: new Date('2026-08-20T16:05:00Z'),
+        bankPaymentErrorMessage: 'Banco Inter respondeu com erro 500. Nova tentativa automática em 20/08/2026 13:05.',
+      });
+      expect(nfse.props.bankPaymentFailedAt).toBeInstanceOf(Date);
+      expect(nfseRepository.edit).toHaveBeenCalledWith(nfse);
+    });
+
+    it('should pick the rung from the rounds already started, repeating the last one', async() => {
+      // Arrange — nona rodada: a escada acabou no degrau de 6h e fica nele.
+      const nfse = NfseFactory.load(makeNfseProps({
+        bankPaymentRequestedAt: new Date('2026-08-20T15:00:00Z'),
+        bankPaymentIdempotencyKey: 'nfse-1',
+        bankPaymentRetryCount: 9,
+      }));
+      jest.spyOn(nfseRepository, 'findById').mockResolvedValue(nfse);
+      jest.spyOn(findBankPaymentByYourNumber, 'execute').mockResolvedValue(null);
+      jest.spyOn(issueBankPayment, 'execute').mockRejectedValue(new TransientProviderError('Banco Inter indisponível.'));
+
+      // Act
+      const error = await sut.execute({ nfseId: 1 }).catch((e: unknown) => e);
+
+      // Assert
+      expect((error as RetryScheduledError).nextAttemptAt).toEqual(new Date('2026-08-20T22:00:00Z'));
+    });
+
+    it('should wait for a Retry-After longer than the rung', async() => {
+      // Arrange
+      const nfse = NfseFactory.load(makeNfseProps());
+      jest.spyOn(nfseRepository, 'findById').mockResolvedValue(nfse);
+      jest.spyOn(issueBankPayment, 'execute')
+        .mockRejectedValue(new TransientProviderError('Banco Inter respondeu com 429.', 1200));
+
+      // Act
+      const error = await sut.execute({ nfseId: 1 }).catch((e: unknown) => e);
+
+      // Assert
+      expect((error as RetryScheduledError).nextAttemptAt).toEqual(new Date('2026-08-20T16:20:00Z'));
+    });
+
+    it('should stop once the next rung would pass 19h59 of the due date', async() => {
+      // Arrange — 19h de Brasília no dia do vencimento; o degrau de 1h cai depois do corte.
+      jest.setSystemTime(new Date('2026-08-20T22:00:00Z'));
+      const err = new TransientProviderError('Banco Inter indisponível.');
+      const nfse = NfseFactory.load(makeNfseProps({
+        bankPaymentRequestedAt: new Date('2026-08-20T15:00:00Z'),
+        bankPaymentIdempotencyKey: 'nfse-1',
+        bankPaymentRetryCount: 3,
+      }));
+      jest.spyOn(nfseRepository, 'findById').mockResolvedValue(nfse);
+      jest.spyOn(findBankPaymentByYourNumber, 'execute').mockResolvedValue(null);
+      jest.spyOn(issueBankPayment, 'execute').mockRejectedValue(err);
+
+      // Act & Assert — sem degrau, o erro original volta para a fila decidir.
+      await expect(sut.execute({ nfseId: 1 })).rejects.toBe(err);
+      expect(nfse.props.bankPaymentNextRetryAt).toBeNull();
+    });
+
+    it('should stop once the next rung would pass 24h since the first request', async() => {
+      // Arrange — vencimento no dia 28, bem longe; quem limita é a janela de 24h.
+      jest.setSystemTime(new Date('2026-08-21T16:00:00Z'));
+      const err = new TransientProviderError('Banco Inter indisponível.');
+      const nfse = NfseFactory.load(makeNfseProps({
+        bankPaymentRequestedAt: new Date('2026-08-20T16:30:00Z'),
+        bankPaymentIdempotencyKey: 'nfse-1',
+        bankPaymentRetryCount: 3,
+        data: makeSnapshot({
+          bankPayment: { ...makeSnapshot().bankPayment!, dueDateDay: 28 },
+        }) as unknown as Record<string, unknown>,
+      }));
+      jest.spyOn(nfseRepository, 'findById').mockResolvedValue(nfse);
+      jest.spyOn(findBankPaymentByYourNumber, 'execute').mockResolvedValue(null);
+      jest.spyOn(issueBankPayment, 'execute').mockRejectedValue(err);
+
+      // Act & Assert
+      await expect(sut.execute({ nfseId: 1 })).rejects.toBe(err);
+      expect(nfse.props.bankPaymentNextRetryAt).toBeNull();
+      expect(nfse.props.bankPaymentErrorMessage).toContain('Retentativa automática encerrada');
+    });
+
+    it('should schedule when the seuNumero lookup itself fails transiently, without posting', async() => {
+      // Arrange
+      const nfse = NfseFactory.load(makeNfseProps({
+        bankPaymentRequestedAt: new Date('2026-08-20T15:50:00Z'),
+        bankPaymentIdempotencyKey: 'nfse-1',
+      }));
+      jest.spyOn(nfseRepository, 'findById').mockResolvedValue(nfse);
+      jest.spyOn(findBankPaymentByYourNumber, 'execute')
+        .mockRejectedValue(new TransientProviderError('Banco Inter indisponível.'));
+
+      // Act
+      const error = await sut.execute({ nfseId: 1 }).catch((e: unknown) => e);
+
+      // Assert
+      expect(error).toBeInstanceOf(RetryScheduledError);
+      expect(issueBankPayment.execute).not.toHaveBeenCalled();
+      expect(nfse.props.bankPaymentNextRetryAt).toEqual(new Date('2026-08-20T16:05:00Z'));
+    });
+
+    it('should clear the schedule when a later round links the charge', async() => {
+      // Arrange
+      const nfse = NfseFactory.load(makeNfseProps({
+        bankPaymentRequestedAt: new Date('2026-08-20T15:50:00Z'),
+        bankPaymentIdempotencyKey: 'nfse-1',
+        bankPaymentErrorMessage: 'Banco Inter indisponível.',
+        bankPaymentFailedAt: new Date('2026-08-20T15:50:00Z'),
+        bankPaymentRetryCount: 1,
+        bankPaymentNextRetryAt: new Date('2026-08-20T16:15:00Z'),
+      }));
+      jest.spyOn(nfseRepository, 'findById').mockResolvedValue(nfse);
+      jest.spyOn(findBankPaymentByYourNumber, 'execute').mockResolvedValue(null);
+      jest.spyOn(issueBankPayment, 'execute').mockResolvedValue({
+        provider: BankPaymentProvider.INTER,
+        requestCode: 'req-after-outage',
+      });
+
+      // Act
+      await sut.execute({ nfseId: 1 });
+
+      // Assert
+      expect(nfse.props).toMatchObject({
+        bankPaymentRequestCode: 'req-after-outage',
+        bankPaymentNextRetryAt: null,
+        bankPaymentFailedAt: null,
+        bankPaymentErrorMessage: null,
+      });
     });
   });
 
@@ -665,17 +828,65 @@ describe('ProcessIssueNfseBankPayment - Unit tests', () => {
       expect(nfseRepository.edit).toHaveBeenCalledWith(nfse);
     });
 
-    it('should rethrow when the existing charge belongs to another nfse', async() => {
-      // Arrange
+    it('should fail permanently when the existing charge does not match this nfse', async() => {
+      // Arrange — mesma chave para o Inter, seuNumero/valor/vencimento diferentes para nós.
       const nfse = NfseFactory.load(makeNfseProps());
       jest.spyOn(nfseRepository, 'findById').mockResolvedValue(nfse);
       jest.spyOn(issueBankPayment, 'execute')
         .mockRejectedValue(new BankPaymentAlreadyExistsError(EXISTING_REQUEST_CODE));
       jest.spyOn(findBankPayment, 'execute').mockResolvedValue(makeExistingBankPayment({ yourNumber: '999' }));
 
-      // Act & Assert
-      await expect(sut.execute({ nfseId: 1 })).rejects.toThrow(BankPaymentAlreadyExistsError);
+      // Act & Assert — antes escapava sem registro e a varredura repetia o POST a cada cinco minutos.
+      await expect(sut.execute({ nfseId: 1 })).rejects.toThrow(PermanentProviderError);
       expect(nfse.props.bankPaymentRequestCode).toBeNull();
+      expect(nfse.props.bankPaymentFailedAt).toBeInstanceOf(Date);
+      expect(nfse.props.bankPaymentNextRetryAt).toBeNull();
+      expect(nfse.props.bankPaymentErrorMessage).toContain(EXISTING_REQUEST_CODE);
+    });
+
+    describe('inside the 30-minute window of a failed charge', () => {
+      beforeEach(() => {
+        jest.useFakeTimers({ now: new Date('2026-08-20T16:00:00Z') });
+      });
+
+      afterEach(() => {
+        jest.useRealTimers();
+      });
+
+      it('should not relink the failed charge the provider still returns', async() => {
+        // Arrange
+        const nfse = NfseFactory.load(makeNfseProps());
+        jest.spyOn(nfseRepository, 'findById').mockResolvedValue(nfse);
+        jest.spyOn(issueBankPayment, 'execute')
+          .mockRejectedValue(new BankPaymentAlreadyExistsError(EXISTING_REQUEST_CODE));
+        jest.spyOn(findBankPayment, 'execute')
+          .mockResolvedValue(makeExistingBankPayment({ status: BankPaymentStatus.FAILED }));
+
+        // Act
+        const error = await sut.execute({ nfseId: 1 }).catch((e: unknown) => e);
+
+        // Assert — vincular reabriria a FALHA_EMISSAO; passada a janela, o POST cria uma cobrança nova.
+        expect(error).toBeInstanceOf(RetryScheduledError);
+        expect(nfse.props.bankPaymentRequestCode).toBeNull();
+        expect(nfse.props.bankPaymentNextRetryAt).toEqual(new Date('2026-08-20T16:05:00Z'));
+      });
+
+      it('should schedule a retry when confirming the duplicate fails transiently', async() => {
+        // Arrange
+        const nfse = NfseFactory.load(makeNfseProps());
+        jest.spyOn(nfseRepository, 'findById').mockResolvedValue(nfse);
+        jest.spyOn(issueBankPayment, 'execute')
+          .mockRejectedValue(new BankPaymentAlreadyExistsError(EXISTING_REQUEST_CODE));
+        jest.spyOn(findBankPayment, 'execute')
+          .mockRejectedValue(new TransientProviderError('Banco Inter indisponível.'));
+
+        // Act
+        const error = await sut.execute({ nfseId: 1 }).catch((e: unknown) => e);
+
+        // Assert
+        expect(error).toBeInstanceOf(RetryScheduledError);
+        expect(nfse.props.bankPaymentRequestCode).toBeNull();
+      });
     });
 
     it('should propagate any other provider error untouched', async() => {

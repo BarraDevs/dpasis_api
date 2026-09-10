@@ -30,5 +30,11 @@ export interface INfseRepository {
    * um digest: carregar e regravar 200 notas uma a uma para gravar um timestamp seria absurdo.
    */
   markProviderAlertsNotified(ids: number[], notifiedAt: Date): Promise<void>;
+  /**
+   * Reivindica a nota para a próxima rodada de retentativa do boleto: só passa se a retentativa
+   * estiver vencida e a nota continuar sem cobrança vinculada. Grava o lease em
+   * `bankPaymentNextRetryAt`, conta a rodada e devolve `false` para quem perdeu a corrida.
+   */
+  claimBankPaymentRetry(nfseId: number, now: Date, leaseUntil: Date): Promise<boolean>;
   findById(id: number): Promise<Nfse | null>;
 }

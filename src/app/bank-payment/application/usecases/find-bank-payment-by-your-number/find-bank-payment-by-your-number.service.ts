@@ -6,11 +6,17 @@ import { BankPaymentStatus } from 'src/infra/bank-payment/enums/bank-payment-sta
 import { FindBankPaymentByYourNumberInputDto } from './dtos/find-bank-payment-by-your-number.dto';
 
 /**
- * Uma cobrança cancelada não conta como existente: ela não cobra ninguém e reemitir é o
- * comportamento certo. As demais situações — inclusive `FAILED`/`FALHA_EMISSAO` — significam que o
- * provedor já conhece esta chave, e emitir de novo é o que produz o segundo boleto.
+ * Situações que não contam como cobrança existente, porque não cobram ninguém:
+ *
+ * - `CANCELLED`: foi cancelada; reemitir é o comportamento certo.
+ * - `FAILED` (`FALHA`/`FALHA_EMISSAO`): o provedor aceitou a solicitação mas não produziu o boleto.
+ *   Contá-la como existente vinculava de novo a cobrança com falha e travava a reemissão.
+ *
+ * As demais — inclusive `AWAITING_APPROVAL` — significam que o provedor já conhece esta chave, e
+ * emitir de novo é o que produz o segundo boleto. Dentro da janela de 30 minutos o Inter ainda
+ * recusa a chave de uma cobrança com falha; quem trata isso é `ProcessIssueNfseBankPayment`.
  */
-const NON_BLOCKING_STATUSES: BankPaymentStatus[] = [BankPaymentStatus.CANCELLED];
+const NON_BLOCKING_STATUSES: BankPaymentStatus[] = [BankPaymentStatus.CANCELLED, BankPaymentStatus.FAILED];
 
 @Injectable()
 export class FindBankPaymentByYourNumber {

@@ -3,6 +3,7 @@ import { AuthenticationGuardsModule } from 'src/app/authentication/application/g
 import { NfmModule } from 'src/app/tax-invoice/nfm/nfm.module';
 import { NfseModule } from 'src/app/tax-invoice/nfse/nfse.module';
 import { IssueBankPaymentByNfmId } from './application/usecases/issue-bank-payment-by-nfm-id/issue-bank-payment-by-nfm-id.service';
+import { ReissueBankPaymentByNfmId } from './application/usecases/reissue-bank-payment-by-nfm-id/reissue-bank-payment-by-nfm-id.service';
 import { BankPaymentCoreModule } from './bank-payment-core.module';
 import { BankPaymentAdminController } from './infra/drivers/http/admin/bank-payment-admin.controller';
 
@@ -18,6 +19,7 @@ import { BankPaymentAdminController } from './infra/drivers/http/admin/bank-paym
   ],
   providers: [
     IssueBankPaymentByNfmId,
+    ReissueBankPaymentByNfmId,
   ],
   exports: [
     BankPaymentCoreModule,

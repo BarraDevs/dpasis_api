@@ -90,6 +90,22 @@ export class NfseToIssueBankPaymentMapper {
     return dueDate < floorDate ? floorDate : dueDate;
   }
 
+  /**
+   * Último instante em que o Inter aceita emitir um boleto com este vencimento: o próprio dia, até
+   * 19h59 de Brasília. Depois disso a data já está no passado para ele e a emissão é recusada — é o
+   * teto natural de qualquer retentativa, porque o vencimento é congelado a partir de `issuedAt`.
+   */
+  public static issueDeadline(dueDate: string): Date {
+    return DateTime.fromISO(dueDate, { zone: SAO_PAULO_TIMEZONE })
+      .set({
+        hour: this.SAME_DAY_CUTOFF_HOUR,
+        minute: this.SAME_DAY_CUTOFF_MINUTE,
+        second: 59,
+        millisecond: 999,
+      })
+      .toJSDate();
+  }
+
   private static resolvePersonType(clientType: string): BankPaymentPersonType {
     if (clientType === ClientType.PF) {
       return BankPaymentPersonType.INDIVIDUAL;

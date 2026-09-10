@@ -30,6 +30,13 @@ export type NfseProps = NfseCreateProps & {
    */
   providerAlerts?: string | null;
   providerAlertedAt?: Date | null;
+  /**
+   * Agendamento da retentativa automática do boleto. Opcionais na entrada pelo mesmo motivo de
+   * `providerAlerts`: são sempre `0`/`null` numa nota nova, e só a falha transitória do provedor os
+   * preenche.
+   */
+  bankPaymentRetryCount?: number;
+  bankPaymentNextRetryAt?: Date | null;
   nfmId: number | null;
   /** Idade da nota. Ancora o prazo de 30 dias do cancelamento, que corre desde a emissão. */
   createdAt: Date;
@@ -188,12 +195,44 @@ export class Nfse {
     this._props.bankPaymentFailedAt = new Date();
   }
 
+  /**
+   * Agenda a próxima tentativa automática do boleto depois de uma falha transitória. `at` nulo
+   * encerra o agendamento: a partir dali a falha exige decisão humana. Não conta a rodada — quem
+   * conta é a varredura, ao reivindicar a nota; contar aqui somaria cada tentativa do BullMQ.
+   */
+  public scheduleBankPaymentRetry(at: Date | null): void {
+    this._props.bankPaymentNextRetryAt = at;
+  }
+
   public linkBankPayment(provider: string, requestCode: string): void {
     this.ensureIssued();
     this._props.bankPaymentProvider = provider;
     this._props.bankPaymentRequestCode = requestCode;
     this._props.bankPaymentErrorMessage = null;
     this._props.bankPaymentFailedAt = null;
+    this._props.bankPaymentNextRetryAt = null;
+  }
+
+  /**
+   * Desfaz o vínculo com uma cobrança que o provedor não conseguiu produzir (`FALHA_EMISSAO`), para
+   * que o boleto seja emitido de novo. Só a rota de reemissão chama, depois de confirmar a falha no
+   * próprio provedor: desfazer o vínculo de uma cobrança viva é o que produz o segundo boleto.
+   *
+   * `bankPaymentRequestedAt` também sai: a próxima emissão é uma solicitação nova, e é dela que corre
+   * a janela da retentativa automática.
+   */
+  public resetBankPaymentForReissue(): void {
+    this.ensureIssued();
+    this._props.bankPaymentProvider = null;
+    this._props.bankPaymentRequestCode = null;
+    this._props.bankPaymentStatus = null;
+    this._props.bankPaymentConfirmedAt = null;
+    this._props.bankPaymentRequestedAt = null;
+    this._props.bankPaymentIdempotencyKey = null;
+    this._props.bankPaymentErrorMessage = null;
+    this._props.bankPaymentFailedAt = null;
+    this._props.bankPaymentNextRetryAt = null;
+    this._props.bankPaymentRetryCount = 0;
   }
 
   /**

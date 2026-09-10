@@ -16,12 +16,14 @@ import {
   IssueBankPaymentOutputDto,
 } from '../../../../application/usecases/issue-bank-payment/dtos/issue-bank-payment.dto';
 import { IssueBankPayment } from '../../../../application/usecases/issue-bank-payment/issue-bank-payment.service';
+import { ReissueBankPaymentByNfmId } from '../../../../application/usecases/reissue-bank-payment-by-nfm-id/reissue-bank-payment-by-nfm-id.service';
 import { BankPaymentAdminController } from './bank-payment-admin.controller';
 
 describe('BankPaymentAdminController - Unit tests', () => {
   let sut: BankPaymentAdminController;
   let issueBankPayment: IssueBankPayment;
   let issueBankPaymentByNfmId: IssueBankPaymentByNfmId;
+  let reissueBankPaymentByNfmId: ReissueBankPaymentByNfmId;
   let findAllBankPayment: FindAllBankPayment;
   let findBankPayment: FindBankPayment;
   let getBankPaymentPdf: GetBankPaymentPdf;
@@ -34,6 +36,7 @@ describe('BankPaymentAdminController - Unit tests', () => {
       providers: [
         { provide: IssueBankPayment, useValue: createMock<IssueBankPayment>() },
         { provide: IssueBankPaymentByNfmId, useValue: createMock<IssueBankPaymentByNfmId>() },
+        { provide: ReissueBankPaymentByNfmId, useValue: createMock<ReissueBankPaymentByNfmId>() },
         { provide: FindAllBankPayment, useValue: createMock<FindAllBankPayment>() },
         { provide: FindBankPayment, useValue: createMock<FindBankPayment>() },
         { provide: GetBankPaymentPdf, useValue: createMock<GetBankPaymentPdf>() },
@@ -44,6 +47,7 @@ describe('BankPaymentAdminController - Unit tests', () => {
     sut = module.get(BankPaymentAdminController);
     issueBankPayment = module.get(IssueBankPayment);
     issueBankPaymentByNfmId = module.get(IssueBankPaymentByNfmId);
+    reissueBankPaymentByNfmId = module.get(ReissueBankPaymentByNfmId);
     findAllBankPayment = module.get(FindAllBankPayment);
     findBankPayment = module.get(FindBankPayment);
     getBankPaymentPdf = module.get(GetBankPaymentPdf);
@@ -72,6 +76,17 @@ describe('BankPaymentAdminController - Unit tests', () => {
     const result = await sut.issueByNfm({ id: 42 });
 
     expect(spy).toHaveBeenCalledWith(42);
+    expect(result).toBe(output);
+  });
+
+  it('should call reissueBankPaymentByNfmId.execute with the nfm id and the body', async() => {
+    const body = { reason: 'Inter reportou FALHA_EMISSAO; reemissão autorizada', confirm: true };
+    const output = { nfseId: 99, replacedRequestCode: 'req-failed' };
+    const spy = jest.spyOn(reissueBankPaymentByNfmId, 'execute').mockResolvedValue(output);
+
+    const result = await sut.reissueByNfm({ id: 42 }, body);
+
+    expect(spy).toHaveBeenCalledWith(42, body);
     expect(result).toBe(output);
   });
 

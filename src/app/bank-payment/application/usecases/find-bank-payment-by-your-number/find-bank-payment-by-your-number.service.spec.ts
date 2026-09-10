@@ -90,13 +90,28 @@ describe('FindBankPaymentByYourNumber - Unit tests', () => {
     await expect(sut.execute(input)).resolves.toBeNull();
   });
 
-  it('should treat a failed charge as existing: the provider already knows this key', async() => {
-    // Arrange
+  it('should ignore a failed charge: it never became a payable boleto', async() => {
+    // Arrange — `FALHA_EMISSAO`. Contá-la como existente vinculava de novo a cobrança com falha e
+    // travava a reemissão do boleto.
     jest.spyOn(gateway, 'list')
       .mockResolvedValue({ items: [makeItem({ status: BankPaymentStatus.FAILED })], total: 1 });
 
     // Act & Assert
-    await expect(sut.execute(input)).resolves.toMatchObject({ requestCode: 'req-1' });
+    await expect(sut.execute(input)).resolves.toBeNull();
+  });
+
+  it('should still find the live charge when a failed one shares the same key', async() => {
+    // Arrange
+    jest.spyOn(gateway, 'list').mockResolvedValue({
+      items: [
+        makeItem({ requestCode: 'req-failed', status: BankPaymentStatus.FAILED }),
+        makeItem({ requestCode: 'req-live', status: BankPaymentStatus.EMITTED }),
+      ],
+      total: 2,
+    });
+
+    // Act & Assert
+    await expect(sut.execute(input)).resolves.toMatchObject({ requestCode: 'req-live' });
   });
 
   it('should return null when the provider knows nothing about the key', async() => {

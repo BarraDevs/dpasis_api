@@ -66,11 +66,12 @@ describe('NfseAlertsScheduler - Unit tests', () => {
   });
 
   describe('runRecoverySweeps', () => {
-    it('should call the four recovery sweeps', async() => {
+    it('should call the five recovery sweeps', async() => {
       // Arrange
       jest.spyOn(sweepNfseRecovery, 'sweepOutbox').mockResolvedValue(0);
       jest.spyOn(sweepNfseRecovery, 'sweepReconciliation').mockResolvedValue(0);
       jest.spyOn(sweepNfseRecovery, 'sweepMissingBankPayment').mockResolvedValue(0);
+      jest.spyOn(sweepNfseRecovery, 'sweepBankPaymentRetry').mockResolvedValue(0);
       jest.spyOn(sweepNfseRecovery, 'sweepBankPaymentConfirmation').mockResolvedValue(0);
 
       // Act
@@ -80,6 +81,7 @@ describe('NfseAlertsScheduler - Unit tests', () => {
       expect(sweepNfseRecovery.sweepOutbox).toHaveBeenCalledTimes(1);
       expect(sweepNfseRecovery.sweepReconciliation).toHaveBeenCalledTimes(1);
       expect(sweepNfseRecovery.sweepMissingBankPayment).toHaveBeenCalledTimes(1);
+      expect(sweepNfseRecovery.sweepBankPaymentRetry).toHaveBeenCalledTimes(1);
       expect(sweepNfseRecovery.sweepBankPaymentConfirmation).toHaveBeenCalledTimes(1);
     });
 

@@ -38,6 +38,8 @@ const NfseSelect = {
   bankPaymentFailedAt: true,
   bankPaymentStatus: true,
   bankPaymentConfirmedAt: true,
+  bankPaymentRetryCount: true,
+  bankPaymentNextRetryAt: true,
   reconcileAttemptCount: true,
   nextReconcileAt: true,
   nfmId: true,

@@ -9,6 +9,9 @@ import { TOKENS } from 'src/core/di/token';
 import { BankPaymentFakeAdapterGateway } from 'src/infra/bank-payment/adapters/fake/bank-payment-fake.gateway';
 import { BankPaymentProvider } from 'src/infra/bank-payment/enums/bank-payment-provider.enum';
 import { PermanentProviderError } from 'src/shared/errors/permanent-provider.error';
+import { RetryScheduledError } from 'src/shared/errors/retry-scheduled.error';
+import { TransientProviderError } from 'src/shared/errors/transient-provider.error';
+import { BankPaymentStatus } from 'src/infra/bank-payment/enums/bank-payment-status.enum';
 import { BankPaymentAlreadyExistsError } from 'src/infra/bank-payment/errors/bank-payment-already-exists.error';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { LoggerModule } from 'src/infra/logger/logger.module';
@@ -420,6 +423,78 @@ describe('ProcessIssueNfseBankPayment - Integration tests', () => {
     expect(saved?.bankPaymentFailedAt).toBeInstanceOf(Date);
   });
 
+  describe('automatic retry after a transient Inter failure', () => {
+    beforeEach(() => {
+      // Só o relógio é falso: os timers seguem reais para o Prisma continuar respondendo. O fixture
+      // é emitido em 20/08/2026 12:00 com vencimento no próprio dia; 13:00 cabe na escada.
+      jest.useFakeTimers({
+        now: new Date('2026-08-20T16:00:00Z'),
+        doNotFake: [
+          'nextTick',
+          'queueMicrotask',
+          'setImmediate',
+          'clearImmediate',
+          'setInterval',
+          'clearInterval',
+          'setTimeout',
+          'clearTimeout',
+          'hrtime',
+          'performance',
+        ],
+      });
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('should record the failure and persist the next retry instead of failing the job', async() => {
+      // Arrange
+      const company = await seedCompany(prisma);
+      const nfse = await seedNfse(prisma, company.id);
+      bankPaymentGateway.issueError = new TransientProviderError('Banco Inter respondeu com erro 503.');
+
+      // Act
+      const error = await sut.execute({ nfseId: nfse.id }).catch((e: unknown) => e);
+
+      // Assert
+      expect(error).toBeInstanceOf(RetryScheduledError);
+      const saved = await prisma.nfse.findUnique({ where: { id: nfse.id } });
+      expect(saved?.bankPaymentRequestCode).toBeNull();
+      expect(saved?.bankPaymentFailedAt).toBeInstanceOf(Date);
+      expect(saved?.bankPaymentNextRetryAt).toEqual(new Date('2026-08-20T16:05:00Z'));
+    });
+
+    it('should not relink the failed charge the provider still returns inside its 30-minute window', async() => {
+      // Arrange — reemissão logo depois de uma FALHA_EMISSAO: o Inter devolve a chave da cobrança morta.
+      const company = await seedCompany(prisma);
+      const nfse = await seedNfse(prisma, company.id);
+      const originalFindResult = bankPaymentGateway.findResult;
+      bankPaymentGateway.issueError = new BankPaymentAlreadyExistsError('ab3242a2-2205-4f5e-9f54-32caf508cfe5');
+      bankPaymentGateway.findResult = {
+        ...originalFindResult,
+        yourNumber: String(nfse.id),
+        amount: 1000,
+        dueDate: '2026-08-20',
+        status: BankPaymentStatus.FAILED,
+      };
+
+      try {
+        // Act
+        const error = await sut.execute({ nfseId: nfse.id }).catch((e: unknown) => e);
+
+        // Assert
+        expect(error).toBeInstanceOf(RetryScheduledError);
+        const saved = await prisma.nfse.findUnique({ where: { id: nfse.id } });
+        expect(saved?.bankPaymentRequestCode).toBeNull();
+        expect(saved?.bankPaymentNextRetryAt).toEqual(new Date('2026-08-20T16:05:00Z'));
+      }
+      finally {
+        bankPaymentGateway.findResult = originalFindResult;
+      }
+    });
+  });
+
   it('should query by seuNumero and link instead of posting again when a previous attempt reached the provider', async() => {
     // Arrange
     const company = await seedCompany(prisma);
@@ -504,7 +579,7 @@ describe('ProcessIssueNfseBankPayment - Integration tests', () => {
     });
   });
 
-  it('should rethrow when the existing charge belongs to another nfse', async() => {
+  it('should fail permanently, with the reason recorded, when the existing charge belongs to another nfse', async() => {
     // Arrange
     const company = await seedCompany(prisma);
     const nfse = await seedNfse(prisma, company.id);
@@ -516,11 +591,13 @@ describe('ProcessIssueNfseBankPayment - Integration tests', () => {
       yourNumber: '999999',
     };
 
-    // Act & Assert
-    await expect(sut.execute({ nfseId: nfse.id })).rejects.toThrow(BankPaymentAlreadyExistsError);
+    // Act & Assert — sem o registro, a varredura de boleto faltante repetia o POST a cada cinco minutos.
+    await expect(sut.execute({ nfseId: nfse.id })).rejects.toThrow(PermanentProviderError);
     const saved = await prisma.nfse.findUnique({ where: { id: nfse.id } });
     expect(saved?.bankPaymentProvider).toBeNull();
     expect(saved?.bankPaymentRequestCode).toBeNull();
+    expect(saved?.bankPaymentFailedAt).toBeInstanceOf(Date);
+    expect(saved?.bankPaymentNextRetryAt).toBeNull();
   });
 
   it('should issue without charges when snapshot has calendar and invoice config is missing', async() => {

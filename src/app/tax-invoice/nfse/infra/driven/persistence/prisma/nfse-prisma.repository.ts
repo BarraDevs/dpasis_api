@@ -49,6 +49,8 @@ const NfseSelect = {
   bankPaymentFailedAt: true,
   bankPaymentStatus: true,
   bankPaymentConfirmedAt: true,
+  bankPaymentRetryCount: true,
+  bankPaymentNextRetryAt: true,
   reconcileAttemptCount: true,
   nextReconcileAt: true,
   providerAlerts: true,
@@ -186,6 +188,8 @@ export class NfseRepositoryAdapterPrisma implements INfseRepository {
         bankPaymentFailedAt: props.bankPaymentFailedAt,
         bankPaymentStatus: props.bankPaymentStatus,
         bankPaymentConfirmedAt: props.bankPaymentConfirmedAt,
+        bankPaymentRetryCount: props.bankPaymentRetryCount ?? 0,
+        bankPaymentNextRetryAt: props.bankPaymentNextRetryAt ?? null,
         reconcileAttemptCount: props.reconcileAttemptCount,
         nextReconcileAt: props.nextReconcileAt,
         providerAlerts: props.providerAlerts,
@@ -204,6 +208,29 @@ export class NfseRepositoryAdapterPrisma implements INfseRepository {
       where: { id: { in: ids }, providerAlertedAt: null },
       data: { providerAlertedAt: notifiedAt },
     });
+  }
+
+  /**
+   * `UPDATE` condicional em vez de ler e regravar: todas as réplicas rodam a mesma varredura no
+   * mesmo minuto, e só a que ganhar a linha enfileira. A condição repete o que a varredura leu —
+   * retentativa vencida, nota emitida e ainda sem cobrança — porque entre a leitura e o `UPDATE` o
+   * job anterior pode ter vinculado o boleto.
+   */
+  public async claimBankPaymentRetry(nfseId: number, now: Date, leaseUntil: Date): Promise<boolean> {
+    const { count } = await this.prisma.nfse.updateMany({
+      where: {
+        id: nfseId,
+        status: NfseStatus.ISSUED,
+        bankPaymentRequestCode: null,
+        bankPaymentNextRetryAt: { lte: now },
+      },
+      data: {
+        bankPaymentNextRetryAt: leaseUntil,
+        bankPaymentRetryCount: { increment: 1 },
+      },
+    });
+
+    return count === 1;
   }
 
   public async findById(id: number): Promise<Nfse | null> {
@@ -238,6 +265,8 @@ export class NfseRepositoryAdapterPrisma implements INfseRepository {
       bankPaymentFailedAt: row.bankPaymentFailedAt,
       bankPaymentStatus: row.bankPaymentStatus,
       bankPaymentConfirmedAt: row.bankPaymentConfirmedAt,
+      bankPaymentRetryCount: row.bankPaymentRetryCount,
+      bankPaymentNextRetryAt: row.bankPaymentNextRetryAt,
       reconcileAttemptCount: row.reconcileAttemptCount,
       nextReconcileAt: row.nextReconcileAt,
       providerAlerts: row.providerAlerts,

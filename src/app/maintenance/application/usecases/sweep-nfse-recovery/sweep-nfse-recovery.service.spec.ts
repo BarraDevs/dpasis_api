@@ -147,6 +147,49 @@ describe('SweepNfseRecovery - Unit tests', () => {
     });
   });
 
+  describe('sweepBankPaymentRetry', () => {
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('should claim each due note with a 15-minute lease before enqueueing it', async() => {
+      // Arrange
+      jest.useFakeTimers({ now: new Date('2026-09-10T12:00:00Z') });
+      jest.spyOn(nfseDao, 'findBankPaymentRetryDue').mockResolvedValue([makeTarget({ id: 5, status: NfseStatus.ISSUED })]);
+      jest.spyOn(nfseRepository, 'claimBankPaymentRetry').mockResolvedValue(true);
+
+      // Act
+      const count = await sut.sweepBankPaymentRetry();
+
+      // Assert
+      expect(nfseDao.findBankPaymentRetryDue).toHaveBeenCalledWith(200);
+      expect(nfseRepository.claimBankPaymentRetry).toHaveBeenCalledWith(
+        5,
+        new Date('2026-09-10T12:00:00Z'),
+        new Date('2026-09-10T12:15:00Z'),
+      );
+      expect(queueProducer.addIssueBankPaymentJob).toHaveBeenCalledWith({ nfseId: 5 });
+      expect(count).toBe(1);
+    });
+
+    it('should skip a note another replica already claimed', async() => {
+      // Arrange — duas réplicas leem a mesma nota; só a que ganha o `UPDATE` enfileira.
+      jest.spyOn(nfseDao, 'findBankPaymentRetryDue')
+        .mockResolvedValue([makeTarget({ id: 5, status: NfseStatus.ISSUED }), makeTarget({ id: 6, status: NfseStatus.ISSUED })]);
+      jest.spyOn(nfseRepository, 'claimBankPaymentRetry')
+        .mockResolvedValueOnce(false)
+        .mockResolvedValueOnce(true);
+
+      // Act
+      const count = await sut.sweepBankPaymentRetry();
+
+      // Assert
+      expect(queueProducer.addIssueBankPaymentJob).toHaveBeenCalledTimes(1);
+      expect(queueProducer.addIssueBankPaymentJob).toHaveBeenCalledWith({ nfseId: 6 });
+      expect(count).toBe(1);
+    });
+  });
+
   describe('sweepBankPaymentConfirmation', () => {
     it('should only chase charges requested more than ten minutes ago', async() => {
       // Arrange

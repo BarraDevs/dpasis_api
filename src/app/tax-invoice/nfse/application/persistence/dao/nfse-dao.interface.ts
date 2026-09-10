@@ -14,7 +14,10 @@ export interface INfseDao {
   findAwaitingProvider(): Promise<NfseAlertRowDto[]>;
   /** Emitidas sem cobrança vinculada há mais que o limiar. */
   findIssuedWithoutBankPayment(olderThanMinutes: number): Promise<NfseAlertRowDto[]>;
-  /** Cobranças cuja produção o provedor recusou (P1-08) e que ninguém reemitiu ainda. */
+  /**
+   * Cobranças com falha que exigem decisão humana: produção recusada pelo provedor (P1-08) ou
+   * emissão sem retentativa automática agendada. As que ainda têm retentativa ficam de fora.
+   */
   findBankPaymentFailed(): Promise<NfseAlertRowDto[]>;
   /** Emitidas com ressalva do fisco (`A*`) sobre as quais a operação ainda não foi avisada. */
   findIssuedWithProviderAlerts(): Promise<NfseAlertRowDto[]>;
@@ -33,6 +36,12 @@ export interface INfseDao {
    * janela entre `markIssued` e `addIssueBankPaymentJob`, que o outbox não cobre.
    */
   findIssuedWithoutBankPaymentJob(limit: number): Promise<NfseReconcileTargetDto[]>;
+  /**
+   * `ISSUED` sem cobrança, com retentativa automática do boleto agendada para agora ou antes. É a
+   * outra metade do boleto faltante: a nota cuja emissão falhou por motivo transitório e que a
+   * varredura acima deixa de fora porque tem falha registrada.
+   */
+  findBankPaymentRetryDue(limit: number): Promise<NfseReconcileTargetDto[]>;
   /**
    * Cobranças solicitadas ao provedor e ainda não confirmadas. `POST /cobrancas` é assíncrono:
    * `codigoSolicitacao` diz que a solicitação foi aceita, não que o boleto existe.

@@ -3,6 +3,7 @@ import { DelayedError, Job, UnrecoverableError } from 'bullmq';
 import { AppException } from 'src/core/filters/app.exception';
 import { JobName } from 'src/infra/queue/enums/job-name.enum';
 import { PermanentProviderError } from 'src/shared/errors/permanent-provider.error';
+import { RetryScheduledError } from 'src/shared/errors/retry-scheduled.error';
 import { TransientProviderError } from 'src/shared/errors/transient-provider.error';
 import type { ConfirmNfseBankPaymentJobDto } from '../../../../application/queue/jobs/confirm-nfse-bank-payment-job.dto';
 import type { IssueNfseBankPaymentJobDto } from '../../../../application/queue/jobs/issue-nfse-bank-payment-job.dto';
@@ -44,6 +45,13 @@ export class NfseJobRouter {
       await this.dispatch(job);
     }
     catch (error: unknown) {
+      // A aplicação já registrou a falha e agendou a própria retentativa, com a escada gravada no
+      // banco e conduzida pela varredura. Encerrar o job aqui evita que o BullMQ retente por cima e
+      // que cada rodada termine na fila de falhas, retida 30 dias e alertada a cada janela.
+      if (error instanceof RetryScheduledError) {
+        return;
+      }
+
       // Erro permanente não melhora com repetição: gastar as tentativas do job só atrasa o
       // diagnóstico. `UnrecoverableError` vive aqui — o consumer é o único lugar que conhece BullMQ.
       if (error instanceof PermanentProviderError) {

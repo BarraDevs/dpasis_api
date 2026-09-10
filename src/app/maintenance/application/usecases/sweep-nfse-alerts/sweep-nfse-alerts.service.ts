@@ -78,9 +78,14 @@ export class SweepNfseAlerts {
   }
 
   /**
-   * Cobranças que o provedor recusou produzir (`FALHA_EMISSAO`). A NFS-e está `ISSUED` e vinculada
-   * — parece saudável em toda consulta —, e o cliente nunca recebeu boleto. Sem alerta, a
-   * inadimplência resultante parece do cliente.
+   * Cobranças com falha que exigem decisão humana. Dois casos:
+   *
+   * - o provedor recusou produzir a cobrança (`FALHA_EMISSAO`): a NFS-e está `ISSUED` e vinculada —
+   *   parece saudável em toda consulta —, e o cliente nunca recebeu boleto. Sem alerta, a
+   *   inadimplência resultante parece do cliente;
+   * - a emissão falhou e não há retentativa automática agendada (falha permanente, ou a escada de
+   *   24h/vencimento se esgotou). Enquanto houver retentativa agendada a nota fica fora daqui: o
+   *   sistema ainda está cuidando dela, e o alerta de "emitida sem cobrança" já sinaliza a demora.
    */
   public async sweepBankPaymentFailed(): Promise<void> {
     const rows = await this.nfseDao.findBankPaymentFailed();
@@ -89,7 +94,10 @@ export class SweepNfseAlerts {
       AlertType.NfseBankPaymentFailed,
       `[NFS-e] ${rows.length} cobrança(s) com falha registrada`,
       rows,
-      ['Conferir a situação no provedor antes de reemitir; o vínculo local não foi apagado.'],
+      [
+        'Cobrança em FALHA_EMISSAO: reemitir por POST /admin/bank-payment/nfm/:id/reissue — a rota confirma a falha no Inter antes.',
+        'Sem cobrança vinculada: conferir o motivo e emitir por POST /admin/bank-payment/nfm/:id.',
+      ],
     );
   }
 

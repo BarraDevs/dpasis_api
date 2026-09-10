@@ -390,6 +390,75 @@ describe('NfseRepositoryAdapterPrisma - Integration tests', () => {
     });
   });
 
+  describe('bank payment retry', () => {
+    async function seedIssued(overrides: { bankPaymentNextRetryAt?: Date | null; bankPaymentRequestCode?: string | null } = {}) {
+      const id = await sut.save(NfseFactory.create(makeNfseCreateProps()));
+      await prisma.nfse.update({
+        where: { id },
+        data: {
+          status: NfseStatus.ISSUED,
+          nfseNumber: '7007',
+          issuedAt: new Date('2026-09-10T12:00:00Z'),
+          ...overrides,
+        },
+      });
+      return id;
+    }
+
+    it('should persist and rehydrate the retry schedule via edit', async() => {
+      // Arrange
+      const id = await seedIssued();
+      const next = new Date('2026-09-10T12:05:00.000Z');
+      const entity = await sut.findById(id);
+      entity!.markBankPaymentFailed('Banco Inter indisponível.');
+      entity!.scheduleBankPaymentRetry(next);
+
+      // Act
+      await sut.edit(entity!);
+      const result = await sut.findById(id);
+
+      // Assert
+      expect(result?.props.bankPaymentNextRetryAt).toEqual(next);
+      expect(result?.props.bankPaymentRetryCount).toBe(0);
+    });
+
+    it('should let only one claim through, pushing the lease forward and counting the round', async() => {
+      // Arrange
+      const id = await seedIssued({ bankPaymentNextRetryAt: new Date('2026-09-10T12:00:00.000Z') });
+      const now = new Date('2026-09-10T12:05:00.000Z');
+      const leaseUntil = new Date('2026-09-10T12:20:00.000Z');
+
+      // Act — duas réplicas disputando a mesma nota na mesma volta da varredura.
+      const first = await sut.claimBankPaymentRetry(id, now, leaseUntil);
+      const second = await sut.claimBankPaymentRetry(id, now, leaseUntil);
+
+      // Assert
+      expect(first).toBe(true);
+      expect(second).toBe(false);
+      const saved = await prisma.nfse.findUnique({ where: { id } });
+      expect(saved?.bankPaymentNextRetryAt).toEqual(leaseUntil);
+      expect(saved?.bankPaymentRetryCount).toBe(1);
+    });
+
+    it('should not claim a note whose charge got linked in the meantime', async() => {
+      // Arrange
+      const id = await seedIssued({
+        bankPaymentNextRetryAt: new Date('2026-09-10T12:00:00.000Z'),
+        bankPaymentRequestCode: 'req-linked',
+      });
+
+      // Act
+      const claimed = await sut.claimBankPaymentRetry(
+        id,
+        new Date('2026-09-10T12:05:00.000Z'),
+        new Date('2026-09-10T12:20:00.000Z'),
+      );
+
+      // Assert
+      expect(claimed).toBe(false);
+    });
+  });
+
   describe('reserve', () => {
     let cnaeNbsIndopId: number;
 

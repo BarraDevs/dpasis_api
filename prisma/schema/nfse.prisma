@@ -33,6 +33,12 @@ model Nfse {
   // `bankPaymentRequestCode` só diz que a solicitação foi aceita, não que o boleto foi produzido.
   bankPaymentStatus         String?
   bankPaymentConfirmedAt    DateTime?
+  // Retentativa automática do boleto depois de falha transitória do provedor (Inter fora, 5xx, 429).
+  // `bankPaymentNextRetryAt` preenchido significa "a varredura tenta de novo a partir dali"; nulo com
+  // `bankPaymentFailedAt` preenchido, "a falha exige decisão humana". `bankPaymentRetryCount` conta
+  // as rodadas iniciadas pela varredura e só escolhe o degrau da escada.
+  bankPaymentRetryCount     Int       @default(0)
+  bankPaymentNextRetryAt    DateTime?
   // Agendamento da reconciliação com o provedor de NFS-e. `nextReconcileAt` nulo numa nota não
   // terminal significa "consultar na próxima varredura"; numa nota terminal, "não consultar mais".
   reconcileAttemptCount     Int       @default(0)
@@ -51,6 +57,7 @@ model Nfse {
   @@unique([companyId, rpsSeries, rpsNumber])
   @@index([status, updatedAt])
   @@index([status, nextReconcileAt])
+  @@index([status, bankPaymentNextRetryAt])
   @@index([nfmId])
   @@index([bankPaymentRequestCode])
   @@map("nfses")

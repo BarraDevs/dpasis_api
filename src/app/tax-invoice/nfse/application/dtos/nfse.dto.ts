@@ -22,6 +22,8 @@ export class NfseDto {
   bankPaymentFailedAt: Date | null;
   bankPaymentStatus: string | null;
   bankPaymentConfirmedAt: Date | null;
+  bankPaymentRetryCount: number;
+  bankPaymentNextRetryAt: Date | null;
   reconcileAttemptCount: number;
   nextReconcileAt: Date | null;
   nfmId: number | null;

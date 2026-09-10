@@ -589,6 +589,93 @@ describe('Nfse - Unit tests', () => {
     expect(sut.props.bankPaymentErrorMessage).toBeNull();
     expect(sut.props.bankPaymentFailedAt).toBeNull();
   });
+
+  describe('bank payment retry', () => {
+    const issuedProps = {
+      status: NfseStatus.ISSUED,
+      nfseNumber: '1000',
+      verificationCode: 'ABC',
+      issuedAt: new Date('2026-07-20T10:00:00Z'),
+    };
+
+    it('should store the next retry without counting a round', () => {
+      // Arrange
+      const sut = Nfse._instantiate(makeNfseProps({ ...issuedProps, bankPaymentRetryCount: 2 }));
+      const next = new Date('2026-09-10T15:00:00Z');
+
+      // Act
+      sut.scheduleBankPaymentRetry(next);
+
+      // Assert — quem conta a rodada é a varredura; contar aqui somaria cada tentativa do BullMQ.
+      expect(sut.props.bankPaymentNextRetryAt).toBe(next);
+      expect(sut.props.bankPaymentRetryCount).toBe(2);
+    });
+
+    it('should clear a scheduled retry when the bank payment gets linked', () => {
+      // Arrange
+      const sut = Nfse._instantiate(makeNfseProps({
+        ...issuedProps,
+        bankPaymentNextRetryAt: new Date('2026-09-10T15:00:00Z'),
+      }));
+
+      // Act
+      sut.linkBankPayment('INTER', 'req-1');
+
+      // Assert
+      expect(sut.props.bankPaymentNextRetryAt).toBeNull();
+    });
+  });
+
+  describe('resetBankPaymentForReissue', () => {
+    it('should drop the failed charge and every trace of the previous request', () => {
+      // Arrange
+      const sut = Nfse._instantiate(makeNfseProps({
+        status: NfseStatus.ISSUED,
+        nfseNumber: '1000',
+        verificationCode: 'ABC',
+        issuedAt: new Date('2026-07-20T10:00:00Z'),
+        bankPaymentProvider: 'INTER',
+        bankPaymentRequestCode: 'req-failed',
+        bankPaymentIdempotencyKey: 'nfse-1',
+        bankPaymentRequestedAt: new Date('2026-09-10T12:00:00Z'),
+        bankPaymentStatus: 'FAILED',
+        bankPaymentErrorMessage: 'Provedor reportou falha na emissão da cobrança req-failed',
+        bankPaymentFailedAt: new Date('2026-09-10T12:15:00Z'),
+        bankPaymentRetryCount: 3,
+        bankPaymentNextRetryAt: new Date('2026-09-10T18:00:00Z'),
+      }));
+
+      // Act
+      sut.resetBankPaymentForReissue();
+
+      // Assert — a nota continua emitida; só o vínculo com a cobrança que falhou sai.
+      expect(sut.props).toMatchObject({
+        status: NfseStatus.ISSUED,
+        nfseNumber: '1000',
+        bankPaymentProvider: null,
+        bankPaymentRequestCode: null,
+        bankPaymentIdempotencyKey: null,
+        bankPaymentRequestedAt: null,
+        bankPaymentStatus: null,
+        bankPaymentConfirmedAt: null,
+        bankPaymentErrorMessage: null,
+        bankPaymentFailedAt: null,
+        bankPaymentRetryCount: 0,
+        bankPaymentNextRetryAt: null,
+      });
+      expect(sut.hasBankPayment()).toBe(false);
+      expect(sut.hasRequestedBankPayment()).toBe(false);
+    });
+
+    it.each([NfseStatus.CANCELED, NfseStatus.PENDING])('should refuse when the nfse is %s', (status) => {
+      // Arrange
+      const sut = Nfse._instantiate(makeNfseProps({ status, bankPaymentRequestCode: 'req-failed' }));
+
+      // Act & Assert
+      expect(() => sut.resetBankPaymentForReissue()).toThrow(NfseNotIssuedError);
+    });
+  });
+
   describe('markRejected', () => {
     it('should set REJECTED and keep the provider message', () => {
       // Arrange

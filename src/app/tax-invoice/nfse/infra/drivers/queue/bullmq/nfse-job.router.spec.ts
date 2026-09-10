@@ -4,6 +4,7 @@ import { DelayedError, Job, UnrecoverableError } from 'bullmq';
 import { AppException } from 'src/core/filters/app.exception';
 import { JobName } from 'src/infra/queue/enums/job-name.enum';
 import { PermanentProviderError } from 'src/shared/errors/permanent-provider.error';
+import { RetryScheduledError } from 'src/shared/errors/retry-scheduled.error';
 import { TransientProviderError } from 'src/shared/errors/transient-provider.error';
 import type { IssueNfseBankPaymentJobDto } from '../../../../application/queue/jobs/issue-nfse-bank-payment-job.dto';
 import type { IssueNfseBatchJobDto } from '../../../../application/queue/jobs/issue-nfse-batch-job.dto';
@@ -270,6 +271,25 @@ describe('NfseJobRouter', () => {
 
       // Act & Assert
       await expect(sut.run(job)).rejects.toBe(err);
+      expect(moveToDelayed).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('run (retentativa agendada pela aplicação)', () => {
+    it('should complete the job when the use case already scheduled its own retry', async() => {
+      // Arrange
+      const moveToDelayed = jest.fn();
+      const job = {
+        name: JobName.IssueNfseBankPayment,
+        data: makeIssueBankPaymentJob(),
+        moveToDelayed,
+      } as unknown as Job<IssueNfseBankPaymentJobDto>;
+      jest.spyOn(processIssueNfseBankPayment, 'execute').mockRejectedValue(
+        new RetryScheduledError('Banco Inter indisponível.', new Date('2026-09-10T15:00:00Z')),
+      );
+
+      // Act & Assert — nem retry do BullMQ nem fila de falhas: a varredura retoma no horário agendado.
+      await expect(sut.run(job, 'token-1')).resolves.toBeUndefined();
       expect(moveToDelayed).not.toHaveBeenCalled();
     });
   });
