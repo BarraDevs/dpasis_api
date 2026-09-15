@@ -1,13 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { AccountClaimSeed } from './account-claims';
 import { AdminSeed } from './admin';
-import { ClientSequenceSeed } from './client-sequence';
-import { ResaleSequenceSeed } from './resale-sequence';
-import { FindElegibleClientsNfmSeed } from './find-elegible-clients-nfm';
-import { CnaeSeed } from './cnae';
-import { CnaeNbsIndopSeed } from './cnae-nbs-indop';
-import { IndopSeed } from './indop';
-import { NbsSeed } from './nbs';
 
 const prisma = new PrismaClient();
 
@@ -22,10 +15,10 @@ async function main() {
   // await DeliveryTermSeed.seed(prisma);
   // await WarrantySeed.seed(prisma);
   // await ProposalValiditySeed.seed(prisma);
-  await CnaeSeed.seed(prisma);
-  await NbsSeed.seed(prisma);
-  await IndopSeed.seed(prisma);
-  await CnaeNbsIndopSeed.seed(prisma);
+  // await CnaeSeed.seed(prisma);
+  // await NbsSeed.seed(prisma);
+  // await IndopSeed.seed(prisma);
+  // await CnaeNbsIndopSeed.seed(prisma);
   // await ClientGroupSeed.seed(prisma);
   // await ClientOwnerSeed.seed(prisma);
   // await DepartmentSeed.seed(prisma);
@@ -35,9 +28,9 @@ async function main() {
   // await ClientDescriptionTypeSeed.seed(prisma);
   // await ClientDriveTypeSeed.seed(prisma);
   // await ClientSeed.seed(prisma);
-  await ClientSequenceSeed.seed(prisma);
-  await ResaleSequenceSeed.seed(prisma);
-  await FindElegibleClientsNfmSeed.seed(prisma);
+  // await ClientSequenceSeed.seed(prisma);
+  // await ResaleSequenceSeed.seed(prisma);
+  // await FindElegibleClientsNfmSeed.seed(prisma);
   // await ClientAddressSeed.seed(prisma);
   // await ClientContactSeed.seed(prisma);
   // await ClientAttachmentSeed.seed(prisma);
