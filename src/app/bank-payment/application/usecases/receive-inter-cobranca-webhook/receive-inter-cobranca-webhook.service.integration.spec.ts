@@ -1,6 +1,9 @@
 import { Test } from '@nestjs/testing';
 import { BankPaymentModule } from 'src/app/bank-payment/bank-payment.module';
+import { CashFlowEntryOrigin } from 'src/app/cash-flow-entry/domain/enums/cash-flow-entry-origin.enum';
+import { CashFlowEntryType } from 'src/app/cash-flow-entry/domain/enums/cash-flow-entry-type.enum';
 import { NfseStatus } from 'src/app/tax-invoice/nfse/domain/enums/nfse-status.enum';
+import { buildMinimalCompanyData } from 'src/test/fixtures/minimal-company';
 import { ConfigService } from 'src/core/config/config.service';
 import { TOKENS } from 'src/core/di/token';
 import { BankPaymentFakeAdapterGateway } from 'src/infra/bank-payment/adapters/fake/bank-payment-fake.gateway';
@@ -18,9 +21,10 @@ let counter = 0;
 
 async function seedNfse(prisma: PrismaService, overrides: Record<string, unknown> = {}) {
   counter += 1;
+  const company = await prisma.company.create({ data: buildMinimalCompanyData() });
   return prisma.nfse.create({
     data: {
-      companyId: 1,
+      companyId: company.id,
       clientId: 1,
       rpsNumber: (Date.now() % 100_000) + counter,
       rpsSeries: 'NFSE',
@@ -34,6 +38,7 @@ async function seedNfse(prisma: PrismaService, overrides: Record<string, unknown
       bankPaymentNextSettlementAt: new Date('2026-09-03T10:15:00Z'),
       data: {},
       ...overrides,
+      companyId: company.id,
     },
   });
 }
@@ -97,6 +102,12 @@ describe('ReceiveInterCobrancaWebhook - Integration tests', () => {
     const saved = await prisma.nfse.findUnique({ where: { id: nfse.id } });
     expect(saved?.bankPaymentStatus).toBe(BankPaymentStatus.PAID);
     expect(saved?.bankPaymentSettledAt).toBeInstanceOf(Date);
+    const ledger = await prisma.cashFlowEntry.findUnique({ where: { nfseId: nfse.id } });
+    expect(ledger).toEqual(expect.objectContaining({
+      type: CashFlowEntryType.CREDIT,
+      origin: CashFlowEntryOrigin.BANK_PAYMENT,
+      amountInCents: 10000,
+    }));
   });
 
   it('should reject an invalid token without settling', async() => {

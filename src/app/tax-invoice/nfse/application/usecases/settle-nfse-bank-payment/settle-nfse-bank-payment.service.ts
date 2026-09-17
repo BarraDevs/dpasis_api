@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { RecordJobAudit } from 'src/app/audit/application/usecases/record-job-audit/record-job-audit.service';
 import { FindBankPayment } from 'src/app/bank-payment/application/usecases/find-bank-payment/find-bank-payment.service';
+import { RecordPaidBankPaymentCashFlowEntry } from 'src/app/cash-flow-entry/application/usecases/record-paid-bank-payment-cash-flow-entry/record-paid-bank-payment-cash-flow-entry.service';
 import { TOKENS } from 'src/core/di/token';
 import { BankPaymentProvider } from 'src/infra/bank-payment/enums/bank-payment-provider.enum';
 import { LogContext, type ILoggerGateway } from 'src/infra/logger/logger.gateway';
@@ -19,6 +20,7 @@ export class SettleNfseBankPayment {
     @Inject(TOKENS.NfseRepository) private readonly nfseRepository: INfseRepository,
     private readonly findBankPayment: FindBankPayment,
     private readonly recordJobAudit: RecordJobAudit,
+    private readonly recordPaidBankPaymentCashFlowEntry: RecordPaidBankPaymentCashFlowEntry,
   ) {}
 
   /**
@@ -38,6 +40,7 @@ export class SettleNfseBankPayment {
     }
 
     if (nfse.hasSettledBankPayment()) {
+      await this.recordPaidCashFlow(nfse, requestCode);
       return { nfseId: nfse.props.id, status: nfse.props.bankPaymentStatus ?? null, settled: true };
     }
 
@@ -50,7 +53,38 @@ export class SettleNfseBankPayment {
     }
 
     await this.persist(nfse, requestCode, settled);
+    if (settled) {
+      await this.recordPaidCashFlow(nfse, requestCode, bankPayment.amount);
+    }
     return { nfseId: nfse.props.id, status: bankPayment.status, settled };
+  }
+
+  private async recordPaidCashFlow(nfse: Nfse, requestCode: string, amount?: number): Promise<void> {
+    if (!nfse.isPaidLikeBankPayment()) {
+      return;
+    }
+
+    const recorded = await this.recordPaidBankPaymentCashFlowEntry.execute({
+      companyId: nfse.props.companyId,
+      nfseId: nfse.props.id,
+      bankPaymentRequestCode: requestCode,
+      occurredAt: nfse.props.bankPaymentSettledAt ?? new Date(),
+      amount,
+    });
+
+    if (recorded.id != null || amount != null) {
+      return;
+    }
+
+    const provider = (nfse.props.bankPaymentProvider ?? BankPaymentProvider.INTER) as BankPaymentProvider;
+    const bankPayment = await this.findBankPayment.execute(requestCode, provider);
+    await this.recordPaidBankPaymentCashFlowEntry.execute({
+      companyId: nfse.props.companyId,
+      nfseId: nfse.props.id,
+      bankPaymentRequestCode: requestCode,
+      occurredAt: nfse.props.bankPaymentSettledAt ?? new Date(),
+      amount: bankPayment.amount,
+    });
   }
 
   private async load(input: SettleNfseBankPaymentInputDto): Promise<Nfse | null> {

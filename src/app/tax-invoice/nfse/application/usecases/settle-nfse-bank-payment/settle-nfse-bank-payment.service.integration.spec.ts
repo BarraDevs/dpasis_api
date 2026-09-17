@@ -1,4 +1,6 @@
 import { Test } from '@nestjs/testing';
+import { CashFlowEntryOrigin } from 'src/app/cash-flow-entry/domain/enums/cash-flow-entry-origin.enum';
+import { CashFlowEntryType } from 'src/app/cash-flow-entry/domain/enums/cash-flow-entry-type.enum';
 import { ConfigModule } from 'src/core/config/config.module';
 import { TOKENS } from 'src/core/di/token';
 import { BankPaymentFakeAdapterGateway } from 'src/infra/bank-payment/adapters/fake/bank-payment-fake.gateway';
@@ -7,6 +9,7 @@ import { BankPaymentStatus } from 'src/infra/bank-payment/enums/bank-payment-sta
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { LoggerModule } from 'src/infra/logger/logger.module';
 import { ExternalApiError } from 'src/shared/errors/external-api.error';
+import { buildMinimalCompanyData } from 'src/test/fixtures/minimal-company';
 import { NfseStatus } from '../../../domain/enums/nfse-status.enum';
 import { NfseNotFoundError } from '../../../domain/errors/nfse-not-found.error';
 import { NfseQueueModule } from '../../queue/nfse-queue.module';
@@ -16,9 +19,10 @@ let counter = 0;
 
 async function seedNfse(prisma: PrismaService, overrides: Record<string, unknown> = {}) {
   counter += 1;
+  const company = await prisma.company.create({ data: buildMinimalCompanyData() });
   return prisma.nfse.create({
     data: {
-      companyId: 1,
+      companyId: company.id,
       clientId: 1,
       rpsNumber: (Date.now() % 100_000) + counter,
       rpsSeries: 'NFSE',
@@ -32,6 +36,7 @@ async function seedNfse(prisma: PrismaService, overrides: Record<string, unknown
       bankPaymentNextSettlementAt: new Date('2026-09-03T10:15:00Z'),
       data: {},
       ...overrides,
+      companyId: company.id,
     },
   });
 }
@@ -91,6 +96,14 @@ describe('SettleNfseBankPayment - Integration tests', () => {
     expect(saved?.bankPaymentStatus).toBe(BankPaymentStatus.PAID);
     expect(saved?.bankPaymentSettledAt).toBeInstanceOf(Date);
     expect(saved?.bankPaymentNextSettlementAt).toBeNull();
+    const ledger = await prisma.cashFlowEntry.findUnique({ where: { nfseId: nfse.id } });
+    expect(ledger).toEqual(expect.objectContaining({
+      companyId: nfse.companyId,
+      type: CashFlowEntryType.CREDIT,
+      origin: CashFlowEntryOrigin.BANK_PAYMENT,
+      amountInCents: 10000,
+      bankPaymentRequestCode: 'req-1',
+    }));
   });
 
   it.each([BankPaymentStatus.CANCELLED, BankPaymentStatus.EXPIRED])(
@@ -112,6 +125,7 @@ describe('SettleNfseBankPayment - Integration tests', () => {
       expect(saved?.bankPaymentStatus).toBe(status);
       expect(saved?.bankPaymentSettledAt).toBeInstanceOf(Date);
       expect(saved?.bankPaymentNextSettlementAt).toBeNull();
+      expect(await prisma.cashFlowEntry.findUnique({ where: { nfseId: nfse.id } })).toBeNull();
     },
   );
 
@@ -153,6 +167,31 @@ describe('SettleNfseBankPayment - Integration tests', () => {
     const saved = await prisma.nfse.findUnique({ where: { id: nfse.id } });
     expect(saved?.bankPaymentSettledAt).toBeNull();
     expect(saved?.bankPaymentNextSettlementAt?.getTime()).toBeGreaterThan(Date.now());
+    expect(await prisma.cashFlowEntry.findUnique({ where: { nfseId: nfse.id } })).toBeNull();
+  });
+
+  it('should not duplicate the cash-flow row when already paid', async() => {
+    const nfse = await seedNfse(prisma, {
+      bankPaymentStatus: BankPaymentStatus.PAID,
+      bankPaymentSettledAt: new Date('2026-09-17T12:00:00Z'),
+    });
+    await prisma.cashFlowEntry.create({
+      data: {
+        companyId: nfse.companyId,
+        type: CashFlowEntryType.CREDIT,
+        origin: CashFlowEntryOrigin.BANK_PAYMENT,
+        amountInCents: 10000,
+        occurredAt: new Date('2026-09-17T12:00:00Z'),
+        description: 'Pagamento existente',
+        nfseId: nfse.id,
+        bankPaymentRequestCode: 'req-1',
+      },
+    });
+
+    await sut.execute({ nfseId: nfse.id });
+
+    expect(bankPaymentGateway.findCalls).toHaveLength(0);
+    expect(await prisma.cashFlowEntry.count({ where: { nfseId: nfse.id } })).toBe(1);
   });
 
   it('should propagate ExternalApiError when the GET fails', async() => {

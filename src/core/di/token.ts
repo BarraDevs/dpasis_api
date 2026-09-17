@@ -67,6 +67,8 @@ const TOKENS = {
   CarrierDao: Symbol.for('CarrierDao'),
   CarrierRepository: Symbol.for('CarrierRepository'),
 
+  CashFlowEntryDao: Symbol.for('CashFlowEntryDao'),
+
   CompanyDao: Symbol.for('CompanyDao'),
   CompanyRepository: Symbol.for('CompanyRepository'),
   CompanyNfsConfigDao: Symbol.for('CompanyNfsConfigDao'),

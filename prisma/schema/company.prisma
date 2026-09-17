@@ -23,8 +23,9 @@ model Company {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  clients  Client[]
-  services Service[]
+  clients         Client[]
+  services        Service[]
+  cashFlowEntries CashFlowEntry[]
 
   nfsProviderConfig NfsProviderConfig?
 

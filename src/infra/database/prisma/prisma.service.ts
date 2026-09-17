@@ -31,6 +31,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
 
     await this.$transaction(async(tx) => {
       await tx.auditLog.deleteMany();
+      await tx.cashFlowEntry.deleteMany();
       await tx.nfmCronRun.deleteMany();
       await tx.nfm.deleteMany();
       await tx.nfseAttempt.deleteMany();

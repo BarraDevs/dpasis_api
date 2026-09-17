@@ -2,6 +2,7 @@ import { createMock } from '@golevelup/ts-jest';
 import { RecordJobAudit } from 'src/app/audit/application/usecases/record-job-audit/record-job-audit.service';
 import { Test } from '@nestjs/testing';
 import { FindBankPayment } from 'src/app/bank-payment/application/usecases/find-bank-payment/find-bank-payment.service';
+import { RecordPaidBankPaymentCashFlowEntry } from 'src/app/cash-flow-entry/application/usecases/record-paid-bank-payment-cash-flow-entry/record-paid-bank-payment-cash-flow-entry.service';
 import { TOKENS } from 'src/core/di/token';
 import { BankPaymentDto } from 'src/infra/bank-payment/dtos/bank-payment.dto';
 import { BankPaymentProvider } from 'src/infra/bank-payment/enums/bank-payment-provider.enum';
@@ -50,7 +51,12 @@ function makeNfseProps(overrides: Partial<NfseProps> = {}): NfseProps {
 }
 
 function makeBankPayment(status: BankPaymentStatus): BankPaymentDto {
-  return createMock<BankPaymentDto>({ provider: BankPaymentProvider.INTER, requestCode: 'req-1', status });
+  return createMock<BankPaymentDto>({
+    provider: BankPaymentProvider.INTER,
+    requestCode: 'req-1',
+    status,
+    amount: 100,
+  });
 }
 
 describe('SettleNfseBankPayment - Unit tests', () => {
@@ -58,6 +64,7 @@ describe('SettleNfseBankPayment - Unit tests', () => {
   let nfseRepository: INfseRepository;
   let findBankPayment: FindBankPayment;
   let recordJobAudit: RecordJobAudit;
+  let recordPaidBankPaymentCashFlowEntry: RecordPaidBankPaymentCashFlowEntry;
 
   beforeEach(async() => {
     const module = await Test.createTestingModule({
@@ -67,6 +74,10 @@ describe('SettleNfseBankPayment - Unit tests', () => {
         { provide: TOKENS.NfseRepository, useValue: createMock<INfseRepository>() },
         { provide: FindBankPayment, useValue: createMock<FindBankPayment>() },
         { provide: RecordJobAudit, useValue: createMock<RecordJobAudit>() },
+        {
+          provide: RecordPaidBankPaymentCashFlowEntry,
+          useValue: createMock<RecordPaidBankPaymentCashFlowEntry>(),
+        },
       ],
     }).compile();
 
@@ -74,6 +85,8 @@ describe('SettleNfseBankPayment - Unit tests', () => {
     nfseRepository = module.get(TOKENS.NfseRepository);
     findBankPayment = module.get(FindBankPayment);
     recordJobAudit = module.get(RecordJobAudit);
+    recordPaidBankPaymentCashFlowEntry = module.get(RecordPaidBankPaymentCashFlowEntry);
+    jest.spyOn(recordPaidBankPaymentCashFlowEntry, 'execute').mockResolvedValue({ id: 1 });
   });
 
   afterEach(() => {
@@ -134,6 +147,37 @@ describe('SettleNfseBankPayment - Unit tests', () => {
     expect(result).toEqual({ nfseId: 1, status: BankPaymentStatus.PAID, settled: true });
     expect(findBankPayment.execute).not.toHaveBeenCalled();
     expect(nfseRepository.edit).not.toHaveBeenCalled();
+    expect(recordPaidBankPaymentCashFlowEntry.execute).toHaveBeenCalledWith({
+      companyId: 1,
+      nfseId: 1,
+      bankPaymentRequestCode: 'req-1',
+      occurredAt: new Date('2026-09-17T12:00:00Z'),
+      amount: undefined,
+    });
+  });
+
+  it('should fetch the amount when already settled paid has no cash-flow row', async() => {
+    // Arrange
+    jest.spyOn(nfseRepository, 'findById').mockResolvedValue(
+      NfseFactory.load(makeNfseProps({
+        bankPaymentStatus: BankPaymentStatus.PAID,
+        bankPaymentSettledAt: new Date('2026-09-17T12:00:00Z'),
+      })),
+    );
+    jest.spyOn(recordPaidBankPaymentCashFlowEntry, 'execute')
+      .mockResolvedValueOnce({ id: null })
+      .mockResolvedValueOnce({ id: 20 });
+    jest.spyOn(findBankPayment, 'execute').mockResolvedValue(makeBankPayment(BankPaymentStatus.PAID));
+
+    // Act
+    await sut.execute({ nfseId: 1 });
+
+    // Assert
+    expect(findBankPayment.execute).toHaveBeenCalledWith('req-1', BankPaymentProvider.INTER);
+    expect(recordPaidBankPaymentCashFlowEntry.execute).toHaveBeenNthCalledWith(2, expect.objectContaining({
+      amount: 100,
+      nfseId: 1,
+    }));
   });
 
   it.each(['', '   '])('should be a no-op when requestCode is blank (%s)', async(requestCode) => {
@@ -212,6 +256,16 @@ describe('SettleNfseBankPayment - Unit tests', () => {
     expect(nfse.props.bankPaymentNextSettlementAt).toBeNull();
     expect(nfseRepository.edit).toHaveBeenCalledWith(nfse);
     expect(result).toEqual({ nfseId: 1, status, settled: true });
+    if (status === BankPaymentStatus.CANCELLED || status === BankPaymentStatus.EXPIRED) {
+      expect(recordPaidBankPaymentCashFlowEntry.execute).not.toHaveBeenCalled();
+    }
+    else {
+      expect(recordPaidBankPaymentCashFlowEntry.execute).toHaveBeenCalledWith(expect.objectContaining({
+        amount: 100,
+        nfseId: 1,
+        bankPaymentRequestCode: 'req-1',
+      }));
+    }
   });
 
   it('should push the next check when the charge is still open', async() => {

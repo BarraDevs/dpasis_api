@@ -44,6 +44,9 @@ export const Claim = {
   BILLED_READ: { subject: ClaimSubject.Billed, action: ClaimAction.Read },
   BILLED_WRITE: { subject: ClaimSubject.Billed, action: ClaimAction.Write },
 
+  CASH_FLOW_ENTRY_READ: { subject: ClaimSubject.CashFlowEntry, action: ClaimAction.Read },
+  CASH_FLOW_ENTRY_WRITE: { subject: ClaimSubject.CashFlowEntry, action: ClaimAction.Write },
+
   CATEGORY_READ: { subject: ClaimSubject.Category, action: ClaimAction.Read },
   CATEGORY_WRITE: { subject: ClaimSubject.Category, action: ClaimAction.Write },
 

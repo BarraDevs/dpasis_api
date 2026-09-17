@@ -4,6 +4,7 @@ import { BullModule } from '@nestjs/bullmq';
 import { DynamicModule, Module } from '@nestjs/common';
 import { AuditModule } from 'src/app/audit/audit.module';
 import { BankPaymentCoreModule } from 'src/app/bank-payment/bank-payment-core.module';
+import { CashFlowEntryModule } from 'src/app/cash-flow-entry/cash-flow-entry.module';
 import { ClientInvoiceConfigModule } from 'src/app/client/client-invoice-config/client-invoice-config.module';
 import { CompanyNfsConfigModule } from 'src/app/company/company-nfs-config/company-nfs-config.module';
 import { CompanyModule } from 'src/app/company/company/company.module';
@@ -66,6 +67,7 @@ export class NfseQueueModule {
         NfsePersistenceModule,
         NfsGenerationModule.register(),
         BankPaymentCoreModule,
+        CashFlowEntryModule,
         ClientInvoiceConfigModule,
         AuditModule,
       ],

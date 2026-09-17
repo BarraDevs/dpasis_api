@@ -1,0 +1,19 @@
+model CashFlowEntry {
+  id                     Int      @id @default(autoincrement())
+  companyId              Int
+  type                   String
+  origin                 String
+  amountInCents          Int
+  occurredAt             DateTime
+  description            String   @db.Text
+  nfseId                 Int?     @unique
+  bankPaymentRequestCode String?
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  nfse    Nfse?   @relation(fields: [nfseId], references: [id], onDelete: Restrict)
+
+  @@index([companyId, occurredAt])
+  @@map("cash_flow_entries")
+}

@@ -58,7 +58,8 @@ model Nfse {
   createdAt                 DateTime  @default(now())
   updatedAt                 DateTime  @updatedAt
 
-  nfm Nfm?
+  nfm            Nfm?
+  cashFlowEntry  CashFlowEntry?
 
   @@unique([companyId, rpsSeries, rpsNumber])
   @@index([status, updatedAt])

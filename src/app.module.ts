@@ -20,6 +20,7 @@ import { InfraModule } from './infra/infra.module';
 import { TaxInvoiceModule } from './app/tax-invoice/tax-invoice.module';
 import { CompanyModuleModule } from './app/company/company-module.module';
 import { BankPaymentModule } from './app/bank-payment/bank-payment.module';
+import { CashFlowEntryModule } from './app/cash-flow-entry/cash-flow-entry.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { BankPaymentModule } from './app/bank-payment/bank-payment.module';
     AuditModule,
     AdminModule,
     BankPaymentModule,
+    CashFlowEntryModule,
     CarrierModule,
     CompanyModuleModule,
     MaintenanceModule.register(),
