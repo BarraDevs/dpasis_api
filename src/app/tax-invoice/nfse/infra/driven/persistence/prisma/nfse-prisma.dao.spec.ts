@@ -164,6 +164,8 @@ describe('NfseDaoAdapterPrisma - Integration tests', () => {
     it('should return bank payment fields via findById', async() => {
       // Arrange
       const issuedAt = new Date('2026-07-20T10:00:00.000Z');
+      const settledAt = new Date('2026-09-17T12:00:00.000Z');
+      const nextSettlementAt = new Date('2026-09-17T18:00:00.000Z');
       const row = await prisma.nfse.create({
         data: {
           companyId: 1,
@@ -176,6 +178,8 @@ describe('NfseDaoAdapterPrisma - Integration tests', () => {
           issuedAt,
           bankPaymentProvider: 'INTER',
           bankPaymentRequestCode: 'request-dao-1',
+          bankPaymentSettledAt: settledAt,
+          bankPaymentNextSettlementAt: nextSettlementAt,
           data: {},
         },
       });
@@ -187,6 +191,8 @@ describe('NfseDaoAdapterPrisma - Integration tests', () => {
       expect(result).toMatchObject({
         bankPaymentProvider: 'INTER',
         bankPaymentRequestCode: 'request-dao-1',
+        bankPaymentSettledAt: settledAt,
+        bankPaymentNextSettlementAt: nextSettlementAt,
       });
     });
 
@@ -754,6 +760,109 @@ describe('NfseDaoAdapterPrisma - Integration tests', () => {
 
       // Assert
       expect(result.map((row) => row.id)).toEqual([pending.id]);
+    });
+  });
+
+  describe('findBankPaymentSettlementDue', () => {
+    it('should return confirmed charges whose settlement check is due', async() => {
+      // Arrange
+      const due = await seed({
+        status: NfseStatus.ISSUED,
+        bankPaymentRequestCode: 'req-due',
+        bankPaymentConfirmedAt: new Date('2026-09-03T11:00:00Z'),
+        bankPaymentNextSettlementAt: new Date(Date.now() - 60_000),
+      });
+      await seed({
+        status: NfseStatus.ISSUED,
+        bankPaymentRequestCode: 'req-future',
+        bankPaymentConfirmedAt: new Date('2026-09-03T11:00:00Z'),
+        bankPaymentNextSettlementAt: new Date(Date.now() + 60 * 60_000),
+      });
+      await seed({
+        status: NfseStatus.ISSUED,
+        bankPaymentRequestCode: 'req-paid',
+        bankPaymentConfirmedAt: new Date('2026-09-03T11:00:00Z'),
+        bankPaymentSettledAt: new Date(),
+        bankPaymentNextSettlementAt: new Date(Date.now() - 60_000),
+      });
+      await seed({
+        status: NfseStatus.ISSUED,
+        bankPaymentRequestCode: 'req-unconfirmed',
+        bankPaymentNextSettlementAt: new Date(Date.now() - 60_000),
+      });
+
+      // Act
+      const result = await sut.findBankPaymentSettlementDue(200);
+
+      // Assert
+      expect(result.map((row) => row.id)).toEqual([due.id]);
+    });
+
+    it('should exclude charges whose Inter GET already recorded FALHA_EMISSAO', async() => {
+      // Arrange
+      const pending = await seed({
+        status: NfseStatus.ISSUED,
+        bankPaymentRequestCode: 'req-open',
+        bankPaymentConfirmedAt: new Date('2026-09-03T11:00:00Z'),
+        bankPaymentNextSettlementAt: new Date(Date.now() - 60_000),
+      });
+      await seed({
+        status: NfseStatus.ISSUED,
+        bankPaymentRequestCode: 'req-failed',
+        bankPaymentConfirmedAt: new Date('2026-09-03T11:00:00Z'),
+        bankPaymentFailedAt: new Date(),
+        bankPaymentNextSettlementAt: new Date(Date.now() - 60_000),
+      });
+
+      // Act
+      const result = await sut.findBankPaymentSettlementDue(200);
+
+      // Assert
+      expect(result.map((row) => row.id)).toEqual([pending.id]);
+    });
+
+    it('should return the oldest due charge first and respect the limit', async() => {
+      // Arrange
+      const older = await seed({
+        status: NfseStatus.ISSUED,
+        bankPaymentRequestCode: 'req-older',
+        bankPaymentConfirmedAt: new Date('2026-09-03T11:00:00Z'),
+        bankPaymentNextSettlementAt: new Date(Date.now() - 120_000),
+      });
+      await seed({
+        status: NfseStatus.ISSUED,
+        bankPaymentRequestCode: 'req-newer',
+        bankPaymentConfirmedAt: new Date('2026-09-03T11:00:00Z'),
+        bankPaymentNextSettlementAt: new Date(Date.now() - 30_000),
+      });
+
+      // Act
+      const limited = await sut.findBankPaymentSettlementDue(1);
+
+      // Assert
+      expect(limited.map((row) => row.id)).toEqual([older.id]);
+    });
+
+    it('should exclude confirmed charges that have no next settlement check', async() => {
+      // Arrange
+      const due = await seed({
+        status: NfseStatus.ISSUED,
+        bankPaymentRequestCode: 'req-due-scheduled',
+        bankPaymentConfirmedAt: new Date('2026-09-03T11:00:00Z'),
+        bankPaymentNextSettlementAt: new Date(Date.now() - 60_000),
+      });
+      await seed({
+        status: NfseStatus.ISSUED,
+        bankPaymentRequestCode: 'req-no-schedule',
+        bankPaymentConfirmedAt: new Date('2026-09-03T11:00:00Z'),
+        bankPaymentNextSettlementAt: null,
+      });
+
+      // Act
+      const result = await sut.findBankPaymentSettlementDue(200);
+
+      // Assert
+      expect(result.map((row) => row.id)).toEqual([due.id]);
     });
   });
 

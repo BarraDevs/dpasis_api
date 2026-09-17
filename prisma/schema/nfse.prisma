@@ -33,6 +33,12 @@ model Nfse {
   // `bankPaymentRequestCode` só diz que a solicitação foi aceita, não que o boleto foi produzido.
   bankPaymentStatus         String?
   bankPaymentConfirmedAt    DateTime?
+  // Liquidação da cobrança (pago / cancelado / expirado) depois da confirmação da emissão.
+  // `bankPaymentSettledAt` nulo com boleto confirmado significa "ainda em aberto"; preenchido, o
+  // status deixou de ser só EMITTED. `bankPaymentNextSettlementAt` agenda a varredura de fallback
+  // quando o webhook do Inter não chega.
+  bankPaymentSettledAt          DateTime?
+  bankPaymentNextSettlementAt   DateTime?
   // Retentativa automática do boleto depois de falha transitória do provedor (Inter fora, 5xx, 429).
   // `bankPaymentNextRetryAt` preenchido significa "a varredura tenta de novo a partir dali"; nulo com
   // `bankPaymentFailedAt` preenchido, "a falha exige decisão humana". `bankPaymentRetryCount` conta
@@ -58,6 +64,7 @@ model Nfse {
   @@index([status, updatedAt])
   @@index([status, nextReconcileAt])
   @@index([status, bankPaymentNextRetryAt])
+  @@index([bankPaymentNextSettlementAt])
   @@index([nfmId])
   @@index([bankPaymentRequestCode])
   @@map("nfses")

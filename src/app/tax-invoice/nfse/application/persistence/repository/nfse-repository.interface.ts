@@ -36,5 +36,12 @@ export interface INfseRepository {
    * `bankPaymentNextRetryAt`, conta a rodada e devolve `false` para quem perdeu a corrida.
    */
   claimBankPaymentRetry(nfseId: number, now: Date, leaseUntil: Date): Promise<boolean>;
+  /**
+   * Reivindica a nota para a consulta de liquidação: só passa se a cobrança continua confirmada,
+   * em aberto, e com a consulta vencida. Empurra o lease para a frente para duas réplicas não
+   * enfileirarem a mesma GET no Inter.
+   */
+  claimBankPaymentSettlement(nfseId: number, now: Date, leaseUntil: Date): Promise<boolean>;
   findById(id: number): Promise<Nfse | null>;
+  findByBankPaymentRequestCode(requestCode: string): Promise<Nfse | null>;
 }

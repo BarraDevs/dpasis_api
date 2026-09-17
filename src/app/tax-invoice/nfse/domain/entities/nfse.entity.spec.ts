@@ -643,6 +643,8 @@ describe('Nfse - Unit tests', () => {
         bankPaymentFailedAt: new Date('2026-09-10T12:15:00Z'),
         bankPaymentRetryCount: 3,
         bankPaymentNextRetryAt: new Date('2026-09-10T18:00:00Z'),
+        bankPaymentSettledAt: new Date('2026-09-10T12:20:00Z'),
+        bankPaymentNextSettlementAt: new Date('2026-09-10T18:00:00Z'),
       }));
 
       // Act
@@ -662,6 +664,8 @@ describe('Nfse - Unit tests', () => {
         bankPaymentFailedAt: null,
         bankPaymentRetryCount: 0,
         bankPaymentNextRetryAt: null,
+        bankPaymentSettledAt: null,
+        bankPaymentNextSettlementAt: null,
       });
       expect(sut.hasBankPayment()).toBe(false);
       expect(sut.hasRequestedBankPayment()).toBe(false);
@@ -810,6 +814,155 @@ describe('Nfse - Unit tests', () => {
 
       // Assert
       expect(sut.hasConfirmedBankPayment()).toBe(false);
+    });
+  });
+
+  describe('bank payment settlement', () => {
+    const issuedProps = {
+      status: NfseStatus.ISSUED,
+      nfseNumber: '1000',
+      verificationCode: 'ABC',
+      issuedAt: new Date('2026-07-20T10:00:00Z'),
+    };
+
+    it.each(['PAID', 'RECEIVED', 'MARKED_RECEIVED', 'CANCELLED', 'EXPIRED'])(
+      'should settle %s and clear the next check',
+      (status) => {
+        // Arrange
+        const sut = Nfse._instantiate(makeNfseProps({
+          ...issuedProps,
+          bankPaymentNextSettlementAt: new Date('2026-09-17T18:00:00Z'),
+        }));
+        const settledAt = new Date('2026-09-17T12:00:00Z');
+
+        // Act
+        const changed = sut.markBankPaymentSettlement(status, settledAt);
+
+        // Assert
+        expect(changed).toBe(true);
+        expect(sut.props.bankPaymentStatus).toBe(status);
+        expect(sut.props.bankPaymentSettledAt).toBe(settledAt);
+        expect(sut.props.bankPaymentNextSettlementAt).toBeNull();
+        expect(sut.props.bankPaymentConfirmedAt).toBe(settledAt);
+        expect(sut.hasSettledBankPayment()).toBe(true);
+      },
+    );
+
+    it('should not treat EMITTED as a settlement', () => {
+      // Arrange
+      const sut = Nfse._instantiate(makeNfseProps({ ...issuedProps, bankPaymentStatus: 'EMITTED' }));
+
+      // Act
+      const changed = sut.markBankPaymentSettlement('EMITTED', new Date());
+
+      // Assert
+      expect(changed).toBe(false);
+      expect(sut.hasSettledBankPayment()).toBe(false);
+    });
+
+    it('should be a no-op when the same settlement status arrives again', () => {
+      // Arrange
+      const settledAt = new Date('2026-09-17T12:00:00Z');
+      const sut = Nfse._instantiate(makeNfseProps({
+        ...issuedProps,
+        bankPaymentStatus: 'PAID',
+        bankPaymentSettledAt: settledAt,
+      }));
+
+      // Act
+      const changed = sut.markBankPaymentSettlement('PAID', new Date('2026-09-17T13:00:00Z'));
+
+      // Assert
+      expect(changed).toBe(false);
+      expect(sut.props.bankPaymentSettledAt).toBe(settledAt);
+    });
+
+    it.each([
+      ['CANCELLED', 'PAID'],
+      ['EXPIRED', 'PAID'],
+      ['CANCELLED', 'RECEIVED'],
+      ['EXPIRED', 'MARKED_RECEIVED'],
+    ])('should not let %s overwrite a %s charge', (incoming, paidLike) => {
+      // Arrange
+      const settledAt = new Date('2026-09-17T12:00:00Z');
+      const sut = Nfse._instantiate(makeNfseProps({
+        ...issuedProps,
+        bankPaymentStatus: paidLike,
+        bankPaymentSettledAt: settledAt,
+      }));
+
+      // Act
+      const changed = sut.markBankPaymentSettlement(incoming, new Date('2026-09-17T13:00:00Z'));
+
+      // Assert
+      expect(changed).toBe(false);
+      expect(sut.props.bankPaymentStatus).toBe(paidLike);
+      expect(sut.props.bankPaymentSettledAt).toBe(settledAt);
+    });
+
+    it.each(['FAILED', 'AWAITING_APPROVAL'])('should not treat %s as a settlement', (status) => {
+      // Arrange
+      const sut = Nfse._instantiate(makeNfseProps({ ...issuedProps, bankPaymentStatus: 'EMITTED' }));
+
+      // Act
+      const changed = sut.markBankPaymentSettlement(status, new Date());
+
+      // Assert
+      expect(changed).toBe(false);
+      expect(sut.hasSettledBankPayment()).toBe(false);
+    });
+
+    it('should keep an existing confirmation date when settling', () => {
+      // Arrange
+      const confirmedAt = new Date('2026-09-03T11:00:00Z');
+      const settledAt = new Date('2026-09-17T12:00:00Z');
+      const sut = Nfse._instantiate(makeNfseProps({
+        ...issuedProps,
+        bankPaymentConfirmedAt: confirmedAt,
+      }));
+
+      // Act
+      sut.markBankPaymentSettlement('PAID', settledAt);
+
+      // Assert
+      expect(sut.props.bankPaymentConfirmedAt).toBe(confirmedAt);
+      expect(sut.props.bankPaymentSettledAt).toBe(settledAt);
+    });
+
+    it('should let PAID replace a cancelled settlement without moving settledAt', () => {
+      // Arrange
+      const settledAt = new Date('2026-09-17T12:00:00Z');
+      const sut = Nfse._instantiate(makeNfseProps({
+        ...issuedProps,
+        bankPaymentStatus: 'CANCELLED',
+        bankPaymentSettledAt: settledAt,
+      }));
+
+      // Act
+      const changed = sut.markBankPaymentSettlement('PAID', new Date('2026-09-17T13:00:00Z'));
+
+      // Assert
+      expect(changed).toBe(true);
+      expect(sut.props.bankPaymentStatus).toBe('PAID');
+      expect(sut.props.bankPaymentSettledAt).toBe(settledAt);
+    });
+
+    it('should schedule and clear the next settlement check', () => {
+      // Arrange
+      const sut = Nfse._instantiate(makeNfseProps(issuedProps));
+      const next = new Date('2026-09-17T18:00:00Z');
+
+      // Act
+      sut.scheduleBankPaymentSettlement(next);
+
+      // Assert
+      expect(sut.props.bankPaymentNextSettlementAt).toBe(next);
+
+      // Act
+      sut.scheduleBankPaymentSettlement(null);
+
+      // Assert
+      expect(sut.props.bankPaymentNextSettlementAt).toBeNull();
     });
   });
 });

@@ -5,6 +5,7 @@ import type { IssueNfseBankPaymentJobDto } from '../../../../application/queue/j
 import type { IssueNfseBatchJobDto } from '../../../../application/queue/jobs/issue-nfse-batch-job.dto';
 import type { PollNfseBatchJobDto } from '../../../../application/queue/jobs/poll-nfse-batch-job.dto';
 import type { ReconcileNfseJobDto } from '../../../../application/queue/jobs/reconcile-nfse-job.dto';
+import type { SettleNfseBankPaymentJobDto } from '../../../../application/queue/jobs/settle-nfse-bank-payment-job.dto';
 import type { INfseQueueProducer, NfseQueueJobOptions } from '../../../../application/queue/nfse-queue-producer.interface';
 
 @Injectable()
@@ -14,6 +15,7 @@ export class NfseQueueFakeAdapterProducer implements INfseQueueProducer {
   public readonly addedIssueBankPaymentJobs: Array<{ name: JobName; data: IssueNfseBankPaymentJobDto }> = [];
   public readonly addedReconcileNfseJobs: Array<{ name: JobName; data: ReconcileNfseJobDto }> = [];
   public readonly addedConfirmBankPaymentJobs: Array<{ name: JobName; data: ConfirmNfseBankPaymentJobDto }> = [];
+  public readonly addedSettleBankPaymentJobs: Array<{ name: JobName; data: SettleNfseBankPaymentJobDto }> = [];
 
   public async addIssueBatchJob(data: IssueNfseBatchJobDto): Promise<void> {
     this.addedIssueBatchJobs.push({ name: JobName.IssueNfseBatch, data });
@@ -33,5 +35,9 @@ export class NfseQueueFakeAdapterProducer implements INfseQueueProducer {
 
   public async addConfirmBankPaymentJob(data: ConfirmNfseBankPaymentJobDto): Promise<void> {
     this.addedConfirmBankPaymentJobs.push({ name: JobName.ConfirmNfseBankPayment, data });
+  }
+
+  public async addSettleBankPaymentJob(data: SettleNfseBankPaymentJobDto): Promise<void> {
+    this.addedSettleBankPaymentJobs.push({ name: JobName.SettleNfseBankPayment, data });
   }
 }

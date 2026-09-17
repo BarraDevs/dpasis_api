@@ -219,6 +219,7 @@ describe('InterCobrancaMapper - Unit tests', () => {
     ['A_RECEBER', BankPaymentStatus.EMITTED],
     ['EMABERTO', BankPaymentStatus.EMITTED],
     ['EMISSAO', BankPaymentStatus.EMITTED],
+    ['ATRASADO', BankPaymentStatus.EMITTED],
     ['Aguardando', BankPaymentStatus.AWAITING_APPROVAL],
     ['AGUARDANDO_APROVACAO', BankPaymentStatus.AWAITING_APPROVAL],
     ['PAGO', BankPaymentStatus.PAID],

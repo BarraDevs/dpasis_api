@@ -8,6 +8,7 @@ import type { IssueNfseBankPaymentJobDto } from '../../../../application/queue/j
 import type { IssueNfseBatchJobDto } from '../../../../application/queue/jobs/issue-nfse-batch-job.dto';
 import type { PollNfseBatchJobDto } from '../../../../application/queue/jobs/poll-nfse-batch-job.dto';
 import type { ReconcileNfseJobDto } from '../../../../application/queue/jobs/reconcile-nfse-job.dto';
+import type { SettleNfseBankPaymentJobDto } from '../../../../application/queue/jobs/settle-nfse-bank-payment-job.dto';
 import type { INfseQueueProducer, NfseQueueJobOptions } from '../../../../application/queue/nfse-queue-producer.interface';
 
 /**
@@ -61,6 +62,13 @@ export class NfseQueueBullmqAdapterProducer implements INfseQueueProducer {
 
   public async addConfirmBankPaymentJob(data: ConfirmNfseBankPaymentJobDto): Promise<void> {
     await this.bankPaymentQueue.add(JobName.ConfirmNfseBankPayment, data, {
+      attempts: 3,
+      backoff: { type: 'exponential', delay: 60_000 },
+    });
+  }
+
+  public async addSettleBankPaymentJob(data: SettleNfseBankPaymentJobDto): Promise<void> {
+    await this.bankPaymentQueue.add(JobName.SettleNfseBankPayment, data, {
       attempts: 3,
       backoff: { type: 'exponential', delay: 60_000 },
     });

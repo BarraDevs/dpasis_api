@@ -85,6 +85,28 @@ describe('ConfirmNfseBankPayment - Integration tests', () => {
     const saved = await prisma.nfse.findUnique({ where: { id: nfse.id } });
     expect(saved?.bankPaymentStatus).toBe(BankPaymentStatus.EMITTED);
     expect(saved?.bankPaymentConfirmedAt).toBeInstanceOf(Date);
+    expect(saved?.bankPaymentSettledAt).toBeNull();
+    expect(saved?.bankPaymentNextSettlementAt).toBeInstanceOf(Date);
+  });
+
+  it('should persist settledAt when the first GET already reports PAID', async() => {
+    // Arrange
+    const nfse = await seedNfse(prisma);
+    bankPaymentGateway.findResult = {
+      ...bankPaymentGateway.findResult,
+      requestCode: 'req-1',
+      status: BankPaymentStatus.PAID,
+    };
+
+    // Act
+    await sut.execute({ nfseId: nfse.id });
+
+    // Assert
+    const saved = await prisma.nfse.findUnique({ where: { id: nfse.id } });
+    expect(saved?.bankPaymentStatus).toBe(BankPaymentStatus.PAID);
+    expect(saved?.bankPaymentConfirmedAt).toBeInstanceOf(Date);
+    expect(saved?.bankPaymentSettledAt).toBeInstanceOf(Date);
+    expect(saved?.bankPaymentNextSettlementAt).toBeNull();
   });
 
   it('should record a failed production without unlinking the charge', async() => {

@@ -49,6 +49,8 @@ const NfseSelect = {
   bankPaymentFailedAt: true,
   bankPaymentStatus: true,
   bankPaymentConfirmedAt: true,
+  bankPaymentSettledAt: true,
+  bankPaymentNextSettlementAt: true,
   bankPaymentRetryCount: true,
   bankPaymentNextRetryAt: true,
   reconcileAttemptCount: true,
@@ -188,6 +190,8 @@ export class NfseRepositoryAdapterPrisma implements INfseRepository {
         bankPaymentFailedAt: props.bankPaymentFailedAt,
         bankPaymentStatus: props.bankPaymentStatus,
         bankPaymentConfirmedAt: props.bankPaymentConfirmedAt,
+        bankPaymentSettledAt: props.bankPaymentSettledAt ?? null,
+        bankPaymentNextSettlementAt: props.bankPaymentNextSettlementAt ?? null,
         bankPaymentRetryCount: props.bankPaymentRetryCount ?? 0,
         bankPaymentNextRetryAt: props.bankPaymentNextRetryAt ?? null,
         reconcileAttemptCount: props.reconcileAttemptCount,
@@ -233,16 +237,43 @@ export class NfseRepositoryAdapterPrisma implements INfseRepository {
     return count === 1;
   }
 
+  public async claimBankPaymentSettlement(nfseId: number, now: Date, leaseUntil: Date): Promise<boolean> {
+    const { count } = await this.prisma.nfse.updateMany({
+      where: {
+        id: nfseId,
+        bankPaymentRequestCode: { not: null },
+        bankPaymentConfirmedAt: { not: null },
+        bankPaymentSettledAt: null,
+        bankPaymentFailedAt: null,
+        bankPaymentNextSettlementAt: { lte: now },
+      },
+      data: {
+        bankPaymentNextSettlementAt: leaseUntil,
+      },
+    });
+
+    return count === 1;
+  }
+
   public async findById(id: number): Promise<Nfse | null> {
     const row = await this.prisma.nfse.findUnique({
       where: { id },
       select: NfseSelect,
     });
 
-    if (!row) {
-      return null;
-    }
+    return row ? this.toEntity(row) : null;
+  }
 
+  public async findByBankPaymentRequestCode(requestCode: string): Promise<Nfse | null> {
+    const row = await this.prisma.nfse.findFirst({
+      where: { bankPaymentRequestCode: requestCode },
+      select: NfseSelect,
+    });
+
+    return row ? this.toEntity(row) : null;
+  }
+
+  private toEntity(row: Prisma.NfseGetPayload<{ select: typeof NfseSelect }>): Nfse {
     return NfseFactory.load({
       id: row.id,
       companyId: row.companyId,
@@ -265,6 +296,8 @@ export class NfseRepositoryAdapterPrisma implements INfseRepository {
       bankPaymentFailedAt: row.bankPaymentFailedAt,
       bankPaymentStatus: row.bankPaymentStatus,
       bankPaymentConfirmedAt: row.bankPaymentConfirmedAt,
+      bankPaymentSettledAt: row.bankPaymentSettledAt,
+      bankPaymentNextSettlementAt: row.bankPaymentNextSettlementAt,
       bankPaymentRetryCount: row.bankPaymentRetryCount,
       bankPaymentNextRetryAt: row.bankPaymentNextRetryAt,
       reconcileAttemptCount: row.reconcileAttemptCount,

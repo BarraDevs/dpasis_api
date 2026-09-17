@@ -52,12 +52,16 @@ export class ConfirmNfseBankPayment {
     const bankPayment = await this.findBankPayment.execute(requestCode, provider);
 
     const confirmed = CONFIRMED_STATUSES.includes(bankPayment.status);
-    nfse.markBankPaymentStatus(bankPayment.status, confirmed ? new Date() : null);
+    const at = new Date();
+    nfse.markBankPaymentStatus(bankPayment.status, confirmed ? at : null);
 
     // A produção da cobrança falhou do lado do provedor. O vínculo **não** é apagado: reemitir é
     // decisão humana, e limpar `bankPaymentRequestCode` reabriria a duplicidade fechada na Onda 2.
     if (bankPayment.status === BankPaymentStatus.FAILED) {
       nfse.markBankPaymentFailed(`Provedor reportou falha na emissão da cobrança ${requestCode}`);
+    }
+    else if (confirmed && !nfse.markBankPaymentSettlement(bankPayment.status, at)) {
+      nfse.scheduleBankPaymentSettlement(at);
     }
 
     await this.nfseRepository.edit(nfse);

@@ -153,6 +153,9 @@ export class ConfigService {
   get interKeyPath(): string {
     return this.nestConfigService.get<string>('INTER_KEY_PATH')!;
   }
+  get interWebhookToken(): string {
+    return this.nestConfigService.get<string>('INTER_WEBHOOK_TOKEN') ?? '';
+  }
 
   // throttle
   get throttleLimit(): number {

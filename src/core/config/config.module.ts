@@ -87,6 +87,11 @@ import { Environment } from './environment.enum';
           then: Joi.string().required(),
           otherwise: Joi.string().optional().allow(''),
         }),
+        INTER_WEBHOOK_TOKEN: Joi.when('INTER_PROVIDER_ENABLED', {
+          is: true,
+          then: Joi.string().min(16).required(),
+          otherwise: Joi.string().optional().allow(''),
+        }),
 
         THROTTLE_LIMIT: Joi.number().integer().min(2),
         THROTTLE_TTL_MS: Joi.number().integer().min(1_000),

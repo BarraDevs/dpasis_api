@@ -117,4 +117,14 @@ describe('NfseQueueFakeAdapterProducer - Unit tests', () => {
       { name: JobName.ConfirmNfseBankPayment, data: { nfseId: 9 } },
     ]);
   });
+
+  it('should record bank payment settlement jobs', async() => {
+    // Act
+    await sut.addSettleBankPaymentJob({ nfseId: 11 });
+
+    // Assert
+    expect(sut.addedSettleBankPaymentJobs).toEqual([
+      { name: JobName.SettleNfseBankPayment, data: { nfseId: 11 } },
+    ]);
+  });
 });

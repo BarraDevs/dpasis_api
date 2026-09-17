@@ -485,6 +485,26 @@ describe('ConfigService', () => {
         expect(result).toBe(mockPath);
       });
     });
+
+    describe('interWebhookToken', () => {
+      it('should return the INTER_WEBHOOK_TOKEN value', () => {
+        const mockToken = 'dev-inter-webhook-token';
+        nestConfigService.get.mockReturnValue(mockToken);
+
+        const result = sut.interWebhookToken;
+
+        expect(nestConfigService.get).toHaveBeenCalledWith('INTER_WEBHOOK_TOKEN');
+        expect(result).toBe(mockToken);
+      });
+
+      it('should return empty string when INTER_WEBHOOK_TOKEN is undefined', () => {
+        nestConfigService.get.mockReturnValue(undefined);
+
+        const result = sut.interWebhookToken;
+
+        expect(result).toBe('');
+      });
+    });
   });
 
   describe('throttle properties', () => {

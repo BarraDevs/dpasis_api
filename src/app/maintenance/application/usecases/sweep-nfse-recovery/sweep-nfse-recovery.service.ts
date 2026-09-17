@@ -28,6 +28,10 @@ const BANK_PAYMENT_CONFIRMATION_MIN_AGE_IN_MINUTES = 10;
  */
 const BANK_PAYMENT_RETRY_LEASE_IN_MS = 15 * 60_000;
 
+/** Teto baixo: cada item vira um GET no Inter, na mesma cota de 120/min da emissão e da confirmação. */
+const BANK_PAYMENT_SETTLEMENT_SWEEP_LIMIT = 20;
+const BANK_PAYMENT_SETTLEMENT_LEASE_IN_MS = 15 * 60_000;
+
 /**
  * Recoloca em movimento tudo que ficou parado. As três varreduras cobrem as três janelas em que o
  * estado é gravado e o job seguinte é enfileirado em seguida, sem atomicidade — se o processo morre
@@ -135,6 +139,33 @@ export class SweepNfseRecovery {
     return targets.length;
   }
 
+  /**
+   * Cobranças confirmadas ainda em aberto. O webhook é o caminho rápido; esta varredura cobre o
+   * callback que o Inter desistiu de reenviar.
+   */
+  public async sweepBankPaymentSettlement(): Promise<number> {
+    const targets = await this.nfseDao.findBankPaymentSettlementDue(BANK_PAYMENT_SETTLEMENT_SWEEP_LIMIT);
+    let enqueued = 0;
+
+    for (const target of targets) {
+      const now = new Date();
+      const claimed = await this.nfseRepository.claimBankPaymentSettlement(
+        target.id,
+        now,
+        new Date(now.getTime() + BANK_PAYMENT_SETTLEMENT_LEASE_IN_MS),
+      );
+      if (!claimed) {
+        continue;
+      }
+
+      await this.queueProducer.addSettleBankPaymentJob({ nfseId: target.id });
+      enqueued += 1;
+    }
+
+    this.log('sweepBankPaymentSettlement', enqueued);
+    return enqueued;
+  }
+
   private async dispatch(jobName: string, nfseId: number): Promise<void> {
     switch (jobName) {
       case JobName.IssueNfseBatch:
@@ -173,4 +204,5 @@ export class SweepNfseRecovery {
 type INfseRepositoryRecovery = {
   markOutboxDispatched(outboxId: number): Promise<void>;
   claimBankPaymentRetry(nfseId: number, now: Date, leaseUntil: Date): Promise<boolean>;
+  claimBankPaymentSettlement(nfseId: number, now: Date, leaseUntil: Date): Promise<boolean>;
 };

@@ -6,5 +6,6 @@ export enum JobName {
   IssueNfseBankPayment = 'issue-nfse-bank-payment',
   ReconcileNfse = 'reconcile-nfse',
   ConfirmNfseBankPayment = 'confirm-nfse-bank-payment',
+  SettleNfseBankPayment = 'settle-nfse-bank-payment',
   ResolveClientAddressIbgeCode = 'resolve-client-address-ibge-code',
 }

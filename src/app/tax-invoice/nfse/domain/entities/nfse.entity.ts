@@ -3,6 +3,16 @@ import { NfseAlreadyIssuedError } from '../errors/nfse-already-issued.error';
 import { NfseNotIssuedError } from '../errors/nfse-not-issued.error';
 import { NfseStatus } from '../enums/nfse-status.enum';
 
+/**
+ * Cobrança paga. Três valores canônicos — cada banco mapeia o próprio vocabulário para cá.
+ */
+const BANK_PAYMENT_PAID_LIKE_STATUSES = ['PAID', 'RECEIVED', 'MARKED_RECEIVED'] as const;
+const BANK_PAYMENT_SETTLEMENT_STATUSES = [
+  ...BANK_PAYMENT_PAID_LIKE_STATUSES,
+  'CANCELLED',
+  'EXPIRED',
+] as const;
+
 export type NfseProps = NfseCreateProps & {
   id: number;
   status: NfseStatus;
@@ -21,6 +31,12 @@ export type NfseProps = NfseCreateProps & {
   bankPaymentFailedAt: Date | null;
   bankPaymentStatus: string | null;
   bankPaymentConfirmedAt: Date | null;
+  /**
+   * Opcionais na entrada pelo mesmo motivo de `providerAlerts`: nulos numa nota nova, e só a
+   * liquidação da cobrança (webhook ou varredura) os preenche.
+   */
+  bankPaymentSettledAt?: Date | null;
+  bankPaymentNextSettlementAt?: Date | null;
   reconcileAttemptCount: number;
   nextReconcileAt: Date | null;
   /**
@@ -233,6 +249,8 @@ export class Nfse {
     this._props.bankPaymentFailedAt = null;
     this._props.bankPaymentNextRetryAt = null;
     this._props.bankPaymentRetryCount = 0;
+    this._props.bankPaymentSettledAt = null;
+    this._props.bankPaymentNextSettlementAt = null;
   }
 
   /**
@@ -270,6 +288,52 @@ export class Nfse {
 
   public hasConfirmedBankPayment(): boolean {
     return !!this._props.bankPaymentConfirmedAt;
+  }
+
+  public hasSettledBankPayment(): boolean {
+    return !!this._props.bankPaymentSettledAt;
+  }
+
+  public isPaidLikeBankPayment(): boolean {
+    const status = this._props.bankPaymentStatus;
+    return !!status && (BANK_PAYMENT_PAID_LIKE_STATUSES as readonly string[]).includes(status);
+  }
+
+  /**
+   * Agenda a próxima consulta de liquidação. `at` nulo encerra o fallback: a cobrança já liquidou
+   * ou nunca foi confirmada.
+   */
+  public scheduleBankPaymentSettlement(at: Date | null): void {
+    this._props.bankPaymentNextSettlementAt = at;
+  }
+
+  /**
+   * Grava pago / cancelado / expirado vindo do provedor. Pago-like não regride para cancelado ou
+   * expirado. Devolve `false` quando nada muda (já liquidada no mesmo sentido).
+   */
+  public markBankPaymentSettlement(status: string, settledAt: Date): boolean {
+    if (!(BANK_PAYMENT_SETTLEMENT_STATUSES as readonly string[]).includes(status)) {
+      return false;
+    }
+
+    if (this.hasSettledBankPayment()) {
+      if (this.isPaidLikeBankPayment()) {
+        return false;
+      }
+      if (this._props.bankPaymentStatus === status) {
+        return false;
+      }
+      this._props.bankPaymentStatus = status;
+      return true;
+    }
+
+    this._props.bankPaymentStatus = status;
+    this._props.bankPaymentSettledAt = settledAt;
+    this._props.bankPaymentNextSettlementAt = null;
+    if (!this._props.bankPaymentConfirmedAt) {
+      this._props.bankPaymentConfirmedAt = settledAt;
+    }
+    return true;
   }
 
   /**

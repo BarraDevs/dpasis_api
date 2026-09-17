@@ -166,6 +166,19 @@ describe('NfseQueueBullmqAdapterProducer', () => {
     });
   });
 
+  describe('addSettleBankPaymentJob', () => {
+    it('should enqueue settle-nfse-bank-payment with the same policy', async() => {
+      // Act
+      await sut.addSettleBankPaymentJob({ nfseId: 11 });
+
+      // Assert
+      expect(queueAdd).toHaveBeenCalledWith(JobName.SettleNfseBankPayment, { nfseId: 11 }, {
+        attempts: 3,
+        backoff: { type: 'exponential', delay: 60_000 },
+      });
+    });
+  });
+
   describe('roteamento por fila', () => {
     async function buildWithSeparateQueues(): Promise<{
       producer: NfseQueueBullmqAdapterProducer;
@@ -216,16 +229,17 @@ describe('NfseQueueBullmqAdapterProducer', () => {
       expect(bankPaymentAdd).not.toHaveBeenCalled();
     });
 
-    it('should send both bank payment jobs to the bank payment queue', async() => {
+    it('should send bank payment jobs to the bank payment queue', async() => {
       // Arrange
       const { producer, issueAdd, pollAdd, bankPaymentAdd } = await buildWithSeparateQueues();
 
       // Act
       await producer.addIssueBankPaymentJob({ nfseId: 1 });
       await producer.addConfirmBankPaymentJob({ nfseId: 1 });
+      await producer.addSettleBankPaymentJob({ nfseId: 1 });
 
       // Assert
-      expect(bankPaymentAdd).toHaveBeenCalledTimes(2);
+      expect(bankPaymentAdd).toHaveBeenCalledTimes(3);
       expect(issueAdd).not.toHaveBeenCalled();
       expect(pollAdd).not.toHaveBeenCalled();
     });

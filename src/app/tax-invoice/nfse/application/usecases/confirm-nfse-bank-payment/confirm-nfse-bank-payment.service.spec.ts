@@ -189,4 +189,33 @@ describe('ConfirmNfseBankPayment - Unit tests', () => {
     // Assert
     expect(nfseRepository.edit).toHaveBeenCalledWith(nfse);
   });
+
+  it('should settle immediately when the first GET already reports payment', async() => {
+    // Arrange
+    const nfse = NfseFactory.load(makeNfseProps());
+    jest.spyOn(nfseRepository, 'findById').mockResolvedValue(nfse);
+    jest.spyOn(findBankPayment, 'execute').mockResolvedValue(makeBankPayment(BankPaymentStatus.PAID));
+
+    // Act
+    await sut.execute({ nfseId: 1 });
+
+    // Assert
+    expect(nfse.props.bankPaymentStatus).toBe(BankPaymentStatus.PAID);
+    expect(nfse.props.bankPaymentSettledAt).toBeInstanceOf(Date);
+    expect(nfse.props.bankPaymentNextSettlementAt).toBeNull();
+  });
+
+  it('should schedule a settlement check when the charge is confirmed still open', async() => {
+    // Arrange
+    const nfse = NfseFactory.load(makeNfseProps());
+    jest.spyOn(nfseRepository, 'findById').mockResolvedValue(nfse);
+    jest.spyOn(findBankPayment, 'execute').mockResolvedValue(makeBankPayment(BankPaymentStatus.EMITTED));
+
+    // Act
+    await sut.execute({ nfseId: 1 });
+
+    // Assert
+    expect(nfse.props.bankPaymentSettledAt).toBeNull();
+    expect(nfse.props.bankPaymentNextSettlementAt).toBeInstanceOf(Date);
+  });
 });

@@ -38,6 +38,8 @@ function makeNfseProps(overrides: Partial<NfseProps> = {}): NfseProps {
     bankPaymentFailedAt: null,
     bankPaymentStatus: null,
     bankPaymentConfirmedAt: null,
+    bankPaymentSettledAt: null,
+    bankPaymentNextSettlementAt: null,
     bankPaymentRetryCount: 0,
     bankPaymentNextRetryAt: null,
     reconcileAttemptCount: 0,
@@ -90,6 +92,8 @@ describe('NfseFactory - Unit tests', () => {
         bankPaymentFailedAt: null,
         bankPaymentStatus: null,
         bankPaymentConfirmedAt: null,
+        bankPaymentSettledAt: null,
+        bankPaymentNextSettlementAt: null,
         bankPaymentRetryCount: 0,
         bankPaymentNextRetryAt: null,
         reconcileAttemptCount: 0,
@@ -267,6 +271,20 @@ describe('NfseFactory - Unit tests', () => {
       expect(sut.props.errorMessage).toBeNull();
       expect(sut.props.canceledAt).toBeNull();
       expect(sut.props.cancelReasonCode).toBeNull();
+    });
+
+    it('should default omitted settlement fields to null', () => {
+      // Arrange
+      const props = makeNfseProps();
+      delete props.bankPaymentSettledAt;
+      delete props.bankPaymentNextSettlementAt;
+
+      // Act
+      const sut = NfseFactory.load(props);
+
+      // Assert
+      expect(sut.props.bankPaymentSettledAt).toBeNull();
+      expect(sut.props.bankPaymentNextSettlementAt).toBeNull();
     });
 
     it('should load without validating PositiveInt constraints', () => {

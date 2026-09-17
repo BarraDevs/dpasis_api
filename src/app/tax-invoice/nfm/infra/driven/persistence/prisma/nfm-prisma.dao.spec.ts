@@ -144,6 +144,8 @@ describe('NfmDaoAdapterPrisma', () => {
           issuedAt: new Date('2026-07-20T10:00:00.000Z'),
           bankPaymentProvider: 'INTER',
           bankPaymentRequestCode: 'nfm-request-code',
+          bankPaymentSettledAt: new Date('2026-09-17T12:00:00.000Z'),
+          bankPaymentNextSettlementAt: new Date('2026-09-17T18:00:00.000Z'),
           data: { providerDocument: '12345678000199' },
         },
       });
@@ -155,6 +157,8 @@ describe('NfmDaoAdapterPrisma', () => {
         id: nfse.id,
         bankPaymentProvider: 'INTER',
         bankPaymentRequestCode: 'nfm-request-code',
+        bankPaymentSettledAt: new Date('2026-09-17T12:00:00.000Z'),
+        bankPaymentNextSettlementAt: new Date('2026-09-17T18:00:00.000Z'),
       });
     });
 

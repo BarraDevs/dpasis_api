@@ -24,6 +24,7 @@ import { ProcessIssueNfseBankPayment } from '../usecases/process-issue-nfse-bank
 import { ProcessIssueNfseBatch } from '../usecases/process-issue-nfse-batch/process-issue-nfse-batch.service';
 import { ProcessPollNfseBatch } from '../usecases/process-poll-nfse-batch/process-poll-nfse-batch.service';
 import { ConfirmNfseBankPayment } from '../usecases/confirm-nfse-bank-payment/confirm-nfse-bank-payment.service';
+import { SettleNfseBankPayment } from '../usecases/settle-nfse-bank-payment/settle-nfse-bank-payment.service';
 import { ReconcileNfsePeriod } from '../usecases/reconcile-nfse-period/reconcile-nfse-period.service';
 import { ReconcileNfse } from '../usecases/reconcile-nfse/reconcile-nfse.service';
 import { ReissueNfseBankPayment } from '../usecases/reissue-nfse-bank-payment/reissue-nfse-bank-payment.service';
@@ -75,6 +76,7 @@ export class NfseQueueModule {
         ReconcileNfse,
         ReconcileNfsePeriod,
         ConfirmNfseBankPayment,
+        SettleNfseBankPayment,
         ReissueNfseBankPayment,
         {
           provide: TOKENS.NfseQueueProducer,
@@ -100,6 +102,7 @@ export class NfseQueueModule {
         ReconcileNfse,
         ReconcileNfsePeriod,
         ConfirmNfseBankPayment,
+        SettleNfseBankPayment,
         ReissueNfseBankPayment,
       ],
     };

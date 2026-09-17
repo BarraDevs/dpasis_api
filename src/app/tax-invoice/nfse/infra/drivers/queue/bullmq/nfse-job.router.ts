@@ -10,18 +10,21 @@ import type { IssueNfseBankPaymentJobDto } from '../../../../application/queue/j
 import type { IssueNfseBatchJobDto } from '../../../../application/queue/jobs/issue-nfse-batch-job.dto';
 import type { PollNfseBatchJobDto } from '../../../../application/queue/jobs/poll-nfse-batch-job.dto';
 import type { ReconcileNfseJobDto } from '../../../../application/queue/jobs/reconcile-nfse-job.dto';
+import type { SettleNfseBankPaymentJobDto } from '../../../../application/queue/jobs/settle-nfse-bank-payment-job.dto';
 import { ConfirmNfseBankPayment } from '../../../../application/usecases/confirm-nfse-bank-payment/confirm-nfse-bank-payment.service';
 import { ProcessIssueNfseBankPayment } from '../../../../application/usecases/process-issue-nfse-bank-payment/process-issue-nfse-bank-payment.service';
 import { ProcessIssueNfseBatch } from '../../../../application/usecases/process-issue-nfse-batch/process-issue-nfse-batch.service';
 import { ProcessPollNfseBatch } from '../../../../application/usecases/process-poll-nfse-batch/process-poll-nfse-batch.service';
 import { ReconcileNfse } from '../../../../application/usecases/reconcile-nfse/reconcile-nfse.service';
+import { SettleNfseBankPayment } from '../../../../application/usecases/settle-nfse-bank-payment/settle-nfse-bank-payment.service';
 
 export type NfseJobData =
   | IssueNfseBatchJobDto
   | PollNfseBatchJobDto
   | IssueNfseBankPaymentJobDto
   | ReconcileNfseJobDto
-  | ConfirmNfseBankPaymentJobDto;
+  | ConfirmNfseBankPaymentJobDto
+  | SettleNfseBankPaymentJobDto;
 
 /**
  * Roteamento e tradução de erro num lugar só.
@@ -38,6 +41,7 @@ export class NfseJobRouter {
     private readonly processIssueNfseBankPayment: ProcessIssueNfseBankPayment,
     private readonly reconcileNfse: ReconcileNfse,
     private readonly confirmNfseBankPayment: ConfirmNfseBankPayment,
+    private readonly settleNfseBankPayment: SettleNfseBankPayment,
   ) {}
 
   public async run(job: Job<NfseJobData>, token?: string): Promise<void> {
@@ -84,6 +88,9 @@ export class NfseJobRouter {
         return;
       case JobName.ConfirmNfseBankPayment:
         await this.confirmNfseBankPayment.execute(job.data as ConfirmNfseBankPaymentJobDto);
+        return;
+      case JobName.SettleNfseBankPayment:
+        await this.settleNfseBankPayment.execute(job.data as SettleNfseBankPaymentJobDto);
         return;
       default:
         throw new AppException(`Unknown job name: ${job.name}`);

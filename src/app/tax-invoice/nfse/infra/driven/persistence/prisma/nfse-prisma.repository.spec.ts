@@ -459,6 +459,112 @@ describe('NfseRepositoryAdapterPrisma - Integration tests', () => {
     });
   });
 
+  describe('bank payment settlement', () => {
+    async function seedConfirmed(overrides: Record<string, unknown> = {}) {
+      const id = await sut.save(NfseFactory.create(makeNfseCreateProps()));
+      await prisma.nfse.update({
+        where: { id },
+        data: {
+          status: NfseStatus.ISSUED,
+          nfseNumber: '8008',
+          issuedAt: new Date('2026-09-10T12:00:00Z'),
+          bankPaymentRequestCode: 'req-settle',
+          bankPaymentConfirmedAt: new Date('2026-09-10T12:10:00Z'),
+          bankPaymentStatus: 'EMITTED',
+          bankPaymentNextSettlementAt: new Date('2026-09-10T12:00:00.000Z'),
+          ...overrides,
+        },
+      });
+      return id;
+    }
+
+    it('should rehydrate a charge by request code', async() => {
+      // Arrange
+      const settledAt = new Date('2026-09-17T12:00:00.000Z');
+      const id = await seedConfirmed({ bankPaymentSettledAt: settledAt });
+
+      // Act
+      const result = await sut.findByBankPaymentRequestCode('req-settle');
+
+      // Assert
+      expect(result?.props.id).toBe(id);
+      expect(result?.props.bankPaymentRequestCode).toBe('req-settle');
+      expect(result?.props.bankPaymentSettledAt).toEqual(settledAt);
+    });
+
+    it('should return null when the request code is unknown', async() => {
+      await expect(sut.findByBankPaymentRequestCode('missing')).resolves.toBeNull();
+    });
+
+    it('should let only one claim through, pushing the lease forward', async() => {
+      // Arrange
+      const id = await seedConfirmed();
+      const now = new Date('2026-09-10T12:05:00.000Z');
+      const leaseUntil = new Date('2026-09-10T12:20:00.000Z');
+
+      // Act
+      const first = await sut.claimBankPaymentSettlement(id, now, leaseUntil);
+      const second = await sut.claimBankPaymentSettlement(id, now, leaseUntil);
+
+      // Assert
+      expect(first).toBe(true);
+      expect(second).toBe(false);
+      const saved = await prisma.nfse.findUnique({ where: { id } });
+      expect(saved?.bankPaymentNextSettlementAt).toEqual(leaseUntil);
+    });
+
+    it('should not claim a charge that already settled', async() => {
+      // Arrange
+      const id = await seedConfirmed({ bankPaymentSettledAt: new Date('2026-09-10T12:30:00.000Z') });
+
+      // Act
+      const claimed = await sut.claimBankPaymentSettlement(
+        id,
+        new Date('2026-09-10T12:35:00.000Z'),
+        new Date('2026-09-10T12:50:00.000Z'),
+      );
+
+      // Assert
+      expect(claimed).toBe(false);
+    });
+
+    it('should not claim a charge whose next check is still in the future', async() => {
+      // Arrange
+      const id = await seedConfirmed({
+        bankPaymentNextSettlementAt: new Date('2026-09-10T13:00:00.000Z'),
+      });
+
+      // Act
+      const claimed = await sut.claimBankPaymentSettlement(
+        id,
+        new Date('2026-09-10T12:05:00.000Z'),
+        new Date('2026-09-10T12:20:00.000Z'),
+      );
+
+      // Assert
+      expect(claimed).toBe(false);
+    });
+
+    it.each([
+      { label: 'unconfirmed', overrides: { bankPaymentConfirmedAt: null } },
+      { label: 'failed', overrides: { bankPaymentFailedAt: new Date('2026-09-10T12:20:00.000Z') } },
+      { label: 'without a request code', overrides: { bankPaymentRequestCode: null } },
+    ])('should not claim a $label charge', async({ overrides }) => {
+      // Arrange
+      const id = await seedConfirmed(overrides);
+
+      // Act
+      const claimed = await sut.claimBankPaymentSettlement(
+        id,
+        new Date('2026-09-10T12:05:00.000Z'),
+        new Date('2026-09-10T12:20:00.000Z'),
+      );
+
+      // Assert
+      expect(claimed).toBe(false);
+    });
+  });
+
   describe('reserve', () => {
     let cnaeNbsIndopId: number;
 

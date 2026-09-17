@@ -66,13 +66,14 @@ describe('NfseAlertsScheduler - Unit tests', () => {
   });
 
   describe('runRecoverySweeps', () => {
-    it('should call the five recovery sweeps', async() => {
+    it('should call the six recovery sweeps', async() => {
       // Arrange
       jest.spyOn(sweepNfseRecovery, 'sweepOutbox').mockResolvedValue(0);
       jest.spyOn(sweepNfseRecovery, 'sweepReconciliation').mockResolvedValue(0);
       jest.spyOn(sweepNfseRecovery, 'sweepMissingBankPayment').mockResolvedValue(0);
       jest.spyOn(sweepNfseRecovery, 'sweepBankPaymentRetry').mockResolvedValue(0);
       jest.spyOn(sweepNfseRecovery, 'sweepBankPaymentConfirmation').mockResolvedValue(0);
+      jest.spyOn(sweepNfseRecovery, 'sweepBankPaymentSettlement').mockResolvedValue(0);
 
       // Act
       await sut.runRecoverySweeps();
@@ -83,6 +84,7 @@ describe('NfseAlertsScheduler - Unit tests', () => {
       expect(sweepNfseRecovery.sweepMissingBankPayment).toHaveBeenCalledTimes(1);
       expect(sweepNfseRecovery.sweepBankPaymentRetry).toHaveBeenCalledTimes(1);
       expect(sweepNfseRecovery.sweepBankPaymentConfirmation).toHaveBeenCalledTimes(1);
+      expect(sweepNfseRecovery.sweepBankPaymentSettlement).toHaveBeenCalledTimes(1);
     });
 
     it('should keep running the other sweeps when one rejects', async() => {

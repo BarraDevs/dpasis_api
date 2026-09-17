@@ -14,6 +14,7 @@ import { ProcessIssueNfseBatch } from '../../../../application/usecases/process-
 import { ProcessPollNfseBatch } from '../../../../application/usecases/process-poll-nfse-batch/process-poll-nfse-batch.service';
 import { ConfirmNfseBankPayment } from '../../../../application/usecases/confirm-nfse-bank-payment/confirm-nfse-bank-payment.service';
 import { ReconcileNfse } from '../../../../application/usecases/reconcile-nfse/reconcile-nfse.service';
+import { SettleNfseBankPayment } from '../../../../application/usecases/settle-nfse-bank-payment/settle-nfse-bank-payment.service';
 import { NfseJobRouter } from './nfse-job.router';
 
 function makeJob<T>(name: string, data: T): Job<T> {
@@ -39,6 +40,7 @@ describe('NfseJobRouter', () => {
   let processIssueNfseBankPayment: ProcessIssueNfseBankPayment;
   let reconcileNfse: ReconcileNfse;
   let confirmNfseBankPayment: ConfirmNfseBankPayment;
+  let settleNfseBankPayment: SettleNfseBankPayment;
 
   beforeEach(async() => {
     const module = await Test.createTestingModule({
@@ -49,6 +51,7 @@ describe('NfseJobRouter', () => {
         { provide: ProcessIssueNfseBankPayment, useValue: createMock<ProcessIssueNfseBankPayment>() },
         { provide: ReconcileNfse, useValue: createMock<ReconcileNfse>() },
         { provide: ConfirmNfseBankPayment, useValue: createMock<ConfirmNfseBankPayment>() },
+        { provide: SettleNfseBankPayment, useValue: createMock<SettleNfseBankPayment>() },
       ],
     }).compile();
 
@@ -57,6 +60,7 @@ describe('NfseJobRouter', () => {
     processPollNfseBatch = module.get(ProcessPollNfseBatch);
     reconcileNfse = module.get(ReconcileNfse);
     confirmNfseBankPayment = module.get(ConfirmNfseBankPayment);
+    settleNfseBankPayment = module.get(SettleNfseBankPayment);
     processIssueNfseBankPayment = module.get(ProcessIssueNfseBankPayment);
   });
 
@@ -228,6 +232,17 @@ describe('NfseJobRouter', () => {
 
       // Assert
       expect(confirmNfseBankPayment.execute).toHaveBeenCalledWith({ nfseId: 9 });
+    });
+
+    it('should delegate settle-nfse-bank-payment jobs to SettleNfseBankPayment', async() => {
+      // Arrange
+      const job = makeJob(JobName.SettleNfseBankPayment, { nfseId: 11 });
+
+      // Act
+      await sut.run(job);
+
+      // Assert
+      expect(settleNfseBankPayment.execute).toHaveBeenCalledWith({ nfseId: 11 });
     });
 
     it('should convert PermanentProviderError from the reconcile job into UnrecoverableError', async() => {

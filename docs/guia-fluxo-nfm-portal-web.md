@@ -643,6 +643,9 @@ type EstadoBoleto =
   | 'falhou'              // mostrar bankPaymentErrorMessage + botão "Gerar boleto"
   | 'confirmando'         // Inter aceitou; aguardando confirmação (>= 10 min)
   | 'emitido'             // Inter confirmou que o boleto existe
+  | 'pago'                // Inter confirmou pagamento (PAID / RECEIVED / MARKED_RECEIVED)
+  | 'cancelado'           // cobrança cancelada no Inter
+  | 'expirado'            // cobrança expirada no Inter
   | 'falha-no-banco'      // Inter não conseguiu produzir o boleto; botão "Reemitir boleto"
   | 'consultar-no-banco'; // nota cancelada: a API não registra se o boleto foi cancelado
 
@@ -657,6 +660,15 @@ function estadoBoleto(nfse: NfseDto): EstadoBoleto {
   }
   if (nfse.bankPaymentStatus === 'FAILED') return 'falha-no-banco';
   if (!nfse.bankPaymentConfirmedAt) return 'confirmando';
+  if (nfse.bankPaymentSettledAt) {
+    if (nfse.bankPaymentStatus === 'PAID'
+      || nfse.bankPaymentStatus === 'RECEIVED'
+      || nfse.bankPaymentStatus === 'MARKED_RECEIVED') {
+      return 'pago';
+    }
+    if (nfse.bankPaymentStatus === 'CANCELLED') return 'cancelado';
+    if (nfse.bankPaymentStatus === 'EXPIRED') return 'expirado';
+  }
   return 'emitido';
 }
 ```
@@ -667,7 +679,10 @@ function estadoBoleto(nfse: NfseDto): EstadoBoleto {
 | `retentando` | aviso, não erro: o motivo (`bankPaymentErrorMessage`, que já termina com o horário da próxima tentativa). O sistema retenta sozinho por até 24h da primeira solicitação, ou até 19h59 do vencimento. O botão **Gerar boleto** antecipa, mas não é necessário. |
 | `falhou` | o motivo (`bankPaymentErrorMessage`) e o botão **Gerar boleto** ([8.5](#85-gerar-boleto-manualmente--post-adminbank-paymentnfmid)). Chega aqui o que não tem retentativa automática: erro permanente (dado recusado pelo Inter) ou a retentativa de 24h/vencimento esgotada. |
 | `confirmando` | "Boleto solicitado, aguardando confirmação do banco". |
-| `emitido` | `bankPaymentStatus` (ex.: `EMITTED`) e os links de PDF/linha digitável ([8.4](#84-dados-do-boleto-pdf-e-situação-atual)). |
+| `emitido` | `bankPaymentStatus` (ex.: `EMITTED`) e os links de PDF/linha digitável ([8.4](#84-dados-do-boleto-pdf-e-situação-atual)). Ainda em aberto: `bankPaymentSettledAt` nulo. |
+| `pago` | cobrança liquidada como paga (`PAID`, `RECEIVED` ou `MARKED_RECEIVED`). `bankPaymentSettledAt` preenchido. Sem botão de gerar/reemitir. |
+| `cancelado` | cobrança cancelada no Inter (`CANCELLED`). `bankPaymentSettledAt` preenchido. |
+| `expirado` | cobrança expirada no Inter (`EXPIRED`). `bankPaymentSettledAt` preenchido. |
 | `falha-no-banco` | o Inter aceitou a solicitação mas não produziu o boleto (`FALHA_EMISSAO`). Botão **Reemitir boleto** ([8.6](#86-reemitir-boleto-com-falha-no-banco--post-adminbank-paymentnfmidreissue)). |
 | `consultar-no-banco` | a nota foi cancelada; se o boleto foi cancelado junto só a resposta do cancelamento disse ([seção 12](#12-cancelamento)). Para saber depois, consultar a situação no Inter. |
 
@@ -686,9 +701,10 @@ Motivos que podem aparecer em `bankPaymentErrorMessage`:
 | outras | mensagem de validação devolvida pelo próprio Inter |
 
 `bankPaymentStatus` pode valer `AWAITING_APPROVAL`, `EMITTED`, `RECEIVED`, `PAID`,
-`MARKED_RECEIVED`, `EXPIRED`, `CANCELLED`, `FAILED` ou `UNKNOWN`. Ele é gravado **uma vez**, na
-confirmação, e não é atualizado depois: **o sistema não acompanha pagamento** (não há webhook do
-Inter). Para saber se o cliente pagou, consultar o Inter na hora (8.4).
+`MARKED_RECEIVED`, `EXPIRED`, `CANCELLED`, `FAILED` ou `UNKNOWN`. Depois da confirmação da emissão
+ele **continua sendo atualizado** quando o Inter avisa (webhook) ou quando a varredura consulta de
+novo: pago, cancelado e expirado gravam também `bankPaymentSettledAt`. `ATRASADO` no Inter continua
+`EMITTED` (ainda em aberto). O GET pontual em 8.4 segue disponível para o detalhe.
 
 ### 8.4 Dados do boleto, PDF e situação atual
 
@@ -744,7 +760,7 @@ Para o estado `falha-no-banco`: o Inter aceitou a solicitação e depois reporto
 | `404` | NFM não encontrada, ou cobrança não encontrada no Inter |
 | `503` | Inter indisponível na consulta — nada foi alterado |
 
-- Depois do `202`, acompanhar pelo estado do boleto (8.3): `gerando` → `confirmando` → `emitido`.
+- Depois do `202`, acompanhar pelo estado do boleto (8.3): `gerando` → `confirmando` → `emitido` (e depois `pago` / `cancelado` / `expirado`).
 
 ---
 
@@ -1220,7 +1236,7 @@ candidatos a correção no backend; vale confirmar com o time antes de desenhar 
 | 12 | Boleto cancelado por engano não tem rota de reemissão (a de [8.6](#86-reemitir-boleto-com-falha-no-banco--post-adminbank-paymentnfmidreissue) só aceita `FALHA_EMISSAO`), e o vencimento seria o da primeira emissão | tratamento manual; mostrar orientação em vez de botão |
 | 13 | Cancelamento: se a prefeitura recusar depois de o boleto ter sido cancelado, a nota segue `ISSUED` com a cobrança cancelada (e ainda vinculada) | num erro de cancelamento, conferir o boleto no Inter |
 | 14 | O resultado do cancelamento do boleto não é gravado na NFS-e | guardar a resposta do cancelamento ou consultar o Inter |
-| 15 | Pagamento não é acompanhado: `bankPaymentStatus` para de ser atualizado depois da confirmação | "pago" só consultando o Inter na hora |
+| 15 | Pagamento, cancelamento e expiração passam a ser gravados em `bankPaymentStatus` + `bankPaymentSettledAt` (webhook Bolepix + varredura). Cadastro da URL no portal Inter é manual | derivar `pago` / `cancelado` / `expirado` dos campos da NFS-e (8.3); não há rota admin nova |
 | 16 | Nota descoberta tarde pela reconciliação tem `issuedAt` no passado; o vencimento do boleto também fica no passado e o Inter recusa | boleto em `falhou`; tratamento manual |
 | 17 | `POST /admin/nfm` é síncrono e serial | timeout longo e sem repetição automática (14.5) |
 | 18 | Combinação CNAE/NBS/INDOP não tem edição | corrigir LC 116 = nova combinação + reapontar itens |
@@ -1272,6 +1288,8 @@ Nota emitida, com boleto confirmado:
     "bankPaymentNextRetryAt": null,
     "bankPaymentStatus": "EMITTED",
     "bankPaymentConfirmedAt": "2026-09-10T09:15:00.000Z",
+    "bankPaymentSettledAt": null,
+    "bankPaymentNextSettlementAt": "2026-09-10T09:15:00.000Z",
     "reconcileAttemptCount": 0,
     "nextReconcileAt": "2026-09-10T09:15:02.000Z",
     "nfmId": 42,
@@ -1283,7 +1301,7 @@ Nota emitida, com boleto confirmado:
 ```
 
 Campos de uso interno, que a UI não precisa exibir fora do diagnóstico: `bankPaymentIdempotencyKey`,
-`reconcileAttemptCount`, `nextReconcileAt`, `data`, `nfmId` (redundante com o `id` da NFM).
+`bankPaymentNextSettlementAt`, `reconcileAttemptCount`, `nextReconcileAt`, `data`, `nfmId` (redundante com o `id` da NFM).
 
 ### 16.B Fuso horário
 
@@ -1303,7 +1321,7 @@ para exibição.
 | Envio e consulta do lote | `src/app/tax-invoice/nfse/application/usecases/process-issue-nfse-batch/`, `.../process-poll-nfse-batch/` |
 | Reconciliação, reemissão, consulta | `src/app/tax-invoice/nfse/application/usecases/reconcile-nfse/`, `.../reconcile-nfse-period/`, `src/app/tax-invoice/nfm/application/usecases/{reconcile-nfm,reissue-nfm,find-nfm-provider-status}/` |
 | Estados da NFS-e | `src/app/tax-invoice/nfse/domain/entities/nfse.entity.ts`, `src/app/tax-invoice/nfse/domain/enums/nfse-status.enum.ts` |
-| Boleto | `src/app/tax-invoice/nfse/application/usecases/process-issue-nfse-bank-payment/`, `.../confirm-nfse-bank-payment/`, `src/app/tax-invoice/nfse/application/mappers/nfse-to-issue-bank-payment.mapper.ts`, `src/app/bank-payment/` |
+| Boleto | `src/app/tax-invoice/nfse/application/usecases/process-issue-nfse-bank-payment/`, `.../confirm-nfse-bank-payment/`, `.../settle-nfse-bank-payment/`, `src/app/tax-invoice/nfse/application/mappers/nfse-to-issue-bank-payment.mapper.ts`, `src/app/bank-payment/` |
 | Cancelamento | `src/app/tax-invoice/nfm/application/usecases/cancel-nfm/`, `src/app/tax-invoice/nfse/application/usecases/cancel-nfse/` |
 | Filas e retentativas | `src/app/tax-invoice/nfse/infra/driven/queue/bullmq/nfse-queue-bullmq.producer.ts`, `src/app/tax-invoice/nfse/infra/drivers/queue/bullmq/` |
 | Varreduras, alertas, saúde | `src/app/maintenance/` |

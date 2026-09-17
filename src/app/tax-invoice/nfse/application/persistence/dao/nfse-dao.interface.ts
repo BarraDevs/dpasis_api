@@ -47,6 +47,11 @@ export interface INfseDao {
    * `codigoSolicitacao` diz que a solicitação foi aceita, não que o boleto existe.
    */
   findBankPaymentUnconfirmed(olderThanMinutes: number, limit: number): Promise<NfseReconcileTargetDto[]>;
+  /**
+   * Boletos confirmados ainda em aberto cuja consulta de liquidação venceu. É o fallback do
+   * webhook Bolepix: o Inter desiste depois de 4 tentativas, e esta varredura pergunta de novo.
+   */
+  findBankPaymentSettlementDue(limit: number): Promise<NfseReconcileTargetDto[]>;
 
   /** Contagem de NFS-e por status. */
   countByStatus(): Promise<NfseCountByKeyDto[]>;

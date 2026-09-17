@@ -214,4 +214,47 @@ describe('SweepNfseRecovery - Unit tests', () => {
       expect(count).toBe(1);
     });
   });
+
+  describe('sweepBankPaymentSettlement', () => {
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('should claim each due charge with a 15-minute lease before enqueueing it', async() => {
+      // Arrange
+      jest.useFakeTimers({ now: new Date('2026-09-17T12:00:00Z') });
+      jest.spyOn(nfseDao, 'findBankPaymentSettlementDue').mockResolvedValue([makeTarget({ id: 5, status: NfseStatus.ISSUED })]);
+      jest.spyOn(nfseRepository, 'claimBankPaymentSettlement').mockResolvedValue(true);
+
+      // Act
+      const count = await sut.sweepBankPaymentSettlement();
+
+      // Assert
+      expect(nfseDao.findBankPaymentSettlementDue).toHaveBeenCalledWith(20);
+      expect(nfseRepository.claimBankPaymentSettlement).toHaveBeenCalledWith(
+        5,
+        new Date('2026-09-17T12:00:00Z'),
+        new Date('2026-09-17T12:15:00Z'),
+      );
+      expect(queueProducer.addSettleBankPaymentJob).toHaveBeenCalledWith({ nfseId: 5 });
+      expect(count).toBe(1);
+    });
+
+    it('should skip a charge another replica already claimed', async() => {
+      // Arrange
+      jest.spyOn(nfseDao, 'findBankPaymentSettlementDue')
+        .mockResolvedValue([makeTarget({ id: 5 }), makeTarget({ id: 6 })]);
+      jest.spyOn(nfseRepository, 'claimBankPaymentSettlement')
+        .mockResolvedValueOnce(false)
+        .mockResolvedValueOnce(true);
+
+      // Act
+      const count = await sut.sweepBankPaymentSettlement();
+
+      // Assert
+      expect(queueProducer.addSettleBankPaymentJob).toHaveBeenCalledTimes(1);
+      expect(queueProducer.addSettleBankPaymentJob).toHaveBeenCalledWith({ nfseId: 6 });
+      expect(count).toBe(1);
+    });
+  });
 });

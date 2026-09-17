@@ -52,6 +52,7 @@ describe('SweepNfseRecovery - Integration tests', () => {
     queueProducer.addedIssueBankPaymentJobs.length = 0;
     queueProducer.addedReconcileNfseJobs.length = 0;
     queueProducer.addedConfirmBankPaymentJobs.length = 0;
+    queueProducer.addedSettleBankPaymentJobs.length = 0;
   });
 
   afterAll(async() => {
@@ -193,6 +194,34 @@ describe('SweepNfseRecovery - Integration tests', () => {
     expect(count).toBe(1);
     expect(queueProducer.addedConfirmBankPaymentJobs).toEqual([
       { name: JobName.ConfirmNfseBankPayment, data: { nfseId: nfse.id } },
+    ]);
+  });
+
+  it('should enqueue a settlement job for a confirmed charge whose check is due', async() => {
+    // Arrange
+    const due = await seedNfse(prisma, {
+      status: NfseStatus.ISSUED,
+      bankPaymentRequestCode: 'req-open',
+      bankPaymentConfirmedAt: new Date('2026-09-03T11:00:00Z'),
+      bankPaymentNextSettlementAt: new Date(Date.now() - 60_000),
+    });
+    await seedNfse(prisma, {
+      status: NfseStatus.ISSUED,
+      bankPaymentRequestCode: 'req-paid',
+      bankPaymentConfirmedAt: new Date('2026-09-03T11:00:00Z'),
+      bankPaymentSettledAt: new Date(),
+      bankPaymentNextSettlementAt: new Date(Date.now() - 60_000),
+    });
+
+    // Act — duas voltas seguidas: o lease tira a cobrança da segunda.
+    const first = await sut.sweepBankPaymentSettlement();
+    const second = await sut.sweepBankPaymentSettlement();
+
+    // Assert
+    expect(first).toBe(1);
+    expect(second).toBe(0);
+    expect(queueProducer.addedSettleBankPaymentJobs).toEqual([
+      { name: JobName.SettleNfseBankPayment, data: { nfseId: due.id } },
     ]);
   });
 });

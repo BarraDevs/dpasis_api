@@ -33,6 +33,8 @@ const NfseSelect = {
   bankPaymentFailedAt: true,
   bankPaymentStatus: true,
   bankPaymentConfirmedAt: true,
+  bankPaymentSettledAt: true,
+  bankPaymentNextSettlementAt: true,
   bankPaymentRetryCount: true,
   bankPaymentNextRetryAt: true,
   reconcileAttemptCount: true,
@@ -243,6 +245,23 @@ export class NfseDaoAdapterPrisma implements INfseDao {
       },
       select: NfseReconcileTargetSelect,
       orderBy: { id: 'asc' },
+      take: limit,
+    });
+
+    return rows.map((row) => this.mapToReconcileTarget(row));
+  }
+
+  public async findBankPaymentSettlementDue(limit: number): Promise<NfseReconcileTargetDto[]> {
+    const rows = await this.prisma.nfse.findMany({
+      where: {
+        bankPaymentRequestCode: { not: null },
+        bankPaymentConfirmedAt: { not: null },
+        bankPaymentSettledAt: null,
+        bankPaymentFailedAt: null,
+        bankPaymentNextSettlementAt: { not: null, lte: new Date() },
+      },
+      select: NfseReconcileTargetSelect,
+      orderBy: { bankPaymentNextSettlementAt: 'asc' },
       take: limit,
     });
 
