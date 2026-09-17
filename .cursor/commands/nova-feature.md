@@ -116,7 +116,7 @@ Carregue **as skills específicas** que cobrem cada passo do plano:
 | Autorização | `.cursor/skills/authentication-and-authorization/SKILL.md` |
 | Gateways externos (se aplicável) | `.cursor/skills/gateway-adapters/SKILL.md` |
 | Filas / BullMQ (se aplicável) | `.cursor/skills/queue-bullmq/SKILL.md` |
-| Testes | `.cursor/skills/testing-strategy/SKILL.md` |
+| Testes (qualquer spec de arquivo novo) | **Obrigatório:** `.cursor/commands/qa-tdd.md` — **não** escreva testes só com `testing-strategy`. `/qa-tdd` carrega `qa-test-generator` + `testing-strategy` + TDD. |
 | Doc integração frontend (após implementação) | `.cursor/skills/frontend-integration-docs/SKILL.md` |
 
 Leia **somente** as skills relacionadas aos passos que serão executados. Não consuma contexto com skills irrelevantes ao caso.
@@ -154,10 +154,15 @@ Apresente o plano usando este template e **aguarde aprovação do usuário** ant
 - `POST /admin/<modulo>` — `@RequiredClaims(Claim.<X>_WRITE)`, body `Create<X>InputDto`, retorna `Create<X>OutputDto`
 - ... (uma linha por rota)
 
-### Testes
-- Para cada use case: `*.spec.ts` (unit, mocks via `createMock`) + `*.integration.spec.ts` (banco real + truncate)
-- DAO: `<modulo>-prisma.dao.spec.ts`
-- DTOs: `*.dto.spec.ts`
+### Testes (via `/qa-tdd` — não inventar specs neste plano)
+- **Como:** na Etapa 3, **não** escrever `*.spec.ts` / `*.integration.spec.ts` “na mão”. Para **cada arquivo de produção novo** (e para arquivos de produção alterados que ganhem comportamento testável), executar o command **`.cursor/commands/qa-tdd.md`** como se o usuário tivesse invocado `/qa-tdd` naquele arquivo (ou no lote de arquivos novos, se o usuário pediu lote).
+- **Listar aqui só os alvos** (produção → tipo de spec esperado). A matriz exaustiva, confirmação e ciclo RED→GREEN→REFACTOR ficam **dentro** do `/qa-tdd`.
+- Use cases novos: `*.service.spec.ts` + `*.service.integration.spec.ts`
+- DAO novo: `<modulo>-prisma.dao.spec.ts`
+- Repository novo (DDD): `<modulo>-prisma.repository.spec.ts`
+- DTOs novos: `*.dto.spec.ts`
+- Entity / Factory / VO novos: `*.entity.spec.ts` / `*.factory.spec.ts` / `*.vo.spec.ts`
+- Controller novo: `*-admin.controller.spec.ts` / `*-user.controller.spec.ts`
 
 ### Pontos de atenção
 - (ex.: este módulo importa `forwardRef(() => XxxModule)` por causa do ciclo)
@@ -186,7 +191,18 @@ Após aprovação do plano, **execute na ordem do checklist** (Rule 11 / skill `
 11. Claims (subject + catálogo)
 12. Module raiz da feature
 13. Importar no `app.module.ts` ou agregador
-14. Testes (unit + integration + DAO + DTO)
+14. **Testes — obrigatoriamente via `/qa-tdd`** (ver subseção abaixo). **Proibido** gerar specs nesta etapa sem seguir `.cursor/commands/qa-tdd.md`.
+
+### 14. Testes: delegar a `.cursor/commands/qa-tdd.md`
+
+Assim que existir arquivo de produção novo (use case, DTO, DAO, repository, entity, factory, VO, controller, consumer, etc.) **e** for a hora de criar os testes dele:
+
+1. **Leia na íntegra** `.cursor/commands/qa-tdd.md` e **execute aquele command** (Etapas 0–5 do `/qa-tdd`) para o arquivo — ou para o lote de arquivos novos, se o usuário pediu lote no `/qa-tdd`.
+2. `/qa-tdd` já manda carregar `.cursor/skills/qa-test-generator/SKILL.md`, `.cursor/skills/testing-strategy/SKILL.md` e o contrato TDD. **Não** substitua isso por “copiar um spec de referência e preencher”.
+3. **Um arquivo de produção novo = um ciclo `/qa-tdd`** (descoberta → matriz → confirmação → RED→GREEN→REFACTOR → verificação), salvo o usuário ter autorizado lote explícito.
+4. Código de produção **já** escrito nesta Etapa 3: siga o `/qa-tdd` mesmo assim. Se o teste passar no primeiro run, trate como **caracterização** (justificativa obrigatória no relatório do `/qa-tdd`) — não invente RED falso. Preferível, quando o plano ainda não tiver produção daquele comportamento: **escrever o teste pelo `/qa-tdd` antes** (RED) e só então o mínimo de produção (GREEN).
+5. Confirmação da matriz do `/qa-tdd` **não** é dispensada pela aprovação do plano desta feature. Plano lista *quais arquivos* terão spec; `/qa-tdd` lista *quais cenários*. Se o usuário já disse “autonomia / manda ver / sem perguntar” no `/nova-feature`, o `/qa-tdd` pode pular a pergunta da Fase 3, mas **a matriz continua obrigatória e visível**.
+6. Só depois dos ciclos `/qa-tdd` dos arquivos novos: `npm run lint` e `npm test` no recorte tocado, como o `/qa-tdd` Etapa 5.
 
 ### Checagens contínuas durante a implementação
 
@@ -205,9 +221,10 @@ Conforme você for criando arquivos, verifique cada padrão:
 - [ ] Rotas mais específicas (`:id/status`) ANTES de genéricas (`:id`)
 - [ ] `@Swagger` em toda rota (sem `@ApiTags` direto)
 - [ ] `@RequiredRoles` + `@RequiredClaims` em rotas administrativas
+- [ ] Specs **só** via `/qa-tdd` (matriz + TDD); co-locação `*.spec.ts` / `*.integration.spec.ts`
 - [ ] Integration test: `beforeEach(prisma.truncate)` + `afterAll(prisma.truncate + $disconnect)`
 
-Use `npm run lint` e `npm test` ao final para validar.
+Use `npm run lint` e `npm test` ao final para validar (além da verificação de cada ciclo `/qa-tdd`).
 
 ---
 
@@ -222,7 +239,7 @@ Quando terminar, apresente um resumo curto:
 **Arquivos modificados:** M
 **Use cases:** Create<X>, FindAll<X>, ... (total)
 **Rotas:** POST /admin/<x>, GET /admin/<x>, ... (total)
-**Testes:** P unit + Q integration
+**Testes:** P unit + Q integration (gerados **somente** via `/qa-tdd`; anexar contagem/cenários do relatório da Etapa 5 do `/qa-tdd`)
 **Doc integração frontend (Etapa 5):** `docs/frontend-integracao-<contexto>.md` — ou *N/A* se não houver contrato admin/HTTP novo ou alterado
 
 ### Para validar localmente
@@ -266,3 +283,4 @@ Se upload/multipart/S3 estiver envolvido, cruze com `.cursor/skills/upload-file-
 5. **Aguarde aprovação do plano antes de implementar.** Nunca pule da Etapa 1 para a Etapa 3.
 6. **Em caso de divergência:** RULES > código existente > skills > intuição. Se a skill estiver desatualizada vs o código, siga o código e mencione a divergência ao final para o usuário considerar atualizar a skill.
 7. **Não encerre o comando sem a Etapa 5** quando houver contrato admin/HTTP novo ou alterado: documentação em `docs/frontend-integracao-<contexto>.md` conforme `.cursor/skills/frontend-integration-docs/SKILL.md`.
+8. **Nunca escreva testes de arquivos novos sem o command `/qa-tdd`.** Fonte: `.cursor/commands/qa-tdd.md`. Skill `testing-strategy` sozinha **não** autoriza gerar spec neste fluxo.

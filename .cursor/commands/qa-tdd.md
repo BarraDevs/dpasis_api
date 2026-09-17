@@ -91,7 +91,7 @@ Siga a **Fase 5** do `qa-test-generator`: `npm test` nos arquivos tocados, `npm 
 ## Quando NÃO usar este comando
 
 - **Só checklist de PR** sem escrever testes → use `/feature-checklist`.
-- **Feature nova completa** (não só testes) → use `/nova-feature` (que já cita testes; você pode combinar com `/qa-tdd` na etapa de testes se quiser TDD explícito).
+- **Feature nova completa** (não só testes) → use `/nova-feature`. Na etapa de testes, `/nova-feature` **delega obrigatoriamente** a este command: cada arquivo de produção **novo** (e produção alterada com comportamento testável) passa por `/qa-tdd` — não gerar specs “na mão” só com `testing-strategy`.
 - **Protótipo descartável** — TDD relaxado só com acordo explícito do usuário (fora do padrão deste comando).
 
 ---
