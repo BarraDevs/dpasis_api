@@ -1,4 +1,5 @@
 import { Test } from '@nestjs/testing';
+import { Prisma } from '@prisma/client';
 import { NfmPersistenceModule } from 'src/app/tax-invoice/nfm/application/persistence/nfm-persistence.module';
 import { NfseStatus } from 'src/app/tax-invoice/nfse/domain/enums/nfse-status.enum';
 import { ConfigModule } from 'src/core/config/config.module';
@@ -15,6 +16,7 @@ describe('NfmDaoAdapterPrisma', () => {
     clientId?: number;
     nfseId?: number | null;
     cnaeNbsIndopId?: number;
+    data?: Prisma.InputJsonValue;
   } = {}) {
     const now = new Date();
     return prisma.nfm.create({
@@ -27,9 +29,9 @@ describe('NfmDaoAdapterPrisma', () => {
         totalValueInCents: 10000,
         cnaeNbsIndopId: overrides.cnaeNbsIndopId ?? cnaeNbsIndopId,
         nfseId: overrides.nfseId ?? null,
-        data: {
+        data: overrides.data ?? {
           client: { id: overrides.clientId ?? 1 },
-          clientItems: [{ totalValueInCents: 10000 }],
+          clientItems: [{ totalValueInCents: 10000, description: 'Item snapshot' }],
         },
       },
     });
@@ -169,6 +171,55 @@ describe('NfmDaoAdapterPrisma', () => {
 
       expect(result).toMatchObject({ id: row.id, nfse: null });
     });
+
+    it('should return clientItems from the nfm data snapshot', async() => {
+      // Arrange
+      const nfse = await createNfse(52);
+      const snapshotItems = [
+        { totalValueInCents: 10000, description: 'Item snapshot' },
+        { totalValueInCents: 5500, description: 'Segundo item' },
+      ];
+      const row = await createNfm({
+        nfseId: nfse.id,
+        data: { client: { id: 1 }, clientItems: snapshotItems },
+      });
+
+      // Act
+      const result = await sut.findById(row.id);
+
+      // Assert
+      expect(result?.clientItems).toEqual(snapshotItems);
+    });
+
+    it('should return empty clientItems when snapshot has none', async() => {
+      // Arrange
+      const nfse = await createNfse(53);
+      const row = await createNfm({
+        nfseId: nfse.id,
+        data: { client: { id: 1 } },
+      });
+
+      // Act
+      const result = await sut.findById(row.id);
+
+      // Assert
+      expect(result?.clientItems).toEqual([]);
+    });
+
+    it('should return empty clientItems when snapshot clientItems is not an array', async() => {
+      // Arrange
+      const nfse = await createNfse(54);
+      const row = await createNfm({
+        nfseId: nfse.id,
+        data: { client: { id: 1 }, clientItems: 'invalid' },
+      });
+
+      // Act
+      const result = await sut.findById(row.id);
+
+      // Assert
+      expect(result?.clientItems).toEqual([]);
+    });
   });
 
   describe('findAll', () => {
@@ -199,6 +250,24 @@ describe('NfmDaoAdapterPrisma', () => {
       expect(total).toBe(1);
       expect(rows).toHaveLength(1);
       expect(rows[0].nfse.id).toBe(nfse.id);
+    });
+
+    it('should return clientItems from the nfm data snapshot', async() => {
+      // Arrange
+      const nfse = await createNfse(2);
+      const snapshotItems = [{ totalValueInCents: 4200, description: 'Item lista' }];
+      await createNfm({
+        clientId: 3,
+        nfseId: nfse.id,
+        cnaeNbsIndopId: cnaeNbsIndopId2,
+        data: { client: { id: 3 }, clientItems: snapshotItems },
+      });
+
+      // Act
+      const [rows] = await sut.findAll({});
+
+      // Assert
+      expect(rows[0].clientItems).toEqual(snapshotItems);
     });
 
     it('should filter by dateStart and dateEnd on createdAt', async() => {

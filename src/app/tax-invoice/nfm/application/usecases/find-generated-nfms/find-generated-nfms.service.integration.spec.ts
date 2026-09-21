@@ -1,4 +1,5 @@
 import { Test } from '@nestjs/testing';
+import { Prisma } from '@prisma/client';
 import { NfseStatus } from 'src/app/tax-invoice/nfse/domain/enums/nfse-status.enum';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { NfmModule } from '../../../nfm.module';
@@ -84,6 +85,7 @@ describe('FindGeneratedNfms - Integration tests', () => {
     nfseId?: number | null;
     cnaeNbsIndopId: number;
     createdAt?: Date;
+    data?: Prisma.InputJsonValue;
   }) {
     const nfm = await prisma.nfm.create({
       data: {
@@ -95,7 +97,7 @@ describe('FindGeneratedNfms - Integration tests', () => {
         totalValueInCents: 10000,
         cnaeNbsIndopId: opts.cnaeNbsIndopId,
         nfseId: opts.nfseId ?? null,
-        data: { client: { id: opts.clientId } },
+        data: opts.data ?? { client: { id: opts.clientId } },
       },
     });
 
@@ -127,6 +129,25 @@ describe('FindGeneratedNfms - Integration tests', () => {
     expect(result.data).toHaveLength(1);
     expect(result.data[0].id).toBe(linked.id);
     expect(result.data[0].nfse.id).toBe(nfse.id);
+    expect(result.data[0].clientItems).toEqual([]);
+  });
+
+  it('should return clientItems from the nfm data snapshot', async() => {
+    // Arrange
+    const snapshotItems = [{ totalValueInCents: 15000, description: 'Item lista' }];
+    const nfse = await createNfse(2);
+    await createNfm({
+      clientId: 2,
+      nfseId: nfse.id,
+      cnaeNbsIndopId: cnaeNbsIndopId2,
+      data: { client: { id: 2 }, clientItems: snapshotItems },
+    });
+
+    // Act
+    const result = await sut.execute({});
+
+    // Assert
+    expect(result.data[0].clientItems).toEqual(snapshotItems);
   });
 
   it('should filter by dateStart and dateEnd', async() => {

@@ -112,7 +112,45 @@ describe('FindNfmById - Integration tests', () => {
       clientId: 1,
       clientDocument: '00000000000101',
       companyName: 'Empresa Teste',
+      clientItems: [],
       nfse: { id: nfse.id },
     });
+  });
+
+  it('should return clientItems from the nfm data snapshot', async() => {
+    // Arrange
+    const snapshotItems = [
+      { totalValueInCents: 10000, description: 'Item snapshot' },
+    ];
+    const nfse = await prisma.nfse.create({
+      data: {
+        companyId: 1,
+        clientId: 1,
+        rpsNumber: Date.now() % 100_000,
+        rpsSeries: 'NFSE',
+        status: NfseStatus.PENDING,
+        data: { providerDocument: '12345678000199' },
+      },
+    });
+
+    const nfm = await prisma.nfm.create({
+      data: {
+        clientId: 1,
+        clientDocument: '00000000000101',
+        companyName: 'Empresa Teste',
+        referenceMonth: 8,
+        referenceYear: 2026,
+        totalValueInCents: 10000,
+        cnaeNbsIndopId,
+        nfseId: nfse.id,
+        data: { client: { id: 1 }, clientItems: snapshotItems },
+      },
+    });
+
+    // Act
+    const result = await sut.execute(nfm.id);
+
+    // Assert
+    expect(result.clientItems).toEqual(snapshotItems);
   });
 });

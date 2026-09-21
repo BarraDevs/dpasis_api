@@ -1,10 +1,24 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { ClientItemDto } from 'src/app/client/client-item/application/dtos/client-item.dto';
 import { NfmDaoRowDto, NfmWithNfseDto } from 'src/app/tax-invoice/nfm/application/dtos/nfm.dto';
 import { INfmDao } from 'src/app/tax-invoice/nfm/application/persistence/dao/nfm-dao.interface';
 import { FindGeneratedNfmsQueryDto } from 'src/app/tax-invoice/nfm/application/usecases/find-generated-nfms/dtos/find-generated-nfms.dto';
 import { NfseStatus } from 'src/app/tax-invoice/nfse/domain/enums/nfse-status.enum';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
+
+function extractClientItems(data: Prisma.JsonValue): ClientItemDto[] {
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    return [];
+  }
+
+  const items = (data as { clientItems?: unknown }).clientItems;
+  if (!Array.isArray(items)) {
+    return [];
+  }
+
+  return items as ClientItemDto[];
+}
 
 const ONE_HOUR_IN_MS = 60 * 60 * 1000;
 
@@ -61,6 +75,7 @@ const NfmWithNfseSelect = {
   cnaeNbsIndopId: true,
   createdAt: true,
   updatedAt: true,
+  data: true,
   nfse: { select: NfseSelect },
 } satisfies Prisma.NfmSelect;
 
@@ -158,6 +173,7 @@ export class NfmDaoAdapterPrisma implements INfmDao {
       cnaeNbsIndopId: row.cnaeNbsIndopId,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
+      clientItems: extractClientItems(row.data),
       nfse: row.nfse
         ? {
           ...row.nfse,

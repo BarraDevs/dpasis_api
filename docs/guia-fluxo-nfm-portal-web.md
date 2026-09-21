@@ -1085,7 +1085,10 @@ Pontos de atenção:
 - Resposta: `{ currentPage, itemsPerPage, totalItems, totalPages, data: NfmWithNfseDto[] }`.
 - `NfmWithNfseDto`: `id`, `clientId`, `clientDocument`, `companyName` (razão social do **cliente**,
   não da empresa emissora), `referenceMonth`, `referenceYear`, `totalValueInCents`,
-  `cnaeNbsIndopId`, `createdAt`, `updatedAt`, `nfse` (exemplo completo no [apêndice](#16a-exemplo-de-nfmwithnfsedto)).
+  `cnaeNbsIndopId`, `createdAt`, `updatedAt`, `clientItems` (snapshot dos itens no fechamento; `[]`
+  se o JSON antigo não tiver), `nfse` (exemplo completo no [apêndice](#16a-exemplo-de-nfmwithnfsedto)).
+  Os itens **não** estão em `nfse.data` — essa chave é snapshot interno da NFS-e. Nota de contrato:
+  [frontend-integracao-nfm-client-items.md](frontend-integracao-nfm-client-items.md).
 
 ### Boleto — `/admin/bank-payment`
 
@@ -1264,6 +1267,27 @@ Nota emitida, com boleto confirmado:
   "cnaeNbsIndopId": 3,
   "createdAt": "2026-09-10T09:00:02.000Z",
   "updatedAt": "2026-09-10T09:00:02.000Z",
+  "clientItems": [
+    {
+      "id": 7,
+      "clientId": 10,
+      "description": "Locação de relógio de ponto",
+      "quantity": 1,
+      "unitValueInCents": 150000,
+      "totalValueInCents": 150000,
+      "active": true,
+      "cnaeNbsIndop": {
+        "id": 3,
+        "active": true,
+        "serviceListItemCode": "01.07",
+        "cnae": { "id": 1, "code": "6209-1/00", "description": "..." },
+        "nbs": { "id": 1, "code": "1.1501.30.00", "description": "..." },
+        "indop": { "id": 1, "code": "050101", "description": "..." }
+      },
+      "createdAt": "2026-09-01T12:00:00.000Z",
+      "updatedAt": "2026-09-01T12:00:00.000Z"
+    }
+  ],
   "nfse": {
     "id": 118,
     "companyId": 1,
@@ -1301,7 +1325,8 @@ Nota emitida, com boleto confirmado:
 ```
 
 Campos de uso interno, que a UI não precisa exibir fora do diagnóstico: `bankPaymentIdempotencyKey`,
-`bankPaymentNextSettlementAt`, `reconcileAttemptCount`, `nextReconcileAt`, `data`, `nfmId` (redundante com o `id` da NFM).
+`bankPaymentNextSettlementAt`, `reconcileAttemptCount`, `nextReconcileAt`, `nfse.data`, `nfmId`
+(redundante com o `id` da NFM). A lista da tela é `clientItems`.
 
 ### 16.B Fuso horário
 

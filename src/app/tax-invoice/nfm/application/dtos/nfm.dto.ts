@@ -20,6 +20,7 @@ export class NfmWithNfseDto {
   cnaeNbsIndopId: number;
   createdAt: Date;
   updatedAt: Date;
+  clientItems: ClientItemDto[];
   nfse: NfseDto;
 }
 
