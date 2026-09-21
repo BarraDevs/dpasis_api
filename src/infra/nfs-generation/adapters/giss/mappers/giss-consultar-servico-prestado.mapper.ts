@@ -1,15 +1,20 @@
 import { XMLParser } from 'fast-xml-parser';
-import { ListIssuedNfsInputDto, ListIssuedNfsOutputDto } from '../../../dtos/list-issued-nfs.dto';
-import { NfsBatchErrorDto, NfsBatchErrorKind, NfsIssuedNoteDto } from '../../../dtos/nfs-batch-status.dto';
+import {
+  LIST_ISSUED_NFS_PAGE_SIZE,
+  ListIssuedNfsInputDto,
+  ListIssuedNfsOutputDto,
+  NfsIssuedNoteListingDto,
+} from '../../../dtos/list-issued-nfs.dto';
+import { NfsBatchErrorDto, NfsBatchErrorKind } from '../../../dtos/nfs-batch-status.dto';
 import {
   GISS_CONSULTAR_NFSE_SERVICO_PRESTADO_ENVIO_NAMESPACE,
   GISS_TIPOS_NAMESPACE,
 } from '../constants/giss-namespaces';
 import { toNfsBatchErrorDto } from './giss-batch-error';
-import { toNfsIssuedNoteDto } from './giss-comp-nfse.reader';
+import { toNfsIssuedNoteListingDto } from './giss-comp-nfse.reader';
 
 /** Teto de página fixado pelo XSD (`maxOccurs="50"` em `ListaNfse/CompNfse`). */
-export const GISS_NOTES_PER_PAGE = 50;
+export const GISS_NOTES_PER_PAGE = LIST_ISSUED_NFS_PAGE_SIZE;
 
 export class GissConsultarServicoPrestadoMapper {
   private static readonly PARSER = new XMLParser({
@@ -70,7 +75,7 @@ export class GissConsultarServicoPrestadoMapper {
       );
     }
 
-    const notes: NfsIssuedNoteDto[] = this.toArray(resposta.ListaNfse?.CompNfse).map(toNfsIssuedNoteDto);
+    const notes: NfsIssuedNoteListingDto[] = this.toArray(resposta.ListaNfse?.CompNfse).map(toNfsIssuedNoteListingDto);
     if (notes.length > 0) {
       return { notes, endOfPages: notes.length < GISS_NOTES_PER_PAGE };
     }

@@ -89,6 +89,15 @@ describe('GissConsultarServicoPrestadoMapper - Unit tests', () => {
         nfseNumber: '9001',
         verificationCode: 'V1',
         issueDate: '2026-07-20T10:00:00',
+        competence: null,
+        takerDocument: null,
+        takerName: null,
+        servicesValue: null,
+        netValue: null,
+        description: null,
+        canceled: false,
+        cancellationDate: null,
+        cancellationReasonCode: null,
       });
     });
 
@@ -182,6 +191,60 @@ describe('GissConsultarServicoPrestadoMapper - Unit tests', () => {
       expect(() => GissConsultarServicoPrestadoMapper.parseConsultarNfseServicoPrestadoResponse(
         '<ConsultarNfseServicoPrestadoResposta><ElementoDesconhecido/></ConsultarNfseServicoPrestadoResposta>',
       )).toThrow('nem ListaNfse nem ListaMensagemRetorno');
+    });
+
+    it('should map tomador, valores and cancellation from CompNfse', () => {
+      // Arrange
+      const xml = `<ConsultarNfseServicoPrestadoResposta><ListaNfse>
+        <CompNfse>
+          <Nfse><InfNfse>
+            <Numero>9041</Numero>
+            <CodigoVerificacao>ABC123</CodigoVerificacao>
+            <DataEmissao>2026-09-03T10:00:00</DataEmissao>
+            <ValoresNfse><ValorLiquidoNfse>1425.48</ValorLiquidoNfse></ValoresNfse>
+            <DeclaracaoPrestacaoServico><InfDeclaracaoPrestacaoServico>
+              <Rps><IdentificacaoRps><Numero>41</Numero><Serie>NFSE</Serie></IdentificacaoRps></Rps>
+              <Competencia>2026-09-01</Competencia>
+              <Servico>
+                <Valores><ValorServicos>1500.50</ValorServicos></Valores>
+                <Discriminacao>Manutenção predial mensal</Discriminacao>
+              </Servico>
+              <TomadorServico>
+                <IdentificacaoTomador><CpfCnpj><Cnpj>12345678000199</Cnpj></CpfCnpj></IdentificacaoTomador>
+                <RazaoSocial>Cliente Exemplo LTDA</RazaoSocial>
+              </TomadorServico>
+            </InfDeclaracaoPrestacaoServico></DeclaracaoPrestacaoServico>
+          </InfNfse></Nfse>
+          <NfseCancelamento>
+            <Confirmacao>
+              <Pedido><InfPedidoCancelamento><CodigoCancelamento>2</CodigoCancelamento></InfPedidoCancelamento></Pedido>
+              <DataHora>2026-09-10T12:00:00</DataHora>
+            </Confirmacao>
+          </NfseCancelamento>
+        </CompNfse>
+        <Pagina>1</Pagina>
+      </ListaNfse></ConsultarNfseServicoPrestadoResposta>`;
+
+      // Act
+      const result = GissConsultarServicoPrestadoMapper.parseConsultarNfseServicoPrestadoResponse(xml);
+
+      // Assert
+      expect(result.notes).toEqual([{
+        rpsNumber: 41,
+        rpsSeries: 'NFSE',
+        nfseNumber: '9041',
+        verificationCode: 'ABC123',
+        issueDate: '2026-09-03T10:00:00',
+        competence: '2026-09-01',
+        takerDocument: '12345678000199',
+        takerName: 'Cliente Exemplo LTDA',
+        servicesValue: 1500.5,
+        netValue: 1425.48,
+        description: 'Manutenção predial mensal',
+        canceled: true,
+        cancellationDate: '2026-09-10T12:00:00',
+        cancellationReasonCode: '2',
+      }]);
     });
   });
 });

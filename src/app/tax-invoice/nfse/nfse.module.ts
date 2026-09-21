@@ -12,6 +12,8 @@ import { CancelNfse } from './application/usecases/cancel-nfse/cancel-nfse.servi
 import { FindNfseById } from './application/usecases/find-nfse-by-id/find-nfse-by-id.service';
 import { GetNfseMetrics } from './application/usecases/get-nfse-metrics/get-nfse-metrics.service';
 import { IssueNfse } from './application/usecases/issue-nfse/issue-nfse.service';
+import { ListIssuedNfseFromProvider } from './application/usecases/list-issued-nfse-from-provider/list-issued-nfse-from-provider.service';
+import { NfseAdminController } from './infra/drivers/http/admin/nfse-admin.controller';
 import { NfseMetricsAdminController } from './infra/drivers/http/admin/nfse-metrics-admin.controller';
 import { BankPaymentModule } from 'src/infra/bank-payment/bank-payment.module';
 
@@ -29,6 +31,7 @@ import { BankPaymentModule } from 'src/infra/bank-payment/bank-payment.module';
     AuthenticationGuardsModule,
   ],
   controllers: [
+    NfseAdminController,
     NfseMetricsAdminController,
   ],
   providers: [
@@ -36,6 +39,7 @@ import { BankPaymentModule } from 'src/infra/bank-payment/bank-payment.module';
     FindNfseById,
     GetNfseMetrics,
     IssueNfse,
+    ListIssuedNfseFromProvider,
   ],
   exports: [
     CancelNfse,
