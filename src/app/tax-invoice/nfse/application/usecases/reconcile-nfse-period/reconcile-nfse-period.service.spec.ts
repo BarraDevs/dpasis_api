@@ -6,7 +6,8 @@ import { CompanyDto } from 'src/app/company/company/application/dtos/company.dto
 import { FindCompanyById } from 'src/app/company/company/application/usecases/find-company-by-id/find-company-by-id.service';
 import { TOKENS } from 'src/core/di/token';
 import type { ILoggerGateway } from 'src/infra/logger/logger.gateway';
-import { NfsBatchErrorKind, NfsIssuedNoteDto } from 'src/infra/nfs-generation/dtos/nfs-batch-status.dto';
+import { NfsIssuedNoteListingDto } from 'src/infra/nfs-generation/dtos/list-issued-nfs.dto';
+import { NfsBatchErrorKind } from 'src/infra/nfs-generation/dtos/nfs-batch-status.dto';
 import { ExternalApiError } from 'src/shared/errors/external-api.error';
 import { NfsProviderEnvironment } from 'src/infra/nfs-generation/dtos/nfs-provider-credentials.dto';
 import type { INfsGenerationGateway } from 'src/infra/nfs-generation/nfs-generation.gateway';
@@ -27,13 +28,22 @@ function makeTarget(overrides: Partial<NfseReconcileTargetDto> = {}): NfseReconc
   };
 }
 
-function makeNote(rpsNumber: number, rpsSeries = 'NFSE'): NfsIssuedNoteDto {
+function makeNote(rpsNumber: number, rpsSeries = 'NFSE'): NfsIssuedNoteListingDto {
   return {
     rpsNumber,
     rpsSeries,
     nfseNumber: String(9000 + rpsNumber),
     verificationCode: `V${rpsNumber}`,
     issueDate: '2026-09-03T10:00:00',
+    competence: null,
+    takerDocument: null,
+    takerName: null,
+    servicesValue: null,
+    netValue: null,
+    description: null,
+    canceled: false,
+    cancellationDate: null,
+    cancellationReasonCode: null,
   };
 }
 

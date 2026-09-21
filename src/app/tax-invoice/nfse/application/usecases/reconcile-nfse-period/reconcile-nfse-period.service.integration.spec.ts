@@ -4,6 +4,7 @@ import { TOKENS } from 'src/core/di/token';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { LoggerModule } from 'src/infra/logger/logger.module';
 import { NfsGenerationFakeAdapterGateway } from 'src/infra/nfs-generation/adapters/fake/nfs-generation-fake.gateway';
+import { NfsIssuedNoteListingDto } from 'src/infra/nfs-generation/dtos/list-issued-nfs.dto';
 import { NfsProviderEnvironment } from 'src/infra/nfs-generation/dtos/nfs-provider-credentials.dto';
 import { NfseStatus } from '../../../domain/enums/nfse-status.enum';
 import { NfseQueueModule } from '../../queue/nfse-queue.module';
@@ -62,6 +63,26 @@ async function seedNfse(prisma: PrismaService, companyId: number, overrides: Rec
   });
 }
 
+function makeListingNote(overrides: Partial<NfsIssuedNoteListingDto> = {}): NfsIssuedNoteListingDto {
+  return {
+    rpsNumber: 41,
+    rpsSeries: 'NFSE',
+    nfseNumber: '12345',
+    verificationCode: 'ABC',
+    issueDate: '2026-09-03T10:00:00',
+    competence: null,
+    takerDocument: null,
+    takerName: null,
+    servicesValue: null,
+    netValue: null,
+    description: null,
+    canceled: false,
+    cancellationDate: null,
+    cancellationReasonCode: null,
+    ...overrides,
+  };
+}
+
 describe('ReconcileNfsePeriod - Integration tests', () => {
   let sut: ReconcileNfsePeriod;
   let prisma: PrismaService;
@@ -118,13 +139,13 @@ describe('ReconcileNfsePeriod - Integration tests', () => {
     await seedProviderConfig(prisma, company.id);
     const nfse = await seedNfse(prisma, company.id);
     nfsGenerationGateway.listIssuedNfseByPeriodResult = {
-      notes: [{
+      notes: [makeListingNote({
         rpsNumber: nfse.rpsNumber,
         rpsSeries: 'NFSE',
         nfseNumber: '12345',
         verificationCode: 'ABC',
         issueDate: '2026-09-03T10:00:00',
-      }],
+      })],
       endOfPages: true,
     };
 
@@ -143,13 +164,13 @@ describe('ReconcileNfsePeriod - Integration tests', () => {
     const company = await seedCompany(prisma);
     await seedProviderConfig(prisma, company.id);
     const nfse = await seedNfse(prisma, company.id);
-    const note = {
+    const note = makeListingNote({
       rpsNumber: nfse.rpsNumber,
       rpsSeries: 'NFSE',
       nfseNumber: '12345',
       verificationCode: 'ABC',
       issueDate: '2026-09-03T10:00:00',
-    };
+    });
     nfsGenerationGateway.listIssuedNfseByPeriodResult = { notes: [note], endOfPages: true };
     // A correção reconsulta pela chave natural antes de gravar.
     nfsGenerationGateway.findNfseByRpsResult = { found: true, note };
@@ -169,13 +190,13 @@ describe('ReconcileNfsePeriod - Integration tests', () => {
     await seedProviderConfig(prisma, company.id);
     const nfse = await seedNfse(prisma, company.id);
     nfsGenerationGateway.listIssuedNfseByPeriodResult = {
-      notes: [{
+      notes: [makeListingNote({
         rpsNumber: nfse.rpsNumber + 5000,
         rpsSeries: 'NFSE',
         nfseNumber: '99999',
         verificationCode: 'XYZ',
         issueDate: '2026-09-03T10:00:00',
-      }],
+      })],
       endOfPages: true,
     };
 

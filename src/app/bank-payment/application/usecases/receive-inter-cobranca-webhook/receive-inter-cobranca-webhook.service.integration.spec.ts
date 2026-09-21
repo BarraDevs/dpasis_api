@@ -24,7 +24,6 @@ async function seedNfse(prisma: PrismaService, overrides: Record<string, unknown
   const company = await prisma.company.create({ data: buildMinimalCompanyData() });
   return prisma.nfse.create({
     data: {
-      companyId: company.id,
       clientId: 1,
       rpsNumber: (Date.now() % 100_000) + counter,
       rpsSeries: 'NFSE',
