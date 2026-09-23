@@ -1,172 +1,34 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
-</p>
+# dpasis_api
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+API NestJS do DPASIS — back-office de prestador de serviço (cadastro, NFM, NFS-e via Giss, boleto Banco Inter, fluxo de caixa).
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+**Onboarding:** leia [docs/onboarding.md](docs/onboarding.md). Docker: [README.Docker.md](README.Docker.md). Arquitetura para agentes e PRs: [.cursor/context.md](.cursor/context.md) e [.cursor/rules/architecture-dpasis.mdc](.cursor/rules/architecture-dpasis.mdc).
 
-## Description
-
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
-
-## Installation
+## Subir em desenvolvimento
 
 ```bash
-$ npm install
-```
-
-## Banco de dados (Prisma)
-
-O schema vive em `prisma/schema/` (um arquivo por contexto, preview `prismaSchemaFolder`) e é
-aplicado por **migrations versionadas**, não mais por `db push`.
-
-```bash
-npm run db:migration          # cria e aplica uma migration em desenvolvimento
-npm run db:migration:create    # só gera o SQL, para editar à mão (índices parciais, backfill)
-npm run db:status              # o que já foi aplicado neste banco
-npm run db:deploy              # aplica as migrations pendentes (produção)
-npm run db:reset               # recria o banco de desenvolvimento e roda o seed
+cp .env.example .env.development
+cp .env.example .env.test          # DATABASE_URL com banco cujo nome termina em `_test`
+mkdir -p logs
+npm run docker:dev:deps            # Postgres 16 + Redis 8
+npm install
+npm run db:migration
 npm run db:seed
+npm run start:dev
 ```
 
-### Índices que o schema não expressa
+Swagger: `http://localhost:3000/swagger`. Login local após o seed: `admin@email.com` / `123456`.
 
-`nfses_one_active_per_nfm` é um índice único **parcial** (`WHERE status NOT IN ('FAILED',
-'REJECTED')`), que o Prisma não representa no schema — ele vive apenas no SQL da migration
-`20260903120000_nfse_idempotencia`. Ao alterar os estados da NFS-e, revise esse índice junto: é ele
-que decide quais estados liberam a NFM para uma nova NFS-e.
-
-Consequência prática: **`prisma db push` não cria esse índice**, porque `db push` deriva o banco do
-schema e o schema não o expressa. Todo ambiente tem de ser provisionado por `migrate deploy`. Depois
-de subir, dá para conferir:
-
-```sql
-SELECT indexdef FROM pg_indexes WHERE indexname = 'nfses_one_active_per_nfm';
-```
-
-Zero linhas significa que a garantia de banco contra NFS-e duplicada não existe naquele ambiente.
-
-### Banco de teste
-
-`.env.test` aponta para um banco **separado**, cujo nome termina em `_test`. A suíte de integração
-trunca todas as tabelas, e `PrismaService.truncate()` recusa qualquer banco fora dessa convenção —
-sem isso, um `npm test` numa máquina apontada para o banco de trabalho (ou de homologação) apaga tudo
-sem perguntar. Criar uma vez:
+## Comandos do dia a dia
 
 ```bash
-createdb dpasis_test    # ou: docker exec postgres createdb -U postgres dpasis_test
-npx dotenv -e .env.test -- npx prisma migrate deploy
+npm run start:dev
+npm run lint
+npm test                           # precisa do Postgres de teste
+npm run test:e2e                   # fluxo NFS-e (Postgres + Redis, QUEUE_E2E=true)
+npm run build
+npm run db:migration               # prisma migrate dev
+npm run db:deploy                  # prisma migrate deploy (produção)
 ```
 
-### Bancos que já existiam sob `db push`
-
-Até a Onda 2 o schema era aplicado com `prisma db push`, que não grava nada em `_prisma_migrations`.
-Num banco assim, o primeiro `migrate deploy` tenta rodar `0_init` do zero e quebra em cima de tabelas
-que já existem. `0_init` é a baseline do schema que já estava em produção, então basta registrá-la
-como aplicada — o comando **não** roda DDL:
-
-```bash
-npx dotenv -e .env.production -- npx prisma migrate resolve --applied 0_init
-npm run db:deploy
-```
-
-Só depois disso o `docker-compose.yml` (que sobe com `prisma migrate deploy`) funciona nesse banco.
-Banco novo não precisa de nada: `migrate deploy` aplica as quatro migrations em ordem.
-
-### Ambientes que aplicaram a migration da Onda 2 sob o nome antigo
-
-A migration da Onda 2 foi renomeada antes do commit. Um banco que a aplicou como
-`20260903120000_onda2_nfse_idempotencia` vai reclamar de histórico divergente. O SQL é o mesmo, então
-basta registrar a versão commitada como aplicada — o comando **não** roda DDL, só grava a linha em
-`_prisma_migrations`:
-
-```bash
-npx dotenv -e .env.development -- npx prisma migrate resolve --applied 20260903120000_nfse_idempotencia
-npm run db:deploy
-```
-
-## Running the app
-
-```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
-```
-
-## Filas
-
-O fluxo de NFS-e usa três filas BullMQ, uma por tipo de trabalho:
-
-| Fila | Jobs | Concorrência | Limite |
-|---|---|---|---|
-| `nfse-issue` | `issue-nfse-batch` | 2 | 30/min |
-| `nfse-poll` | `poll-nfse-batch`, `reconcile-nfse` | 6 | 120/min |
-| `nfse-bank-payment` | `issue-nfse-bank-payment`, `confirm-nfse-bank-payment` | 6 | 100/min |
-
-A fila única antiga (`nfse`) foi removida junto com as filas novas. No deploy pode haver jobs em voo
-nela — eles não são processados, e quem os recupera são as varreduras da Onda 3
-(`SweepNfseRecovery`, a cada 5 min): nota criada e não despachada volta pelo outbox, nota sem
-desfecho volta pela reconciliação agendada, nota emitida sem cobrança volta pelo braço de boleto.
-A recuperação leva minutos, não exige ação manual, e não há caminho sem `limiter` sobrando no código.
-
-Se sobrar lixo no Redis, a chave é `bull:nfse:*` e pode ser apagada depois que
-`GET /admin/metrics/nfse` mostrar as três filas novas trabalhando.
-
-## Test
-
-```bash
-# unit + integration (precisa do Postgres de desenvolvimento no ar)
-$ npm run test
-
-# ponta a ponta do fluxo de NFS-e (precisa de Postgres e Redis no ar)
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
-```
-
-`npm run test:e2e` roda `src/app/tax-invoice/nfse/nfse-flow.e2e.integration.spec.ts` com
-`QUEUE_E2E=true`, o interruptor que liga o BullMQ real dentro do ambiente de teste — na suíte normal
-as filas são fakes em memória, para que ninguém precise de Redis para rodar os testes. O spec
-atravessa transação, fila, worker e gateways falsos, e injeta falha em cada ponto de commit: crash
-entre commit e despacho, duas emissões simultâneas para a mesma NFM, timeout ambíguo no envio e
-recusa por duplicidade do banco.
-
-Confira `REDIS_URL` no `.env.test` antes de rodar: ele precisa apontar para um Redis que esteja
-mesmo no ar.
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](LICENSE).
+Schema em `prisma/schema/` (migrations versionadas). O índice parcial `nfses_one_active_per_nfm` só existe no SQL da migration — todo ambiente sobe com `migrate deploy`, nunca `db push`. Detalhe em [docs/onboarding.md](docs/onboarding.md#8-banco-de-dados).

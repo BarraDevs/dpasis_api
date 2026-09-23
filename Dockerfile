@@ -34,7 +34,7 @@ COPY package*.json ./
 COPY prisma ./prisma/
 
 # Install only production dependencies
-# Prisma CLI (devDependency) — usado no entrypoint do compose (db push)
+# Prisma CLI (devDependency) — usado no entrypoint do compose (migrate deploy)
 RUN npm ci --omit=dev && npm install prisma@5.22.0 --no-save && npm cache clean --force
 
 # Generate Prisma Client

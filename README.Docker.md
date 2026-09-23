@@ -35,7 +35,7 @@ Como executar a API NestJS (dpasis_api) com Docker e Docker Compose.
 
 - Porta: `3000` (`PORT`)
 - Swagger: `http://localhost:3000/swagger`
-- Schema Prisma: `prisma/schema` (pasta); no container de produção o schema é aplicado com `prisma db push` na subida
+- Schema Prisma: `prisma/schema` (pasta); no container de produção o schema é aplicado com `prisma migrate deploy` na subida (`npx prisma migrate deploy && node dist/src/main`). `db push` omite o índice parcial `nfses_one_active_per_nfm`.
 
 ### Dozzle (somente dev)
 
@@ -77,7 +77,7 @@ npm run start:dev
 
 ```bash
 docker compose -f docker-compose.dev.yml up -d --build
-docker compose -f docker-compose.dev.yml exec api npx prisma db push
+docker compose -f docker-compose.dev.yml exec api npm run db:migration
 docker compose -f docker-compose.dev.yml exec api npm run db:seed   # opcional
 ```
 
@@ -85,7 +85,7 @@ Debug Node: porta `9229` exposta no serviço `api`.
 
 ## Produção
 
-1. Configure `.env` na raiz (o Compose usa essas variáveis na interpolação e no serviço `api`). Use `.env.example` como base.
+1. Configure `.env.production` na raiz (o Compose usa `env_file: .env.production` no serviço `api` e interpola `POSTGRES_*` / `PORT` do ambiente). Use `.env.example` como base.
 
 2. **HTTPS:** o `main.ts` atual sobe HTTP mesmo com `NODE_ENV=production`. Os campos `SSL_*` ainda são obrigatórios na validação Joi — preencha caminhos válidos no `.env`. Quando reativar `httpsOptions` no `main.ts`, monte os certificados no container (ex.: volume `/etc/letsencrypt`).
 
@@ -101,7 +101,7 @@ Debug Node: porta `9229` exposta no serviço `api`.
    docker compose exec api npm run db:seed
    ```
 
-O comando de entrada da API já executa `npx prisma db push` antes de `node dist/src/main`.
+O comando de entrada da API já executa `npx prisma migrate deploy` antes de `node dist/src/main`.
 
 ## Comandos úteis
 

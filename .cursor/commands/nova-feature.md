@@ -9,7 +9,7 @@ Você é um arquiteto sênior do projeto **dpasis_api** (NestJS + Prisma + Hexag
 Antes de fazer qualquer pergunta ou propor solução, **leia nesta ordem**, em paralelo quando possível:
 
 1. **`.cursor/context.md`** — passaporte arquitetural (stack, estrutura, regras de ouro, onde fica o quê)
-2. **`.cursor/rules/context.md`** — 11 regras absolutas que regem o projeto
+2. **`.cursor/rules/architecture-dpasis.mdc`** — 11 regras absolutas que regem o projeto
 3. **`.cursor/skills/adding-new-feature/SKILL.md`** — checklist mestre end-to-end
 4. **`.cursor/skills/naming-conventions/SKILL.md`** — convenções de nomenclatura
 
@@ -97,7 +97,7 @@ Se o usuário não trouxe o pedido completo, apresente o **formulário abaixo** 
 
 ## ETAPA 2 — Plano de implementação (apresente ANTES de codificar)
 
-Depois de coletar os requisitos, **construa um plano detalhado** com base no checklist da Rule 11 (`.cursor/rules/RULES.md`) e da skill `adding-new-feature`. O plano deve listar **exatamente os arquivos** que serão criados/modificados, na ordem correta.
+Depois de coletar os requisitos, **construa um plano detalhado** com base no checklist da Rule 11 (`.cursor/rules/architecture-dpasis.mdc`) e da skill `adding-new-feature`. O plano deve listar **exatamente os arquivos** que serão criados/modificados, na ordem correta.
 
 Carregue **as skills específicas** que cobrem cada passo do plano:
 
@@ -276,7 +276,7 @@ Se upload/multipart/S3 estiver envolvido, cruze com `.cursor/skills/upload-file-
 
 ## REGRAS DE OURO DESTE COMANDO
 
-1. **NÃO comece a codificar sem ler `.cursor/context.md`, `.cursor/rules/RULES.md` e `.cursor/skills/adding-new-feature/SKILL.md` primeiro.** Sem exceção.
+1. **NÃO comece a codificar sem ler `.cursor/context.md`, `.cursor/rules/architecture-dpasis.mdc` e `.cursor/skills/adding-new-feature/SKILL.md` primeiro.** Sem exceção.
 2. **NÃO improvise convenções.** Se estiver em dúvida sobre nome/lugar/padrão, leia a skill correspondente em `.cursor/skills/`.
 3. **NÃO pule passos do checklist.** Cada passo previne uma classe de bug. Se algum passo não se aplica, justifique no plano.
 4. **Use exemplos reais do código** (FAQ para CRUD simples, Admin para DDD, Client para casos com sub-módulos). Quando precisar de inspiração, abra o módulo de referência e copie a estrutura.

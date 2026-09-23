@@ -134,7 +134,7 @@ prisma/
 
 ## Decisões importantes registradas
 
-- **Sem `prisma migrate`**: usa-se `prisma db push` (`npm run db:migration`); seeds via `npm run db:seed`. `npm run db:reset` faz tudo.
+- **Migrations versionadas**: `npm run db:migration` = `prisma migrate dev`; `npm run db:deploy` = `prisma migrate deploy` (produção / Docker). Seeds via `npm run db:seed`. `npm run db:reset` recria o banco de desenvolvimento e roda o seed. Não use `prisma db push`: o índice parcial `nfses_one_active_per_nfm` só existe no SQL da migration.
 - **Sem `enum` do Prisma**: enums armazenados como `String` no banco e cast para enum TS no DAO.
 - **Sem barrel files (`index.ts`)** nos módulos de feature.
 - **Path absoluto** via `baseUrl: ./` (imports começam com `src/...`); sem path aliases tipo `@app/*`.
@@ -152,7 +152,7 @@ Não inventar endpoints: cruzar o mapa rápido do glossário com a spec Redoc/YA
 
 ## Pré-requisitos para qualquer geração de código
 
-1. Ler **`.cursor/rules/RULES.md`** (rules absolutas)
+1. Ler **`.cursor/rules/architecture-dpasis.mdc`** (rules absolutas)
 2. Ler a **skill específica** ao que está sendo feito (`.cursor/skills/<nome>/SKILL.md`)
 3. Olhar um **exemplo real do código** (FAQ para CRUD simples; Admin para DDD; Client para casos com sub-módulos)
 4. Em caso de divergência entre rules e skills, **as RULES vencem**; em caso de divergência entre skills e código, **o código vence** (e a skill deve ser atualizada)
