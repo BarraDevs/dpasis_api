@@ -88,6 +88,8 @@ const TOKENS = {
   BilledDao: Symbol.for('BilledDao'),
   BilledRepository: Symbol.for('BilledRepository'),
   CategoryDao: Symbol.for('CategoryDao'),
+  EmailTemplateDao: Symbol.for('EmailTemplateDao'),
+  EmailTemplateVariableDao: Symbol.for('EmailTemplateVariableDao'),
   DepartmentDao: Symbol.for('DepartmentDao'),
   DeliveryTermDao: Symbol.for('DeliveryTermDao'),
   FreightDao: Symbol.for('FreightDao'),

@@ -1,0 +1,26 @@
+model EmailTemplate {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique @db.VarChar(255)
+  description String?  @db.Text
+  subject     String   @db.VarChar(255)
+  html        String   @db.Text
+  css         String   @db.Text
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("email_templates")
+}
+
+model EmailTemplateVariable {
+  id          Int      @id @default(autoincrement())
+  key         String   @unique @db.VarChar(128)
+  label       String   @db.VarChar(255)
+  example     String?  @db.VarChar(1024)
+  description String?  @db.Text
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("email_template_variables")
+}

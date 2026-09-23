@@ -56,6 +56,12 @@ export const Claim = {
   DELIVERY_TERM_READ: { subject: ClaimSubject.DeliveryTerm, action: ClaimAction.Read },
   DELIVERY_TERM_WRITE: { subject: ClaimSubject.DeliveryTerm, action: ClaimAction.Write },
 
+  EMAIL_TEMPLATE_READ: { subject: ClaimSubject.EmailTemplate, action: ClaimAction.Read },
+  EMAIL_TEMPLATE_WRITE: { subject: ClaimSubject.EmailTemplate, action: ClaimAction.Write },
+
+  EMAIL_TEMPLATE_VARIABLE_READ: { subject: ClaimSubject.EmailTemplateVariable, action: ClaimAction.Read },
+  EMAIL_TEMPLATE_VARIABLE_WRITE: { subject: ClaimSubject.EmailTemplateVariable, action: ClaimAction.Write },
+
   FREIGHT_READ: { subject: ClaimSubject.Freight, action: ClaimAction.Read },
   FREIGHT_WRITE: { subject: ClaimSubject.Freight, action: ClaimAction.Write },
 

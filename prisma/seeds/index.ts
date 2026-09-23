@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import { AccountClaimSeed } from './account-claims';
 import { AdminSeed } from './admin';
+import { FindElegibleClientsNfmSeed } from './find-elegible-clients-nfm';
 
 const prisma = new PrismaClient();
 
@@ -30,7 +31,7 @@ async function main() {
   // await ClientSeed.seed(prisma);
   // await ClientSequenceSeed.seed(prisma);
   // await ResaleSequenceSeed.seed(prisma);
-  // await FindElegibleClientsNfmSeed.seed(prisma);
+  await FindElegibleClientsNfmSeed.seed(prisma);
   // await ClientAddressSeed.seed(prisma);
   // await ClientContactSeed.seed(prisma);
   // await ClientAttachmentSeed.seed(prisma);
