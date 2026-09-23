@@ -2,7 +2,7 @@
 
 Guia de handoff para quem vai manter esta API. Resume o que o código faz hoje e aponta para os documentos longos. Contrato HTTP detalhado: Swagger em `/swagger`.
 
-**Leia primeiro:** este arquivo → [`.cursor/context.md`](../.cursor/context.md) → [`.cursor/rules/architecture-dpasis.mdc`](../.cursor/rules/architecture-dpasis.mdc).
+**Leia primeiro:** este arquivo → [`.cursor/context.md`](.cursor/context.md) → [`.cursor/rules/architecture-dpasis.mdc`](.cursor/rules/architecture-dpasis.mdc).
 
 ---
 
@@ -80,7 +80,7 @@ npm run start:dev
 
 ### Seed local
 
-Orquestrado em [`prisma/seeds/index.ts`](../prisma/seeds/index.ts). Ativos hoje:
+Orquestrado em [`prisma/seeds/index.ts`](prisma/seeds/index.ts). Ativos hoje:
 
 | Seed | Efeito |
 |---|---|
@@ -102,7 +102,7 @@ O compose de **dev não aplica schema na subida** — só `npm run start:dev`. M
 
 Debug Node: porta `9229`. Logs dos containers + arquivos Winston: Dozzle em `http://localhost:9999`.
 
-Coleção Postman: [`postman/README.md`](../postman/README.md). Regenerar com `npm run generate:postman`.
+Coleção Postman: [`postman/README.md`](postman/README.md). Regenerar com `npm run generate:postman`.
 
 ---
 
@@ -124,7 +124,7 @@ prisma/
 └── seeds/
 ```
 
-Composição em [`src/app.module.ts`](../src/app.module.ts): `CoreModule` + `InfraModule` + módulos de feature.
+Composição em [`src/app.module.ts`](src/app.module.ts): `CoreModule` + `InfraModule` + módulos de feature.
 
 ### Bounded contexts em `src/app/`
 
@@ -186,13 +186,13 @@ Agregadores terminam em `ModuleModule` (ex.: `ClientModuleModule`) e listam subm
 
 ## 4. Regras de negócio
 
-Detalhe operacional, armadilhas de UI e referência de rotas: **[`docs/guia-fluxo-nfm-portal-web.md`](guia-fluxo-nfm-portal-web.md)**. Abaixo, o que o backend garante.
+Detalhe operacional, armadilhas de UI e referência de rotas: **[`docs/guia-fluxo-nfm-portal-web.md`](docs/guia-fluxo-nfm-portal-web.md)**. Abaixo, o que o backend garante.
 
 ### 4.1 Cadastro que o fechamento exige
 
 Ordem prática (guia §4): empresa → config NFS-e → tributação CNAE/NBS/INDOP → cliente → endereços → itens → config de fatura (`clientInvoiceConfig`) + banco.
 
-`CreateClient` ([`create-client.service.ts`](../src/app/client/client/application/usecases/create-client/create-client.service.ts)):
+`CreateClient` ([`create-client.service.ts`](src/app/client/client/application/usecases/create-client/create-client.service.ts)):
 
 - Valida `id` explícito, pai (não pode ser ele mesmo; pai não pode ser subcliente), grupo/revenda/empresa **ativos**; honorific opcional ativo.
 - Reserva sequência de id, persiste o cliente, cria endereço `MAIN`.
@@ -205,18 +205,18 @@ Ordem prática (guia §4): empresa → config NFS-e → tributação CNAE/NBS/IN
 - Cliente elegível: tipo contrato, `active`, `generateInvoice`, `clientInvoiceConfig.generateNf`, `dueDateDayMax <= hoje` (BRT), itens ativos.
 - Uma NFM por `(clientId, referenceMonth, referenceYear, cnaeNbsIndopId)`. Itens da mesma combinação CNAE×NBS×INDOP viram **um** grupo fiscal. Unique no banco.
 - NFM **não tem status próprio**. Estado vive em `nfse.status` + `nfse.bankPayment*`.
-- Itens do cliente ficam congelados na NFM gerada: [`docs/frontend-integracao-nfm-client-items.md`](frontend-integracao-nfm-client-items.md).
+- Itens do cliente ficam congelados na NFM gerada: [`docs/frontend-integracao-nfm-client-items.md`](docs/frontend-integracao-nfm-client-items.md).
 
 ### 4.3 NFS-e (Giss)
 
-Estados em [`nfse-status.enum.ts`](../src/app/tax-invoice/nfse/domain/enums/nfse-status.enum.ts): `PENDING` → `SUBMITTED` → `PROCESSING` → `ISSUED` | `REJECTED` | `FAILED` | `AWAITING_PROVIDER` | `CANCELED`.
+Estados em [`nfse-status.enum.ts`](src/app/tax-invoice/nfse/domain/enums/nfse-status.enum.ts): `PENDING` → `SUBMITTED` → `PROCESSING` → `ISSUED` | `REJECTED` | `FAILED` | `AWAITING_PROVIDER` | `CANCELED`.
 
 - Persistência + outbox na mesma transação, **depois** enqueue (não há outbox genérico no projeto; a fila de NFS-e é o caso especial).
 - Idempotência de aplicação: pula NFM que já `hasNfse()`.
 - Idempotência de banco: índice único **parcial** `nfses_one_active_per_nfm` — uma NFS-e viva por NFM enquanto o status **não** é `FAILED` nem `REJECTED`. Só existe no SQL da migration `20260903120000_nfse_idempotencia`. `prisma db push` **não** cria esse índice.
 - Snapshot em `nfse.data` na criação. Reenvio usa o snapshot.
 - Reemissão **somente** por `POST /admin/nfm/:id/reissue`: reconcilia na prefeitura e reaproveita o RPS. Emitir nota que já existe é o erro irreversível do fluxo.
-- Classificação ERP (`NFM` | `NFS`) **não vai ao Giss**: `GET /admin/nfse/issued-at-provider` + `POST /admin/nfse/classifications`. [`docs/frontend-integracao-nfse-giss.md`](frontend-integracao-nfse-giss.md).
+- Classificação ERP (`NFM` | `NFS`) **não vai ao Giss**: `GET /admin/nfse/issued-at-provider` + `POST /admin/nfse/classifications`. [`docs/frontend-integracao-nfse-giss.md`](docs/frontend-integracao-nfse-giss.md).
 
 `AWAITING_PROVIDER` = timeout ambíguo. O backend investiga sozinho. Não é erro de configuração.
 
@@ -226,13 +226,13 @@ Estados em [`nfse-status.enum.ts`](../src/app/tax-invoice/nfse/domain/enums/nfse
 - `seuNumero` = id da NFS-e; `codigoSolicitacao` → `nfse.bankPaymentRequestCode`.
 - Webhook: `POST /webhooks/inter/cobranca/:token` (`INTER_WEBHOOK_TOKEN`, mínimo 16 caracteres quando o provider está ligado).
 - Confirm também via sweep (≥10 min) se o webhook atrasar.
-- Glossário oficial: [`.cursor/docs/banco-inter-api.md`](../.cursor/docs/banco-inter-api.md). Campos e UI: [`docs/frontend-integracao-boleto-pagamento.md`](frontend-integracao-boleto-pagamento.md).
+- Glossário oficial: [`.cursor/docs/banco-inter-api.md`](.cursor/docs/banco-inter-api.md). Campos e UI: [`docs/frontend-integracao-boleto-pagamento.md`](docs/frontend-integracao-boleto-pagamento.md).
 - Com `INTER_PROVIDER_ENABLED=false` a estratégia do Inter não registra: a NFS-e emite e a cobrança falha de forma permanente.
 
 ### 4.5 Fluxo de caixa
 
 - CRUD manual CREDIT/DEBIT com `origin=MANUAL`.
-- Pagamento de boleto: `RecordPaidBankPaymentCashFlowEntry` — CREDIT `BANK_PAYMENT`, idempotente por `nfseId`. Cancelamento/expiração **não** lançam. [`docs/frontend-integracao-fluxo-caixa.md`](frontend-integracao-fluxo-caixa.md).
+- Pagamento de boleto: `RecordPaidBankPaymentCashFlowEntry` — CREDIT `BANK_PAYMENT`, idempotente por `nfseId`. Cancelamento/expiração **não** lançam. [`docs/frontend-integracao-fluxo-caixa.md`](docs/frontend-integracao-fluxo-caixa.md).
 
 ### 4.6 Recuperação automática (sem ação manual)
 
@@ -254,7 +254,7 @@ Canal único de alerta: SMTP. Sem servidor real, a operação fica cega. Confira
 
 Arquitetura **hexagonal (Ports & Adapters)** com nomenclatura `drivers` (entrada) / `driven` (saída). **DDD-light** só em módulos com regra rica (entity + factory + repository). CRUD simples: só DAO. **Sem CQRS, sem domain events, sem MediatR.**
 
-Passaporte: [`.cursor/context.md`](../.cursor/context.md). Visão de pastas: skill [`architecture-overview`](../.cursor/skills/architecture-overview/SKILL.md). Regras absolutas: [`.cursor/rules/architecture-dpasis.mdc`](../.cursor/rules/architecture-dpasis.mdc) (11 rules).
+Passaporte: [`.cursor/context.md`](.cursor/context.md). Visão de pastas: skill [`architecture-overview`](.cursor/skills/architecture-overview/SKILL.md). Regras absolutas: [`.cursor/rules/architecture-dpasis.mdc`](.cursor/rules/architecture-dpasis.mdc) (11 rules).
 
 ```
 src/app/<contexto>/<modulo>/
@@ -274,7 +274,7 @@ Seta de dependência: **de fora para dentro**. `domain/` nunca importa `applicat
 | Repository | entidade | só DDD |
 
 - Use case: classe `<Verbo><Entity>`, arquivo `<verbo>-<modulo>.service.ts`, único método público `execute`. Sempre devolve DTO.
-- Tokens: **somente** [`src/core/di/token.ts`](../src/core/di/token.ts) (`Symbol.for('Nome')`).
+- Tokens: **somente** [`src/core/di/token.ts`](src/core/di/token.ts) (`Symbol.for('Nome')`).
 - Comunicação entre módulos: importar o `Module` e injetar **use case exportado**. Nunca o DAO de outro contexto.
 - Erros: `extends AppException`, mensagem **pt-BR**. Filter global responde `{ message }`. Sem `HttpException` do Nest.
 - DTOs de input: classes + class-validator, `@Trim` / `@StringToNumber` / `@StringToBoolean`, `@ApiProperty`. Edit: `PartialType(Create…)`.
@@ -290,7 +290,7 @@ Referências de código: CRUD simples → `src/app/global/faq/`. DDD → `src/ap
 
 ## 6. Docker
 
-Detalhe de comandos e troubleshooting: [`README.Docker.md`](../README.Docker.md).
+Detalhe de comandos e troubleshooting: [`README.Docker.md`](README.Docker.md).
 
 | Arquivo | Uso |
 |---|---|
@@ -315,9 +315,9 @@ Scripts: `npm run docker:dev`, `docker:dev:detach`, `docker:dev:build`, `docker:
 
 ## 7. Variáveis de ambiente
 
-O app carrega **`.env.${NODE_ENV}`** ([`config.module.ts`](../src/core/config/config.module.ts)). `NODE_ENV`: `development` | `production` | `test`. Acessar via `ConfigService` tipado, não `process.env` nas features.
+O app carrega **`.env.${NODE_ENV}`** ([`config.module.ts`](src/core/config/config.module.ts)). `NODE_ENV`: `development` | `production` | `test`. Acessar via `ConfigService` tipado, não `process.env` nas features.
 
-Template: [`.env.example`](../.env.example). Arquivos `.env*` (exceto o example) estão no `.gitignore`.
+Template: [`.env.example`](.env.example). Arquivos `.env*` (exceto o example) estão no `.gitignore`.
 
 ### Sempre obrigatórias (Joi)
 
@@ -408,7 +408,7 @@ Ao criar tabela nova: incluir `tx.<camelCase>.deleteMany()` em `truncate()` na o
 
 ## 9. Filas, crons e operação
 
-Infra global: [`src/infra/queue/queue.module.ts`](../src/infra/queue/queue.module.ts). Nomes em [`queue-name.enum.ts`](../src/infra/queue/enums/queue-name.enum.ts) e [`job-name.enum.ts`](../src/infra/queue/enums/job-name.enum.ts). Padrão por feature: skill [`queue-bullmq`](../.cursor/skills/queue-bullmq/SKILL.md).
+Infra global: [`src/infra/queue/queue.module.ts`](src/infra/queue/queue.module.ts). Nomes em [`queue-name.enum.ts`](src/infra/queue/enums/queue-name.enum.ts) e [`job-name.enum.ts`](src/infra/queue/enums/job-name.enum.ts). Padrão por feature: skill [`queue-bullmq`](.cursor/skills/queue-bullmq/SKILL.md).
 
 | Fila | Jobs | Concorrência | Limiter |
 |---|---|---|---|
@@ -442,7 +442,7 @@ Não há pipeline CI neste repositório (sem `.github/`). Os badges do README an
 
 ## 10. Testes
 
-Skill: [`testing-strategy`](../.cursor/skills/testing-strategy/SKILL.md). Jest `--runInBand`. Co-locação: specs **ao lado** do código, sem pasta `__tests__/`.
+Skill: [`testing-strategy`](.cursor/skills/testing-strategy/SKILL.md). Jest `--runInBand`. Co-locação: specs **ao lado** do código, sem pasta `__tests__/`.
 
 | Sufixo | Tipo | Como |
 |---|---|---|
@@ -468,11 +468,11 @@ Gerar cobertura no estilo do repo: comando Cursor `/qa-tdd`.
 
 ## 11. Cursor: commands, skills e rules
 
-A pasta [`.cursor/`](../.cursor/README.md) é a **memória arquitetural** versionada com o código. Agente e humano usam a mesma fonte. Atualize a skill no **mesmo PR** em que o padrão mudar.
+A pasta [`.cursor/`](.cursor/README.md) é a **memória arquitetural** versionada com o código. Agente e humano usam a mesma fonte. Atualize a skill no **mesmo PR** em que o padrão mudar.
 
 ### Rules (sempre ligadas)
 
-Arquivo real: [`.cursor/rules/architecture-dpasis.mdc`](../.cursor/rules/architecture-dpasis.mdc) (`alwaysApply`). Onze regras: camadas, entidades, use cases, DAO/Repository, testes, (não usar) domain events, erros, DTOs, gateways, filas, checklist de feature.
+Arquivo real: [`.cursor/rules/architecture-dpasis.mdc`](.cursor/rules/architecture-dpasis.mdc) (`alwaysApply`). Onze regras: camadas, entidades, use cases, DAO/Repository, testes, (não usar) domain events, erros, DTOs, gateways, filas, checklist de feature.
 
 Alguns textos ainda citam `.cursor/rules/RULES.md` ou `.cursor/rules/context.md` — **esses arquivos não existem**. Vale o `.mdc`.
 
@@ -486,7 +486,7 @@ Em divergência: **rules > skills**. Em divergência skill vs código: **código
 | `/feature-checklist` | Revisar PR/diff contra a Rule 11 + skill `code-reviewer`. Sem o pipeline inteiro de feature. |
 | `/qa-tdd` | Testes com TDD (RED → GREEN → REFACTOR) + matriz QA do `qa-test-generator`. |
 
-Definições em [`.cursor/commands/`](../.cursor/commands/).
+Definições em [`.cursor/commands/`](.cursor/commands/).
 
 ### Skills
 
@@ -519,7 +519,7 @@ Cada uma em `.cursor/skills/<nome>/SKILL.md`. O agente carrega pela `description
 | Doc para o frontend | `frontend-integration-docs` |
 | Revisar PR | `code-reviewer` (+ `references/backend.md`, `database.md`, `security.md`, `infra.md`) |
 
-Índice humano: [`.cursor/README.md`](../.cursor/README.md) (a lista de skills lá pode estar um pouco atrás desta tabela).
+Índice humano: [`.cursor/README.md`](.cursor/README.md) (a lista de skills lá pode estar um pouco atrás desta tabela).
 
 ### Rotina sugerida para feature nova
 
@@ -551,8 +551,8 @@ Cada uma em `.cursor/skills/<nome>/SKILL.md`. O agente carrega pela `description
 ## 13. Lacunas conhecidas
 
 - **`docs/runbook-certificados.md`** é citado no `.env.example` e no `.dockerignore` e ainda não foi escrito.
-- **[`.cursor/README.md`](../.cursor/README.md)** ainda aponta para `.cursor/rules/RULES.md` (inexistente) e omite skills mais novas (`code-reviewer`, `frontend-integration-docs`, `upload-file-flow`). A rule válida é `architecture-dpasis.mdc`.
-- A skill [`prisma-conventions`](../.cursor/skills/prisma-conventions/SKILL.md) ainda descreve `db push`. O código e este guia usam `migrate dev` / `migrate deploy`.
+- **[`.cursor/README.md`](.cursor/README.md)** ainda aponta para `.cursor/rules/RULES.md` (inexistente) e omite skills mais novas (`code-reviewer`, `frontend-integration-docs`, `upload-file-flow`). A rule válida é `architecture-dpasis.mdc`.
+- A skill [`prisma-conventions`](.cursor/skills/prisma-conventions/SKILL.md) ainda descreve `db push`. O código e este guia usam `migrate dev` / `migrate deploy`.
 - Não há CI no repositório. Qualidade local: `npm run lint`, `npm test`, `npm run build`.
 - `forgot-password` / `reset-password` no controller de auth estão comentados.
 - HTTPS de produção no `main.ts` está comentado; o Joi ainda exige `SSL_*`.
