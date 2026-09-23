@@ -9,6 +9,7 @@ import { NfsGenerationModule } from 'src/infra/nfs-generation/nfs-generation.mod
 import { NfsePersistenceModule } from './application/persistence/nfse-persistence.module';
 import { NfseQueueModule } from './application/queue/nfse-queue.module';
 import { CancelNfse } from './application/usecases/cancel-nfse/cancel-nfse.service';
+import { ClassifyNfse } from './application/usecases/classify-nfse/classify-nfse.service';
 import { FindNfseById } from './application/usecases/find-nfse-by-id/find-nfse-by-id.service';
 import { GetNfseMetrics } from './application/usecases/get-nfse-metrics/get-nfse-metrics.service';
 import { IssueNfse } from './application/usecases/issue-nfse/issue-nfse.service';
@@ -36,6 +37,7 @@ import { BankPaymentModule } from 'src/infra/bank-payment/bank-payment.module';
   ],
   providers: [
     CancelNfse,
+    ClassifyNfse,
     FindNfseById,
     GetNfseMetrics,
     IssueNfse,
@@ -43,6 +45,7 @@ import { BankPaymentModule } from 'src/infra/bank-payment/bank-payment.module';
   ],
   exports: [
     CancelNfse,
+    ClassifyNfse,
     FindNfseById,
     GetNfseMetrics,
     IssueNfse,

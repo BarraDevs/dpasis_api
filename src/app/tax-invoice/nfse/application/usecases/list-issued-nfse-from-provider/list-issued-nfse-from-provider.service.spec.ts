@@ -13,7 +13,9 @@ import { NfsProviderEnvironment } from 'src/infra/nfs-generation/dtos/nfs-provid
 import type { INfsGenerationGateway } from 'src/infra/nfs-generation/nfs-generation.gateway';
 import { ExternalApiError } from 'src/shared/errors/external-api.error';
 import { TransientProviderError } from 'src/shared/errors/transient-provider.error';
+import { NfseClassificationKind } from '../../../domain/enums/nfse-classification-kind.enum';
 import { InvalidNfsePeriodError } from '../../../domain/errors/invalid-nfse-period.error';
+import type { INfseClassificationDao } from '../../persistence/dao/nfse-classification-dao.interface';
 import { ListIssuedNfseFromProviderQueryDto } from './dtos/list-issued-nfse-from-provider.dto';
 import { ListIssuedNfseFromProvider } from './list-issued-nfse-from-provider.service';
 
@@ -59,6 +61,7 @@ const company = createMock<CompanyDto>({ id: 10, document: '12345678000199' });
 describe('ListIssuedNfseFromProvider - Unit tests', () => {
   let sut: ListIssuedNfseFromProvider;
   let nfsGenerationGateway: INfsGenerationGateway;
+  let nfseClassificationDao: INfseClassificationDao;
   let findCompanyById: FindCompanyById;
   let findCompanyNfsConfigByCompanyId: FindCompanyNfsConfigByCompanyId;
 
@@ -67,6 +70,7 @@ describe('ListIssuedNfseFromProvider - Unit tests', () => {
       providers: [
         ListIssuedNfseFromProvider,
         { provide: TOKENS.NfsGenerationGateway, useValue: createMock<INfsGenerationGateway>() },
+        { provide: TOKENS.NfseClassificationDao, useValue: createMock<INfseClassificationDao>() },
         { provide: FindCompanyById, useValue: createMock<FindCompanyById>() },
         { provide: FindCompanyNfsConfigByCompanyId, useValue: createMock<FindCompanyNfsConfigByCompanyId>() },
       ],
@@ -74,11 +78,13 @@ describe('ListIssuedNfseFromProvider - Unit tests', () => {
 
     sut = module.get(ListIssuedNfseFromProvider);
     nfsGenerationGateway = module.get(TOKENS.NfsGenerationGateway);
+    nfseClassificationDao = module.get(TOKENS.NfseClassificationDao);
     findCompanyById = module.get(FindCompanyById);
     findCompanyNfsConfigByCompanyId = module.get(FindCompanyNfsConfigByCompanyId);
 
     jest.spyOn(findCompanyById, 'execute').mockResolvedValue(company);
     jest.spyOn(findCompanyNfsConfigByCompanyId, 'execute').mockResolvedValue(providerConfig);
+    jest.spyOn(nfseClassificationDao, 'findByRpsKeys').mockResolvedValue([]);
   });
 
   it('should be defined', () => {
@@ -115,7 +121,7 @@ describe('ListIssuedNfseFromProvider - Unit tests', () => {
       page: 2,
       pageSize: LIST_ISSUED_NFS_PAGE_SIZE,
       endOfPages: true,
-      notes,
+      notes: [{ ...notes[0], kind: null }],
     });
   });
 
@@ -132,6 +138,7 @@ describe('ListIssuedNfseFromProvider - Unit tests', () => {
     // Assert
     expect(listSpy).toHaveBeenCalledWith(expect.objectContaining({ page: 1 }));
     expect(result.page).toBe(1);
+    expect(nfseClassificationDao.findByRpsKeys).not.toHaveBeenCalled();
   });
 
   it('should throw InvalidNfsePeriodError when startDate is after endDate', async() => {
@@ -183,5 +190,39 @@ describe('ListIssuedNfseFromProvider - Unit tests', () => {
 
     // Act & Assert
     await expect(sut.execute(makeValidQuery())).rejects.toBe(error);
+  });
+
+  it('should attach kind from the local classification matching series case-insensitively', async() => {
+    // Arrange
+    const classified = makeNote({ rpsNumber: 41, rpsSeries: 'nfse' });
+    const unclassified = makeNote({ rpsNumber: 42, rpsSeries: 'A' });
+    jest.spyOn(nfsGenerationGateway, 'listIssuedNfseByPeriod').mockResolvedValue({
+      notes: [classified, unclassified],
+      endOfPages: true,
+    });
+    jest.spyOn(nfseClassificationDao, 'findByRpsKeys').mockResolvedValue([
+      {
+        id: 1,
+        companyId: 10,
+        rpsNumber: 41,
+        rpsSeries: 'NFSE',
+        kind: NfseClassificationKind.NFM,
+        createdAt: new Date('2026-09-01T00:00:00.000Z'),
+        updatedAt: new Date('2026-09-01T00:00:00.000Z'),
+      },
+    ]);
+
+    // Act
+    const result = await sut.execute(makeValidQuery());
+
+    // Assert
+    expect(nfseClassificationDao.findByRpsKeys).toHaveBeenCalledWith(10, [
+      { rpsNumber: 41, rpsSeries: 'NFSE' },
+      { rpsNumber: 42, rpsSeries: 'A' },
+    ]);
+    expect(result.notes).toEqual([
+      { ...classified, kind: NfseClassificationKind.NFM },
+      { ...unclassified, kind: null },
+    ]);
   });
 });

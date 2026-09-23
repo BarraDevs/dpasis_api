@@ -10,6 +10,7 @@ import { NfsProviderEnvironment } from 'src/infra/nfs-generation/dtos/nfs-provid
 import { ExternalApiError } from 'src/shared/errors/external-api.error';
 import { buildMinimalCompanyData } from 'src/test/fixtures/minimal-company';
 import { InvalidNfsePeriodError } from '../../../domain/errors/invalid-nfse-period.error';
+import { NfseClassificationKind } from '../../../domain/enums/nfse-classification-kind.enum';
 import { NfseModule } from '../../../nfse.module';
 import { ListIssuedNfseFromProvider } from './list-issued-nfse-from-provider.service';
 
@@ -33,7 +34,7 @@ async function seedProviderConfig(prisma: PrismaService, companyId: number) {
   });
 }
 
-function makeNote(): NfsIssuedNoteListingDto {
+function makeNote(overrides: Partial<NfsIssuedNoteListingDto> = {}): NfsIssuedNoteListingDto {
   return {
     rpsNumber: 41,
     rpsSeries: 'NFSE',
@@ -49,6 +50,7 @@ function makeNote(): NfsIssuedNoteListingDto {
     canceled: false,
     cancellationDate: null,
     cancellationReasonCode: null,
+    ...overrides,
   };
 }
 
@@ -117,7 +119,7 @@ describe('ListIssuedNfseFromProvider - Integration tests', () => {
       page: 2,
       pageSize: LIST_ISSUED_NFS_PAGE_SIZE,
       endOfPages: false,
-      notes: [note],
+      notes: [{ ...note, kind: null }],
     });
     expect(await prisma.nfse.count()).toBe(0);
     expect(await prisma.nfm.count()).toBe(0);
@@ -180,5 +182,40 @@ describe('ListIssuedNfseFromProvider - Integration tests', () => {
       startDate: '2026-09-01',
       endDate: '2026-09-30',
     })).rejects.toThrow(ExternalApiError);
+  });
+
+  it('should attach kind from nfse_classifications without reading nfse or nfm', async() => {
+    // Arrange
+    const company = await seedCompany(prisma);
+    await seedProviderConfig(prisma, company.id);
+    const classified = makeNote({ rpsNumber: 41, rpsSeries: 'nfse' });
+    const unclassified = makeNote({ rpsNumber: 42, rpsSeries: 'A', nfseNumber: '9042' });
+    nfsGenerationGateway.listIssuedNfseByPeriodResult = {
+      notes: [classified, unclassified],
+      endOfPages: true,
+    };
+    await prisma.nfseClassification.create({
+      data: {
+        companyId: company.id,
+        rpsNumber: 41,
+        rpsSeries: 'NFSE',
+        kind: NfseClassificationKind.NFM,
+      },
+    });
+
+    // Act
+    const result = await sut.execute({
+      companyId: company.id,
+      startDate: '2026-09-01',
+      endDate: '2026-09-30',
+    });
+
+    // Assert
+    expect(result.notes).toEqual([
+      { ...classified, kind: NfseClassificationKind.NFM },
+      { ...unclassified, kind: null },
+    ]);
+    expect(await prisma.nfse.count()).toBe(0);
+    expect(await prisma.nfm.count()).toBe(0);
   });
 });

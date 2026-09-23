@@ -7,6 +7,8 @@ import { NfsProviderCredentialsDto, NfsProviderEnvironment } from 'src/infra/nfs
 import type { INfsGenerationGateway } from 'src/infra/nfs-generation/nfs-generation.gateway';
 import { ExternalApiError } from 'src/shared/errors/external-api.error';
 import { InvalidNfsePeriodError } from '../../../domain/errors/invalid-nfse-period.error';
+import { normalizeRpsSeries } from '../../helpers/normalize-rps-series';
+import type { INfseClassificationDao } from '../../persistence/dao/nfse-classification-dao.interface';
 import {
   ListIssuedNfseFromProviderOutputDto,
   ListIssuedNfseFromProviderQueryDto,
@@ -16,13 +18,15 @@ import {
 export class ListIssuedNfseFromProvider {
   constructor(
     @Inject(TOKENS.NfsGenerationGateway) private readonly nfsGenerationGateway: INfsGenerationGateway,
+    @Inject(TOKENS.NfseClassificationDao) private readonly nfseClassificationDao: INfseClassificationDao,
     private readonly findCompanyById: FindCompanyById,
     private readonly findCompanyNfsConfigByCompanyId: FindCompanyNfsConfigByCompanyId,
   ) {}
 
   /**
    * Lista NFS-e emitidas no Giss para uma empresa e um período. Uma chamada SOAP por request —
-   * a paginação é a do provedor (50 notas). Não lê tabelas `nfm`/`nfse`.
+   * a paginação é a do provedor (50 notas). Não lê tabelas `nfm`/`nfse`. `kind` vem da classificação
+   * local; sem linha, `null`.
    */
   public async execute(query: ListIssuedNfseFromProviderQueryDto): Promise<ListIssuedNfseFromProviderOutputDto> {
     if (query.startDate > query.endDate) {
@@ -54,12 +58,30 @@ export class ListIssuedNfseFromProvider {
       throw new ExternalApiError(`Erro ao consultar NFS-e por período no Giss: ${detail}`);
     }
 
+    const keys = result.notes
+      .filter((note) => note.rpsNumber && note.rpsSeries.trim())
+      .map((note) => ({
+        rpsNumber: note.rpsNumber,
+        rpsSeries: normalizeRpsSeries(note.rpsSeries),
+      }));
+
+    const classifications = keys.length > 0
+      ? await this.nfseClassificationDao.findByRpsKeys(query.companyId, keys)
+      : [];
+
+    const kindByKey = new Map(
+      classifications.map((row) => [`${row.rpsSeries}:${row.rpsNumber}`, row.kind]),
+    );
+
     return {
       companyId: query.companyId,
       page,
       pageSize: LIST_ISSUED_NFS_PAGE_SIZE,
       endOfPages: result.endOfPages,
-      notes: result.notes,
+      notes: result.notes.map((note) => ({
+        ...note,
+        kind: kindByKey.get(`${normalizeRpsSeries(note.rpsSeries)}:${note.rpsNumber}`) ?? null,
+      })),
     };
   }
 }

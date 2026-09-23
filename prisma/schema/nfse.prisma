@@ -112,3 +112,18 @@ model NfseOutbox {
   @@index([dispatchedAt, availableAt])
   @@map("nfse_outbox")
 }
+
+/// Classificação interna NFM/NFS. Não vai para o Giss: a listagem do provedor só lê esta tabela
+/// para preencher `kind`. Sem linha, a nota volta `kind: null`. Chave igual à do RPS no prestador.
+model NfseClassification {
+  id         Int      @id @default(autoincrement())
+  companyId  Int
+  rpsNumber  Int
+  rpsSeries  String
+  kind       String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([companyId, rpsSeries, rpsNumber])
+  @@map("nfse_classifications")
+}

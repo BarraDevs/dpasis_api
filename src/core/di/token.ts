@@ -17,6 +17,7 @@ const TOKENS = {
   UploadFileQueueProducer: Symbol.for('UploadFileQueueProducer'),
 
   NfseDao: Symbol.for('NfseDao'),
+  NfseClassificationDao: Symbol.for('NfseClassificationDao'),
   NfseOutboxDao: Symbol.for('NfseOutboxDao'),
   NfseRepository: Symbol.for('NfseRepository'),
   NfseRpsSequenceRepository: Symbol.for('NfseRpsSequenceRepository'),

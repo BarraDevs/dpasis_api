@@ -3,6 +3,7 @@ import { IsInt, IsNotEmpty, IsOptional, IsPositive, IsString, Matches } from 'cl
 import { LIST_ISSUED_NFS_PAGE_SIZE, NfsIssuedNoteListingDto } from 'src/infra/nfs-generation/dtos/list-issued-nfs.dto';
 import { StringToNumber } from 'src/infra/validators/class/decorators/string-number/string-number';
 import { Trim } from 'src/infra/validators/class/decorators/trim/trim';
+import { NfseClassificationKind } from '../../../../domain/enums/nfse-classification-kind.enum';
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -37,7 +38,17 @@ export class ListIssuedNfseFromProviderQueryDto {
   page?: number;
 }
 
-@ApiExtraModels(NfsIssuedNoteListingDto)
+export class ListedIssuedNfseNoteDto extends NfsIssuedNoteListingDto {
+  @ApiProperty({
+    enum: NfseClassificationKind,
+    nullable: true,
+    example: NfseClassificationKind.NFM,
+    description: 'Classificação interna. null quando o RPS ainda não foi classificado neste ERP.',
+  })
+  kind: NfseClassificationKind | null;
+}
+
+@ApiExtraModels(ListedIssuedNfseNoteDto)
 export class ListIssuedNfseFromProviderOutputDto {
   @ApiProperty({ example: 1 })
   companyId: number;
@@ -54,6 +65,6 @@ export class ListIssuedNfseFromProviderOutputDto {
   })
   endOfPages: boolean;
 
-  @ApiProperty({ type: [NfsIssuedNoteListingDto] })
-  notes: NfsIssuedNoteListingDto[];
+  @ApiProperty({ type: [ListedIssuedNfseNoteDto] })
+  notes: ListedIssuedNfseNoteDto[];
 }
