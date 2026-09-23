@@ -13,7 +13,6 @@ const EmailTemplateSelect = {
   description: true,
   subject: true,
   html: true,
-  css: true,
   active: true,
   createdAt: true,
   updatedAt: true,
@@ -80,7 +79,6 @@ export class EmailTemplateDaoAdapterPrisma implements IEmailTemplateDao {
         description: data.description ?? null,
         subject: data.subject,
         html: data.html,
-        css: data.css,
       },
     });
 

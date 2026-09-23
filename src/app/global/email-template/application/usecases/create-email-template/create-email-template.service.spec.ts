@@ -12,7 +12,6 @@ function makeValidCreateEmailTemplateInput(overrides: Partial<CreateEmailTemplat
     name: 'Cobranca NFS-e',
     subject: 'Sua NFS-e {{nfse.numero}}',
     html: '<p>{{cliente.nome}}</p>',
-    css: '',
     ...overrides,
   };
 }

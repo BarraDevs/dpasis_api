@@ -43,8 +43,8 @@ describe('EmailTemplateDaoAdapterPrisma - Integration tests', () => {
     it('should search in name, description and subject', async() => {
       await prisma.emailTemplate.createMany({
         data: [
-          { name: uniqueName(), description: 'Nota fiscal', subject: 'Emissão', html: '<p>a</p>', css: '' },
-          { name: uniqueName(), description: 'Boas-vindas', subject: 'Hello', html: '<p>b</p>', css: '' },
+          { name: uniqueName(), description: 'Nota fiscal', subject: 'Emissão', html: '<p>a</p>' },
+          { name: uniqueName(), description: 'Boas-vindas', subject: 'Hello', html: '<p>b</p>' },
         ],
       });
 
@@ -59,7 +59,7 @@ describe('EmailTemplateDaoAdapterPrisma - Integration tests', () => {
     it('should find by name case-insensitive', async() => {
       const name = uniqueName();
       const created = await prisma.emailTemplate.create({
-        data: { name, subject: 'S', html: '<p>oi</p>', css: '' },
+        data: { name, subject: 'S', html: '<p>oi</p>' },
       });
 
       const result = await sut.findByName(name.toUpperCase());
@@ -74,7 +74,6 @@ describe('EmailTemplateDaoAdapterPrisma - Integration tests', () => {
         name: uniqueName(),
         subject: 'Assunto',
         html: '<p>oi</p>',
-        css: '',
       };
 
       const id = await sut.save(data);
@@ -88,7 +87,7 @@ describe('EmailTemplateDaoAdapterPrisma - Integration tests', () => {
   describe('findById', () => {
     it('should return all fields', async() => {
       const created = await prisma.emailTemplate.create({
-        data: { name: uniqueName(), description: 'Desc', subject: 'S', html: '<p>oi</p>', css: 'p{}' },
+        data: { name: uniqueName(), description: 'Desc', subject: 'S', html: '<p>oi</p>' },
       });
 
       const result = await sut.findById(created.id);
@@ -99,7 +98,6 @@ describe('EmailTemplateDaoAdapterPrisma - Integration tests', () => {
         description: created.description,
         subject: created.subject,
         html: created.html,
-        css: created.css,
         active: created.active,
         createdAt: created.createdAt,
         updatedAt: created.updatedAt,

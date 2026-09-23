@@ -3,7 +3,6 @@ import { FindActiveEmailTemplateVariablesByKeys } from 'src/app/global/email-tem
 import {
   extractEmailTemplatePlaceholderKeys,
   interpolateEmailTemplate,
-  prependEmailTemplateCss,
 } from '../../../domain/email-template-renderer';
 import { EmailTemplateVariableMissingValueError } from '../../../domain/errors/email-template-variable-missing-value.error';
 import { EmailTemplateVariableUnknownError } from '../../../domain/errors/email-template-variable-unknown.error';
@@ -34,10 +33,7 @@ export class RenderEmailTemplate {
     }
 
     const subject = interpolateEmailTemplate(template.subject, data.variables);
-    const html = prependEmailTemplateCss(
-      interpolateEmailTemplate(template.html, data.variables),
-      template.css,
-    );
+    const html = interpolateEmailTemplate(template.html, data.variables);
 
     return { subject, html };
   }

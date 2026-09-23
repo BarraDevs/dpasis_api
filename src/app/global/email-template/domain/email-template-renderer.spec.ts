@@ -1,7 +1,6 @@
 import {
   extractEmailTemplatePlaceholderKeys,
   interpolateEmailTemplate,
-  prependEmailTemplateCss,
 } from './email-template-renderer';
 
 describe('email-template-renderer - Unit tests', () => {
@@ -37,16 +36,6 @@ describe('email-template-renderer - Unit tests', () => {
       const result = interpolateEmailTemplate('{{nfse.numero}}', {});
 
       expect(result).toBe('{{nfse.numero}}');
-    });
-  });
-
-  describe('prependEmailTemplateCss', () => {
-    it('should return html when css is empty', () => {
-      expect(prependEmailTemplateCss('<p>oi</p>', '')).toBe('<p>oi</p>');
-    });
-
-    it('should prefix style tag when css is present', () => {
-      expect(prependEmailTemplateCss('<p>oi</p>', 'p { color: red; }')).toBe('<style>p { color: red; }</style><p>oi</p>');
     });
   });
 });

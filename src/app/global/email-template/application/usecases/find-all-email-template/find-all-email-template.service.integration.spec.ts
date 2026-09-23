@@ -39,8 +39,8 @@ describe('FindAllEmailTemplate - Integration tests', () => {
   it('should search in name, description and subject', async() => {
     await prisma.emailTemplate.createMany({
       data: [
-        { name: `Cobranca ${Date.now()}`, description: 'Nota fiscal', subject: 'Emissão', html: '<p>a</p>', css: '' },
-        { name: `Outro ${Date.now()}`, description: 'Boas-vindas', subject: 'Bem-vindo', html: '<p>b</p>', css: '' },
+        { name: `Cobranca ${Date.now()}`, description: 'Nota fiscal', subject: 'Emissão', html: '<p>a</p>' },
+        { name: `Outro ${Date.now()}`, description: 'Boas-vindas', subject: 'Bem-vindo', html: '<p>b</p>' },
       ],
     });
 

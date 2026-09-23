@@ -13,7 +13,6 @@ function makeValidInputDto(overrides: Partial<CreateEmailTemplateInputDto> = {})
     description: 'E-mail com dados da NFS-e.',
     subject: 'Sua NFS-e {{nfse.numero}} foi emitida',
     html: '<p>Olá {{cliente.nome}}</p>',
-    css: 'p { color: #222; }',
     ...overrides,
   };
 }
@@ -74,21 +73,6 @@ describe('CreateEmailTemplateInputDto', () => {
       expect.assertions(1);
       return target.transform(makeValidInputDto({ html: value }), metadata).catch((error) => {
         expect(error.getResponse().message).toContain('html é obrigatório');
-      });
-    });
-  });
-
-  describe('css field', () => {
-    it('should accept empty css', async() => {
-      const result = await target.transform(makeValidInputDto({ css: '' }), metadata);
-
-      expect(result.css).toBe('');
-    });
-
-    it('should throw an error if css exceeds 100000 characters', async() => {
-      expect.assertions(1);
-      return target.transform(makeValidInputDto({ css: 'a'.repeat(100001) }), metadata).catch((error) => {
-        expect(error.getResponse().message).toContain('css deve ter no máximo 100000 caracteres');
       });
     });
   });

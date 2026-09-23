@@ -19,11 +19,3 @@ export function interpolateEmailTemplate(text: string, values: Record<string, st
     return Object.prototype.hasOwnProperty.call(values, key) ? values[key] : full;
   });
 }
-
-export function prependEmailTemplateCss(html: string, css: string): string {
-  if (css.length === 0) {
-    return html;
-  }
-
-  return `<style>${css}</style>${html}`;
-}

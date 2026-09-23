@@ -35,7 +35,6 @@ describe('RenderEmailTemplate - Unit tests', () => {
     jest.spyOn(findEmailTemplateById, 'execute').mockResolvedValue(createMock<EmailTemplateDto>({
       subject: 'Nota {{nfse.numero}}',
       html: '<p>oi</p>',
-      css: '',
     }));
     jest.spyOn(findActiveEmailTemplateVariablesByKeys, 'execute').mockResolvedValue([]);
 
@@ -46,7 +45,6 @@ describe('RenderEmailTemplate - Unit tests', () => {
     jest.spyOn(findEmailTemplateById, 'execute').mockResolvedValue(createMock<EmailTemplateDto>({
       subject: 'Nota {{nfse.numero}}',
       html: '<p>oi</p>',
-      css: '',
     }));
     jest.spyOn(findActiveEmailTemplateVariablesByKeys, 'execute').mockResolvedValue([
       createMock<EmailTemplateVariableDto>({ key: 'nfse.numero', active: true }),
@@ -55,11 +53,10 @@ describe('RenderEmailTemplate - Unit tests', () => {
     await expect(sut.execute(1, { variables: {} })).rejects.toThrow(EmailTemplateVariableMissingValueError);
   });
 
-  it('should interpolate subject and html and prefix css', async() => {
+  it('should interpolate subject and html', async() => {
     jest.spyOn(findEmailTemplateById, 'execute').mockResolvedValue(createMock<EmailTemplateDto>({
       subject: 'Nota {{nfse.numero}}',
-      html: '<p>{{cliente.nome}}</p>',
-      css: 'p { color: red; }',
+      html: '<style>p { color: red; }</style><p>{{cliente.nome}}</p>',
     }));
     jest.spyOn(findActiveEmailTemplateVariablesByKeys, 'execute').mockResolvedValue([
       createMock<EmailTemplateVariableDto>({ key: 'nfse.numero', active: true }),
@@ -80,7 +77,6 @@ describe('RenderEmailTemplate - Unit tests', () => {
     jest.spyOn(findEmailTemplateById, 'execute').mockResolvedValue(createMock<EmailTemplateDto>({
       subject: '{{nfse.numero}}',
       html: '<p></p>',
-      css: '',
     }));
     jest.spyOn(findActiveEmailTemplateVariablesByKeys, 'execute').mockResolvedValue([
       createMock<EmailTemplateVariableDto>({ key: 'nfse.numero', active: true }),

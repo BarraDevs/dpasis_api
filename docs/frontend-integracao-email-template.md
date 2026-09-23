@@ -1,8 +1,11 @@
 # Integração frontend — templates de e-mail
 
-CRUD admin de **templates** (assunto + HTML + CSS) e do **catálogo de variáveis** usadas no
+CRUD admin de **templates** (assunto + HTML) e do **catálogo de variáveis** usadas no
 placeholder `{{chave}}`. Há um `POST` de **render** que devolve o HTML interpolado. Esta entrega
 **não envia e-mail**, **não anexa boleto** e **não busca NFS-e** — o body do render manda os valores.
+
+O HTML é um único documento (export do Word, “página da Web filtrada”, etc.). Estilo vai **dentro**
+do `html` (`<style>` no `<head>` ou inline). Não existe campo `css`.
 
 ## Base URL admin
 
@@ -34,6 +37,7 @@ Não existe `GET /admin/email-template/variables`. O catálogo é a listagem de 
 | Área | O que mudou | Breaking? |
 |---|---|---|
 | Rotas admin | Recursos novos `/admin/email-template` e `/admin/email-template-variable` | Não (aditivo) |
+| Template body | Só `html` (documento completo). Campo `css` **não existe** | Sim para quem já enviava `css` separado |
 | Claims CASL | `EMAIL_TEMPLATE_READ/WRITE` (subject `email-template`) e `EMAIL_TEMPLATE_VARIABLE_READ/WRITE` (subject `email-template-variable`) | Sim para quem for usar a tela: admin sem a claim fica fail-closed |
 | Envio SMTP / anexo | Fora desta entrega | — |
 
@@ -67,8 +71,7 @@ Resposta de create: `201` `{ "id": number }`. Edição/status/exclusão: `{ "mes
 | `name` | string | Único (case-insensitive). Até 255 |
 | `description` | string \| null | Até 8192. Opcional |
 | `subject` | string | Até 255. Aceita `{{chave}}` |
-| `html` | string | Até 100000. Aceita `{{chave}}` |
-| `css` | string | Até 100000. **Não** interpola variável. String vazia é válida |
+| `html` | string | Até 100000. Documento completo, incluindo `<style>` e estilo inline. Aceita `{{chave}}` |
 | `active` | boolean | Nasce `true`. Só muda em `PATCH :id/status` |
 | `createdAt` / `updatedAt` | string ISO UTC | |
 
@@ -108,7 +111,7 @@ Resposta `200`:
 }
 ```
 
-Substituição crua, **sem** escape HTML. Se `css` não for vazio, o `html` devolvido começa com `<style>` + css + `</style>`. CSS não é interpolado.
+Substituição crua, **sem** escape HTML. O `html` devolvido é o documento armazenado com `{{chave}}` substituída. Não há prefixo de `<style>` — o CSS já vem no próprio HTML.
 
 ## Autenticação e claims
 
@@ -134,7 +137,7 @@ Exibir `message`. No editor, falha de render por chave inativa/ausente deve apon
 1. Tipar as duas tags OpenAPI (**Templates de e-mail** e **Variáveis de template de e-mail**).
 2. Esconder o menu se o admin não tiver `EMAIL_TEMPLATE_READ` (e o CRUD de variáveis sem `EMAIL_TEMPLATE_VARIABLE_READ`).
 3. Tela de variáveis primeiro: cadastrar chaves ativas; o seletor do editor usa `GET /admin/email-template-variable?active=true`.
-4. Editor: inserir `{{key}}` no `subject`/`html`; `css` separado; preview via `POST /admin/email-template/:id/render` com o mapa de exemplos/valores.
+4. Editor: um campo para colar o HTML completo no `html`; inserir `{{key}}` no `subject`/`html`; preview via `POST /admin/email-template/:id/render` com o mapa de exemplos/valores. Sem campo de CSS.
 5. `active` só via `PATCH :id/status` (toggle). Não enviar `active` no create.
 6. Não implementar envio SMTP nem anexo nesta tela — o render só devolve `subject` + `html`.
 7. Mocks E2E: template com `{{nfse.numero}}`; variável ativa; render com `variables["nfse.numero"]`; 400 se a variável for desativada.

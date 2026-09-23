@@ -24,18 +24,14 @@ export class CreateEmailTemplateInputDto {
   @Trim()
   subject: string;
 
-  @ApiProperty({ example: '<p>Olá {{cliente.nome}}, segue a nota {{nfse.numero}}.</p>' })
+  @ApiProperty({
+    example: '<html><head><style>p { color: #222; }</style></head><body><p>Olá {{cliente.nome}}, segue a nota {{nfse.numero}}.</p></body></html>',
+  })
   @IsString({ message: '$property deve ser uma string' })
   @IsNotEmpty({ message: '$property é obrigatório' })
   @MaxLength(100000, { message: '$property deve ter no máximo 100000 caracteres' })
   @Trim()
   html: string;
-
-  @ApiProperty({ example: 'p { color: #222; }' })
-  @IsString({ message: '$property deve ser uma string' })
-  @MaxLength(100000, { message: '$property deve ter no máximo 100000 caracteres' })
-  @Trim()
-  css: string;
 }
 
 export class CreateEmailTemplateOutputDto {

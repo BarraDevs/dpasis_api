@@ -41,7 +41,7 @@ describe('EditEmailTemplate - Integration tests', () => {
 
   it('should update subject without changing name', async() => {
     const created = await prisma.emailTemplate.create({
-      data: { name: uniqueName(), subject: 'Original', html: '<p>oi</p>', css: '' },
+      data: { name: uniqueName(), subject: 'Original', html: '<p>oi</p>' },
     });
 
     await sut.execute(created.id, { subject: 'Atualizado' });
@@ -54,10 +54,10 @@ describe('EditEmailTemplate - Integration tests', () => {
   it('should throw EmailTemplateAlreadyExistsError when name belongs to another row', async() => {
     const nameA = uniqueName();
     await prisma.emailTemplate.create({
-      data: { name: nameA, subject: 'A', html: '<p>a</p>', css: '' },
+      data: { name: nameA, subject: 'A', html: '<p>a</p>' },
     });
     const rowB = await prisma.emailTemplate.create({
-      data: { name: uniqueName(), subject: 'B', html: '<p>b</p>', css: '' },
+      data: { name: uniqueName(), subject: 'B', html: '<p>b</p>' },
     });
 
     await expect(sut.execute(rowB.id, { name: nameA })).rejects.toThrow(EmailTemplateAlreadyExistsError);

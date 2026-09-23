@@ -36,7 +36,7 @@ describe('DeleteEmailTemplate - Integration tests', () => {
 
   it('should delete template from database', async() => {
     const created = await prisma.emailTemplate.create({
-      data: { name: `T-${Date.now()}`, subject: 'S', html: '<p>oi</p>', css: '' },
+      data: { name: `T-${Date.now()}`, subject: 'S', html: '<p>oi</p>' },
     });
 
     await sut.execute(created.id);

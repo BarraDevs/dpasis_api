@@ -4,7 +4,6 @@ export class EmailTemplateDto {
   description: string | null;
   subject: string;
   html: string;
-  css: string;
   active: boolean;
   createdAt: Date;
   updatedAt: Date;

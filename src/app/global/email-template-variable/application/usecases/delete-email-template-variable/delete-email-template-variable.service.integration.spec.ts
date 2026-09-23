@@ -43,7 +43,6 @@ describe('DeleteEmailTemplateVariable - Integration tests', () => {
         name: `T-${Date.now()}`,
         subject: `Nota {{${created.key}}}`,
         html: '<p>oi</p>',
-        css: '',
       },
     });
 

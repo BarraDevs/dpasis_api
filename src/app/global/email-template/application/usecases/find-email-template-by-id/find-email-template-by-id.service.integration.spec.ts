@@ -36,7 +36,7 @@ describe('FindEmailTemplateById - Integration tests', () => {
 
   it('should return template by id including inactive ones', async() => {
     const created = await prisma.emailTemplate.create({
-      data: { name: `T-${Date.now()}`, subject: 'S', html: '<p>oi</p>', css: '', active: false },
+      data: { name: `T-${Date.now()}`, subject: 'S', html: '<p>oi</p>', active: false },
     });
 
     const result = await sut.execute(created.id);

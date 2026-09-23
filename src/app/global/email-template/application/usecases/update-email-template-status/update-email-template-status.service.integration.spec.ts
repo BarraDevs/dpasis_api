@@ -36,7 +36,7 @@ describe('UpdateEmailTemplateStatus - Integration tests', () => {
 
   it('should invert active from true to false', async() => {
     const created = await prisma.emailTemplate.create({
-      data: { name: `T-${Date.now()}`, subject: 'S', html: '<p>oi</p>', css: '', active: true },
+      data: { name: `T-${Date.now()}`, subject: 'S', html: '<p>oi</p>', active: true },
     });
 
     await sut.execute(created.id);

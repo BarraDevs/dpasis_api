@@ -1,4 +1,4 @@
--- Templates de e-mail (HTML + CSS + assunto) e catálogo de variáveis interpoláveis.
+-- Templates de e-mail (HTML + assunto) e catálogo de variáveis interpoláveis.
 
 CREATE TABLE "email_templates" (
     "id" SERIAL NOT NULL,
@@ -6,7 +6,6 @@ CREATE TABLE "email_templates" (
     "description" TEXT,
     "subject" VARCHAR(255) NOT NULL,
     "html" TEXT NOT NULL,
-    "css" TEXT NOT NULL,
     "active" BOOLEAN NOT NULL DEFAULT true,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,

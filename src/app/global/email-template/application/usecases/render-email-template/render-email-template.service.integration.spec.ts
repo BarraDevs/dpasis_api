@@ -42,7 +42,7 @@ describe('RenderEmailTemplate - Integration tests', () => {
       data: { key, label: 'Número', active: false },
     });
     const template = await prisma.emailTemplate.create({
-      data: { name: `T-${Date.now()}`, subject: `Nota {{${key}}}`, html: '<p>oi</p>', css: '' },
+      data: { name: `T-${Date.now()}`, subject: `Nota {{${key}}}`, html: '<p>oi</p>' },
     });
 
     await expect(sut.execute(template.id, { variables: { [key]: '123' } })).rejects.toThrow(EmailTemplateVariableUnknownError);
@@ -54,13 +54,13 @@ describe('RenderEmailTemplate - Integration tests', () => {
       data: { key, label: 'Número', active: true },
     });
     const template = await prisma.emailTemplate.create({
-      data: { name: `T-${Date.now()}`, subject: `Nota {{${key}}}`, html: '<p>oi</p>', css: '' },
+      data: { name: `T-${Date.now()}`, subject: `Nota {{${key}}}`, html: '<p>oi</p>' },
     });
 
     await expect(sut.execute(template.id, { variables: {} })).rejects.toThrow(EmailTemplateVariableMissingValueError);
   });
 
-  it('should render inactive template with css prefix and extra keys ignored', async() => {
+  it('should render inactive template and ignore extra keys', async() => {
     const nfseKey = `nfse.numero${Date.now()}`;
     const clientKey = `cliente.nome${Date.now()}`;
     await prisma.emailTemplateVariable.createMany({
@@ -73,8 +73,7 @@ describe('RenderEmailTemplate - Integration tests', () => {
       data: {
         name: `T-${Date.now()}`,
         subject: `Nota {{${nfseKey}}}`,
-        html: `<p>{{${clientKey}}}</p>`,
-        css: 'p { color: red; }',
+        html: `<style>p { color: red; }</style><p>{{${clientKey}}}</p>`,
         active: false,
       },
     });

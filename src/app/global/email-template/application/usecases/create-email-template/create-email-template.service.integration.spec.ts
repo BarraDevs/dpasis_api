@@ -14,7 +14,6 @@ function makeInput(overrides: Partial<CreateEmailTemplateInputDto> = {}): Create
     name: uniqueName(),
     subject: 'Sua NFS-e {{nfse.numero}}',
     html: '<p>{{cliente.nome}}</p>',
-    css: 'p { color: #222; }',
     ...overrides,
   };
 }
@@ -62,7 +61,6 @@ describe('CreateEmailTemplate - Integration tests', () => {
       description: 'E-mail da cobrança',
       subject: input.subject,
       html: input.html,
-      css: input.css,
       active: true,
     }));
   });
