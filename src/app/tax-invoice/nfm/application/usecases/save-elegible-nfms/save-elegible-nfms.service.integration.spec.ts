@@ -1,4 +1,6 @@
 import { Test } from '@nestjs/testing';
+import { DateTime } from 'luxon';
+import { SAO_PAULO_TIMEZONE } from 'src/core/constants/timezone.constant';
 import { ClientAddressType } from 'src/app/client/client-address/domain/enums/client-address-type.enum';
 import { ClientInvoiceConfigDueDateType } from 'src/app/client/client-invoice-config/domain/enums/client-invoice-config-due-date-type.enum';
 import { ClientInvoiceConfigType } from 'src/app/client/client-invoice-config/domain/enums/client-invoice-config-type.enum';
@@ -13,8 +15,9 @@ import { NfseQueueFakeAdapterProducer } from 'src/app/tax-invoice/nfse/infra/dri
 import { NfmModule } from '../../../nfm.module';
 import { SaveElegibleNfms } from './save-elegible-nfms.service';
 
-const TODAY = new Date().getDate();
-const NOT_TODAY = TODAY >= 28 ? 1 : TODAY + 1;
+const TODAY = DateTime.now().setZone(SAO_PAULO_TIMEZONE).day;
+// A varredura inclui vencimento <= hoje. Dia 1 no fim do mês ainda entra; só um dia à frente fica de fora.
+const NOT_YET_DUE = TODAY < 31 ? TODAY + 1 : 32;
 
 type CreateClientOptions = {
   dueDateDay?: number;
@@ -425,7 +428,7 @@ describe('SaveElegibleNfms - Integration tests', () => {
     // Arrange
     const base = await seedBase(prisma);
     await createClientWithConfig(prisma, base, 1, '00000000000101', {
-      dueDateDay: NOT_TODAY,
+      dueDateDay: NOT_YET_DUE,
       withItem: true,
     });
 

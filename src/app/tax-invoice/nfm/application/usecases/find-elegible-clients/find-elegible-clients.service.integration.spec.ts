@@ -1,4 +1,6 @@
 import { Test } from '@nestjs/testing';
+import { DateTime } from 'luxon';
+import { SAO_PAULO_TIMEZONE } from 'src/core/constants/timezone.constant';
 import { ClientAddressType } from 'src/app/client/client-address/domain/enums/client-address-type.enum';
 import { ClientInvoiceConfigDueDateType } from 'src/app/client/client-invoice-config/domain/enums/client-invoice-config-due-date-type.enum';
 import { ClientInvoiceConfigType } from 'src/app/client/client-invoice-config/domain/enums/client-invoice-config-type.enum';
@@ -10,8 +12,9 @@ import { buildMinimalCompanyData } from 'src/test/fixtures/minimal-company';
 import { NfmModule } from '../../../nfm.module';
 import { FindElegibleClients } from './find-elegible-clients.service';
 
-const TODAY = new Date().getDate();
-const TOMORROW = TODAY < 28 ? TODAY + 1 : TODAY - 1;
+const TODAY = DateTime.now().setZone(SAO_PAULO_TIMEZONE).day;
+// A varredura inclui vencimento <= hoje. Dia anterior ainda entra; só um dia à frente fica de fora.
+const NOT_YET_DUE = TODAY < 31 ? TODAY + 1 : 32;
 
 type SeedBase = {
   groupId: number;
@@ -218,7 +221,7 @@ describe('FindElegibleClients - Integration tests', () => {
     await createClientWithConfig(
       prisma, base,
       { clientId: 1, document: '00000000000101' },
-      { dueDateDay: TOMORROW, generateNf: true },
+      { dueDateDay: NOT_YET_DUE, generateNf: true },
     );
     await addClientItem(prisma, 1, base.cnaeNbsIndopId, true);
 
@@ -467,7 +470,7 @@ describe('FindElegibleClients - Integration tests', () => {
     await createClientWithConfig(
       prisma, base,
       { clientId: 2, document: '00000000000202' },
-      { dueDateDay: TOMORROW, generateNf: true },
+      { dueDateDay: NOT_YET_DUE, generateNf: true },
     );
     await addClientItem(prisma, 2, base.cnaeNbsIndopId, true);
 

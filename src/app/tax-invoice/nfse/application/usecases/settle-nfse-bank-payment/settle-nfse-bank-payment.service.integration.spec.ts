@@ -1,6 +1,8 @@
-import { Test } from '@nestjs/testing';
+import { Test, TestingModule } from '@nestjs/testing';
 import { CashFlowEntryOrigin } from 'src/app/cash-flow-entry/domain/enums/cash-flow-entry-origin.enum';
 import { CashFlowEntryType } from 'src/app/cash-flow-entry/domain/enums/cash-flow-entry-type.enum';
+import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
+import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum';
 import { ConfigModule } from 'src/core/config/config.module';
 import { TOKENS } from 'src/core/di/token';
 import { BankPaymentFakeAdapterGateway } from 'src/infra/bank-payment/adapters/fake/bank-payment-fake.gateway';
@@ -10,6 +12,8 @@ import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { LoggerModule } from 'src/infra/logger/logger.module';
 import { ExternalApiError } from 'src/shared/errors/external-api.error';
 import { buildMinimalCompanyData } from 'src/test/fixtures/minimal-company';
+import { buildMinimalResaleData, nextResaleFixtureId } from 'src/test/fixtures/minimal-resale';
+import { seedClientInvoiceConfig } from 'src/test/fixtures/seed-client-invoice-config';
 import { NfseStatus } from '../../../domain/enums/nfse-status.enum';
 import { NfseNotFoundError } from '../../../domain/errors/nfse-not-found.error';
 import { NfseQueueModule } from '../../queue/nfse-queue.module';
@@ -17,12 +21,43 @@ import { SettleNfseBankPayment } from './settle-nfse-bank-payment.service';
 
 let counter = 0;
 
-async function seedNfse(prisma: PrismaService, overrides: Record<string, unknown> = {}) {
+async function seedClient(prisma: PrismaService, clientId: number) {
+  const group = await prisma.clientGroup.create({ data: { name: `Grupo ${clientId}`, active: true } });
+  const resale = await prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) });
+  const company = await prisma.company.create({ data: buildMinimalCompanyData() });
+
+  return prisma.client.create({
+    data: {
+      id: clientId,
+      type: ClientType.PJ,
+      document: `${clientId}`.padStart(14, '0'),
+      ie: null,
+      groupId: group.id,
+      resaleId: resale.id,
+      companyId: company.id,
+      companyName: 'Cliente LTDA',
+      fantasyName: null,
+      headquarters: 'São Paulo',
+      invoiceType: ClientInvoiceType.CONTRACT,
+      generateInvoice: true,
+      active: true,
+    },
+  });
+}
+
+async function seedNfse(
+  moduleRef: TestingModule,
+  prisma: PrismaService,
+  overrides: Record<string, unknown> = {},
+) {
   counter += 1;
   const company = await prisma.company.create({ data: buildMinimalCompanyData() });
+  const clientId = (Date.now() % 80_000) + counter;
+  await seedClient(prisma, clientId);
+  await seedClientInvoiceConfig(moduleRef, clientId);
+
   return prisma.nfse.create({
     data: {
-      clientId: 1,
       rpsNumber: (Date.now() % 100_000) + counter,
       rpsSeries: 'NFSE',
       status: NfseStatus.ISSUED,
@@ -36,6 +71,7 @@ async function seedNfse(prisma: PrismaService, overrides: Record<string, unknown
       data: {},
       ...overrides,
       companyId: company.id,
+      clientId,
     },
   });
 }
@@ -43,10 +79,11 @@ async function seedNfse(prisma: PrismaService, overrides: Record<string, unknown
 describe('SettleNfseBankPayment - Integration tests', () => {
   let sut: SettleNfseBankPayment;
   let prisma: PrismaService;
+  let moduleRef: TestingModule;
   let bankPaymentGateway: BankPaymentFakeAdapterGateway;
 
   beforeAll(async() => {
-    const module = await Test.createTestingModule({
+    moduleRef = await Test.createTestingModule({
       imports: [
         ConfigModule,
         LoggerModule,
@@ -54,9 +91,9 @@ describe('SettleNfseBankPayment - Integration tests', () => {
       ],
     }).compile();
 
-    sut = module.get(SettleNfseBankPayment);
-    prisma = module.get(PrismaService);
-    bankPaymentGateway = module.get(TOKENS.BankPaymentGateway);
+    sut = moduleRef.get(SettleNfseBankPayment);
+    prisma = moduleRef.get(PrismaService);
+    bankPaymentGateway = moduleRef.get(TOKENS.BankPaymentGateway);
   });
 
   beforeEach(async() => {
@@ -80,7 +117,7 @@ describe('SettleNfseBankPayment - Integration tests', () => {
 
   it('should persist PAID and the settlement date', async() => {
     // Arrange
-    const nfse = await seedNfse(prisma);
+    const nfse = await seedNfse(moduleRef, prisma);
     bankPaymentGateway.findResult = {
       ...bankPaymentGateway.findResult,
       requestCode: 'req-1',
@@ -109,7 +146,7 @@ describe('SettleNfseBankPayment - Integration tests', () => {
     'should persist %s and the settlement date',
     async(status) => {
       // Arrange
-      const nfse = await seedNfse(prisma);
+      const nfse = await seedNfse(moduleRef, prisma);
       bankPaymentGateway.findResult = {
         ...bankPaymentGateway.findResult,
         requestCode: 'req-1',
@@ -139,7 +176,7 @@ describe('SettleNfseBankPayment - Integration tests', () => {
 
   it('should not ask the provider again once the charge is settled', async() => {
     // Arrange
-    const nfse = await seedNfse(prisma, { bankPaymentSettledAt: new Date('2026-09-17T12:00:00Z') });
+    const nfse = await seedNfse(moduleRef, prisma, { bankPaymentSettledAt: new Date('2026-09-17T12:00:00Z') });
 
     // Act
     const result = await sut.execute({ nfseId: nfse.id });
@@ -151,7 +188,7 @@ describe('SettleNfseBankPayment - Integration tests', () => {
 
   it('should push the next check when the provider still reports EMITTED', async() => {
     // Arrange
-    const nfse = await seedNfse(prisma);
+    const nfse = await seedNfse(moduleRef, prisma);
     bankPaymentGateway.findResult = {
       ...bankPaymentGateway.findResult,
       requestCode: 'req-1',
@@ -170,7 +207,7 @@ describe('SettleNfseBankPayment - Integration tests', () => {
   });
 
   it('should not duplicate the cash-flow row when already paid', async() => {
-    const nfse = await seedNfse(prisma, {
+    const nfse = await seedNfse(moduleRef, prisma, {
       bankPaymentStatus: BankPaymentStatus.PAID,
       bankPaymentSettledAt: new Date('2026-09-17T12:00:00Z'),
     });
@@ -195,7 +232,7 @@ describe('SettleNfseBankPayment - Integration tests', () => {
 
   it('should propagate ExternalApiError when the GET fails', async() => {
     // Arrange
-    const nfse = await seedNfse(prisma);
+    const nfse = await seedNfse(moduleRef, prisma);
     bankPaymentGateway.findError = new ExternalApiError('Banco Inter indisponível.');
 
     // Act & Assert

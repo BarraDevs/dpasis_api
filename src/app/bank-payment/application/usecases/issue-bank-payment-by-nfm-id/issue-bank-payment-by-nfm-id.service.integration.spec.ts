@@ -10,8 +10,9 @@ import { BankPaymentFakeAdapterGateway } from 'src/infra/bank-payment/adapters/f
 import { BankPaymentProvider } from 'src/infra/bank-payment/enums/bank-payment-provider.enum';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { buildMinimalCompanyData } from 'src/test/fixtures/minimal-company';
+import { seedClientInvoiceConfig } from 'src/test/fixtures/seed-client-invoice-config';
 import { buildMinimalResaleData, nextResaleFixtureId } from 'src/test/fixtures/minimal-resale';
-import { Test } from '@nestjs/testing';
+import { Test, TestingModule } from '@nestjs/testing';
 import { NfseBankPaymentAlreadyLinkedError } from '../../../domain/errors/nfse-bank-payment-already-linked.error';
 import { NfseNotIssuedForBankPaymentError } from '../../../domain/errors/nfse-not-issued-for-bank-payment.error';
 import { BankPaymentModule } from '../../../bank-payment.module';
@@ -131,16 +132,17 @@ async function seedCnaeNbsIndop(prisma: PrismaService): Promise<number> {
 describe('IssueBankPaymentByNfmId - Integration tests', () => {
   let sut: IssueBankPaymentByNfmId;
   let prisma: PrismaService;
+  let moduleRef: TestingModule;
   let bankPaymentGateway: BankPaymentFakeAdapterGateway;
 
   beforeAll(async() => {
-    const module = await Test.createTestingModule({
+    moduleRef = await Test.createTestingModule({
       imports: [BankPaymentModule],
     }).compile();
 
-    sut = module.get(IssueBankPaymentByNfmId);
-    prisma = module.get(PrismaService);
-    bankPaymentGateway = module.get(TOKENS.BankPaymentGateway) as BankPaymentFakeAdapterGateway;
+    sut = moduleRef.get(IssueBankPaymentByNfmId);
+    prisma = moduleRef.get(PrismaService);
+    bankPaymentGateway = moduleRef.get(TOKENS.BankPaymentGateway) as BankPaymentFakeAdapterGateway;
   });
 
   beforeEach(async() => {
@@ -242,6 +244,7 @@ describe('IssueBankPaymentByNfmId - Integration tests', () => {
   it('should issue bank payment for ISSUED nfse without boleto and persist requestCode', async() => {
     const company = await seedCompany(prisma);
     const client = await seedClient(prisma, Date.now() % 100_000);
+    await seedClientInvoiceConfig(moduleRef, client.id);
     const cnaeNbsIndopId = await seedCnaeNbsIndop(prisma);
 
     const nfse = await prisma.nfse.create({

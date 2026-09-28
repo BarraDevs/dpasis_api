@@ -1,5 +1,5 @@
 import { createMock } from '@golevelup/ts-jest';
-import { Test } from '@nestjs/testing';
+import { Test, TestingModule } from '@nestjs/testing';
 import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
 import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum';
 import { NfseStatus } from 'src/app/tax-invoice/nfse/domain/enums/nfse-status.enum';
@@ -11,6 +11,7 @@ import { NfsProviderEnvironment } from 'src/infra/nfs-generation/dtos/nfs-provid
 import type { INfsGenerationGateway } from 'src/infra/nfs-generation/nfs-generation.gateway';
 import { buildMinimalCompanyData } from 'src/test/fixtures/minimal-company';
 import { buildMinimalResaleData, nextResaleFixtureId } from 'src/test/fixtures/minimal-resale';
+import { seedClientInvoiceConfig } from 'src/test/fixtures/seed-client-invoice-config';
 import { NfmNfseMissingError } from '../../../domain/errors/nfm-nfse-missing.error';
 import { NfmNotFoundError } from '../../../domain/errors/nfm-not-found.error';
 import { NfmModule } from '../../../nfm.module';
@@ -103,21 +104,22 @@ async function seedCnaeNbsIndop(prisma: PrismaService): Promise<number> {
 describe('CancelNfm - Integration tests', () => {
   let sut: CancelNfm;
   let prisma: PrismaService;
+  let moduleRef: TestingModule;
   let nfsGenerationGateway: INfsGenerationGateway;
   let bankPaymentGateway: BankPaymentFakeAdapterGateway;
 
   beforeAll(async() => {
-    const module = await Test.createTestingModule({
+    moduleRef = await Test.createTestingModule({
       imports: [NfmModule],
     })
       .overrideProvider(TOKENS.NfsGenerationGateway)
       .useValue(createMock<INfsGenerationGateway>())
       .compile();
 
-    sut = module.get(CancelNfm);
-    prisma = module.get(PrismaService);
-    nfsGenerationGateway = module.get(TOKENS.NfsGenerationGateway);
-    bankPaymentGateway = module.get(TOKENS.BankPaymentGateway);
+    sut = moduleRef.get(CancelNfm);
+    prisma = moduleRef.get(PrismaService);
+    nfsGenerationGateway = moduleRef.get(TOKENS.NfsGenerationGateway);
+    bankPaymentGateway = moduleRef.get(TOKENS.BankPaymentGateway);
   });
 
   beforeEach(async() => {
@@ -261,6 +263,7 @@ describe('CancelNfm - Integration tests', () => {
     // Arrange
     const company = await seedCompany(prisma);
     const client = await seedClient(prisma, Date.now() % 100_000);
+    await seedClientInvoiceConfig(moduleRef, client.id);
     await seedProviderConfig(prisma, company.id);
     const cnaeNbsIndopId = await seedCnaeNbsIndop(prisma);
 
@@ -322,6 +325,7 @@ describe('CancelNfm - Integration tests', () => {
     // Arrange
     const company = await seedCompany(prisma);
     const client = await seedClient(prisma, Date.now() % 100_000);
+    await seedClientInvoiceConfig(moduleRef, client.id);
     await seedProviderConfig(prisma, company.id);
     const cnaeNbsIndopId = await seedCnaeNbsIndop(prisma);
 
