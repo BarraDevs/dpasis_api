@@ -95,4 +95,23 @@ describe('CreateBankInputDto', () => {
       expectMessageToContain(error.getResponse().message, 'moraRate');
     });
   });
+
+  it('should accept optional Inter credentials', async() => {
+    const result = await target.transform(makeValidInput({
+      apiUrl: 'https://cdpj.partners.bancointer.com.br',
+      clientId: 'inter-client-id',
+      clientSecret: 'inter-client-secret',
+      webhookToken: 'token-do-webhook-16',
+    }), metadata);
+
+    expect(result.apiUrl).toBe('https://cdpj.partners.bancointer.com.br');
+    expect(result.webhookToken).toBe('token-do-webhook-16');
+  });
+
+  it('should reject webhookToken shorter than 16 characters', async() => {
+    expect.assertions(1);
+    return target.transform(makeValidInput({ webhookToken: 'short' }), metadata).catch((error) => {
+      expectMessageToContain(error.getResponse().message, 'webhookToken');
+    });
+  });
 });

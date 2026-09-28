@@ -12,6 +12,7 @@ import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-inv
 import { ClientItemDto } from 'src/app/client/client-item/application/dtos/client-item.dto';
 import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
 import { FindElegibleClients } from './find-elegible-clients.service';
+import { UNCONFIGURED_BANK_INTEGRATION } from 'src/test/fixtures/unconfigured-bank-dto';
 
 function makePagination<T>(data: T[]): IPagination<T> {
   return {
@@ -80,6 +81,7 @@ function makeInvoiceConfigDto(overrides: Partial<ClientInvoiceConfigDto> = {}): 
     paymentLocation: null,
     fineRate: null,
     moraRate: null,
+    ...UNCONFIGURED_BANK_INTEGRATION,
     active: true,
     createdAt: baseDate,
     updatedAt: baseDate,

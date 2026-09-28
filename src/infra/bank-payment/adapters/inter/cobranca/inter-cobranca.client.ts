@@ -2,8 +2,8 @@ import { HttpService } from '@nestjs/axios';
 import { Inject, Injectable } from '@nestjs/common';
 import { isAxiosError } from 'axios';
 import { Agent } from 'node:https';
-import { ConfigService } from 'src/core/config/config.service';
 import { TOKENS } from 'src/core/di/token';
+import { BankPaymentCredentialsDto } from '../../../dtos/bank-payment-credentials.dto';
 import { LogContext, type ILoggerGateway } from 'src/infra/logger/logger.gateway';
 import { ExternalApiError } from 'src/shared/errors/external-api.error';
 import { PermanentProviderError } from 'src/shared/errors/permanent-provider.error';
@@ -43,7 +43,6 @@ export class InterCobrancaClient {
 
   constructor(
     private readonly httpService: HttpService,
-    private readonly configService: ConfigService,
     private readonly oauthClient: InterOauthClient,
     @Inject(TOKENS.LoggerGateway) private readonly logger: ILoggerGateway,
     @Inject(TOKENS.ProviderAttemptRecorder) private readonly attemptRecorder: IProviderAttemptRecorder,
@@ -56,6 +55,7 @@ export class InterCobrancaClient {
       const result = await this.request<InterEmitirCobrancaResponseDto>('POST', '/cobrancas', {
         body,
         action: 'issue',
+        credentials: input.credentials,
         attempt: { nfseId: input.nfseId, operation: ProviderAttemptOperation.InterIssue },
       });
 
@@ -78,7 +78,7 @@ export class InterCobrancaClient {
       const result = await this.request<InterCobrancaDetalheDto>(
         'GET',
         `/cobrancas/${encodeURIComponent(input.requestCode)}`,
-        { action: 'find', requestCode: input.requestCode },
+        { action: 'find', requestCode: input.requestCode, credentials: input.credentials },
       );
 
       return InterCobrancaMapper.toBankPaymentDto(input.requestCode, result ?? {});
@@ -94,7 +94,7 @@ export class InterCobrancaClient {
       const result = await this.request<InterCobrancaListResponseDto>(
         'GET',
         '/cobrancas',
-        { action: 'list', params },
+        { action: 'list', params, credentials: input.credentials },
       );
 
       return InterCobrancaMapper.toListOutput(result ?? {});
@@ -109,7 +109,7 @@ export class InterCobrancaClient {
       const result = await this.request<InterCobrancaPdfResponseDto>(
         'GET',
         `/cobrancas/${encodeURIComponent(input.requestCode)}/pdf`,
-        { action: 'getPdf', requestCode: input.requestCode },
+        { action: 'getPdf', requestCode: input.requestCode, credentials: input.credentials },
       );
 
       if (!result?.pdf) {
@@ -134,6 +134,7 @@ export class InterCobrancaClient {
           body,
           action: 'cancel',
           requestCode: input.requestCode,
+          credentials: input.credentials,
           accept: 'application/problem+json',
         },
       );
@@ -152,12 +153,13 @@ export class InterCobrancaClient {
       requestCode?: string;
       accept?: string;
       params?: Record<string, string | number>;
+      credentials: BankPaymentCredentialsDto;
       attempt?: { nfseId?: number; operation: ProviderAttemptOperation };
     },
   ): Promise<T> {
-    const token = await this.oauthClient.getAccessToken(InterCobrancaClient.OAUTH_SCOPE);
-    const agent = this.createHttpsAgent();
-    const url = `${this.configService.interApiUrl}/cobranca/v3${path}`;
+    const token = await this.oauthClient.getAccessToken(InterCobrancaClient.OAUTH_SCOPE, options.credentials);
+    const agent = this.createHttpsAgent(options.credentials);
+    const url = `${options.credentials.apiUrl}/cobranca/v3${path}`;
     const startedAt = Date.now();
 
     try {
@@ -302,11 +304,8 @@ export class InterCobrancaClient {
    * disco passa a valer sem reiniciar. Guardá-lo aqui, no campo da instância, tornava a troca a
    * quente impossível — e o certificado de sandbox vence dentro da janela de homologação.
    */
-  private createHttpsAgent(): Agent {
-    const material = InterCertLoader.load(
-      this.configService.interCertPath,
-      this.configService.interKeyPath,
-    );
+  private createHttpsAgent(credentials: BankPaymentCredentialsDto): Agent {
+    const material = InterCertLoader.loadFromPem(credentials.certPem, credentials.keyPem);
 
     return new Agent({
       cert: material.cert,

@@ -7,6 +7,7 @@ import {
   Max,
   MaxLength,
   Min,
+  MinLength,
 } from 'class-validator';
 import { Trim } from 'src/infra/validators/class/decorators/trim/trim';
 
@@ -72,9 +73,46 @@ export class CreateBankInputDto {
   @Min(0, { message: '$property deve ser maior ou igual a 0' })
   @Max(100, { message: '$property deve ser menor ou igual a 100' })
   moraRate?: number | null;
+
+  @ApiPropertyOptional({ example: 'https://cdpj.partners.bancointer.com.br' })
+  @IsOptional()
+  @IsString({ message: '$property deve ser uma string' })
+  @MaxLength(512, { message: '$property deve ter no máximo 512 caracteres' })
+  @Trim()
+  apiUrl?: string | null;
+
+  @ApiPropertyOptional({ example: 'inter-client-id' })
+  @IsOptional()
+  @IsString({ message: '$property deve ser uma string' })
+  @MaxLength(255, { message: '$property deve ter no máximo 255 caracteres' })
+  @Trim()
+  clientId?: string;
+
+  @ApiPropertyOptional({ example: 'inter-client-secret' })
+  @IsOptional()
+  @IsString({ message: '$property deve ser uma string' })
+  @MaxLength(512, { message: '$property deve ter no máximo 512 caracteres' })
+  @Trim()
+  clientSecret?: string;
+
+  @ApiPropertyOptional({
+    example: 'token-do-webhook-min-16',
+    description: 'Segredo no path do webhook Inter. Se omitido ao gravar clientId e clientSecret, a API gera um.',
+  })
+  @IsOptional()
+  @IsString({ message: '$property deve ser uma string' })
+  @MinLength(16, { message: '$property deve ter no mínimo 16 caracteres' })
+  @MaxLength(128, { message: '$property deve ter no máximo 128 caracteres' })
+  @Trim()
+  webhookToken?: string;
 }
 
 export class CreateBankOutputDto {
   @ApiProperty()
   id: number;
+
+  @ApiPropertyOptional({
+    description: 'Token do webhook, devolvido somente nesta resposta. Não é lido de novo.',
+  })
+  webhookToken?: string;
 }

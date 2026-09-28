@@ -1,42 +1,49 @@
+import { createMock } from '@golevelup/ts-jest';
 import { Test } from '@nestjs/testing';
-import { PrismaService } from 'src/infra/database/prisma/prisma.service';
-import { BankModule } from '../../../bank.module';
+import { TOKENS } from 'src/core/di/token';
+import type { ISecretsCryptoGateway } from 'src/infra/secrets-crypto/secrets-crypto.gateway';
 import { BankAlreadyExistsError } from '../../../domain/errors/bank-already-exists.error';
 import { BankNotFoundError } from '../../../domain/errors/bank-not-found.error';
+import { BankDto } from '../../dtos/bank.dto';
+import type { IBankDao } from '../../persistence/dao/bank-dao.interface';
 import { EditBankInputDto } from './dtos/edit-bank.dto';
 import { EditBank } from './edit-bank.service';
 
-const baseBankData = {
-  drawer: 'Empresa XYZ',
-  wallet: '123',
-  account: '12345-6',
-  agency: '0001',
-  bankCode: '001',
-  bankName: 'Banco do Brasil',
-  paymentLocation: null as string | null,
-  active: true,
-};
+function makeValidEditBankInput(overrides: Partial<EditBankInputDto> = {}): EditBankInputDto {
+  return {
+    drawer: 'Empresa XYZ Ltda',
+    wallet: '123',
+    account: '12345-6',
+    agency: '0001',
+    bankCode: '001',
+    bankName: 'Banco do Brasil',
+    paymentLocation: null,
+    ...overrides,
+  };
+}
 
-describe('EditBank - Integration tests', () => {
+describe('EditBank - Unit tests', () => {
   let sut: EditBank;
-  let prisma: PrismaService;
+  let dao: IBankDao;
+  let secretsCrypto: ISecretsCryptoGateway;
 
-  beforeAll(async() => {
+  beforeEach(async() => {
     const module = await Test.createTestingModule({
-      imports: [BankModule],
+      providers: [
+        EditBank,
+        { provide: TOKENS.BankDao, useValue: createMock<IBankDao>() },
+        {
+          provide: TOKENS.SecretsCryptoGateway,
+          useValue: createMock<ISecretsCryptoGateway>({
+            encrypt: jest.fn((value: string) => `enc:${value}`),
+          }),
+        },
+      ],
     }).compile();
 
     sut = module.get(EditBank);
-    prisma = module.get(PrismaService);
-  });
-
-  beforeEach(async() => {
-    await prisma.truncate();
-  });
-
-  afterAll(async() => {
-    await prisma.truncate();
-    await prisma.$disconnect();
+    dao = module.get(TOKENS.BankDao);
+    secretsCrypto = module.get(TOKENS.SecretsCryptoGateway);
   });
 
   it('should be defined', () => {
@@ -44,123 +51,55 @@ describe('EditBank - Integration tests', () => {
   });
 
   it('should throw BankNotFoundError when bank does not exist', async() => {
-    // Arrange
-    const id = 0;
-    const data: EditBankInputDto = {
-      ...baseBankData,
-      bankName: 'Santander',
-    };
+    jest.spyOn(dao, 'findById').mockResolvedValue(null);
 
-    // Act & Assert
-    await expect(sut.execute(id, data)).rejects.toThrow(BankNotFoundError);
+    await expect(sut.execute(1, makeValidEditBankInput())).rejects.toThrow(BankNotFoundError);
+    expect(dao.edit).not.toHaveBeenCalled();
   });
 
-  it('should update bank fields', async() => {
-    // Arrange
-    const bank = await prisma.bank.create({
-      data: baseBankData,
-    });
-    const data: EditBankInputDto = {
-      drawer: 'Nova Empresa',
-      wallet: '456',
-      account: '54321-0',
-      agency: '0002',
-      bankCode: '033',
-      bankName: 'Santander',
-      paymentLocation: null,
-    };
+  it('should throw BankAlreadyExistsError when another bank owns the unique key', async() => {
+    jest.spyOn(dao, 'findById').mockResolvedValue(createMock<BankDto>({ id: 1 }));
+    jest.spyOn(dao, 'findByBankCodeAgencyAccount').mockResolvedValue(createMock<BankDto>({ id: 2 }));
 
-    // Act
-    await sut.execute(bank.id, data);
-
-    // Assert
-    const updated = await prisma.bank.findUnique({ where: { id: bank.id } });
-    expect(updated?.drawer).toBe('Nova Empresa');
-    expect(updated?.wallet).toBe('456');
-    expect(updated?.account).toBe('54321-0');
-    expect(updated?.agency).toBe('0002');
-    expect(updated?.bankCode).toBe('033');
-    expect(updated?.bankName).toBe('Santander');
-    expect(updated?.paymentLocation).toBe(null);
-    expect(updated?.active).toBe(true);
+    await expect(sut.execute(1, makeValidEditBankInput())).rejects.toThrow(BankAlreadyExistsError);
+    expect(dao.edit).not.toHaveBeenCalled();
   });
 
-  it('should return success message', async() => {
+  it('should keep existing secrets when keys are omitted', async() => {
     // Arrange
-    const bank = await prisma.bank.create({
-      data: baseBankData,
-    });
-    const data: EditBankInputDto = {
-      ...baseBankData,
-      bankName: 'Santander',
-    };
+    const input = makeValidEditBankInput();
+    jest.spyOn(dao, 'findById').mockResolvedValue(createMock<BankDto>({ id: 1 }));
+    jest.spyOn(dao, 'findByBankCodeAgencyAccount').mockResolvedValue(null);
 
     // Act
-    const result = await sut.execute(bank.id, data);
+    const result = await sut.execute(1, input);
 
     // Assert
     expect(result).toEqual({ message: 'Banco atualizado com sucesso' });
+    expect(secretsCrypto.encrypt).not.toHaveBeenCalled();
+    expect(dao.edit).toHaveBeenCalledWith(1, expect.objectContaining({
+      drawer: input.drawer,
+      bankName: input.bankName,
+    }));
+    expect(dao.edit).toHaveBeenCalledWith(1, expect.not.objectContaining({
+      clientIdCiphertext: expect.anything(),
+    }));
   });
 
-  it('should throw BankAlreadyExistsError when editing to duplicate bankCode, agency and account', async() => {
+  it('should encrypt a new clientSecret without generating a webhook token', async() => {
     // Arrange
-    await prisma.bank.create({
-      data: baseBankData,
-    });
-    const bankB = await prisma.bank.create({
-      data: {
-        ...baseBankData,
-        bankCode: '033',
-        agency: '0002',
-        account: '65432-1',
-      },
-    });
-    const data: EditBankInputDto = {
-      ...baseBankData,
-      bankName: 'Banco B atualizado',
-    };
-
-    // Act & Assert
-    await expect(sut.execute(bankB.id, data)).rejects.toThrow(BankAlreadyExistsError);
-  });
-
-  it('should allow edit when bankCode, agency and account belong to the same bank being edited', async() => {
-    // Arrange
-    const bank = await prisma.bank.create({
-      data: baseBankData,
-    });
-    const data: EditBankInputDto = {
-      ...baseBankData,
-      bankName: 'Banco do Brasil - Atualizado',
-    };
+    jest.spyOn(dao, 'findById').mockResolvedValue(createMock<BankDto>({ id: 1 }));
+    jest.spyOn(dao, 'findByBankCodeAgencyAccount').mockResolvedValue(null);
 
     // Act
-    await sut.execute(bank.id, data);
+    await sut.execute(1, makeValidEditBankInput({ clientSecret: 'novo-secret' }));
 
     // Assert
-    const updated = await prisma.bank.findUnique({ where: { id: bank.id } });
-    expect(updated?.bankCode).toBe('001');
-    expect(updated?.agency).toBe('0001');
-    expect(updated?.account).toBe('12345-6');
-    expect(updated?.bankName).toBe('Banco do Brasil - Atualizado');
-    expect(updated?.active).toBe(true);
-  });
-
-  it('should update paymentLocation', async() => {
-    // Arrange
-    const bank = await prisma.bank.create({
-      data: baseBankData,
-    });
-    const data: EditBankInputDto = {
-      ...baseBankData,
-      paymentLocation: 'Pagável em qualquer banco',
-    };
-
-    // Act
-    await sut.execute(bank.id, data);
-
-    // Assert
-    const updated = await prisma.bank.findUnique({ where: { id: bank.id } });
-    expect(updated?.paymentLocation).toBe('Pagável em qualquer banco');
+    expect(dao.edit).toHaveBeenCalledWith(1, expect.objectContaining({
+      clientSecretCiphertext: 'enc:novo-secret',
+    }));
+    expect(dao.edit).toHaveBeenCalledWith(1, expect.not.objectContaining({
+      webhookTokenHash: expect.anything(),
+    }));
   });
 });

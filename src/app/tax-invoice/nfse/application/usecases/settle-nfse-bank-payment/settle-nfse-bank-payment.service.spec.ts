@@ -3,6 +3,7 @@ import { RecordJobAudit } from 'src/app/audit/application/usecases/record-job-au
 import { Test } from '@nestjs/testing';
 import { FindBankPayment } from 'src/app/bank-payment/application/usecases/find-bank-payment/find-bank-payment.service';
 import { RecordPaidBankPaymentCashFlowEntry } from 'src/app/cash-flow-entry/application/usecases/record-paid-bank-payment-cash-flow-entry/record-paid-bank-payment-cash-flow-entry.service';
+import { FindClientInvoiceConfigByClientId } from 'src/app/client/client-invoice-config/application/usecases/find-client-invoice-config-by-client-id/find-client-invoice-config-by-client-id.service';
 import { TOKENS } from 'src/core/di/token';
 import { BankPaymentDto } from 'src/infra/bank-payment/dtos/bank-payment.dto';
 import { BankPaymentProvider } from 'src/infra/bank-payment/enums/bank-payment-provider.enum';
@@ -73,6 +74,12 @@ describe('SettleNfseBankPayment - Unit tests', () => {
         { provide: TOKENS.LoggerGateway, useValue: createMock<ILoggerGateway>() },
         { provide: TOKENS.NfseRepository, useValue: createMock<INfseRepository>() },
         { provide: FindBankPayment, useValue: createMock<FindBankPayment>() },
+        {
+          provide: FindClientInvoiceConfigByClientId,
+          useValue: createMock<FindClientInvoiceConfigByClientId>({
+            execute: jest.fn().mockResolvedValue({ bank: { id: 1 } }),
+          }),
+        },
         { provide: RecordJobAudit, useValue: createMock<RecordJobAudit>() },
         {
           provide: RecordPaidBankPaymentCashFlowEntry,
@@ -173,7 +180,7 @@ describe('SettleNfseBankPayment - Unit tests', () => {
     await sut.execute({ nfseId: 1 });
 
     // Assert
-    expect(findBankPayment.execute).toHaveBeenCalledWith('req-1', BankPaymentProvider.INTER);
+    expect(findBankPayment.execute).toHaveBeenCalledWith('req-1', BankPaymentProvider.INTER, 1);
     expect(recordPaidBankPaymentCashFlowEntry.execute).toHaveBeenNthCalledWith(2, expect.objectContaining({
       amount: 100,
       nfseId: 1,
@@ -211,7 +218,7 @@ describe('SettleNfseBankPayment - Unit tests', () => {
     await sut.execute({ nfseId: 1 });
 
     // Assert
-    expect(findBankPayment.execute).toHaveBeenCalledWith('req-1', BankPaymentProvider.INTER);
+    expect(findBankPayment.execute).toHaveBeenCalledWith('req-1', BankPaymentProvider.INTER, 1);
   });
 
   it('should record a job audit when the charge is persisted', async() => {
@@ -250,7 +257,7 @@ describe('SettleNfseBankPayment - Unit tests', () => {
     const result = await sut.execute({ requestCode: 'req-1' });
 
     // Assert
-    expect(findBankPayment.execute).toHaveBeenCalledWith('req-1', BankPaymentProvider.INTER);
+    expect(findBankPayment.execute).toHaveBeenCalledWith('req-1', BankPaymentProvider.INTER, 1);
     expect(nfse.props.bankPaymentStatus).toBe(status);
     expect(nfse.props.bankPaymentSettledAt).toBeInstanceOf(Date);
     expect(nfse.props.bankPaymentNextSettlementAt).toBeNull();

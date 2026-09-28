@@ -1,15 +1,18 @@
 import { createMock } from '@golevelup/ts-jest';
 import { Test } from '@nestjs/testing';
+import { ResolveBankIntegrationCredentials } from 'src/app/global/bank/application/usecases/resolve-bank-integration-credentials/resolve-bank-integration-credentials.service';
 import { TOKENS } from 'src/core/di/token';
 import type { IBankPaymentGateway } from 'src/infra/bank-payment/bank-payment.gateway';
 import { BankPaymentPersonType } from 'src/infra/bank-payment/enums/bank-payment-person-type.enum';
 import { BankPaymentProvider } from 'src/infra/bank-payment/enums/bank-payment-provider.enum';
 import { BankPaymentStatus } from 'src/infra/bank-payment/enums/bank-payment-status.enum';
 import { FindAllBankPayment } from './find-all-bank-payment.service';
+import { makeBankPaymentCredentials } from 'src/test/fixtures/bank-payment-credentials';
 
 describe('FindAllBankPayment - Unit tests', () => {
   let sut: FindAllBankPayment;
   let gateway: IBankPaymentGateway;
+  const credentials = makeBankPaymentCredentials();
 
   beforeEach(async() => {
     const module = await Test.createTestingModule({
@@ -18,6 +21,12 @@ describe('FindAllBankPayment - Unit tests', () => {
         {
           provide: TOKENS.BankPaymentGateway,
           useValue: createMock<IBankPaymentGateway>(),
+        },
+        {
+          provide: ResolveBankIntegrationCredentials,
+          useValue: createMock<ResolveBankIntegrationCredentials>({
+            execute: jest.fn().mockResolvedValue(credentials),
+          }),
         },
       ],
     }).compile();
@@ -50,6 +59,7 @@ describe('FindAllBankPayment - Unit tests', () => {
 
     const result = await sut.execute({
       provider: BankPaymentProvider.INTER,
+      bankId: 1,
       startDate: '2026-01-01',
       endDate: '2026-01-31',
     });
@@ -63,6 +73,7 @@ describe('FindAllBankPayment - Unit tests', () => {
       payerDocument: undefined,
       page: 1,
       size: 100,
+      credentials,
     });
     expect(result).toEqual({
       currentPage: 1,
@@ -83,6 +94,7 @@ describe('FindAllBankPayment - Unit tests', () => {
 
     await sut.execute({
       provider: BankPaymentProvider.INTER,
+      bankId: 1,
       startDate: '2026-01-01',
       endDate: '2026-01-31',
       status: BankPaymentStatus.EMITTED,
@@ -101,6 +113,7 @@ describe('FindAllBankPayment - Unit tests', () => {
       payerDocument: '11122233344',
       page: 2,
       size: 20,
+      credentials,
     });
   });
 });

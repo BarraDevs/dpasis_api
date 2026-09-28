@@ -15,6 +15,7 @@ import type { INfmCronRunDao } from '../../persistence/dao/nfm-cron-run-dao.inte
 import type { INfmRepository } from '../../persistence/repository/nfm-repository.interface';
 import { FindElegibleClients } from '../find-elegible-clients/find-elegible-clients.service';
 import { SaveElegibleNfms } from './save-elegible-nfms.service';
+import { UNCONFIGURED_BANK_INTEGRATION } from 'src/test/fixtures/unconfigured-bank-dto';
 
 function makeCnaeNbsIndop(id = 1) {
   return {
@@ -91,6 +92,7 @@ function makeNfmDto(overrides: Partial<NfmDto> = {}): NfmDto {
         paymentLocation: null,
         fineRate: null,
         moraRate: null,
+        ...UNCONFIGURED_BANK_INTEGRATION,
         active: true,
         createdAt: new Date(),
         updatedAt: new Date(),

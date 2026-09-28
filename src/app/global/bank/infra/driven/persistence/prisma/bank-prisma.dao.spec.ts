@@ -13,6 +13,7 @@ import { FindAllBankQueryDto } from 'src/app/global/bank/application/usecases/fi
 import { ConfigModule } from 'src/core/config/config.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { BankDaoAdapterPrisma } from './bank-prisma.dao';
+import { UNCONFIGURED_BANK_INTEGRATION } from 'src/test/fixtures/unconfigured-bank-dto';
 
 describe('BankDaoAdapterPrisma - Integration tests', () => {
   let sut: BankDaoAdapterPrisma;
@@ -192,6 +193,7 @@ describe('BankDaoAdapterPrisma - Integration tests', () => {
         paymentLocation: created.paymentLocation,
         fineRate: null,
         moraRate: null,
+        ...UNCONFIGURED_BANK_INTEGRATION,
         active: created.active,
         createdAt: created.createdAt,
         updatedAt: created.updatedAt,
@@ -521,6 +523,69 @@ describe('BankDaoAdapterPrisma - Integration tests', () => {
       const count = await sut.countClientInvoiceConfigsByBankId(bank.id);
 
       expect(count).toBe(1);
+    });
+  });
+
+  describe('findByWebhookTokenHash', () => {
+    it('should return null when hash is unknown', async() => {
+      await expect(sut.findByWebhookTokenHash('a'.repeat(64))).resolves.toBeNull();
+    });
+
+    it('should find the bank by webhook token hash', async() => {
+      const hash = 'b'.repeat(64);
+      const created = await prisma.bank.create({
+        data: {
+          ...baseBankData,
+          agency: '0099',
+          account: '99999-9',
+          webhookTokenHash: hash,
+        },
+      });
+
+      const result = await sut.findByWebhookTokenHash(hash);
+
+      expect(result?.id).toBe(created.id);
+      expect(result?.webhookTokenHash).toBe(hash);
+    });
+  });
+
+  describe('findIntegrationById', () => {
+    it('should return ciphertext fields that the public DTO never exposes', async() => {
+      const created = await prisma.bank.create({
+        data: {
+          ...baseBankData,
+          agency: '0088',
+          account: '88888-8',
+          clientIdCiphertext: 'cipher-id',
+          clientSecretCiphertext: 'cipher-secret',
+        },
+      });
+
+      const integration = await sut.findIntegrationById(created.id);
+      const publicDto = await sut.findById(created.id);
+
+      expect(integration?.clientIdCiphertext).toBe('cipher-id');
+      expect(publicDto).not.toHaveProperty('clientIdCiphertext');
+      expect(publicDto?.hasClientSecret).toBe(true);
+    });
+  });
+
+  describe('findAllWithCertificate', () => {
+    it('should return only banks that have a cert file path', async() => {
+      await prisma.bank.create({ data: { ...baseBankData, agency: '0071', account: '111-1' } });
+      const withCert = await prisma.bank.create({
+        data: {
+          ...baseBankData,
+          agency: '0072',
+          account: '222-2',
+          certFilePath: '12/cert.enc',
+        },
+      });
+
+      const result = await sut.findAllWithCertificate();
+
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe(withCert.id);
     });
   });
 });

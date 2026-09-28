@@ -224,10 +224,10 @@ Estados em [`nfse-status.enum.ts`](src/app/tax-invoice/nfse/domain/enums/nfse-st
 
 - Disparado depois de `ISSUED`, fila `nfse-bank-payment`.
 - `seuNumero` = id da NFS-e; `codigoSolicitacao` → `nfse.bankPaymentRequestCode`.
-- Webhook: `POST /webhooks/inter/cobranca/:token` (`INTER_WEBHOOK_TOKEN`, mínimo 16 caracteres quando o provider está ligado).
+- Credenciais (client id/secret, URL, certificado) ficam no CRUD de bancos, cifradas. Sem elas no banco da config de fatura a NFS-e emite e a cobrança falha com erro tipado.
+- Webhook: `POST /webhooks/inter/cobranca/:token`. O token é gerado no create/rotate do banco e **não** vem mais do `.env`. Recadastre a URL no portal Inter com o token devolvido.
 - Confirm também via sweep (≥10 min) se o webhook atrasar.
-- Glossário oficial: [`.cursor/docs/banco-inter-api.md`](.cursor/docs/banco-inter-api.md). Campos e UI: [`docs/frontend-integracao-boleto-pagamento.md`](docs/frontend-integracao-boleto-pagamento.md).
-- Com `INTER_PROVIDER_ENABLED=false` a estratégia do Inter não registra: a NFS-e emite e a cobrança falha de forma permanente.
+- Glossário oficial: [`.cursor/docs/banco-inter-api.md`](.cursor/docs/banco-inter-api.md). Campos e UI: [`docs/frontend-integracao-boleto-pagamento.md`](docs/frontend-integracao-boleto-pagamento.md) e [`docs/frontend-integracao-bancos.md`](docs/frontend-integracao-bancos.md).
 
 ### 4.5 Fluxo de caixa
 
@@ -334,13 +334,15 @@ Template: [`.env.example`](.env.example). Arquivos `.env*` (exceto o example) es
 | `QUEUE_DASHBOARD_USERNAME`, `QUEUE_DASHBOARD_PASSWORD` | Basic auth do Bull Board |
 | `CNPJA_API_URL`, `VIACEP_API_URL` | Lookups |
 | `NFEMAIL_API_URL`, `NFEMAIL_CNPJ`, `NFEMAIL_API_KEY` | Gateway NFeMail |
+| `SECRETS_ENCRYPTION_KEY` | 64 hex (32 bytes). Cifra AES-256-GCM dos segredos de banco. Trocar a chave órfão os ciphertexts |
 
 ### Condicionais
 
 | Flag | Quando `true`, exige |
 |---|---|
 | `GISS_PROVIDER_ENABLED` | `GISS_CERT_PATH`, `GISS_CERT_PASSWORD` |
-| `INTER_PROVIDER_ENABLED` | `INTER_API_URL`, `INTER_CLIENT_ID`, `INTER_CLIENT_SECRET`, `INTER_CERT_PATH`, `INTER_KEY_PATH`, `INTER_WEBHOOK_TOKEN` (min. 16) |
+
+Credenciais Inter **não** são variáveis de ambiente: cadastre API keys e certificado no CRUD de bancos (`POST /admin/bank`, `POST /admin/bank/:id/certificate`). Fora de teste a estratégia Inter está sempre registrada.
 
 Opcionais: `THROTTLE_LIMIT` (default 100), `THROTTLE_TTL_MS` (default 60000).
 
@@ -348,7 +350,7 @@ No Compose, defina também `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, 
 
 ### Certificados
 
-A1 (Giss) e mTLS (Inter) **não são versionados**: `.gitignore` (`*.pfx`, `*.key`, `*.crt`, …) e `.dockerignore`. Chegam por cópia manual em `resources/files/` e o compose de produção monta esse diretório `:ro`. Na VPS, `chmod 600` e dono exclusivo do usuário da API.
+A1 (Giss) **não é versionado**: `.gitignore` (`*.pfx`, `*.key`, `*.crt`, `*.enc`, …) e `.dockerignore`. Caminho + senha do A1 continuam no env. O certificado Inter é enviado pelo admin (`POST /admin/bank/:id/certificate`) e gravado cifrado em `resources/files/bank-payment/{id}/`. O compose de produção monta `./resources/files` **`:rw`** para esse upload. Na VPS, `chmod 600` e dono exclusivo do usuário da API.
 
 O `.env.example` e o `.dockerignore` citam `docs/runbook-certificados.md`, que **ainda não existe**. Até lá, esta seção + os comentários desses arquivos são a referência.
 

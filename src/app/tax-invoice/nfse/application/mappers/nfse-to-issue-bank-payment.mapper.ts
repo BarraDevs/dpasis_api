@@ -15,6 +15,7 @@ export type NfseToIssueBankPaymentParams = {
   bankPayment?: NfseBankPaymentSnapshot;
   fineRate?: number | null;
   moraRate?: number | null;
+  bankId: number;
 };
 
 export class NfseToIssueBankPaymentMapper {
@@ -41,6 +42,7 @@ export class NfseToIssueBankPaymentMapper {
     }
 
     return {
+      bankId: params.bankId,
       provider: BankPaymentProvider.INTER,
       nfseId: params.nfseId,
       yourNumber: String(params.nfseId).slice(0, 15),

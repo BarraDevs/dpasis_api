@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { RecordJobAudit } from 'src/app/audit/application/usecases/record-job-audit/record-job-audit.service';
 import { NfseNotIssuedForBankPaymentError } from 'src/app/bank-payment/domain/errors/nfse-not-issued-for-bank-payment.error';
 import { FindBankPayment } from 'src/app/bank-payment/application/usecases/find-bank-payment/find-bank-payment.service';
+import { FindClientInvoiceConfigByClientId } from 'src/app/client/client-invoice-config/application/usecases/find-client-invoice-config-by-client-id/find-client-invoice-config-by-client-id.service';
 import { TOKENS } from 'src/core/di/token';
 import { BankPaymentProvider } from 'src/infra/bank-payment/enums/bank-payment-provider.enum';
 import { BankPaymentStatus } from 'src/infra/bank-payment/enums/bank-payment-status.enum';
@@ -9,6 +10,7 @@ import { LogContext, type ILoggerGateway } from 'src/infra/logger/logger.gateway
 import { NfseBankPaymentNotLinkedError } from '../../../domain/errors/nfse-bank-payment-not-linked.error';
 import { NfseBankPaymentNotReissuableError } from '../../../domain/errors/nfse-bank-payment-not-reissuable.error';
 import { NfseNotFoundError } from '../../../domain/errors/nfse-not-found.error';
+import { bankIdFromClientInvoiceConfig } from '../../helpers/bank-id-from-invoice-config';
 import type { INfseRepository } from '../../persistence/repository/nfse-repository.interface';
 import type { INfseQueueProducer } from '../../queue/nfse-queue-producer.interface';
 import { ReissueNfseBankPaymentInputDto, ReissueNfseBankPaymentOutputDto } from './dtos/reissue-nfse-bank-payment.dto';
@@ -20,6 +22,7 @@ export class ReissueNfseBankPayment {
     @Inject(TOKENS.NfseRepository) private readonly nfseRepository: INfseRepository,
     @Inject(TOKENS.NfseQueueProducer) private readonly queueProducer: INfseQueueProducer,
     private readonly findBankPayment: FindBankPayment,
+    private readonly findClientInvoiceConfigByClientId: FindClientInvoiceConfigByClientId,
     private readonly recordJobAudit: RecordJobAudit,
   ) {}
 
@@ -52,7 +55,8 @@ export class ReissueNfseBankPayment {
     }
 
     const provider = (nfse.props.bankPaymentProvider ?? BankPaymentProvider.INTER) as BankPaymentProvider;
-    const bankPayment = await this.findBankPayment.execute(requestCode, provider);
+    const bankId = await bankIdFromClientInvoiceConfig(this.findClientInvoiceConfigByClientId, nfse.props.clientId);
+    const bankPayment = await this.findBankPayment.execute(requestCode, provider, bankId);
     if (bankPayment.status !== BankPaymentStatus.FAILED) {
       throw new NfseBankPaymentNotReissuableError(requestCode, bankPayment.status);
     }

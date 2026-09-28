@@ -1,6 +1,7 @@
 import { BankPaymentPersonType } from '../../enums/bank-payment-person-type.enum';
 import { BankPaymentProvider } from '../../enums/bank-payment-provider.enum';
 import { BankPaymentFakeAdapterGateway } from './bank-payment-fake.gateway';
+import { makeBankPaymentCredentials } from 'src/test/fixtures/bank-payment-credentials';
 
 describe('BankPaymentFakeAdapterGateway - Unit tests', () => {
   let sut: BankPaymentFakeAdapterGateway;
@@ -20,6 +21,7 @@ describe('BankPaymentFakeAdapterGateway - Unit tests', () => {
       amount: 10,
       dueDate: '2026-09-01',
       daysAfterDue: 30,
+      credentials: makeBankPaymentCredentials(),
       payer: {
         document: '1',
         personType: BankPaymentPersonType.INDIVIDUAL,
@@ -32,16 +34,16 @@ describe('BankPaymentFakeAdapterGateway - Unit tests', () => {
     expect(sut.issueCalls).toEqual([input]);
     expect(result).toEqual({
       provider: BankPaymentProvider.INTER,
-      requestCode: 'fake-request-code',
-    });
+      requestCode: 'fake-request-code' });
   });
 
   it('should record find and cancel calls', async() => {
-    await sut.find({ provider: BankPaymentProvider.INTER, requestCode: 'abc' });
+    await sut.find({ provider: BankPaymentProvider.INTER, requestCode: 'abc', credentials: makeBankPaymentCredentials() });
     await sut.cancel({
       provider: BankPaymentProvider.INTER,
       requestCode: 'abc',
       reason: 'Cliente pediu o cancelamento',
+      credentials: makeBankPaymentCredentials(),
     });
 
     expect(sut.findCalls).toHaveLength(1);
@@ -51,6 +53,7 @@ describe('BankPaymentFakeAdapterGateway - Unit tests', () => {
   it('should record list calls and return default result', async() => {
     const input = {
       provider: BankPaymentProvider.INTER,
+      credentials: makeBankPaymentCredentials(),
       startDate: '2026-01-01',
       endDate: '2026-01-31',
     };
@@ -69,6 +72,7 @@ describe('BankPaymentFakeAdapterGateway - Unit tests', () => {
 
     await expect(sut.list({
       provider: BankPaymentProvider.INTER,
+      credentials: makeBankPaymentCredentials(),
       startDate: '2026-01-01',
       endDate: '2026-01-31',
     })).rejects.toBe(error);
@@ -76,7 +80,7 @@ describe('BankPaymentFakeAdapterGateway - Unit tests', () => {
 
   it('should return findResult with requestCode from input', async() => {
     // Arrange
-    const input = { provider: BankPaymentProvider.INTER, requestCode: 'abc' };
+    const input = { provider: BankPaymentProvider.INTER, requestCode: 'abc', credentials: makeBankPaymentCredentials() };
 
     // Act
     const result = await sut.find(input);
@@ -94,8 +98,7 @@ describe('BankPaymentFakeAdapterGateway - Unit tests', () => {
     // Act / Assert
     await expect(sut.find({
       provider: BankPaymentProvider.INTER,
-      requestCode: 'abc',
-    })).rejects.toBe(error);
+      requestCode: 'abc', credentials: makeBankPaymentCredentials() })).rejects.toBe(error);
   });
 
   it('should reject when cancelError is set', async() => {
@@ -108,24 +111,22 @@ describe('BankPaymentFakeAdapterGateway - Unit tests', () => {
       provider: BankPaymentProvider.INTER,
       requestCode: 'abc',
       reason: 'Cliente pediu o cancelamento',
+      credentials: makeBankPaymentCredentials(),
     })).rejects.toBe(error);
   });
 
   it('should record getPdf calls and return default result', async() => {
     const result = await sut.getPdf({
       provider: BankPaymentProvider.INTER,
-      requestCode: 'abc',
-    });
+      requestCode: 'abc', credentials: makeBankPaymentCredentials() });
 
     expect(sut.getPdfCalls).toEqual([{
       provider: BankPaymentProvider.INTER,
-      requestCode: 'abc',
-    }]);
+      requestCode: 'abc', credentials: makeBankPaymentCredentials() }]);
     expect(result).toEqual({
       provider: BankPaymentProvider.INTER,
       requestCode: 'abc',
-      pdf: 'JVBERi0xLjQK',
-    });
+      pdf: 'JVBERi0xLjQK' });
   });
 
   it('should reject when getPdfError is set', async() => {
@@ -134,8 +135,7 @@ describe('BankPaymentFakeAdapterGateway - Unit tests', () => {
 
     await expect(sut.getPdf({
       provider: BankPaymentProvider.INTER,
-      requestCode: 'abc',
-    })).rejects.toBe(error);
+      requestCode: 'abc', credentials: makeBankPaymentCredentials() })).rejects.toBe(error);
   });
 
   it('should reject when issueError is set', async() => {
@@ -148,6 +148,7 @@ describe('BankPaymentFakeAdapterGateway - Unit tests', () => {
       amount: 10,
       dueDate: '2026-09-01',
       daysAfterDue: 30,
+      credentials: makeBankPaymentCredentials(),
       payer: {
         document: '1',
         personType: BankPaymentPersonType.INDIVIDUAL,

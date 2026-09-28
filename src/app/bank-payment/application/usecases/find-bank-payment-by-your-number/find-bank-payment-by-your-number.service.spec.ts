@@ -1,11 +1,13 @@
 import { createMock } from '@golevelup/ts-jest';
 import { Test } from '@nestjs/testing';
+import { ResolveBankIntegrationCredentials } from 'src/app/global/bank/application/usecases/resolve-bank-integration-credentials/resolve-bank-integration-credentials.service';
 import { TOKENS } from 'src/core/di/token';
 import type { IBankPaymentGateway } from 'src/infra/bank-payment/bank-payment.gateway';
 import { BankPaymentDto } from 'src/infra/bank-payment/dtos/bank-payment.dto';
 import { BankPaymentProvider } from 'src/infra/bank-payment/enums/bank-payment-provider.enum';
 import { BankPaymentStatus } from 'src/infra/bank-payment/enums/bank-payment-status.enum';
 import { FindBankPaymentByYourNumber } from './find-bank-payment-by-your-number.service';
+import { makeBankPaymentCredentials } from 'src/test/fixtures/bank-payment-credentials';
 
 function makeItem(overrides: Partial<BankPaymentDto> = {}): BankPaymentDto {
   return createMock<BankPaymentDto>({
@@ -19,8 +21,11 @@ function makeItem(overrides: Partial<BankPaymentDto> = {}): BankPaymentDto {
   });
 }
 
+const credentials = makeBankPaymentCredentials();
+
 const input = {
   provider: BankPaymentProvider.INTER,
+  bankId: 1,
   yourNumber: '42',
   amount: 1000,
   dueDate: '2026-08-15',
@@ -35,6 +40,12 @@ describe('FindBankPaymentByYourNumber - Unit tests', () => {
       providers: [
         FindBankPaymentByYourNumber,
         { provide: TOKENS.BankPaymentGateway, useValue: createMock<IBankPaymentGateway>() },
+        {
+          provide: ResolveBankIntegrationCredentials,
+          useValue: createMock<ResolveBankIntegrationCredentials>({
+            execute: jest.fn().mockResolvedValue(credentials),
+          }),
+        },
       ],
     }).compile();
 
@@ -61,6 +72,7 @@ describe('FindBankPaymentByYourNumber - Unit tests', () => {
       yourNumber: '42',
       page: 1,
       size: 100,
+      credentials,
     });
     expect(result?.requestCode).toBe('req-1');
   });

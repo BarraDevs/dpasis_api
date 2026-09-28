@@ -12,6 +12,14 @@ function makeBankRow(overrides: Partial<BankRow> = {}): BankRow {
     paymentLocation: null,
     fineRate: null,
     moraRate: null,
+    apiUrl: null,
+    clientIdHint: null,
+    hasClientSecret: false,
+    hasCertificate: false,
+    certFormat: null,
+    certificateNotAfter: null,
+    hasWebhookToken: false,
+    integrationConfigured: false,
     active: true,
     createdAt: new Date('2026-01-01T00:00:00.000Z'),
     updatedAt: new Date('2026-01-02T00:00:00.000Z'),
@@ -76,6 +84,20 @@ describe('toBankDto - Unit tests', () => {
     // Assert
     expect(result.fineRate).toBe(2.5);
     expect(result.moraRate).toBe(1);
+  });
+
+  it('should keep integration flags as provided', () => {
+    const row = makeBankRow({
+      apiUrl: 'https://cdpj.partners.bancointer.com.br',
+      clientIdHint: 't-id',
+      hasClientSecret: true,
+      hasCertificate: true,
+      integrationConfigured: true,
+    });
+
+    expect(toBankDto(row).integrationConfigured).toBe(true);
+    expect(toBankDto(row).hasClientSecret).toBe(true);
+    expect(toBankDto(row).clientIdHint).toBe('t-id');
   });
 });
 

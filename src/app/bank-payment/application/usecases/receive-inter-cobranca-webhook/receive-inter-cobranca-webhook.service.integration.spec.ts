@@ -1,10 +1,10 @@
-import { Test } from '@nestjs/testing';
+import { Test, TestingModule } from '@nestjs/testing';
 import { BankPaymentModule } from 'src/app/bank-payment/bank-payment.module';
 import { CashFlowEntryOrigin } from 'src/app/cash-flow-entry/domain/enums/cash-flow-entry-origin.enum';
 import { CashFlowEntryType } from 'src/app/cash-flow-entry/domain/enums/cash-flow-entry-type.enum';
 import { NfseStatus } from 'src/app/tax-invoice/nfse/domain/enums/nfse-status.enum';
 import { buildMinimalCompanyData } from 'src/test/fixtures/minimal-company';
-import { ConfigService } from 'src/core/config/config.service';
+import { seedConfiguredBank } from 'src/test/fixtures/seed-configured-bank';
 import { TOKENS } from 'src/core/di/token';
 import { BankPaymentFakeAdapterGateway } from 'src/infra/bank-payment/adapters/fake/bank-payment-fake.gateway';
 import { BankPaymentProvider } from 'src/infra/bank-payment/enums/bank-payment-provider.enum';
@@ -46,36 +46,27 @@ describe('ReceiveInterCobrancaWebhook - Integration tests', () => {
   let sut: ReceiveInterCobrancaWebhook;
   let prisma: PrismaService;
   let bankPaymentGateway: BankPaymentFakeAdapterGateway;
-  let config: ConfigService;
-  const previousToken = process.env.INTER_WEBHOOK_TOKEN;
+  let moduleRef: TestingModule;
+  let bankId: number;
 
   beforeAll(async() => {
-    process.env.INTER_WEBHOOK_TOKEN = TOKEN;
-
-    const module = await Test.createTestingModule({
+    moduleRef = await Test.createTestingModule({
       imports: [LoggerModule, BankPaymentModule],
     }).compile();
 
-    sut = module.get(ReceiveInterCobrancaWebhook);
-    prisma = module.get(PrismaService);
-    bankPaymentGateway = module.get(TOKENS.BankPaymentGateway);
-    config = module.get(ConfigService);
+    sut = moduleRef.get(ReceiveInterCobrancaWebhook);
+    prisma = moduleRef.get(PrismaService);
+    bankPaymentGateway = moduleRef.get(TOKENS.BankPaymentGateway);
   });
 
   beforeEach(async() => {
     await prisma.truncate();
     bankPaymentGateway.findCalls.length = 0;
     bankPaymentGateway.findError = null;
-    Object.defineProperty(config, 'interWebhookToken', { configurable: true, get: () => TOKEN });
+    ({ bankId } = await seedConfiguredBank(moduleRef, { webhookToken: TOKEN }));
   });
 
   afterAll(async() => {
-    if (previousToken === undefined) {
-      delete process.env.INTER_WEBHOOK_TOKEN;
-    }
-    else {
-      process.env.INTER_WEBHOOK_TOKEN = previousToken;
-    }
     await prisma.truncate();
     await prisma.$disconnect();
   });
@@ -107,6 +98,7 @@ describe('ReceiveInterCobrancaWebhook - Integration tests', () => {
       origin: CashFlowEntryOrigin.BANK_PAYMENT,
       amountInCents: 10000,
     }));
+    expect(bankPaymentGateway.findCalls[0].credentials.bankId).toBe(bankId);
   });
 
   it('should reject an invalid token without settling', async() => {
@@ -132,12 +124,8 @@ describe('ReceiveInterCobrancaWebhook - Integration tests', () => {
     expect(bankPaymentGateway.findCalls).toHaveLength(0);
   });
 
-  it('should reject when the webhook token is not configured', async() => {
-    // Arrange
-    Object.defineProperty(config, 'interWebhookToken', { configurable: true, get: () => '' });
-
-    // Act & Assert
-    await expect(sut.execute(TOKEN, { codigoSolicitacao: 'req-1' }))
+  it('should reject when the webhook token is blank', async() => {
+    await expect(sut.execute('   ', { codigoSolicitacao: 'req-1' }))
       .rejects.toThrow(InterWebhookNotConfiguredError);
     expect(bankPaymentGateway.findCalls).toHaveLength(0);
   });

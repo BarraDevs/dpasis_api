@@ -4,6 +4,7 @@ import { BankPaymentProvider } from '../../enums/bank-payment-provider.enum';
 import { BankPaymentStatus } from '../../enums/bank-payment-status.enum';
 import { InterCobrancaClient } from './cobranca/inter-cobranca.client';
 import { BankPaymentInterStrategy } from './bank-payment-inter.strategy';
+import { makeBankPaymentCredentials } from 'src/test/fixtures/bank-payment-credentials';
 
 describe('BankPaymentInterStrategy - Unit tests', () => {
   let sut: BankPaymentInterStrategy;
@@ -13,8 +14,7 @@ describe('BankPaymentInterStrategy - Unit tests', () => {
     cobrancaClient = createMock<InterCobrancaClient>({
       issue: jest.fn().mockResolvedValue({
         provider: BankPaymentProvider.INTER,
-        requestCode: 'req-1',
-      }),
+        requestCode: 'req-1' }),
       find: jest.fn().mockResolvedValue({
         provider: BankPaymentProvider.INTER,
         requestCode: 'req-1',
@@ -48,6 +48,7 @@ describe('BankPaymentInterStrategy - Unit tests', () => {
       amount: 10,
       dueDate: '2026-09-01',
       daysAfterDue: 30,
+      credentials: makeBankPaymentCredentials(),
       payer: {
         document: '1',
         personType: BankPaymentPersonType.INDIVIDUAL,
@@ -62,7 +63,7 @@ describe('BankPaymentInterStrategy - Unit tests', () => {
   });
 
   it('should delegate find to cobranca client', async() => {
-    const input = { provider: BankPaymentProvider.INTER, requestCode: 'req-1' };
+    const input = { provider: BankPaymentProvider.INTER, requestCode: 'req-1', credentials: makeBankPaymentCredentials() };
     await sut.find(input);
     expect(cobrancaClient.find).toHaveBeenCalledWith(input);
   });
@@ -70,6 +71,7 @@ describe('BankPaymentInterStrategy - Unit tests', () => {
   it('should delegate list to cobranca client', async() => {
     const input = {
       provider: BankPaymentProvider.INTER,
+      credentials: makeBankPaymentCredentials(),
       startDate: '2026-01-01',
       endDate: '2026-01-31',
     };
@@ -85,12 +87,11 @@ describe('BankPaymentInterStrategy - Unit tests', () => {
   });
 
   it('should delegate getPdf to cobranca client', async() => {
-    const input = { provider: BankPaymentProvider.INTER, requestCode: 'req-1' };
+    const input = { provider: BankPaymentProvider.INTER, requestCode: 'req-1', credentials: makeBankPaymentCredentials() };
     cobrancaClient.getPdf = jest.fn().mockResolvedValue({
       provider: BankPaymentProvider.INTER,
       requestCode: 'req-1',
-      pdf: 'JVBERi0xLjQK',
-    });
+      pdf: 'JVBERi0xLjQK' });
 
     const result = await sut.getPdf(input);
 
@@ -103,6 +104,7 @@ describe('BankPaymentInterStrategy - Unit tests', () => {
       provider: BankPaymentProvider.INTER,
       requestCode: 'req-1',
       reason: 'Cliente pediu o cancelamento',
+      credentials: makeBankPaymentCredentials(),
     };
     await sut.cancel(input);
     expect(cobrancaClient.cancel).toHaveBeenCalledWith(input);

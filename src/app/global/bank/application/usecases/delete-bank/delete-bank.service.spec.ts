@@ -1,37 +1,30 @@
-import { buildMinimalResaleData, nextResaleFixtureId } from 'src/test/fixtures/minimal-resale';
-import { buildMinimalCompanyData } from 'src/test/fixtures/minimal-company';
+import { createMock } from '@golevelup/ts-jest';
 import { Test } from '@nestjs/testing';
-import { ClientAddressType } from 'src/app/client/client-address/domain/enums/client-address-type.enum';
-import { ClientInvoiceConfigDueDateType } from 'src/app/client/client-invoice-config/domain/enums/client-invoice-config-due-date-type.enum';
-import { ClientInvoiceConfigType } from 'src/app/client/client-invoice-config/domain/enums/client-invoice-config-type.enum';
-import { ClientInvoiceType } from 'src/app/client/client/domain/enums/client-invoice-type.enum';
-import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum';
-import { BankModule } from 'src/app/global/bank/bank.module';
-import { BankInUseError } from 'src/app/global/bank/domain/errors/bank-in-use.error';
-import { BankNotFoundError } from 'src/app/global/bank/domain/errors/bank-not-found.error';
-import { PrismaService } from 'src/infra/database/prisma/prisma.service';
+import { TOKENS } from 'src/core/di/token';
+import type { ILocalSecureFileGateway } from 'src/infra/local-secure-file/local-secure-file.gateway';
+import { BankInUseError } from '../../../domain/errors/bank-in-use.error';
+import { BankNotFoundError } from '../../../domain/errors/bank-not-found.error';
+import { BankDto } from '../../dtos/bank.dto';
+import type { IBankDao } from '../../persistence/dao/bank-dao.interface';
 import { DeleteBank } from './delete-bank.service';
 
-describe('DeleteBank - Integration tests', () => {
+describe('DeleteBank - Unit tests', () => {
   let sut: DeleteBank;
-  let prisma: PrismaService;
+  let dao: IBankDao;
+  let localSecureFile: ILocalSecureFileGateway;
 
-  beforeAll(async() => {
+  beforeEach(async() => {
     const module = await Test.createTestingModule({
-      imports: [BankModule],
+      providers: [
+        DeleteBank,
+        { provide: TOKENS.BankDao, useValue: createMock<IBankDao>() },
+        { provide: TOKENS.LocalSecureFileGateway, useValue: createMock<ILocalSecureFileGateway>() },
+      ],
     }).compile();
 
     sut = module.get(DeleteBank);
-    prisma = module.get(PrismaService);
-  });
-
-  beforeEach(async() => {
-    await prisma.truncate();
-  });
-
-  afterAll(async() => {
-    await prisma.truncate();
-    await prisma.$disconnect();
+    dao = module.get(TOKENS.BankDao);
+    localSecureFile = module.get(TOKENS.LocalSecureFileGateway);
   });
 
   it('should be defined', () => {
@@ -39,111 +32,31 @@ describe('DeleteBank - Integration tests', () => {
   });
 
   it('should throw BankNotFoundError when bank does not exist', async() => {
-    const id = 99999;
+    jest.spyOn(dao, 'findById').mockResolvedValue(null);
 
-    await expect(sut.execute(id)).rejects.toThrow(BankNotFoundError);
+    await expect(sut.execute(99)).rejects.toThrow(BankNotFoundError);
+    expect(dao.delete).not.toHaveBeenCalled();
   });
 
-  it('should throw BankInUseError when bank is linked to a client invoice config', async() => {
-    const suffix = `${Date.now()}`;
-    const bank = await prisma.bank.create({
-      data: {
-        drawer: 'Drawer',
-        wallet: '1',
-        account: `A${suffix}`.slice(0, 20),
-        agency: '0001',
-        bankCode: `B${suffix}`.slice(0, 20),
-        bankName: 'Bank',
-        paymentLocation: null,
-        active: true,
-      },
-    });
+  it('should throw BankInUseError when invoice configs reference the bank', async() => {
+    jest.spyOn(dao, 'findById').mockResolvedValue(createMock<BankDto>({ id: 1 }));
+    jest.spyOn(dao, 'countClientInvoiceConfigsByBankId').mockResolvedValue(1);
 
-    const [group, resale, company] = await Promise.all([
-      prisma.clientGroup.create({ data: { name: `Grupo ${suffix}`, active: true } }),
-      prisma.resale.create({ data: buildMinimalResaleData(nextResaleFixtureId()) }),
-      prisma.company.create({ data: buildMinimalCompanyData() }),
-    ]);
-
-    const client = await prisma.client.create({
-      data: {
-        id: 1,
-        type: ClientType.PJ,
-        document: String(Date.now()).padStart(14, '0').slice(-14),
-        ie: null,
-        groupId: group.id,
-        resaleId: resale.id,
-        companyId: company.id,
-        companyName: 'Empresa Test',
-        fantasyName: null,
-        headquarters: 'São Paulo',
-        invoiceType: ClientInvoiceType.CONTRACT,
-        generateInvoice: true,
-        active: true,
-      },
-    });
-
-    const address = await prisma.clientAddress.create({
-      data: {
-        clientId: client.id,
-        type: ClientAddressType.BILLING,
-        zipCode: '12345-678',
-        street: 'Rua Teste',
-        number: '123',
-        complement: null,
-        neighborhood: 'Centro',
-        city: 'São Paulo',
-        state: 'SP',
-        active: true,
-      },
-    });
-
-    await prisma.clientInvoiceConfig.create({
-      data: {
-        clientId: client.id,
-        generateNf: true,
-        type: ClientInvoiceConfigType.MONTHLY,
-        emissionDay: 5,
-        dueDateType: ClientInvoiceConfigDueDateType.DUE_DATE,
-        dueDateDay: 15,
-        deadlineDays: null,
-        months: [],
-        billingAddressId: address.id,
-        bankId: bank.id,
-        autoProtestBoleto: false,
-        message: null,
-      },
-    });
-
-    await expect(sut.execute(bank.id)).rejects.toThrow(BankInUseError);
-    await expect(sut.execute(bank.id)).rejects.toThrow(
-      'Não é possível excluir o banco pois existem configurações de fatura vinculadas.',
-    );
-
-    const stillExists = await prisma.bank.findUnique({ where: { id: bank.id } });
-    expect(stillExists).not.toBeNull();
+    await expect(sut.execute(1)).rejects.toThrow(BankInUseError);
+    expect(dao.delete).not.toHaveBeenCalled();
   });
 
-  it('should delete bank and return success message when bank has no linked configs', async() => {
-    const suffix = `${Date.now()}`;
-    const created = await prisma.bank.create({
-      data: {
-        drawer: 'Drawer',
-        wallet: '1',
-        account: `X${suffix}`.slice(0, 20),
-        agency: '0001',
-        bankCode: `Y${suffix}`.slice(0, 20),
-        bankName: 'Bank',
-        paymentLocation: null,
-        active: true,
-      },
-    });
+  it('should delete the bank and its certificate directory', async() => {
+    // Arrange
+    jest.spyOn(dao, 'findById').mockResolvedValue(createMock<BankDto>({ id: 12 }));
+    jest.spyOn(dao, 'countClientInvoiceConfigsByBankId').mockResolvedValue(0);
 
-    const result = await sut.execute(created.id);
+    // Act
+    const result = await sut.execute(12);
 
+    // Assert
+    expect(dao.delete).toHaveBeenCalledWith(12);
+    expect(localSecureFile.deleteDirectory).toHaveBeenCalledWith('12');
     expect(result).toEqual({ message: 'Banco excluído com sucesso.' });
-
-    const found = await prisma.bank.findUnique({ where: { id: created.id } });
-    expect(found).toBeNull();
   });
 });

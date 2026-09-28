@@ -1,4 +1,5 @@
 import { BankPaymentProvider } from '../enums/bank-payment-provider.enum';
+import { BankPaymentCredentialsDto } from './bank-payment-credentials.dto';
 import { BankPaymentPayerDto } from './bank-payment-payer.dto';
 
 export class IssueBankPaymentInputDto {
@@ -12,6 +13,7 @@ export class IssueBankPaymentInputDto {
   payer: BankPaymentPayerDto;
   fineRate?: number | null;
   moraRate?: number | null;
+  credentials: BankPaymentCredentialsDto;
 }
 
 export class IssueBankPaymentOutputDto {

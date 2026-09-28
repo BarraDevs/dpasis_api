@@ -1,6 +1,7 @@
 import { createMock } from '@golevelup/ts-jest';
 import { Test } from '@nestjs/testing';
 import { CancelBankPayment } from 'src/app/bank-payment/application/usecases/cancel-bank-payment/cancel-bank-payment.service';
+import { FindClientInvoiceConfigByClientId } from 'src/app/client/client-invoice-config/application/usecases/find-client-invoice-config-by-client-id/find-client-invoice-config-by-client-id.service';
 import { CancelNfse } from 'src/app/tax-invoice/nfse/application/usecases/cancel-nfse/cancel-nfse.service';
 import { CancelNfseOutputDto } from 'src/app/tax-invoice/nfse/application/usecases/cancel-nfse/dtos/cancel-nfse.dto';
 import { NfseStatus } from 'src/app/tax-invoice/nfse/domain/enums/nfse-status.enum';
@@ -117,6 +118,12 @@ describe('CancelNfm - Unit tests', () => {
         { provide: TOKENS.LoggerGateway, useValue: createMock<ILoggerGateway>() },
         { provide: CancelNfse, useValue: createMock<CancelNfse>() },
         { provide: CancelBankPayment, useValue: createMock<CancelBankPayment>() },
+        {
+          provide: FindClientInvoiceConfigByClientId,
+          useValue: createMock<FindClientInvoiceConfigByClientId>({
+            execute: jest.fn().mockResolvedValue({ bank: { id: 1 } }),
+          }),
+        },
       ],
     }).compile();
 
@@ -217,6 +224,7 @@ describe('CancelNfm - Unit tests', () => {
       expect(order).toEqual(['bankPayment', 'nfse']);
       expect(cancelBankPayment.execute).toHaveBeenCalledWith('req-123', {
         provider: BankPaymentProvider.INTER,
+        bankId: 1,
         reason: 'Serviço não prestado',
       });
       expect(result.bankPaymentCanceled).toBe(true);
@@ -260,6 +268,7 @@ describe('CancelNfm - Unit tests', () => {
       // Assert
       expect(cancelBankPayment.execute).toHaveBeenCalledWith('req-123', {
         provider: BankPaymentProvider.INTER,
+        bankId: 1,
         reason: expected,
       });
       expect(expected.length).toBeLessThanOrEqual(50);

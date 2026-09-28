@@ -4,6 +4,7 @@ import { BankModule } from '../../../bank.module';
 import { BankNotFoundError } from '../../../domain/errors/bank-not-found.error';
 import { BankDto } from '../../dtos/bank.dto';
 import { FindBankById } from './find-bank-by-id.service';
+import { UNCONFIGURED_BANK_INTEGRATION } from 'src/test/fixtures/unconfigured-bank-dto';
 
 const baseBankData = {
   drawer: 'Empresa XYZ',
@@ -100,6 +101,7 @@ describe('FindBankById - Integration tests', () => {
       paymentLocation: bank.paymentLocation,
       fineRate: null,
       moraRate: null,
+      ...UNCONFIGURED_BANK_INTEGRATION,
       active: bank.active,
       createdAt: bank.createdAt,
       updatedAt: bank.updatedAt,

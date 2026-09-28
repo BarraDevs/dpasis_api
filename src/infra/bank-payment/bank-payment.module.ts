@@ -27,13 +27,8 @@ export class BankPaymentModule {
       };
     }
 
-    const imports: Type[] = [];
-    const strategyInject: Type<IBankPaymentStrategy>[] = [];
-
-    if (process.env.INTER_PROVIDER_ENABLED === 'true') {
-      imports.push(BankPaymentInterModule);
-      strategyInject.push(BankPaymentInterStrategy);
-    }
+    const imports: Type[] = [BankPaymentInterModule];
+    const strategyInject: Type<IBankPaymentStrategy>[] = [BankPaymentInterStrategy];
 
     const providers: Provider[] = [
       {

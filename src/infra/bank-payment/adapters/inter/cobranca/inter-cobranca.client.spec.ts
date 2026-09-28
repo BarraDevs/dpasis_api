@@ -2,17 +2,13 @@ import { createMock } from '@golevelup/ts-jest';
 import { HttpService } from '@nestjs/axios';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AxiosError } from 'axios';
-import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
-import { ConfigService } from 'src/core/config/config.service';
 import { TOKENS } from 'src/core/di/token';
 import { LogContext, type ILoggerGateway } from 'src/infra/logger/logger.gateway';
 import { ExternalApiError } from 'src/shared/errors/external-api.error';
 import { PermanentProviderError } from 'src/shared/errors/permanent-provider.error';
 import { TransientProviderError } from 'src/shared/errors/transient-provider.error';
 import { ProviderAttemptFakeAdapterGateway } from 'src/infra/provider-attempt/adapters/fake/provider-attempt-fake.gateway';
-import { buildTestCertificatePem } from 'src/test/fixtures/test-certificate';
+import { makeBankPaymentCredentials } from 'src/test/fixtures/bank-payment-credentials';
 import { BankPaymentPersonType } from '../../../enums/bank-payment-person-type.enum';
 import { BankPaymentProvider } from '../../../enums/bank-payment-provider.enum';
 import { BankPaymentStatus } from '../../../enums/bank-payment-status.enum';
@@ -40,7 +36,6 @@ describe('InterCobrancaClient - Unit tests', () => {
   let httpService: { axiosRef: { request: jest.Mock } };
   let oauthClient: jest.Mocked<InterOauthClient>;
   let logger: jest.Mocked<ILoggerGateway>;
-  let sutDir: string;
 
   const issueInput = {
     provider: BankPaymentProvider.INTER,
@@ -48,6 +43,7 @@ describe('InterCobrancaClient - Unit tests', () => {
     amount: 10,
     dueDate: '2026-09-01',
     daysAfterDue: 30,
+    credentials: makeBankPaymentCredentials(),
     payer: {
       document: '11122233344',
       personType: BankPaymentPersonType.INDIVIDUAL,
@@ -56,13 +52,6 @@ describe('InterCobrancaClient - Unit tests', () => {
   };
 
   beforeEach(async() => {
-    sutDir = join(tmpdir(), `inter-cobranca-client-${Date.now()}`);
-    mkdirSync(sutDir, { recursive: true });
-    const certPath = join(sutDir, 'inter.crt');
-    const keyPath = join(sutDir, 'inter.key');
-    writeFileSync(certPath, buildTestCertificatePem());
-    writeFileSync(keyPath, '-----BEGIN PRIVATE KEY-----\nfake\n-----END PRIVATE KEY-----\n');
-
     httpService = {
       axiosRef: {
         request: jest.fn(),
@@ -88,14 +77,6 @@ describe('InterCobrancaClient - Unit tests', () => {
       providers: [
         InterCobrancaClient,
         { provide: HttpService, useValue: httpService },
-        {
-          provide: ConfigService,
-          useValue: createMock<ConfigService>({
-            interApiUrl: 'https://cdpj-sandbox.partners.uatinter.co',
-            interCertPath: certPath,
-            interKeyPath: keyPath,
-          }),
-        },
         { provide: InterOauthClient, useValue: oauthClient },
         { provide: TOKENS.LoggerGateway, useValue: logger },
         { provide: TOKENS.ProviderAttemptRecorder, useValue: attemptRecorder },
@@ -107,7 +88,6 @@ describe('InterCobrancaClient - Unit tests', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
-    rmSync(sutDir, { recursive: true, force: true });
   });
 
   it('should be defined', () => {
@@ -124,7 +104,10 @@ describe('InterCobrancaClient - Unit tests', () => {
     const result = await sut.issue(issueInput);
 
     // Assert
-    expect(oauthClient.getAccessToken).toHaveBeenCalledWith(InterCobrancaClient.OAUTH_SCOPE);
+    expect(oauthClient.getAccessToken).toHaveBeenCalledWith(
+      InterCobrancaClient.OAUTH_SCOPE,
+      issueInput.credentials,
+    );
     expect(httpService.axiosRef.request).toHaveBeenCalledWith(expect.objectContaining({
       method: 'POST',
       url: 'https://cdpj-sandbox.partners.uatinter.co/cobranca/v3/cobrancas',
@@ -141,8 +124,7 @@ describe('InterCobrancaClient - Unit tests', () => {
     }));
     expect(result).toEqual({
       provider: BankPaymentProvider.INTER,
-      requestCode: 'req-123',
-    });
+      requestCode: 'req-123' });
   });
 
   it('should record the issue attempt when the input carries an nfseId', async() => {
@@ -223,8 +205,7 @@ describe('InterCobrancaClient - Unit tests', () => {
     // Act
     const result = await sut.find({
       provider: BankPaymentProvider.INTER,
-      requestCode: 'req-123',
-    });
+      requestCode: 'req-123', credentials: makeBankPaymentCredentials() });
 
     // Assert
     expect(httpService.axiosRef.request).toHaveBeenCalledWith(expect.objectContaining({
@@ -260,6 +241,7 @@ describe('InterCobrancaClient - Unit tests', () => {
     // Act
     const result = await sut.list({
       provider: BankPaymentProvider.INTER,
+      credentials: makeBankPaymentCredentials(),
       startDate: '2026-01-01',
       endDate: '2026-01-31',
       status: BankPaymentStatus.EMITTED,
@@ -270,7 +252,10 @@ describe('InterCobrancaClient - Unit tests', () => {
     });
 
     // Assert
-    expect(oauthClient.getAccessToken).toHaveBeenCalledWith(InterCobrancaClient.OAUTH_SCOPE);
+    expect(oauthClient.getAccessToken).toHaveBeenCalledWith(
+      InterCobrancaClient.OAUTH_SCOPE,
+      issueInput.credentials,
+    );
     expect(httpService.axiosRef.request).toHaveBeenCalledWith(expect.objectContaining({
       method: 'GET',
       url: 'https://cdpj-sandbox.partners.uatinter.co/cobranca/v3/cobrancas',
@@ -299,6 +284,7 @@ describe('InterCobrancaClient - Unit tests', () => {
   it('should throw BankPaymentRequestError on unsupported list status before HTTP', async() => {
     await expect(sut.list({
       provider: BankPaymentProvider.INTER,
+      credentials: makeBankPaymentCredentials(),
       startDate: '2026-01-01',
       endDate: '2026-01-31',
       status: BankPaymentStatus.PAID,
@@ -314,11 +300,13 @@ describe('InterCobrancaClient - Unit tests', () => {
 
     await expect(sut.list({
       provider: BankPaymentProvider.INTER,
+      credentials: makeBankPaymentCredentials(),
       startDate: '2026-01-01',
       endDate: '2026-01-31',
     })).rejects.toBeInstanceOf(PermanentProviderError);
     await expect(sut.list({
       provider: BankPaymentProvider.INTER,
+      credentials: makeBankPaymentCredentials(),
       startDate: '2026-01-01',
       endDate: '2026-01-31',
     })).rejects.toThrow('Período inválido');
@@ -329,6 +317,7 @@ describe('InterCobrancaClient - Unit tests', () => {
 
     await expect(sut.list({
       provider: BankPaymentProvider.INTER,
+      credentials: makeBankPaymentCredentials(),
       startDate: '2026-01-01',
       endDate: '2026-01-31',
     })).rejects.toBeInstanceOf(ExternalApiError);
@@ -343,11 +332,13 @@ describe('InterCobrancaClient - Unit tests', () => {
     // Act
     const result = await sut.getPdf({
       provider: BankPaymentProvider.INTER,
-      requestCode: 'req-123',
-    });
+      requestCode: 'req-123', credentials: makeBankPaymentCredentials() });
 
     // Assert
-    expect(oauthClient.getAccessToken).toHaveBeenCalledWith(InterCobrancaClient.OAUTH_SCOPE);
+    expect(oauthClient.getAccessToken).toHaveBeenCalledWith(
+      InterCobrancaClient.OAUTH_SCOPE,
+      issueInput.credentials,
+    );
     expect(httpService.axiosRef.request).toHaveBeenCalledWith(expect.objectContaining({
       method: 'GET',
       url: 'https://cdpj-sandbox.partners.uatinter.co/cobranca/v3/cobrancas/req-123/pdf',
@@ -360,8 +351,7 @@ describe('InterCobrancaClient - Unit tests', () => {
     expect(result).toEqual({
       provider: BankPaymentProvider.INTER,
       requestCode: 'req-123',
-      pdf: 'JVBERi0xLjQK',
-    });
+      pdf: 'JVBERi0xLjQK' });
   });
 
   it('should throw ExternalApiError when pdf is missing from response', async() => {
@@ -369,12 +359,10 @@ describe('InterCobrancaClient - Unit tests', () => {
 
     await expect(sut.getPdf({
       provider: BankPaymentProvider.INTER,
-      requestCode: 'req-123',
-    })).rejects.toBeInstanceOf(ExternalApiError);
+      requestCode: 'req-123', credentials: makeBankPaymentCredentials() })).rejects.toBeInstanceOf(ExternalApiError);
     await expect(sut.getPdf({
       provider: BankPaymentProvider.INTER,
-      requestCode: 'req-123',
-    })).rejects.toThrow('Falha ao obter PDF da cobrança no Banco Inter.');
+      requestCode: 'req-123', credentials: makeBankPaymentCredentials() })).rejects.toThrow('Falha ao obter PDF da cobrança no Banco Inter.');
   });
 
   it('should throw BankPaymentNotFoundError on 404 for getPdf', async() => {
@@ -382,8 +370,7 @@ describe('InterCobrancaClient - Unit tests', () => {
 
     await expect(sut.getPdf({
       provider: BankPaymentProvider.INTER,
-      requestCode: 'missing',
-    })).rejects.toBeInstanceOf(BankPaymentNotFoundError);
+      requestCode: 'missing', credentials: makeBankPaymentCredentials() })).rejects.toBeInstanceOf(BankPaymentNotFoundError);
 
     expect(logger.error).toHaveBeenCalledWith(LogContext.BANK_PAYMENT, expect.objectContaining({
       action: 'getPdf',
@@ -400,6 +387,7 @@ describe('InterCobrancaClient - Unit tests', () => {
       provider: BankPaymentProvider.INTER,
       requestCode: 'req-123',
       reason: 'Cliente pediu o cancelamento',
+      credentials: makeBankPaymentCredentials(),
     });
 
     // Assert
@@ -419,8 +407,7 @@ describe('InterCobrancaClient - Unit tests', () => {
 
     await expect(sut.find({
       provider: BankPaymentProvider.INTER,
-      requestCode: 'missing',
-    })).rejects.toBeInstanceOf(BankPaymentNotFoundError);
+      requestCode: 'missing', credentials: makeBankPaymentCredentials() })).rejects.toBeInstanceOf(BankPaymentNotFoundError);
 
     expect(logger.error).toHaveBeenCalledWith(LogContext.BANK_PAYMENT, expect.objectContaining({
       action: 'find',
@@ -466,11 +453,13 @@ describe('InterCobrancaClient - Unit tests', () => {
       provider: BankPaymentProvider.INTER,
       requestCode: 'ab3242a2-2205-4f5e-9f54-32caf508cfe5',
       reason: 'Cancelamento da NFS-e',
+      credentials: makeBankPaymentCredentials(),
     })).rejects.toBeInstanceOf(PermanentProviderError);
     await expect(sut.cancel({
       provider: BankPaymentProvider.INTER,
       requestCode: 'ab3242a2-2205-4f5e-9f54-32caf508cfe5',
       reason: 'Cancelamento da NFS-e',
+      credentials: makeBankPaymentCredentials(),
     })).rejects.toThrow('A cobrança com código de solicitação');
   });
 
@@ -580,7 +569,7 @@ describe('InterCobrancaClient - Unit tests', () => {
   it('should not wrap PermanentProviderError from OAuth into ExternalApiError', async() => {
     // Arrange — getAccessToken lança fora do try do axios; mapThrownError tem de deixar passar.
     const oauthError = new PermanentProviderError(
-      'Credencial OAuth do Banco Inter recusada (HTTP 401). Verifique INTER_CLIENT_ID/INTER_CLIENT_SECRET e o escopo.',
+      'Credencial OAuth do Banco Inter recusada (HTTP 401). Verifique clientId, clientSecret e o escopo no cadastro do banco.',
     );
     oauthClient.getAccessToken.mockRejectedValue(oauthError);
 
@@ -611,8 +600,7 @@ describe('InterCobrancaClient - Unit tests', () => {
     // Act
     await sut.find({
       provider: BankPaymentProvider.INTER,
-      requestCode: 'req/123',
-    });
+      requestCode: 'req/123', credentials: makeBankPaymentCredentials() });
 
     // Assert
     expect(httpService.axiosRef.request).toHaveBeenCalledWith(expect.objectContaining({
@@ -643,8 +631,7 @@ describe('InterCobrancaClient - Unit tests', () => {
     // Act
     await sut.find({
       provider: BankPaymentProvider.INTER,
-      requestCode: 'req-123',
-    });
+      requestCode: 'req-123', credentials: makeBankPaymentCredentials() });
 
     // Assert
     const call = httpService.axiosRef.request.mock.calls[0][0];
@@ -664,6 +651,7 @@ describe('InterCobrancaClient - Unit tests', () => {
       provider: BankPaymentProvider.INTER,
       requestCode: 'missing',
       reason: 'Cliente pediu o cancelamento',
+      credentials: makeBankPaymentCredentials(),
     })).rejects.toBeInstanceOf(BankPaymentNotFoundError);
 
     expect(logger.error).toHaveBeenCalledWith(LogContext.BANK_PAYMENT, expect.objectContaining({

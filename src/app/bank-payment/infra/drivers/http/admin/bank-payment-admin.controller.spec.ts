@@ -93,6 +93,7 @@ describe('BankPaymentAdminController - Unit tests', () => {
   it('should call findAllBankPayment.execute', async() => {
     const queries = {
       provider: BankPaymentProvider.INTER,
+      bankId: 1,
       startDate: '2026-01-01',
       endDate: '2026-01-31',
     };
@@ -111,10 +112,10 @@ describe('BankPaymentAdminController - Unit tests', () => {
 
     const result = await sut.findOne(
       { codigoSolicitacao: 'req-1' },
-      { provider: BankPaymentProvider.INTER },
+      { provider: BankPaymentProvider.INTER, bankId: 1 },
     );
 
-    expect(spy).toHaveBeenCalledWith('req-1', BankPaymentProvider.INTER);
+    expect(spy).toHaveBeenCalledWith('req-1', BankPaymentProvider.INTER, 1);
     expect(result).toBe(output);
   });
 
@@ -124,10 +125,10 @@ describe('BankPaymentAdminController - Unit tests', () => {
 
     const result = await sut.getPdf(
       { codigoSolicitacao: 'req-1' },
-      { provider: BankPaymentProvider.INTER },
+      { provider: BankPaymentProvider.INTER, bankId: 1 },
     );
 
-    expect(spy).toHaveBeenCalledWith('req-1', BankPaymentProvider.INTER);
+    expect(spy).toHaveBeenCalledWith('req-1', BankPaymentProvider.INTER, 1);
     expect(result).toBe(output);
   });
 
@@ -137,11 +138,12 @@ describe('BankPaymentAdminController - Unit tests', () => {
 
     const result = await sut.cancel(
       { codigoSolicitacao: 'req-1' },
-      { provider: BankPaymentProvider.INTER, reason: 'Cliente pediu o cancelamento' },
+      { provider: BankPaymentProvider.INTER, bankId: 1, reason: 'Cliente pediu o cancelamento' },
     );
 
     expect(spy).toHaveBeenCalledWith('req-1', {
       provider: BankPaymentProvider.INTER,
+      bankId: 1,
       reason: 'Cliente pediu o cancelamento',
     });
     expect(result).toBe(output);

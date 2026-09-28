@@ -1,117 +1,103 @@
+import { createMock } from '@golevelup/ts-jest';
 import { Test } from '@nestjs/testing';
-import { PrismaService } from 'src/infra/database/prisma/prisma.service';
-import { BankModule } from '../../../bank.module';
+import { TOKENS } from 'src/core/di/token';
+import type { ISecretsCryptoGateway } from 'src/infra/secrets-crypto/secrets-crypto.gateway';
 import { BankAlreadyExistsError } from '../../../domain/errors/bank-already-exists.error';
 import { BankDto } from '../../dtos/bank.dto';
+import type { IBankDao } from '../../persistence/dao/bank-dao.interface';
 import { CreateBank } from './create-bank.service';
 import { CreateBankInputDto } from './dtos/create-bank.dto';
 
-const baseInput: CreateBankInputDto = {
-  drawer: 'Empresa XYZ Ltda',
-  wallet: '123',
-  account: '12345-6',
-  agency: '0001',
-  bankCode: '001',
-  bankName: 'Banco do Brasil',
-  paymentLocation: null,
-};
+function makeValidCreateBankInput(overrides: Partial<CreateBankInputDto> = {}): CreateBankInputDto {
+  return {
+    drawer: 'Empresa XYZ Ltda',
+    wallet: '123',
+    account: '12345-6',
+    agency: '0001',
+    bankCode: '001',
+    bankName: 'Banco do Brasil',
+    paymentLocation: null,
+    ...overrides,
+  };
+}
 
-describe('CreateBank - Integration tests', () => {
+describe('CreateBank - Unit tests', () => {
   let sut: CreateBank;
-  let prisma: PrismaService;
+  let dao: IBankDao;
+  let secretsCrypto: ISecretsCryptoGateway;
 
-  beforeAll(async() => {
+  beforeEach(async() => {
     const module = await Test.createTestingModule({
-      imports: [BankModule],
+      providers: [
+        CreateBank,
+        { provide: TOKENS.BankDao, useValue: createMock<IBankDao>() },
+        {
+          provide: TOKENS.SecretsCryptoGateway,
+          useValue: createMock<ISecretsCryptoGateway>({
+            encrypt: jest.fn((value: string) => `enc:${value}`),
+          }),
+        },
+      ],
     }).compile();
 
     sut = module.get(CreateBank);
-    prisma = module.get(PrismaService);
-  });
-
-  beforeEach(async() => {
-    await prisma.truncate();
-  });
-
-  afterAll(async() => {
-    await prisma.truncate();
-    await prisma.$disconnect();
+    dao = module.get(TOKENS.BankDao);
+    secretsCrypto = module.get(TOKENS.SecretsCryptoGateway);
   });
 
   it('should be defined', () => {
     expect(sut).toBeDefined();
   });
 
-  it('should throw BankAlreadyExistsError when creating with duplicate bankCode, agency and account', async() => {
+  it('should throw BankAlreadyExistsError when bankCode/agency/account already exist', async() => {
     // Arrange
-    const input: CreateBankInputDto = { ...baseInput };
-    await sut.execute(input);
+    jest.spyOn(dao, 'findByBankCodeAgencyAccount').mockResolvedValue(createMock<BankDto>({ id: 9 }));
 
     // Act & Assert
-    await expect(sut.execute(input)).rejects.toThrow(BankAlreadyExistsError);
+    await expect(sut.execute(makeValidCreateBankInput())).rejects.toThrow(BankAlreadyExistsError);
+    expect(dao.save).not.toHaveBeenCalled();
   });
 
-  it('should create bank and return id', async() => {
+  it('should persist public fields without encrypting when keys are omitted', async() => {
     // Arrange
-    const input: CreateBankInputDto = { ...baseInput, paymentLocation: null };
+    const input = makeValidCreateBankInput();
+    jest.spyOn(dao, 'findByBankCodeAgencyAccount').mockResolvedValue(null);
+    jest.spyOn(dao, 'save').mockResolvedValue(42);
 
     // Act
     const result = await sut.execute(input);
 
     // Assert
-    expect(result.id).toBeDefined();
-    expect(typeof result.id).toBe('number');
-
-    const saved = await prisma.bank.findUnique({ where: { id: result.id } });
-    expect(saved).not.toBeNull();
-    expect(saved).toEqual<BankDto>({
-      id: result.id,
+    expect(result).toEqual({ id: 42 });
+    expect(secretsCrypto.encrypt).not.toHaveBeenCalled();
+    expect(dao.save).toHaveBeenCalledWith(expect.objectContaining({
       drawer: input.drawer,
-      wallet: input.wallet,
-      account: input.account,
-      agency: input.agency,
       bankCode: input.bankCode,
-      bankName: input.bankName,
-      paymentLocation: null,
-      fineRate: null,
-      moraRate: null,
-      active: true,
-      createdAt: expect.any(Date),
-      updatedAt: expect.any(Date),
-    });
+    }));
   });
 
-  it('should create bank with optional paymentLocation', async() => {
+  it('should encrypt keys and return generated webhook token', async() => {
     // Arrange
-    const input: CreateBankInputDto = {
-      ...baseInput,
-      paymentLocation: 'Pagável em qualquer banco até o vencimento',
-    };
+    const input = makeValidCreateBankInput({
+      apiUrl: 'https://cdpj.partners.bancointer.com.br',
+      clientId: 'client-xyz',
+      clientSecret: 'secret-xyz',
+    });
+    jest.spyOn(dao, 'findByBankCodeAgencyAccount').mockResolvedValue(null);
+    jest.spyOn(dao, 'save').mockResolvedValue(7);
 
     // Act
     const result = await sut.execute(input);
 
     // Assert
-    const saved = await prisma.bank.findUnique({ where: { id: result.id } });
-    expect(saved?.paymentLocation).toBe(input.paymentLocation);
-  });
-
-  it('should allow creating bank with same bankCode but different agency/account', async() => {
-    // Arrange
-    const input1: CreateBankInputDto = { ...baseInput };
-    const input2: CreateBankInputDto = {
-      ...baseInput,
-      agency: '0002',
-      account: '65432-1',
-    };
-
-    // Act
-    const result1 = await sut.execute(input1);
-    const result2 = await sut.execute(input2);
-
-    // Assert
-    expect(result1.id).not.toBe(result2.id);
-    const banks = await prisma.bank.findMany();
-    expect(banks).toHaveLength(2);
+    expect(result.id).toBe(7);
+    expect(result.webhookToken).toEqual(expect.any(String));
+    expect(dao.save).toHaveBeenCalledWith(expect.objectContaining({
+      apiUrl: input.apiUrl,
+      clientIdCiphertext: 'enc:client-xyz',
+      clientIdHint: '-xyz',
+      clientSecretCiphertext: 'enc:secret-xyz',
+      webhookTokenHash: expect.any(String),
+    }));
   });
 });

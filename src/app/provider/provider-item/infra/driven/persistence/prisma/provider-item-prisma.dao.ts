@@ -6,7 +6,7 @@ import { IProviderItemDao } from 'src/app/provider/provider-item/application/per
 import { FindAllProviderItemQueryDto } from 'src/app/provider/provider-item/application/usecases/find-all-provider-item/dtos/find-all-provider-item.dto';
 import { ProviderItemInstallmentStatus } from 'src/app/provider/provider-item/domain/enums/provider-item-installment-status.enum';
 import { ProviderItemScheduleType } from 'src/app/provider/provider-item/domain/enums/provider-item-schedule-type.enum';
-import { toBankDto } from 'src/app/global/bank/application/mappers/to-bank.dto';
+import { toBankDtoFromPersistence } from 'src/app/global/bank/application/mappers/to-bank.dto';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 
 const ProviderItemSelect = {
@@ -34,6 +34,14 @@ const ProviderItemSelect = {
       paymentLocation: true,
       fineRate: true,
       moraRate: true,
+      apiUrl: true,
+      clientIdHint: true,
+      clientIdCiphertext: true,
+      clientSecretCiphertext: true,
+      webhookTokenHash: true,
+      certFormat: true,
+      certFilePath: true,
+      certificateNotAfter: true,
       active: true,
       createdAt: true,
       updatedAt: true,
@@ -80,7 +88,7 @@ export class ProviderItemDaoAdapterPrisma implements IProviderItemDao {
       intervalDays: row.intervalDays,
       dueDay: row.dueDay,
       firstDueDate: row.firstDueDate,
-      bank: toBankDto(row.bank),
+      bank: toBankDtoFromPersistence(row.bank),
       active: row.active,
       installments: row.installments.map((installment) => this.toInstallmentDto(installment)),
       createdAt: row.createdAt,

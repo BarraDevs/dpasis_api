@@ -23,6 +23,7 @@ describe('CancelBankPaymentInputDto', () => {
   it('should accept a valid input', async() => {
     const result = await target.transform({
       provider: BankPaymentProvider.INTER,
+      bankId: 1,
       reason: 'Cliente pediu o cancelamento',
     }, metadata);
 
@@ -32,6 +33,7 @@ describe('CancelBankPaymentInputDto', () => {
   it('should trim reason', async() => {
     const result = await target.transform({
       provider: BankPaymentProvider.INTER,
+      bankId: 1,
       reason: '  Cliente pediu o cancelamento  ',
     }, metadata);
 
@@ -42,6 +44,7 @@ describe('CancelBankPaymentInputDto', () => {
     expect.assertions(1);
     return target.transform({
       provider: BankPaymentProvider.INTER,
+      bankId: 1,
       reason: '   ',
     }, metadata).catch((error) => {
       expectMessageToContain(error.getResponse().message, 'reason');
@@ -52,6 +55,7 @@ describe('CancelBankPaymentInputDto', () => {
     expect.assertions(1);
     return target.transform({
       provider: BankPaymentProvider.INTER,
+      bankId: 1,
       reason: 123,
     }, metadata).catch((error) => {
       expectMessageToContain(error.getResponse().message, 'reason');
@@ -62,9 +66,20 @@ describe('CancelBankPaymentInputDto', () => {
     expect.assertions(1);
     return target.transform({
       provider: BankPaymentProvider.INTER,
+      bankId: 1,
       reason: 'a'.repeat(51),
     }, metadata).catch((error) => {
       expectMessageToContain(error.getResponse().message, 'reason');
+    });
+  });
+
+  it('should reject missing bankId', async() => {
+    expect.assertions(1);
+    return target.transform({
+      provider: BankPaymentProvider.INTER,
+      reason: 'Cliente pediu o cancelamento',
+    }, metadata).catch((error) => {
+      expectMessageToContain(error.getResponse().message, 'bankId');
     });
   });
 });

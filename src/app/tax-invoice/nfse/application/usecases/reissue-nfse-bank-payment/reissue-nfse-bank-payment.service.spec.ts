@@ -2,6 +2,7 @@ import { createMock } from '@golevelup/ts-jest';
 import { Test } from '@nestjs/testing';
 import { RecordJobAudit } from 'src/app/audit/application/usecases/record-job-audit/record-job-audit.service';
 import { FindBankPayment } from 'src/app/bank-payment/application/usecases/find-bank-payment/find-bank-payment.service';
+import { FindClientInvoiceConfigByClientId } from 'src/app/client/client-invoice-config/application/usecases/find-client-invoice-config-by-client-id/find-client-invoice-config-by-client-id.service';
 import { NfseNotIssuedForBankPaymentError } from 'src/app/bank-payment/domain/errors/nfse-not-issued-for-bank-payment.error';
 import { TOKENS } from 'src/core/di/token';
 import { BankPaymentDto } from 'src/infra/bank-payment/dtos/bank-payment.dto';
@@ -73,6 +74,12 @@ describe('ReissueNfseBankPayment - Unit tests', () => {
         { provide: TOKENS.NfseRepository, useValue: createMock<INfseRepository>() },
         { provide: TOKENS.NfseQueueProducer, useValue: createMock<INfseQueueProducer>() },
         { provide: FindBankPayment, useValue: createMock<FindBankPayment>() },
+        {
+          provide: FindClientInvoiceConfigByClientId,
+          useValue: createMock<FindClientInvoiceConfigByClientId>({
+            execute: jest.fn().mockResolvedValue({ bank: { id: 1 } }),
+          }),
+        },
         { provide: RecordJobAudit, useValue: createMock<RecordJobAudit>() },
       ],
     }).compile();
@@ -151,7 +158,7 @@ describe('ReissueNfseBankPayment - Unit tests', () => {
     const result = await sut.execute({ nfseId: 1, reason: 'Inter reportou FALHA_EMISSAO' });
 
     // Assert
-    expect(findBankPayment.execute).toHaveBeenCalledWith('req-failed', BankPaymentProvider.INTER);
+    expect(findBankPayment.execute).toHaveBeenCalledWith('req-failed', BankPaymentProvider.INTER, 1);
     expect(result).toEqual({ nfseId: 1, replacedRequestCode: 'req-failed' });
     expect(nfse.props).toMatchObject({
       status: NfseStatus.ISSUED,

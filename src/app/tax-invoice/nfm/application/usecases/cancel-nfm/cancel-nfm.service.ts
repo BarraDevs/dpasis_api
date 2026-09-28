@@ -3,10 +3,12 @@ import { CancelBankPayment } from 'src/app/bank-payment/application/usecases/can
 import { CancelNfse } from 'src/app/tax-invoice/nfse/application/usecases/cancel-nfse/cancel-nfse.service';
 import { NfseCancellationReason } from 'src/app/tax-invoice/nfse/domain/enums/nfse-cancellation-reason.enum';
 import { Nfse } from 'src/app/tax-invoice/nfse/domain/entities/nfse.entity';
+import { FindClientInvoiceConfigByClientId } from 'src/app/client/client-invoice-config/application/usecases/find-client-invoice-config-by-client-id/find-client-invoice-config-by-client-id.service';
 import { TOKENS } from 'src/core/di/token';
 import { BankPaymentProvider } from 'src/infra/bank-payment/enums/bank-payment-provider.enum';
 import { LogContext, type ILoggerGateway } from 'src/infra/logger/logger.gateway';
 import { NfmNotFoundError } from '../../../domain/errors/nfm-not-found.error';
+import { bankIdFromClientInvoiceConfig } from 'src/app/tax-invoice/nfse/application/helpers/bank-id-from-invoice-config';
 import type { INfmRepository } from '../../persistence/repository/nfm-repository.interface';
 import { CancelNfmInputDto, CancelNfmOutputDto } from './dtos/cancel-nfm.dto';
 
@@ -28,6 +30,7 @@ export class CancelNfm {
     @Inject(TOKENS.LoggerGateway) private readonly logger: ILoggerGateway,
     private readonly cancelNfse: CancelNfse,
     private readonly cancelBankPayment: CancelBankPayment,
+    private readonly findClientInvoiceConfigByClientId: FindClientInvoiceConfigByClientId,
   ) {}
 
   public async execute(nfmId: number, input: CancelNfmInputDto): Promise<CancelNfmOutputDto> {
@@ -68,8 +71,13 @@ export class CancelNfm {
     }
 
     try {
+      const bankId = await bankIdFromClientInvoiceConfig(
+        this.findClientInvoiceConfigByClientId,
+        nfse.props.clientId,
+      );
       await this.cancelBankPayment.execute(requestCode, {
         provider: provider as BankPaymentProvider,
+        bankId,
         reason: CancelNfm.buildCancelReason(cancelReasonCode),
       });
 

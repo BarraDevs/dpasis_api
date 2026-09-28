@@ -16,6 +16,7 @@ function expectMessageToContain(message: string | string[], substring: string) {
 
 function makeValidInput(overrides: Partial<IssueBankPaymentInputDto> = {}): IssueBankPaymentInputDto {
   return {
+    bankId: 1,
     provider: BankPaymentProvider.INTER,
     yourNumber: 'INV-1',
     amount: 150.5,

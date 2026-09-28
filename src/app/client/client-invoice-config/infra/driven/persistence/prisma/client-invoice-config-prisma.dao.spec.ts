@@ -11,6 +11,7 @@ import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum'
 import { ConfigModule } from 'src/core/config/config.module';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { ClientInvoiceConfigDaoAdapterPrisma } from './client-invoice-config-prisma.dao';
+import { UNCONFIGURED_BANK_INTEGRATION } from 'src/test/fixtures/unconfigured-bank-dto';
 
 describe('ClientInvoiceConfigDaoAdapterPrisma - Integration tests', () => {
   let sut: ClientInvoiceConfigDaoAdapterPrisma;
@@ -53,6 +54,7 @@ describe('ClientInvoiceConfigDaoAdapterPrisma - Integration tests', () => {
       paymentLocation: null,
       fineRate: null,
       moraRate: null,
+      ...UNCONFIGURED_BANK_INTEGRATION,
       active: true,
       createdAt: bankRow.createdAt,
       updatedAt: bankRow.updatedAt,

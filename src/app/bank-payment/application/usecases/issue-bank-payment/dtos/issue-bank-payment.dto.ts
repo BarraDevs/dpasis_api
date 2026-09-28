@@ -17,6 +17,7 @@ import {
 import { BankPaymentPersonType } from 'src/infra/bank-payment/enums/bank-payment-person-type.enum';
 import { BankPaymentProvider } from 'src/infra/bank-payment/enums/bank-payment-provider.enum';
 import { Trim } from 'src/infra/validators/class/decorators/trim/trim';
+import { StringToNumber } from 'src/infra/validators/class/decorators/string-number/string-number';
 import { IssueBankPaymentOutputDto as GatewayIssueOutput } from 'src/infra/bank-payment/dtos/issue-bank-payment.dto';
 
 export class IssueBankPaymentPayerInputDto {
@@ -110,6 +111,12 @@ export class IssueBankPaymentPayerInputDto {
 }
 
 export class IssueBankPaymentInputDto {
+  @ApiProperty({ example: 1, description: 'Banco cujas credenciais Inter serão usadas' })
+  @StringToNumber()
+  @IsInt({ message: '$property deve ser um número inteiro' })
+  @IsPositive({ message: '$property deve ser positivo' })
+  bankId: number;
+
   @ApiPropertyOptional({ example: 1, description: 'NFS-e de origem; usado só na trilha de tentativas' })
   @IsOptional()
   @IsInt({ message: '$property deve ser um número inteiro' })

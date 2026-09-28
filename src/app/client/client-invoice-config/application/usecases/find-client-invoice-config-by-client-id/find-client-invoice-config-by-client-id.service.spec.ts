@@ -11,6 +11,7 @@ import { ClientType } from 'src/app/client/client/domain/enums/client-type.enum'
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 import { ClientInvoiceConfigDto } from '../../dtos/client-invoice-config.dto';
 import { FindClientInvoiceConfigByClientId } from './find-client-invoice-config-by-client-id.service';
+import { UNCONFIGURED_BANK_INTEGRATION } from 'src/test/fixtures/unconfigured-bank-dto';
 
 describe('FindClientInvoiceConfigByClientId - Integration tests', () => {
   let sut: FindClientInvoiceConfigByClientId;
@@ -53,6 +54,7 @@ describe('FindClientInvoiceConfigByClientId - Integration tests', () => {
       paymentLocation: null,
       fineRate: null,
       moraRate: null,
+      ...UNCONFIGURED_BANK_INTEGRATION,
       active: true,
       createdAt: bankRow.createdAt,
       updatedAt: bankRow.updatedAt,

@@ -4,4 +4,13 @@ export const SENSITIVE_FIELDS = [
   'token',
   'secret',
   'accessPassword',
+  'clientId',
+  'clientSecret',
+  'webhookToken',
+  'pfxPassword',
+  'certPassword',
+  'apiKey',
+  'pfx',
+  'cert',
+  'key',
 ] as const;

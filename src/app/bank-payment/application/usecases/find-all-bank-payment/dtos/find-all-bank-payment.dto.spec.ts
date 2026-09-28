@@ -16,6 +16,7 @@ function expectMessageToContain(message: string | string[], substring: string) {
 
 function makeValidQuery(overrides: Partial<FindAllBankPaymentQueryDto> = {}): FindAllBankPaymentQueryDto {
   return {
+    bankId: 1,
     provider: BankPaymentProvider.INTER,
     startDate: '2026-01-01',
     endDate: '2026-01-31',
@@ -74,6 +75,13 @@ describe('FindAllBankPaymentQueryDto', () => {
     expect.assertions(1);
     return target.transform(makeValidQuery({ status: 'OTHER' as BankPaymentStatus }), metadata).catch((error) => {
       expectMessageToContain(error.getResponse().message, 'status');
+    });
+  });
+
+  it('should reject missing bankId', async() => {
+    expect.assertions(1);
+    return target.transform(makeValidQuery({ bankId: undefined }), metadata).catch((error) => {
+      expectMessageToContain(error.getResponse().message, 'bankId');
     });
   });
 });

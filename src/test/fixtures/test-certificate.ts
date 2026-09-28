@@ -10,6 +10,14 @@ const ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000;
  * para que o caso do certificado vencido também possa ser testado.
  */
 export function buildTestCertificatePem(notAfter: Date = new Date(Date.now() + ONE_YEAR_MS)): string {
+  return buildTestTlsMaterial(notAfter).certPem;
+}
+
+export function buildTestTlsMaterial(notAfter: Date = new Date(Date.now() + ONE_YEAR_MS)): {
+  certPem: string;
+  keyPem: string;
+  notAfter: Date;
+} {
   const keys = forge.pki.rsa.generateKeyPair(1024);
   const cert = forge.pki.createCertificate();
   cert.publicKey = keys.publicKey;
@@ -21,7 +29,11 @@ export function buildTestCertificatePem(notAfter: Date = new Date(Date.now() + O
   cert.setIssuer(attrs);
   cert.sign(keys.privateKey);
 
-  return forge.pki.certificateToPem(cert);
+  return {
+    certPem: forge.pki.certificateToPem(cert),
+    keyPem: forge.pki.privateKeyToPem(keys.privateKey),
+    notAfter,
+  };
 }
 
 export { ONE_YEAR_MS };

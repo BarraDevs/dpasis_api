@@ -88,12 +88,17 @@ export class ProcessIssueNfseBankPayment {
     let bankPayment = snapshot.bankPayment;
     let fineRate: number | null = null;
     let moraRate: number | null = null;
+    let bankId: number;
 
     try {
       const invoiceConfig = await this.findClientInvoiceConfigByClientId.execute(nfse.props.clientId);
       if (!invoiceConfig) {
         throw new ClientInvoiceConfigNotFoundError();
       }
+      if (!invoiceConfig.bank?.id) {
+        throw new AppException('Banco da configuração de faturamento ausente para emissão do boleto.');
+      }
+      bankId = invoiceConfig.bank.id;
       const charges = bankChargesFromDto(invoiceConfig.bank);
       fineRate = charges.fineRate;
       moraRate = charges.moraRate;
@@ -102,12 +107,10 @@ export class ProcessIssueNfseBankPayment {
       }
     }
     catch (error: unknown) {
-      if (!(bankPayment && error instanceof ClientInvoiceConfigNotFoundError)) {
-        const wrapped = error instanceof ClientInvoiceConfigNotFoundError
-          ? new AppException('Configuração de faturamento do cliente ausente para emissão do boleto.')
-          : error;
-        throw await this.failBankPayment(nfse, this.resolveErrorMessage(wrapped), wrapped);
-      }
+      const wrapped = error instanceof ClientInvoiceConfigNotFoundError
+        ? new AppException('Configuração de faturamento do cliente ausente para emissão do boleto.')
+        : error;
+      throw await this.failBankPayment(nfse, this.resolveErrorMessage(wrapped), wrapped);
     }
 
     let issueInput: IssueBankPaymentInputDto;
@@ -119,6 +122,7 @@ export class ProcessIssueNfseBankPayment {
         bankPayment,
         fineRate,
         moraRate,
+        bankId,
       });
     }
     catch (error: unknown) {
@@ -160,6 +164,7 @@ export class ProcessIssueNfseBankPayment {
     if (previouslyRequested) {
       const existing = await this.findBankPaymentByYourNumber.execute({
         provider: BankPaymentProvider.INTER,
+        bankId: issueInput.bankId,
         yourNumber: issueInput.yourNumber,
         amount: issueInput.amount,
         dueDate: issueInput.dueDate,
@@ -309,7 +314,7 @@ export class ProcessIssueNfseBankPayment {
   ): Promise<IssueBankPaymentOutputDto> {
     let existing: BankPaymentDto;
     try {
-      existing = await this.findBankPayment.execute(error.requestCode, BankPaymentProvider.INTER);
+      existing = await this.findBankPayment.execute(error.requestCode, BankPaymentProvider.INTER, expected.bankId);
     }
     catch (lookupError: unknown) {
       throw await this.handleProviderFailure(nfse, lookupError, expected.dueDate);

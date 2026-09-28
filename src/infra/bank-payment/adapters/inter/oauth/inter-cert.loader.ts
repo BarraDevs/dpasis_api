@@ -1,4 +1,4 @@
-import { readFileSync, statSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import * as forge from 'node-forge';
 import { InterOauthConfigError } from './errors/inter-oauth-config.error';
 
@@ -10,106 +10,66 @@ export type InterCertMaterial = {
 };
 
 export class InterCertLoader {
-  /**
-   * Mesma disciplina do `GissPfxLoader`: a chave inclui `mtime` e tamanho dos dois arquivos, então
-   * sobrescrever o certificado em disco invalida o cache sozinho.
-   *
-   * Antes o material ficava guardado no campo de cada cliente (`InterCobrancaClient` e
-   * `InterOauthClient`), sem nenhuma invalidação — trocar o `.crt` exigia reiniciar a aplicação,
-   * ao contrário do que `docs/runbook-certificados.md` §3 prometia. Com o certificado de sandbox
-   * vencendo em plena janela de homologação, essa diferença é a troca acontecer no ar ou virar
-   * indisponibilidade.
-   */
   private static readonly cache = new Map<string, InterCertMaterial>();
 
-  public static load(certPath: string, keyPath: string): InterCertMaterial {
-    if (!certPath?.trim()) {
-      throw new InterOauthConfigError('Caminho do certificado Inter (INTER_CERT_PATH) não está definido');
+  public static loadFromPem(certPem: string, keyPem: string): InterCertMaterial {
+    if (!certPem?.trim()) {
+      throw new InterOauthConfigError('Certificado Inter (PEM) não está definido');
     }
-    if (!keyPath?.trim()) {
-      throw new InterOauthConfigError('Caminho da chave privada Inter (INTER_KEY_PATH) não está definido');
+    if (!keyPem?.trim()) {
+      throw new InterOauthConfigError('Chave privada Inter (PEM) não está definida');
     }
 
-    const cacheKey = this.buildCacheKey(certPath, keyPath);
-    const cached = cacheKey ? this.cache.get(cacheKey) : undefined;
+    const cacheKey = this.hashMaterial(certPem, keyPem);
+    const cached = this.cache.get(cacheKey);
     if (cached) {
-      // A validade é conferida fora do cache: um certificado carregado hoje vence amanhã com o
-      // processo ainda de pé.
-      this.ensureNotAfterInFuture(cached.notAfter, certPath);
+      this.ensureNotAfterInFuture(cached.notAfter);
       return cached;
     }
 
-    const material = this.parse(certPath, keyPath);
-    if (cacheKey) {
-      this.cache.set(cacheKey, material);
-    }
+    const material = this.parsePem(certPem, keyPem);
+    this.cache.set(cacheKey, material);
     return material;
   }
 
-  /** Descarta o material em memória. Existe para os testes e para uma troca manual de certificado. */
+  /** Descarta o material em memória. Existe para os testes e para uma troca de certificado. */
   public static clearCache(): void {
     this.cache.clear();
   }
 
-  private static buildCacheKey(certPath: string, keyPath: string): string | null {
-    try {
-      const certStats = statSync(certPath);
-      const keyStats = statSync(keyPath);
-      return `${certPath}|${certStats.mtimeMs}|${certStats.size}`
-        + `|${keyPath}|${keyStats.mtimeMs}|${keyStats.size}`;
-    }
-    catch {
-      // Arquivo ausente: deixa `parse` lançar o erro de configuração com a mensagem certa.
-      return null;
-    }
+  private static hashMaterial(certPem: string, keyPem: string): string {
+    return createHash('sha256').update(certPem).update('\0').update(keyPem).digest('hex');
   }
 
-  private static parse(certPath: string, keyPath: string): InterCertMaterial {
-    let cert: Buffer;
-    try {
-      cert = readFileSync(certPath);
-    }
-    catch {
-      throw new InterOauthConfigError(`Certificado Inter não encontrado em "${certPath}"`);
-    }
+  private static parsePem(certPem: string, keyPem: string): InterCertMaterial {
+    const notAfter = this.ensureNotExpired(certPem);
 
-    let key: Buffer;
-    try {
-      key = readFileSync(keyPath);
-    }
-    catch {
-      throw new InterOauthConfigError(`Chave privada Inter não encontrada em "${keyPath}"`);
-    }
-
-    const notAfter = this.ensureNotExpired(cert, certPath);
-
-    return { cert, key, notAfter };
+    return {
+      cert: Buffer.from(certPem),
+      key: Buffer.from(keyPem),
+      notAfter,
+    };
   }
 
-  /**
-   * Sem isto, um certificado vencido aparece como erro de handshake TLS que o cliente de cobrança
-   * colapsa em `ExternalApiError` genérico — indistinguível de instabilidade de rede. O job esgota
-   * as tentativas e a NFS-e fica emitida sem boleto, sem ninguém saber por quê.
-   */
-  private static ensureNotExpired(cert: Buffer, certPath: string): Date {
+  private static ensureNotExpired(certPem: string): Date {
     let notAfter: Date;
 
     try {
-      notAfter = forge.pki.certificateFromPem(cert.toString()).validity.notAfter;
+      notAfter = forge.pki.certificateFromPem(certPem).validity.notAfter;
     }
     catch {
-      throw new InterOauthConfigError(`Certificado Inter em "${certPath}" não é um PEM válido`);
+      throw new InterOauthConfigError('Certificado Inter não é um PEM válido');
     }
 
-    this.ensureNotAfterInFuture(notAfter, certPath);
+    this.ensureNotAfterInFuture(notAfter);
 
     return notAfter;
   }
 
-  private static ensureNotAfterInFuture(notAfter: Date, certPath: string): void {
+  private static ensureNotAfterInFuture(notAfter: Date): void {
     if (notAfter.getTime() <= Date.now()) {
       throw new InterOauthConfigError(
-        `Certificado Inter em "${certPath}" venceu em ${notAfter.toISOString()}`,
+        `Certificado Inter venceu em ${notAfter.toISOString()}`,
       );
     }
   }

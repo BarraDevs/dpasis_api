@@ -1,15 +1,16 @@
 import { createMock } from '@golevelup/ts-jest';
-import { Test } from '@nestjs/testing';
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import * as forge from 'node-forge';
 import type { ICompanyNfsConfigDao } from 'src/app/company/company-nfs-config/application/persistence/dao/company-nfs-config-dao.interface';
 import { CompanyNfsConfigDto } from 'src/app/company/company-nfs-config/application/dtos/company-nfs-config.dto';
+import { InspectBankCertificates } from 'src/app/global/bank/application/usecases/inspect-bank-certificates/inspect-bank-certificates.service';
 import { ConfigService } from 'src/core/config/config.service';
 import { TOKENS } from 'src/core/di/token';
 import { GissPfxLoader } from 'src/infra/nfs-generation/adapters/giss/signing/giss-pfx-loader';
-import { buildTestCertificatePem, ONE_YEAR_MS } from 'src/test/fixtures/test-certificate';
+import { Test } from '@nestjs/testing';
+import { ONE_YEAR_MS } from 'src/test/fixtures/test-certificate';
 import { CheckCertificates } from './check-certificates.service';
 import { CertificateHealthStatus } from './dtos/check-certificates.dto';
 
@@ -46,43 +47,42 @@ function makeConfig(certFilePath: string, overrides: Partial<CompanyNfsConfigDto
 describe('CheckCertificates - Unit tests', () => {
   let sut: CheckCertificates;
   let companyNfsConfigDao: ICompanyNfsConfigDao;
+  let inspectBankCertificates: InspectBankCertificates;
   let dir: string;
-  // Objeto mutável em vez de `createMock`: os getters do `ConfigService` não existem no mock, e cada
-  // caso precisa ligar e desligar provedor.
-  let config: {
-    gissProviderEnabled: boolean;
-    interProviderEnabled: boolean;
-    interCertPath: string;
-    interKeyPath: string;
-  };
+  let config: { gissProviderEnabled: boolean };
 
   beforeEach(async() => {
     GissPfxLoader.clearCache();
     dir = mkdtempSync(join(tmpdir(), 'check-certificates-'));
     process.env[PASSWORD_ENV_VAR] = PASSWORD;
-
-    config = {
-      gissProviderEnabled: true,
-      interProviderEnabled: false,
-      interCertPath: '',
-      interKeyPath: '',
-    };
+    config = { gissProviderEnabled: true };
 
     const module = await Test.createTestingModule({
       providers: [
         CheckCertificates,
         { provide: TOKENS.CompanyNfsConfigDao, useValue: createMock<ICompanyNfsConfigDao>() },
         { provide: ConfigService, useValue: config as unknown as ConfigService },
+        {
+          provide: InspectBankCertificates,
+          useValue: createMock<InspectBankCertificates>({
+            execute: jest.fn().mockResolvedValue([]),
+          }),
+        },
       ],
     }).compile();
 
     sut = module.get(CheckCertificates);
     companyNfsConfigDao = module.get(TOKENS.CompanyNfsConfigDao);
+    inspectBankCertificates = module.get(InspectBankCertificates);
   });
 
   afterEach(() => {
     delete process.env[PASSWORD_ENV_VAR];
     rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('should be defined', () => {
+    expect(sut).toBeDefined();
   });
 
   it('should report a healthy Giss certificate with its expiry date', async() => {
@@ -105,7 +105,7 @@ describe('CheckCertificates - Unit tests', () => {
   });
 
   it('should flag a certificate inside the 30-day warning window', async() => {
-    // Arrange — 30 dias é o prazo mínimo para emitir e instalar um certificado novo.
+    // Arrange
     const path = join(dir, 'expiring.pfx');
     writeFileSync(path, buildPfx(new Date(Date.now() + 10 * 24 * 60 * 60 * 1000)));
     jest.spyOn(companyNfsConfigDao, 'findAll').mockResolvedValue([makeConfig(path)]);
@@ -132,7 +132,7 @@ describe('CheckCertificates - Unit tests', () => {
   });
 
   it('should not blow up when the certificate file is missing', async() => {
-    // Arrange — um healthcheck que cai por causa do problema que reporta não serve para nada.
+    // Arrange
     jest.spyOn(companyNfsConfigDao, 'findAll').mockResolvedValue([makeConfig(join(dir, 'missing.pfx'))]);
 
     // Act
@@ -146,26 +146,48 @@ describe('CheckCertificates - Unit tests', () => {
     });
   });
 
-  it('should check the Inter certificate when the provider is enabled', async() => {
+  it('should check Inter certificates returned by InspectBankCertificates', async() => {
     // Arrange
-    const certPath = join(dir, 'inter.crt');
-    const keyPath = join(dir, 'inter.key');
-    writeFileSync(certPath, buildTestCertificatePem());
-    writeFileSync(keyPath, 'key');
-    jest.spyOn(companyNfsConfigDao, 'findAll').mockResolvedValue([]);
     config.gissProviderEnabled = false;
-    config.interProviderEnabled = true;
-    config.interCertPath = certPath;
-    config.interKeyPath = keyPath;
+    const notAfter = new Date(Date.now() + ONE_YEAR_MS);
+    jest.spyOn(inspectBankCertificates, 'execute').mockResolvedValue([{
+      bankId: 12,
+      owner: 'banco 12 · Drawer Inter',
+      path: '12/cert.enc',
+      notAfter,
+      loadError: null,
+    }]);
 
     // Act
     const result = await sut.execute();
 
     // Assert
-    expect(result.certificates).toEqual([expect.objectContaining({ provider: 'INTER' })]);
+    expect(result.certificates).toEqual([expect.objectContaining({
+      provider: 'INTER',
+      owner: 'banco 12 · Drawer Inter',
+      status: CertificateHealthStatus.Ok,
+    })]);
   });
 
-  it('should skip providers that are turned off', async() => {
+  it('should mark Inter certificate as expired when inspect reports vencimento', async() => {
+    // Arrange
+    config.gissProviderEnabled = false;
+    jest.spyOn(inspectBankCertificates, 'execute').mockResolvedValue([{
+      bankId: 12,
+      owner: 'banco 12',
+      path: '12/cert.enc',
+      notAfter: new Date('2020-01-01T00:00:00.000Z'),
+      loadError: 'O certificado venceu em 2020-01-01T00:00:00.000Z.',
+    }]);
+
+    // Act
+    const result = await sut.execute();
+
+    // Assert
+    expect(result.certificates[0].status).toBe(CertificateHealthStatus.Expired);
+  });
+
+  it('should skip Giss when the provider is turned off and Inter has no certificates', async() => {
     // Arrange
     config.gissProviderEnabled = false;
 

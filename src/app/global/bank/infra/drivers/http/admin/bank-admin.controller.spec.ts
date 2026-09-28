@@ -10,7 +10,12 @@ import { EditBank } from 'src/app/global/bank/application/usecases/edit-bank/edi
 import { FindAllBankQueryDto } from 'src/app/global/bank/application/usecases/find-all-bank/dtos/find-all-bank.dto';
 import { FindAllBank } from 'src/app/global/bank/application/usecases/find-all-bank/find-all-bank.service';
 import { FindBankById } from 'src/app/global/bank/application/usecases/find-bank-by-id/find-bank-by-id.service';
+import { RotateBankWebhookTokenOutputDto } from 'src/app/global/bank/application/usecases/rotate-bank-webhook-token/dtos/rotate-bank-webhook-token.dto';
+import { RotateBankWebhookToken } from 'src/app/global/bank/application/usecases/rotate-bank-webhook-token/rotate-bank-webhook-token.service';
 import { UpdateBankStatus } from 'src/app/global/bank/application/usecases/update-bank-status/update-bank-status.service';
+import type { UploadBankCertificateFiles } from 'src/app/global/bank/application/usecases/upload-bank-certificate/dtos/upload-bank-certificate.dto';
+import { UploadBankCertificateInputDto } from 'src/app/global/bank/application/usecases/upload-bank-certificate/dtos/upload-bank-certificate.dto';
+import { UploadBankCertificate } from 'src/app/global/bank/application/usecases/upload-bank-certificate/upload-bank-certificate.service';
 import { SuccessMessage } from 'src/core/dtos/success-message.dto';
 import { Params } from 'src/infra/validators/class/dtos/params';
 import { IPagination } from 'src/shared/value-objects/pagination/pagination.vo';
@@ -24,6 +29,8 @@ describe('BankAdminController - Unit tests', () => {
   let editBankService: EditBank;
   let updateBankStatusService: UpdateBankStatus;
   let deleteBankService: DeleteBank;
+  let uploadBankCertificate: UploadBankCertificate;
+  let rotateBankWebhookToken: RotateBankWebhookToken;
 
   beforeEach(async() => {
     const module = await Test.createTestingModule({
@@ -36,6 +43,8 @@ describe('BankAdminController - Unit tests', () => {
         { provide: EditBank, useValue: createMock<EditBank>() },
         { provide: UpdateBankStatus, useValue: createMock<UpdateBankStatus>() },
         { provide: DeleteBank, useValue: createMock<DeleteBank>() },
+        { provide: UploadBankCertificate, useValue: createMock<UploadBankCertificate>() },
+        { provide: RotateBankWebhookToken, useValue: createMock<RotateBankWebhookToken>() },
       ],
     }).compile();
 
@@ -46,6 +55,8 @@ describe('BankAdminController - Unit tests', () => {
     editBankService = module.get(EditBank);
     updateBankStatusService = module.get(UpdateBankStatus);
     deleteBankService = module.get(DeleteBank);
+    uploadBankCertificate = module.get(UploadBankCertificate);
+    rotateBankWebhookToken = module.get(RotateBankWebhookToken);
   });
 
   it('should be defined', () => {
@@ -143,6 +154,34 @@ describe('BankAdminController - Unit tests', () => {
 
       expect(result).toEqual(output);
       expect(removeSpy).toHaveBeenCalledWith(params.id);
+    });
+  });
+
+  describe('uploadCertificate', () => {
+    it('should call uploadBankCertificate.execute with params, files and body', async() => {
+      const params = createMock<Params>();
+      const body = createMock<UploadBankCertificateInputDto>();
+      const files = createMock<UploadBankCertificateFiles>();
+      const output = createMock<SuccessMessage>();
+      const spy = jest.spyOn(uploadBankCertificate, 'execute').mockResolvedValue(output);
+
+      const result = await sut.uploadCertificate(params, body, files);
+
+      expect(result).toEqual(output);
+      expect(spy).toHaveBeenCalledWith(params.id, files, body);
+    });
+  });
+
+  describe('rotateWebhookToken', () => {
+    it('should call rotateBankWebhookToken.execute with params.id', async() => {
+      const params = createMock<Params>();
+      const output = createMock<RotateBankWebhookTokenOutputDto>();
+      const spy = jest.spyOn(rotateBankWebhookToken, 'execute').mockResolvedValue(output);
+
+      const result = await sut.rotateWebhookToken(params);
+
+      expect(result).toEqual(output);
+      expect(spy).toHaveBeenCalledWith(params.id);
     });
   });
 });

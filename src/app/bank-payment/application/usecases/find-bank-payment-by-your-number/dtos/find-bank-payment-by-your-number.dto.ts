@@ -2,6 +2,7 @@ import { BankPaymentProvider } from 'src/infra/bank-payment/enums/bank-payment-p
 
 export class FindBankPaymentByYourNumberInputDto {
   provider: BankPaymentProvider;
+  bankId: number;
   yourNumber: string;
   amount: number;
   dueDate: string;

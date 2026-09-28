@@ -7,6 +7,7 @@ import { BankPaymentStatus } from '../../enums/bank-payment-status.enum';
 import { BankPaymentProviderNotSupportedError } from '../../errors/bank-payment-provider-not-supported.error';
 import type { IBankPaymentStrategy } from '../../strategies/bank-payment.strategy';
 import { BankPaymentStrategyAdapterGateway } from './bank-payment-strategy.gateway';
+import { makeBankPaymentCredentials } from 'src/test/fixtures/bank-payment-credentials';
 
 describe('BankPaymentStrategyAdapterGateway - Unit tests', () => {
   let sut: BankPaymentStrategyAdapterGateway;
@@ -17,8 +18,7 @@ describe('BankPaymentStrategyAdapterGateway - Unit tests', () => {
       provider: BankPaymentProvider.INTER,
       issue: jest.fn().mockResolvedValue({
         provider: BankPaymentProvider.INTER,
-        requestCode: 'req-1',
-      }),
+        requestCode: 'req-1' }),
       find: jest.fn().mockResolvedValue({
         provider: BankPaymentProvider.INTER,
         requestCode: 'req-1',
@@ -40,8 +40,7 @@ describe('BankPaymentStrategyAdapterGateway - Unit tests', () => {
       getPdf: jest.fn().mockResolvedValue({
         provider: BankPaymentProvider.INTER,
         requestCode: 'req-1',
-        pdf: 'JVBERi0xLjQK',
-      }),
+        pdf: 'JVBERi0xLjQK' }),
     });
 
     const module = await Test.createTestingModule({
@@ -68,6 +67,7 @@ describe('BankPaymentStrategyAdapterGateway - Unit tests', () => {
       amount: 10,
       dueDate: '2026-09-01',
       daysAfterDue: 30,
+      credentials: makeBankPaymentCredentials(),
       payer: {
         document: '1',
         personType: BankPaymentPersonType.INDIVIDUAL,
@@ -80,18 +80,18 @@ describe('BankPaymentStrategyAdapterGateway - Unit tests', () => {
     expect(interStrategy.issue).toHaveBeenCalledWith(input);
     expect(result).toEqual({
       provider: BankPaymentProvider.INTER,
-      requestCode: 'req-1',
-    });
+      requestCode: 'req-1' });
   });
 
   it('should delegate find, getPdf and cancel', async() => {
     // Arrange
-    const findInput = { provider: BankPaymentProvider.INTER, requestCode: 'req-1' };
-    const getPdfInput = { provider: BankPaymentProvider.INTER, requestCode: 'req-1' };
+    const findInput = { provider: BankPaymentProvider.INTER, requestCode: 'req-1', credentials: makeBankPaymentCredentials() };
+    const getPdfInput = { provider: BankPaymentProvider.INTER, requestCode: 'req-1', credentials: makeBankPaymentCredentials() };
     const cancelInput = {
       provider: BankPaymentProvider.INTER,
       requestCode: 'req-1',
       reason: 'Cliente pediu o cancelamento',
+      credentials: makeBankPaymentCredentials(),
     };
 
     // Act
@@ -108,6 +108,7 @@ describe('BankPaymentStrategyAdapterGateway - Unit tests', () => {
   it('should delegate list to matching strategy', async() => {
     const listInput = {
       provider: BankPaymentProvider.INTER,
+      credentials: makeBankPaymentCredentials(),
       startDate: '2026-01-01',
       endDate: '2026-01-31',
     };
@@ -129,6 +130,7 @@ describe('BankPaymentStrategyAdapterGateway - Unit tests', () => {
       amount: 10,
       dueDate: '2026-09-01',
       daysAfterDue: 30,
+      credentials: makeBankPaymentCredentials(),
       payer: {
         document: '1',
         personType: BankPaymentPersonType.INDIVIDUAL,

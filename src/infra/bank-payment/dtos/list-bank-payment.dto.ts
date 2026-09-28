@@ -1,5 +1,6 @@
 import { BankPaymentProvider } from '../enums/bank-payment-provider.enum';
 import { BankPaymentStatus } from '../enums/bank-payment-status.enum';
+import { BankPaymentCredentialsDto } from './bank-payment-credentials.dto';
 import { BankPaymentDto } from './bank-payment.dto';
 
 export class ListBankPaymentInputDto {
@@ -13,6 +14,7 @@ export class ListBankPaymentInputDto {
   payerDocument?: string;
   page?: number;
   size?: number;
+  credentials: BankPaymentCredentialsDto;
 }
 
 export class ListBankPaymentOutputDto {

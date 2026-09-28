@@ -118,7 +118,7 @@ export class BankPaymentAdminController {
     @Param() params: BankPaymentRequestCodeParams,
     @Query() query: FindBankPaymentQueryDto,
   ): Promise<BankPaymentPdfDto> {
-    return this.getBankPaymentPdf.execute(params.codigoSolicitacao, query.provider);
+    return this.getBankPaymentPdf.execute(params.codigoSolicitacao, query.provider, query.bankId);
   }
 
   @Get(':codigoSolicitacao')
@@ -135,7 +135,7 @@ export class BankPaymentAdminController {
     @Param() params: BankPaymentRequestCodeParams,
     @Query() query: FindBankPaymentQueryDto,
   ): Promise<BankPaymentDto> {
-    return this.findBankPayment.execute(params.codigoSolicitacao, query.provider);
+    return this.findBankPayment.execute(params.codigoSolicitacao, query.provider, query.bankId);
   }
 
   @Post(':codigoSolicitacao/cancel')

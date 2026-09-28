@@ -74,18 +74,27 @@ function makeSnapshot(overrides: Partial<NfseIssueSnapshot> = {}): NfseIssueSnap
 }
 
 function makeInvoiceConfig(overrides: Partial<ClientInvoiceConfigDto> = {}): ClientInvoiceConfigDto {
-  return createMock<ClientInvoiceConfigDto>({
+  const { bank, ...rest } = overrides;
+  const dto = createMock<ClientInvoiceConfigDto>({
     type: ClientInvoiceConfigType.MONTHLY,
     dueDateType: ClientInvoiceConfigDueDateType.DUE_DATE,
     dueDateDay: 15,
     dueMonth: null,
     deadlineDays: null,
-    bank: {
+    ...rest,
+  });
+  if ('bank' in overrides && bank === undefined) {
+    (dto as { bank?: ClientInvoiceConfigDto['bank'] }).bank = undefined;
+  }
+  else {
+    dto.bank = {
+      id: 1,
       fineRate: null,
       moraRate: null,
-    } as ClientInvoiceConfigDto['bank'],
-    ...overrides,
-  });
+      ...bank,
+    } as ClientInvoiceConfigDto['bank'];
+  }
+  return dto;
 }
 
 function makeNfseProps(overrides: Partial<NfseProps> = {}): NfseProps {
@@ -150,6 +159,7 @@ describe('ProcessIssueNfseBankPayment - Unit tests', () => {
     findBankPayment = module.get(FindBankPayment);
     findBankPaymentByYourNumber = module.get(FindBankPaymentByYourNumber);
     findClientInvoiceConfigByClientId = module.get(FindClientInvoiceConfigByClientId);
+    jest.spyOn(findClientInvoiceConfigByClientId, 'execute').mockResolvedValue(makeInvoiceConfig());
   });
 
   it('should be defined', () => {
@@ -235,6 +245,7 @@ describe('ProcessIssueNfseBankPayment - Unit tests', () => {
     });
     expect(issueBankPayment.execute).toHaveBeenCalledWith(expect.objectContaining({
       provider: BankPaymentProvider.INTER,
+      bankId: 1,
       yourNumber: '1',
       amount: 1000,
       fineRate: null,
@@ -353,6 +364,7 @@ describe('ProcessIssueNfseBankPayment - Unit tests', () => {
     jest.spyOn(nfseRepository, 'findById').mockResolvedValue(nfse);
     jest.spyOn(findClientInvoiceConfigByClientId, 'execute').mockResolvedValue(makeInvoiceConfig({
       bank: {
+        id: 1,
         fineRate: 2,
         moraRate: 1,
       } as ClientInvoiceConfigDto['bank'],
@@ -372,31 +384,36 @@ describe('ProcessIssueNfseBankPayment - Unit tests', () => {
     }));
   });
 
-  it('should issue without charges when snapshot has bankPayment and invoice config is missing', async() => {
+  it('should fail the job when snapshot has bankPayment and invoice config is missing', async() => {
     // Arrange
     const nfse = NfseFactory.load(makeNfseProps());
     jest.spyOn(nfseRepository, 'findById').mockResolvedValue(nfse);
     jest.spyOn(findClientInvoiceConfigByClientId, 'execute').mockRejectedValue(new ClientInvoiceConfigNotFoundError());
-    jest.spyOn(issueBankPayment, 'execute').mockResolvedValue({
-      provider: BankPaymentProvider.INTER,
-      requestCode: 'req-snapshot',
-    });
     const loggerSpy = jest.spyOn(logger, 'error');
 
-    // Act
-    const result = await sut.execute({ nfseId: 1 });
+    // Act & Assert
+    await expect(sut.execute({ nfseId: 1 })).rejects.toThrow(PermanentProviderError);
+    expect(issueBankPayment.execute).not.toHaveBeenCalled();
+    expect(loggerSpy).toHaveBeenCalled();
+    expect(nfse.props.bankPaymentErrorMessage).toBe(
+      'Configuração de faturamento do cliente ausente para emissão do boleto.',
+    );
+  });
 
-    // Assert
-    expect(result).toEqual({
-      provider: BankPaymentProvider.INTER,
-      requestCode: 'req-snapshot',
-    });
-    expect(issueBankPayment.execute).toHaveBeenCalledWith(expect.objectContaining({
-      fineRate: null,
-      moraRate: null,
+  it('should fail the job when invoice config has no bank id', async() => {
+    // Arrange
+    const nfse = NfseFactory.load(makeNfseProps());
+    jest.spyOn(nfseRepository, 'findById').mockResolvedValue(nfse);
+    jest.spyOn(findClientInvoiceConfigByClientId, 'execute').mockResolvedValue(makeInvoiceConfig({
+      bank: undefined,
     }));
-    expect(loggerSpy).not.toHaveBeenCalled();
-    expect(nfseRepository.edit).toHaveBeenCalledWith(nfse);
+
+    // Act & Assert
+    await expect(sut.execute({ nfseId: 1 })).rejects.toThrow(PermanentProviderError);
+    expect(issueBankPayment.execute).not.toHaveBeenCalled();
+    expect(nfse.props.bankPaymentErrorMessage).toBe(
+      'Banco da configuração de faturamento ausente para emissão do boleto.',
+    );
   });
 
   it('should fail the job when snapshot has bankPayment and invoice config lookup fails with a generic error', async() => {
@@ -739,6 +756,7 @@ describe('ProcessIssueNfseBankPayment - Unit tests', () => {
       // Assert
       expect(findBankPaymentByYourNumber.execute).toHaveBeenCalledWith({
         provider: BankPaymentProvider.INTER,
+        bankId: 1,
         yourNumber: '1',
         amount: 1000,
         dueDate: '2026-08-20',
@@ -819,7 +837,7 @@ describe('ProcessIssueNfseBankPayment - Unit tests', () => {
       const result = await sut.execute({ nfseId: 1 });
 
       // Assert
-      expect(findBankPayment.execute).toHaveBeenCalledWith(EXISTING_REQUEST_CODE, BankPaymentProvider.INTER);
+      expect(findBankPayment.execute).toHaveBeenCalledWith(EXISTING_REQUEST_CODE, BankPaymentProvider.INTER, 1);
       expect(result).toEqual({ provider: BankPaymentProvider.INTER, requestCode: EXISTING_REQUEST_CODE });
       expect(nfse.props).toMatchObject({
         bankPaymentProvider: BankPaymentProvider.INTER,

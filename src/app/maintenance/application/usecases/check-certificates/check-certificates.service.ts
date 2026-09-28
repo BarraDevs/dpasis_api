@@ -1,8 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
 import type { ICompanyNfsConfigDao } from 'src/app/company/company-nfs-config/application/persistence/dao/company-nfs-config-dao.interface';
+import { InspectBankCertificates } from 'src/app/global/bank/application/usecases/inspect-bank-certificates/inspect-bank-certificates.service';
 import { ConfigService } from 'src/core/config/config.service';
 import { TOKENS } from 'src/core/di/token';
-import { InterCertLoader } from 'src/infra/bank-payment/adapters/inter/oauth/inter-cert.loader';
 import { GissPfxLoader } from 'src/infra/nfs-generation/adapters/giss/signing/giss-pfx-loader';
 import {
   CertificateHealthDto,
@@ -20,6 +20,7 @@ export class CheckCertificates {
   constructor(
     @Inject(TOKENS.CompanyNfsConfigDao) private readonly companyNfsConfigDao: ICompanyNfsConfigDao,
     private readonly configService: ConfigService,
+    private readonly inspectBankCertificates: InspectBankCertificates,
   ) {}
 
   /**
@@ -33,7 +34,7 @@ export class CheckCertificates {
   public async execute(): Promise<CheckCertificatesOutputDto> {
     const certificates: CertificateHealthDto[] = [
       ...await this.checkGissCertificates(),
-      ...this.checkInterCertificate(),
+      ...await this.checkInterCertificates(),
     ];
 
     return { certificates, status: CheckCertificates.worstStatus(certificates) };
@@ -54,19 +55,38 @@ export class CheckCertificates {
     ));
   }
 
-  private checkInterCertificate(): CertificateHealthDto[] {
-    if (!this.configService.interProviderEnabled) {
-      return [];
-    }
+  private async checkInterCertificates(): Promise<CertificateHealthDto[]> {
+    const inspections = await this.inspectBankCertificates.execute();
 
-    const certPath = this.configService.interCertPath;
+    return inspections.map((item) => {
+      if (item.loadError) {
+        const expired = /venceu em/.test(item.loadError);
+        return {
+          provider: 'INTER',
+          owner: item.owner,
+          path: item.path,
+          notAfter: item.notAfter?.toISOString() ?? null,
+          daysToExpire: null,
+          status: expired ? CertificateHealthStatus.Expired : CertificateHealthStatus.Error,
+          message: item.loadError,
+        };
+      }
 
-    return [this.inspect(
-      'INTER',
-      'mTLS da API de cobrança',
-      certPath,
-      () => InterCertLoader.load(certPath, this.configService.interKeyPath).notAfter,
-    )];
+      const notAfter = item.notAfter ?? new Date(0);
+      const daysToExpire = Math.floor((notAfter.getTime() - Date.now()) / ONE_DAY_IN_MS);
+
+      return {
+        provider: 'INTER',
+        owner: item.owner,
+        path: item.path,
+        notAfter: item.notAfter?.toISOString() ?? null,
+        daysToExpire,
+        status: daysToExpire <= CERTIFICATE_WARNING_THRESHOLDS_IN_DAYS[0]
+          ? CertificateHealthStatus.Expiring
+          : CertificateHealthStatus.Ok,
+        message: null,
+      };
+    });
   }
 
   private inspect(provider: string, owner: string, path: string, readNotAfter: ()=> Date): CertificateHealthDto {
@@ -88,9 +108,6 @@ export class CheckCertificates {
     }
     catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error);
-
-      // O loader recusa um certificado vencido com a data na mensagem: é vencimento, não defeito de
-      // leitura, e a diferença muda o que a operação faz a seguir.
       const expired = /venceu em/.test(message);
 
       return {

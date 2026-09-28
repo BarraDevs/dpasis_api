@@ -5,14 +5,21 @@ do fluxo NFM: [guia-fluxo-nfm-portal-web.md](guia-fluxo-nfm-portal-web.md) §8.3
 
 ## Base URL
 
-Rotas de **consulta** do boleto no admin **não mudaram**:
+Rotas de **consulta** do boleto no admin **ganharam `bankId` obrigatório** (credenciais Inter agora
+são por banco, não por `.env`):
 
-- `GET /admin/nfm` e `GET /admin/nfm/:id` — JWT admin, claims de NFM
-- `GET /admin/bank-payment/:codigoSolicitacao` — JWT admin, claim `BANK_PAYMENT_READ`
+- `GET /admin/nfm` e `GET /admin/nfm/:id` — JWT admin, claims de NFM (inalteradas)
+- `POST /admin/bank-payment` — body com `bankId`
+- `GET /admin/bank-payment` — query `bankId`
+- `GET /admin/bank-payment/:codigoSolicitacao` — query `provider` + `bankId`
+- `GET /admin/bank-payment/:codigoSolicitacao/pdf` — query `provider` + `bankId`
+- `POST /admin/bank-payment/:codigoSolicitacao/cancel` — body com `bankId`
 
-Há uma rota **pública** nova só para o Banco Inter (não usar no app):
+Há uma rota **pública** só para o Banco Inter (não usar no app):
 
 - `POST /webhooks/inter/cobranca/:token`
+
+Cadastro das keys/certificado: [frontend-integracao-bancos.md](frontend-integracao-bancos.md).
 
 ## Resumo das mudanças
 
@@ -20,7 +27,7 @@ Há uma rota **pública** nova só para o Banco Inter (não usar no app):
 |---|---|---|
 | `NfseDto` / `NfmWithNfseDto.nfse` | Campos novos `bankPaymentSettledAt` e `bankPaymentNextSettlementAt` | Não (aditivo) |
 | `bankPaymentStatus` | Continua sendo atualizado depois da confirmação (pago, cancelado, expirado) | Não — o valor antigo `EMITTED` ainda existe enquanto a cobrança está em aberto |
-| Rotas admin de boleto | Inalteradas | Não |
+| Rotas admin de boleto | `bankId` **obrigatório** no emit/list/find/pdf/cancel | **Sim** — sem `bankId` a validação responde 400 |
 | Claims CASL | Nenhuma claim nova | Não |
 
 ## Campos novos na NFS-e
@@ -49,8 +56,9 @@ Pago-like **não** é sobrescrito depois por cancelado ou expirado.
 
 ## Erros / UX
 
-O contrato admin de boleto (gerar, reemitir, PDF) não mudou. Mensagens continuam em `message` do
-payload `{ message: string }`.
+Mensagens continuam em `message` do payload `{ message: string }`. Sem `bankId` nas rotas admin de
+cobrança → 400. Banco da config de fatura sem keys/certificado → 400
+(`Banco sem credenciais de integração configuradas.`).
 
 Na lista/detalhe da NFM, se `bankPaymentSettledAt` estiver nulo e `bankPaymentConfirmedAt`
 preenchido, mostrar “em aberto” (`emitido`), não “pago”.
@@ -60,5 +68,6 @@ preenchido, mostrar “em aberto” (`emitido`), não “pago”.
 1. Tipar `bankPaymentSettledAt` e `bankPaymentNextSettlementAt` a partir do OpenAPI.
 2. Ajustar a derivação de estado do boleto (pago / cancelado / expirado).
 3. Não exibir `bankPaymentNextSettlementAt`.
-4. Mocks E2E: nota emitida em aberto (`EMITTED` + `bankPaymentSettledAt: null`) vs paga (`PAID` +
+4. Enviar `bankId` em emit/list/find/pdf/cancel.
+5. Mocks E2E: nota emitida em aberto (`EMITTED` + `bankPaymentSettledAt: null`) vs paga (`PAID` +
    `bankPaymentSettledAt` preenchido).

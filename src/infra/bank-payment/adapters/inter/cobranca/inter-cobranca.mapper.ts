@@ -55,7 +55,7 @@ const STATUS_TO_INTER: Partial<Record<BankPaymentStatus, string>> = {
 };
 
 export class InterCobrancaMapper {
-  public static toIssueRequest(input: IssueBankPaymentInputDto): InterEmitirCobrancaRequestDto {
+  public static toIssueRequest(input: Omit<IssueBankPaymentInputDto, 'credentials'>): InterEmitirCobrancaRequestDto {
     const request: InterEmitirCobrancaRequestDto = {
       seuNumero: input.yourNumber,
       valorNominal: input.amount,
@@ -81,13 +81,13 @@ export class InterCobrancaMapper {
     return request;
   }
 
-  public static toCancelRequest(input: CancelBankPaymentInputDto): InterCancelarCobrancaRequestDto {
+  public static toCancelRequest(input: Omit<CancelBankPaymentInputDto, 'credentials'>): InterCancelarCobrancaRequestDto {
     return {
       motivoCancelamento: input.reason,
     };
   }
 
-  public static toListQueryParams(input: ListBankPaymentInputDto): Record<string, string | number> {
+  public static toListQueryParams(input: Omit<ListBankPaymentInputDto, 'credentials'>): Record<string, string | number> {
     const page = input.page ?? 1;
     const size = input.size ?? 100;
     const params: Record<string, string | number> = {

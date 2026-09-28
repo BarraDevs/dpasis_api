@@ -15,6 +15,9 @@ const TOKENS = {
 
   UploadFileGateway: Symbol.for('UploadFileGateway'),
   UploadFileQueueProducer: Symbol.for('UploadFileQueueProducer'),
+  SecretsCryptoGateway: Symbol.for('SecretsCryptoGateway'),
+  LocalSecureFileGateway: Symbol.for('LocalSecureFileGateway'),
+  CertificateParserGateway: Symbol.for('CertificateParserGateway'),
 
   NfseDao: Symbol.for('NfseDao'),
   NfseClassificationDao: Symbol.for('NfseClassificationDao'),

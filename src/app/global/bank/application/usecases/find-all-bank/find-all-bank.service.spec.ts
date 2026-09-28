@@ -4,6 +4,7 @@ import { BankModule } from '../../../bank.module';
 import { BankDto } from '../../dtos/bank.dto';
 import { FindAllBankQueryDto } from './dtos/find-all-bank.dto';
 import { FindAllBank } from './find-all-bank.service';
+import { UNCONFIGURED_BANK_INTEGRATION } from 'src/test/fixtures/unconfigured-bank-dto';
 
 const baseBankData = {
   drawer: 'Empresa XYZ',
@@ -199,6 +200,7 @@ describe('FindAllBank - Integration tests', () => {
       paymentLocation: bank.paymentLocation,
       fineRate: null,
       moraRate: null,
+      ...UNCONFIGURED_BANK_INTEGRATION,
       active: bank.active,
       createdAt: bank.createdAt,
       updatedAt: bank.updatedAt,

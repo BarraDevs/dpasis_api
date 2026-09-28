@@ -1,17 +1,27 @@
 model Bank {
-  id              Int      @id @default(autoincrement())
-  drawer          String   @db.VarChar(255)
-  wallet          String   @db.VarChar(50)
-  account         String   @db.VarChar(50)
-  agency          String   @db.VarChar(50)
-  bankCode        String   @db.VarChar(20)
-  bankName        String   @db.VarChar(255)
-  paymentLocation String?  @db.Text
-  fineRate        Decimal? @db.Decimal(5, 2)
-  moraRate        Decimal? @db.Decimal(5, 2)
-  active          Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id                      Int       @id @default(autoincrement())
+  drawer                  String    @db.VarChar(255)
+  wallet                  String    @db.VarChar(50)
+  account                 String    @db.VarChar(50)
+  agency                  String    @db.VarChar(50)
+  bankCode                String    @db.VarChar(20)
+  bankName                String    @db.VarChar(255)
+  paymentLocation         String?   @db.Text
+  fineRate                Decimal?  @db.Decimal(5, 2)
+  moraRate                Decimal?  @db.Decimal(5, 2)
+  apiUrl                  String?   @db.VarChar(512)
+  clientIdCiphertext      String?   @db.Text
+  clientIdHint            String?   @db.VarChar(4)
+  clientSecretCiphertext  String?   @db.Text
+  webhookTokenHash        String?   @unique @db.VarChar(64)
+  certFormat              String?
+  certFilePath            String?   @db.Text
+  keyFilePath             String?   @db.Text
+  certPasswordCiphertext  String?   @db.Text
+  certificateNotAfter     DateTime?
+  active                  Boolean   @default(true)
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
 
   invoiceConfigs ClientInvoiceConfig[]
   providerItems  ProviderItem[]

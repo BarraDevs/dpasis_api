@@ -5,7 +5,7 @@ import { IClientInvoiceConfigDao } from 'src/app/client/client-invoice-config/ap
 import { FindAllClientInvoiceConfigQueryDto } from 'src/app/client/client-invoice-config/application/usecases/find-all-client-invoice-config/dtos/find-all-client-invoice-config.dto';
 import { ClientInvoiceConfigDueDateType } from 'src/app/client/client-invoice-config/domain/enums/client-invoice-config-due-date-type.enum';
 import { ClientInvoiceConfigType } from 'src/app/client/client-invoice-config/domain/enums/client-invoice-config-type.enum';
-import { toBankDto } from 'src/app/global/bank/application/mappers/to-bank.dto';
+import { toBankDtoFromPersistence } from 'src/app/global/bank/application/mappers/to-bank.dto';
 import { PrismaService } from 'src/infra/database/prisma/prisma.service';
 
 const ClientInvoiceConfigBillingAddressSelect = {
@@ -36,6 +36,14 @@ const ClientInvoiceConfigBankSelect = {
   paymentLocation: true,
   fineRate: true,
   moraRate: true,
+  apiUrl: true,
+  clientIdHint: true,
+  clientIdCiphertext: true,
+  clientSecretCiphertext: true,
+  webhookTokenHash: true,
+  certFormat: true,
+  certFilePath: true,
+  certificateNotAfter: true,
   active: true,
   createdAt: true,
   updatedAt: true,
@@ -125,7 +133,7 @@ export class ClientInvoiceConfigDaoAdapterPrisma implements IClientInvoiceConfig
       deadlineDays: data.deadlineDays,
       months: data.months,
       billingAddress: { ...data.billingAddress },
-      bank: toBankDto(data.bank),
+      bank: toBankDtoFromPersistence(data.bank),
       autoProtestBoleto: data.autoProtestBoleto,
       issWithheld: data.issWithheld,
       message: data.message,

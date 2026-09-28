@@ -1,6 +1,7 @@
 import { DynamicModule, Module } from '@nestjs/common';
 import { ScheduleModule } from '@nestjs/schedule';
 import { AuthenticationGuardsModule } from 'src/app/authentication/application/guards/guards.module';
+import { BankModule } from 'src/app/global/bank/bank.module';
 import { ConfigModule } from 'src/core/config/config.module';
 import { CompanyNfsConfigPersistenceModule } from 'src/app/company/company-nfs-config/application/persistence/company-nfs-config-persistence.module';
 import { NfsePersistenceModule } from 'src/app/tax-invoice/nfse/application/persistence/nfse-persistence.module';
@@ -30,6 +31,7 @@ export class MaintenanceModule {
         // junto com os use cases que as varreduras usam.
         NfseModule,
         CompanyNfsConfigPersistenceModule,
+        BankModule,
         ConfigModule,
         AuthenticationGuardsModule,
       ],

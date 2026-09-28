@@ -134,27 +134,8 @@ export class ConfigService {
     return this.nestConfigService.get<string>('GISS_CERT_PASSWORD')!;
   }
 
-  // banco inter
-  get interProviderEnabled(): boolean {
-    return this.nestConfigService.get<boolean>('INTER_PROVIDER_ENABLED') ?? false;
-  }
-  get interApiUrl(): string {
-    return this.nestConfigService.get<string>('INTER_API_URL')!;
-  }
-  get interClientId(): string {
-    return this.nestConfigService.get<string>('INTER_CLIENT_ID')!;
-  }
-  get interClientSecret(): string {
-    return this.nestConfigService.get<string>('INTER_CLIENT_SECRET')!;
-  }
-  get interCertPath(): string {
-    return this.nestConfigService.get<string>('INTER_CERT_PATH')!;
-  }
-  get interKeyPath(): string {
-    return this.nestConfigService.get<string>('INTER_KEY_PATH')!;
-  }
-  get interWebhookToken(): string {
-    return this.nestConfigService.get<string>('INTER_WEBHOOK_TOKEN') ?? '';
+  get secretsEncryptionKey(): string {
+    return this.nestConfigService.get<string>('SECRETS_ENCRYPTION_KEY')!;
   }
 
   // throttle

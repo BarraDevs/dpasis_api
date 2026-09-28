@@ -3,27 +3,19 @@ import { createMock } from '@golevelup/ts-jest';
 import { HttpService } from '@nestjs/axios';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AxiosError } from 'axios';
-import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
-import { ConfigService } from 'src/core/config/config.service';
 import { TOKENS } from 'src/core/di/token';
 import { LogContext, type ILoggerGateway } from 'src/infra/logger/logger.gateway';
 import { ExternalApiError } from 'src/shared/errors/external-api.error';
 import { PermanentProviderError } from 'src/shared/errors/permanent-provider.error';
 import { TransientProviderError } from 'src/shared/errors/transient-provider.error';
-import { buildTestCertificatePem } from 'src/test/fixtures/test-certificate';
+import { makeBankPaymentCredentials } from 'src/test/fixtures/bank-payment-credentials';
 import { InterOauthConfigError } from './errors/inter-oauth-config.error';
 import { InterOauthClient } from './inter-oauth.client';
 
 describe('InterOauthClient - Unit tests', () => {
   let sut: InterOauthClient;
   let httpService: { axiosRef: { post: jest.Mock } };
-  let configService: jest.Mocked<ConfigService>;
   let logger: jest.Mocked<ILoggerGateway>;
-  let sutDir: string;
-  let certPath: string;
-  let keyPath: string;
 
   const SCOPE_A = 'boleto-cobranca.read boleto-cobranca.write';
   const SCOPE_A_REORDERED = 'boleto-cobranca.write boleto-cobranca.read';
@@ -35,26 +27,11 @@ describe('InterOauthClient - Unit tests', () => {
   };
 
   beforeEach(async() => {
-    sutDir = join(tmpdir(), `inter-oauth-client-${Date.now()}`);
-    mkdirSync(sutDir, { recursive: true });
-    certPath = join(sutDir, 'inter.crt');
-    keyPath = join(sutDir, 'inter.key');
-    writeFileSync(certPath, buildTestCertificatePem());
-    writeFileSync(keyPath, '-----BEGIN PRIVATE KEY-----\nfake\n-----END PRIVATE KEY-----\n');
-
     httpService = {
       axiosRef: {
         post: jest.fn().mockResolvedValue({ data: TOKEN_RESPONSE }),
       },
     };
-
-    configService = createMock<ConfigService>({
-      interApiUrl: 'https://cdpj-sandbox.partners.uatinter.co',
-      interClientId: 'client-id',
-      interClientSecret: 'client-secret',
-      interCertPath: certPath,
-      interKeyPath: keyPath,
-    });
 
     logger = createMock<ILoggerGateway>({
       error: jest.fn(),
@@ -64,7 +41,6 @@ describe('InterOauthClient - Unit tests', () => {
       providers: [
         InterOauthClient,
         { provide: HttpService, useValue: httpService },
-        { provide: ConfigService, useValue: configService },
         { provide: TOKENS.LoggerGateway, useValue: logger },
       ],
     }).compile();
@@ -75,7 +51,6 @@ describe('InterOauthClient - Unit tests', () => {
   afterEach(() => {
     jest.useRealTimers();
     jest.clearAllMocks();
-    rmSync(sutDir, { recursive: true, force: true });
   });
 
   it('should be defined', () => {
@@ -84,7 +59,7 @@ describe('InterOauthClient - Unit tests', () => {
 
   it('should POST form-urlencoded with mTLS agent and map response to DTO', async() => {
     // Act
-    const result = await sut.getAccessToken(SCOPE_A);
+    const result = await sut.getAccessToken(SCOPE_A, makeBankPaymentCredentials());
 
     // Assert
     expect(httpService.axiosRef.post).toHaveBeenCalledTimes(1);
@@ -108,8 +83,8 @@ describe('InterOauthClient - Unit tests', () => {
 
   it('should not call HTTP on second request with same scope (cache hit)', async() => {
     // Act
-    await sut.getAccessToken(SCOPE_A);
-    await sut.getAccessToken(SCOPE_A);
+    await sut.getAccessToken(SCOPE_A, makeBankPaymentCredentials());
+    await sut.getAccessToken(SCOPE_A, makeBankPaymentCredentials());
 
     // Assert
     expect(httpService.axiosRef.post).toHaveBeenCalledTimes(1);
@@ -117,8 +92,8 @@ describe('InterOauthClient - Unit tests', () => {
 
   it('should share cache for reordered scopes', async() => {
     // Act
-    await sut.getAccessToken(SCOPE_A);
-    await sut.getAccessToken(SCOPE_A_REORDERED);
+    await sut.getAccessToken(SCOPE_A, makeBankPaymentCredentials());
+    await sut.getAccessToken(SCOPE_A_REORDERED, makeBankPaymentCredentials());
 
     // Assert
     expect(httpService.axiosRef.post).toHaveBeenCalledTimes(1);
@@ -137,9 +112,9 @@ describe('InterOauthClient - Unit tests', () => {
       });
 
     // Act
-    const first = await sut.getAccessToken(SCOPE_A);
+    const first = await sut.getAccessToken(SCOPE_A, makeBankPaymentCredentials());
     jest.advanceTimersByTime((3600 - 60) * 1000 + 1);
-    const second = await sut.getAccessToken(SCOPE_A);
+    const second = await sut.getAccessToken(SCOPE_A, makeBankPaymentCredentials());
 
     // Assert
     expect(httpService.axiosRef.post).toHaveBeenCalledTimes(2);
@@ -157,8 +132,8 @@ describe('InterOauthClient - Unit tests', () => {
     );
 
     // Act
-    const p1 = sut.getAccessToken(SCOPE_A);
-    const p2 = sut.getAccessToken(SCOPE_A);
+    const p1 = sut.getAccessToken(SCOPE_A, makeBankPaymentCredentials());
+    const p2 = sut.getAccessToken(SCOPE_A, makeBankPaymentCredentials());
     resolvePost!({ data: TOKEN_RESPONSE });
     const [r1, r2] = await Promise.all([p1, p2]);
 
@@ -169,43 +144,31 @@ describe('InterOauthClient - Unit tests', () => {
   });
 
   it('should throw InterOauthConfigError when scope is empty', async() => {
-    await expect(sut.getAccessToken('   ')).rejects.toBeInstanceOf(InterOauthConfigError);
-    await expect(sut.getAccessToken('')).rejects.toThrow('Escopo OAuth do Banco Inter não pode ser vazio');
+    await expect(sut.getAccessToken('   ', makeBankPaymentCredentials())).rejects.toBeInstanceOf(InterOauthConfigError);
+    await expect(sut.getAccessToken('', makeBankPaymentCredentials())).rejects.toThrow('Escopo OAuth do Banco Inter não pode ser vazio');
     expect(httpService.axiosRef.post).not.toHaveBeenCalled();
   });
 
   it('should throw InterOauthConfigError when client id is missing', async() => {
-    // Arrange
-    Object.defineProperty(configService, 'interClientId', { get: () => '' });
-
-    // Act / Assert
-    await expect(sut.getAccessToken(SCOPE_A)).rejects.toBeInstanceOf(InterOauthConfigError);
-    await expect(sut.getAccessToken(SCOPE_A)).rejects.toThrow(
-      'Variável de ambiente "INTER_CLIENT_ID" não está definida',
+    await expect(sut.getAccessToken(SCOPE_A, makeBankPaymentCredentials({ clientId: '' }))).rejects.toBeInstanceOf(InterOauthConfigError);
+    await expect(sut.getAccessToken(SCOPE_A, makeBankPaymentCredentials({ clientId: '' }))).rejects.toThrow(
+      'Client ID Inter não está configurado no banco',
     );
     expect(httpService.axiosRef.post).not.toHaveBeenCalled();
   });
 
   it('should throw InterOauthConfigError when API URL is missing', async() => {
-    // Arrange
-    Object.defineProperty(configService, 'interApiUrl', { get: () => '' });
-
-    // Act / Assert
-    await expect(sut.getAccessToken(SCOPE_A)).rejects.toBeInstanceOf(InterOauthConfigError);
-    await expect(sut.getAccessToken(SCOPE_A)).rejects.toThrow(
-      'Variável de ambiente "INTER_API_URL" não está definida',
+    await expect(sut.getAccessToken(SCOPE_A, makeBankPaymentCredentials({ apiUrl: '' }))).rejects.toBeInstanceOf(InterOauthConfigError);
+    await expect(sut.getAccessToken(SCOPE_A, makeBankPaymentCredentials({ apiUrl: '' }))).rejects.toThrow(
+      'URL da API Inter não está configurada no banco',
     );
     expect(httpService.axiosRef.post).not.toHaveBeenCalled();
   });
 
   it('should throw InterOauthConfigError when client secret is missing', async() => {
-    // Arrange
-    Object.defineProperty(configService, 'interClientSecret', { get: () => '' });
-
-    // Act / Assert
-    await expect(sut.getAccessToken(SCOPE_A)).rejects.toBeInstanceOf(InterOauthConfigError);
-    await expect(sut.getAccessToken(SCOPE_A)).rejects.toThrow(
-      'Variável de ambiente "INTER_CLIENT_SECRET" não está definida',
+    await expect(sut.getAccessToken(SCOPE_A, makeBankPaymentCredentials({ clientSecret: '' }))).rejects.toBeInstanceOf(InterOauthConfigError);
+    await expect(sut.getAccessToken(SCOPE_A, makeBankPaymentCredentials({ clientSecret: '' }))).rejects.toThrow(
+      'Client secret Inter não está configurado no banco',
     );
     expect(httpService.axiosRef.post).not.toHaveBeenCalled();
   });
@@ -220,7 +183,7 @@ describe('InterOauthClient - Unit tests', () => {
     });
 
     // Act
-    const result = await sut.getAccessToken(SCOPE_A);
+    const result = await sut.getAccessToken(SCOPE_A, makeBankPaymentCredentials());
 
     // Assert
     expect(result).toEqual({
@@ -241,8 +204,8 @@ describe('InterOauthClient - Unit tests', () => {
     });
 
     // Act / Assert
-    await expect(sut.getAccessToken(SCOPE_A)).rejects.toBeInstanceOf(ExternalApiError);
-    await expect(sut.getAccessToken(SCOPE_A)).rejects.toThrow(
+    await expect(sut.getAccessToken(SCOPE_A, makeBankPaymentCredentials())).rejects.toBeInstanceOf(ExternalApiError);
+    await expect(sut.getAccessToken(SCOPE_A, makeBankPaymentCredentials())).rejects.toThrow(
       'Falha ao obter token OAuth no Banco Inter.',
     );
   });
@@ -257,8 +220,8 @@ describe('InterOauthClient - Unit tests', () => {
     });
 
     // Act / Assert
-    await expect(sut.getAccessToken(SCOPE_A)).rejects.toBeInstanceOf(ExternalApiError);
-    await expect(sut.getAccessToken(SCOPE_A)).rejects.toThrow(
+    await expect(sut.getAccessToken(SCOPE_A, makeBankPaymentCredentials())).rejects.toBeInstanceOf(ExternalApiError);
+    await expect(sut.getAccessToken(SCOPE_A, makeBankPaymentCredentials())).rejects.toThrow(
       'Falha ao obter token OAuth no Banco Inter.',
     );
   });
@@ -270,22 +233,16 @@ describe('InterOauthClient - Unit tests', () => {
       .mockResolvedValueOnce({ data: TOKEN_RESPONSE });
 
     // Act
-    await expect(sut.getAccessToken(SCOPE_A)).rejects.toBeInstanceOf(ExternalApiError);
-    const result = await sut.getAccessToken(SCOPE_A);
+    await expect(sut.getAccessToken(SCOPE_A, makeBankPaymentCredentials())).rejects.toBeInstanceOf(ExternalApiError);
+    const result = await sut.getAccessToken(SCOPE_A, makeBankPaymentCredentials());
 
     // Assert
     expect(httpService.axiosRef.post).toHaveBeenCalledTimes(2);
     expect(result.accessToken).toBe('access-token-abc');
   });
 
-  it('should throw InterOauthConfigError when cert file is missing', async() => {
-    // Arrange
-    Object.defineProperty(configService, 'interCertPath', {
-      get: () => join(sutDir, 'missing.crt'),
-    });
-
-    // Act / Assert
-    await expect(sut.getAccessToken(SCOPE_A)).rejects.toBeInstanceOf(InterOauthConfigError);
+  it('should throw InterOauthConfigError when cert PEM is missing', async() => {
+    await expect(sut.getAccessToken(SCOPE_A, makeBankPaymentCredentials({ certPem: '' }))).rejects.toBeInstanceOf(InterOauthConfigError);
     expect(httpService.axiosRef.post).not.toHaveBeenCalled();
   });
 
@@ -295,8 +252,8 @@ describe('InterOauthClient - Unit tests', () => {
     httpService.axiosRef.post.mockRejectedValue(networkError);
 
     // Act
-    await expect(sut.getAccessToken(SCOPE_A)).rejects.toBeInstanceOf(TransientProviderError);
-    await expect(sut.getAccessToken(SCOPE_A)).rejects.toThrow('Falha ao obter token OAuth no Banco Inter.');
+    await expect(sut.getAccessToken(SCOPE_A, makeBankPaymentCredentials())).rejects.toBeInstanceOf(TransientProviderError);
+    await expect(sut.getAccessToken(SCOPE_A, makeBankPaymentCredentials())).rejects.toThrow('Falha ao obter token OAuth no Banco Inter.');
 
     // Assert
     expect(logger.error).toHaveBeenCalledWith(LogContext.BANK_PAYMENT, {
@@ -326,9 +283,9 @@ describe('InterOauthClient - Unit tests', () => {
     httpService.axiosRef.post.mockRejectedValue(axiosError);
 
     // Act / Assert
-    await expect(sut.getAccessToken(SCOPE_A)).rejects.toBeInstanceOf(PermanentProviderError);
-    await expect(sut.getAccessToken(SCOPE_A)).rejects.toThrow(
-      `Credencial OAuth do Banco Inter recusada (HTTP ${status}). Verifique INTER_CLIENT_ID/INTER_CLIENT_SECRET e o escopo.`,
+    await expect(sut.getAccessToken(SCOPE_A, makeBankPaymentCredentials())).rejects.toBeInstanceOf(PermanentProviderError);
+    await expect(sut.getAccessToken(SCOPE_A, makeBankPaymentCredentials())).rejects.toThrow(
+      `Credencial OAuth do Banco Inter recusada (HTTP ${status}). Verifique clientId, clientSecret e o escopo no cadastro do banco.`,
     );
   });
 
@@ -356,7 +313,7 @@ describe('InterOauthClient - Unit tests', () => {
     httpService.axiosRef.post.mockRejectedValue(axiosError);
 
     // Act
-    await expect(sut.getAccessToken(SCOPE_A)).rejects.toBeInstanceOf(PermanentProviderError);
+    await expect(sut.getAccessToken(SCOPE_A, makeBankPaymentCredentials())).rejects.toBeInstanceOf(PermanentProviderError);
 
     // Assert
     const logged = (logger.error as jest.Mock).mock.calls[0][1];

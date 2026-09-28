@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { BankModule } from 'src/app/global/bank/bank.module';
 import { BankPaymentModule as BankPaymentModuleInfra } from 'src/infra/bank-payment/bank-payment.module';
 import { CancelBankPayment } from './application/usecases/cancel-bank-payment/cancel-bank-payment.service';
 import { FindAllBankPayment } from './application/usecases/find-all-bank-payment/find-all-bank-payment.service';
@@ -14,6 +15,7 @@ import { IssueBankPayment } from './application/usecases/issue-bank-payment/issu
 @Module({
   imports: [
     BankPaymentModuleInfra.register(),
+    BankModule,
   ],
   providers: [
     IssueBankPayment,

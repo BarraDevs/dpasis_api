@@ -2,8 +2,8 @@ import { HttpService } from '@nestjs/axios';
 import { Inject, Injectable } from '@nestjs/common';
 import { isAxiosError } from 'axios';
 import { Agent } from 'node:https';
-import { ConfigService } from 'src/core/config/config.service';
 import { TOKENS } from 'src/core/di/token';
+import { BankPaymentCredentialsDto } from 'src/infra/bank-payment/dtos/bank-payment-credentials.dto';
 import { LogContext, type ILoggerGateway } from 'src/infra/logger/logger.gateway';
 import { ExternalApiError } from 'src/shared/errors/external-api.error';
 import { PermanentProviderError } from 'src/shared/errors/permanent-provider.error';
@@ -28,51 +28,51 @@ export class InterOauthClient {
 
   constructor(
     private readonly httpService: HttpService,
-    private readonly configService: ConfigService,
     @Inject(TOKENS.LoggerGateway) private readonly logger: ILoggerGateway,
   ) {}
 
-  public async getAccessToken(scope: string): Promise<InterOauthTokenDto> {
+  public async getAccessToken(scope: string, credentials: BankPaymentCredentialsDto): Promise<InterOauthTokenDto> {
     const normalizedScope = this.normalizeScope(scope);
     if (!normalizedScope) {
       throw new InterOauthConfigError('Escopo OAuth do Banco Inter não pode ser vazio');
     }
 
-    const cached = this.cache.get(normalizedScope);
+    const cacheKey = this.cacheKey(credentials, normalizedScope);
+    const cached = this.cache.get(cacheKey);
     if (cached && cached.expiresAtMs > Date.now()) {
       return cached.token;
     }
 
-    const pending = this.inflight.get(normalizedScope);
+    const pending = this.inflight.get(cacheKey);
     if (pending) {
       return pending;
     }
 
     const request = this
-      .fetchAndCache(normalizedScope)
-      .finally(() => this.inflight.delete(normalizedScope));
+      .fetchAndCache(cacheKey, normalizedScope, credentials)
+      .finally(() => this.inflight.delete(cacheKey));
 
-    this.inflight.set(normalizedScope, request);
+    this.inflight.set(cacheKey, request);
     return request;
   }
 
-  private async fetchAndCache(normalizedScope: string): Promise<InterOauthTokenDto> {
-    const token = await this.requestToken(normalizedScope);
-    this.cache.set(normalizedScope, {
+  private async fetchAndCache(
+    cacheKey: string,
+    normalizedScope: string,
+    credentials: BankPaymentCredentialsDto,
+  ): Promise<InterOauthTokenDto> {
+    const token = await this.requestToken(normalizedScope, credentials);
+    this.cache.set(cacheKey, {
       token,
       expiresAtMs: Date.now() + (token.expiresIn * 1000) - InterOauthClient.EXPIRY_MARGIN_MS,
     });
     return token;
   }
 
-  private async requestToken(scope: string): Promise<InterOauthTokenDto> {
-    this.assertConfig();
+  private async requestToken(scope: string, credentials: BankPaymentCredentialsDto): Promise<InterOauthTokenDto> {
+    this.assertCredentials(credentials);
 
-    // Cache com invalidação por `mtime` vive no loader; ver InterCertLoader.
-    const material = InterCertLoader.load(
-      this.configService.interCertPath,
-      this.configService.interKeyPath,
-    );
+    const material = InterCertLoader.loadFromPem(credentials.certPem, credentials.keyPem);
     const agent = new Agent({
       cert: material.cert,
       key: material.key,
@@ -82,15 +82,15 @@ export class InterOauthClient {
     /* eslint-disable camelcase -- contrato form-urlencoded da API Inter */
     const body = new URLSearchParams({
       grant_type: 'client_credentials',
-      client_id: this.configService.interClientId,
-      client_secret: this.configService.interClientSecret,
+      client_id: credentials.clientId,
+      client_secret: credentials.clientSecret,
       scope,
     });
     /* eslint-enable camelcase */
 
     try {
       const result = await this.httpService.axiosRef.post<InterTokenResponseDto>(
-        `${this.configService.interApiUrl}/oauth/v2/token`,
+        `${credentials.apiUrl}/oauth/v2/token`,
         body.toString(),
         {
           httpsAgent: agent,
@@ -120,12 +120,10 @@ export class InterOauthClient {
         error: toLoggableHttpError(error),
       });
 
-      // Credencial recusada não melhora com retry: são cinco tentativas gastas e o incidente real
-      // (client_id/secret ou escopo errados) chegando cinco vezes mais tarde ao operador.
       const status = isAxiosError(error) ? error.response?.status : undefined;
       if (status === 400 || status === 401 || status === 403) {
         throw new PermanentProviderError(
-          `Credencial OAuth do Banco Inter recusada (HTTP ${status}). Verifique INTER_CLIENT_ID/INTER_CLIENT_SECRET e o escopo.`,
+          `Credencial OAuth do Banco Inter recusada (HTTP ${status}). Verifique clientId, clientSecret e o escopo no cadastro do banco.`,
         );
       }
 
@@ -133,16 +131,20 @@ export class InterOauthClient {
     }
   }
 
-  private assertConfig(): void {
-    if (!this.configService.interApiUrl?.trim()) {
-      throw new InterOauthConfigError('Variável de ambiente "INTER_API_URL" não está definida');
+  private assertCredentials(credentials: BankPaymentCredentialsDto): void {
+    if (!credentials?.apiUrl?.trim()) {
+      throw new InterOauthConfigError('URL da API Inter não está configurada no banco');
     }
-    if (!this.configService.interClientId?.trim()) {
-      throw new InterOauthConfigError('Variável de ambiente "INTER_CLIENT_ID" não está definida');
+    if (!credentials.clientId?.trim()) {
+      throw new InterOauthConfigError('Client ID Inter não está configurado no banco');
     }
-    if (!this.configService.interClientSecret?.trim()) {
-      throw new InterOauthConfigError('Variável de ambiente "INTER_CLIENT_SECRET" não está definida');
+    if (!credentials.clientSecret?.trim()) {
+      throw new InterOauthConfigError('Client secret Inter não está configurado no banco');
     }
+  }
+
+  private cacheKey(credentials: BankPaymentCredentialsDto, scope: string): string {
+    return `${credentials.bankId}|${credentials.clientId}|${scope}`;
   }
 
   private normalizeScope(scope: string): string {

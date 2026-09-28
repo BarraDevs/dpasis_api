@@ -74,6 +74,7 @@ describe('NfseToIssueBankPaymentMapper - Unit tests', () => {
     // Act
     const result = NfseToIssueBankPaymentMapper.toIssueBankPaymentInput({
       nfseId: 42,
+      bankId: 1,
       issuedAt: new Date('2026-02-10T12:00:00-03:00'),
       snapshot,
     });
@@ -111,6 +112,7 @@ describe('NfseToIssueBankPaymentMapper - Unit tests', () => {
     // Act
     const result = NfseToIssueBankPaymentMapper.toIssueBankPaymentInput({
       nfseId: 7,
+      bankId: 1,
       issuedAt: new Date('2026-08-01T12:00:00-03:00'),
       snapshot,
     });
@@ -132,6 +134,7 @@ describe('NfseToIssueBankPaymentMapper - Unit tests', () => {
     // Act
     const result = NfseToIssueBankPaymentMapper.toIssueBankPaymentInput({
       nfseId: 7,
+      bankId: 1,
       issuedAt: new Date('2026-08-20T15:00:00-03:00'),
       snapshot,
     });
@@ -151,6 +154,7 @@ describe('NfseToIssueBankPaymentMapper - Unit tests', () => {
     // Act
     const result = NfseToIssueBankPaymentMapper.toIssueBankPaymentInput({
       nfseId: 7,
+      bankId: 1,
       issuedAt: new Date('2026-08-20T15:00:00-03:00'),
       snapshot,
     });
@@ -167,11 +171,13 @@ describe('NfseToIssueBankPaymentMapper - Unit tests', () => {
     // Act & Assert
     expect(() => NfseToIssueBankPaymentMapper.toIssueBankPaymentInput({
       nfseId: 7,
+      bankId: 1,
       issuedAt: new Date(),
       snapshot,
     })).toThrow(AppException);
     expect(() => NfseToIssueBankPaymentMapper.toIssueBankPaymentInput({
       nfseId: 7,
+      bankId: 1,
       issuedAt: new Date(),
       snapshot,
     })).toThrow('Contexto de boleto ausente na NFS-e.');
@@ -201,11 +207,13 @@ describe('NfseToIssueBankPaymentMapper - Unit tests', () => {
     // Act & Assert
     expect(() => NfseToIssueBankPaymentMapper.toIssueBankPaymentInput({
       nfseId: 7,
+      bankId: 1,
       issuedAt: new Date(),
       snapshot,
     })).toThrow(AppException);
     expect(() => NfseToIssueBankPaymentMapper.toIssueBankPaymentInput({
       nfseId: 7,
+      bankId: 1,
       issuedAt: new Date(),
       snapshot,
     })).toThrow('Valor dos serviços inválido para emissão do boleto.');
@@ -229,11 +237,13 @@ describe('NfseToIssueBankPaymentMapper - Unit tests', () => {
     // Act & Assert
     expect(() => NfseToIssueBankPaymentMapper.toIssueBankPaymentInput({
       nfseId: 7,
+      bankId: 1,
       issuedAt: new Date(),
       snapshot,
     })).toThrow(AppException);
     expect(() => NfseToIssueBankPaymentMapper.toIssueBankPaymentInput({
       nfseId: 7,
+      bankId: 1,
       issuedAt: new Date(),
       snapshot,
     })).toThrow('Cidade do tomador ausente para emissão do boleto.');
@@ -251,6 +261,7 @@ describe('NfseToIssueBankPaymentMapper - Unit tests', () => {
     // Act
     const result = NfseToIssueBankPaymentMapper.toIssueBankPaymentInput({
       nfseId: 7,
+      bankId: 1,
       issuedAt: new Date('2026-08-20T15:00:00-03:00'),
       snapshot,
       bankPayment,
@@ -268,6 +279,7 @@ describe('NfseToIssueBankPaymentMapper - Unit tests', () => {
     // Act
     const result = NfseToIssueBankPaymentMapper.toIssueBankPaymentInput({
       nfseId,
+      bankId: 1,
       issuedAt: new Date('2026-08-20T15:00:00-03:00'),
       snapshot,
     });
@@ -295,6 +307,7 @@ describe('NfseToIssueBankPaymentMapper - Unit tests', () => {
     // Act
     const result = NfseToIssueBankPaymentMapper.toIssueBankPaymentInput({
       nfseId: 7,
+      bankId: 1,
       issuedAt: new Date('2026-08-20T15:00:00-03:00'),
       snapshot,
     });
@@ -311,6 +324,7 @@ describe('NfseToIssueBankPaymentMapper - Unit tests', () => {
     // Act
     const result = NfseToIssueBankPaymentMapper.toIssueBankPaymentInput({
       nfseId: 7,
+      bankId: 1,
       issuedAt: new Date('2026-08-20T15:00:00-03:00'),
       snapshot,
       fineRate: 2,
@@ -329,6 +343,7 @@ describe('NfseToIssueBankPaymentMapper - Unit tests', () => {
     // Act
     const result = NfseToIssueBankPaymentMapper.toIssueBankPaymentInput({
       nfseId: 7,
+      bankId: 1,
       issuedAt: new Date('2026-08-20T15:00:00-03:00'),
       snapshot,
     });
@@ -345,6 +360,7 @@ describe('NfseToIssueBankPaymentMapper - Unit tests', () => {
     // Act
     const result = NfseToIssueBankPaymentMapper.toIssueBankPaymentInput({
       nfseId: 7,
+      bankId: 1,
       issuedAt: new Date('2026-08-20T15:00:00-03:00'),
       snapshot,
       fineRate: 0,
@@ -368,6 +384,7 @@ describe('NfseToIssueBankPaymentMapper - piso de vencimento', () => {
     // Act
     const result = NfseToIssueBankPaymentMapper.toIssueBankPaymentInput({
       nfseId: 42,
+      bankId: 1,
       issuedAt: new Date('2026-09-20T09:00:00-03:00'),
       snapshot,
     });
@@ -385,6 +402,7 @@ describe('NfseToIssueBankPaymentMapper - piso de vencimento', () => {
     // Act
     const result = NfseToIssueBankPaymentMapper.toIssueBankPaymentInput({
       nfseId: 42,
+      bankId: 1,
       issuedAt: new Date('2026-09-20T20:30:00-03:00'),
       snapshot,
     });
@@ -402,6 +420,7 @@ describe('NfseToIssueBankPaymentMapper - piso de vencimento', () => {
     // Act
     const result = NfseToIssueBankPaymentMapper.toIssueBankPaymentInput({
       nfseId: 42,
+      bankId: 1,
       issuedAt: new Date('2026-09-20T09:00:00-03:00'),
       snapshot,
     });
@@ -419,8 +438,8 @@ describe('NfseToIssueBankPaymentMapper - piso de vencimento', () => {
     const issuedAt = new Date('2026-09-20T09:00:00-03:00');
 
     // Act
-    const first = NfseToIssueBankPaymentMapper.toIssueBankPaymentInput({ nfseId: 42, issuedAt, snapshot });
-    const second = NfseToIssueBankPaymentMapper.toIssueBankPaymentInput({ nfseId: 42, issuedAt, snapshot });
+    const first = NfseToIssueBankPaymentMapper.toIssueBankPaymentInput({ nfseId: 42, issuedAt, snapshot, bankId: 1 });
+    const second = NfseToIssueBankPaymentMapper.toIssueBankPaymentInput({ nfseId: 42, issuedAt, snapshot, bankId: 1 });
 
     // Assert
     expect(second.dueDate).toBe(first.dueDate);
